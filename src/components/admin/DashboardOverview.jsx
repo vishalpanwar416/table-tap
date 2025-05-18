@@ -20,37 +20,37 @@ const DashboardOverview = ({ orders, foodItems, updateOrderStatus, setActiveTab 
     const calculateOrderStats = () => {
       try {
         const now = new Date();
-        const pending = orders.filter(order => order.status === 'pending').length;
         const ready = orders.filter(order => order.status === 'ready').length;
+        const completed = orders.filter(order => order.status === 'completed').length;
         const preparing = orders.filter(order => order.status === 'preparing').length;
         
         setOrderStats({
-          total: orders.length,
-          pending: pending,
+          total: ready + completed,
           preparing: preparing,
-          ready: ready
+          ready: ready,
+          completed: completed
         });
         
         const totalRevenue = orders
-          .filter(order => order.status === 'ready')
+          .filter(order => order.status === 'completed')
           .reduce((sum, order) => sum + (parseFloat(order.total) || 0), 0);
           
           const dailyOrders = orders.filter(order => {
             const orderDate = new Date(order.created_at);
-            return order.status === 'ready' && 
+            return order.status === 'completed' && 
                    orderDate.toDateString() === now.toDateString();
           });
           
           const weeklyOrders = orders.filter(order => {
             const orderDate = new Date(order.created_at);
             const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-            return order.status === 'ready' && orderDate >= weekStart;
+            return order.status === 'completed' && orderDate >= weekStart;
           });
           
           const monthlyOrders = orders.filter(order => {
             const orderDate = new Date(order.created_at);
             const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-            return order.status === 'ready' && orderDate >= monthStart;
+            return order.status === 'completed' && orderDate >= monthStart;
           });
     
           setRevenueData({
@@ -81,21 +81,45 @@ const DashboardOverview = ({ orders, foodItems, updateOrderStatus, setActiveTab 
 
   // Generate chart data
   const generateChartData = (orders) => {
-    // Sample data generation for chart
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const data = days.map(day => {
-      // Simulating different data points
-      const orderCount = Math.floor(Math.random() * 15) + 5;
-      const revenue = Math.floor(Math.random() * 2000) + 1000;
-      
-      return {
-        name: day,
-        orders: orderCount,
-        revenue: revenue
-      };
+    const now = new Date();
+    const days = [];
+    const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    // Prepare last 7 days
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(now.getDate() - i);
+      days.push({
+        date: d,
+        label: dayLabels[d.getDay()],
+        orders: 0,
+        revenue: 0
+      });
+    }
+
+    // Aggregate orders by day
+    orders.forEach(order => {
+      if (order.status !== 'completed') return;
+      const orderDate = new Date(order.created_at);
+      // Find the matching day
+      days.forEach(day => {
+        if (
+          orderDate.getFullYear() === day.date.getFullYear() &&
+          orderDate.getMonth() === day.date.getMonth() &&
+          orderDate.getDate() === day.date.getDate()
+        ) {
+          day.orders += 1;
+          day.revenue += parseFloat(order.total) || 0;
+        }
+      });
     });
-    
-    setChartData(data);
+
+    // Format for chart
+    setChartData(days.map(day => ({
+      name: day.label,
+      orders: day.orders,
+      revenue: day.revenue
+    })));
   };
 
   const toggleCollapse = (section) => {
@@ -208,14 +232,14 @@ const DashboardOverview = ({ orders, foodItems, updateOrderStatus, setActiveTab 
                 </div>
               </div>
               <div className="flex mt-2 justify-between text-xs">
-                <span className="text-yellow-600 flex items-center">
-                  <Clock size={12} className="mr-1" /> {orderStats.pending} pending
-                </span>
                 <span className="text-purple-600 flex items-center">
                   <Truck size={12} className="mr-1" /> {orderStats.preparing || 0} preparing
                 </span>
                 <span className="text-green-600 flex items-center">
                   <CheckCircle size={12} className="mr-1" /> {orderStats.ready} ready
+                </span>
+                <span className="text-blue-600 flex items-center">
+                  <CheckCircle size={12} className="mr-1" /> {orderStats.completed} completed
                 </span>
               </div>
             </div>

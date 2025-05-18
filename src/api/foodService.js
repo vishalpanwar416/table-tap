@@ -317,3 +317,20 @@ export const setCarouselOffer = async (id, isCarousel) => {
     throw error;
   }
 };
+
+// Add this function for updating order status
+export const updateOrderStatus = async (orderId, newStatus) => {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .update({ status: newStatus })
+      .eq('id', orderId)
+      .select();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error updating order status:', error);
+    throw error;
+  }
+};
