@@ -1,4 +1,6 @@
+// src/api/orderService.js
 import { supabase } from '../supabase';
+import { createNotification } from './notificationService';
 
 // Create a new order
 export const createOrder = async (orderData) => {
@@ -17,10 +19,42 @@ export const createOrder = async (orderData) => {
       .single();
 
     if (error) throw error;
+    
+    // Create admin notification for new order
+    await createAdminOrderNotification(data);
+    
     return data;
   } catch (error) {
     console.error('Error creating order:', error);
     throw error;
+  }
+};
+
+// Helper function to create admin notification for new orders
+const createAdminOrderNotification = async (order) => {
+  try {
+    const orderItems = order.items || [];
+    const itemCount = orderItems.length;
+    const totalAmount = order.total || 0;
+    
+    // Create detailed notification
+    await createNotification({
+      title: 'New Order Received',
+      message: `Order #${order.id.slice(0, 8)} - ${itemCount} items`,
+      type: 'new_order',
+      order_id: order.id,
+      is_admin_notification: true,
+      order_details: {
+        items: orderItems,
+        total: totalAmount,
+        table: order.table_number || order.tableNumber,
+        customer: order.customerName,
+        created_at: order.created_at
+      }
+    });
+  } catch (error) {
+    console.error('Error creating admin notification:', error);
+    // Don't throw here to prevent order creation from failing
   }
 };
 
@@ -64,6 +98,9 @@ export const updateOrderStatus = async (orderId, status) => {
       throw error;
     }
     
+    // Create notification for user about status update
+    await createOrderStatusNotification(data);
+    
     console.log(`Order ${orderId} status updated to ${status} successfully`);
     return data;
   } catch (error) {
@@ -72,7 +109,51 @@ export const updateOrderStatus = async (orderId, status) => {
   }
 };
 
-
+// Helper function to create user notification for order status updates
+const createOrderStatusNotification = async (order) => {
+  try {
+    // Skip if no user_id
+    if (!order.user_id) return;
+    
+    let title, message;
+    
+    switch (order.status) {
+      case 'preparing':
+        title = 'Order Accepted';
+        message = `Your order #${order.id.slice(0, 8)} is now being prepared`;
+        break;
+      case 'ready':
+        title = 'Order Ready';
+        message = `Your order #${order.id.slice(0, 8)} is ready for pickup/delivery`;
+        break;
+      case 'delivered':
+        title = 'Order Delivered';
+        message = `Your order #${order.id.slice(0, 8)} has been delivered`;
+        break;
+      case 'rejected':
+        title = 'Order Rejected';
+        message = `Your order #${order.id.slice(0, 8)} has been rejected`;
+        break;
+      case 'completed':
+        title = 'Order Completed';
+        message = `Your order #${order.id.slice(0, 8)} has been completed`;
+        break;
+      default:
+        title = `Order ${order.status}`;
+        message = `Your order #${order.id.slice(0, 8)} status: ${order.status}`;
+    }
+    
+    await createNotification({
+      title,
+      message,
+      type: `order_${order.status}`,
+      order_id: order.id,
+      user_id: order.user_id
+    });
+  } catch (error) {
+    console.error('Error creating order status notification:', error);
+  }
+};
 
 // Get order by ID
 export const getOrderById = async (orderId) => {

@@ -1,11 +1,15 @@
-// src/contexts/NotificationContext.jsx
+// src/context/NotificationContext.jsx
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { useAuth } from './AuthContext'; // Assuming you have an AuthContext
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../config/AuthContext';
 import { 
-  getUserNotifications, 
-  markNotificationAsRead, 
+  getUserNotifications,
+  getUnreadNotifications, 
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
   subscribeToUserNotifications
 } from '../api/notificationService';
+
 
 const NotificationContext = createContext();
 
@@ -14,7 +18,8 @@ export const NotificationProvider = ({ children }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const { user } = useAuth(); // Get current user from auth context
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Fetch user notifications when component mounts or user changes
   useEffect(() => {
@@ -23,11 +28,16 @@ export const NotificationProvider = ({ children }) => {
       
       // Subscribe to new notifications
       const subscription = subscribeToUserNotifications(user.id, (newNotification) => {
+        // Add notification to state
         setNotifications(prev => [newNotification, ...prev]);
-        setUnreadCount(prevCount => prevCount + 1);
         
-        // Show browser notification if supported
-        showBrowserNotification(newNotification);
+        // Increment unread count
+        if (!newNotification.read) {
+          setUnreadCount(prevCount => prevCount + 1);
+          
+          // Show browser notification
+          showBrowserNotification(newNotification);
+        }
       });
       
       return () => {
@@ -44,9 +54,15 @@ export const NotificationProvider = ({ children }) => {
     
     try {
       setLoading(true);
+      
+      // Get all user notifications
       const userNotifications = await getUserNotifications(user.id);
       setNotifications(userNotifications);
-      setUnreadCount(userNotifications.filter(notif => !notif.read).length);
+      
+      // Get unread count
+      const unreadNotifications = await getUnreadNotifications(user.id);
+      setUnreadCount(unreadNotifications.length);
+      
       setError(null);
     } catch (err) {
       console.error('Error fetching notifications:', err);
@@ -77,15 +93,10 @@ export const NotificationProvider = ({ children }) => {
 
   // Mark all notifications as read
   const markAllAsRead = async () => {
+    if (!user) return;
+    
     try {
-      const unreadNotifications = notifications.filter(n => !n.read);
-      
-      // Mark each unread notification as read
-      await Promise.all(
-        unreadNotifications.map(notification => 
-          markNotificationAsRead(notification.id)
-        )
-      );
+      await markAllNotificationsAsRead(user.id);
       
       // Update local state
       setNotifications(prev => 
@@ -105,21 +116,34 @@ export const NotificationProvider = ({ children }) => {
       return;
     }
     
+    const showNotif = () => {
+      const notificationTitle = notification.title || 'New Notification';
+      const notificationBody = notification.message || 'You have a new notification';
+      
+      const notif = new Notification(notificationTitle, {
+        body: notificationBody,
+        icon: '/logo.png', // Update with your app logo
+      });
+
+      notif.onclick = () => {
+        window.focus();
+        if (notification.order_id) {
+          navigate(`/order-tracking/${notification.order_id}`);
+        } else {
+          navigate('/my-orders');
+        }
+      };
+    };
+    
     // Check if permission is granted
     if (Notification.permission === "granted") {
-      new Notification(notification.title, {
-        body: notification.message,
-        icon: '/path/to/icon.png' // Add your app icon path
-      });
+      showNotif();
     }
     // If permission is not denied, ask for it
     else if (Notification.permission !== "denied") {
       Notification.requestPermission().then(permission => {
         if (permission === "granted") {
-          new Notification(notification.title, {
-            body: notification.message,
-            icon: '/path/to/icon.png' // Add your app icon path
-          });
+          showNotif();
         }
       });
     }

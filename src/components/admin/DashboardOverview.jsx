@@ -19,6 +19,7 @@ const DashboardOverview = ({ orders, foodItems, updateOrderStatus, setActiveTab 
   useEffect(() => {
     const calculateOrderStats = () => {
       try {
+        const now = new Date();
         const pending = orders.filter(order => order.status === 'pending').length;
         const ready = orders.filter(order => order.status === 'ready').length;
         const preparing = orders.filter(order => order.status === 'preparing').length;
@@ -30,21 +31,34 @@ const DashboardOverview = ({ orders, foodItems, updateOrderStatus, setActiveTab 
           ready: ready
         });
         
-        // Calculate revenue
         const totalRevenue = orders
           .filter(order => order.status === 'ready')
           .reduce((sum, order) => sum + (parseFloat(order.total) || 0), 0);
           
-        const dailyRevenue = totalRevenue / 30; // Simplified calculation
-        const weeklyRevenue = dailyRevenue * 7;
-        const monthlyRevenue = dailyRevenue * 30;
-        
-        setRevenueData({
-          daily: dailyRevenue,
-          weekly: weeklyRevenue,
-          monthly: monthlyRevenue
-        });
-        
+          const dailyOrders = orders.filter(order => {
+            const orderDate = new Date(order.created_at);
+            return order.status === 'ready' && 
+                   orderDate.toDateString() === now.toDateString();
+          });
+          
+          const weeklyOrders = orders.filter(order => {
+            const orderDate = new Date(order.created_at);
+            const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            return order.status === 'ready' && orderDate >= weekStart;
+          });
+          
+          const monthlyOrders = orders.filter(order => {
+            const orderDate = new Date(order.created_at);
+            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+            return order.status === 'ready' && orderDate >= monthStart;
+          });
+    
+          setRevenueData({
+            daily: dailyOrders.reduce((sum, order) => sum + (parseFloat(order.total) || 0), 0),
+            weekly: weeklyOrders.reduce((sum, order) => sum + (parseFloat(order.total) || 0), 0),
+            monthly: monthlyOrders.reduce((sum, order) => sum + (parseFloat(order.total) || 0), 0)
+          });
+    
         // Calculate unique active users
         const uniqueUsers = new Set(orders.map(order => order.userId || order.customerEmail || order.id));
         setActiveUsers(uniqueUsers.size);
@@ -104,7 +118,9 @@ const DashboardOverview = ({ orders, foodItems, updateOrderStatus, setActiveTab 
       pending: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
       preparing: 'bg-purple-100 text-purple-800 border border-purple-200',
       ready: 'bg-green-100 text-green-800 border border-green-200',
-      rejected: 'bg-red-100 text-red-800 border border-red-200'
+      rejected: 'bg-red-100 text-red-800 border border-red-200',
+      cancelled: 'bg-gray-100 text-gray-800 border border-gray-200',
+      completed: 'bg-blue-100 text-blue-800 border border-blue-200'
     };
     
     return (
@@ -124,6 +140,11 @@ const DashboardOverview = ({ orders, foodItems, updateOrderStatus, setActiveTab 
         return <CheckCircle className="h-5 w-5 text-green-500" />;
       case 'rejected':
         return <X className="h-5 w-5 text-red-500" />;
+      case 'cancelled':
+        return <X className="h-5 w-5 text-gray-500" />;
+      case 'completed':
+        return <CheckCircle className="h-5 w-5 text-blue-500" />;
+          
       default:
         return <Clock className="h-5 w-5 text-gray-400" />;
     }

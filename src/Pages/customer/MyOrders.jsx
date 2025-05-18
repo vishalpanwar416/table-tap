@@ -92,7 +92,7 @@ const MyOrders = () => {
     switch(activeTab) {
       case 'pending': return order.status === 'pending';
       case 'preparing': return order.status === 'preparing';
-      case 'completed': return ['completed', 'rejected'].includes(order.status);
+      case 'completed': return ['completed', 'rejected','ready'].includes(order.status);
       default: return false;
     }
   });

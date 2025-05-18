@@ -386,7 +386,13 @@ const AdminDashboard = () => {
               )}
 
               {activeTab === 'users' && <UserManagement />}
-              {activeTab === 'offers' && <OffersManagement />}
+              {activeTab === 'offers' && (
+                <OffersManagement 
+                  setLoading={setLoading}
+                  setErrorMsg={setErrorMsg}
+                  setSuccessMsg={setSuccessMsg}
+                />
+              )}
               {activeTab === 'settings' && (
                 <SettingsManagement 
                   currentUser={currentUser}

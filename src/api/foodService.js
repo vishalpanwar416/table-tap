@@ -237,3 +237,83 @@ export const checkIsAdmin = async () => {
     return false;
   }
 };
+
+// Add these functions to foodService.js
+
+// Offer Management Functions
+export const createOffer = async (offerData) => {
+  try {
+    const { data, error } = await supabase
+      .from('offers')
+      .insert([offerData])
+      .select();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error creating offer:', error);
+    throw error;
+  }
+};
+
+export const getAllOffers = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('offers')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error fetching offers:', error);
+    throw error;
+  }
+};
+
+export const updateOffer = async (id, offerData) => {
+  try {
+    const { data, error } = await supabase
+      .from('offers')
+      .update(offerData)
+      .eq('id', id)
+      .select();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error updating offer:', error);
+    throw error;
+  }
+};
+
+export const deleteOffer = async (id) => {
+  try {
+    const { error } = await supabase
+      .from('offers')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error deleting offer:', error);
+    throw error;
+  }
+};
+
+export const setCarouselOffer = async (id, isCarousel) => {
+  try {
+    const { data, error } = await supabase
+      .from('offers')
+      .update({ is_carousel: isCarousel })
+      .eq('id', id)
+      .select();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error updating carousel status:', error);
+    throw error;
+  }
+};
