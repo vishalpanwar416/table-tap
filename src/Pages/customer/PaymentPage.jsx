@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useCart } from '../../components/customer/CartContent';
+import { useCart } from '../../config/CartContent';
 import { supabase } from '../../supabase';
 import { ChevronLeft, CreditCard, QrCode } from 'lucide-react';
+import { useRestaurant } from '../../context/RestaurantContext';
 
 const PaymentPage = () => {
   const navigate = useNavigate();
@@ -15,13 +16,16 @@ const PaymentPage = () => {
   const [user, setUser] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('razorpay');
+  const { restaurant } = useRestaurant();
 
-  // Hardcoded restaurant details
-  const restaurant = {
-    id: "1",
-    name: "Our Restaurant",
-    logo_url: "/logo.png"
-  };
+  // Early return if restaurant data isn't loaded yet
+  if (!restaurant) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white text-xl">Loading restaurant details...</div>
+      </div>
+    );
+  }
 
   // Calculate total with GST
   const calculateTotal = () => {
@@ -70,7 +74,11 @@ const PaymentPage = () => {
       };
 
       document.body.appendChild(script);
-      return () => document.body.removeChild(script);
+      return () => {
+        if (document.body.contains(script)) {
+          document.body.removeChild(script);
+        }
+      };
     };
 
     loadRazorpay();
@@ -80,7 +88,7 @@ const PaymentPage = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const user = (await supabase.auth.getUser()).data.user;
+        const { data: { user } } = await supabase.auth.getUser();
         setUser(user);
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -95,7 +103,10 @@ const PaymentPage = () => {
 
   // Generate order_number
   const generateOrderNumber = () => {
-    return 'ORD-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+    const restaurantPrefix = restaurant?.name?.substring(0, 3).toUpperCase() || 'RST';
+    const timestamp = new Date().getTime().toString().substring(9, 13);
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `${restaurantPrefix}-${timestamp}-${random}`;
   };
 
   // Handle going back
@@ -105,6 +116,11 @@ const PaymentPage = () => {
 
   // Handle Razorpay payment with better error handling
   const handlePayment = async () => {
+    if (!restaurant) {
+      setScriptError('Restaurant data not loaded');
+      return;
+    }
+
     if (!isMounted || cartItems.length === 0) {
       setScriptError('Unable to process payment at this time');
       return;
@@ -130,21 +146,22 @@ const PaymentPage = () => {
         return;
       }
 
-      // Use environment variable or fallback to a placeholder key
-      // IMPORTANT: In production, always use environment variables
-      const razorpayKeyId = process.env.REACT_APP_RAZORPAY_KEY_ID || 'rzp_test_placeholder';
+      // Use restaurant-specific Razorpay key or fallback to environment variable
+      const razorpayKeyId = restaurant.razorpay_key_id || process.env.REACT_APP_RAZORPAY_KEY_ID;
       
-      if (razorpayKeyId === 'rzp_test_placeholder') {
-        console.warn('Using placeholder Razorpay key. For production, set REACT_APP_RAZORPAY_KEY_ID in your environment.');
+      if (!razorpayKeyId) {
+        setScriptError('Payment processor not configured for this restaurant');
+        setIsProcessing(false);
+        return;
       }
 
       const options = {
         key: razorpayKeyId,
         amount: Math.round(total * 100),
-        currency: 'INR',
+        currency: restaurant.currency || 'INR',
         name: restaurant.name,
         description: `Order at ${restaurant.name}`,
-        image: restaurant.logo_url,
+        image: restaurant.logo_url || '/logo.png',
         handler: async (response) => {
           await processOrder(response);
         },
@@ -153,7 +170,7 @@ const PaymentPage = () => {
           email: user?.email || '',
           contact: user?.phone || ''
         },
-        theme: { color: '#F37254' },
+        theme: { color: restaurant.theme_color || '#F37254' },
         modal: {
           ondismiss: () => {
             setIsProcessing(false);
@@ -194,7 +211,9 @@ const PaymentPage = () => {
       
       // Create order data object matching the database schema
       const orderData = {
+        order_number: generateOrderNumber(),
         user_id: user?.id,
+        restaurant_id: restaurant?.id,
         table_number: tableNumber || 'N/A',
         items: cartItems,
         subtotal: parseFloat(subtotal),
@@ -234,6 +253,8 @@ const PaymentPage = () => {
       navigate('/order-success', {
         state: {
           orderId: order.id,
+          restaurantId: restaurant.id,
+          restaurantName: restaurant.name,
           totalAmount: parseFloat(total),
           tableNumber,
           cartItems
@@ -254,6 +275,14 @@ const PaymentPage = () => {
           <ChevronLeft size={30} />
         </button>
         <h1 className="text-2xl font-bold">Payment</h1>
+      </div>
+
+      {/* Restaurant info */}
+      <div className="px-4 py-2 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-bold">{restaurant.name}</h2>
+          <p className="text-sm text-gray-300">{restaurant.address}</p>
+        </div>
       </div>
 
       {/* Main content */}

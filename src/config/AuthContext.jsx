@@ -9,30 +9,49 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      setLoading(false);
+    let mounted = true;
 
-       // Add automatic home redirect when session exists
-    if (session?.user && window.location.pathname === '/') {
-      window.location.href = '/home';
-    }
+    const getSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (mounted) {
+          setUser(session?.user ?? null);
+          setLoading(false);
+
+          // Add automatic home redirect when session exists
+          if (session?.user && window.location.pathname === '/') {
+            window.location.href = '/home';
+          }
+        }
+      } catch (error) {
+        console.error('Error getting session:', error);
+        if (mounted) {
+          setUser(null);
+          setLoading(false);
+        }
+      }
     };
 
     getSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (mounted) {
+          setUser(session?.user ?? null);
+          setLoading(false);
 
-      // Handle post-login redirect
-    if (_event === 'SIGNED_IN' && window.location.pathname === '/') {
-      window.location.href = '/home';
-    }
-    });
+          // Handle post-login redirect
+          if (event === 'SIGNED_IN' && window.location.pathname === '/') {
+            window.location.href = '/home';
+          }
+        }
+      }
+    );
 
-    return () => subscription?.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription?.unsubscribe();
+    };
   }, []);
 
   return (

@@ -100,14 +100,15 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
         <>
           <motion.div
             key="sidebar-content"
-            className="fixed top-1 right-0 h-full w-full bg-black z-50 rounded-l-[80px]"
+            className="fixed top-1 right-0 h-full w-full bg-black z-50 rounded-l-[80px] flex flex-col overflow-hidden"
             style={{ maxWidth: '70%' }}
             variants={slideVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
           >
-            <div className="pt-16 pb-6 px-6 flex flex-col items-center border-b border-gray-800">
+            {/* User profile section - fixed at top */}
+            <div className="pt-16 pb-6 px-6 flex flex-col items-center border-b border-gray-800 flex-shrink-0">
               <div className="relative w-20 h-20 rounded-full overflow-hidden mb-4 border-2 border-purple-500">
               <img 
                 src={userData.profileImg || "/default-avatar.png"} 
@@ -115,8 +116,8 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
                 className="w-full h-full object-cover"
               />
               </div>
-              <h2 className="text-2xl font-bold text-white">{userData.userName}</h2>
-              <p className="text-gray-400 text-sm mt-1">{userData.userEmail}</p>
+              <h2 className="text-2xl font-bold text-white truncate max-w-full">{userData.userName}</h2>
+              <p className="text-gray-400 text-sm mt-1 truncate max-w-full">{userData.userEmail}</p>
               {userData.isAdmin && (
                 <div className="mt-2 px-3 py-1 bg-purple-600 rounded-full">
                   <span className="text-xs font-semibold text-white">Admin</span>
@@ -124,50 +125,58 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
               )}
             </div>
 
-            <div className="py-4">
-              {userData.isAdmin && (
-                <div>
-                  <button 
-                    onClick={() => handleNavigation(adminOption.path)}
-                    className="w-full py-3 px-6 flex items-center text-left hover:bg-gray-800 transition-colors duration-200 group"
-                  >
-                    <div className="bg-purple-600 rounded-full p-3 mr-4 group-hover:bg-purple-700 transition-colors">
-                      {React.cloneElement(adminOption.icon, { className: "w-5 h-5 text-white" })}
-                    </div>
-                    <span className="text-lg text-white font-medium">{adminOption.name}</span>
-                  </button>
-                </div>
-              )}
-              
-              {/* Standard menu options */}
-              {menuOptions.map((option, index) => (
-                <div key={index}>
-                  <button 
-                    onClick={() => handleNavigation(option.path)}
-                    className="w-full py-3 px-6 flex items-center text-left hover:bg-gray-800 transition-colors duration-200 group"
-                  >
-                    <div className="bg-gray-700 rounded-full p-3 mr-4 group-hover:bg-purple-500 transition-colors">
-                      {React.cloneElement(option.icon, { className: "w-5 h-5 text-gray-300 group-hover:text-white" })}
-                    </div>
-                    <span className="text-lg text-gray-300 group-hover:text-white">{option.name}</span>
-                  </button>
-                </div>
-              ))}
-            </div>
+            {/* Scrollable menu section */}
+            <div className="flex-1 overflow-y-auto" style={{ 
+              scrollbarWidth: 'thin', 
+              scrollbarColor: '#4B5563 transparent',
+              msOverflowStyle: 'auto'
+            }}>
+              <div className="py-4">
+                {userData.isAdmin && (
+                  <div>
+                    <button 
+                      onClick={() => handleNavigation(adminOption.path)}
+                      className="w-full py-3 px-6 flex items-center text-left hover:bg-gray-800 transition-colors duration-200 group"
+                    >
+                      <div className="bg-purple-600 rounded-full p-3 mr-4 group-hover:bg-purple-700 transition-colors">
+                        {React.cloneElement(adminOption.icon, { className: "w-5 h-5 text-white" })}
+                      </div>
+                      <span className="text-lg text-white font-medium">{adminOption.name}</span>
+                    </button>
+                  </div>
+                )}
+                
+                {/* Standard menu options */}
+                {menuOptions.map((option, index) => (
+                  <div key={index}>
+                    <button 
+                      onClick={() => handleNavigation(option.path)}
+                      className="w-full py-3 px-6 flex items-center text-left hover:bg-gray-800 transition-colors duration-200 group"
+                    >
+                      <div className="bg-gray-700 rounded-full p-3 mr-4 group-hover:bg-purple-500 transition-colors">
+                        {React.cloneElement(option.icon, { className: "w-5 h-5 text-gray-300 group-hover:text-white" })}
+                      </div>
+                      <span className="text-lg text-gray-300 group-hover:text-white">{option.name}</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
 
-            <div className=" flex mb-6">
-              <button 
-                className="w-full py-5 px-20 flex items-center text-left rounded-full hover:bg-gray-800 transition-colors duration-200 group"
-                onClick={() => {
-                  toggleSidebar();
-                  onLogout();
-                }}
-              >
-                <div className="bg-gray-700 rounded-full p-3 mr-4 group-hover:bg-red-500 transition-colors">
-                  <LogOut className="w-5 h-5 text-gray-300 group-hover:text-white" />
-                </div>
-                <span className="text-lg text-gray-300 group-hover:text-white">Log Out</span>
-              </button>
+              {/* Logout button - always visible inside scroll area */}
+              <div className="px-6 py-4 mb-6">
+                <button 
+                  className="w-full py-5 px-4 flex items-center text-left rounded-full hover:bg-gray-800 transition-colors duration-200 group"
+                  onClick={() => {
+                    toggleSidebar();
+                    onLogout();
+                  }}
+                >
+                  <div className="bg-gray-700 rounded-full p-3 mr-4 group-hover:bg-red-500 transition-colors">
+                    <LogOut className="w-5 h-5 text-gray-300 group-hover:text-white" />
+                  </div>
+                  <span className="text-lg text-gray-300 group-hover:text-white">Log Out</span>
+                </button>
+              </div>
             </div>
           </motion.div>
 

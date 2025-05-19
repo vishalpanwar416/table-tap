@@ -1,7 +1,7 @@
 import React from 'react';
 import { ShoppingCart, Minus, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useCart } from './CartContent';
+import { useCart } from '../../config/CartContent';
 import { useNavigate } from 'react-router-dom';
 
 const CartSidebar = ({ isOpen, onClose }) => {

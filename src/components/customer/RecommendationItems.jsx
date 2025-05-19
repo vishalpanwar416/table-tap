@@ -1,6 +1,6 @@
 import { Heart, ShoppingBag } from 'lucide-react';
-import { useCart } from './CartContent';
-import { useLikes } from './LikesContent';
+import { useCart } from '../../config/CartContent';
+import { useLikes } from '../../config/LikesContent';
 import PriceDisplay from './PriceDisplay';
 
 const RecommendationItem = ({ item }) => {

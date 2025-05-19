@@ -1,7 +1,7 @@
 import React from 'react';
 import { ShoppingBag } from 'lucide-react';
-import { useCart } from './CartContent';
-import { useLikes } from './LikesContent';
+import { useCart } from '../../config/CartContent';
+import { useLikes } from '../../config/LikesContent';
 import { useNavigate } from 'react-router-dom';
 import PriceDisplay from './PriceDisplay';
 

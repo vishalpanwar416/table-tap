@@ -11,28 +11,32 @@ export default function AuthWrapper({ children, publicOnly = false }) {
   const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
+    let mounted = true;
+
     const checkAuthAndProfile = async () => {
       if (authLoading) return;
 
+      if (!mounted) return;
+
+      // Handle home route redirect
       if (location.pathname === '/' && user) {
         navigate('/home');
         return;
       }
-    
 
       // Public-only route handling
       if (publicOnly) {
         if (user) {
           navigate('/home');
-        } else {
-          setChecking(false);
         }
+        setChecking(false);
         return;
       }
 
       // Protected route handling
       if (!user) {
         navigate('/login', { state: { from: location.pathname } });
+        setChecking(false);
         return;
       }
 
@@ -44,30 +48,48 @@ export default function AuthWrapper({ children, publicOnly = false }) {
           .eq('id', user.id)
           .single();
 
-        if (error) throw error;
+        if (!mounted) return;
 
-        const needsCompletion = !profile?.mobile_number || !profile?.date_of_birth;
+        if (error) {
+          console.error("Profile check error:", error);
+          if (error.code === 'PGRST116') {
+            // Profile doesn't exist, redirect to complete profile
+            navigate('/complete-profile', { state: { from: location.pathname } });
+          }
+        } else {
+          const needsCompletion = !profile?.mobile_number || !profile?.date_of_birth;
 
-        if (needsCompletion && !location.pathname.startsWith('/complete-profile')) {
-          navigate('/complete-profile', { state: { from: location.pathname } });
-        } else if (!needsCompletion && location.pathname === '/complete-profile') {
-          navigate(location.state?.from || '/home');
+          if (needsCompletion && !location.pathname.startsWith('/complete-profile')) {
+            navigate('/complete-profile', { state: { from: location.pathname } });
+          } else if (!needsCompletion && location.pathname === '/complete-profile') {
+            navigate(location.state?.from || '/home');
+          }
         }
       } catch (error) {
-        console.error("Profile check error:", error);
-        if (error.code === 'PGRST116') {
-          navigate('/complete-profile', { state: { from: location.pathname } });
-        }
+        console.error("Unexpected error in profile check:", error);
       } finally {
-        setChecking(false);
+        if (mounted) {
+          setChecking(false);
+        }
       }
     };
 
     checkAuthAndProfile();
+
+    return () => {
+      mounted = false;
+    };
   }, [navigate, location, publicOnly, user, authLoading]);
 
   if (checking || authLoading) {
-    return <div className="text-center p-8">Checking authentication...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center p-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Checking authentication...</p>
+        </div>
+      </div>
+    );
   }
 
   return children;

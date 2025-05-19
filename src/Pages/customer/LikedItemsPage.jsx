@@ -4,10 +4,10 @@ import Header from '../../components/customer/Header';
 import Sidebar from '../../components/customer/Slidebar';
 import CartSidebar from '../../components/customer/CartSidebar';
 import { profileImg } from '../../assets/images/Food/Index';
-import { useCart } from '../../components/customer/CartContent';
+import { useCart } from '../../config/CartContent';
 import { useNavigate } from 'react-router-dom';
 import { allFoodItems } from '../../components/foodData';
-import { useLikes } from '../../components/customer/LikesContent';
+import { useLikes } from '../../config/LikesContent';
 import NotificationSidebar from '../../components/customer/NotificationSlidebar';
 
 const LikedItem = ({ image, name, price, description, item }) => {

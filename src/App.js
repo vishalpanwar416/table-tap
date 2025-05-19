@@ -5,11 +5,11 @@ import Opening from '../src/Pages/shared/opening';
 import Homepage from './Pages/HomePage/Homepage';
 import BestSellerPage from '../src/Pages/customer/BestSellerPage';
 import LoginPage from '../src/Pages/auth/LoginPage';
-import { CartProvider } from '../src/components/customer/CartContent';
+import { CartProvider } from '../src/config/CartContent';
 import "@fontsource/league-spartan";
 import OnboardingScreen from '../src/Pages/shared/onboardingScreen';
 import SignupPage from '../src/Pages/auth/SignupPage';
-import { LikesProvider } from '../src/components/customer/LikesContent';
+import { LikesProvider } from '../src/config/LikesContent';
 import LikedItemsPage from '../src/Pages/customer/LikedItemsPage';
 import MyOrders from '../src/Pages/customer/MyOrders';
 import OrderConfirmation from '../src/Pages/customer/OrderConfirmation';
@@ -26,10 +26,12 @@ import { OrderProvider } from './context/OrderContext';
 import { AuthProvider } from './config/AuthContext';
 import OrderTracking from '../src/Pages/customer/OrderTracking';
 import { AdminNotificationProvider } from './context/AdminNotificationContext';
+import { RestaurantProvider } from './context/RestaurantContext';
 
 const App = () => {
   return (
     <AuthProvider>
+      <RestaurantProvider>
       <CartProvider>
         <LikesProvider>
           <OrderProvider>
@@ -89,6 +91,7 @@ const App = () => {
           </OrderProvider>
         </LikesProvider>
       </CartProvider>
+      </RestaurantProvider>
     </AuthProvider>
   );
 };

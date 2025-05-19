@@ -1,7 +1,7 @@
 import { X, Heart, ShoppingBag } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useCart } from "./CartContent";
-import { useLikes } from "./LikesContent";
+import { useCart } from "../../config/CartContent";
+import { useLikes } from "../../config/LikesContent";
 import PriceDisplay from './PriceDisplay'
 
 const MenuDropdown = ({

@@ -17,7 +17,7 @@ export const createOffer = async (offerData) => {
     const formattedData = {
       ...offerData,
       price: parseFloat(offerData.price),
-      //original_price: parseFloat(offerData.original_price),
+      discounted_price: parseFloat(offerData.discounted_price),
       user_id: userData.user?.id || null,
       category: 'Offers', // Force category to be 'Offers'
     };
@@ -75,7 +75,7 @@ export const updateOffer = async (id, offerData) => {
     const formattedData = {
       ...offerData,
       price: parseFloat(offerData.price),
-      original_price: parseFloat(offerData.original_price),
+      discounted_price: parseFloat(offerData.discounted_price),
       category: 'Offers', // Ensure category remains 'Offers'
     };
     
@@ -132,15 +132,39 @@ export const deleteOffer = async (id) => {
   }
 };
 
-// Update featured carousel offers
-export const setCarouselOffer = async (offerIds) => {
+// Set/unset individual offer carousel status
+export const setCarouselOffer = async (offerId, isCarousel) => {
+  try {
+    console.log(`Setting offer ${offerId} carousel status to: ${isCarousel}`);
+    
+    const { data, error } = await supabase
+      .from('fooditems')
+      .update({ is_carousel: isCarousel })
+      .eq('id', offerId)
+      .select();
+    
+    if (error) {
+      console.error('Error updating carousel status:', error);
+      throw error;
+    }
+    
+    console.log('Carousel status updated successfully:', data);
+    return data;
+  } catch (error) {
+    console.error('Error updating carousel status:', error);
+    throw error;
+  }
+};
+
+// Update featured carousel offers (alternative method if needed)
+export const setMultipleCarouselOffers = async (offerIds) => {
   try {
     console.log('Updating carousel offers with IDs:', offerIds);
     
     // First, reset all featured offers
     const { error: resetError } = await supabase
       .from('fooditems')
-      .update({ featured_in_carousel: false })
+      .update({ is_carousel: false })
       .eq('category', 'Offers');
     
     if (resetError) {
@@ -152,7 +176,7 @@ export const setCarouselOffer = async (offerIds) => {
     if (offerIds && offerIds.length > 0) {
       const { error: updateError } = await supabase
         .from('fooditems')
-        .update({ featured_in_carousel: true })
+        .update({ is_carousel: true })
         .in('id', offerIds);
       
       if (updateError) {
@@ -178,7 +202,7 @@ export const getCarouselOffers = async () => {
       .from('fooditems')
       .select('*')
       .eq('category', 'Offers')
-      .eq('featured_in_carousel', true)
+      .eq('is_carousel', true)
       .order('created_at', { ascending: false });
     
     if (error) {

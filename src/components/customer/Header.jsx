@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Search, X, ShoppingCart, Bell, User } from 'lucide-react';
-import { useCart } from './CartContent';
+import { useCart } from '../../config/CartContent';
 
 const Header = ({ 
   isSearchActive, 

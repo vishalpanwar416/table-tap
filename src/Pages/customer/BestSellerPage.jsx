@@ -6,9 +6,9 @@ import Sidebar from '../../components/customer/Slidebar';
 import CartSidebar from '../../components/customer/CartSidebar';
 import NotificationSidebar from '../../components/customer/NotificationSlidebar';
 import { profileImg } from '../../assets/images/Food/Index';
-import { useCart } from '../../components/customer/CartContent';
+import { useCart } from '../../config/CartContent';
 import { useNavigate } from 'react-router-dom';
-import { useLikes } from '../../components/customer/LikesContent';
+import { useLikes } from '../../config/LikesContent';
 import LogoutPopup from '../../components/auth/LogoutPopup';
 import { fetchFoodItems } from '../../components/foodData';
 

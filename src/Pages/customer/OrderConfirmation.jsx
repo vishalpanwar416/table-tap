@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronLeft, Trash2, Minus, Plus } from 'lucide-react';
-import { useCart } from '../../components/customer/CartContent';
+import { useCart } from '../../config/CartContent';
 import { useNavigate } from 'react-router-dom';
 
 const OrderConfirmation = () => {

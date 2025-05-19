@@ -9,13 +9,14 @@ import Header from '../../components/customer/Header';
 import Sidebar from '../../components/customer/Slidebar';
 import NotificationSidebar from '../../components/customer/NotificationSlidebar';  
 import CartSidebar from '../../components/customer/CartSidebar';
+import OrderCard from '../../components/customer/OrderCard';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useCart } from '../../components/customer/CartContent';
+import { useCart } from '../../config/CartContent';
 import LogoutPopup from '../../components/auth/LogoutPopup';
 import DynamicGreeting from '../../components/customer/Greetings';
 import LikedItems from '../../components/customer/LikedItems';
 import { fetchFoodItems } from '../../components/foodData';
-
+import FloatingCartButton from '../../components/customer/FloatingCartButton';
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -51,6 +52,10 @@ export default function HomePage() {
   const scrollRef = useRef(null);
   const [allFoodItems, setAllFoodItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // New state for OrderCard
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isOrderCardOpen, setIsOrderCardOpen] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -64,9 +69,11 @@ export default function HomePage() {
   if (loading) {
     return <div className="text-white text-center p-4">Loading menu...</div>;
   }
+  
   const bestSellerItems = allFoodItems.filter(item => 
     item.tags?.some(tag => tag.toLowerCase() === 'bestseller')
   );
+  
   const handleCategoryClick = (category, event) => {
     const buttonRect = event.currentTarget.getBoundingClientRect();
     setMenuPosition({
@@ -79,7 +86,12 @@ export default function HomePage() {
     setMenuOpen(true);
   };
   
-
+  const handleItemClick = (item) => {
+    setSelectedItem(item);
+    setIsOrderCardOpen(true);
+    // Close other menus when opening order card
+    if (menuOpen) setMenuOpen(false);
+  };
 
   const scroll = (scrollOffset) => {
     if (scrollRef.current) {
@@ -99,7 +111,9 @@ export default function HomePage() {
     cart: () => setIsCartOpen(!isCartOpen),
     notifications: () => setIsNotificationOpen(!isNotificationOpen)
   };
+  
   const handleCloseMenu = () => setMenuOpen(false);
+  const handleCloseOrderCard = () => setIsOrderCardOpen(false);
 
   return (
     <div className="flex justify-center items-start min-h-screen bg-black p-4">
@@ -137,6 +151,7 @@ export default function HomePage() {
                 />
               )}
             </AnimatePresence>
+            
             <AnimatePresence>
               {isCartOpen && (
                 <CartSidebar
@@ -148,6 +163,13 @@ export default function HomePage() {
                 />
               )}
             </AnimatePresence>
+            
+            {/* Order Card Component */}
+            <OrderCard 
+              isOpen={isOrderCardOpen}
+              onClose={handleCloseOrderCard}
+              item={selectedItem}
+            />
 
           <Header 
             isSearchActive={isSearchActive}
@@ -197,6 +219,7 @@ export default function HomePage() {
                 menuItems={allFoodItems.filter(item => item.category === activeCategory)} 
                 categoryButtonsRef={categoryButtonsRef}
                 onAddToCart={addToCart}
+                onItemClick={handleItemClick}
               />
               )}
             </AnimatePresence>
@@ -204,11 +227,18 @@ export default function HomePage() {
               <Divider />
 
               <motion.div variants={staggerItems}>
-                  <BestSellers foodItems={bestSellerItems} onAddToCart={addToCart} />
+                  <BestSellers 
+                    foodItems={bestSellerItems} 
+                    onAddToCart={addToCart} 
+                    onItemClick={handleItemClick}
+                  />
               </motion.div>
               <Divider />
 
-              <LikedItems foodItems={allFoodItems}/>
+              <LikedItems 
+                foodItems={allFoodItems} 
+                onItemClick={handleItemClick}
+              />
 
               {/* Recommendations */}
               <motion.div className="px-1 pb-2 text-black flex-1">
@@ -223,29 +253,30 @@ export default function HomePage() {
                 </div>
                 
                 <motion.div 
-              ref={scrollRef}
-              className="grid grid-rows-2 grid-flow-col gap-3 overflow-x-auto scrollbar-hide pb-2 md:pb-0 md:grid-rows-2 md:grid-flow-col"
-              variants={staggerItems}
-              style={{ 
-                scrollSnapType: 'x mandatory',
-                minHeight: '320px' 
-              }}
-            >
+                  ref={scrollRef}
+                  className="grid grid-rows-2 grid-flow-col gap-3 overflow-x-auto scrollbar-hide pb-2 md:pb-0 md:grid-rows-2 md:grid-flow-col"
+                  variants={staggerItems}
+                  style={{ 
+                    scrollSnapType: 'x mandatory',
+                    minHeight: '320px' 
+                  }}
+                >
                   {allFoodItems.filter(item => item.tags?.some(tag => tag.toLowerCase() === 'recommended')).map((item) => (
                     <div 
                       key={item.id}
-                      className="flex-shrink-0 w-[45vw] md:w-[30vw]"
+                      className="flex-shrink-0 w-[45vw] md:w-[30vw] cursor-pointer"
                       style={{ scrollSnapAlign: 'start' }}
+                      onClick={() => handleItemClick(item)}
                     >
                       <RecommendationItem item={item} />
                     </div>
                   ))}
                 </motion.div>
-              </motion.div>
-              
+              </motion.div>  
             </motion.div>
           </motion.div>
         </motion.div>
+        <FloatingCartButton toggleCart={toggle.cart} />
       </div>
     </div>
   );
