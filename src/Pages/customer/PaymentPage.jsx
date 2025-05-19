@@ -53,32 +53,45 @@ const PaymentPage = () => {
   useEffect(() => {
     const loadRazorpay = async () => {
       if (window.Razorpay) {
+        console.log('Razorpay already loaded');
         setScriptLoaded(true);
         return;
       }
 
-      const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.async = true;
+      try {
+        console.log('Loading Razorpay script...');
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.async = true;
+        script.crossOrigin = 'anonymous';
 
-      script.onload = () => {
-        if (!window.Razorpay) {
-          setScriptError('Payment processor failed to load');
-          return;
-        }
-        setScriptLoaded(true);
-      };
+        script.onload = () => {
+          console.log('Razorpay script loaded successfully');
+          if (!window.Razorpay) {
+            console.error('Razorpay not found in window object after script load');
+            setScriptError('Payment gateway failed to initialize properly');
+            return;
+          }
+          setScriptLoaded(true);
+          setScriptError(null);
+        };
 
-      script.onerror = () => {
-        setScriptError('Failed to load payment processor');
-      };
+        script.onerror = (error) => {
+          console.error('Failed to load Razorpay script:', error);
+          setScriptError('Failed to load payment gateway. Please try again later or choose Pay At Restaurant.');
+        };
 
-      document.body.appendChild(script);
-      return () => {
-        if (document.body.contains(script)) {
-          document.body.removeChild(script);
-        }
-      };
+        document.body.appendChild(script);
+        
+        return () => {
+          if (document.body.contains(script)) {
+            document.body.removeChild(script);
+          }
+        };
+      } catch (error) {
+        console.error('Error in Razorpay script loading:', error);
+        setScriptError('Payment setup failed. Please try again later.');
+      }
     };
 
     loadRazorpay();
@@ -88,11 +101,22 @@ const PaymentPage = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        setUser(user);
+        const { data, error } = await supabase.auth.getUser();
+        
+        if (error) {
+          console.error('Error fetching user:', error);
+          // Don't block the payment process if user fetch fails
+          return;
+        }
+        
+        if (data && data.user) {
+          console.log('User authenticated:', data.user.id);
+          setUser(data.user);
+        } else {
+          console.log('No authenticated user found');
+        }
       } catch (error) {
-        console.error('Error fetching user data:', error);
-        setScriptError('Failed to load user data');
+        console.error('User fetch exception:', error);
       }
     };
   
@@ -146,23 +170,44 @@ const PaymentPage = () => {
         return;
       }
 
-      // Use restaurant-specific Razorpay key or fallback to environment variable
-      const razorpayKeyId = restaurant.razorpay_key_id || process.env.REACT_APP_RAZORPAY_KEY_ID;
+      // Use environment variable first (safer), then fall back to restaurant config if needed
+      const razorpayKeyId = process.env.REACT_APP_RAZORPAY_KEY_ID || restaurant.razorpay_key_id;
       
+      // Fail gracefully with helpful error message
       if (!razorpayKeyId) {
-        setScriptError('Payment processor not configured for this restaurant');
+        console.error('Missing Razorpay key in both environment and restaurant config');
+        setScriptError('Payment gateway configuration issue. Please try paying at restaurant instead.');
         setIsProcessing(false);
         return;
       }
 
+      // Ensure the amount is valid and properly formatted
+      const amountInPaise = Math.round(parseFloat(total) * 100);
+      if (isNaN(amountInPaise) || amountInPaise <= 0) {
+        setScriptError('Invalid order amount. Please check your cart and try again.');
+        setIsProcessing(false);
+        return;
+      }
+
+      console.log('Setting up Razorpay with:', {
+        keyId: razorpayKeyId ? 'Valid key present' : 'Missing key',
+        amount: amountInPaise,
+        currency: restaurant.currency || 'INR'
+      });
+
       const options = {
         key: razorpayKeyId,
-        amount: Math.round(total * 100),
+        amount: amountInPaise,
         currency: restaurant.currency || 'INR',
-        name: restaurant.name,
-        description: `Order at ${restaurant.name}`,
+        name: restaurant.name || 'Restaurant Order',
+        description: `Order at ${restaurant.name || 'Restaurant'}`,
         image: restaurant.logo_url || '/logo.png',
         handler: async (response) => {
+          if (!response.razorpay_payment_id) {
+            setScriptError('Payment failed: Missing payment confirmation');
+            setIsProcessing(false);
+            return;
+          }
           await processOrder(response);
         },
         prefill: {
@@ -175,20 +220,26 @@ const PaymentPage = () => {
           ondismiss: () => {
             setIsProcessing(false);
           }
+        },
+        // Add better error handling
+        notes: {
+          restaurant_id: restaurant.id || '1',
+          table_number: tableNumber || 'N/A'  
         }
       };
 
       const rzp = new window.Razorpay(options);
       
       rzp.on('payment.failed', (response) => {
-        setScriptError(`Payment failed: ${response.error.description}`);
+        console.error('Razorpay failure details:', response.error);
+        setScriptError(`Payment failed: ${response.error.description || 'Gateway error'}`);
         setIsProcessing(false);
       });
 
       rzp.open();
     } catch (error) {
       console.error('Payment error:', error);
-      setScriptError('Failed to initialize payment');
+      setScriptError(`Failed to initialize payment: ${error.message || 'Unknown error'}`);
       setIsProcessing(false);
     }
   };
@@ -196,6 +247,10 @@ const PaymentPage = () => {
   // Process the order with better error handling
   const processOrder = async (response) => {
     try {
+      if (!response || !response.razorpay_payment_id) {
+        throw new Error('Missing payment confirmation details');
+      }
+
       // Get current user information
       const customer_name = user?.user_metadata?.full_name || 'Customer';
       const customer_email = user?.email || '';
@@ -212,17 +267,16 @@ const PaymentPage = () => {
       // Create order data object matching the database schema
       const orderData = {
         order_number: generateOrderNumber(),
-        user_id: user?.id,
-        restaurant_id: restaurant?.id,
+        user_id: user?.id || null, // Handle anonymous orders
         table_number: tableNumber || 'N/A',
         items: cartItems,
-        subtotal: parseFloat(subtotal),
-        gst: parseFloat(gst),
+        subtotal: parseFloat(subtotal) || 0,
+        gst: parseFloat(gst) || 0,
         discount: 0,
-        total: parseFloat(total),
+        total: parseFloat(total) || 0,
         razorpay_payment_id: response.razorpay_payment_id,
-        razorpay_order_id: response.razorpay_order_id,
-        razorpay_signature: response.razorpay_signature,
+        razorpay_order_id: response.razorpay_order_id || '',
+        razorpay_signature: response.razorpay_signature || '',
         payment_method: paymentMethod,
         payment_status: 'completed',
         payment_timestamp: new Date().toISOString(),
@@ -234,6 +288,8 @@ const PaymentPage = () => {
         special_instructions: ''
       };
 
+      console.log('Submitting order to database:', orderData.order_number);
+
       // Save order to Supabase with better error handling
       const { data: order, error } = await supabase
         .from('orders')
@@ -243,10 +299,14 @@ const PaymentPage = () => {
 
       if (error) {
         console.error('Order creation error:', error);
-        setScriptError(`Order creation failed: ${error.message || 'Database error'}`);
-        setIsProcessing(false);
-        return;
+        throw new Error(error.message || 'Database error');
       }
+
+      if (!order || !order.id) {
+        throw new Error('Order created but missing ID');
+      }
+
+      console.log('Order successfully created:', order.id);
 
       // Clear cart and navigate to success page
       clearCart();
@@ -261,8 +321,8 @@ const PaymentPage = () => {
         }
       });
     } catch (error) {
-      console.error('Error details:', error);
-      setScriptError('Payment successful but order creation failed: ' + (error.message || error));
+      console.error('Order processing error:', error);
+      setScriptError('Payment successful but order creation failed: ' + (error.message || 'Unknown error'));
       setIsProcessing(false);
     }
   };
@@ -289,17 +349,25 @@ const PaymentPage = () => {
       <div className="bg-white text-black rounded-t-3xl p-6 mt-2 flex-1 overflow-y-auto">
         <h2 className="text-2xl font-bold text-center mb-6">Complete Your Payment</h2>
 
-        {scriptError && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-center">
-            {scriptError}
+      {/* Error Message */}
+      {scriptError && (
+        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+          <div className="flex items-center">
+            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            <span className="font-medium">{scriptError}</span>
+          </div>
+          <div className="flex justify-end mt-2">
             <button 
               onClick={() => setScriptError(null)}
-              className="ml-2 underline"
+              className="text-sm underline text-red-700 hover:text-red-900"
             >
               Dismiss
             </button>
           </div>
-        )}
+        </div>
+      )}
 
         <div className="flex flex-col space-y-6">
           {/* Payment Method Selection */}
