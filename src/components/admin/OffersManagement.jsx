@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Tag, Plus, X, Edit, Trash2, Check, ShoppingBag, Eye, AlertCircle, Package, DollarSign, Percent } from 'lucide-react';
+import { Tag, Plus, X, Edit, Trash2, Check, ShoppingBag, Eye, AlertCircle, Package, DollarSign, Percent, IndianRupee } from 'lucide-react';
 import { createOffer, updateOffer, deleteOffer, getAllOffers, setCarouselOffer } from '../../api/offerService';
 import { getAllFoodItems } from '../../api/foodService';
 
@@ -361,7 +361,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   }, 0).toFixed(0)}
                 </p>
               </div>
-              <DollarSign className="text-orange-500" size={24} />
+              <IndianRupee className="text-orange-500" size={24} />
             </div>
           </div>
         </div>
