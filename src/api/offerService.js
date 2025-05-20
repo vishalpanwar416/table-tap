@@ -218,10 +218,6 @@ export const getCarouselOffers = async () => {
   }
 };
 
-// Upload a composite image for an offer
 export const createCompositeOfferImage = async (images) => {
-  // This is a placeholder for a future implementation
-  // In a real implementation, you would use a canvas to combine multiple images
-  // For now, we'll just return the first image
   return images[0];
 };

@@ -8,8 +8,11 @@ const OrderConfirmation = () => {
   const { cartItems, removeItem, updateQuantity } = useCart();
   const [tableNumber, setTableNumber] = useState('');
 
-  const calculateSubtotal = () => {
-    return cartItems.reduce((total, item) => {
+  const calculateSubtotalAndTaxes = () => {
+    let subtotal = 0;
+    let taxableAmount = 0;
+    
+    cartItems.forEach(item => {
       let price = item.price;
       
       if (item.discountType === 'percentage') {
@@ -18,13 +21,32 @@ const OrderConfirmation = () => {
         price = item.price - item.discountValue;
       }
       
-      return total + (price * item.quantity);
-    }, 0);
+      const itemTotal = price * item.quantity;
+      subtotal += itemTotal;
+      
+      // Check if the item is water (exempt from GST)
+      const isWater = item.name && 
+        (item.name.toLowerCase().includes('water') || 
+         item.category?.toLowerCase() === 'water');
+         
+      if (!isWater) {
+        taxableAmount += itemTotal;
+      }
+    });
+    
+    // Calculate taxes (split into CGST and SGST equally, each at 2.5%)
+    const cgst = taxableAmount * 0.025; // 2.5% CGST
+    const sgst = taxableAmount * 0.025; // 2.5% SGST
+    
+    return {
+      subtotal,
+      cgst,
+      sgst,
+      total: subtotal + cgst + sgst
+    };
   };
 
-  const subtotal = calculateSubtotal();
-  const gst = subtotal * 0.05;
-  const total1 = subtotal + gst;
+  const { subtotal, cgst, sgst, total } = calculateSubtotalAndTaxes();
 
   const formatDate = (timestamp) => {
     const date = new Date(timestamp);
@@ -49,133 +71,150 @@ const OrderConfirmation = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-2 flex flex-col">
-      {/* Header */}
-      <div className="p-4 flex items-center justify-center relative">
-        <button onClick={handleGoBack} className="absolute left-4 text-orange-500">
-          <ChevronLeft size={30} />
-        </button>
-        <h1 className="text-2xl font-bold">Confirm Order</h1>
-      </div>
-
-      {/* Main content */}
-      <div className="bg-white text-black rounded-t-3xl p-6 mt-2 flex-1">
-
-        {/* Table Number Input */}
-        <div className="mb-6">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="tableNumber">
-            Table Number
-          </label>
-          <input
-            id="tableNumber"
-            type="text"
-            value={tableNumber}
-            onChange={(e) => setTableNumber(e.target.value)}
-            placeholder="Enter your table number"
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
-            required
-          />
+    <div className="flex justify-center items-start min-h-screen bg-black">
+      <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
+        {/* Header */}
+        <div className="w-full px-6 py-8 relative flex justify-center">
+          <button
+            onClick={handleGoBack}
+            className="absolute left-4 top-8 text-orange-500"
+          >
+            <ChevronLeft size={30} />
+          </button>
+          <h1 className="text-gray-100 text-3xl font-medium font-spartan">Confirm Order</h1>
         </div>
 
-        {/* Order Summary */}
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">Order Summary</h2>
+        {/* Main content */}
+        <div className="bg-gray-200 w-full flex-1 rounded-t-3xl px-6 pt-10 pb-6 flex flex-col font-spartan">
+          <h2 className="justify-center text-center text-black text-3xl font-semibold mb-8">Order Summary</h2>
+
+          {/* Table Number Input */}
+          <div className="mb-8">
+            <label className="block text-black mb-2 text-lg" htmlFor="tableNumber">
+              Table Number
+            </label>
+            <input
+              id="tableNumber"
+              type="text"
+              value={tableNumber}
+              onChange={(e) => setTableNumber(e.target.value)}
+              placeholder="Enter your table number"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+              required
+            />
           </div>
 
-          <div className="border-t border-gray-200 pt-4">
-            {cartItems.map((item, index) => (
-              <div key={`${item.id}-${item.category}`} className="mb-4">
-                <div className="flex items-start mb-4">
-                  {/* Item image */}
-                  <div className="w-20 h-20 overflow-hidden rounded-lg mr-4">
-                    <img 
-                      src={item.image || `/api/placeholder/80/80`} 
-                      alt={item.name} 
-                      className="w-full h-full object-cover" 
-                    />
-                  </div>
-                  
-                  {/* Item details */}
-                  <div className="flex-1">
-                    <h3 className="font-bold text-lg">{item.name}</h3>
-                    <p className="text-sm text-gray-600">
-                      {item.addedAt ? formatDate(item.addedAt) : 'Now'}
-                    </p>
-                    <div className="flex justify-between items-center mt-2">
-                      
-                      <div className="flex items-center ">
-                        <button 
-                          onClick={() => {
-                            if (item.quantity > 1) {
-                              updateQuantity(item.id, item.category, item.quantity - 1);
-                            }
-                          }}
-                          className="text-gray-700"
-                        >
-                          <div className="border border-gray-400 rounded-full w-6 h-6 flex items-center justify-center">
-                            <Minus size={16} />
-                          </div>
-                        </button>
-                        <span className="mx-3">{item.quantity}</span>
-                        <button 
-                          onClick={() => updateQuantity(item.id, item.category, item.quantity + 1)}
-                          className="text-gray-700"
-                        >
-                          <div className="border border-gray-400 rounded-full w-6 h-6 flex items-center justify-center">
-                            <Plus size={16} />
-                          </div>
-                        </button>
+          {/* Order Summary */}
+          <div className="border-t border-gray-300 pt-6">
+            {cartItems.map((item, index) => {
+              // Check if the item is water
+              const isWater = item.name && 
+                (item.name.toLowerCase().includes('water') || 
+                 item.category?.toLowerCase() === 'water');
+              
+              return (
+                <div key={`${item.id}-${item.category}`} className="mb-4">
+                  <div className="flex items-start mb-4">
+                    {/* Item image */}
+                    <div className="w-20 h-20 overflow-hidden rounded-lg mr-4">
+                      <img 
+                        src={item.image || `/api/placeholder/80/80`} 
+                        alt={item.name} 
+                        className="w-full h-full object-cover" 
+                      />
+                    </div>
+                    
+                    {/* Item details */}
+                    <div className="flex-1">
+                      <h3 className="font-bold text-lg">{item.name}</h3>
+                      <p className="text-sm text-gray-600">
+                        {item.addedAt ? formatDate(item.addedAt) : 'Now'}
+                      </p>
+                      {isWater && (
+                        <p className="text-green-600 text-sm">GST exempt</p>
+                      )}
+                      <div className="flex justify-between items-center mt-2">
+                        
+                        <div className="flex items-center">
+                          <button 
+                            onClick={() => {
+                              if (item.quantity > 1) {
+                                updateQuantity(item.id, item.category, item.quantity - 1);
+                              }
+                            }}
+                            className="text-gray-700"
+                          >
+                            <div className="border border-gray-400 rounded-full w-6 h-6 flex items-center justify-center">
+                              <Minus size={16} />
+                            </div>
+                          </button>
+                          <span className="mx-3">{item.quantity}</span>
+                          <button 
+                            onClick={() => updateQuantity(item.id, item.category, item.quantity + 1)}
+                            className="text-gray-700"
+                          >
+                            <div className="border border-gray-400 rounded-full w-6 h-6 flex items-center justify-center">
+                              <Plus size={16} />
+                            </div>
+                          </button>
+                        </div>
                       </div>
+                    </div>
+                    
+                    {/* Price */}
+                    <div className="text-right">
+                      <p className="font-bold">₹{(item.price * item.quantity).toFixed(2)}</p>
+                      <button 
+                        onClick={() => removeItem(item.id, item.category)}
+                        className="text-red-500 mt-8"
+                      >
+                        <Trash2 size={20} />
+                      </button>
                     </div>
                   </div>
                   
-                  {/* Price */}
-                  <div className="text-right">
-                    <p className="font-bold">₹{(item.price * item.quantity).toFixed(2)}</p>
-                    <button 
-                      onClick={() => removeItem(item.id, item.category)}
-                      className="text-red-500 mt-8"
-                    >
-                      <Trash2 size={20} />
-                    </button>
-                  </div>
+                  {index < cartItems.length - 1 && (
+                    <div className="border-t border-gray-200 my-4"></div>
+                  )}
                 </div>
-                
-                {index < cartItems.length - 1 && (
-                  <div className="border-t border-gray-200 my-4"></div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
-          <div className="border-t border-gray-200 my-4"></div>
-        </div>
 
-        {/* Price Summary */}
-        <div className="mt-4">
-          <div className="flex justify-between mb-2">
-            <span>Subtotal</span>
-            <span>₹{subtotal.toFixed(2)}</span>
+          {/* Price Summary */}
+          <div className="mt-6 space-y-2">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Subtotal</span>
+              <span>₹{subtotal.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">CGST (2.5%)</span>
+              <span>₹{cgst.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">SGST (2.5%)</span>
+              <span>₹{sgst.toFixed(2)}</span>
+            </div>
+            <div className="border-t border-gray-300 my-4"></div>
+            <div className="flex justify-between font-bold text-xl">
+              <span>Total</span>
+              <span>₹{total.toFixed(2)}</span>
+            </div>
           </div>
-          <div className="flex justify-between mb-2">
-            <span>GST (5%)</span>
-            <span>₹{gst.toFixed(2)}</span>
-          </div>
-          <div className="border-t border-gray-200 my-4"></div>
-          <div className="flex justify-between font-bold text-xl">
-            <span>Total</span>
-            <span>₹{total1.toFixed(2)}</span>
-          </div>
-        </div>
 
-        {/* Place Order Button */}
-        <div className="mt-8 flex justify-center">
-          <button 
-            onClick={handlePlaceOrder}
-            className="bg-gray-300 text-black font-bold py-3 px-12 rounded-full text-xl w-full max-w-md hover:bg-gray-400 transition-colors"
-          >
-            Place Order
-          </button>
+          {/* Place Order Button */}
+          <div className="mt-auto pt-6 flex justify-center">
+            <button 
+              onClick={handlePlaceOrder}
+              disabled={!tableNumber}
+              className="bg-gray-600 text-white w-full py-3 rounded-full mt-8 font-medium text-lg hover:bg-gray-700 transition-colors"
+            >
+              Place Order
+            </button>
+          </div>
+          
+          {/* Bottom Spacing */}
+          <div className="pb-20"></div>
         </div>
       </div>
     </div>

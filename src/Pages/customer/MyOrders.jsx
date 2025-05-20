@@ -1,27 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ShoppingBag } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { ArrowLeft, ShoppingBag, Loader, Filter, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useOrders } from '../../context/OrderContext';
 import OrderCard from '../../components/customer/OrderCard';
 
+// Status configuration object with visual elements and messages
 const statusComponents = {
   pending: {
     icon: (
-      <div className="w-24 h-24 rounded-full bg-yellow-50 flex items-center justify-center">
-        <svg className="w-12 h-12 text-yellow-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-yellow-50 flex items-center justify-center shadow-sm">
+        <svg className="w-8 h-8 md:w-10 md:h-10 text-yellow-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
           <circle cx="12" cy="12" r="10"/>
           <path d="M12 6v6l4 2"/>
         </svg>
       </div>
     ),
-    message: 'No orders waiting for acceptance',
-    description: 'Your orders will appear here once you place them'
+    message: 'No pending orders',
+    description: 'Your pending orders will appear here'
   },
   preparing: {
     icon: (
-      <div className="w-24 h-24 rounded-full bg-purple-50 flex items-center justify-center">
-        <svg className="w-12 h-12 text-purple-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M12 2v4M12 22v-4M4 12H2M6.314 6.314L4.9 4.9M17.686 6.314L19.1 4.9M6.314 17.69L4.9 19.1M17.686 17.69L19.1 19.1M20 12h2M12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6 6 6 0 0 1-6-6 6 6 0 0 1 6-6z"/>
+      <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-purple-50 flex items-center justify-center shadow-sm">
+        <svg className="w-8 h-8 md:w-10 md:h-10 text-purple-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M12 2v4M12 22v-4M6.314 6.314L4.9 4.9M17.686 6.314L19.1 4.9M6.314 17.69L4.9 19.1M17.686 17.69L19.1 19.1M12 6a6 6 0 1 1 0 12 6 6 0 0 1 0-12z"/>
         </svg>
       </div>
     ),
@@ -30,8 +31,8 @@ const statusComponents = {
   },
   completed: {
     icon: (
-      <div className="w-24 h-24 rounded-full bg-green-50 flex items-center justify-center">
-        <svg className="w-12 h-12 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-green-50 flex items-center justify-center shadow-sm">
+        <svg className="w-8 h-8 md:w-10 md:h-10 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
           <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
           <polyline points="22 4 12 14.01 9 11.01"/>
         </svg>
@@ -44,38 +45,136 @@ const statusComponents = {
 
 const MyOrders = () => {
   const [activeTab, setActiveTab] = useState('pending');
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [expandedOrderId, setExpandedOrderId] = useState(null);
+  const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [sortBy, setSortBy] = useState('newest'); // 'newest' or 'oldest'
+  
   const navigate = useNavigate();
   const { userOrders, fetchUserOrders, loading, error } = useOrders();
   
-  useEffect(() => {
-    const fetchData = async () => {
+  // Fetch orders with better error handling
+  const handleFetchOrders = useCallback(async (showRefreshAnimation = false) => {
+    if (showRefreshAnimation) {
+      setIsRefreshing(true);
+    }
+    
+    try {
       await fetchUserOrders();
-    };
-    fetchData();
-    const interval = setInterval(fetchData, 30000);
-    return () => clearInterval(interval);
-  }, [fetchUserOrders]);
+      setLastRefresh(new Date());
+    } catch (err) {
+      console.error("Error fetching orders:", err);
+    } finally {
+      if (isInitialLoad) {
+        setIsInitialLoad(false);
+      }
+      
+      if (showRefreshAnimation) {
+        // Keep the refresh animation for at least 500ms to provide feedback
+        setTimeout(() => setIsRefreshing(false), 500);
+      }
+    }
+  }, [fetchUserOrders, isInitialLoad]);
 
-  if (loading) {
+  // Initial load and polling setup
+  useEffect(() => {
+    handleFetchOrders();
+    
+    // Setting up polling for updates (WebSocket would be better in production)
+    const interval = setInterval(() => handleFetchOrders(), 10000); // Poll every 10 seconds
+    
+    return () => clearInterval(interval);
+  }, [handleFetchOrders]);
+
+  // Manual refresh handler for pull-to-refresh
+  const handleManualRefresh = () => {
+    handleFetchOrders(true);
+  };
+
+  // Show loading state only on initial load
+  const showLoading = loading && isInitialLoad;
+
+  // Tab change handler
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setExpandedOrderId(null); // Reset expanded order when changing tabs
+  };
+
+  // Order card click handler
+  const handleOrderClick = (orderId) => {
+    setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
+  };
+
+  // Toggle sort order
+  const toggleSortOrder = () => {
+    setSortBy(sortBy === 'newest' ? 'oldest' : 'newest');
+  };
+
+  // Filter and sort orders based on active tab and sort preference
+  const getFilteredAndSortedOrders = () => {
+    // First filter by status
+    const filtered = userOrders.filter(order => {
+      switch(activeTab) {
+        case 'pending': return order.status === 'pending';
+        case 'preparing': return order.status === 'preparing';
+        case 'completed': return ['completed', 'rejected', 'ready'].includes(order.status);
+        default: return false;
+      }
+    });
+    
+    // Then sort by date
+    return filtered.sort((a, b) => {
+      const dateA = new Date(a.created_at || 0);
+      const dateB = new Date(b.created_at || 0);
+      return sortBy === 'newest' ? dateB - dateA : dateA - dateB;
+    });
+  };
+  
+  // Get orders for current tab
+  const filteredOrders = getFilteredAndSortedOrders();
+
+  // Empty state component
+  const EmptyState = ({ tab }) => {
+    const { icon, message, description } = statusComponents[tab];
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-black to-gray-900">
+      <div className="flex flex-col items-center justify-center py-12 px-4">
+        {icon}
+        <h2 className="text-lg md:text-xl font-semibold text-center text-gray-800 mt-5 mb-2">
+          {message}
+        </h2>
+        <p className="text-gray-500 text-center text-sm max-w-xs">
+          {description}
+        </p>
+      </div>
+    );
+  };
+
+  // Loading spinner component
+  if (showLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-black">
         <div className="flex flex-col items-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-orange-500 border-t-transparent"></div>
-          <p className="text-white mt-4 text-lg">Loading your orders...</p>
+          <div className="relative w-16 h-16">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-orange-500 border-opacity-20"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-transparent border-t-orange-500 absolute top-0 left-0"></div>
+          </div>
+          <p className="text-white mt-4 text-lg font-medium">Loading your orders...</p>
         </div>
       </div>
     );
   }
 
+  // Error display component
   if (error) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-black to-gray-900">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
+      <div className="flex justify-center items-center min-h-screen bg-black">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 max-w-md shadow-lg">
           <h3 className="text-red-600 text-xl font-semibold mb-2">Error Loading Orders</h3>
           <p className="text-red-500">{error}</p>
           <button 
-            onClick={() => fetchUserOrders()}
-            className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+            onClick={() => handleFetchOrders(true)}
+            className="mt-4 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors shadow-sm"
           >
             Try Again
           </button>
@@ -83,134 +182,146 @@ const MyOrders = () => {
       </div>
     );
   }
-  
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-  };
 
-  const filteredOrders = userOrders.filter(order => {
-    switch(activeTab) {
-      case 'pending': return order.status === 'pending';
-      case 'preparing': return order.status === 'preparing';
-      case 'completed': return ['completed', 'rejected','ready'].includes(order.status);
-      default: return false;
-    }
-  });
-
-  const EmptyState = ({ tab }) => {
-    const { icon, message, description } = statusComponents[tab];
-    return (
-      <div className="flex flex-col items-center justify-center py-12 px-4">
-        {icon}
-        <h2 className="text-xl md:text-2xl font-semibold text-center text-gray-800 mt-6 mb-2">
-          {message}
-        </h2>
-        <p className="text-gray-500 text-center max-w-xs">
-          {description}
-        </p>
-      </div>
-    );
+  // Format the "last updated" time
+  const formatLastUpdated = () => {
+    return lastRefresh.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black to-gray-900">
-      <div className="container mx-auto max-w-4xl px-4 py-6">
+    <div className="flex justify-center items-start min-h-screen bg-black">
+      <div className="w-full max-w-md md:max-w-2xl flex flex-col">
         {/* Header */}
-        <div className="relative flex items-center justify-center mb-6">
-          <button 
-            className="absolute left-0 text-orange-500 hover:text-orange-600 transition-colors"
-            onClick={() => navigate('/home')}
-          >
-            <ArrowLeft size={28} />
-          </button>
-          <div className="flex flex-col items-center">
-            <h1 className="text-2xl md:text-3xl font-bold text-white">
-              My Orders
-            </h1>
-            <p className="text-gray-400 text-sm mt-1">Track and manage your food orders</p>
+        <div className="px-4 py-6">
+          <div className="relative flex items-center justify-center mb-4">
+            <button 
+              className="absolute left-0 text-orange-500 hover:text-orange-600 transition-colors"
+              onClick={() => navigate('/home')}
+              aria-label="Go back to home"
+            >
+              <ArrowLeft size={24} />
+            </button>
+            <div className="flex flex-col items-center">
+              <h1 className="text-2xl md:text-3xl font-bold text-white">
+                My Orders
+              </h1>
+              <p className="text-gray-400 text-sm mt-1">Track and manage your food orders</p>
+            </div>
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
-          {/* Tabs */}
-          <div className="flex justify-center py-4 px-4 border-b border-gray-100">
-            <div className="inline-flex gap-2 overflow-x-auto scrollbar-hide bg-gray-50 rounded-full p-1">
-              <button 
-                className={`px-5 py-2 rounded-full text-sm md:text-base font-medium whitespace-nowrap transition-all ${
-                  activeTab === 'pending' 
-                    ? 'bg-orange-500 text-white shadow-md' 
-                    : 'bg-transparent text-gray-500 hover:bg-gray-100'
-                }`}
-                onClick={() => handleTabChange('pending')}
-              >
-                Waiting Acceptance
-              </button>
-              <button 
-                className={`px-5 py-2 rounded-full text-sm md:text-base font-medium whitespace-nowrap transition-all ${
-                  activeTab === 'preparing' 
-                    ? 'bg-orange-500 text-white shadow-md' 
-                    : 'bg-transparent text-gray-500 hover:bg-gray-100'
-                }`}
-                onClick={() => handleTabChange('preparing')}
-              >
-                In Preparation
-              </button>
-              <button 
-                className={`px-5 py-2 rounded-full text-sm md:text-base font-medium whitespace-nowrap transition-all ${
-                  activeTab === 'completed' 
-                    ? 'bg-orange-500 text-white shadow-md' 
-                    : 'bg-transparent text-gray-500 hover:bg-gray-100'
-                }`}
-                onClick={() => handleTabChange('completed')}
-              >
-                Order History
-              </button>
-            </div>
-          </div>
-
-          {/* Orders List */}
-          <div className="p-4 md:p-6 bg-gray-50 min-h-[60vh]">
-            {filteredOrders.length > 0 ? (
-              <div className="space-y-4">
-                {filteredOrders.map(order => (
-                  <OrderCard 
-                    key={order.id}
-                    order={order}
-                    onClick={() => navigate(`/order-tracking/${order.id}`)}
-                  />
-                ))}
+        {/* Main Content - White block with rounded top corners */}
+        <div className="flex-1 flex flex-col px-0 pb-0">
+          <div className="flex-1 flex flex-col bg-white shadow-xl rounded-t-3xl overflow-hidden min-h-[500px]">
+            {/* Tabs */}
+            <div className="flex justify-center py-3 px-2 border-b border-gray-100 bg-white">
+              <div className="inline-flex gap-1 overflow-x-auto scrollbar-hide bg-gray-100 rounded-full p-1 shadow-sm">
+                <button 
+                  className={`px-3 py-2 md:px-5 rounded-full text-xs md:text-sm font-medium whitespace-nowrap transition-all ${
+                    activeTab === 'pending' 
+                      ? 'bg-orange-500 text-white shadow-sm' 
+                      : 'bg-transparent text-gray-600 hover:bg-gray-200'
+                  }`}
+                  onClick={() => handleTabChange('pending')}
+                >
+                  Waiting Acceptance
+                </button>
+                <button 
+                  className={`px-3 py-2 md:px-5 rounded-full text-xs md:text-sm font-medium whitespace-nowrap transition-all ${
+                    activeTab === 'preparing' 
+                      ? 'bg-orange-500 text-white shadow-sm' 
+                      : 'bg-transparent text-gray-600 hover:bg-gray-200'
+                  }`}
+                  onClick={() => handleTabChange('preparing')}
+                >
+                  In Preparation
+                </button>
+                <button 
+                  className={`px-3 py-2 md:px-5 rounded-full text-xs md:text-sm font-medium whitespace-nowrap transition-all ${
+                    activeTab === 'completed' 
+                      ? 'bg-orange-500 text-white shadow-sm' 
+                      : 'bg-transparent text-gray-600 hover:bg-gray-200'
+                  }`}
+                  onClick={() => handleTabChange('completed')}
+                >
+                  Order History
+                </button>
               </div>
-            ) : (
-              <EmptyState tab={activeTab} />
-            )}
-          </div>
-        </div>
-        
-        {/* Order Summary */}
-        <div className="mt-8 bg-white rounded-3xl p-6 shadow-xl">
-          <div className="flex items-center mb-4">
-            <ShoppingBag size={24} className="text-orange-500 mr-3" />
-            <h2 className="text-xl font-semibold">Order Summary</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-            <div className="bg-gray-50 rounded-xl p-4">
-              <p className="text-gray-500 mb-1">Pending</p>
-              <p className="text-2xl font-bold text-yellow-500">
-                {userOrders.filter(order => order.status === 'pending').length}
-              </p>
             </div>
-            <div className="bg-gray-50 rounded-xl p-4">
-              <p className="text-gray-500 mb-1">Preparing</p>
-              <p className="text-2xl font-bold text-purple-500">
-                {userOrders.filter(order => order.status === 'preparing').length}
-              </p>
+
+            {/* Filter and Refresh Bar */}
+            <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-100">
+              <div className="flex items-center">
+                <button 
+                  onClick={toggleSortOrder}
+                  className="flex items-center text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition-colors"
+                >
+                  <Filter size={14} className="mr-1.5" />
+                  Sort: {sortBy === 'newest' ? 'Newest first' : 'Oldest first'}
+                </button>
+              </div>
+              <div className="flex items-center">
+                <span className="text-xs text-gray-500 mr-2">
+                  Updated: {formatLastUpdated()}
+                </span>
+                <button 
+                  onClick={handleManualRefresh}
+                  disabled={isRefreshing}
+                  className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                  aria-label="Refresh orders"
+                >
+                  <RefreshCw 
+                    size={16} 
+                    className={`text-gray-600 ${isRefreshing ? 'animate-spin' : ''}`} 
+                  />
+                </button>
+              </div>
             </div>
-            <div className="bg-gray-50 rounded-xl p-4">
-              <p className="text-gray-500 mb-1">Completed</p>
-              <p className="text-2xl font-bold text-green-500">
-                {userOrders.filter(order => ['completed', 'rejected'].includes(order.status)).length}
-              </p>
+
+            {/* Orders List - Scrollable area */}
+            <div className="flex-1 p-4 md:p-5 bg-gray-50 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 340px)' }}>
+              {filteredOrders.length > 0 ? (
+                <div className="space-y-4">
+                  {filteredOrders.map(order => (
+                    <OrderCard 
+                      key={order.id}
+                      order={order}
+                      isExpanded={expandedOrderId === order.id}
+                      onClick={() => handleOrderClick(order.id)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState tab={activeTab} />
+              )}
+            </div>
+          </div>
+          
+          {/* Order Summary - White block with rounded bottom corners, flush with above */}
+          <div className="bg-white p-4 md:p-5 shadow-xl rounded-b-3xl border-t border-gray-100">
+            <div className="flex items-center mb-3">
+              <ShoppingBag size={20} className="text-orange-500 mr-2" />
+              <h2 className="text-lg font-semibold text-gray-800">Order Summary</h2>
+            </div>
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 shadow-sm">
+                <p className="text-gray-500 text-xs md:text-sm mb-1">Pending</p>
+                <p className="text-xl md:text-2xl font-bold text-yellow-500">
+                  {userOrders.filter(order => order.status === 'pending').length}
+                </p>
+              </div>
+              <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 shadow-sm">
+                <p className="text-gray-500 text-xs md:text-sm mb-1">Preparing</p>
+                <p className="text-xl md:text-2xl font-bold text-purple-500">
+                  {userOrders.filter(order => order.status === 'preparing').length}
+                </p>
+              </div>
+              <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 shadow-sm">
+                <p className="text-gray-500 text-xs md:text-sm mb-1">Completed</p>
+                <p className="text-xl md:text-2xl font-bold text-green-500">
+                  {userOrders.filter(order => ['completed', 'rejected', 'ready'].includes(order.status)).length}
+                </p>
+              </div>
             </div>
           </div>
         </div>

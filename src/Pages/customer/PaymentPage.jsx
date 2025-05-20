@@ -29,25 +29,44 @@ const PaymentPage = () => {
 
   // Calculate total with GST
   const calculateTotal = () => {
-    const subtotal = cartItems.reduce((sum, item) => {
-      let price = item.price;
-      if (item.discountType === 'percentage') {
-        price *= (1 - item.discountValue / 100);
-      } else if (item.discountType === 'fixed') {
-        price -= item.discountValue;
-      }
-      return sum + (price * item.quantity);
-    }, 0);
+    let subtotal = 0;
+    let taxableAmount = 0;
     
-    const gst = subtotal * 0.05;
+    cartItems.forEach(item => {
+      let price = item.price;
+      
+      if (item.discountType === 'percentage') {
+        price = item.price * (1 - item.discountValue/100);
+      } else if (item.discountType === 'fixed') {
+        price = item.price - item.discountValue;
+      }
+      
+      const itemTotal = price * item.quantity;
+      subtotal += itemTotal;
+      
+      // Check if the item is water (exempt from GST)
+      const isWater = item.name && 
+        (item.name.toLowerCase().includes('water') || 
+         item.category?.toLowerCase() === 'water');
+         
+      if (!isWater) {
+        taxableAmount += itemTotal;
+      }
+    });
+    
+    // Calculate taxes (split into CGST and SGST equally, each at 2.5%)
+    const cgst = taxableAmount * 0.025; // 2.5% CGST
+    const sgst = taxableAmount * 0.025; // 2.5% SGST
+    
     return {
       subtotal: subtotal.toFixed(2),
-      gst: gst.toFixed(2),
-      total: (subtotal + gst).toFixed(2)
+      cgst: cgst.toFixed(2),
+      sgst: sgst.toFixed(2),
+      total: (subtotal + cgst + sgst).toFixed(2)
     };
   };
 
-  const { subtotal, gst, total } = calculateTotal();
+  const { subtotal, cgst, sgst, total } = calculateTotal();
 
   // Load Razorpay SDK
   useEffect(() => {
@@ -271,7 +290,7 @@ const PaymentPage = () => {
         table_number: tableNumber || 'N/A',
         items: cartItems,
         subtotal: parseFloat(subtotal) || 0,
-        gst: parseFloat(gst) || 0,
+        gst: parseFloat(cgst) + parseFloat(sgst) || 0,
         discount: 0,
         total: parseFloat(total) || 0,
         razorpay_payment_id: response.razorpay_payment_id,
@@ -328,125 +347,151 @@ const PaymentPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col">
-      {/* Header */}
-      <div className="p-4 flex items-center justify-center relative">
-        <button onClick={handleGoBack} className="absolute left-4 text-orange-500">
-          <ChevronLeft size={30} />
-        </button>
-        <h1 className="text-2xl font-bold">Payment</h1>
-      </div>
-
-      {/* Restaurant info */}
-      <div className="px-4 py-2 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-bold">{restaurant.name}</h2>
-          <p className="text-sm text-gray-300">{restaurant.address}</p>
-        </div>
-      </div>
-
-      {/* Main content */}
-      <div className="bg-white text-black rounded-t-3xl p-6 mt-2 flex-1 overflow-y-auto">
-        <h2 className="text-2xl font-bold text-center mb-6">Complete Your Payment</h2>
-
-      {/* Error Message */}
-      {scriptError && (
-        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-          <div className="flex items-center">
-            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-            </svg>
-            <span className="font-medium">{scriptError}</span>
-          </div>
-          <div className="flex justify-end mt-2">
-            <button 
-              onClick={() => setScriptError(null)}
-              className="text-sm underline text-red-700 hover:text-red-900"
-            >
-              Dismiss
-            </button>
-          </div>
-        </div>
-      )}
-
-        <div className="flex flex-col space-y-6">
-          {/* Payment Method Selection */}
-          <div className="flex flex-col space-y-3">
-            <h3 className="font-semibold text-lg">Payment Method</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <button
-                onClick={() => setPaymentMethod('razorpay')}
-                className={`p-4 rounded-lg border-2 flex items-center gap-3 ${
-                  paymentMethod === 'razorpay' 
-                    ? 'border-orange-500 bg-orange-50' 
-                    : 'border-gray-200'
-                }`}
-              >
-                <CreditCard className={`${paymentMethod === 'razorpay' ? 'text-orange-500' : 'text-gray-500'}`} />
-                <div className="text-left">
-                  <div className="font-semibold">Online Payment</div>
-                  <div className="text-sm text-gray-500">Credit/Debit Card, UPI, Net Banking</div>
-                </div>
-              </button>
-              
-              <button
-                onClick={() => setPaymentMethod('direct')}
-                className={`p-4 rounded-lg border-2 flex items-center gap-3 ${
-                  paymentMethod === 'direct' 
-                    ? 'border-orange-500 bg-orange-50' 
-                    : 'border-gray-200'
-                }`}
-              >
-                <QrCode className={`${paymentMethod === 'direct' ? 'text-orange-500' : 'text-gray-500'}`} />
-                <div className="text-left">
-                  <div className="font-semibold">Pay At Restaurant</div>
-                  <div className="text-sm text-gray-500">Cash, Card or UPI at counter</div>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          {/* Order Summary */}
-          <div className="border rounded-lg p-4">
-            <h3 className="font-bold mb-2">Order Summary</h3>
-            <p className="text-sm text-gray-600 mb-2">
-              Table: {tableNumber || 'Not specified'}
-            </p>
-            {cartItems.map(item => (
-              <div key={`${item.id}-${item.category}`} 
-                className="flex justify-between py-2 border-b">
-                <span>{item.name} × {item.quantity}</span>
-                <span>₹{(item.price * item.quantity).toFixed(2)}</span>
-              </div>
-            ))}
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="flex justify-between mb-2">
-                <span>Subtotal</span>
-                <span>₹{subtotal}</span>
-              </div>
-              <div className="flex justify-between mb-2">
-                <span>GST (5%)</span>
-                <span>₹{gst}</span>
-              </div>
-              <div className="flex justify-between font-bold mt-2">
-                <span>Total</span>
-                <span>₹{total}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Place Order Button */}
+    <div className="flex justify-center items-start min-h-screen bg-black">
+      <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
+        {/* Header */}
+        <div className="w-full px-6 py-8 relative flex justify-center">
           <button
-            onClick={handlePayment}
-            disabled={isProcessing || cartItems.length === 0}
-            className={`w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl shadow-md transition-colors ${
-              isProcessing || cartItems.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
+            onClick={handleGoBack}
+            className="absolute left-4 top-8 text-orange-500"
           >
-            {isProcessing ? 'Processing...' : paymentMethod === 'razorpay' 
-              ? `Pay ₹${total} Now` 
-              : `Place Order - Pay at Restaurant`}
+            <ChevronLeft size={30} />
           </button>
+          <h1 className="text-gray-100 text-3xl font-medium font-spartan">Payment</h1>
+        </div>
+
+        {/* Restaurant info */}
+        <div className="px-6 pb-4 flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-xl font-bold text-white">{restaurant.name}</h2>
+            <p className="text-sm text-gray-300">{restaurant.address}</p>
+          </div>
+        </div>
+
+        {/* Main content */}
+        <div className="bg-gray-200 w-full flex-1 rounded-t-3xl px-6 pt-10 pb-6 flex flex-col font-spartan">
+          <h2 className="justify-center text-center text-black text-3xl font-semibold mb-8">Complete Your Payment</h2>
+
+          {/* Error Message */}
+          {scriptError && (
+            <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <span className="font-medium">{scriptError}</span>
+              </div>
+              <div className="flex justify-end mt-2">
+                <button 
+                  onClick={() => setScriptError(null)}
+                  className="text-sm underline text-red-700 hover:text-red-900"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-col space-y-6">
+            {/* Payment Method Selection */}
+            <div className="flex flex-col space-y-3">
+              <h3 className="font-semibold text-lg">Payment Method</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <button
+                  onClick={() => setPaymentMethod('razorpay')}
+                  className={`p-4 rounded-lg border-2 flex items-center gap-3 ${
+                    paymentMethod === 'razorpay' 
+                      ? 'border-orange-500 bg-orange-50' 
+                      : 'border-gray-200'
+                  }`}
+                >
+                  <CreditCard className={`${paymentMethod === 'razorpay' ? 'text-orange-500' : 'text-gray-500'}`} />
+                  <div className="text-left">
+                    <div className="font-semibold">Online Payment</div>
+                    <div className="text-sm text-gray-500">Credit/Debit Card, UPI, Net Banking</div>
+                  </div>
+                </button>
+                
+                <button
+                  onClick={() => setPaymentMethod('direct')}
+                  className={`p-4 rounded-lg border-2 flex items-center gap-3 ${
+                    paymentMethod === 'direct' 
+                      ? 'border-orange-500 bg-orange-50' 
+                      : 'border-gray-200'
+                  }`}
+                >
+                  <QrCode className={`${paymentMethod === 'direct' ? 'text-orange-500' : 'text-gray-500'}`} />
+                  <div className="text-left">
+                    <div className="font-semibold">Pay At Restaurant</div>
+                    <div className="text-sm text-gray-500">Cash, Card or UPI at counter</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Order Summary */}
+            <div className="border border-gray-300 rounded-lg p-4 bg-white">
+              <h3 className="font-bold mb-2">Order Summary</h3>
+              <p className="text-sm text-gray-600 mb-2">
+                Table: {tableNumber || 'Not specified'}
+              </p>
+              {cartItems.map(item => {
+                // Check if the item is water
+                const isWater = item.name && 
+                  (item.name.toLowerCase().includes('water') || 
+                   item.category?.toLowerCase() === 'water');
+                   
+                return (
+                  <div key={`${item.id}-${item.category}`} 
+                    className="flex justify-between py-2 border-b">
+                    <div>
+                      <span>{item.name} × {item.quantity}</span>
+                      {isWater && (
+                        <span className="ml-2 text-xs text-green-600">(GST exempt)</span>
+                      )}
+                    </div>
+                    <span>₹{(item.price * item.quantity).toFixed(2)}</span>
+                  </div>
+                );
+              })}
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <div className="flex justify-between mb-2">
+                  <span className="text-gray-600">Subtotal</span>
+                  <span>₹{subtotal}</span>
+                </div>
+                <div className="flex justify-between mb-1">
+                  <span className="text-gray-600">CGST (2.5%)</span>
+                  <span>₹{cgst}</span>
+                </div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-gray-600">SGST (2.5%)</span>
+                  <span>₹{sgst}</span>
+                </div>
+                <div className="flex justify-between font-bold mt-2">
+                  <span>Total</span>
+                  <span>₹{total}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Place Order Button */}
+            <div className="mt-auto pt-6">
+              <button
+                onClick={handlePayment}
+                disabled={isProcessing || cartItems.length === 0}
+                className={`w-full bg-gray-600 text-white py-3 rounded-full font-medium text-lg ${
+                  isProcessing || cartItems.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700'
+                } transition-colors`}
+              >
+                {isProcessing ? 'Processing...' : paymentMethod === 'razorpay' 
+                  ? `Pay ₹${total} Now` 
+                  : `Place Order - Pay at Restaurant`}
+              </button>
+            </div>
+            
+            {/* Bottom Spacing */}
+            <div className="pb-5"></div>
+          </div>
         </div>
       </div>
     </div>

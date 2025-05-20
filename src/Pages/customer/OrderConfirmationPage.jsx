@@ -23,6 +23,7 @@ const OrderConfirmationPage = () => {
         startStatusUpdates(orderId);
         calculateETA(order.created_at);
 
+        // Automatically redirect to my-orders after 5 seconds
         setTimeout(() => navigate('/my-orders'), 5000);
       } catch (err) {
         console.error(err);
@@ -64,6 +65,13 @@ const OrderConfirmationPage = () => {
     setEta(etaDate.toLocaleString('en-US', options));
   };
 
+  // Handle the track order button click
+  const handleTrackOrder = () => {
+    if (orderDetails && orderDetails.id) {
+      navigate(`/track-order/${orderDetails.id}`);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center text-white">
@@ -97,7 +105,7 @@ const OrderConfirmationPage = () => {
         </div>
 
         <button
-          onClick={() => navigate(`/track-order/${orderDetails.id}`)}
+          onClick={handleTrackOrder}
           className="text-orange-500 font-semibold text-lg hover:underline"
         >
           Track my order

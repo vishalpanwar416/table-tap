@@ -7,8 +7,11 @@ import { useNavigate } from 'react-router-dom';
 const CartSidebar = ({ isOpen, onClose }) => {
   const { cartItems, updateQuantity, removeItem } = useCart();
 
-  const calculateSubtotal = () => {
-    return cartItems.reduce((total, item) => {
+  const calculateSubtotalAndTaxes = () => {
+    let subtotal = 0;
+    let taxableAmount = 0;
+    
+    cartItems.forEach(item => {
       let price = item.price;
       
       if (item.discountType === 'percentage') {
@@ -17,14 +20,34 @@ const CartSidebar = ({ isOpen, onClose }) => {
         price = item.price - item.discountValue;
       }
       
-      return total + (price * item.quantity);
-    }, 0);
+      const itemTotal = price * item.quantity;
+      subtotal += itemTotal;
+      
+      // Check if the item is water (exempt from GST)
+      const isWater = item.name && 
+        (item.name.toLowerCase().includes('water') || 
+         item.category?.toLowerCase() === 'water');
+         
+      if (!isWater) {
+        taxableAmount += itemTotal;
+      }
+    });
+    
+    // Calculate taxes (split into CGST and SGST equally, each at 2.5%)
+    const cgst = taxableAmount * 0.025; // 2.5% CGST
+    const sgst = taxableAmount * 0.025; // 2.5% SGST
+    
+    return {
+      subtotal,
+      cgst,
+      sgst,
+      total: subtotal + cgst + sgst
+    };
   };
 
-  const subtotal = calculateSubtotal();
-  const gst = subtotal * 0.05; // 5% GST for restaurants in India
-  const total = subtotal + gst;
+  const { subtotal, cgst, sgst, total } = calculateSubtotalAndTaxes();
   const navigate = useNavigate();
+  
   const slideVariants = {
     hidden: { x: '100%', opacity: 0 },
     visible: { 
@@ -78,59 +101,69 @@ const CartSidebar = ({ isOpen, onClose }) => {
                 {cartItems.length === 0 ? (
                   <p className="text-gray-400 text-center mt-8">Your cart is empty</p>
                 ) : (
-                  cartItems.map((item, index) => (
-                    <div key={`${item.id}-${item.category}`}>
-                      <div className="flex items-start mb-4">
-                        {/* Item image */}
-                        <div className="w-24 h-24 overflow-hidden rounded-lg mr-4">
-                          <img 
-                            src={item.image} 
-                            alt={item.name} 
-                            className="w-full h-full object-cover" 
-                          />
-                        </div>
-                        
-                        {/* Item details */}
-                        <div className="flex-1">
-                          <h3 className="text-white font-medium text-lg">{item.name}</h3>
-                          <p className="text-white font-medium">₹{Number(item.price).toFixed(2)}</p>
-                        </div>
-                        
-                        {/* Date and time (using placeholders) */}
-                        <div className="text-right">
-                        <p className="text-white">{new Date().toLocaleDateString()}</p>
-                        <p>" "</p>
-                        {/* <p className="text-white">{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p> */}
+                  cartItems.map((item, index) => {
+                    // Check if the item is water
+                    const isWater = item.name && 
+                      (item.name.toLowerCase().includes('water') || 
+                       item.category?.toLowerCase() === 'water');
+                    
+                    return (
+                      <div key={`${item.id}-${item.category}`}>
+                        <div className="flex items-start mb-4">
+                          {/* Item image */}
+                          <div className="w-24 h-24 overflow-hidden rounded-lg mr-4">
+                            <img 
+                              src={item.image} 
+                              alt={item.name} 
+                              className="w-full h-full object-cover" 
+                            />
+                          </div>
                           
-                          {/* Quantity controls */}
-                          <div className="flex items-center justify-end mt-2">
-                            <button 
-                              onClick={() => {
-                                if (item.quantity === 1) {
-                                  removeItem(item.id, item.category);
-                                } else {
-                                  updateQuantity(item.id, item.category, item.quantity - 1);
-                                }
-                              }}
-                              className="bg-black border border-white rounded-full w-6 h-6 flex items-center justify-center"
-                            >
-                              <Minus className="h-3 w-3 text-white" />
-                            </button>
-                            <span className="mx-2 text-white">{item.quantity}</span>
-                            <button 
-                              onClick={() => updateQuantity(item.id, item.category, item.quantity + 1)}
-                              className="bg-black border border-white rounded-full w-6 h-6 flex items-center justify-center"
-                            >
-                              <Plus className="h-3 w-3 text-white" />
-                            </button>
+                          {/* Item details */}
+                          <div className="flex-1">
+                            <h3 className="text-white font-medium text-lg">{item.name}</h3>
+                            <p className="text-white font-medium">₹{Number(item.price).toFixed(2)}</p>
+                            {isWater && (
+                              <p className="text-green-400 text-sm">GST exempt</p>
+                            )}
+                          </div>
+                          
+                          {/* Date and time (using placeholders) */}
+                          <div className="text-right">
+                          <p className="text-white">{new Date().toLocaleDateString()}</p>
+                          <p>" "</p>
+                          {/* <p className="text-white">{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p> */}
+                            
+                            {/* Quantity controls */}
+                            <div className="flex items-center justify-end mt-2">
+                              <button 
+                                onClick={() => {
+                                  if (item.quantity === 1) {
+                                    removeItem(item.id, item.category);
+                                  } else {
+                                    updateQuantity(item.id, item.category, item.quantity - 1);
+                                  }
+                                }}
+                                className="bg-black border border-white rounded-full w-6 h-6 flex items-center justify-center"
+                              >
+                                <Minus className="h-3 w-3 text-white" />
+                              </button>
+                              <span className="mx-2 text-white">{item.quantity}</span>
+                              <button 
+                                onClick={() => updateQuantity(item.id, item.category, item.quantity + 1)}
+                                className="bg-black border border-white rounded-full w-6 h-6 flex items-center justify-center"
+                              >
+                                <Plus className="h-3 w-3 text-white" />
+                              </button>
+                            </div>
                           </div>
                         </div>
+                        
+                        {/* Divider between items */}
+                        <div className="border-t border-gray-700 w-full my-4"></div>
                       </div>
-                      
-                      {/* Divider between items */}
-                      <div className="border-t border-gray-700 w-full my-4"></div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
 
@@ -142,9 +175,14 @@ const CartSidebar = ({ isOpen, onClose }) => {
                     <span className="text-white text-lg font-medium">₹{subtotal.toFixed(2)}</span>
                   </div>
                   
+                  <div className="flex justify-between mb-2">
+                    <span className="text-white text-lg">CGST (2.5%)</span>
+                    <span className="text-white text-lg font-medium">₹{cgst.toFixed(2)}</span>
+                  </div>
+                  
                   <div className="flex justify-between mb-4">
-                    <span className="text-white text-lg">GST (5%)</span>
-                    <span className="text-white text-lg font-medium">₹{gst.toFixed(2)}</span>
+                    <span className="text-white text-lg">SGST (2.5%)</span>
+                    <span className="text-white text-lg font-medium">₹{sgst.toFixed(2)}</span>
                   </div>
                   
                   <div className="border-t border-gray-600 my-4"></div>

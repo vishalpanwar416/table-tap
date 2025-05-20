@@ -1,31 +1,31 @@
-import React from 'react';
-import { Clock, CheckCircle, XCircle, ChefHat, Calendar, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { Clock, CheckCircle, XCircle, ChefHat, Calendar, ChevronDown, ChevronUp, DollarSign } from 'lucide-react';
 
 const statusIcons = {
-  pending: <Clock className="w-5 h-5 text-yellow-500" />,
-  completed: <CheckCircle className="w-5 h-5 text-green-500" />,
-  rejected: <XCircle className="w-5 h-5 text-red-500" />,
-  accepted: <ChefHat className="w-5 h-5 text-blue-500" />,
-  preparing: <ChefHat className="w-5 h-5 text-purple-500" />,
-  ready: <CheckCircle className="w-5 h-5 text-green-500" />
+  pending: <Clock className="w-4 h-4 text-yellow-500" />,
+  completed: <CheckCircle className="w-4 h-4 text-green-500" />,
+  rejected: <XCircle className="w-4 h-4 text-red-500" />,
+  accepted: <ChefHat className="w-4 h-4 text-blue-500" />,
+  preparing: <ChefHat className="w-4 h-4 text-purple-500" />,
+  ready: <CheckCircle className="w-4 h-4 text-green-500" />
 };
 
 const statusLabels = {
-  pending: 'Pending Acceptance',
+  pending: 'Pending',
   completed: 'Completed',
   rejected: 'Rejected',
   accepted: 'Accepted',
-  preparing: 'In Preparation',
-  ready: 'Ready for Pickup'
+  preparing: 'Preparing',
+  ready: 'Ready'
 };
 
 const statusColors = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  completed: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
-  accepted: 'bg-blue-100 text-blue-800',
-  preparing: 'bg-purple-100 text-purple-800',
-  ready: 'bg-green-100 text-green-800'
+  pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+  completed: 'bg-green-100 text-green-800 border-green-200',
+  rejected: 'bg-red-100 text-red-800 border-red-200',
+  accepted: 'bg-blue-100 text-blue-800 border-blue-200',
+  preparing: 'bg-purple-100 text-purple-800 border-purple-200',
+  ready: 'bg-green-100 text-green-800 border-green-200'
 };
 
 // Helper to format date
@@ -41,109 +41,155 @@ const formatDate = (dateString) => {
   });
 };
 
-// Placeholder images for menu items
-const itemPlaceholderImages = {
-  burger: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300&h=200&fit=crop',
-  pizza: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=300&h=200&fit=crop',
-  pasta: 'https://images.unsplash.com/photo-1563379926898-05f4575a45d8?w=300&h=200&fit=crop',
-  salad: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300&h=200&fit=crop',
-  default: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&h=200&fit=crop'
-};
-
-// Helper to get image based on item name
-const getItemImage = (item) => {
-  if (!item || !item.name) return itemPlaceholderImages.default;
-  
-  const name = item.name.toLowerCase();
-  if (name.includes('burger')) return itemPlaceholderImages.burger;
-  if (name.includes('pizza')) return itemPlaceholderImages.pizza;
-  if (name.includes('pasta')) return itemPlaceholderImages.pasta;
-  if (name.includes('salad')) return itemPlaceholderImages.salad;
-  
-  return itemPlaceholderImages.default;
-};
-
 const OrderCard = ({ order, onClick }) => {
+  const [expanded, setExpanded] = useState(false);
+  
   if (!order) return null;
+  
+  const handleCardClick = (e) => {
+    // Toggle expanded state
+    setExpanded(!expanded);
+    
+    // Also call the parent onClick if provided
+    if (onClick) onClick(e);
+  };
+  
+  const handleViewDetails = (e) => {
+    e.stopPropagation(); // Prevent triggering the card click
+    setExpanded(!expanded);
+  };
   
   return (
     <div 
-      onClick={onClick}
-      className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all border border-gray-100"
+      onClick={handleCardClick}
+      className={`bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all border mx-auto max-w-md ${expanded ? 'border-orange-200' : 'border-gray-100'}`}
     >
-      <div className="p-4">
-        {/* Order Header */}
-        <div className="flex justify-between items-start mb-3">
+      <div className={`p-4 ${expanded ? 'pb-3' : ''}`}>
+        {/* Order Header - Always visible */}
+        <div className="flex justify-between items-center mb-2">
           <div>
-            <h3 className="font-semibold text-lg text-gray-800">
-              Order #{order.id && order.id.slice(0, 8)}
+            <h3 className="font-semibold text-gray-900 flex items-center">
+              <span className="mr-1">Order</span>
+              <span className="font-mono text-sm bg-gray-100 px-2 py-0.5 rounded">
+                #{order.id && order.id.slice(0, 8)}
+              </span>
             </h3>
-            <div className="flex items-center text-sm text-gray-500 mt-1">
-              <Calendar size={14} className="mr-1" />
+            <div className="flex items-center text-xs text-gray-500 mt-1">
+              <Calendar size={12} className="mr-1" />
               <span>{formatDate(order.created_at || new Date())}</span>
             </div>
           </div>
           
-          <div className="flex items-center space-x-2">
-            <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[order.status]}`}>
-              {statusLabels[order.status]}
-            </span>
-            {statusIcons[order.status]}
-          </div>
-        </div>
-        
-        {/* Item Images */}
-        <div className="mb-4">
-          <div className="flex mb-3 space-x-2 overflow-x-auto pb-1 scrollbar-hide">
-            {(order.items || []).slice(0, 4).map((item, idx) => (
-              <div key={idx} className="flex-shrink-0 w-12 h-12 rounded-md overflow-hidden border border-gray-200">
-                <img 
-                  src={getItemImage(item)} 
-                  alt={item.name || `Item ${idx+1}`}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            ))}
-            {(order.items || []).length > 4 && (
-              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-md bg-gray-100 text-gray-500 text-xs font-medium">
-                +{(order.items || []).length - 4}
-              </div>
-            )}
-          </div>
-        </div>
-        
-        {/* Order Items */}
-        <div className="mt-2">
-          <h4 className="text-sm font-medium text-gray-500 mb-2">Items:</h4>
-          <div className="flex flex-wrap gap-2">
-            {order.items && order.items.map((item, index) => (
-              <div key={index} className="flex items-center bg-gray-50 rounded-lg px-3 py-1">
-                <span className="text-sm font-medium">{item.name}</span>
-                {item.quantity > 1 && (
-                  <span className="ml-1 text-xs bg-gray-200 px-1.5 rounded-full">x{item.quantity}</span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-        
-        {/* Order Footer - Price, Table Number, View Details */}
-        <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
-          <div>
-            <span className="text-sm text-gray-500">Total:</span>
-            <span className="ml-1 font-semibold text-gray-900">₹{order.total?.toFixed(2) || '0.00'}</span>
-          </div>
-          
-          {order.tableNumber && (
-            <div className="px-3 py-1 bg-blue-50 text-blue-700 rounded-lg text-sm">
-              Table {order.tableNumber}
+          <div className={`flex items-center px-3 py-1.5 rounded-full text-xs font-medium border ${statusColors[order.status]}`}>
+            <div className="mr-1.5">
+              {statusIcons[order.status]}
             </div>
-          )}
+            {statusLabels[order.status]}
+          </div>
+        </div>
+        
+        {/* Compact Item Summary - Always visible */}
+        <div className="flex items-center justify-between py-2 border-t border-b border-gray-100">
+          <div className="flex items-center py-1">
+            <div className="bg-gray-50 rounded-full px-2 py-1 text-xs font-medium text-gray-600">
+              {(order.items || []).length} {(order.items || []).length === 1 ? 'item' : 'items'}
+            </div>
+          </div>
           
-          <button className="flex items-center text-orange-500 hover:text-orange-600 text-sm font-medium">
-            View Details <ArrowRight size={16} className="ml-1" />
+          <div className="flex items-center font-medium text-gray-900">
+            {/* <DollarSign size={14} className="text-green-600" /> */}
+            <span>₹{order.total?.toFixed(2) || '0.00'}</span>
+          </div>
+          
+          <button 
+            onClick={handleViewDetails}
+            className={`flex items-center text-sm font-medium rounded-lg px-2 py-1 ${expanded ? 'bg-orange-50 text-orange-600' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'} transition-colors`}
+          >
+            {expanded ? 'Hide' : 'View'} 
+            {expanded ? <ChevronUp size={14} className="ml-0.5" /> : <ChevronDown size={14} className="ml-0.5" />}
           </button>
         </div>
+        
+        {/* Expanded Content */}
+        {expanded && (
+          <div className="mt-3 pt-1 overflow-hidden transition-all duration-300 ease-in-out">
+            {/* Order Items */}
+            <div className="mb-3">
+              <h4 className="text-xs uppercase font-medium text-gray-500 mb-2 tracking-wider">Order Items</h4>
+              <div className="space-y-2">
+                {order.items && order.items.map((item, index) => (
+                  <div key={index} className="flex items-center rounded-lg px-3 py-2 border border-gray-100 hover:bg-gray-50 transition-colors">
+                    {item.image && (
+                      <div className="w-10 h-10 rounded-md overflow-hidden mr-3 flex-shrink-0 border border-gray-200">
+                        <img 
+                          src={item.image} 
+                          alt={item.name} 
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.style.display = 'none'; // Hide image on error
+                          }}
+                        />
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <span className="text-sm font-medium text-gray-800">{item.name}</span>
+                      {item.quantity > 1 && (
+                        <span className="ml-2 text-xs bg-gray-100 px-1.5 py-0.5 rounded-full text-gray-600">
+                          x{item.quantity}
+                        </span>
+                      )}
+                      {item.variant && (
+                        <p className="text-xs text-gray-500 mt-0.5">{item.variant}</p>
+                      )}
+                    </div>
+                    <div className="text-sm font-medium text-gray-900">
+                      ₹{(item.price * (item.quantity || 1)).toFixed(2)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Additional Order Details */}
+            <div className="mt-2 space-y-2">
+              {order.tableNumber && (
+                <div className="bg-blue-50 text-blue-700 rounded-lg p-2 text-sm flex items-center justify-center">
+                  <span className="font-medium">Table {order.tableNumber}</span>
+                </div>
+              )}
+              
+              {order.specialInstructions && (
+                <div className="bg-gray-50 rounded-lg p-3 text-sm border border-gray-200">
+                  <span className="font-medium text-xs uppercase text-gray-500 block mb-1">Special Instructions</span>
+                  <p className="text-gray-700">{order.specialInstructions}</p>
+                </div>
+              )}
+              
+              {/* Payment details */}
+              <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                <span className="font-medium text-xs uppercase text-gray-500 block mb-1">Payment Summary</span>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-gray-600">Subtotal</span>
+                  <span className="text-gray-900">₹{((order.total || 0) * 0.95).toFixed(2)}</span>
+                </div>
+                {order.deliveryFee && (
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-600">Delivery Fee</span>
+                    <span className="text-gray-900">₹{order.deliveryFee.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-gray-600">Tax</span>
+                  <span className="text-gray-900">₹{((order.total || 0) * 0.05).toFixed(2)}</span>
+                </div>
+                <div className="border-t border-gray-200 mt-2 pt-2 flex justify-between font-medium">
+                  <span className="text-gray-800">Total</span>
+                  <span className="text-gray-900">₹{order.total?.toFixed(2) || '0.00'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
