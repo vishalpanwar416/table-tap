@@ -46,3 +46,18 @@
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+<<<<<<< HEAD
+=======
+/* Prevent zooming on input focus on mobile */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Ensure inputs are properly clickable */
+input, textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+>>>>>>> 9c8bca8baaeafffc07b4d6e70921de234e163488
