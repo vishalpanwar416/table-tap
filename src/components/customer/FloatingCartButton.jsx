@@ -78,7 +78,7 @@ const FloatingCartButton = ({ toggleCart }) => {
 
   const handleDirectCheckout = useCallback((e) => {
     e.stopPropagation();
-    navigate('/checkout');
+    navigate('/order-confirmation');
   }, [navigate]);
 
   // Only continue rendering if there are items in the cart

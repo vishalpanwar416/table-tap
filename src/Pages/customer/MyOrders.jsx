@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, ShoppingBag, Loader, Filter, RefreshCw } from 'lucide-react';
+import { ChevronLeft, ShoppingBag, Loader, Filter, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useOrders } from '../../context/OrderContext';
 import OrderCard from '../../components/customer/OrderCard';
 
-// Status configuration object with visual elements and messages
 const statusComponents = {
   pending: {
     icon: (
@@ -190,37 +189,35 @@ const MyOrders = () => {
 
   return (
     <div className="flex justify-center items-start min-h-screen bg-black">
-      <div className="w-full max-w-md md:max-w-2xl flex flex-col">
+      <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
         {/* Header */}
-        <div className="px-4 py-6">
-          <div className="relative flex items-center justify-center mb-4">
-            <button 
-              className="absolute left-0 text-orange-500 hover:text-orange-600 transition-colors"
-              onClick={() => navigate('/home')}
-              aria-label="Go back to home"
-            >
-              <ArrowLeft size={24} />
-            </button>
-            <div className="flex flex-col items-center">
-              <h1 className="text-2xl md:text-3xl font-bold text-white">
-                My Orders
-              </h1>
-              <p className="text-gray-400 text-sm mt-1">Track and manage your food orders</p>
-            </div>
+        <div className="w-full px-6 py-8 relative flex justify-center">
+          <button 
+            className="absolute left-4 top-8 text-orange-500"
+            onClick={() => navigate('/home')}
+            aria-label="Go back to home"
+          >
+            <ChevronLeft size={30} />
+          </button>
+          <div className="flex flex-col items-center">
+            <h1 className="text-gray-100 text-3xl font-medium">
+              My Orders
+            </h1>
+            <p className="text-gray-400 text-sm mt-1">Track and manage your food orders</p>
           </div>
         </div>
 
-        {/* Main Content - White block with rounded top corners */}
-        <div className="flex-1 flex flex-col px-0 pb-0">
-          <div className="flex-1 flex flex-col bg-white shadow-xl rounded-t-3xl overflow-hidden min-h-[500px]">
+        {/* Main Content - Gray block with rounded top corners */}
+        <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col bg-gray-200 rounded-t-3xl overflow-hidden min-h-[500px] px-6 pt-10 pb-6">
             {/* Tabs */}
-            <div className="flex justify-center py-3 px-2 border-b border-gray-100 bg-white">
-              <div className="inline-flex gap-1 overflow-x-auto scrollbar-hide bg-gray-100 rounded-full p-1 shadow-sm">
+            <div className="flex justify-center mb-6">
+              <div className="inline-flex gap-1 overflow-x-auto scrollbar-hide bg-gray-300 rounded-full p-1 shadow-sm">
                 <button 
                   className={`px-3 py-2 md:px-5 rounded-full text-xs md:text-sm font-medium whitespace-nowrap transition-all ${
                     activeTab === 'pending' 
-                      ? 'bg-orange-500 text-white shadow-sm' 
-                      : 'bg-transparent text-gray-600 hover:bg-gray-200'
+                      ? 'bg-gray-600 text-white shadow-sm' 
+                      : 'bg-transparent text-gray-600 hover:bg-gray-400'
                   }`}
                   onClick={() => handleTabChange('pending')}
                 >
@@ -229,8 +226,8 @@ const MyOrders = () => {
                 <button 
                   className={`px-3 py-2 md:px-5 rounded-full text-xs md:text-sm font-medium whitespace-nowrap transition-all ${
                     activeTab === 'preparing' 
-                      ? 'bg-orange-500 text-white shadow-sm' 
-                      : 'bg-transparent text-gray-600 hover:bg-gray-200'
+                      ? 'bg-gray-600 text-white shadow-sm' 
+                      : 'bg-transparent text-gray-600 hover:bg-gray-400'
                   }`}
                   onClick={() => handleTabChange('preparing')}
                 >
@@ -239,8 +236,8 @@ const MyOrders = () => {
                 <button 
                   className={`px-3 py-2 md:px-5 rounded-full text-xs md:text-sm font-medium whitespace-nowrap transition-all ${
                     activeTab === 'completed' 
-                      ? 'bg-orange-500 text-white shadow-sm' 
-                      : 'bg-transparent text-gray-600 hover:bg-gray-200'
+                      ? 'bg-gray-600 text-white shadow-sm' 
+                      : 'bg-transparent text-gray-600 hover:bg-gray-400'
                   }`}
                   onClick={() => handleTabChange('completed')}
                 >
@@ -250,14 +247,14 @@ const MyOrders = () => {
             </div>
 
             {/* Filter and Refresh Bar */}
-            <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-100">
+            <div className="flex items-center justify-between mb-4 bg-white rounded-xl py-3 px-4 shadow-sm">
               <div className="flex items-center">
                 <button 
                   onClick={toggleSortOrder}
-                  className="flex items-center text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition-colors"
+                  className="flex items-center text-xs font-medium text-gray-600 bg-gray-100 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-200 transition-colors"
                 >
                   <Filter size={14} className="mr-1.5" />
-                  Sort: {sortBy === 'newest' ? 'Newest first' : 'Oldest first'}
+                  Sort: {sortBy === 'newest' ? 'New first' : 'Old first'}
                 </button>
               </div>
               <div className="flex items-center">
@@ -279,7 +276,12 @@ const MyOrders = () => {
             </div>
 
             {/* Orders List - Scrollable area */}
-            <div className="flex-1 p-4 md:p-5 bg-gray-50 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 340px)' }}>
+            <div className="flex-1 bg-white rounded-xl p-4 overflow-y-auto shadow-sm" style={{ maxHeight: 'calc(100vh - 340px)' }}>
+              <h2 className="text-black text-xl font-semibold mb-4">
+                {activeTab === 'pending' ? 'Pending Orders' : 
+                 activeTab === 'preparing' ? 'Orders in Preparation' : 'Order History'}
+              </h2>
+              
               {filteredOrders.length > 0 ? (
                 <div className="space-y-4">
                   {filteredOrders.map(order => (
@@ -295,34 +297,36 @@ const MyOrders = () => {
                 <EmptyState tab={activeTab} />
               )}
             </div>
-          </div>
-          
-          {/* Order Summary - White block with rounded bottom corners, flush with above */}
-          <div className="bg-white p-4 md:p-5 shadow-xl rounded-b-3xl border-t border-gray-100">
-            <div className="flex items-center mb-3">
-              <ShoppingBag size={20} className="text-orange-500 mr-2" />
-              <h2 className="text-lg font-semibold text-gray-800">Order Summary</h2>
+
+            {/* Order Summary */}
+            <div className="mt-4 bg-white p-4 rounded-xl shadow-sm">
+              <div className="flex items-center mb-3">
+                <ShoppingBag size={20} className="text-gray-600 mr-2" />
+                <h2 className="text-lg font-semibold text-gray-800">Order Summary</h2>
+              </div>
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 shadow-sm">
+                  <p className="text-gray-600 text-xs md:text-sm mb-1">Pending</p>
+                  <p className="text-xl md:text-2xl font-bold text-yellow-500">
+                    {userOrders.filter(order => order.status === 'pending').length}
+                  </p>
+                </div>
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 shadow-sm">
+                  <p className="text-gray-600 text-xs md:text-sm mb-1">Preparing</p>
+                  <p className="text-xl md:text-2xl font-bold text-purple-500">
+                    {userOrders.filter(order => order.status === 'preparing').length}
+                  </p>
+                </div>
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 shadow-sm">
+                  <p className="text-gray-600 text-xs md:text-sm mb-1">Completed</p>
+                  <p className="text-xl md:text-2xl font-bold text-green-500">
+                    {userOrders.filter(order => ['completed', 'rejected', 'ready'].includes(order.status)).length}
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 shadow-sm">
-                <p className="text-gray-500 text-xs md:text-sm mb-1">Pending</p>
-                <p className="text-xl md:text-2xl font-bold text-yellow-500">
-                  {userOrders.filter(order => order.status === 'pending').length}
-                </p>
-              </div>
-              <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 shadow-sm">
-                <p className="text-gray-500 text-xs md:text-sm mb-1">Preparing</p>
-                <p className="text-xl md:text-2xl font-bold text-purple-500">
-                  {userOrders.filter(order => order.status === 'preparing').length}
-                </p>
-              </div>
-              <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 shadow-sm">
-                <p className="text-gray-500 text-xs md:text-sm mb-1">Completed</p>
-                <p className="text-xl md:text-2xl font-bold text-green-500">
-                  {userOrders.filter(order => ['completed', 'rejected', 'ready'].includes(order.status)).length}
-                </p>
-              </div>
-            </div>
+            
+            {/* Bottom Spacing */}
           </div>
         </div>
       </div>

@@ -62,7 +62,7 @@ const OrderCard = ({ order, onClick }) => {
   return (
     <div 
       onClick={handleCardClick}
-      className={`bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all border mx-auto max-w-md ${expanded ? 'border-orange-200' : 'border-gray-100'}`}
+      className={`bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all border mx-auto max-w-full ${expanded ? 'border-orange-200' : 'border-gray-100'}`}
     >
       <div className={`p-4 ${expanded ? 'pb-3' : ''}`}>
         {/* Order Header - Always visible */}
@@ -97,7 +97,6 @@ const OrderCard = ({ order, onClick }) => {
           </div>
           
           <div className="flex items-center font-medium text-gray-900">
-            {/* <DollarSign size={14} className="text-green-600" /> */}
             <span>₹{order.total?.toFixed(2) || '0.00'}</span>
           </div>
           
