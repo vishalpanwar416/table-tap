@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../components/admin/Sidebar';
 import MobileNav from '../../components/admin/MobileNav';
 import DashboardOverview from '../../components/admin/DashboardOverviewComponents/DashboardOverview';
-import MenuManagement from '../../components/admin/MenuManagement';
+import MenuManagement from '../../components/admin/MenuManagementComponent/MenuManagement';
 import OrderManagement from '../../components/admin/OrderManagement.jsx';
 import UserManagement from '../../components/admin/UserManagement';
 import OffersManagement from '../../components/admin/OffersManagement';
