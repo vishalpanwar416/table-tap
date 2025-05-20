@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../components/admin/Sidebar';
 import MobileNav from '../../components/admin/MobileNav';
-import DashboardOverview from '../../components/admin/DashboardOverview';
+import DashboardOverview from '../../components/admin/DashboardOverviewComponents/DashboardOverview';
 import MenuManagement from '../../components/admin/MenuManagement';
 import OrderManagement from '../../components/admin/OrderManagement.jsx';
 import UserManagement from '../../components/admin/UserManagement';
