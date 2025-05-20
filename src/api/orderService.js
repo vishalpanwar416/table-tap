@@ -78,7 +78,7 @@ export const getUserOrders = async (userId) => {
 // Update order status
 export const updateOrderStatus = async (orderId, status) => {
   // Define allowed statuses
-  const allowedStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'delivered', 'cancelled', 'rejected', 'completed'];
+  const allowedStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'cancelled', 'rejected', 'completed'];
 
   if (!allowedStatuses.includes(status)) {
     console.error(`Invalid status: ${status}`);

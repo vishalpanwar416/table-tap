@@ -4,10 +4,8 @@ import {
   Clock, Calendar, MapPin, Phone, Filter, Search, AlertCircle,
   Printer, Download, RefreshCw, AlertTriangle, ShoppingBag, Info
 } from 'lucide-react';
-import { useOrders } from '../../context/OrderContext';
 import { useAdminNotifications } from '../../context/AdminNotificationContext';
 import { format, isToday, isYesterday } from 'date-fns';
-import { supabase } from '../../supabase';
 
 const OrderManagement = ({ orders, updateOrderStatus }) => {
   const { createNotification } = useAdminNotifications();
@@ -33,7 +31,7 @@ const OrderManagement = ({ orders, updateOrderStatus }) => {
       const notificationMessages = {
         preparing: 'Order is being prepared',
         ready: 'Order is ready for serving',
-        cancelled: 'Order was cancelled',
+        rejected: 'Order was rejected',
         completed: 'Order has been completed'
       };
       
@@ -43,11 +41,8 @@ const OrderManagement = ({ orders, updateOrderStatus }) => {
         userId,
         message: `Order #${orderId.slice(0,8)} ${notificationMessages[newStatus] || `status updated to ${newStatus}`}`
       });
-      
-      // (No need to close modal here anymore)
     } catch (error) {
       console.error(`Error updating order to ${newStatus}:`, error);
-      // Optionally, show an error toast or re-open the modal
     } finally {
       setIsLoading(false);
     }
@@ -63,7 +58,7 @@ const OrderManagement = ({ orders, updateOrderStatus }) => {
       pending: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
       preparing: 'bg-purple-100 text-purple-800 border border-purple-200',
       ready: 'bg-green-100 text-green-800 border border-green-200',
-      cancelled: 'bg-red-100 text-red-800 border border-red-200',
+      rejected: 'bg-red-100 text-red-800 border border-red-200',
       completed: 'bg-teal-100 text-teal-800 border border-teal-200',
     };
 
@@ -86,7 +81,7 @@ const OrderManagement = ({ orders, updateOrderStatus }) => {
         return <Truck className="h-5 w-5 text-purple-500" />;
       case 'ready':
         return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case 'cancelled':
+      case 'rejected':
         return <X className="h-5 w-5 text-red-500" />;
       case 'completed':
         return <Check className="h-5 w-5 text-teal-500" />;
@@ -160,10 +155,10 @@ const OrderManagement = ({ orders, updateOrderStatus }) => {
   // Get next status options based on current status
   const getNextStatusOptions = (currentStatus) => {
     const statusFlow = {
-      pending: ['preparing', 'cancelled'],
-      preparing: ['ready', 'cancelled'],
+      pending: ['preparing', 'rejected'],
+      preparing: ['ready', 'rejected'],
       ready: ['completed'],
-      // No further actions for cancelled or completed
+      // No further actions for rejected or completed
     };
     
     return statusFlow[currentStatus] || [];
@@ -176,7 +171,7 @@ const OrderManagement = ({ orders, updateOrderStatus }) => {
       preparing: 0,
       ready: 0,
       completed: 0,
-      cancelled: 0
+      rejected: 0
     };
     
     orders.forEach(order => {
@@ -271,13 +266,13 @@ const OrderManagement = ({ orders, updateOrderStatus }) => {
           </div>
           
           <div 
-            className={`p-3 rounded-lg bg-white shadow-sm border-l-4 border-red-400 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === 'cancelled' ? 'ring-2 ring-red-400' : ''}`}
-            onClick={() => setStatusFilter(statusFilter === 'cancelled' ? 'all' : 'cancelled')}
+            className={`p-3 rounded-lg bg-white shadow-sm border-l-4 border-red-400 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === 'rejected' ? 'ring-2 ring-red-400' : ''}`}
+            onClick={() => setStatusFilter(statusFilter === 'rejected' ? 'all' : 'rejected')}
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500 uppercase font-medium">Cancelled</p>
-                <p className="text-2xl font-bold text-gray-800">{statusCounts.cancelled}</p>
+                <p className="text-xs text-gray-500 uppercase font-medium">rejected</p>
+                <p className="text-2xl font-bold text-gray-800">{statusCounts.rejected}</p>
               </div>
               <div className="p-2 rounded-full bg-red-100">
                 <X className="h-5 w-5 text-red-600" />
@@ -327,7 +322,7 @@ const OrderManagement = ({ orders, updateOrderStatus }) => {
                   <option value="preparing">Preparing</option>
                   <option value="ready">Ready</option>
                   <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
+                  <option value="rejected">rejected</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                   <ChevronDown size={16} className="text-gray-400" />
@@ -553,7 +548,7 @@ const OrderManagement = ({ orders, updateOrderStatus }) => {
                             <Check size={16} />
                           </button>
                           <button
-                            onClick={() => openConfirmModal(order, 'cancelled')}
+                            onClick={() => openConfirmModal(order, 'rejected')}
                             className="p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition-colors"
                             title="Reject Order"
                             disabled={isLoading}
@@ -707,7 +702,7 @@ const OrderManagement = ({ orders, updateOrderStatus }) => {
                                 <Check size={16} />
                               </button>
                               <button
-                                onClick={() => openConfirmModal(order, 'cancelled')}
+                                onClick={() => openConfirmModal(order, 'rejected')}
                                 className="p-1.5 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
                                 title="Reject Order"
                                 disabled={isLoading}
@@ -839,45 +834,47 @@ const OrderManagement = ({ orders, updateOrderStatus }) => {
 
       {/* Confirmation Modal */}
       {confirmModal.show && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
-          <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full">
-            <div className="flex items-center mb-4">
-              <AlertTriangle className="text-yellow-500 mr-2" />
-              <h3 className="text-lg font-semibold text-gray-800">
-                Confirm {confirmModal.type === 'accept' ? 'Accept' : confirmModal.type === 'reject' ? 'Reject' : confirmModal.type === 'ready' ? 'Mark Ready' : 'Complete'} Order
-              </h3>
-            </div>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to {confirmModal.type === 'accept' ? 'accept' : confirmModal.type === 'reject' ? 'reject' : confirmModal.type === 'ready' ? 'mark as ready' : 'complete'} order <span className="font-semibold">#{confirmModal.order.id.slice(0,8)}</span>?
-            </p>
-            <div className="flex justify-end space-x-2">
-              <button
-                onClick={() => setConfirmModal({ show: false, type: null, order: null })}
-                className="px-4 py-2 rounded bg-gray-100 text-gray-700 hover:bg-gray-200"
-                disabled={isLoading}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  // Map modal type to status
-                  const statusMap = {
-                    accept: 'preparing',
-                    reject: 'cancelled',
-                    ready: 'ready',
-                    complete: 'completed'
-                  };
-                  handleStatusUpdate(confirmModal.order.id, confirmModal.order.userId, statusMap[confirmModal.type]);
-                }}
-                className={`px-4 py-2 rounded text-white ${confirmModal.type === 'reject' ? 'bg-red-500 hover:bg-red-600' : 'bg-orange-500 hover:bg-orange-600'}`}
-                disabled={isLoading}
-              >
-                {isLoading ? 'Processing...' : 'Confirm'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+    <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full">
+      <div className="flex items-center mb-4">
+        <AlertTriangle className="text-yellow-500 mr-2" />
+        <h3 className="text-lg font-semibold text-gray-800">
+          Confirm {confirmModal.type === 'accept' ? 'Accept' : confirmModal.type === 'rejected' ? 'Reject' : confirmModal.type === 'ready' ? 'Mark Ready' : 'Complete'} Order
+        </h3>
+      </div>
+      <p className="text-gray-600 mb-6">
+        Are you sure you want to {confirmModal.type === 'accept' ? 'accept' : confirmModal.type === 'rejected' ? 'reject' : confirmModal.type === 'ready' ? 'mark as ready' : 'complete'} order <span className="font-semibold">#{confirmModal.order.id.slice(0,8)}</span>?
+      </p>
+      <div className="flex justify-end space-x-2">
+        <button
+          onClick={() => setConfirmModal({ show: false, type: null, order: null })}
+          className="px-4 py-2 rounded bg-gray-100 text-gray-700 hover:bg-gray-200"
+          disabled={isLoading}
+        >
+          Cancel
+        </button>
+        <button
+          onClick={() => {
+            const normalizedType = confirmModal.type?.toLowerCase();
+            console.log(normalizedType);
+            const statusMap = {
+              accept: 'preparing',
+              rejected: 'rejected',
+              ready: 'ready',
+              complete: 'completed'
+            };
+            console.log(confirmModal.order.userId,confirmModal.order.id,statusMap[normalizedType]);
+            handleStatusUpdate(confirmModal.order.id, confirmModal.order.userId, statusMap[normalizedType]);
+          }}
+          className={`px-4 py-2 rounded text-white ${confirmModal.type === 'rejected' ? 'bg-red-500 hover:bg-red-600' : 'bg-orange-500 hover:bg-orange-600'}`}
+          disabled={isLoading}
+        >
+          {isLoading ? 'Processing...' : 'Confirm'}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 };

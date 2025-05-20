@@ -17,6 +17,9 @@ const PaymentPage = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('razorpay');
   const { restaurant } = useRestaurant();
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [showPhoneInput, setShowPhoneInput] = useState(false);
+  const [phoneError, setPhoneError] = useState('');
 
   // Early return if restaurant data isn't loaded yet
   if (!restaurant) {
@@ -131,6 +134,11 @@ const PaymentPage = () => {
         if (data && data.user) {
           console.log('User authenticated:', data.user.id);
           setUser(data.user);
+          
+          // Set phone number from user metadata if available
+          if (data.user.user_metadata && data.user.user_metadata.phone) {
+            setPhoneNumber(data.user.user_metadata.phone);
+          }
         } else {
           console.log('No authenticated user found');
         }
@@ -157,8 +165,65 @@ const PaymentPage = () => {
     navigate(-1);
   };
 
+  // Validate phone number
+  const validatePhoneNumber = (phone) => {
+    // Basic validation for Indian phone numbers (10 digits)
+    const phoneRegex = /^[6-9]\d{9}$/;
+    return phoneRegex.test(phone);
+  };
+
+  // Handle phone number change
+  const handlePhoneChange = (e) => {
+    const value = e.target.value;
+    setPhoneNumber(value);
+    
+    if (value && !validatePhoneNumber(value)) {
+      setPhoneError('Please enter a valid 10-digit phone number');
+    } else {
+      setPhoneError('');
+    }
+  };
+
+  // Update user phone in database
+  const updateUserPhone = async () => {
+    if (!user || !phoneNumber || !validatePhoneNumber(phoneNumber)) {
+      return false;
+    }
+
+    try {
+      // Update user metadata with phone number
+      const { error } = await supabase.auth.updateUser({
+        data: { phone: phoneNumber }
+      });
+
+      if (error) {
+        console.error('Error updating user phone:', error);
+        return false;
+      }
+      
+      console.log('User phone updated successfully');
+      return true;
+    } catch (error) {
+      console.error('User phone update exception:', error);
+      return false;
+    }
+  };
+
   // Handle Razorpay payment with better error handling
   const handlePayment = async () => {
+    // First check if we need to collect phone number
+    // if (!phoneNumber) {
+    //   setShowPhoneInput(true);
+    //   return;
+    // }
+    
+    // // Validate phone number
+    // if (!validatePhoneNumber(phoneNumber)) {
+    //   setPhoneError('Please enter a valid 10-digit phone number');
+    //   setShowPhoneInput(true);
+    //   return;
+    // }
+    
     if (!restaurant) {
       setScriptError('Restaurant data not loaded');
       return;
@@ -172,6 +237,11 @@ const PaymentPage = () => {
     setIsProcessing(true);
 
     try {
+      // Update user phone number in database first
+      if (user) {
+        await updateUserPhone();
+      }
+      
       // For direct payment without razorpay, process immediately
       if (paymentMethod === 'direct') {
         await processOrder({
@@ -232,7 +302,7 @@ const PaymentPage = () => {
         prefill: {
           name: user?.user_metadata?.full_name || 'Customer',
           email: user?.email || '',
-          contact: user?.phone || ''
+          contact: phoneNumber || ''
         },
         theme: { color: restaurant.theme_color || '#F37254' },
         modal: {
@@ -273,7 +343,7 @@ const PaymentPage = () => {
       // Get current user information
       const customer_name = user?.user_metadata?.full_name || 'Customer';
       const customer_email = user?.email || '';
-      const customer_phone = user?.phone || '';
+      const customer_phone = phoneNumber || '';
       
       // Prepare tracking data according to schema
       const tracking = {
@@ -393,6 +463,7 @@ const PaymentPage = () => {
           )}
 
           <div className="flex flex-col space-y-6">
+
             {/* Payment Method Selection */}
             <div className="flex flex-col space-y-3">
               <h3 className="font-semibold text-lg">Payment Method</h3>
@@ -483,9 +554,11 @@ const PaymentPage = () => {
                   isProcessing || cartItems.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700'
                 } transition-colors`}
               >
-                {isProcessing ? 'Processing...' : paymentMethod === 'razorpay' 
-                  ? `Pay ₹${total} Now` 
-                  : `Place Order - Pay at Restaurant`}
+                {isProcessing ? 'Processing...' : phoneNumber ? (
+                  paymentMethod === 'razorpay' 
+                    ? `Pay ₹${total} Now` 
+                    : `Place Order - Pay at Restaurant`
+                ) : 'Continue with Phone Number'}
               </button>
             </div>
             

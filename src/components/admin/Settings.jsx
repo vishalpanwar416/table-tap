@@ -4,12 +4,7 @@ import { useRestaurant } from '../../context/RestaurantContext';
 
 const SettingsManagement = () => {
   const { restaurant, updateRestaurant } = useRestaurant();
-  // Add google_maps_link to the default restaurant if it doesn't exist
-  const initialRestaurant = {
-    ...restaurant,
-    google_maps_link: restaurant.google_maps_link || ""
-  };
-  const [formData, setFormData] = useState(initialRestaurant);
+  const [formData, setFormData] = useState(restaurant);
   const [isEditing, setIsEditing] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
@@ -18,6 +13,17 @@ const SettingsManagement = () => {
     setFormData(prev => ({
       ...prev,
       [name]: value
+    }));
+  };
+
+  const handleSocialMediaChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      social_media: {
+        ...prev.social_media,
+        [name]: value
+      }
     }));
   };
 
@@ -110,6 +116,68 @@ const SettingsManagement = () => {
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded-md"
                 placeholder="https://maps.google.com/..."
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">GST Number</label>
+              <input
+                type="text"
+                name="gst_number"
+                value={formData.gst_number}
+                onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                placeholder="29AADCB2230M1ZP"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">FSSAI License</label>
+              <input
+                type="text"
+                name="fssai_license"
+                value={formData.fssai_license}
+                onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                placeholder="12345678901234"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Radius</label>
+              <input
+                type="text"
+                name="delivery_radius"
+                value={formData.delivery_radius}
+                onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                placeholder="5 km"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Instagram Handle</label>
+              <input
+                type="text"
+                name="instagram"
+                value={formData.social_media?.instagram || ""}
+                onChange={handleSocialMediaChange}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                placeholder="@restaurant"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Facebook Page</label>
+              <input
+                type="text"
+                name="facebook"
+                value={formData.social_media?.facebook || ""}
+                onChange={handleSocialMediaChange}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                placeholder="RestaurantOfficial"
               />
             </div>
           </div>
@@ -211,6 +279,36 @@ const SettingsManagement = () => {
                     "Not provided"
                   )}
                 </p>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">GST Number</h3>
+                <p className="mt-1 text-sm text-gray-900">{restaurant.gst_number || "Not provided"}</p>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">FSSAI License</h3>
+                <p className="mt-1 text-sm text-gray-900">{restaurant.fssai_license || "Not provided"}</p>
+              </div>
+
+              {/* <div>
+                <h3 className="text-sm font-medium text-gray-500">Delivery Radius</h3>
+                <p className="mt-1 text-sm text-gray-900">{restaurant.delivery_radius || "Not specified"}</p>
+              </div> */}
+
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Social Media</h3>
+                <div className="mt-1">
+                  {restaurant.social_media?.instagram && (
+                    <p className="text-sm text-gray-900">Instagram: {restaurant.social_media.instagram}</p>
+                  )}
+                  {restaurant.social_media?.facebook && (
+                    <p className="text-sm text-gray-900">Facebook: {restaurant.social_media.facebook}</p>
+                  )}
+                  {!restaurant.social_media?.instagram && !restaurant.social_media?.facebook && (
+                    <p className="text-sm text-gray-900">No social media profiles provided</p>
+                  )}
+                </div>
               </div>
             </div>
             
