@@ -5,29 +5,28 @@ import { useCart } from '../../config/CartContent';
 import { useNavigate } from 'react-router-dom';
 
 const CartSidebar = ({ isOpen, onClose }) => {
-  const { cartItems, updateQuantity, removeItem } = useCart();
+  const { cartItems, updateQuantity, removeItem, calculateDiscountedPrice } = useCart();
 
-  // Calculate discounted price for an item
-  const calculateDiscountedPrice = (item) => {
-    let price = item.price;
-    
-    if (item.discounttype === 'Percentage') {
-      price = item.price * (1 - item.discountvalue/100);
-    } else if (item.discounttype === 'Fixed') {
-      price = item.price - item.discountvalue;
-    }
-    
-    return price;
-  };
-
-  const calculateSubtotalAndTaxes = () => {
-    let subtotal = 0;
+  const calculatePriceDetails = () => {
+    let originalTotal = 0;
+    let discountAmount = 0;
     let taxableAmount = 0;
     
     cartItems.forEach(item => {
-      const price = calculateDiscountedPrice(item);
-      const itemTotal = price * item.quantity;
-      subtotal += itemTotal;
+      // Calculate original price total
+      const originalItemTotal = item.price * item.quantity;
+      originalTotal += originalItemTotal;
+      
+      // Calculate discount amount
+      const effectivePrice = item.effectivePrice !== undefined ? 
+        item.effectivePrice : 
+        calculateDiscountedPrice(item);
+      
+      const itemDiscount = (item.price - effectivePrice) * item.quantity;
+      discountAmount += itemDiscount;
+      
+      // Calculate subtotal after discount for tax calculation
+      const itemSubtotal = effectivePrice * item.quantity;
       
       // Check if the item is water (exempt from GST)
       const isWater = item.name && 
@@ -35,7 +34,7 @@ const CartSidebar = ({ isOpen, onClose }) => {
          item.category?.toLowerCase() === 'water');
          
       if (!isWater) {
-        taxableAmount += itemTotal;
+        taxableAmount += itemSubtotal;
       }
     });
     
@@ -43,15 +42,31 @@ const CartSidebar = ({ isOpen, onClose }) => {
     const cgst = taxableAmount * 0.025; // 2.5% CGST
     const sgst = taxableAmount * 0.025; // 2.5% SGST
     
+    // Subtotal is original total minus discount
+    const subtotalAfterDiscount = originalTotal - discountAmount;
+    
+    // Final total is subtotal plus taxes
+    const finalTotal = subtotalAfterDiscount + cgst + sgst;
+    
     return {
-      subtotal,
+      originalTotal,
+      discountAmount,
+      subtotalAfterDiscount,
       cgst,
       sgst,
-      total: subtotal + cgst + sgst
+      finalTotal
     };
   };
 
-  const { subtotal, cgst, sgst, total } = calculateSubtotalAndTaxes();
+  const { 
+    originalTotal, 
+    discountAmount, 
+    subtotalAfterDiscount, 
+    cgst, 
+    sgst, 
+    finalTotal 
+  } = calculatePriceDetails();
+  
   const navigate = useNavigate();
   
   const slideVariants = {
@@ -125,8 +140,11 @@ const CartSidebar = ({ isOpen, onClose }) => {
                     // Calculate discounted price
                     const hasDiscount = item.discounttype && item.discountvalue;
                     const originalPrice = Number(item.price).toFixed(2);
-                    const discountedPrice = hasDiscount ? 
-                      Number(calculateDiscountedPrice(item)).toFixed(2) : originalPrice;
+                    
+                    // Use effectivePrice if it exists, otherwise calculate it
+                    const discountedPrice = item.effectivePrice !== undefined ? 
+                      Number(item.effectivePrice).toFixed(2) : 
+                      Number(calculateDiscountedPrice(item)).toFixed(2);
                     
                     return (
                       <div key={`${item.id}-${item.category}`}>
@@ -169,7 +187,6 @@ const CartSidebar = ({ isOpen, onClose }) => {
                           <div className="text-right">
                           <p className="text-white">{new Date().toLocaleDateString()}</p>
                           <p>" "</p>
-                          {/* <p className="text-white">{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p> */}
                             
                             {/* Quantity controls */}
                             <div className="flex items-center justify-end mt-2">
@@ -204,12 +221,24 @@ const CartSidebar = ({ isOpen, onClose }) => {
                 )}
               </div>
 
-              {/* Pricing information with Indian tax standards */}
+              {/* Pricing information with detailed breakdown */}
               {cartItems.length > 0 && (
                 <div className="px-6 pb-20">
                   <div className="flex justify-between mb-4">
+                    <span className="text-white text-lg">Original Total</span>
+                    <span className="text-white text-lg font-medium">₹{originalTotal.toFixed(2)}</span>
+                  </div>
+                  
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between mb-4">
+                      <span className="text-green-400 text-lg">Discount</span>
+                      <span className="text-green-400 text-lg font-medium">- ₹{discountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between mb-4">
                     <span className="text-white text-lg">Subtotal</span>
-                    <span className="text-white text-lg font-medium">₹{subtotal.toFixed(2)}</span>
+                    <span className="text-white text-lg font-medium">₹{subtotalAfterDiscount.toFixed(2)}</span>
                   </div>
                   
                   <div className="flex justify-between mb-2">
@@ -226,7 +255,7 @@ const CartSidebar = ({ isOpen, onClose }) => {
                   
                   <div className="flex justify-between mb-8">
                     <span className="text-white text-xl font-medium">Total</span>
-                    <span className="text-white text-xl font-medium">₹{total.toFixed(2)}</span>
+                    <span className="text-white text-xl font-medium">₹{finalTotal.toFixed(2)}</span>
                   </div>
                   
                   {/* Checkout button */}

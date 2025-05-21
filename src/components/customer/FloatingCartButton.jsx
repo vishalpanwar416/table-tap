@@ -1,34 +1,76 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { ShoppingCart, ChevronUp, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../../config/CartContent';
 import { useNavigate } from 'react-router-dom';
 
 const FloatingCartButton = ({ toggleCart }) => {
-  const { cartItems } = useCart();
+  const { cartItems, calculateDiscountedPrice } = useCart();
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
   const [showAddedAnimation, setShowAddedAnimation] = useState(false);
   const [prevQuantity, setPrevQuantity] = useState(0);
   const [initialLoad, setInitialLoad] = useState(true);
+  const expandedPanelRef = useRef(null);
+  
+  // Calculate the detailed price breakdown
+  const calculatePriceDetails = useCallback(() => {
+    let originalTotal = 0;
+    let discountAmount = 0;
+    let taxableAmount = 0;
+    
+    cartItems.forEach(item => {
+      // Calculate original price total
+      const originalItemTotal = item.price * item.quantity;
+      originalTotal += originalItemTotal;
+      
+      // Calculate discount amount
+      const effectivePrice = item.effectivePrice !== undefined ? 
+        item.effectivePrice : 
+        calculateDiscountedPrice(item);
+      
+      const itemDiscount = (item.price - effectivePrice) * item.quantity;
+      discountAmount += itemDiscount;
+      
+      // Calculate subtotal after discount for tax calculation
+      const itemSubtotal = effectivePrice * item.quantity;
+      
+      // Check if the item is water (exempt from GST)
+      const isWater = item.name && 
+        (item.name.toLowerCase().includes('water') || 
+         item.category?.toLowerCase() === 'water');
+         
+      if (!isWater) {
+        taxableAmount += itemSubtotal;
+      }
+    });
+    
+    // Calculate taxes (split into CGST and SGST equally, each at 2.5%)
+    const cgst = taxableAmount * 0.025; // 2.5% CGST
+    const sgst = taxableAmount * 0.025; // 2.5% SGST
+    
+    // Subtotal is original total minus discount
+    const subtotalAfterDiscount = originalTotal - discountAmount;
+    
+    // Final total is subtotal plus taxes
+    const finalTotal = subtotalAfterDiscount + cgst + sgst;
+    
+    return {
+      originalTotal,
+      discountAmount,
+      subtotalAfterDiscount,
+      cgst,
+      sgst,
+      finalTotal
+    };
+  }, [cartItems, calculateDiscountedPrice]);
   
   // Memoize calculations to prevent unnecessary recalculations
-  const { totalQuantity, totalPrice, recentItems } = useMemo(() => {
+  const { totalQuantity, totalPrice, recentItems, priceDetails } = useMemo(() => {
     // Calculate the total quantity of items
     const totalQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
     
-    // Calculate the total price
-    const totalPrice = cartItems.reduce((total, item) => {
-      let price = item.price;
-      
-      if (item.discountType === 'percentage') {
-        price = item.price * (1 - item.discountValue/100);
-      } else if (item.discountType === 'fixed') {
-        price = item.price - item.discountValue;
-      }
-      
-      return total + (price * item.quantity);
-    }, 0);
+    const priceDetails = calculatePriceDetails();
     
     // Get most recent items (limited to 2)
     const recentItems = [...cartItems]
@@ -38,8 +80,31 @@ const FloatingCartButton = ({ toggleCart }) => {
       })
       .slice(0, 2);
       
-    return { totalQuantity, totalPrice, recentItems };
-  }, [cartItems]);
+    return { 
+      totalQuantity, 
+      totalPrice: priceDetails.finalTotal, 
+      recentItems,
+      priceDetails
+    };
+  }, [cartItems, calculatePriceDetails]);
+  
+  // Add event listener to close expanded panel when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        isExpanded && 
+        expandedPanelRef.current && 
+        !expandedPanelRef.current.contains(event.target)
+      ) {
+        setIsExpanded(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isExpanded]);
   
   // Check if new items were added to show animation
   useEffect(() => {
@@ -105,10 +170,11 @@ const FloatingCartButton = ({ toggleCart }) => {
         }}
         exit={{ y: 100, opacity: 0, transition: { duration: 0.2 } }}
       >
-        {/* Expanded panel showing recent items */}
+        {/* Expanded panel showing recent items and price breakdown */}
         <AnimatePresence>
           {isExpanded && (
             <motion.div 
+              ref={expandedPanelRef}
               className="bg-white rounded-2xl shadow-xl mb-3 p-4"
               style={{ 
                 width: "85%", 
@@ -156,6 +222,35 @@ const FloatingCartButton = ({ toggleCart }) => {
                   </div>
                 </motion.div>
               ))}
+              
+              {/* Price breakdown section */}
+              <div className="mt-4 border-t border-gray-100 pt-3">
+                <h3 className="font-bold text-black mb-2">Price Details</h3>
+                
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Original Total</span>
+                    <span className="font-medium">₹{priceDetails.originalTotal.toFixed(2)}</span>
+                  </div>
+                  
+                  {priceDetails.discountAmount > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-green-600">Discount</span>
+                      <span className="text-green-600 font-medium">- ₹{priceDetails.discountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">GST (5%)</span>
+                    <span className="font-medium">₹{(priceDetails.cgst + priceDetails.sgst).toFixed(2)}</span>
+                  </div>
+                  
+                  <div className="flex justify-between pt-2 border-t border-gray-100">
+                    <span className="font-bold text-black">Total</span>
+                    <span className="font-bold text-black">₹{priceDetails.finalTotal.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
               
               <div className="flex justify-between mt-4">
                 <motion.button

@@ -5,24 +5,29 @@ import { useNavigate } from 'react-router-dom';
 
 const OrderConfirmation = () => {
   const navigate = useNavigate();
-  const { cartItems, removeItem, updateQuantity } = useCart();
+  const { cartItems, removeItem, updateQuantity, calculateDiscountedPrice } = useCart();
   const [tableNumber, setTableNumber] = useState('');
 
-  const calculateSubtotalAndTaxes = () => {
-    let subtotal = 0;
+  const calculatePriceDetails = () => {
+    let originalTotal = 0;
+    let discountAmount = 0;
     let taxableAmount = 0;
     
     cartItems.forEach(item => {
-      let price = item.price;
+      // Calculate original price total
+      const originalItemTotal = item.price * item.quantity;
+      originalTotal += originalItemTotal;
       
-      if (item.discountType === 'percentage') {
-        price = item.price * (1 - item.discountValue/100);
-      } else if (item.discountType === 'fixed') {
-        price = item.price - item.discountValue;
-      }
+      // Calculate discount amount
+      const effectivePrice = item.effectivePrice !== undefined ? 
+        item.effectivePrice : 
+        calculateDiscountedPrice(item);
       
-      const itemTotal = price * item.quantity;
-      subtotal += itemTotal;
+      const itemDiscount = (item.price - effectivePrice) * item.quantity;
+      discountAmount += itemDiscount;
+      
+      // Calculate subtotal after discount for tax calculation
+      const itemSubtotal = effectivePrice * item.quantity;
       
       // Check if the item is water (exempt from GST)
       const isWater = item.name && 
@@ -30,7 +35,7 @@ const OrderConfirmation = () => {
          item.category?.toLowerCase() === 'water');
          
       if (!isWater) {
-        taxableAmount += itemTotal;
+        taxableAmount += itemSubtotal;
       }
     });
     
@@ -38,15 +43,30 @@ const OrderConfirmation = () => {
     const cgst = taxableAmount * 0.025; // 2.5% CGST
     const sgst = taxableAmount * 0.025; // 2.5% SGST
     
+    // Subtotal is original total minus discount
+    const subtotalAfterDiscount = originalTotal - discountAmount;
+    
+    // Final total is subtotal plus taxes
+    const finalTotal = subtotalAfterDiscount + cgst + sgst;
+    
     return {
-      subtotal,
+      originalTotal,
+      discountAmount,
+      subtotalAfterDiscount,
       cgst,
       sgst,
-      total: subtotal + cgst + sgst
+      finalTotal
     };
   };
 
-  const { subtotal, cgst, sgst, total } = calculateSubtotalAndTaxes();
+  const { 
+    originalTotal, 
+    discountAmount, 
+    subtotalAfterDiscount, 
+    cgst, 
+    sgst, 
+    finalTotal 
+  } = calculatePriceDetails();
 
   const formatDate = (timestamp) => {
     const date = new Date(timestamp);
@@ -112,6 +132,19 @@ const OrderConfirmation = () => {
                 (item.name.toLowerCase().includes('water') || 
                  item.category?.toLowerCase() === 'water');
               
+              // Check if the item has a discount
+              const hasDiscount = item.discounttype && item.discountvalue;
+              const originalPrice = Number(item.price).toFixed(2);
+              
+              // Use effectivePrice if it exists, otherwise calculate it
+              const discountedPrice = item.effectivePrice !== undefined ? 
+                Number(item.effectivePrice).toFixed(2) : 
+                Number(calculateDiscountedPrice(item)).toFixed(2);
+              
+              // Calculate price total considering quantity
+              const originalTotal = (item.price * item.quantity).toFixed(2);
+              const discountedTotal = (Number(discountedPrice) * item.quantity).toFixed(2);
+              
               return (
                 <div key={`${item.id}-${item.category}`} className="mb-4">
                   <div className="flex items-start mb-4">
@@ -130,11 +163,20 @@ const OrderConfirmation = () => {
                       <p className="text-sm text-gray-600">
                         {item.addedAt ? formatDate(item.addedAt) : 'Now'}
                       </p>
+                      
+                      {/* Display discounts if available */}
+                      {hasDiscount && (
+                        <div className="text-green-600 text-sm">
+                          {item.discounttype === 'Percentage' && `${item.discountvalue}% off`}
+                          {item.discounttype === 'Fixed' && `₹${item.discountvalue} off`}
+                        </div>
+                      )}
+                      
                       {isWater && (
                         <p className="text-green-600 text-sm">GST exempt</p>
                       )}
+                      
                       <div className="flex justify-between items-center mt-2">
-                        
                         <div className="flex items-center">
                           <button 
                             onClick={() => {
@@ -163,7 +205,14 @@ const OrderConfirmation = () => {
                     
                     {/* Price */}
                     <div className="text-right">
-                      <p className="font-bold">₹{(item.price * item.quantity).toFixed(2)}</p>
+                      {hasDiscount ? (
+                        <>
+                          <p className="text-gray-600 text-sm line-through">₹{originalTotal}</p>
+                          <p className="font-bold">₹{discountedTotal}</p>
+                        </>
+                      ) : (
+                        <p className="font-bold">₹{originalTotal}</p>
+                      )}
                       <button 
                         onClick={() => removeItem(item.id, item.category)}
                         className="text-red-500 mt-8"
@@ -184,21 +233,37 @@ const OrderConfirmation = () => {
           {/* Price Summary */}
           <div className="mt-6 space-y-2">
             <div className="flex justify-between">
-              <span className="text-gray-600">Subtotal</span>
-              <span>₹{subtotal.toFixed(2)}</span>
+              <span className="text-gray-600">Original Total</span>
+              <span>₹{originalTotal.toFixed(2)}</span>
             </div>
+            
+            {discountAmount > 0 && (
+              <div className="flex justify-between">
+                <span className="text-green-600">Discount</span>
+                <span className="text-green-600">- ₹{discountAmount.toFixed(2)}</span>
+              </div>
+            )}
+            
+            <div className="flex justify-between">
+              <span className="text-gray-600">Subtotal</span>
+              <span>₹{subtotalAfterDiscount.toFixed(2)}</span>
+            </div>
+            
             <div className="flex justify-between">
               <span className="text-gray-600">CGST (2.5%)</span>
               <span>₹{cgst.toFixed(2)}</span>
             </div>
+            
             <div className="flex justify-between">
               <span className="text-gray-600">SGST (2.5%)</span>
               <span>₹{sgst.toFixed(2)}</span>
             </div>
+            
             <div className="border-t border-gray-300 my-4"></div>
+            
             <div className="flex justify-between font-bold text-xl">
               <span>Total</span>
-              <span>₹{total.toFixed(2)}</span>
+              <span>₹{finalTotal.toFixed(2)}</span>
             </div>
           </div>
 

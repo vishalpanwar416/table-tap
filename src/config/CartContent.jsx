@@ -10,6 +10,23 @@ export function CartProvider({ children }) {
     console.log("Cart state updated:", cartItems);
   }, [cartItems]);
 
+  // Calculate the actual price after discount
+  const calculateDiscountedPrice = (item) => {
+    if (!item.discounttype || !item.discountvalue) {
+      return item.price;
+    }
+    
+    let finalPrice = item.price;
+    
+    if (item.discounttype === 'Percentage') {
+      finalPrice = item.price * (1 - item.discountvalue/100);
+    } else if (item.discounttype === 'Fixed') {
+      finalPrice = Math.max(0, item.price - item.discountvalue);
+    }
+    
+    return finalPrice;
+  };
+
   const addToCart = (item) => {
     // Debug: Log the item being added to cart
     console.log("Adding to cart:", item);
@@ -36,10 +53,15 @@ export function CartProvider({ children }) {
         );
       }
       
-      // Preserve all item properties exactly as they are
+      // Calculate the actual price after discount
+      const effectivePrice = calculateDiscountedPrice(item);
+      console.log(`Original price: ${item.price}, Effective price after discount: ${effectivePrice}`);
+      
+      // Preserve all item properties and add the effective price
       console.log("Creating new cart item");
       const newItem = { 
         ...item, 
+        effectivePrice: effectivePrice,  // Store the calculated price
         quantity: 1
       };
       
@@ -80,7 +102,8 @@ export function CartProvider({ children }) {
         addToCart,
         removeItem,
         updateQuantity,
-        clearCart
+        clearCart,
+        calculateDiscountedPrice
       }}
     >
       {children}
