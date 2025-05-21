@@ -54,7 +54,7 @@ const Maincarosel = () => {
       className="flex flex-row w-full h-[190px] md:h-[240px] rounded-[3rem] overflow-hidden shadow-md cursor-pointer"
       onClick={() => handleItemClick(item)}
     >
-      <div className="w-1/2 bg-gray-700 text-white flex flex-col justify-center items-center px-3">
+      <div className="w-1/2 bg-gradient-to-r from-gray-700 to-gray-900 text-white flex flex-col justify-center items-center px-3">
         <p className="text-xl md:text-2xl font-medium text-center">{item.message}</p>
         <p className="text-4xl md:text-5xl font-extrabold mt-2 text-center">{item.discount}</p>
       </div>
