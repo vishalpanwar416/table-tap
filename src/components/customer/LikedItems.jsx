@@ -91,7 +91,7 @@ const LikedItems = ({ foodItems }) => {
         ) : (
           <button 
             onClick={() => addToCart(item)}
-            className="absolute bottom-0 right-0 px-1 py-1 bg-black/80 text-orange-100 rounded-md
+            className="absolute bottom-0 right-0 px-1 py-1 bg-black/80 text-gray-100 rounded-md
                       text-[10px] font-medium hover:bg-black/90 transition-colors duration-200"
           >
             <ShoppingBag className="w-5 h-5 md:w-7 md:h-7" />

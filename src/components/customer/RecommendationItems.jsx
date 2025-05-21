@@ -3,7 +3,7 @@ import { useCart } from '../../config/CartContent';
 import { useLikes } from '../../config/LikesContent';
 import PriceDisplay from './PriceDisplay';
 
-const RecommendationItem = ({ item }) => {
+const RecommendationItem = ({ item, onImageClick }) => {
   const { toggleLike, likedItems } = useLikes();
   const { cartItems, addToCart, updateQuantity, removeItem } = useCart();
 
@@ -34,6 +34,8 @@ const RecommendationItem = ({ item }) => {
           src={image} 
           alt={name} 
           className="w-full h-full object-cover" 
+          onClick={() => onImageClick && onImageClick(item)}
+          style={{ cursor: 'pointer' }}
         />
       </div>
 
@@ -75,8 +77,20 @@ const RecommendationItem = ({ item }) => {
             )}
 
       {/* Price Display */}
-      <div className="absolute top-1 right-1 bg-black/80 px-2 py-1 pt-1.5 rounded-xl text-white text-xs font-medium md:w-[64px] md:h-6">
-        <PriceDisplay item={item} className='md:text-[17px]' />
+      <div className="absolute top-1 right-1 bg-black/80 px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1 min-w-[50px] min-h-[15px] md:min-w-[100px] md:min-h-[26px]">
+        {item.discounttype && item.discountvalue ? (
+          <>
+            <span className="line-through text-gray-300 mr-1 whitespace-nowrap text-base text-sm md:text-sm">₹{Number(item.price).toFixed(2)}</span>
+            <span className="text-orange-400 font-semibold whitespace-nowrap text-lg md:text-lg">
+              ₹{item.discounttype === 'Percentage'
+                ? (item.price - (item.price * (item.discountvalue / 100))).toFixed(2)
+                : Math.max(0, item.price - item.discountvalue).toFixed(2)
+              }
+            </span>
+          </>
+        ) : (
+          <span className="font-semibold whitespace-nowrap text-white text-lg md:text-xl">₹{Number(item.price).toFixed(2)}</span>
+        )}
       </div>
 
       {/* Food Info */}

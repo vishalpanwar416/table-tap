@@ -170,12 +170,25 @@ const MenuDropdown = ({
                     <p className="text-black font-medium text-lg">{item.name}</p>
                     <p className="text-gray-500 text-sm mt-1">{item.description}</p>
                   </div>
-                  <PriceDisplay 
-                    item={item} 
+                  <PriceDisplay
+                    item={item}
                     className="text-black font-semibold text-lg"
                     percentageClass="bg-gray-200 text-gray-800"
                   />
                 </div>
+                {/* Tags if available */}
+                {item.tags && item.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {item.tags.map(tag => (
+                      <span
+                        key={tag}
+                        className="bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded-full"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <div className="flex justify-end mt-3">
                   {quantity > 0 ? (
                     <div className="flex items-center bg-black/80 rounded-full px-3 py-1 gap-2">

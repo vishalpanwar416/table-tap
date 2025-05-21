@@ -1,5 +1,4 @@
-// CartSidebar.jsx - Debugging Version
-import React, { useEffect } from 'react';
+import React from 'react';
 import { ShoppingCart, Minus, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../../config/CartContent';
@@ -7,36 +6,15 @@ import { useNavigate } from 'react-router-dom';
 
 const CartSidebar = ({ isOpen, onClose }) => {
   const { cartItems, updateQuantity, removeItem } = useCart();
-  
-  // Debug: Log cart items to see their actual structure
-  useEffect(() => {
-    if (cartItems.length > 0) {
-      console.log("Cart Items with discount info:", cartItems);
-    }
-  }, [cartItems]);
 
-  // Calculate discounted price for an item - handling ALL possible property name variations
+  // Calculate discounted price for an item
   const calculateDiscountedPrice = (item) => {
-    let price = parseFloat(item.price);
+    let price = item.price;
     
-    // Debug: Log the item and its discount properties
-    console.log("Item being calculated:", item);
-    console.log("Discount properties:", {
-      discounttype: item.discounttype,
-      discountvalue: item.discountvalue,
-      discountType: item.discountType,
-      discountValue: item.discountValue,
-      type: item.type,
-      value: item.value
-    });
-  
-    // Try all possible property name combinations
-    if (item.discounttype === 'Percentage' || item.discountType === 'percentage' || item.discountType === 'Percentage') {
-      const value = item.discountvalue || item.discountValue || 0;
-      price = price * (1 - value / 100);
-    } else if (item.discounttype === 'Fixed' || item.discountType === 'fixed' || item.discountType === 'Fixed') {
-      const value = item.discountvalue || item.discountValue || 0;
-      price = price - value;
+    if (item.discounttype === 'Percentage') {
+      price = item.price * (1 - item.discountvalue/100);
+    } else if (item.discounttype === 'Fixed') {
+      price = item.price - item.discountvalue;
     }
     
     return price;
@@ -92,11 +70,6 @@ const CartSidebar = ({ isOpen, onClose }) => {
     exit: { opacity: 0 }
   };
 
-  // Function to check if item has any discount
-  const hasAnyDiscount = (item) => {
-    return (item.discounttype && item.discountvalue) || 
-           (item.discountType && item.discountValue);
-  };
 
   return (
     <AnimatePresence>
@@ -129,17 +102,19 @@ const CartSidebar = ({ isOpen, onClose }) => {
                 </h3>
               </div>
 
-              {/* Debug info */}
-              <div className="px-6 mb-4 text-white text-xs">
-                <div className="bg-gray-800 p-2 rounded">
-                  <p>Debug mode: Checking discount properties...</p>
-                </div>
-              </div>
-
               {/* Cart items list */}
               <div className="flex-1 overflow-y-auto px-6">
                 {cartItems.length === 0 ? (
-                  <p className="text-gray-400 text-center mt-8">Your cart is empty</p>
+                  <div className="flex flex-col items-center justify-center mt-8">
+                    <p className="text-gray-400 text-center mb-4">Your cart is empty</p>
+                    <button
+                      onClick={onClose}
+                      className="bg-white text-black rounded-full w-12 h-12 flex items-center justify-center text-3xl shadow-lg hover:bg-gray-200 transition"
+                      aria-label="Close Cart"
+                    >
+                      +
+                    </button>
+                  </div>
                 ) : (
                   cartItems.map((item, index) => {
                     // Check if the item is water
@@ -147,20 +122,14 @@ const CartSidebar = ({ isOpen, onClose }) => {
                       (item.name.toLowerCase().includes('water') || 
                        item.category?.toLowerCase() === 'water');
                     
-                    // Calculate discounted price - using the comprehensive function
-                    const itemHasDiscount = hasAnyDiscount(item);
-                    const originalPrice = parseFloat(item.price).toFixed(2);
-                    const discountedPrice = itemHasDiscount ? 
-                      parseFloat(calculateDiscountedPrice(item)).toFixed(2) : originalPrice;
-                    
-                    // Debug info
-                    console.log(`Item ${index + 1}: ${item.name}`);
-                    console.log(`- Original price: ${originalPrice}`);
-                    console.log(`- Discounted price: ${discountedPrice}`);
-                    console.log(`- Has discount: ${itemHasDiscount}`);
+                    // Calculate discounted price
+                    const hasDiscount = item.discounttype && item.discountvalue;
+                    const originalPrice = Number(item.price).toFixed(2);
+                    const discountedPrice = hasDiscount ? 
+                      Number(calculateDiscountedPrice(item)).toFixed(2) : originalPrice;
                     
                     return (
-                      <div key={`${item.id}-${item.category}-${index}`}>
+                      <div key={`${item.id}-${item.category}`}>
                         <div className="flex items-start mb-4">
                           {/* Item image */}
                           <div className="w-24 h-24 overflow-hidden rounded-lg mr-4">
@@ -175,30 +144,16 @@ const CartSidebar = ({ isOpen, onClose }) => {
                           <div className="flex-1">
                             <h3 className="text-white font-medium text-lg">{item.name}</h3>
                             
-                            {/* Debug info */}
-                            <div className="text-xs text-gray-400 mb-1">
-                              {itemHasDiscount ? 
-                                `Using discount: ${item.discounttype || item.discountType} ${item.discountvalue || item.discountValue}` : 
-                                'No discount found'}
-                            </div>
-                            
                             {/* Price display with discounts if available */}
-                            {itemHasDiscount ? (
+                            {hasDiscount ? (
                               <div>
                                 <p className="text-gray-400 text-sm line-through">₹{originalPrice}</p>
                                 <p className="text-white font-medium">₹{discountedPrice}</p>
-                                
-                                {/* Show discount details */}
-                                {(item.discounttype === 'Percentage' || item.discountType === 'percentage' || item.discountType === 'Percentage') && (
-                                  <span className="text-green-400 text-sm">
-                                    {item.discountvalue || item.discountValue}% off
-                                  </span>
+                                {item.discounttype === 'Percentage' && (
+                                  <span className="text-green-400 text-sm">{item.discountvalue}% off</span>
                                 )}
-                                
-                                {(item.discounttype === 'Fixed' || item.discountType === 'fixed' || item.discountType === 'Fixed') && (
-                                  <span className="text-green-400 text-sm">
-                                    ₹{item.discountvalue || item.discountValue} off
-                                  </span>
+                                {item.discounttype === 'Fixed' && (
+                                  <span className="text-green-400 text-sm">₹{item.discountvalue} off</span>
                                 )}
                               </div>
                             ) : (
@@ -210,10 +165,11 @@ const CartSidebar = ({ isOpen, onClose }) => {
                             )}
                           </div>
                           
-                          {/* Date and time */}
+                          {/* Date and time (using placeholders) */}
                           <div className="text-right">
-                            <p className="text-white">{new Date().toLocaleDateString()}</p>
-                            <p>" "</p>
+                          <p className="text-white">{new Date().toLocaleDateString()}</p>
+                          <p>" "</p>
+                          {/* <p className="text-white">{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p> */}
                             
                             {/* Quantity controls */}
                             <div className="flex items-center justify-end mt-2">

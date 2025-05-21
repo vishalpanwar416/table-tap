@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Search, X, ShoppingCart, Bell, User } from 'lucide-react';
 import { useCart } from '../../config/CartContent';
+import { useRestaurant } from '../../context/RestaurantContext';
 
 const Header = ({ 
   isSearchActive, 
@@ -13,6 +14,7 @@ const Header = ({
   const inputRef = useRef(null);
   const [searchQuery, setSearchQuery] = useState('');
   const { cartItems } = useCart();
+  const { restaurant } = useRestaurant();
 
   useEffect(() => {
     if (isSearchActive && inputRef.current) {
@@ -74,6 +76,14 @@ const Header = ({
             </div>
           </div>
         </form>
+      </div>
+
+      {/* Restaurant name styled like in PaymentPage */}
+      <div className={`flex-1 text-center transition-all duration-500 ${isSearchActive ? 'opacity-0 pointer-events-none transform -translate-y-2' : 'opacity-100 transform translate-y-0'}`}>
+        <div className="flex flex-col items-center justify-center mr-4">
+          <h2 className="text-white text-[17px] font-spartan">{restaurant.name}</h2>
+          <p className="text-[8px] text-gray-300">{restaurant.address || "Gourmet Restaurant"}</p>
+        </div>
       </div>
 
       {/* Icons section */}

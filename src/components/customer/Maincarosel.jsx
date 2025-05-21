@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AliceCarousel from 'react-alice-carousel';
 import 'react-alice-carousel/lib/alice-carousel.css';
 import { fetchMaincaroselData, fallbackMaincaroselData } from './MaincaroselData';
+import OrderCard from './itemCard';
 
 const responsive = {
   0: { items: 1 },
@@ -11,6 +12,8 @@ const responsive = {
 const Maincarosel = () => {
   const [carouselData, setCarouselData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isOrderCardOpen, setIsOrderCardOpen] = useState(false);
 
   useEffect(() => {
     const loadCarouselData = async () => {
@@ -35,10 +38,21 @@ const Maincarosel = () => {
     loadCarouselData();
   }, []);
 
+  const handleItemClick = (item) => {
+    setSelectedItem(item);
+    setIsOrderCardOpen(true);
+  };
+
+  const handleCloseOrderCard = () => {
+    setIsOrderCardOpen(false);
+    setSelectedItem(null);
+  };
+
   const items = carouselData.map((item, index) => (
     <div
       key={item.id || index}
-      className="flex flex-row w-full h-[190px] md:h-[240px] rounded-[3rem] overflow-hidden shadow-md"
+      className="flex flex-row w-full h-[190px] md:h-[240px] rounded-[3rem] overflow-hidden shadow-md cursor-pointer"
+      onClick={() => handleItemClick(item)}
     >
       <div className="w-1/2 bg-gray-700 text-white flex flex-col justify-center items-center px-3">
         <p className="text-xl md:text-2xl font-medium text-center">{item.message}</p>
@@ -73,19 +87,30 @@ const Maincarosel = () => {
   }
 
   return (
-    <AliceCarousel
-      mouseTracking
-      items={items}
-      responsive={responsive}
-      controlsStrategy="responsive"
-      autoPlay
-      autoPlayInterval={3000}
-      infinite
-      disableDotsControls
-      disableButtonsControls
-      animationType="fade"
-      animationDuration={1000}
-    />
+    <>
+      <AliceCarousel
+        mouseTracking
+        items={items}
+        responsive={responsive}
+        controlsStrategy="responsive"
+        autoPlay
+        autoPlayInterval={3000}
+        infinite
+        disableDotsControls
+        disableButtonsControls
+        animationType="fade"
+        animationDuration={1000}
+      />
+      <OrderCard
+        isOpen={isOrderCardOpen}
+        onClose={handleCloseOrderCard}
+        item={
+          selectedItem
+            ? { ...selectedItem, image: selectedItem.imade || selectedItem.image }
+            : null
+        }
+      />
+    </>
   );
 };
 

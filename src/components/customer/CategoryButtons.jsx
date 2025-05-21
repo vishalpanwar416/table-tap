@@ -29,7 +29,7 @@ const CategoryButtons = ({
       {categories.map((categoryName, index) => (
         <button
           key={index}
-          className="flex flex-col items-center relative focus:outline-none"
+          className="flex flex-col items-center relative focus:outline-none justify-center"
           onClick={(e) => handleCategoryClick({ name: categoryName }, e)}
         >
           <div className={`${

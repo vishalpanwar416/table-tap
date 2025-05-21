@@ -9,7 +9,7 @@ import Header from '../../components/customer/Header';
 import Sidebar from '../../components/customer/Slidebar';
 import NotificationSidebar from '../../components/customer/NotificationSlidebar';  
 import CartSidebar from '../../components/customer/CartSidebar';
-import OrderCard from '../../components/customer/OrderCard';
+import OrderCard from '../../components/customer/itemCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../../config/CartContent';
 import LogoutPopup from '../../components/auth/LogoutPopup';
@@ -264,11 +264,10 @@ export default function HomePage() {
                   {allFoodItems.filter(item => item.tags?.some(tag => tag.toLowerCase() === 'recommended')).map((item) => (
                     <div 
                       key={item.id}
-                      className="flex-shrink-0 w-[45vw] md:w-[30vw] cursor-pointer"
+                      className="flex-shrink-0 w-[45vw] md:w-[30vw]"
                       style={{ scrollSnapAlign: 'start' }}
-                      onClick={() => handleItemClick(item)}
                     >
-                      <RecommendationItem item={item} />
+                      <RecommendationItem item={item} onImageClick={handleItemClick} />
                     </div>
                   ))}
                 </motion.div>

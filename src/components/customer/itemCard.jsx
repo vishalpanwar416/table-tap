@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { X, Heart, ShoppingBag, Minus, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../../config/CartContent';
 import { useLikes } from '../../config/LikesContent';
 import PriceDisplay from './PriceDisplay';
+import { useMotionValue, useTransform } from 'framer-motion';
 
 const OrderCard = ({ isOpen, onClose, item }) => {
   const { cartItems, addToCart, updateQuantity, removeItem } = useCart();
@@ -12,6 +13,9 @@ const OrderCard = ({ isOpen, onClose, item }) => {
   const isLiked = item ? likedItems.some(likedItem => likedItem.id === item.id) : false;
   const cartItem = item ? cartItems.find(i => i.id === item.id) : null;
   const quantity = cartItem?.quantity || 0;
+
+  const y = useMotionValue(0);
+  const backdropOpacity = useTransform(y, [0, 300], [0.5, 0]); // Fade out as you drag down
 
   // Lock scrolling when the order card is open
   useEffect(() => {
@@ -53,6 +57,7 @@ const OrderCard = ({ isOpen, onClose, item }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.5 }}
             exit={{ opacity: 0 }}
+            style={{ opacity: backdropOpacity }}
             className="fixed inset-0 bg-black z-40"
             onClick={onClose}
           />
@@ -64,6 +69,15 @@ const OrderCard = ({ isOpen, onClose, item }) => {
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 250 }}
             className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 shadow-xl overflow-hidden max-h-[85vh] max-w-[450px] md:max-w-4xl mx-auto"
+            drag="y"
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={0.3}
+            style={{ y }}
+            onDragEnd={(event, info) => {
+              if (info.point.y > 150 || info.velocity.y > 800) { // More dynamic threshold
+                onClose();
+              }
+            }}
           >
             {/* Close button */}
             <button
@@ -93,7 +107,7 @@ const OrderCard = ({ isOpen, onClose, item }) => {
             </div>
             
             {/* Content */}
-            <div className="p-6 pb-24 overflow-y-auto rounded-xl" style={{ maxHeight: 'calc(85vh - 224px)' }}>
+            <div className="p-6 pb-24 overflow-y-auto " style={{ maxHeight: 'calc(85vh - 224px)' }}>
               <div className="flex justify-between items-center mb-2">
                 <h2 className="text-2xl font-bold text-gray-900">{item.name}</h2>
                 <PriceDisplay item={item} className="text-xl font-bold text-black" />
