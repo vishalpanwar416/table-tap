@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Heart, ShoppingBag, ArrowLeft } from 'lucide-react';
 import Header from '../../components/customer/Header';
 import Sidebar from '../../components/customer/Slidebar';
@@ -6,11 +6,11 @@ import CartSidebar from '../../components/customer/CartSidebar';
 import { profileImg } from '../../assets/images/Food/Index';
 import { useCart } from '../../config/CartContent';
 import { useNavigate } from 'react-router-dom';
-import { allFoodItems } from '../../components/foodData';
 import { useLikes } from '../../config/LikesContent';
 import NotificationSidebar from '../../components/customer/NotificationSlidebar';
+import OrderCard from '../../components/customer/itemCard';
 
-const LikedItem = ({ image, name, price, description, item }) => {
+const LikedItem = ({ image, name, price, description, item, onImageClick }) => {
   const { cartItems, addToCart, updateQuantity, removeItem } = useCart();
   const { toggleLike, likedItems } = useLikes();
   const cartItem = cartItems.find(i => i.id === item.id);
@@ -24,10 +24,21 @@ const LikedItem = ({ image, name, price, description, item }) => {
   return (
     <div className="relative h-full flex flex-col group hover:shadow-lg transition-shadow">
       <div className="relative rounded-xl overflow-hidden mb-2 flex-1 aspect-square">
+        {/* Offer Badge */}
+        {item.discounttype && item.discountvalue ? (
+          <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-lg font-semibold shadow-lg z-10">
+            {item.discounttype === 'Percentage'
+              ? `${item.discountvalue}% off`
+              : `₹${item.discountvalue} off`
+            }
+          </div>
+        ) : null}
+
         <img 
           src={image} 
           alt={name}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover cursor-pointer"
+          onClick={() => onImageClick(item)}
         />
         
         <button 
@@ -37,8 +48,21 @@ const LikedItem = ({ image, name, price, description, item }) => {
           <Heart className={`h-4 w-4 ${isLiked ? 'text-red-500 fill-red-500' : 'text-gray-600'}`} />
         </button>
 
-        <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2.5 py-1 rounded-lg">
-          ₹{Number(price).toFixed(2)}
+        {/* Price Tag */}
+        <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2.5 py-1 rounded-lg flex flex-col items-end">
+          {item.discounttype && item.discountvalue ? (
+            <>
+              <span className="line-through text-gray-300 mr-1 whitespace-nowrap">₹{Number(item.price).toFixed(2)}</span>
+              <span className="text-orange-400 font-semibold whitespace-nowrap">
+                ₹{item.discounttype === 'Percentage'
+                  ? (item.price - (item.price * (item.discountvalue / 100))).toFixed(2)
+                  : Math.max(0, item.price - item.discountvalue).toFixed(2)
+                }
+              </span>
+            </>
+          ) : (
+            <span className="font-semibold whitespace-nowrap text-white">₹{Number(item.price).toFixed(2)}</span>
+          )}
         </div>
       </div>
       
@@ -85,19 +109,31 @@ const LikedItemsPage = () => {
   const [isSearchActive, setIsSearchActive] = useState(false);
   const { cartItems } = useCart();
   const navigate = useNavigate();
-  const { likedItems } = useLikes();
+  const { likedItems, loading } = useLikes();
   const containerRef = useRef(null);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isOrderCardOpen, setIsOrderCardOpen] = useState(false);
 
-  const likedFoodItems = allFoodItems.filter(item => 
-    likedItems.some(li => li.id === item.id)
-  );
+  // No need to filter from allFoodItems, we can use the likedItems directly
+  const likedFoodItems = likedItems;
+
+  // For debugging
+  useEffect(() => {
+    console.log("likedItems from context:", likedItems);
+    console.log("likedFoodItems to display:", likedFoodItems);
+  }, [likedItems]);
 
   const toggle = {
     sidebar: () => setIsSidebarOpen(!isSidebarOpen),
     cart: () => setIsCartOpen(!isCartOpen),
     search: () => setIsSearchActive(!isSearchActive),
     notification: () => setIsNotificationOpen(!isNotificationOpen),
+  };
+
+  const handleImageClick = (item) => {
+    setSelectedItem(item);
+    setIsOrderCardOpen(true);
   };
 
   return (
@@ -155,13 +191,35 @@ const LikedItemsPage = () => {
               It's time to buy your favorite dish.
           </p>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {likedFoodItems.map((item) => (
-              <div key={item.id} className="aspect-square">
-                <LikedItem {...item} item={item} />
-              </div>
-            ))}
-          </div>
+          {loading ? (
+            <div className="flex justify-center items-center h-32">
+              <p>Loading your liked items...</p>
+            </div>
+          ) : likedFoodItems.length === 0 ? (
+            <div className="flex flex-col justify-center items-center h-64">
+              <Heart className="h-16 w-16 text-gray-300 mb-4" />
+              <p className="text-gray-500 text-lg">You haven't liked any items yet.</p>
+              <button 
+                onClick={() => navigate('/')}
+                className="mt-4 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Browse Menu
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+              {likedFoodItems.map((item) => (
+                <div key={item.id} className="aspect-square">
+                  <LikedItem {...item} item={item} onImageClick={handleImageClick} />
+                </div>
+              ))}
+            </div>
+          )}
+          <OrderCard
+            isOpen={isOrderCardOpen}
+            onClose={() => setIsOrderCardOpen(false)}
+            item={selectedItem}
+          />
         </div>
       </div>
     </div>

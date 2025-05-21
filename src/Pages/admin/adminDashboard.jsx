@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../components/admin/Sidebar';
 import MobileNav from '../../components/admin/MobileNav';
@@ -15,6 +15,7 @@ import { X } from 'lucide-react';
 import { getAllFoodItems } from '../../api/foodService';
 import { supabase } from '../../supabase';
 import { updateOrderStatus as updateOrderStatusService } from '../../api/orderService';
+import NotificationSound from '../../components/NotificationSound';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -29,6 +30,8 @@ const AdminDashboard = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const orderChannelRef = useRef(null);
+  const [playOrderSound, setPlayOrderSound] = useState(false);
   // Menu items shared across components
   const menuItems = [
     { id: 'dashboard', icon: 'LayoutDashboard', label: 'Dashboard' },
@@ -96,9 +99,6 @@ const AdminDashboard = () => {
     fetchAdminProfile();
   }, [currentUser]);
         
-        
-        
-
   // Fetch food items with error handling
   const fetchFoodItems = async () => {
     let loadingTimeout;
@@ -112,7 +112,6 @@ const AdminDashboard = () => {
       }, 15000);
       
       const data = await getAllFoodItems();
-      //console.log("Fetched food items:", data);
       setFoodItems(data || []);
       clearTimeout(loadingTimeout);
       return data;
@@ -133,22 +132,20 @@ const AdminDashboard = () => {
     }
   }, [currentUser]);
 
-  // Fetch orders with safety timeout
+  // Fetch orders with safety timeout and set up real-time subscription
   useEffect(() => {
     if (!currentUser) return;
-    
+
     let loadingTimeout;
-    
+
     const fetchOrders = async () => {
       try {
         setLoading(true);
-        
-        // Set a timeout to force loading to false after 15 seconds
         loadingTimeout = setTimeout(() => {
           setLoading(false);
           setErrorMsg('Orders request took too long. Please try again.');
         }, 15000);
-        
+
         const { data, error } = await supabase
           .from('orders')
           .select('*')
@@ -164,13 +161,68 @@ const AdminDashboard = () => {
         setLoading(false);
       }
     };
-    
+
     fetchOrders();
-    
+
+    // Remove previous channel if exists
+    if (orderChannelRef.current) {
+      supabase.removeChannel(orderChannelRef.current);
+    }
+
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel('orders-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+        },
+        (payload) => {
+          console.log('Realtime payload:', payload);
+          const { eventType, new: newRecord, old: oldRecord } = payload;
+
+          setOrders((prevOrders) => {
+            if (eventType === 'INSERT') {
+              setPlayOrderSound(true);
+              return [newRecord, ...prevOrders];
+            } else if (eventType === 'UPDATE') {
+              return prevOrders.map((order) =>
+                order.id === newRecord.id ? newRecord : order
+              );
+            } else if (eventType === 'DELETE') {
+              return prevOrders.filter((order) => order.id !== oldRecord.id);
+            }
+            return prevOrders;
+          });
+
+          if (eventType === 'INSERT') {
+            setSuccessMsg('New order received!');
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+      });
+
+    orderChannelRef.current = channel;
+
     return () => {
       if (loadingTimeout) clearTimeout(loadingTimeout);
+      if (orderChannelRef.current) {
+        supabase.removeChannel(orderChannelRef.current);
+        orderChannelRef.current = null;
+      }
     };
   }, [currentUser]);
+
+  // Reset playOrderSound after it is triggered
+  useEffect(() => {
+    if (playOrderSound) {
+      setTimeout(() => setPlayOrderSound(false), 500);
+    }
+  }, [playOrderSound]);
 
   // Clear messages after 5 seconds
   useEffect(() => {
@@ -197,7 +249,7 @@ const AdminDashboard = () => {
       // Update order status and get updated order data
       const updatedOrder = await updateOrderStatusService(orderId, status);
       
-      // Optimistically update local state
+      // Optimistically update local state (now redundant with real-time updates, but keeps UI responsive)
       setOrders(prevOrders => 
         prevOrders.map(order => 
           order.id === orderId ? { ...order, status: updatedOrder.status } : order
@@ -265,6 +317,7 @@ const AdminDashboard = () => {
         </div>
       )}
       <AdminNotificationsToast />
+      <NotificationSound play={playOrderSound} />
 
       {loading && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -382,6 +435,7 @@ const AdminDashboard = () => {
                 <OrderManagement 
                   orders={orders}
                   updateOrderStatus={updateOrderStatus}
+                  searchTerm={searchTerm}
                 />
               )}
 

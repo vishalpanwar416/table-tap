@@ -1,16 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, Heart } from 'lucide-react';
 import { useCart } from '../../config/CartContent';
 import { useLikes } from '../../config/LikesContent';
 import PriceDisplay from './PriceDisplay';
+import OrderCard from './itemCard';
 
 const BestSellers = ({ foodItems }) => {
   const navigate = useNavigate();
 
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isOrderCardOpen, setIsOrderCardOpen] = useState(false);
 
   const handleViewAll = () => {
     navigate('/best-sellers');
+  };
+
+  const handleOpenItemCard = (item) => {
+    setSelectedItem(item);
+    setIsOrderCardOpen(true);
+  };
+
+  const handleCloseItemCard = () => {
+    setIsOrderCardOpen(false);
+    setSelectedItem(null);
   };
 
   const FoodItem = ({ item }) => {
@@ -48,7 +61,13 @@ const BestSellers = ({ foodItems }) => {
         <div className="w-[150px] flex-shrink-0 rounded-xl overflow-hidden relative shadow-lg group 
                       hover:shadow-xl transition-shadow duration-200
                       md:w-[250px] md:h-[200px]">
-        <img src={item.image} alt={item.name} className="w-full h-28 md:h-[200px] object-cover" />
+        <button
+          onClick={() => handleOpenItemCard(item)}
+          className="w-full h-28 md:h-[200px] block focus:outline-none"
+          style={{ padding: 0, border: 'none', background: 'none' }}
+        >
+          <img src={item.image} alt={item.name} className="w-full h-28 md:h-[200px] object-cover" />
+        </button>
         <button 
         className="absolute top-2 left-2 bg-white/70 rounded-full p-1 z-10"
         onClick={() => toggleLike(item)}
@@ -58,11 +77,20 @@ const BestSellers = ({ foodItems }) => {
         />
       </button>
         {/* Price Tag */}
-        <div className="absolute top-1 right-1 bg-black/80 px-1 rounded-md text-xs font-medium text-white md:w-[64px] md:h-5">
-          <PriceDisplay
-          item={item}
-          className='md:text-[15px]'
-          />
+        <div className="absolute top-1 right-1 bg-black/80 px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1 min-w-[80px] min-h-[22px] md:min-w-[100px] md:min-h-[26px]">
+          {item.discounttype && item.discountvalue ? (
+            <>
+              <span className="line-through text-gray-300 mr-1 whitespace-nowrap">₹{Number(item.price).toFixed(2)}</span>
+              <span className="text-orange-400 font-semibold whitespace-nowrap">
+                ₹{item.discounttype === 'Percentage'
+                  ? (item.price - (item.price * (item.discountvalue / 100))).toFixed(2)
+                  : Math.max(0, item.price - item.discountvalue).toFixed(2)
+                }
+              </span>
+            </>
+          ) : (
+            <span className="font-semibold whitespace-nowrap text-white">₹{Number(item.price).toFixed(2)}</span>
+          )}
         </div>
 
         {/* Quantity Controls or Add Button */}
@@ -125,6 +153,7 @@ const BestSellers = ({ foodItems }) => {
             />
           ))}
       </div>
+      <OrderCard isOpen={isOrderCardOpen} onClose={handleCloseItemCard} item={selectedItem} />
     </div>
   );
 };

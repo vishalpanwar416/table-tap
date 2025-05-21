@@ -545,6 +545,29 @@ const PaymentPage = () => {
               </div>
             </div>
 
+            {/* Phone Number Input */}
+            {(!phoneNumber || showPhoneInput || phoneError) && (
+              <div className="flex flex-col space-y-2">
+                <label className="font-semibold text-lg" htmlFor="phone-input">
+                  Enter your Phone Number
+                </label>
+                <input
+                  id="phone-input"
+                  type="tel"
+                  value={phoneNumber}
+                  onChange={handlePhoneChange}
+                  maxLength={10}
+                  className="p-3 rounded-lg border border-gray-300 focus:outline-none focus:border-orange-500"
+                  placeholder="10-digit mobile number"
+                  inputMode="numeric"
+                  pattern="[0-9]{10}"
+                />
+                {phoneError && (
+                  <span className="text-red-600 text-sm">{phoneError}</span>
+                )}
+              </div>
+            )}
+
             {/* Place Order Button */}
             <div className="mt-auto pt-6">
               <button

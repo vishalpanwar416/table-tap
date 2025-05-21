@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Heart, ShoppingBag, ArrowLeft } from 'lucide-react';
 import Header from '../../components/customer/Header';
@@ -11,8 +10,10 @@ import { useNavigate } from 'react-router-dom';
 import { useLikes } from '../../config/LikesContent';
 import LogoutPopup from '../../components/auth/LogoutPopup';
 import { fetchFoodItems } from '../../components/foodData';
+import FloatingCartButton from '../../components/customer/FloatingCartButton';
+import OrderCard from '../../components/customer/itemCard';
 
-const BestSellerItem = ({ image, name, price, description, item }) => {
+const BestSellerItem = ({ image, name, price, description, item, onImageClick }) => {
   const { toggleLike, likedItems } = useLikes();
   const { cartItems, addToCart, updateQuantity, removeItem } = useCart();
   const cartItem = cartItems.find(i => i.id === item.id);
@@ -32,8 +33,18 @@ const BestSellerItem = ({ image, name, price, description, item }) => {
         <img 
           src={image} 
           alt={name}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover cursor-pointer"
+          onClick={onImageClick}
         />
+        
+        {item.discounttype && item.discountvalue ? (
+          <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-lg font-semibold shadow-lg z-10">
+            {item.discounttype === 'Percentage'
+              ? `${item.discountvalue}% off`
+              : `₹${item.discountvalue} off`
+            }
+          </div>
+        ) : null}
         
         <button 
           className="absolute top-2 right-2 bg-white/80 rounded-full p-1.5 backdrop-blur-sm hover:bg-white transition-colors"
@@ -42,8 +53,20 @@ const BestSellerItem = ({ image, name, price, description, item }) => {
           <Heart className={`h-4 w-4 ${isLiked ? 'text-red-500 fill-red-500' : 'text-gray-600'}`} />
         </button>
 
-        <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2.5 py-1 rounded-lg">
-          ₹{Number(price).toFixed(2)}
+        <div className="absolute bottom-2 right-2 bg-black/80 text-xs px-2.5 py-1 rounded-lg flex flex-col items-end">
+          {item.discounttype && item.discountvalue ? (
+            <>
+              <span className="line-through text-gray-300 mr-1">₹{Number(item.price).toFixed(2)}</span>
+              <span className="text-orange-400 font-semibold text-base">
+                ₹{item.discounttype === 'Percentage'
+                  ? (item.price - (item.price * (item.discountvalue / 100))).toFixed(2)
+                  : Math.max(0, item.price - item.discountvalue).toFixed(2)
+                }
+              </span>
+            </>
+          ) : (
+            <span className="text-white font-semibold">₹{Number(item.price).toFixed(2)}</span>
+          )}
         </div>
       </div>
       
@@ -95,6 +118,8 @@ const BestSellerPage = () => {
   const { cartItems } = useCart();
   const navigate = useNavigate();
   const containerRef = useRef(null);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isOrderCardOpen, setIsOrderCardOpen] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -112,6 +137,18 @@ const BestSellerPage = () => {
     cart: () => setIsCartOpen(!isCartOpen),
     search: () => setIsSearchActive(!isSearchActive),
     notification: () => setIsNotificationOpen(!isNotificationOpen),
+  };
+
+  // Handler to open the item card
+  const handleOpenItemCard = (item) => {
+    setSelectedItem(item);
+    setIsOrderCardOpen(true);
+  };
+
+  // Handler to close the item card
+  const handleCloseItemCard = () => {
+    setIsOrderCardOpen(false);
+    setSelectedItem(null);
   };
 
   if (loading) {
@@ -188,12 +225,14 @@ const BestSellerPage = () => {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {bestSellerItems.map((item) => (
               <div key={item.id} className="aspect-square md:aspect-[1/1.1]">
-                <BestSellerItem {...item} item={item} />
+                <BestSellerItem {...item} item={item} onImageClick={() => handleOpenItemCard(item)} />
               </div>
             ))}
           </div>
         </div>
       </div>
+      <FloatingCartButton toggleCart={toggle.cart} />
+      <OrderCard isOpen={isOrderCardOpen} onClose={handleCloseItemCard} item={selectedItem} />
     </div>
   );
 };

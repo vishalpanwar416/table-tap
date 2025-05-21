@@ -55,8 +55,29 @@ const ActiveOrders = ({
                   <div className="flex flex-wrap items-center justify-between mb-3">
                     <div className="flex items-center mb-2 md:mb-0">
                       <User size={14} className="text-gray-400 mr-1" />
-                      <span className="text-sm font-medium">{order.customerName || 'Guest'}</span>
+                      <span className="text-sm font-medium">
+                        {order.customer_name || order.customerName || 'Guest'}
+                      </span>
+                      {(order.table_number || order.tableNumber) && (
+                        <span className="ml-2 px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full text-xs font-medium">
+                          Table {order.table_number || order.tableNumber}
+                        </span>
+                      )}
                     </div>
+                    {order.customer_email && (
+                      <div className="flex items-center text-xs text-gray-500">
+                        <svg className="mr-1" width="16" height="16" fill="none" viewBox="0 0 24 24">
+                          <path d="M4 4h16v16H4V4zm0 0l8 8 8-8" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        <span>{order.customer_email}</span>
+                      </div>
+                    )}
+                    {order.customer_phone && (
+                      <div className="flex items-center text-xs text-gray-500">
+                        <span className="mr-1">📞</span>
+                        <span>{order.customer_phone}</span>
+                      </div>
+                    )}
                     {order.address && (
                       <div className="flex items-center text-xs text-gray-500 mr-4">
                         <MapPin size={12} className="mr-1" />

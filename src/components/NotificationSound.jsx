@@ -1,13 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 import { useAdminNotifications } from '../context/AdminNotificationContext';
 
-const NotificationSound = () => {
+const NotificationSound = ({ play }) => {
   const { lastNotificationTime, unreadCount } = useAdminNotifications();
   const audioRef = useRef(null);
   
   // Play notification sound when we receive a new notification
   useEffect(() => {
-    if (lastNotificationTime && audioRef.current) {
+    if (play && audioRef.current) {
       const playSound = async () => {
         try {
           // Reset audio to beginning
@@ -26,7 +26,7 @@ const NotificationSound = () => {
       
       playSound();
     }
-  }, [lastNotificationTime]);
+  }, [play]);
 
   return (
     <audio 

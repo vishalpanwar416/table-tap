@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { X, Heart, ShoppingBag, Minus, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useCart } from './CartContent';
-import { useLikes } from './LikesContent';
+import { useCart } from '../../config/CartContent';
+import { useLikes } from '../../config/LikesContent';
 import PriceDisplay from './PriceDisplay';
 
 const OrderCard = ({ isOpen, onClose, item }) => {
@@ -60,10 +60,10 @@ const OrderCard = ({ isOpen, onClose, item }) => {
           {/* Order Card */}
           <motion.div
             initial={{ y: '100%' }}
-            animate={{ y: '40%' }}
+            animate={{ y: 0 }}
             exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 shadow-xl overflow-hidden max-h-[70vh] max-w-[390px] md:max-w-4xl mx-auto"
+            transition={{ type: 'spring', damping: 25, stiffness: 250 }}
+            className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 shadow-xl overflow-hidden max-h-[85vh] max-w-[450px] md:max-w-4xl mx-auto"
           >
             {/* Close button */}
             <button
@@ -74,7 +74,7 @@ const OrderCard = ({ isOpen, onClose, item }) => {
             </button>
             
             {/* Image and like button */}
-            <div className="relative w-full h-48 md:h-64">
+            <div className="relative w-full h-56 md:h-72">
               <img
                 src={item.image}
                 alt={item.name}
@@ -90,15 +90,36 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                   }`}
                 />
               </button>
-              <div className="absolute top-4 right-12 bg-black/80 px-2 py-1 rounded-xl text-white text-sm font-medium">
-                <PriceDisplay item={item} />
-              </div>
             </div>
             
             {/* Content */}
-            <div className="p-6 pb-24">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">{item.name}</h2>
+            <div className="p-6 pb-24 overflow-y-auto rounded-xl" style={{ maxHeight: 'calc(85vh - 224px)' }}>
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-2xl font-bold text-gray-900">{item.name}</h2>
+                <PriceDisplay item={item} className="text-xl font-bold text-black" />
+              </div>
               <p className="text-gray-600 mb-6">{item.description || "No description available."}</p>
+              
+              {/* Order Details Section */}
+              <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">Order Details</h3>
+                
+                {/* Price removed from here since it's now shown next to the name */}
+                
+                {item.preparationTime && (
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-gray-700">Preparation Time</span>
+                    <span className="text-gray-900">{item.preparationTime}</span>
+                  </div>
+                )}
+                
+                {item.category && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-700">Category</span>
+                    <span className="text-gray-900 capitalize">{item.category}</span>
+                  </div>
+                )}
+              </div>
               
               {/* Nutrition facts if available */}
               {item.nutritionFacts && (
@@ -118,6 +139,7 @@ const OrderCard = ({ isOpen, onClose, item }) => {
               {/* Tags if available */}
               {item.tags && item.tags.length > 0 && (
                 <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">Details</h3>
                   <div className="flex flex-wrap gap-2">
                     {item.tags.map(tag => (
                       <span 

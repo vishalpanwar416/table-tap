@@ -7,18 +7,20 @@ import {
 import { useAdminNotifications } from '../../context/AdminNotificationContext';
 import { format, isToday, isYesterday } from 'date-fns';
 
-const OrderManagement = ({ orders, updateOrderStatus }) => {
+const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm }) => {
   const { createNotification } = useAdminNotifications();
   const [viewType, setViewType] = useState('tiles');
   const [statusFilter, setStatusFilter] = useState('all');
   const [expandedOrderId, setExpandedOrderId] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
   const [sortDirection, setSortDirection] = useState('desc');
   const [isLoading, setIsLoading] = useState(false);
   const [confirmModal, setConfirmModal] = useState({ show: false, type: null, order: null });
   const [dropdownOpenOrderId, setDropdownOpenOrderId] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
+  
+  // Use the prop if provided, otherwise fallback to local state (for safety)
+  const searchTerm = propSearchTerm !== undefined ? propSearchTerm : '';
   
   // Handle order status updates with confirmation
   const handleStatusUpdate = async (orderId, userId, newStatus, cancelReason) => {
@@ -292,7 +294,7 @@ const OrderManagement = ({ orders, updateOrderStatus }) => {
             )}
           </h2>
           
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto justify-center items-center">
             {/* View Switcher */}
             <div className="flex items-center space-x-2">
               <button
@@ -308,22 +310,20 @@ const OrderManagement = ({ orders, updateOrderStatus }) => {
                 Table
               </button>
             </div>
-            {/* Search */}
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search size={16} className="text-gray-400" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search orders by ID, table, or item..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              />
-            </div>
-            
+            {/* Refresh Button (replaces Search) */}
+            <button
+              onClick={() => {
+                // Call your refresh logic here, e.g., refetch orders
+                if (typeof window !== "undefined") window.location.reload(); // or use a prop/callback
+              }}
+              className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+              title="Refresh Orders"
+            >
+              <RefreshCw size={18} className="mr-2" />
+              Refresh
+            </button>
             {/* Filters */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 justify-center items-center w-full">
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Filter size={16} className="text-gray-400" />
@@ -346,7 +346,7 @@ const OrderManagement = ({ orders, updateOrderStatus }) => {
               </div>
               
               {/* Sort options */}
-              <div className="relative">
+              <div className="relative flex justify-center w-full">
                 <select
                   value={`${sortBy}-${sortDirection}`}
                   onChange={(e) => {
@@ -354,7 +354,8 @@ const OrderManagement = ({ orders, updateOrderStatus }) => {
                     setSortBy(newSortBy);
                     setSortDirection(newSortDirection);
                   }}
-                  className="pr-8 py-2 border border-gray-200 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="pr-8 py-2 border border-gray-200 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent mx-auto"
+                  style={{ minWidth: 160, textAlign: 'center' }}
                 >
                   <option value="created_at-desc">Newest First</option>
                   <option value="created_at-asc">Oldest First</option>
@@ -381,7 +382,6 @@ const OrderManagement = ({ orders, updateOrderStatus }) => {
             {(searchTerm || statusFilter !== 'all') && (
               <button 
                 onClick={() => {
-                  setSearchTerm('');
                   setStatusFilter('all');
                 }}
                 className="mt-4 px-4 py-2 bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition-colors"

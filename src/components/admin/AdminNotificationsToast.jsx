@@ -4,7 +4,7 @@ import { Check, X, Info, Bell } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const AdminNotificationsToast = () => {
-  const { notifications, markAsRead, unreadCount } = useAdminNotifications();
+  const { notifications, markAsRead, unreadCount, updateOrderStatus } = useAdminNotifications();
   const audioRef = useRef(null);
   
   // Play sound when a new notification arrives
@@ -79,6 +79,15 @@ const AdminNotificationsToast = () => {
                   )}
                   <p>Total: ₹{notification.order_details.total?.toFixed(2) || '0.00'}</p>
                   <p>{notification.order_details.items?.length || 0} items</p>
+                  {notification.order_details.items && (
+                    <ul className="list-disc ml-5 text-xs text-gray-700">
+                      {notification.order_details.items.map((item, idx) => (
+                        <li key={idx}>
+                          {item.name} x{item.quantity}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               )}
 

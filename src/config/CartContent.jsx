@@ -1,195 +1,93 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../supabase';
-import { useAuth } from './AuthContext';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const CartContext = createContext();
 
-export const CartProvider = ({ children }) => {
+export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const { user } = useAuth(); // Use the centralized auth context
 
-  // Load cart items when user changes
+  // Debug: Log cart items state whenever it changes
   useEffect(() => {
-    if (user) {
-      loadUserCart(user.id);
-    } else {
-      setCartItems([]);
-      setLoading(false);
-    }
-  }, [user]);
+    console.log("Cart state updated:", cartItems);
+  }, [cartItems]);
 
-  // Load user cart items from profiles table
-  const loadUserCart = async (userId) => {
-    try {
-      setLoading(true);
-      
-      // Get cart items from profiles table
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('cart_items')
-        .eq('id', userId)
-        .single();
+  const addToCart = (item) => {
+    // Debug: Log the item being added to cart
+    console.log("Adding to cart:", item);
+    console.log("Item discount properties:", {
+      discounttype: item.discounttype,
+      discountvalue: item.discountvalue,
+      price: item.price
+    });
 
-      if (error) {
-        console.error('Error loading user cart:', error);
-        setCartItems([]);
-        return;
-      }
-
-      // Convert cart items from JSONB to our cart format
-      if (profile?.cart_items && profile.cart_items.length > 0) {
-        const formattedItems = await Promise.all(
-          profile.cart_items.map(async (cartItem) => {
-            // Get the food item details
-            const { data: foodItem, error: foodError } = await supabase
-              .from('fooditems')
-              .select('*')
-              .eq('id', cartItem.id)
-              .single();
-
-            if (foodError || !foodItem) {
-              console.error('Error fetching food item:', foodError);
-              return null;
-            }
-
-            return {
-              ...foodItem,
-              quantity: cartItem.quantity,
-              addedAt: cartItem.addedAt
-            };
-          })
-        );
-
-        // Filter out any null items
-        setCartItems(formattedItems.filter(item => item !== null));
-      } else {
-        setCartItems([]);
-      }
-    } catch (error) {
-      console.error('Error loading user cart:', error);
-      setCartItems([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Update cart in profiles table
-  const updateCartInDB = async (newCartItems) => {
-    if (!user) return;
-
-    try {
-      // Convert cart items to JSONB format
-      const cartForDB = newCartItems.map(item => ({
-        id: item.id,
-        quantity: item.quantity,
-        addedAt: item.addedAt || new Date().toISOString()
-      }));
-
-      const { error } = await supabase
-        .from('profiles')
-        .update({ cart_items: cartForDB })
-        .eq('id', user.id);
-
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error updating cart:', error);
-    }
-  };
-
-  const addToCart = async (item) => {
-    if (!user) {
-      console.error('User must be logged in to add items to cart');
-      return;
-    }
-
-    const newCartItems = [...cartItems];
-    const sanitizedPrice = typeof item.price === 'string' 
-      ? parseFloat(item.price.replace(/[^0-9.]/g, '')) 
-      : item.price;
-
-    const numericPriceItem = {
-      ...item,
-      price: sanitizedPrice
-    };
-    
-    const existingIndex = newCartItems.findIndex(i => 
-      i.id === numericPriceItem.id && 
-      i.category === numericPriceItem.category
-    );
-    
-    if (existingIndex > -1) {
-      newCartItems[existingIndex].quantity += 1;
-    } else {
-      newCartItems.push({ 
-        ...numericPriceItem, 
-        quantity: 1, 
-        addedAt: new Date().toISOString() 
-      });
-    }
-
-    setCartItems(newCartItems);
-    await updateCartInDB(newCartItems);
-  };
-
-  const removeItem = async (id, category) => {
-    if (!user) return;
-
-    const newCartItems = cartItems.filter(item => 
-      !(item.id === id && item.category === category)
-    );
-    
-    setCartItems(newCartItems);
-    await updateCartInDB(newCartItems);
-  };
-  
-  const updateQuantity = async (id, category, newQuantity) => {
-    if (!user) return;
-
-    let newCartItems;
-    if (newQuantity <= 0) {
-      newCartItems = cartItems.filter(item => 
-        !(item.id === id && item.category === category)
+    setCartItems(prev => {
+      // Look for an existing item with same id and category
+      const existingItem = prev.find(i => 
+        i.id === item.id && 
+        (item.category ? i.category === item.category : true)
       );
-    } else {
-      newCartItems = cartItems.map(item => {
-        if (item.id === id && item.category === category) {
-          return { ...item, quantity: newQuantity };
-        }
-        return item;
-      });
-    }
-
-    setCartItems(newCartItems);
-    await updateCartInDB(newCartItems);
+      
+      if (existingItem) {
+        console.log("Found existing item, updating quantity");
+        return prev.map(i => 
+          (i.id === item.id && 
+           (item.category ? i.category === item.category : true)) 
+            ? { ...i, quantity: i.quantity + 1 } 
+            : i
+        );
+      }
+      
+      // Preserve all item properties exactly as they are
+      console.log("Creating new cart item");
+      const newItem = { 
+        ...item, 
+        quantity: 1
+      };
+      
+      console.log("New item created:", newItem);
+      return [...prev, newItem];
+    });
   };
 
-  const clearCart = async () => {
-    if (!user) return;
+  const removeItem = (id, category) => {
+    console.log(`Removing item: ${id}, category: ${category}`);
+    setCartItems(prev => prev.filter(item => 
+      !(item.id === id && (category ? item.category === category : true))
+    ));
+  };
 
+  const updateQuantity = (id, category, quantity) => {
+    console.log(`Updating quantity for item: ${id}, category: ${category}, new quantity: ${quantity}`);
+    if (quantity < 1) return removeItem(id, category);
+    
+    setCartItems(prev =>
+      prev.map(item => 
+        (item.id === id && (category ? item.category === category : true)) 
+          ? { ...item, quantity } 
+          : item
+      )
+    );
+  };
+
+  const clearCart = () => {
+    console.log("Clearing cart");
     setCartItems([]);
-    await updateCartInDB([]);
   };
-  
+
   return (
-    <CartContext.Provider value={{
-      cartItems,
-      addToCart,
-      updateQuantity,
-      removeItem,
-      clearCart,
-      loading,
-      user
-    }}>
+    <CartContext.Provider
+      value={{
+        cartItems,
+        addToCart,
+        removeItem,
+        updateQuantity,
+        clearCart
+      }}
+    >
       {children}
     </CartContext.Provider>
   );
-};
+}
 
-export const useCart = () => {
-  const context = useContext(CartContext);
-  if (!context) {
-    throw new Error('useCart must be used within a CartProvider');
-  }
-  return context;
-};
+export function useCart() {
+  return useContext(CartContext);
+}

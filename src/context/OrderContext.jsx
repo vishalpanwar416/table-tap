@@ -73,16 +73,16 @@ const newOrder = await createOrder(fullOrderData);
 // Create detailed admin notification
 await createNotification({
   title: 'New Order Received',
-  message: `Order #${newOrder.id.slice(0, 8)}`,
-  type: 'order_received',
-  orderId: newOrder.id,
-  isAdminNotification: true,
-  orderDetails: { // Include full order details
+  message: `Order #${newOrder.id.slice(0, 8)} - ${newOrder.items.length} items`,
+  type: 'new_order',
+  order_id: newOrder.id,
+  is_admin_notification: true,
+  order_details: {
     items: newOrder.items,
     total: newOrder.total,
-    customer: newOrder.customerName,
     table: newOrder.tableNumber,
-    createdAt: newOrder.created_at
+    customer: newOrder.customerName,
+    created_at: newOrder.created_at
   }
 });
       // Set current order
