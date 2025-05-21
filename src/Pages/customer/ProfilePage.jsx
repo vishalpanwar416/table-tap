@@ -32,8 +32,8 @@ const ProfilePage = () => {
 
       if (!profileError) {
         const dobDate = profile.date_of_birth ? new Date(profile.date_of_birth) : null;
-        const dobString = dobDate ? 
-          `${dobDate.getDate()}/${dobDate.getMonth() + 1}/${dobDate.getFullYear()}` : '';
+        const dobString = dobDate ?
+          `${dobDate.getDate().toString().padStart(2, '0')}-${(dobDate.getMonth() + 1).toString().padStart(2, '0')}-${dobDate.getFullYear()}` : '';
 
         const newProfileData = {
           name: profile.full_name || '',
@@ -57,10 +57,10 @@ const ProfilePage = () => {
         table: 'profiles',
       }, (payload) => {
         if (user?.id && payload.new.id === user.id) {
-          const dobDate = payload.new.date_of_birth ? 
+          const dobDate = payload.new.date_of_birth ?
             new Date(payload.new.date_of_birth) : null;
-          const dobString = dobDate ? 
-            `${dobDate.getDate()}/${dobDate.getMonth() + 1}/${dobDate.getFullYear()}` : '';
+          const dobString = dobDate ?
+            `${dobDate.getDate().toString().padStart(2, '0')}-${(dobDate.getMonth() + 1).toString().padStart(2, '0')}-${dobDate.getFullYear()}` : '';
 
           setProfileData(prev => ({
             ...prev,
@@ -141,7 +141,7 @@ const ProfilePage = () => {
       return;
     }
 
-    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(formData.dob)) {
+    if (!/^\d{2}-\d{2}-\d{4}$/.test(formData.dob)) {
       alert('Please use DD/MM/YYYY format for date of birth');
       return;
     }
@@ -153,7 +153,7 @@ const ProfilePage = () => {
 
 
     try {
-      const [day, month, year] = formData.dob.split('/');
+      const [day, month, year] = formData.dob.split('-');
       const dobDate = new Date(`${year}-${month}-${day}`);
       const { data: { user: updatedUser }, error: authError } = await supabase.auth.updateUser({
         email: formData.email
@@ -255,7 +255,7 @@ if (reAuthError) throw reAuthError;
                     value={formData.dob}
                     onChange={handleChange}
                     className="w-full p-4 bg-gray-100 rounded-xl border-0 focus:ring-2 focus:ring-orange-500 text-black"
-                    placeholder="DD/MM/YYYY"
+                    placeholder="DD-MM-YYYY"
                   />
                 </div>
                 
