@@ -18,14 +18,14 @@ const OrderManagement = ({ orders, updateOrderStatus }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [confirmModal, setConfirmModal] = useState({ show: false, type: null, order: null });
   const [dropdownOpenOrderId, setDropdownOpenOrderId] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState('');
   
   // Handle order status updates with confirmation
-  const handleStatusUpdate = async (orderId, userId, newStatus) => {
+  const handleStatusUpdate = async (orderId, userId, newStatus, cancelReason) => {
     setIsLoading(true);
-    // Close the modal immediately
     setConfirmModal({ show: false, type: null, order: null });
     try {
-      await updateOrderStatus(orderId, newStatus);
+      await updateOrderStatus(orderId, newStatus, cancelReason);
       
       // Create appropriate notification
       const notificationMessages = {
@@ -45,6 +45,7 @@ const OrderManagement = ({ orders, updateOrderStatus }) => {
       console.error(`Error updating order to ${newStatus}:`, error);
     } finally {
       setIsLoading(false);
+      setRejectionReason('');
     }
   };
   
@@ -125,8 +126,8 @@ const OrderManagement = ({ orders, updateOrderStatus }) => {
       return (
         (order.id && order.id.toLowerCase().includes(searchLower)) ||
         (order.customerName && order.customerName.toLowerCase().includes(searchLower)) ||
-        (order.customerPhone && order.customerPhone.toLowerCase().includes(searchLower)) ||
-        (order.customerEmail && order.customerEmail.toLowerCase().includes(searchLower)) ||
+        (order.customer_phone && order.customer_phone.toLowerCase().includes(searchLower)) ||
+        (order.customer_email && order.customer_email.toLowerCase().includes(searchLower)) ||
         (order.table_number && order.table_number.toString().includes(searchLower)) ||
         (order.items && order.items.some(item => item.name && item.name.toLowerCase().includes(searchLower)))
       );
@@ -292,6 +293,21 @@ const OrderManagement = ({ orders, updateOrderStatus }) => {
           </h2>
           
           <div className="flex flex-col sm:flex-row gap-4">
+            {/* View Switcher */}
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setViewType('tiles')}
+                className={`px-3 py-1 rounded-lg border ${viewType === 'tiles' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-700 border-gray-200'} transition`}
+              >
+                Tiles
+              </button>
+              <button
+                onClick={() => setViewType('table')}
+                className={`px-3 py-1 rounded-lg border ${viewType === 'table' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-700 border-gray-200'} transition`}
+              >
+                Table
+              </button>
+            </div>
             {/* Search */}
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -399,7 +415,14 @@ const OrderManagement = ({ orders, updateOrderStatus }) => {
                     <div className="flex justify-between mb-2">
                       <div className="flex items-center">
                         <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center mr-2">
-                          <img src={order.customerData?.profileImg || "/default-avatar.png"} alt="Profile" className="w-full h-full object-cover" />
+                          <img
+                            src={
+                              order.profile?.avatar_url ||
+                              "data:image/svg+xml;utf8,<svg width='40' height='40' viewBox='0 0 40 40' fill='none' xmlns='http://www.w3.org/2000/svg'><rect width='40' height='40' rx='20' fill='%23f3f4f6'/><circle cx='20' cy='16' r='7' fill='%23f59e42'/><ellipse cx='20' cy='29' rx='11' ry='6' fill='%23f59e42' fill-opacity='0.5'/><circle cx='20' cy='16' r='4' fill='white'/></svg>"
+                            }
+                            alt="Profile"
+                            className="w-full h-full object-cover"
+                          />
                         </div>
                         <span className="font-medium">{order.customer_name || 'Guest'}</span>
                       </div>
@@ -411,10 +434,19 @@ const OrderManagement = ({ orders, updateOrderStatus }) => {
                       )}
                     </div>
                     
-                    {order.customerPhone && (
+                    {order.customer_phone && (
                       <div className="flex items-center text-sm text-gray-500 mb-1">
                         <Phone size={14} className="mr-1" />
-                        <span>{order.customerPhone}</span>
+                        <span>{order.customer_phone}</span>
+                      </div>
+                    )}
+                    
+                    {order.customer_email && (
+                      <div className="flex items-center text-sm text-gray-500 mb-1">
+                        <svg className="mr-1" width="16" height="16" fill="none" viewBox="0 0 24 24">
+                          <path d="M4 4h16v16H4V4zm0 0l8 8 8-8" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        <span>{order.customer_email}</span>
                       </div>
                     )}
                     
@@ -790,10 +822,16 @@ const OrderManagement = ({ orders, updateOrderStatus }) => {
                               )}
                               <div className="text-sm text-gray-600">
                                 <span className="font-medium">Payment: </span>
-                                {order.paymentStatus === 'paid' ? (
-                                  <span className="text-green-600">Paid</span>
-                                ) : (
+                                {order.payment_method === 'razorpay' && order.payment_status === 'completed' ? (
+                                  <span className="text-green-600">Paid Online</span>
+                                ) : order.payment_method === 'cod' ? (
                                   <span className="text-yellow-600">Cash on Delivery</span>
+                                ) : order.payment_status === 'pending' ? (
+                                  <span className="text-orange-600">Pending Payment</span>
+                                ) : order.payment_status === 'failed' ? (
+                                  <span className="text-red-600">Payment Failed</span>
+                                ) : (
+                                  <span className="text-gray-600 capitalize">{order.payment_method || 'Unknown'}</span>
                                 )}
                               </div>
                             </div>
@@ -834,47 +872,66 @@ const OrderManagement = ({ orders, updateOrderStatus }) => {
 
       {/* Confirmation Modal */}
       {confirmModal.show && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
-    <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full">
-      <div className="flex items-center mb-4">
-        <AlertTriangle className="text-yellow-500 mr-2" />
-        <h3 className="text-lg font-semibold text-gray-800">
-          Confirm {confirmModal.type === 'accept' ? 'Accept' : confirmModal.type === 'rejected' ? 'Reject' : confirmModal.type === 'ready' ? 'Mark Ready' : 'Complete'} Order
-        </h3>
-      </div>
-      <p className="text-gray-600 mb-6">
-        Are you sure you want to {confirmModal.type === 'accept' ? 'accept' : confirmModal.type === 'rejected' ? 'reject' : confirmModal.type === 'ready' ? 'mark as ready' : 'complete'} order <span className="font-semibold">#{confirmModal.order.id.slice(0,8)}</span>?
-      </p>
-      <div className="flex justify-end space-x-2">
-        <button
-          onClick={() => setConfirmModal({ show: false, type: null, order: null })}
-          className="px-4 py-2 rounded bg-gray-100 text-gray-700 hover:bg-gray-200"
-          disabled={isLoading}
-        >
-          Cancel
-        </button>
-        <button
-          onClick={() => {
-            const normalizedType = confirmModal.type?.toLowerCase();
-            console.log(normalizedType);
-            const statusMap = {
-              accept: 'preparing',
-              rejected: 'rejected',
-              ready: 'ready',
-              complete: 'completed'
-            };
-            console.log(confirmModal.order.userId,confirmModal.order.id,statusMap[normalizedType]);
-            handleStatusUpdate(confirmModal.order.id, confirmModal.order.userId, statusMap[normalizedType]);
-          }}
-          className={`px-4 py-2 rounded text-white ${confirmModal.type === 'rejected' ? 'bg-red-500 hover:bg-red-600' : 'bg-orange-500 hover:bg-orange-600'}`}
-          disabled={isLoading}
-        >
-          {isLoading ? 'Processing...' : 'Confirm'}
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full">
+            <div className="flex items-center mb-4">
+              <AlertTriangle className="text-yellow-500 mr-2" />
+              <h3 className="text-lg font-semibold text-gray-800">
+                Confirm {confirmModal.type === 'accept' ? 'Accept' : confirmModal.type === 'rejected' ? 'Reject' : confirmModal.type === 'ready' ? 'Mark Ready' : 'Complete'} Order
+              </h3>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to {confirmModal.type === 'accept' ? 'accept' : confirmModal.type === 'rejected' ? 'reject' : confirmModal.type === 'ready' ? 'mark as ready' : 'complete'} order <span className="font-semibold">#{confirmModal.order.id.slice(0,8)}</span>?
+            </p>
+            {confirmModal.type === 'rejected' && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Reason for rejection <span className="text-red-500">*</span></label>
+                <textarea
+                  className="w-full border border-gray-300 rounded p-2"
+                  rows={3}
+                  value={rejectionReason}
+                  onChange={e => setRejectionReason(e.target.value)}
+                  placeholder="Enter reason for rejection"
+                  required
+                />
+              </div>
+            )}
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => {
+                  setConfirmModal({ show: false, type: null, order: null });
+                  setRejectionReason('');
+                }}
+                className="px-4 py-2 rounded bg-gray-100 text-gray-700 hover:bg-gray-200"
+                disabled={isLoading}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  const normalizedType = confirmModal.type?.toLowerCase();
+                  const statusMap = {
+                    accept: 'preparing',
+                    rejected: 'rejected',
+                    ready: 'ready',
+                    complete: 'completed'
+                  };
+                  handleStatusUpdate(
+                    confirmModal.order.id,
+                    confirmModal.order.userId,
+                    statusMap[normalizedType],
+                    normalizedType === 'rejected' ? rejectionReason : undefined
+                  );
+                }}
+                className={`px-4 py-2 rounded text-white ${confirmModal.type === 'rejected' ? 'bg-red-500 hover:bg-red-600' : 'bg-orange-500 hover:bg-orange-600'}`}
+                disabled={isLoading || (confirmModal.type === 'rejected' && !rejectionReason.trim())}
+              >
+                {isLoading ? 'Processing...' : 'Confirm'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

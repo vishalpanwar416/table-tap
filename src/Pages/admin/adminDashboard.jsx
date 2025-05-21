@@ -4,7 +4,7 @@ import Sidebar from '../../components/admin/Sidebar';
 import MobileNav from '../../components/admin/MobileNav';
 import DashboardOverview from '../../components/admin/DashboardOverviewComponents/DashboardOverview';
 import MenuManagement from '../../components/admin/MenuManagementComponent/MenuManagement';
-import OrderManagement from '../../components/admin/OrderManagement.jsx';
+import OrderManagement from '../../components/admin/OrderManagement';
 import UserManagement from '../../components/admin/UserManagement';
 import OffersManagement from '../../components/admin/OffersManagement';
 import SettingsManagement from '../../components/admin/Settings';
