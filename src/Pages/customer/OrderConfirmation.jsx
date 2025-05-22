@@ -7,6 +7,7 @@ const OrderConfirmation = () => {
   const navigate = useNavigate();
   const { cartItems, removeItem, updateQuantity, calculateDiscountedPrice } = useCart();
   const [tableNumber, setTableNumber] = useState('');
+  const [specialInstructions, setSpecialInstructions] = useState('');
 
   const calculatePriceDetails = () => {
     let originalTotal = 0;
@@ -87,7 +88,7 @@ const OrderConfirmation = () => {
       alert('Please enter your table number');
       return;
     }
-    navigate('/payment', { state: { tableNumber } });
+    navigate('/payment', { state: { tableNumber, specialInstructions } });
   };
 
   return (
@@ -121,6 +122,21 @@ const OrderConfirmation = () => {
               placeholder="Enter your table number"
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
+            />
+          </div>
+
+          {/* Special Instructions Input */}
+          <div className="mb-8">
+            <label className="block text-black mb-2 text-lg" htmlFor="specialInstructions">
+              Special Instructions (optional)
+            </label>
+            <textarea
+              id="specialInstructions"
+              value={specialInstructions}
+              onChange={(e) => setSpecialInstructions(e.target.value)}
+              placeholder="E.g. No onions, extra spicy, etc."
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+              rows={3}
             />
           </div>
 

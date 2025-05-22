@@ -11,7 +11,7 @@ import SettingsManagement from '../../components/admin/Settings';
 import LogoutPopup from '../../components/auth/LogoutPopup';
 import AdminNotificationsToast from '../../components/admin/AdminNotificationsToast';
 import { useAdminNotifications } from '../../context/AdminNotificationContext';
-import { X } from 'lucide-react';
+import { X, ArrowLeft } from 'lucide-react';
 import { getAllFoodItems } from '../../api/foodService';
 import { supabase } from '../../supabase';
 import { updateOrderStatus as updateOrderStatusService } from '../../api/orderService';
@@ -365,9 +365,19 @@ const AdminDashboard = () => {
           {/* Main Content Header */}
           <div className="bg-white shadow-sm z-10 p-4 md:p-6">
             <div className="max-w-7xl mx-auto flex justify-between items-center">
-              <h2 className="text-xl md:text-2xl font-semibold text-gray-800">
-                {menuItems.find(item => item.id === activeTab)?.label || 'Dashboard'}
-              </h2>
+              {/* Back Button - Top Left */}
+              <div className="flex items-center">
+                <button
+                  onClick={() => navigate(-1)}
+                  className="mr-4 p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  aria-label="Go back"
+                >
+                  <ArrowLeft size={22} />
+                </button>
+                <h2 className="text-xl md:text-2xl font-semibold text-gray-800">
+                  {menuItems.find(item => item.id === activeTab)?.label || 'Dashboard'}
+                </h2>
+              </div>
               <div className="hidden md:block">
                 <div className="relative text-gray-600">
                   <input 

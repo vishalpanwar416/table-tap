@@ -20,6 +20,7 @@ const PaymentPage = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [showPhoneInput, setShowPhoneInput] = useState(false);
   const [phoneError, setPhoneError] = useState('');
+  const specialInstructions = location.state?.specialInstructions || '';
 
   // Early return if restaurant data isn't loaded yet
   if (!restaurant) {
@@ -313,7 +314,8 @@ const PaymentPage = () => {
         // Add better error handling
         notes: {
           restaurant_id: restaurant.id || '1',
-          table_number: tableNumber || 'N/A'  
+          table_number: tableNumber || 'N/A',
+          special_instructions: specialInstructions
         }
       };
 
@@ -374,7 +376,7 @@ const PaymentPage = () => {
         customer_name: customer_name,
         customer_email: customer_email,
         customer_phone: customer_phone,
-        special_instructions: ''
+        special_instructions: specialInstructions,
       };
 
       console.log('Submitting order to database:', orderData.order_number);

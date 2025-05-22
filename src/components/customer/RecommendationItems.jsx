@@ -1,4 +1,4 @@
-import { Heart, ShoppingBag } from 'lucide-react';
+import { Heart, ShoppingBag, ArrowRight } from 'lucide-react';
 import { useCart } from '../../config/CartContent';
 import { useLikes } from '../../config/LikesContent';
 import PriceDisplay from './PriceDisplay';
@@ -77,11 +77,13 @@ const RecommendationItem = ({ item, onImageClick }) => {
             )}
 
       {/* Price Display */}
-      <div className="absolute top-1 right-1 bg-black/80 px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1 min-w-[50px] min-h-[15px] md:min-w-[100px] md:min-h-[26px]">
+      <div className="absolute top-1 right-1 bg-black/80 px-2 py-1 rounded-md flex items-center gap-1 min-w-[50px] min-h-[15px] md:min-w-[100px] md:min-h-[26px]">
         {item.discounttype && item.discountvalue ? (
           <>
-            <span className="line-through text-gray-300 mr-1 whitespace-nowrap text-base text-sm md:text-sm">₹{Number(item.price).toFixed(2)}</span>
-            <span className="text-orange-400 font-semibold whitespace-nowrap text-lg md:text-lg">
+            <span className="line-through text-gray-300 mr-1 whitespace-nowrap text-xs md:text-lg font-spartan-regular">
+              ₹{Number(item.price).toFixed(2)}
+            </span>
+            <span className="text-orange-400 font-semibold whitespace-nowrap text-base md:text-xl font-spartan-semibold">
               ₹{item.discounttype === 'Percentage'
                 ? (item.price - (item.price * (item.discountvalue / 100))).toFixed(2)
                 : Math.max(0, item.price - item.discountvalue).toFixed(2)
@@ -89,7 +91,9 @@ const RecommendationItem = ({ item, onImageClick }) => {
             </span>
           </>
         ) : (
-          <span className="font-semibold whitespace-nowrap text-white text-lg md:text-xl">₹{Number(item.price).toFixed(2)}</span>
+          <span className="font-semibold whitespace-nowrap text-white text-base md:text-xl font-spartan-semibold">
+            ₹{Number(item.price).toFixed(2)}
+          </span>
         )}
       </div>
 
@@ -103,4 +107,49 @@ const RecommendationItem = ({ item, onImageClick }) => {
   );
 };
 
-export default RecommendationItem;
+const RecommendationItems = ({ 
+  allFoodItems = [],
+  onItemClick, 
+  scrollRef, 
+  scroll 
+}) => {
+  const recommendedItems = (allFoodItems || []).filter(item => 
+    item?.tags?.some?.(tag => 
+      tag?.toLowerCase?.() === 'recommended'
+    )
+  );
+
+  if (recommendedItems.length === 0) return null;
+
+  return (
+    <div className="px-1 pb-2 text-black flex-1">
+      <div className="flex justify-between items-center mb-3">
+        <h2 className="text-xl font-thick font-spartan-bold md:text-3xl">Our Best Recommendations</h2>
+        <button 
+          onClick={() => scroll(scrollRef.current?.clientWidth || 300)}
+          className="p-2 rounded-full bg-white text-gray-500 hover:bg-gray-100 transition-colors"
+        >
+          <ArrowRight className="w-5 h-5" />
+        </button>
+      </div>
+      <div
+        ref={scrollRef}
+        className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 md:pb-0"
+        style={{ minHeight: recommendedItems.length > 0 ? 'auto' : '0' }}
+      >
+        {recommendedItems.map((item) => (
+          <div 
+            key={item.id}
+            className="flex-shrink-0 w-[45vw] md:w-[30vw]"
+            style={{ scrollSnapAlign: 'start' }}
+          >
+            {/* This is the single item card */}
+            <RecommendationItem item={item} onImageClick={onItemClick} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default RecommendationItems;

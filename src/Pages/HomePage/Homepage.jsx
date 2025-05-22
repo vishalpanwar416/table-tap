@@ -17,6 +17,8 @@ import DynamicGreeting from '../../components/customer/Greetings';
 import LikedItems from '../../components/customer/LikedItems';
 import { fetchFoodItems } from '../../components/foodData';
 import FloatingCartButton from '../../components/customer/FloatingCartButton';
+import Tags from '../../components/customer/Tags';
+import RecommendationItems from '../../components/customer/RecommendationItems';
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -240,38 +242,23 @@ export default function HomePage() {
                 onItemClick={handleItemClick}
               />
 
-              {/* Recommendations */}
-              <motion.div className="px-1 pb-2 text-black flex-1">
-                <div className="flex justify-between items-center mb-3">
-                  <h2 className="text-xl font-thick font-spartan-bold md:text-3xl">Our Best Recommendations</h2>
-                  <button 
-                    onClick={() => scroll(scrollRef.current?.clientWidth || 300)}
-                    className="p-2 rounded-full bg-white text-gray-500 hover:bg-gray-100 transition-colors"
-                  >
-                    <ArrowRight className="w-5 h-5" />
-                  </button>
-                </div>
-                
-                <motion.div 
-                  ref={scrollRef}
-                  className="grid grid-rows-2 grid-flow-col gap-3 overflow-x-auto scrollbar-hide pb-2 md:pb-0 md:grid-rows-2 md:grid-flow-col"
-                  variants={staggerItems}
-                  style={{ 
-                    scrollSnapType: 'x mandatory',
-                    minHeight: '320px' 
-                  }}
-                >
-                  {allFoodItems.filter(item => item.tags?.some(tag => tag.toLowerCase() === 'recommended')).map((item) => (
-                    <div 
-                      key={item.id}
-                      className="flex-shrink-0 w-[45vw] md:w-[30vw]"
-                      style={{ scrollSnapAlign: 'start' }}
-                    >
-                      <RecommendationItem item={item} onImageClick={handleItemClick} />
-                    </div>
-                  ))}
+              <motion.div>
+                <RecommendationItems
+                  allFoodItems={allFoodItems || []}
+                  onItemClick={handleItemClick}
+                  scrollRef={scrollRef}
+                  scroll={scroll}
+                />
+              </motion.div>
+              {!loading && (
+                <motion.div variants={staggerItems}>
+                  <Divider />
+                  <Tags 
+                    foodItems={allFoodItems} 
+                    onItemClick={handleItemClick}
+                  />
                 </motion.div>
-              </motion.div>  
+              )}
             </motion.div>
           </motion.div>
         </motion.div>
