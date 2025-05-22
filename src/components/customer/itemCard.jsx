@@ -67,7 +67,11 @@ const OrderCard = ({ isOpen, onClose, item }) => {
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 250 }}
+            transition={{ 
+              type: 'tween', 
+              duration: 0.3, 
+              ease: [0.25, 0.46, 0.45, 0.94] // Custom cubic-bezier for smooth animation
+            }}
             className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 shadow-xl overflow-hidden max-h-[85vh] max-w-[450px] md:max-w-4xl mx-auto"
             drag="y"
             dragConstraints={{ top: 0, bottom: 0 }}

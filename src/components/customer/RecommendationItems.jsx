@@ -80,7 +80,7 @@ const RecommendationItem = ({ item, onImageClick }) => {
       <div className="absolute top-1 right-1 bg-black/80 px-2 py-1 rounded-md flex items-center gap-1 min-w-[50px] min-h-[15px] md:min-w-[100px] md:min-h-[26px]">
         {item.discounttype && item.discountvalue ? (
           <>
-            <span className="line-through text-gray-300 mr-1 whitespace-nowrap text-xs md:text-lg font-spartan-regular">
+            <span className="line-through text-gray-300 mr-1 whitespace-nowrap text-xs. md:text-lg font-spartan-regular">
               ₹{Number(item.price).toFixed(2)}
             </span>
             <span className="text-orange-400 font-semibold whitespace-nowrap text-base md:text-xl font-spartan-semibold">
