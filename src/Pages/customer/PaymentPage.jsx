@@ -8,7 +8,7 @@ import { useRestaurant } from '../../context/RestaurantContext';
 const PaymentPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { cartItems, clearCart } = useCart();
+  const { cartItems, clearCart, calculateDiscountedPrice } = useCart();
   const tableNumber = location.state?.tableNumber;
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [scriptError, setScriptError] = useState(null);
@@ -31,22 +31,27 @@ const PaymentPage = () => {
     );
   }
 
-  // Calculate total with GST
-  const calculateTotal = () => {
-    let subtotal = 0;
+  // Updated calculation function to match CartSidebar and OrderConfirmation
+  const calculatePriceDetails = () => {
+    let originalTotal = 0;
+    let discountAmount = 0;
     let taxableAmount = 0;
     
     cartItems.forEach(item => {
-      let price = item.price;
+      // Calculate original price total
+      const originalItemTotal = item.price * item.quantity;
+      originalTotal += originalItemTotal;
       
-      if (item.discountType === 'percentage') {
-        price = item.price * (1 - item.discountValue/100);
-      } else if (item.discountType === 'fixed') {
-        price = item.price - item.discountValue;
-      }
+      // Calculate discount amount
+      const effectivePrice = item.effectivePrice !== undefined ? 
+        item.effectivePrice : 
+        calculateDiscountedPrice(item);
       
-      const itemTotal = price * item.quantity;
-      subtotal += itemTotal;
+      const itemDiscount = (item.price - effectivePrice) * item.quantity;
+      discountAmount += itemDiscount;
+      
+      // Calculate subtotal after discount for tax calculation
+      const itemSubtotal = effectivePrice * item.quantity;
       
       // Check if the item is water (exempt from GST)
       const isWater = item.name && 
@@ -54,7 +59,7 @@ const PaymentPage = () => {
          item.category?.toLowerCase() === 'water');
          
       if (!isWater) {
-        taxableAmount += itemTotal;
+        taxableAmount += itemSubtotal;
       }
     });
     
@@ -62,15 +67,30 @@ const PaymentPage = () => {
     const cgst = taxableAmount * 0.025; // 2.5% CGST
     const sgst = taxableAmount * 0.025; // 2.5% SGST
     
+    // Subtotal is original total minus discount
+    const subtotalAfterDiscount = originalTotal - discountAmount;
+    
+    // Final total is subtotal plus taxes
+    const finalTotal = subtotalAfterDiscount + cgst + sgst;
+    
     return {
-      subtotal: subtotal.toFixed(2),
-      cgst: cgst.toFixed(2),
-      sgst: sgst.toFixed(2),
-      total: (subtotal + cgst + sgst).toFixed(2)
+      originalTotal,
+      discountAmount,
+      subtotalAfterDiscount,
+      cgst,
+      sgst,
+      finalTotal
     };
   };
 
-  const { subtotal, cgst, sgst, total } = calculateTotal();
+  const { 
+    originalTotal, 
+    discountAmount, 
+    subtotalAfterDiscount, 
+    cgst, 
+    sgst, 
+    finalTotal 
+  } = calculatePriceDetails();
 
   // Load Razorpay SDK
   useEffect(() => {
@@ -128,7 +148,6 @@ const PaymentPage = () => {
         
         if (error) {
           console.error('Error fetching user:', error);
-          // Don't block the payment process if user fetch fails
           return;
         }
         
@@ -136,7 +155,6 @@ const PaymentPage = () => {
           console.log('User authenticated:', data.user.id);
           setUser(data.user);
           
-          // Set phone number from user metadata if available
           if (data.user.user_metadata && data.user.user_metadata.phone) {
             setPhoneNumber(data.user.user_metadata.phone);
           }
@@ -168,7 +186,6 @@ const PaymentPage = () => {
 
   // Validate phone number
   const validatePhoneNumber = (phone) => {
-    // Basic validation for Indian phone numbers (10 digits)
     const phoneRegex = /^[6-9]\d{9}$/;
     return phoneRegex.test(phone);
   };
@@ -192,7 +209,6 @@ const PaymentPage = () => {
     }
 
     try {
-      // Update user metadata with phone number
       const { error } = await supabase.auth.updateUser({
         data: { phone: phoneNumber }
       });
@@ -212,19 +228,6 @@ const PaymentPage = () => {
 
   // Handle Razorpay payment with better error handling
   const handlePayment = async () => {
-    // First check if we need to collect phone number
-    // if (!phoneNumber) {
-    //   setShowPhoneInput(true);
-    //   return;
-    // }
-    
-    // // Validate phone number
-    // if (!validatePhoneNumber(phoneNumber)) {
-    //   setPhoneError('Please enter a valid 10-digit phone number');
-    //   setShowPhoneInput(true);
-    //   return;
-    // }
-    
     if (!restaurant) {
       setScriptError('Restaurant data not loaded');
       return;
@@ -238,12 +241,10 @@ const PaymentPage = () => {
     setIsProcessing(true);
 
     try {
-      // Update user phone number in database first
       if (user) {
         await updateUserPhone();
       }
       
-      // For direct payment without razorpay, process immediately
       if (paymentMethod === 'direct') {
         await processOrder({
           razorpay_payment_id: 'DIRECT-' + Date.now(),
@@ -253,17 +254,14 @@ const PaymentPage = () => {
         return;
       }
       
-      // Otherwise use Razorpay
       if (!scriptLoaded || !window.Razorpay) {
         setScriptError('Payment processor not loaded. Please try again or choose Pay At Restaurant.');
         setIsProcessing(false);
         return;
       }
 
-      // Use environment variable first (safer), then fall back to restaurant config if needed
       const razorpayKeyId = process.env.REACT_APP_RAZORPAY_KEY_ID || restaurant.razorpay_key_id;
       
-      // Fail gracefully with helpful error message
       if (!razorpayKeyId) {
         console.error('Missing Razorpay key in both environment and restaurant config');
         setScriptError('Payment gateway configuration issue. Please try paying at restaurant instead.');
@@ -271,8 +269,7 @@ const PaymentPage = () => {
         return;
       }
 
-      // Ensure the amount is valid and properly formatted
-      const amountInPaise = Math.round(parseFloat(total) * 100);
+      const amountInPaise = Math.round(parseFloat(finalTotal) * 100);
       if (isNaN(amountInPaise) || amountInPaise <= 0) {
         setScriptError('Invalid order amount. Please check your cart and try again.');
         setIsProcessing(false);
@@ -311,7 +308,6 @@ const PaymentPage = () => {
             setIsProcessing(false);
           }
         },
-        // Add better error handling
         notes: {
           restaurant_id: restaurant.id || '1',
           table_number: tableNumber || 'N/A',
@@ -342,12 +338,10 @@ const PaymentPage = () => {
         throw new Error('Missing payment confirmation details');
       }
 
-      // Get current user information
       const customer_name = user?.user_metadata?.full_name || 'Customer';
       const customer_email = user?.email || '';
       const customer_phone = phoneNumber || '';
       
-      // Prepare tracking data according to schema
       const tracking = {
         confirmed: { status: true, timestamp: new Date().toISOString() },
         preparing: { status: false, timestamp: null },
@@ -355,16 +349,15 @@ const PaymentPage = () => {
         completed: { status: false, timestamp: null }
       };
       
-      // Create order data object matching the database schema
       const orderData = {
         order_number: generateOrderNumber(),
-        user_id: user?.id || null, // Handle anonymous orders
+        user_id: user?.id || null,
         table_number: tableNumber || 'N/A',
         items: cartItems,
-        subtotal: parseFloat(subtotal) || 0,
+        subtotal: parseFloat(subtotalAfterDiscount) || 0,
         gst: parseFloat(cgst) + parseFloat(sgst) || 0,
-        discount: 0,
-        total: parseFloat(total) || 0,
+        discount: parseFloat(discountAmount) || 0,
+        total: parseFloat(finalTotal) || 0,
         razorpay_payment_id: response.razorpay_payment_id,
         razorpay_order_id: response.razorpay_order_id || '',
         razorpay_signature: response.razorpay_signature || '',
@@ -381,7 +374,6 @@ const PaymentPage = () => {
 
       console.log('Submitting order to database:', orderData.order_number);
 
-      // Save order to Supabase with better error handling
       const { data: order, error } = await supabase
         .from('orders')
         .insert([orderData])
@@ -399,14 +391,13 @@ const PaymentPage = () => {
 
       console.log('Order successfully created:', order.id);
 
-      // Clear cart and navigate to success page
       clearCart();
       navigate('/order-success', {
         state: {
           orderId: order.id,
           restaurantId: restaurant.id,
           restaurantName: restaurant.name,
-          totalAmount: parseFloat(total),
+          totalAmount: parseFloat(finalTotal),
           tableNumber,
           cartItems
         }
@@ -502,47 +493,91 @@ const PaymentPage = () => {
               </div>
             </div>
 
-            {/* Order Summary */}
+            {/* Order Summary with Detailed Breakdown */}
             <div className="border border-gray-300 rounded-lg p-4 bg-white">
-              <h3 className="font-bold mb-2">Order Summary</h3>
-              <p className="text-sm text-gray-600 mb-2">
+              <h3 className="font-bold mb-4">Order Summary</h3>
+              <p className="text-sm text-gray-600 mb-4">
                 Table: {tableNumber || 'Not specified'}
               </p>
+              
+              {/* Individual Items */}
               {cartItems.map(item => {
-                // Check if the item is water
                 const isWater = item.name && 
                   (item.name.toLowerCase().includes('water') || 
                    item.category?.toLowerCase() === 'water');
+                
+                const hasDiscount = item.discounttype && item.discountvalue;
+                const originalPrice = Number(item.price).toFixed(2);
+                const discountedPrice = item.effectivePrice !== undefined ? 
+                  Number(item.effectivePrice).toFixed(2) : 
+                  Number(calculateDiscountedPrice(item)).toFixed(2);
+                
+                const originalTotal = (item.price * item.quantity).toFixed(2);
+                const discountedTotal = (Number(discountedPrice) * item.quantity).toFixed(2);
                    
                 return (
                   <div key={`${item.id}-${item.category}`} 
                     className="flex justify-between py-2 border-b">
                     <div>
                       <span>{item.name} × {item.quantity}</span>
+                      {hasDiscount && (
+                        <div className="text-green-600 text-sm">
+                          {item.discounttype === 'Percentage' && `${item.discountvalue}% off`}
+                          {item.discounttype === 'Fixed' && `₹${item.discountvalue * item.quantity} off`}
+                        </div>
+                      )}
                       {isWater && (
                         <span className="ml-2 text-xs text-green-600">(GST exempt)</span>
                       )}
                     </div>
-                    <span>₹{(item.price * item.quantity).toFixed(2)}</span>
+                    <div className="text-right">
+                      {hasDiscount ? (
+                        <>
+                          <p className="text-gray-600 text-sm line-through">₹{originalTotal}</p>
+                          <p className="font-medium">₹{discountedTotal}</p>
+                        </>
+                      ) : (
+                        <span>₹{originalTotal}</span>
+                      )}
+                    </div>
                   </div>
                 );
               })}
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <div className="flex justify-between mb-2">
+              
+              {/* Price Breakdown */}
+              <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Original Total</span>
+                  <span>₹{originalTotal.toFixed(2)}</span>
+                </div>
+                
+                {discountAmount > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-green-600">Discount</span>
+                    <span className="text-green-600">- ₹{discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
+                
+                <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal</span>
-                  <span>₹{subtotal}</span>
+                  <span>₹{subtotalAfterDiscount.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between mb-1">
+                
+                <div className="flex justify-between">
                   <span className="text-gray-600">CGST (2.5%)</span>
-                  <span>₹{cgst}</span>
+                  <span>₹{cgst.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between mb-2">
+                
+                <div className="flex justify-between">
                   <span className="text-gray-600">SGST (2.5%)</span>
-                  <span>₹{sgst}</span>
+                  <span>₹{sgst.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between font-bold mt-2">
+                
+                <div className="border-t border-gray-300 my-4"></div>
+                
+                <div className="flex justify-between font-bold text-xl">
                   <span>Total</span>
-                  <span>₹{total}</span>
+                  <span>₹{finalTotal.toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -581,7 +616,7 @@ const PaymentPage = () => {
               >
                 {isProcessing ? 'Processing...' : phoneNumber ? (
                   paymentMethod === 'razorpay' 
-                    ? `Pay ₹${total} Now` 
+                    ? `Pay ₹${finalTotal.toFixed(2)} Now` 
                     : `Place Order - Pay at Restaurant`
                 ) : 'Continue with Phone Number'}
               </button>
