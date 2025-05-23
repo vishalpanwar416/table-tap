@@ -194,8 +194,9 @@ const Tags = ({ foodItems = [], onItemClick }) => {
               <button
                 onClick={() => toggleTag(tagKey)}
                 className="flex items-center gap-2 text-lg font-semibold text-gray-800 capitalize hover:text-orange-500 transition-colors md:text-2xl"
+                type="button"
               >
-                <h3>{tagData.name}</h3>
+                <span>{tagData.name}</span>
                 {expandedTags.has(tagKey) ? (
                   <ChevronUp className="w-5 h-5 md:w-6 md:h-6" />
                 ) : (
