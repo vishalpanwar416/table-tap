@@ -35,7 +35,7 @@ const ActiveOrders = ({
                   <div className="flex items-center">
                     <div className="mr-2">{getStatusIcon(order.status)}</div>
                     <div>
-                      <p className="font-medium">#{order.id.slice(0, 8)}</p>
+                      <p className="font-medium">#{order.order_number}</p>
                       <p className="text-xs text-gray-500">{formatDate(order.created_at || new Date())}</p>
                     </div>
                   </div>

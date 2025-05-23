@@ -30,6 +30,7 @@ const Header = ({
     e.preventDefault();
     if (searchQuery.trim() && onSearch) {
       onSearch(searchQuery.trim());
+      setSearchQuery(''); // Clear the input after search
     }
   };
 
@@ -41,6 +42,15 @@ const Header = ({
   const handleLocationClick = () => {
     if (restaurant.google_maps_link) {
       window.open(restaurant.google_maps_link, '_blank');
+    }
+  };
+
+  // Handle search icon click - if search is active and there's a query, trigger search
+  const handleSearchIconClick = () => {
+    if (isSearchActive && searchQuery.trim()) {
+      handleSearchSubmit({ preventDefault: () => {} });
+    } else {
+      toggleSearch();
     }
   };
 
@@ -100,8 +110,10 @@ const Header = ({
       <div className={`flex space-x-4 transition-all duration-500 ease-out ${isSearchActive ? 'opacity-20 transform translate-x-2' : 'opacity-100 transform translate-x-0'}`}>
         <button
           type="button"
-          onClick={toggleSearch}
-          className="cursor-pointer text-white text-xl transition-transform duration-300 ease-out hover:scale-110"
+          onClick={handleSearchIconClick}
+          className={`cursor-pointer text-white text-xl transition-all duration-300 ease-out hover:scale-110 ${
+            isSearchActive && searchQuery.trim() ? 'text-blue-300' : ''
+          }`}
         >
           <Search size={25} />
         </button>

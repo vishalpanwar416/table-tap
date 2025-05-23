@@ -16,7 +16,6 @@ const PrintKOT = ({ order }) => {
         <h2 style={{ margin: 0 }}>KOT</h2>
         <p style={{ margin: "4px 0" }}><strong>Order #:</strong> {order.id.slice(0, 8)} - </p>
         <p style={{ margin: "4px 0" }}><strong>Table:</strong> T{order.table_number}</p>
-        <p style={{ margin: "4px 0" }}><strong>Customer:</strong> {order.customer_name || "Guest"}</p>
         <p style={{ margin: "4px 0" }}><strong>Date:</strong> {new Date(order.created_at).toLocaleString()}</p>
         <hr />
       </div>

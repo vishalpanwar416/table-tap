@@ -10,7 +10,7 @@ import OffersManagement from '../../components/admin/OffersManagement';
 import SettingsManagement from '../../components/admin/Settings';
 import LogoutPopup from '../../components/auth/LogoutPopup';
 import AdminNotificationsToast from '../../components/admin/AdminNotificationsToast';
-import { X, ArrowLeft } from 'lucide-react';
+import { X, ArrowLeft, Package } from 'lucide-react';
 import { getAllFoodItems } from '../../api/foodService';
 import { supabase } from '../../supabase';
 import { updateOrderStatus as updateOrderStatusService } from '../../api/orderService';
@@ -34,11 +34,10 @@ const AdminDashboard = () => {
   const orderChannelRef = useRef(null);
   const [playOrderSound, setPlayOrderSound] = useState(false);
   const [orderSoundType, setOrderSoundType] = useState('order');
-  
-  // Enhanced notification states
   const [showOrderToast, setShowOrderToast] = useState(false);
   const [orderToastMessage, setOrderToastMessage] = useState('');
   const [orderToastTitle, setOrderToastTitle] = useState('');
+  const [showLoadingOverlay, setShowLoadingOverlay] = useState(false);
 
   // Menu items shared across components
   const menuItems = [
@@ -56,10 +55,14 @@ const AdminDashboard = () => {
 
   const { restaurant } = useRestaurant();
 
+  // New state for authentication loading
+  const [authLoading, setAuthLoading] = useState(true);
+
   // Check authentication and get user on mount
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        setAuthLoading(true); // Start loading
         const { data: { session } } = await supabase.auth.getSession();
         const user = session?.user;
         if (!user) {
@@ -70,6 +73,8 @@ const AdminDashboard = () => {
       } catch (error) {
         console.error('Auth check failed:', error);
         navigate('/login');
+      } finally {
+        setAuthLoading(false); // End loading
       }
     };
     
@@ -366,8 +371,17 @@ const AdminDashboard = () => {
     }
   };
 
-  // If we don't have a user yet, show a minimal loading state
-  if (!currentUser) {
+  useEffect(() => {
+    let timer;
+    if (loading) {
+      timer = setTimeout(() => setShowLoadingOverlay(true), 700);
+    } else {
+      setShowLoadingOverlay(false);
+    }
+    return () => clearTimeout(timer);
+  }, [loading]);
+
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -376,6 +390,11 @@ const AdminDashboard = () => {
         </div>
       </div>
     );
+  }
+
+  if (!currentUser) {
+    // Optionally, you can return null or a redirect here, since navigate('/login') will handle it.
+    return null;
   }
 
   return (
@@ -419,11 +438,10 @@ const AdminDashboard = () => {
       />
 
       <AdminNotificationsToast />
-      
-      {/* Enhanced Notification Sound */}
+  
       <NotificationSound play={playOrderSound} soundType={orderSoundType} />
 
-      {loading && (
+      {showLoadingOverlay && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-5 rounded-lg shadow-lg flex items-center space-x-3">
             <div className="animate-spin rounded-full h-6 w-6 border-2 border-orange-500 border-t-transparent"></div>

@@ -7,7 +7,9 @@ const NotificationToast = ({
   onClose, 
   autoClose = true,
   duration = 5000,
-  title = null
+  title = null,
+  onAccept,
+  onReject
 }) => {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -56,6 +58,26 @@ const NotificationToast = ({
           <p className="font-semibold text-sm mb-1">{title}</p>
         )}
         <p className={title ? "text-sm" : "font-medium"}>{message}</p>
+        {(onAccept || onReject) && (
+          <div className="mt-2 flex gap-2">
+            {onAccept && (
+              <button
+                onClick={onAccept}
+                className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition"
+              >
+                Accept
+              </button>
+            )}
+            {onReject && (
+              <button
+                onClick={onReject}
+                className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
+              >
+                Reject
+              </button>
+            )}
+          </div>
+        )}
       </div>
       {onClose && (
         <button 

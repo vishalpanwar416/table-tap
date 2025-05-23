@@ -227,9 +227,19 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
       </html>
     `);
     printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
-    printWindow.close();
+
+    // Use onload to ensure content is rendered before printing
+    printWindow.onload = function () {
+      printWindow.focus();
+      printWindow.print();
+
+      // Use onafterprint to close the window after printing (works in Chrome)
+      printWindow.onafterprint = function () {
+        printWindow.close();
+      };
+    };
+
+    // Fallback: If onload doesn't fire (rare), let the user close the window manually
   };
   
   const handlePrintBill = (order) => {
@@ -246,9 +256,19 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
       </html>
     `);
     printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
-    printWindow.close();
+
+    // Use onload to ensure content is rendered before printing
+    printWindow.onload = function () {
+      printWindow.focus();
+      printWindow.print();
+
+      // Use onafterprint to close the window after printing (works in Chrome)
+      printWindow.onafterprint = function () {
+        printWindow.close();
+      };
+    };
+
+    // Fallback: If onload doesn't fire (rare), let the user close the window manually
   };
   
   return (
