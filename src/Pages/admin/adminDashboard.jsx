@@ -210,54 +210,50 @@ const AdminDashboard = () => {
 
           setOrders((prevOrders) => {
             if (eventType === 'INSERT') {
-              // Enhanced notification handling for new orders
+              // Play sound for new order only
               let orderTotal = Number(newRecord.total);
               if (isNaN(orderTotal)) orderTotal = 0;
               const customerName = newRecord.customer_name || 'Unknown Customer';
               const orderId = newRecord.order_number || 'N/A';
-              
-              // Determine sound type based on order value
+
               const soundType = orderTotal > 50 ? 'urgent' : 'order';
               setOrderSoundType(soundType);
               setPlayOrderSound(true);
-              
-              // Set enhanced toast notification
+
               setOrderToastTitle('🔔 New Order Received!');
               setOrderToastMessage(
                 `Order #${orderId} from ${customerName} - $${orderTotal.toFixed(2)}`
               );
               setShowOrderToast(true);
-              
-              // Browser notification (if permission granted)
+
               if ('Notification' in window && Notification.permission === 'granted') {
                 new Notification('New Order Received!', {
                   body: `Order #${orderId} from ${customerName} - Total: ${orderTotal.toFixed(2)}`,
                   icon: '/favicon.ico',
                   tag: 'new-order',
                   badge: '/favicon.ico',
-                  requireInteraction: true, // Keep notification visible until user interacts
+                  requireInteraction: true,
                 });
               }
-              
+
               return [newRecord, ...prevOrders];
             } else if (eventType === 'UPDATE') {
-              // Handle order status updates
+              // No sound here!
               const updatedOrder = newRecord;
-              const statusChanged = prevOrders.find(o => o.id === updatedOrder.id)?.status !== updatedOrder.status;
-              
+              const statusChanged = prevOrders.find(o => o.order_number === updatedOrder.order_number)?.status !== updatedOrder.status;
+
               if (statusChanged) {
                 setOrderToastTitle('📋 Order Updated');
-                setOrderToastMessage(`Order #${updatedOrder.id?.slice(0, 8)} status changed to ${updatedOrder.status}`);
+                setOrderToastMessage(`Order #${updatedOrder.order_number} status changed to ${updatedOrder.status}`);
                 setShowOrderToast(true);
-                setOrderSoundType('success');
-                setPlayOrderSound(true);
               }
-              
+
               return prevOrders.map((order) =>
-                order.id === newRecord.id ? newRecord : order
+                order.order_number === updatedOrder.order_number ? updatedOrder : order
               );
             } else if (eventType === 'DELETE') {
-              return prevOrders.filter((order) => order.id !== oldRecord.id);
+              // No sound here!
+              return prevOrders.filter((order) => order.order_number !== oldRecord.order_number);
             }
             return prevOrders;
           });
@@ -313,31 +309,32 @@ const AdminDashboard = () => {
       // Update order status and get updated order data
       const updatedOrder = await updateOrderStatusService(orderId, status);
       
-      // Optimistically update local state (now redundant with real-time updates, but keeps UI responsive)
+      // Optimistically update local state
       setOrders(prevOrders => 
         prevOrders.map(order => 
-          order.id === orderId ? { ...order, status: updatedOrder.status } : order
+          order.order_number === orderId ? { ...order, status: updatedOrder.status } : order
         )
       );
       
-      // Enhanced success notification
+      // Use updatedOrder for toast and notification
       setOrderToastTitle('✅ Status Updated');
-      setOrderToastMessage(`Order #${orderId.slice(0,8)} marked as ${status}`);
+      setOrderToastMessage(
+        `Order #${updatedOrder.order_number} marked as ${status}`
+      );
       setShowOrderToast(true);
       setOrderSoundType('success');
       setPlayOrderSound(true);
       
       // Create notification for customer (handle separately)
       try {
-        const order = orders.find(o => o.id === orderId);
-        if (order?.user_id) {
+        if (updatedOrder?.user_id) {
           await supabase
             .from('notifications')
             .insert({
-              order_id: orderId,
+              order_id: updatedOrder.order_number,
               title: `Order ${status}`,
-              message: `Your order #${orderId.slice(0,8)} has been ${status}`,
-              user_id: order.user_id,
+              message: `Your order #${updatedOrder.order_number} has been ${status}`,
+              user_id: updatedOrder.user_id,
               type: `order_${status}`
             });
         }
