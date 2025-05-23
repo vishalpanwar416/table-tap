@@ -8,6 +8,7 @@ const OrderConfirmation = () => {
   const { cartItems, removeItem, updateQuantity, calculateDiscountedPrice } = useCart();
   const [tableNumber, setTableNumber] = useState('');
   const [specialInstructions, setSpecialInstructions] = useState('');
+  const [showTableNumberModal, setShowTableNumberModal] = useState(false);
 
   const calculatePriceDetails = () => {
     let originalTotal = 0;
@@ -85,7 +86,7 @@ const OrderConfirmation = () => {
 
   const handlePlaceOrder = () => {
     if (!tableNumber) {
-      alert('Please enter your table number');
+      setShowTableNumberModal(true);
       return;
     }
     navigate('/payment', { state: { tableNumber, specialInstructions } });
@@ -184,7 +185,7 @@ const OrderConfirmation = () => {
                       {hasDiscount && (
                         <div className="text-green-600 text-sm">
                           {item.discounttype === 'Percentage' && `${item.discountvalue}% off`}
-                          {item.discounttype === 'Fixed' && `₹${item.discountvalue} off`}
+                          {item.discounttype === 'Fixed' && `₹${item.discountvalue*item.quantity} off`}
                         </div>
                       )}
                       
@@ -287,7 +288,6 @@ const OrderConfirmation = () => {
           <div className="mt-auto pt-6 flex justify-center">
             <button 
               onClick={handlePlaceOrder}
-              disabled={!tableNumber}
               className="bg-gray-600 text-white w-full py-3 rounded-full mt-8 font-medium text-lg hover:bg-gray-700 transition-colors"
             >
               Place Order

@@ -1,7 +1,7 @@
 import React from 'react';
 import { LayoutDashboard, Utensils, ShoppingCart, Users, Settings, Tag } from 'lucide-react';
 
-const Sidebar = ({ activeTab, setActiveTab, menuItems, handleLogout, currentUser }) => {
+const Sidebar = ({ activeTab, setActiveTab, menuItems, handleLogout, currentUser, restaurantName }) => {
   // Map icon strings to actual components
   const getIcon = (iconName) => {
     const icons = {
@@ -62,6 +62,9 @@ const Sidebar = ({ activeTab, setActiveTab, menuItems, handleLogout, currentUser
           <div className="flex flex-col">
             <p className="admin-name font-medium text-gray-800 dark:text-white">
               {currentUser?.full_name || currentUser?.email}
+            </p>
+            <p className="text-base text-gray-500 dark:text-gray-400">
+              {restaurantName}
             </p>
             <p className="admin-role text-xs text-gray-500 dark:text-gray-400">
               Administrator

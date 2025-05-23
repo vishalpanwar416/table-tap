@@ -10,12 +10,13 @@ import OffersManagement from '../../components/admin/OffersManagement';
 import SettingsManagement from '../../components/admin/Settings';
 import LogoutPopup from '../../components/auth/LogoutPopup';
 import AdminNotificationsToast from '../../components/admin/AdminNotificationsToast';
-import { useAdminNotifications } from '../../context/AdminNotificationContext';
 import { X, ArrowLeft } from 'lucide-react';
 import { getAllFoodItems } from '../../api/foodService';
 import { supabase } from '../../supabase';
 import { updateOrderStatus as updateOrderStatusService } from '../../api/orderService';
-import NotificationSound from '../../components/NotificationSound';
+import NotificationSound from '../../components/admin/NotificationSound';
+import NotificationToast from '../../components/admin/NotificationToast';
+import { useRestaurant } from '../../context/RestaurantContext';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -32,6 +33,13 @@ const AdminDashboard = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const orderChannelRef = useRef(null);
   const [playOrderSound, setPlayOrderSound] = useState(false);
+  const [orderSoundType, setOrderSoundType] = useState('order');
+  
+  // Enhanced notification states
+  const [showOrderToast, setShowOrderToast] = useState(false);
+  const [orderToastMessage, setOrderToastMessage] = useState('');
+  const [orderToastTitle, setOrderToastTitle] = useState('');
+
   // Menu items shared across components
   const menuItems = [
     { id: 'dashboard', icon: 'LayoutDashboard', label: 'Dashboard' },
@@ -41,6 +49,12 @@ const AdminDashboard = () => {
     { id: 'offers', icon: 'Tag', label: 'Offers & Promotions' },
     { id: 'settings', icon: 'Settings', label: 'Settings' },
   ];
+
+  const [notificationPermission, setNotificationPermission] = useState(
+    typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'unsupported'
+  );
+
+  const { restaurant } = useRestaurant();
 
   // Check authentication and get user on mount
   useEffect(() => {
@@ -77,6 +91,12 @@ const AdminDashboard = () => {
     };
   }, [navigate]);
 
+  // Request notification permission on component mount
+  useEffect(() => {
+    if ('Notification' in window) {
+      setNotificationPermission(Notification.permission);
+    }
+  }, []);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -132,7 +152,7 @@ const AdminDashboard = () => {
     }
   }, [currentUser]);
 
-  // Fetch orders with safety timeout and set up real-time subscription
+  // Enhanced fetch orders with real-time subscription
   useEffect(() => {
     if (!currentUser) return;
 
@@ -169,9 +189,9 @@ const AdminDashboard = () => {
       supabase.removeChannel(orderChannelRef.current);
     }
 
-    // Subscribe to real-time changes
+    // Enhanced real-time subscription with better notifications
     const channel = supabase
-      .channel('orders-changes')
+      .channel('orders-channel')
       .on(
         'postgres_changes',
         {
@@ -185,9 +205,49 @@ const AdminDashboard = () => {
 
           setOrders((prevOrders) => {
             if (eventType === 'INSERT') {
+              // Enhanced notification handling for new orders
+              let orderTotal = Number(newRecord.total);
+              if (isNaN(orderTotal)) orderTotal = 0;
+              const customerName = newRecord.customer_name || 'Unknown Customer';
+              const orderId = newRecord.order_number || 'N/A';
+              
+              // Determine sound type based on order value
+              const soundType = orderTotal > 50 ? 'urgent' : 'order';
+              setOrderSoundType(soundType);
               setPlayOrderSound(true);
+              
+              // Set enhanced toast notification
+              setOrderToastTitle('🔔 New Order Received!');
+              setOrderToastMessage(
+                `Order #${orderId} from ${customerName} - $${orderTotal.toFixed(2)}`
+              );
+              setShowOrderToast(true);
+              
+              // Browser notification (if permission granted)
+              if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('New Order Received!', {
+                  body: `Order #${orderId} from ${customerName} - Total: ${orderTotal.toFixed(2)}`,
+                  icon: '/favicon.ico',
+                  tag: 'new-order',
+                  badge: '/favicon.ico',
+                  requireInteraction: true, // Keep notification visible until user interacts
+                });
+              }
+              
               return [newRecord, ...prevOrders];
             } else if (eventType === 'UPDATE') {
+              // Handle order status updates
+              const updatedOrder = newRecord;
+              const statusChanged = prevOrders.find(o => o.id === updatedOrder.id)?.status !== updatedOrder.status;
+              
+              if (statusChanged) {
+                setOrderToastTitle('📋 Order Updated');
+                setOrderToastMessage(`Order #${updatedOrder.id?.slice(0, 8)} status changed to ${updatedOrder.status}`);
+                setShowOrderToast(true);
+                setOrderSoundType('success');
+                setPlayOrderSound(true);
+              }
+              
               return prevOrders.map((order) =>
                 order.id === newRecord.id ? newRecord : order
               );
@@ -196,14 +256,13 @@ const AdminDashboard = () => {
             }
             return prevOrders;
           });
-
-          if (eventType === 'INSERT') {
-            setSuccessMsg('New order received!');
-          }
         }
       )
       .subscribe((status) => {
         console.log('Subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('Successfully subscribed to order changes');
+        }
       });
 
     orderChannelRef.current = channel;
@@ -235,7 +294,7 @@ const AdminDashboard = () => {
     }
   }, [errorMsg, successMsg]);
 
-  // Update order status with timeout protection
+  // Enhanced update order status with better notifications
   const updateOrderStatus = async (orderId, status) => {
     let loadingTimeout;
     try {
@@ -256,9 +315,14 @@ const AdminDashboard = () => {
         )
       );
       
-      setSuccessMsg(`Order status updated to ${status}`);
+      // Enhanced success notification
+      setOrderToastTitle('✅ Status Updated');
+      setOrderToastMessage(`Order #${orderId.slice(0,8)} marked as ${status}`);
+      setShowOrderToast(true);
+      setOrderSoundType('success');
+      setPlayOrderSound(true);
       
-      // Create notification (handle separately)
+      // Create notification for customer (handle separately)
       try {
         const order = orders.find(o => o.id === orderId);
         if (order?.user_id) {
@@ -279,9 +343,26 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error("Error updating order:", error);
       setErrorMsg('Failed to update order status: ' + (error.message || error));
+      setOrderSoundType('error');
+      setPlayOrderSound(true);
     } finally {
       clearTimeout(loadingTimeout);
       setLoading(false);
+    }
+  };
+
+  const handleRequestNotification = () => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then(permission => {
+        setNotificationPermission(permission);
+        if (permission === 'granted') {
+          new Notification('Admin Dashboard Ready!', {
+            body: 'You will receive notifications for new orders.',
+            icon: '/favicon.ico',
+            tag: 'welcome'
+          });
+        }
+      });
     }
   };
 
@@ -299,25 +380,48 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Enhanced Error Messages */}
       {errorMsg && (
-        <div className="fixed top-4 right-4 z-50 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-md flex items-center">
-          <strong className="mr-2">Error:</strong> {errorMsg}
-          <button onClick={() => setErrorMsg('')} className="ml-4 text-red-700">
+        <div className="fixed top-4 right-4 z-50 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-md flex items-center max-w-md">
+          <span className="text-xl mr-3">❌</span>
+          <div className="flex-1">
+            <strong className="block">Error</strong>
+            <span className="text-sm">{errorMsg}</span>
+          </div>
+          <button onClick={() => setErrorMsg('')} className="ml-4 text-red-700 hover:text-red-900">
             <X size={18} />
           </button>
         </div>
       )}
       
-      {successMsg && (
-        <div className="fixed top-4 right-4 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded shadow-md flex items-center">
-          <strong className="mr-2">Success:</strong> {successMsg}
-          <button onClick={() => setSuccessMsg('')} className="ml-4 text-green-700">
+      {/* Keep basic success messages for non-order related actions */}
+      {successMsg && !showOrderToast && (
+        <div className="fixed top-4 right-4 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded shadow-md flex items-center max-w-md">
+          <span className="text-xl mr-3">✅</span>
+          <div className="flex-1">
+            <strong className="block">Success</strong>
+            <span className="text-sm">{successMsg}</span>
+          </div>
+          <button onClick={() => setSuccessMsg('')} className="ml-4 text-green-700 hover:text-green-900">
             <X size={18} />
           </button>
         </div>
       )}
+
+      {/* Enhanced Order Notification Toast */}
+      <NotificationToast
+        show={showOrderToast}
+        message={orderToastMessage}
+        title={orderToastTitle}
+        type="order"
+        onClose={() => setShowOrderToast(false)}
+        duration={6000} // Show for 6 seconds
+      />
+
       <AdminNotificationsToast />
-      <NotificationSound play={playOrderSound} />
+      
+      {/* Enhanced Notification Sound */}
+      <NotificationSound play={playOrderSound} soundType={orderSoundType} />
 
       {loading && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -327,11 +431,27 @@ const AdminDashboard = () => {
             {/* Emergency escape button */}
             <button 
               onClick={() => setLoading(false)}
-              className="ml-4 text-xs text-gray-500 underline"
+              className="ml-4 text-xs text-gray-500 underline hover:text-gray-700"
             >
               Cancel
             </button>
           </div>
+        </div>
+      )}
+
+      {notificationPermission === 'default' && (
+        <div className="fixed top-20 right-4 z-50 bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded shadow-md flex items-center max-w-md">
+          <span className="text-xl mr-3">🔔</span>
+          <div className="flex-1">
+            <strong className="block">Enable Notifications</strong>
+            <span className="text-sm">Click to allow browser notifications for new orders.</span>
+          </div>
+          <button
+            onClick={handleRequestNotification}
+            className="ml-4 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Allow
+          </button>
         </div>
       )}
 
@@ -343,6 +463,7 @@ const AdminDashboard = () => {
           menuItems={menuItems}
           handleLogout={() => setShowLogoutPopup(true)}
           currentUser={{...currentUser, ...isAdmin}}
+          restaurantName={restaurant?.name}
         />
 
         {/* Mobile Navigation */}
@@ -358,7 +479,7 @@ const AdminDashboard = () => {
         <LogoutPopup 
           isOpen={showLogoutPopup}
           onClose={() => setShowLogoutPopup(false)}
-            />
+        />
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
@@ -369,7 +490,7 @@ const AdminDashboard = () => {
               <div className="flex items-center">
                 <button
                   onClick={() => navigate(-1)}
-                  className="mr-4 p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="mr-4 p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
                   aria-label="Go back"
                 >
                   <ArrowLeft size={22} />
@@ -384,7 +505,7 @@ const AdminDashboard = () => {
                     type="search" 
                     name="search" 
                     placeholder="Search..." 
-                    className="bg-gray-100 h-10 px-5 pr-10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="bg-gray-100 h-10 px-5 pr-10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -408,7 +529,7 @@ const AdminDashboard = () => {
                     type="search" 
                     name="search" 
                     placeholder="Search..." 
-                    className="bg-gray-100 w-full h-10 px-5 pr-10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="bg-gray-100 w-full h-10 px-5 pr-10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />

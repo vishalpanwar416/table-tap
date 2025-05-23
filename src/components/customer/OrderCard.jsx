@@ -71,7 +71,7 @@ const OrderCard = ({ order, onClick }) => {
             <h3 className="font-semibold text-gray-900 flex items-center">
               <span className="mr-1">Order</span>
               <span className="font-mono text-sm bg-gray-100 px-2 py-0.5 rounded">
-                #{order.id && order.id.slice(0, 8)}
+                #{order.order_number || (order.id && order.id.slice(0, 8))}
               </span>
             </h3>
             <div className="flex items-center text-xs text-gray-500 mt-1">
@@ -169,8 +169,14 @@ const OrderCard = ({ order, onClick }) => {
                 <span className="font-medium text-xs uppercase text-gray-500 block mb-1">Payment Summary</span>
                 <div className="flex justify-between text-sm mb-1">
                   <span className="text-gray-600">Subtotal</span>
-                  <span className="text-gray-900">₹{((order.total || 0) * 0.95).toFixed(2)}</span>
+                  <span className="text-gray-900">₹{order.subtotal?.toFixed(2) || '0.00'}</span>
                 </div>
+                {order.discount !== undefined && (
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-600">Discount</span>
+                    <span className="text-gray-900">-₹{order.discount?.toFixed(2) || '0.00'}</span>
+                  </div>
+                )}
                 {order.deliveryFee && (
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-gray-600">Delivery Fee</span>
@@ -179,7 +185,7 @@ const OrderCard = ({ order, onClick }) => {
                 )}
                 <div className="flex justify-between text-sm mb-1">
                   <span className="text-gray-600">Tax</span>
-                  <span className="text-gray-900">₹{((order.total || 0) * 0.05).toFixed(2)}</span>
+                  <span className="text-gray-900">₹{order.gst?.toFixed(2) || '0.00'}</span>
                 </div>
                 <div className="border-t border-gray-200 mt-2 pt-2 flex justify-between font-medium">
                   <span className="text-gray-800">Total</span>

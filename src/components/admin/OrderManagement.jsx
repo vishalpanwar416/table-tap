@@ -6,9 +6,14 @@ import {
 } from 'lucide-react';
 import { useAdminNotifications } from '../../context/AdminNotificationContext';
 import { format, isToday, isYesterday } from 'date-fns';
+import { useRestaurant } from '../../context/RestaurantContext';
+import ReactDOMServer from "react-dom/server";
+import PrintBill from "./PrintBill";
+import PrintKOT from "./PrintKOT";
 
 const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm }) => {
   const { createNotification } = useAdminNotifications();
+  const { restaurant } = useRestaurant();
   const [viewType, setViewType] = useState('tiles');
   const [statusFilter, setStatusFilter] = useState('all');
   const [expandedOrderId, setExpandedOrderId] = useState(null);
@@ -188,6 +193,13 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
   
   const statusCounts = getStatusCounts();
   
+  const getOrderSubtotal = (order) => {
+    return (order.items || []).reduce(
+      (sum, item) => sum + (item.price || 0) * (item.quantity || 1),
+      0
+    );
+  };
+  
   useEffect(() => {
     const handleClick = (e) => {
       // Close dropdown if click is outside any dropdown
@@ -202,6 +214,42 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
       document.removeEventListener('mousedown', handleClick);
     };
   }, [dropdownOpenOrderId]);
+  
+  const handlePrintKOT = (order) => {
+    const printWindow = window.open("", "", "width=600,height=600");
+    const html = ReactDOMServer.renderToString(<PrintKOT order={order} />);
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>KOT - Order ${order.order_number || order.id.slice(0, 8)}</title>
+        </head>
+        <body>${html}</body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+  };
+  
+  const handlePrintBill = (order) => {
+    const printWindow = window.open("", "", "width=700,height=800");
+    const html = ReactDOMServer.renderToString(
+      <PrintBill order={order} restaurant={restaurant} />
+    );
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Bill - Order ${order.order_number || order.id.slice(0, 8)}</title>
+        </head>
+        <body>${html}</body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+  };
   
   return (
     <div className="bg-white rounded-xl shadow">
@@ -393,7 +441,22 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
         ) : viewType === 'tiles' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {sortedOrders.map((order) => (
-              <div key={order.id} className="border rounded-lg hover:shadow-md transition-shadow">
+              <div
+                key={order.id}
+                className={`border rounded-lg hover:shadow-md transition-shadow
+                  ${
+                    order.status === 'pending'
+                      ? 'bg-green-50' // very mild light green
+                      : order.status === 'ready'
+                      ? 'bg-blue-50' // mild light yellow
+                      : order.status === 'rejected'
+                      ? 'bg-red-50' // mild light red
+                      : order.status === 'preparing'
+                      ? 'bg-yellow-50' // default or you can set another color if you want
+                      : 'bg-white'
+                  }
+                `}
+              >
                 {/* Order header */}
                 <div className="bg-gray-50 p-3 flex justify-between items-center border-b">
                   <div className="flex items-center">
@@ -401,7 +464,7 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
                       {getStatusIcon(order.status)}
                     </div>
                     <div>
-                      <p className="font-medium">#{order.id.slice(0, 8)}</p>
+                      <p className="font-medium">{order.order_number || order.id.slice(0, 8)}</p>
                       <p className="text-xs text-gray-500">{formatDate(order.created_at)}</p>
                     </div>
                   </div>
@@ -523,8 +586,26 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
                         <div className="mt-4 pt-3 border-t border-gray-200">
                           <div className="flex justify-between text-xs text-gray-500 mb-1">
                             <span>Subtotal</span>
-                            <span>₹{(order.subtotal || order.total || 0).toFixed(2)}</span>
+                            <span>₹{getOrderSubtotal(order).toFixed(2)}</span>
                           </div>
+                          {order.discount > 0 && (
+                            <div className="flex justify-between text-xs text-gray-500 mb-1">
+                              <span>Discount</span>
+                              <span>-₹{order.discount?.toFixed(2) || '0.00'}</span>
+                            </div>
+                          )}
+                          {order.gst > 0 && (
+                            <>
+                              <div className="flex justify-between text-xs text-gray-500 mb-1">
+                                <span>CGST (2.5%)</span>
+                                <span>₹{(order.gst / 2).toFixed(2)}</span>
+                              </div>
+                              <div className="flex justify-between text-xs text-gray-500 mb-1">
+                                <span>SGST (2.5%)</span>
+                                <span>₹{(order.gst / 2).toFixed(2)}</span>
+                              </div>
+                            </>
+                          )}
                           {order.deliveryFee > 0 && (
                             <div className="flex justify-between text-xs text-gray-500 mb-1">
                               <span>Delivery</span>
@@ -533,30 +614,28 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
                           )}
                           <div className="flex justify-between font-medium text-sm mt-2">
                             <span>Total</span>
-                            <span>₹{order.total?.toFixed(2) || '0.00'}</span>
+                            <span>
+                              ₹{(
+                                getOrderSubtotal(order)
+                                - (order.discount || 0)
+                                + (order.gst || 0)
+                                + (order.deliveryFee || 0)
+                              ).toFixed(2)}
+                            </span>
                           </div>
                         </div>
                         
-                        {order.notes && (
+                        {order.special_instructions && (
                           <div className="mt-3 p-2 bg-yellow-50 border border-yellow-100 rounded text-sm text-gray-700">
                             <div className="flex items-start">
                               <Info size={14} className="text-yellow-500 mr-1 mt-0.5" />
                               <div>
-                                <span className="font-medium block text-xs mb-0.5">Notes:</span>
-                                <p className="text-xs">{order.notes}</p>
+                                <span className="font-medium block text-xs mb-0.5">Special Instructions:</span>
+                                <p className="text-xs">{order.special_instructions}</p>
                               </div>
                             </div>
                           </div>
                         )}
-                        
-                        <div className="mt-3 flex justify-end space-x-2">
-                          <button 
-                            className="text-xs text-gray-500 hover:text-gray-700 flex items-center px-2 py-1 rounded hover:bg-gray-100"
-                            title="Print Order"
-                          >
-                            <Printer size={14} className="mr-1" /> Print
-                          </button>
-                        </div>
                       </div>
                     )}
                   </div>
@@ -573,7 +652,7 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
                         <>
                           <button
                             onClick={() => openConfirmModal(order, 'accept')}
-                            className="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-colors"
+                            className="p-1.5 rounded-full bg-green-100 text-green-600 hover:bg-green-200"
                             title="Accept Order"
                             disabled={isLoading}
                           >
@@ -581,7 +660,7 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
                           </button>
                           <button
                             onClick={() => openConfirmModal(order, 'rejected')}
-                            className="p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition-colors"
+                            className="p-1.5 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
                             title="Reject Order"
                             disabled={isLoading}
                           >
@@ -591,13 +670,23 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
                       )}
                       
                       {order.status === 'preparing' && (
-                        <button
-                          onClick={() => openConfirmModal(order, 'ready')}
-                          className="px-4 py-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 flex items-center transition-colors"
-                          disabled={isLoading}
-                        >
-                          <CheckCircle size={16} className="mr-1" /> Mark Ready
-                        </button>
+                        <>
+                          <button
+                            onClick={() => handlePrintKOT(order)}
+                            className="p-1.5 rounded-full bg-orange-100 text-orange-600 hover:bg-orange-200"
+                            title="Print KOT"
+                          >
+                            <Printer size={16} />
+                          </button>
+                          <button
+                            onClick={() => openConfirmModal(order, 'ready')}
+                            className="px-4 py-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 flex items-center transition-colors"
+                            disabled={isLoading}
+                            title="Mark as Ready"
+                          >
+                            <CheckCircle size={16} className="mr-1" /> Ready
+                          </button>
+                        </>
                       )}
                       
                       {order.status === 'ready' && (
@@ -605,47 +694,19 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
                           onClick={() => openConfirmModal(order, 'complete')}
                           className="px-4 py-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 flex items-center transition-colors"
                           disabled={isLoading}
+                          title="Complete"
                         >
                           <Check size={16} className="mr-1" /> Complete
                         </button>
                       )}
-                      
-                      {/* Status update dropdown for additional options */}
-                      {getNextStatusOptions(order.status).length > 0 && (
-                        <div className="relative">
-                          <button
-                            onClick={() =>
-                              setDropdownOpenOrderId(
-                                dropdownOpenOrderId === order.id ? null : order.id
-                              )
-                            }
-                            className="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
-                            disabled={isLoading}
-                            type="button"
-                          >
-                            <ChevronDown size={16} />
-                          </button>
-                          {dropdownOpenOrderId === order.id && (
-                            <div className="absolute right-0 mt-1 z-50 bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100 min-w-48">
-                              {getNextStatusOptions(order.status).map((status) => (
-                                <button
-                                  key={status}
-                                  onClick={() => {
-                                    openConfirmModal(order, status);
-                                    setDropdownOpenOrderId(null);
-                                  }}
-                                  className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center"
-                                  type="button"
-                                >
-                                  {getStatusIcon(status)}
-                                  <span className="ml-2">
-                                    Mark as {status.charAt(0).toUpperCase() + status.slice(1)}
-                                  </span>
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
+                      {order.status === 'completed' && (
+                        <button
+                          onClick={() => handlePrintBill(order)}
+                          className="p-1.5 rounded-full bg-orange-100 text-orange-600 hover:bg-orange-200"
+                          title="Print Bill"
+                        >
+                          <Printer size={16} />
+                        </button>
                       )}
                     </div>
                   </div>
@@ -672,7 +733,7 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
                   <React.Fragment key={order.id}>
                     <tr className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        #{order.id.slice(0, 8)}
+                        {order.order_number || order.id.slice(0, 8)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {order.customer_name || 'Guest'}
@@ -744,59 +805,42 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
                             </>
                           )}
                           {order.status === 'preparing' && (
-                            <button
-                              onClick={() => openConfirmModal(order, 'ready')}
-                              className="p-1.5 rounded-full bg-green-100 text-green-600 hover:bg-green-200"
-                              title="Mark as Ready"
-                              disabled={isLoading}
-                            >
-                              <CheckCircle size={16} />
-                            </button>
+                            <>
+                              <button
+                                onClick={() => handlePrintKOT(order)}
+                                className="p-1.5 rounded-full bg-orange-100 text-orange-600 hover:bg-orange-200"
+                                title="Print KOT"
+                              >
+                                <Printer size={16} />
+                              </button>
+                              <button
+                                onClick={() => openConfirmModal(order, 'ready')}
+                                className="px-4 py-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 flex items-center transition-colors"
+                                disabled={isLoading}
+                                title="Mark as Ready"
+                              >
+                                <CheckCircle size={16} className="mr-1" /> Ready
+                              </button>
+                            </>
                           )}
                           {order.status === 'ready' && (
                             <button
                               onClick={() => openConfirmModal(order, 'complete')}
-                              className="p-1.5 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200"
-                              title="Complete"
+                              className="px-4 py-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 flex items-center transition-colors"
                               disabled={isLoading}
+                              title="Complete"
                             >
-                              <Check size={16} />
+                              <Check size={16} className="mr-1" /> Complete
                             </button>
                           )}
-                          {/* Dropdown for additional status options */}
-                          {getNextStatusOptions(order.status).length > 0 && (
-                            <div className="relative">
-                              <button
-                                onClick={() =>
-                                  setDropdownOpenOrderId(
-                                    dropdownOpenOrderId === order.id ? null : order.id
-                                  )
-                                }
-                                className="p-1.5 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                disabled={isLoading}
-                              >
-                                <ChevronDown size={16} />
-                              </button>
-                              {dropdownOpenOrderId === order.id && (
-                                <div className="absolute right-0 mt-1 z-50 bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100 min-w-48">
-                                  {getNextStatusOptions(order.status).map((status) => (
-                                    <button
-                                      key={status}
-                                      onClick={() => {
-                                        openConfirmModal(order, status);
-                                        setDropdownOpenOrderId(null);
-                                      }}
-                                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center"
-                                    >
-                                      {getStatusIcon(status)}
-                                      <span className="ml-2">
-                                        Mark as {status.charAt(0).toUpperCase() + status.slice(1)}
-                                      </span>
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
+                          {order.status === 'completed' && (
+                            <button
+                              onClick={() => handlePrintBill(order)}
+                              className="p-1.5 rounded-full bg-orange-100 text-orange-600 hover:bg-orange-200"
+                              title="Print Bill"
+                            >
+                              <Printer size={16} />
+                            </button>
                           )}
                         </div>
                       </td>
@@ -815,9 +859,9 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
                                   <span className="text-sm text-gray-600">{order.address}</span>
                                 </div>
                               )}
-                              {order.notes && (
+                              {order.special_instructions && (
                                 <div className="mb-2 text-sm text-gray-600">
-                                  <span className="font-medium">Notes: </span>{order.notes}
+                                  <span className="font-medium">Special Instructions: </span>{order.special_instructions}
                                 </div>
                               )}
                               <div className="text-sm text-gray-600">
@@ -881,7 +925,7 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
               </h3>
             </div>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to {confirmModal.type === 'accept' ? 'accept' : confirmModal.type === 'rejected' ? 'reject' : confirmModal.type === 'ready' ? 'mark as ready' : 'complete'} order <span className="font-semibold">#{confirmModal.order.id.slice(0,8)}</span>?
+              Are you sure you want to {confirmModal.type === 'accept' ? 'accept' : confirmModal.type === 'rejected' ? 'reject' : confirmModal.type === 'ready' ? 'mark as ready' : 'complete'} order <span className="font-semibold">{confirmModal.order.order_number || confirmModal.order.id.slice(0,8)}</span>?
             </p>
             {confirmModal.type === 'rejected' && (
               <div className="mb-4">
