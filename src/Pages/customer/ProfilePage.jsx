@@ -15,6 +15,7 @@ const ProfilePage = () => {
   const [formData, setFormData] = useState({...profileData});
   const [user, setUser] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -89,22 +90,19 @@ const ProfilePage = () => {
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       const filePath = `profile-photos/${user.id}/${fileName}`;
   
-      // Corrected storage access
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload( filePath, file, {
+        .upload(filePath, file, {
           cacheControl: '3600',
           upsert: true
         });
   
       if (uploadError) throw uploadError;
   
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
   
-      // Update profile
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: publicUrl })
@@ -112,7 +110,6 @@ const ProfilePage = () => {
   
       if (updateError) throw updateError;
   
-      // Update state
       setProfileData(prev => ({ ...prev, profileImg: publicUrl }));
       setFormData(prev => ({ ...prev, profileImg: publicUrl }));
       
@@ -122,6 +119,7 @@ const ProfilePage = () => {
       setUploading(false);
     }
   };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -130,66 +128,139 @@ const ProfilePage = () => {
     }));
   };
 
+  const validateEmail = (email) => {
+    // Simple but reliable email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email) && 
+           email.length <= 254 && 
+           email.length >= 5 &&
+           !email.includes('..') && // No consecutive dots
+           !email.startsWith('.') && // No leading dot
+           !email.endsWith('.'); // No trailing dot
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!user) return;
-
-    const cleanPhone = formData.phone.replace(/\D/g, '');
-    if (cleanPhone.length < 10) {
-      alert('Phone number must be at least 10 digits');
-      return;
-    }
-
-    if (!/^\d{2}-\d{2}-\d{4}$/.test(formData.dob)) {
-      alert('Please use DD/MM/YYYY format for date of birth');
-      return;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(formData.email)) {
-    alert('Please enter a valid email address');
-    return;
-  }
-
+    
+    setIsSubmitting(true);
 
     try {
+      // Validate phone
+      const cleanPhone = formData.phone.replace(/\D/g, '');
+      if (cleanPhone.length < 10) {
+        alert('Phone number must be at least 10 digits');
+        return;
+      }
+
+      // Validate date of birth
+      if (!/^\d{2}-\d{2}-\d{4}$/.test(formData.dob)) {
+        alert('Please use DD-MM-YYYY format for date of birth');
+        return;
+      }
+
+      // Validate email
+      if (!validateEmail(formData.email)) {
+        alert('Please enter a valid email address');
+        return;
+      }
+
+      // Parse date
       const [day, month, year] = formData.dob.split('-');
       const dobDate = new Date(`${year}-${month}-${day}`);
-      const { data: { user: updatedUser }, error: authError } = await supabase.auth.updateUser({
-        email: formData.email
-      });
-      if (authError) throw authError;
-      const { error: reAuthError } = await supabase.auth.reauthenticate();
-if (reAuthError) throw reAuthError;
-      const { error } = await supabase
+      
+      // Check if email has changed
+      const emailChanged = formData.email !== user.email;
+      
+      // Update profile data first (non-auth related)
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({
           full_name: formData.name,
-          email: formData.email,
           mobile_number: cleanPhone,
           date_of_birth: dobDate.toISOString()
         })
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      // Update local state for profile data
       setProfileData(prev => ({
         ...prev,
         name: formData.name,
         phone: cleanPhone,
-        dob: formData.dob,
-        email: formData.email
+        dob: formData.dob
       }));
-      if (updatedUser.email_confirmed_at) {
-        // Update profile here
+
+      // Handle email update separately if it changed
+      if (emailChanged) {
+        // Double-check email format before sending to Supabase
+        if (!validateEmail(formData.email)) {
+          alert('Please enter a valid email address in the format: example@domain.com');
+          return;
+        }
+
+        // Trim and clean the email
+        const cleanEmail = formData.email.trim().toLowerCase();
+        
+        try {
+          console.log('Attempting to update email from:', user.email, 'to:', cleanEmail);
+          
+          const { data: { user: updatedUser }, error: authError } = await supabase.auth.updateUser({
+            email: cleanEmail
+          });
+
+          if (authError) {
+            // Log the full error for debugging
+            console.error('Full auth error:', authError);
+            console.error('Error code:', authError.code);
+            console.error('Error message:', authError.message);
+            
+            if (authError.message.includes('User already registered') || 
+                authError.message.includes('already exists') ||
+                authError.code === 'email_address_invalid') {
+              alert('This email address is already registered or invalid. Please use a different email.');
+            } else if (authError.message.includes('rate') || authError.message.includes('limit')) {
+              alert('Too many email change attempts. Please wait a few minutes before trying again.');
+            } else if (authError.message.includes('invalid') || authError.message.includes('Invalid')) {
+              alert(`Email validation failed: ${authError.message}\n\nPlease try:\n- A different email provider\n- Removing special characters\n- Using a standard format like: name@example.com`);
+            } else {
+              alert(`Error updating email: ${authError.message}\n\nIf this persists, please contact support.`);
+            }
+            return;
+          }
+
+          if (updatedUser) {
+            console.log('Email update successful:', updatedUser);
+            
+            // Update local state with new email immediately
+            setProfileData(prev => ({
+              ...prev,
+              email: cleanEmail
+            }));
+            
+            if (!updatedUser.email_confirmed_at) {
+              alert('Profile updated successfully! Please check your new email for a verification link.');
+            } else {
+              alert('Profile and email updated successfully!');
+            }
+          }
+        } catch (emailError) {
+          console.error('Email update error:', emailError);
+          alert(`Profile information updated, but email update failed: ${emailError.message}\n\nPlease try updating your email again later.`);
+        }
       } else {
-        alert('Please verify your new email address before continuing');
+        alert('Profile updated successfully!');
       }
-      //setProfileData(formData);
+
       setIsEditing(false);
-    alert('Profile updated successfully! Please check your new email for verification.');
+
     } catch (error) {
       console.error('Update error:', error);
       alert('Error updating profile: ' + error.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -244,6 +315,7 @@ if (reAuthError) throw reAuthError;
                     value={formData.name}
                     onChange={handleChange}
                     className="w-full p-4 bg-gray-100 rounded-xl border-0 focus:ring-2 focus:ring-orange-500 text-black"
+                    disabled={isSubmitting}
                   />
                 </div>
                 
@@ -256,6 +328,7 @@ if (reAuthError) throw reAuthError;
                     onChange={handleChange}
                     className="w-full p-4 bg-gray-100 rounded-xl border-0 focus:ring-2 focus:ring-orange-500 text-black"
                     placeholder="DD-MM-YYYY"
+                    disabled={isSubmitting}
                   />
                 </div>
                 
@@ -267,7 +340,14 @@ if (reAuthError) throw reAuthError;
                     value={formData.email}
                     onChange={handleChange}
                     className="w-full p-4 bg-gray-100 rounded-xl border-0 focus:ring-2 focus:ring-orange-500 text-black"
+                    disabled={isSubmitting}
+                    placeholder="example@domain.com"
                   />
+                  {formData.email !== user?.email && (
+                    <p className="text-xs text-orange-600 mt-1">
+                      ⚠️ Changing your email will require verification
+                    </p>
+                  )}
                 </div>
                 
                 <div>
@@ -279,6 +359,7 @@ if (reAuthError) throw reAuthError;
                     onChange={handleChange}
                     className="w-full p-4 bg-gray-100 rounded-xl border-0 focus:ring-2 focus:ring-orange-500 text-black"
                     placeholder="+91 987 654 3210"
+                    disabled={isSubmitting}
                   />
                 </div>
               </div>
@@ -291,14 +372,16 @@ if (reAuthError) throw reAuthError;
                     setIsEditing(false);
                   }}
                   className="px-6 py-3 bg-gray-200 text-gray-800 rounded-xl font-medium hover:bg-gray-300 transition-colors"
+                  disabled={isSubmitting}
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit"
-                  className="px-6 py-3 bg-black text-white rounded-xl font-medium hover:bg-black/80 transition-colors"
+                  className="px-6 py-3 bg-black text-white rounded-xl font-medium hover:bg-black/80 transition-colors disabled:opacity-50"
+                  disabled={isSubmitting}
                 >
-                  Save Changes
+                  {isSubmitting ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </form>
