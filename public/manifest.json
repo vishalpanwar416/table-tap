@@ -1,0 +1,20 @@
+
+{
+    "name": "Table-Tap",
+    "short_name": "TT",
+    "icons": [
+      {
+        "src": "/images/logo-192.png",
+        "type": "image/png",
+        "sizes": "192x192"
+      },
+      {
+        "src": "/images/logo-512.png",
+        "type": "image/png",
+        "sizes": "512x512"
+      }
+    ],
+    "theme_color": "#ffffff",
+    "background_color": "#ffffff",
+    "display": "standalone"
+  }
