@@ -3,6 +3,8 @@ import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../../api/authService';
 import GoogleButton from '../../components/auth/GoogleButton';
+import { toast, ToastContainer, Slide } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function SignUpPage() {
   const navigate = useNavigate();
@@ -36,6 +38,8 @@ export default function SignUpPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    let updatedFormData = { ...formData, [name]: value };
+
     if (name === 'mobileNumber') {
       if (e.nativeEvent.inputType === 'deleteContentBackward') {
         if (value.length <= 4) {
@@ -59,7 +63,20 @@ export default function SignUpPage() {
       setFormData(prev => ({ ...prev, [name]: formatted }));
       return;
     }
-    setFormData(prev => ({ ...prev, [name]: value }));
+
+    setFormData(updatedFormData);
+
+    if (
+      (name === 'password' || name === 'confirmPassword') &&
+      updatedFormData.password &&
+      updatedFormData.confirmPassword
+    ) {
+      if (updatedFormData.password !== updatedFormData.confirmPassword) {
+        setError('Passwords do not match');
+      } else {
+        setError('');
+      }
+    }
   };
 
   const validateForm = () => {
@@ -87,6 +104,37 @@ export default function SignUpPage() {
       setError('Date of birth is required');
       return false;
     }
+    // Age check
+    const today = new Date();
+    const dob = new Date(formData.dateOfBirth);
+    const age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    const isBirthdayPassed = m > 0 || (m === 0 && today.getDate() >= dob.getDate());
+    const actualAge = isBirthdayPassed ? age : age - 1;
+    if (actualAge < 13) {
+      toast('You must be at least 13 years old to sign up.', {
+        type: 'error',
+        position: 'top-center',
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        style: {
+          background: '#fff',
+          color: '#e53e3e',
+          borderRadius: '8px',
+          fontWeight: 500,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+          fontFamily: 'inherit',
+          fontSize: '15px',
+          padding: '12px 20px'
+        },
+        icon: false,
+        transition: Slide,
+      });
+      return false;
+    }
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return false;
@@ -110,22 +158,76 @@ export default function SignUpPage() {
         dateOfBirth: formData.dateOfBirth
       });
 
-      navigate('/home'); 
+      // Show verification toast
+      toast('Verify your profile by clicking on the email you receive.', {
+        type: 'info',
+        position: 'top-center',
+        autoClose: 4000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        style: {
+          background: '#fff',
+          color: '#2563eb',
+          borderRadius: '8px',
+          fontWeight: 500,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+          fontFamily: 'inherit',
+          fontSize: '15px',
+          padding: '12px 20px'
+        },
+        icon: false,
+        transition: Slide,
+      });
+
+      setFormData({
+        fullName: '',
+        password: '',
+        confirmPassword: '',
+        email: '',
+        mobileNumber: '+91 ',
+        dateOfBirth: ''
+      });
+
+      // Do NOT navigate to /home here.
+      // Optionally, you can redirect to a verify page:
+      // navigate('/verify-email');
     } catch (err) {
       console.error("Signup error:", err);
       let errorMessage = 'Registration failed. Please check your details';
       
       // Handle specific error messages
       if (err.message.includes('duplicate')) {
-        if (err.message.includes('profiles_email_key')) {
-          errorMessage = 'Email already registered';
+        if (err.message.includes('email')) {
+          errorMessage = 'Email is already registered';
         }
         else if (err.message.includes('profiles_mobile_number_key')) {
-          errorMessage = 'Mobile number already registered';
+          errorMessage = 'Mobile number is already registered';
         }
       }
       
-      setError(errorMessage);
+      toast(errorMessage, {
+        type: 'error',
+        position: 'top-center',
+        autoClose: 3000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        style: {
+          background: '#fff',
+          color: '#e53e3e',
+          borderRadius: '8px',
+          fontWeight: 500,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+          fontFamily: 'inherit',
+          fontSize: '15px',
+          padding: '12px 20px'
+        },
+        icon: false,
+        transition: Slide,
+      });
     } finally {
       setLoading(false);
     }
@@ -324,6 +426,31 @@ export default function SignUpPage() {
           </p>
         </div>
       </div>
+      <ToastContainer
+        position="top-center"
+        autoClose={2000}
+        hideProgressBar
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss={false}
+        draggable={false}
+        pauseOnHover={false}
+        theme="light"
+        style={{ width: 'auto', minWidth: 0, maxWidth: 320 }}
+        toastStyle={{
+          background: '#fff',
+          color: '#e53e3e',
+          borderRadius: '8px',
+          fontWeight: 500,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+          fontFamily: 'inherit',
+          fontSize: '15px',
+          padding: '12px 20px'
+        }}
+        transition={Slide}
+        closeButton={false}
+      />
     </div>
     </div>
   );
