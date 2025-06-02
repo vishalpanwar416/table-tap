@@ -1,5 +1,17 @@
 import { supabase } from '../supabase';
 
+const DEFAULT_AVATAR_URL = 'https://vogixryubhpqziivspks.supabase.co/storage/v1/object/public/avatars//default.jpg';
+
+const upsertProfileIfNeeded = async (user, extraFields = {}) => {
+  await supabase.from('profiles').upsert([{
+    id: user.id,
+    full_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email,
+    email: user.email,
+    avatar_url: DEFAULT_AVATAR_URL,
+    ...extraFields
+  }]);
+};
+
 export const authService = {
   /**
    * Get the current authenticated user
@@ -77,29 +89,28 @@ export const authService = {
   },
 
   /**
- * Complete password reset with token from email
- * @param {string} newPassword - New password
- * @returns {Promise<Object>} Result data
- * @throws {Error} If reset fails
- */
-completePasswordReset: async (newPassword) => {
-  try {
-    // This will use the existing session from the token
-    const { data, error } = await supabase.auth.updateUser({
-      password: newPassword
-    });
-    
-    if (error) throw error;
-    return {
-      success: true,
-      message: 'Password updated successfully',
-      user: data.user
-    };
-  } catch (error) {
-    console.error('Password reset failed:', error.message);
-    throw new Error('Failed to update password. The link may have expired.');
-  }
-},
+   * Complete password reset with token from email
+   * @param {string} newPassword - New password
+   * @returns {Promise<Object>} Result data
+   * @throws {Error} If reset fails
+   */
+  completePasswordReset: async (newPassword) => {
+    try {
+      const { data, error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+      
+      if (error) throw error;
+      return {
+        success: true,
+        message: 'Password updated successfully',
+        user: data.user
+      };
+    } catch (error) {
+      console.error('Password reset failed:', error.message);
+      throw new Error('Failed to update password. The link may have expired.');
+    }
+  },
 
   /**
    * Sign in with Google OAuth
@@ -117,6 +128,14 @@ completePasswordReset: async (newPassword) => {
       });
       
       if (error) throw error;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await upsertProfileIfNeeded(user, {
+          avatar_url: user.user_metadata?.avatar_url || DEFAULT_AVATAR_URL
+        });
+      }
+
       return data;
     } catch (error) {
       console.error('Google sign in failed:', error.message);
@@ -138,8 +157,6 @@ completePasswordReset: async (newPassword) => {
   signUp: async (userData) => {
     try {
       const { fullName, email, password, mobileNumber, dateOfBirth } = userData;
-      
-      // Create auth user
       const { data: { user }, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -155,7 +172,6 @@ completePasswordReset: async (newPassword) => {
       if (authError) throw authError;
       if (!user) throw new Error('User creation failed');
       
-      // Create profile
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert([{
@@ -163,7 +179,8 @@ completePasswordReset: async (newPassword) => {
           full_name: fullName,
           email,
           mobile_number: mobileNumber,
-          date_of_birth: dateOfBirth
+          date_of_birth: dateOfBirth,
+          avatar_url: DEFAULT_AVATAR_URL
         }]);
       
       if (profileError) throw profileError;
@@ -195,6 +212,14 @@ completePasswordReset: async (newPassword) => {
       });
       
       if (error) throw error;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await upsertProfileIfNeeded(user, {
+          avatar_url: user.user_metadata?.avatar_url || DEFAULT_AVATAR_URL
+        });
+      }
+
       return data;
     } catch (error) {
       console.error('Google sign up failed:', error.message);
@@ -217,7 +242,7 @@ completePasswordReset: async (newPassword) => {
         .from('profiles')
         .upsert({
           id: user.id,
-          full_name: user.user_metadata.full_name || user.user_metadata.name,
+          full_name: user.user_metadata?.full_name || user.user_metadata?.name,
           email: user.email,
           ...profileData
         });
@@ -251,52 +276,28 @@ completePasswordReset: async (newPassword) => {
   },
 
   /**
-   * Update user password
-   * @param {string} newPassword - New password
+   * Send password reset email
+   * @param {string} email - User email
    * @returns {Promise<Object>} Result data
-   * @throws {Error} If update fails
+   * @throws {Error} If reset fails
    */
-  updatePassword: async (newPassword) => {
-    try {
-      const { data, error } = await supabase.auth.updateUser({
-        password: newPassword
+  sendPasswordResetEmail: async (email) => {
+    if (typeof supabase.auth.resetPasswordForEmail === 'function') {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
       });
-      
       if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Password update failed:', error.message);
-      throw error;
+      return;
     }
+    if (supabase.auth.api && typeof supabase.auth.api.resetPasswordForEmail === 'function') {
+      const { error } = await supabase.auth.api.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      return;
+    }
+    throw new Error('resetPasswordForEmail is not available on your Supabase client');
   },
- /**
- * Send password reset email
- * @param {string} email - User email
- * @returns {Promise<Object>} Result data
- * @throws {Error} If reset fails
- */
- sendPasswordResetEmail: async (email) => {
-  // — supabase‑js v2 —
-  if (typeof supabase.auth.resetPasswordForEmail === 'function') {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    if (error) throw error;
-    return;
-  }
-
-  // — supabase‑js v1 —
-  if (supabase.auth.api && typeof supabase.auth.api.resetPasswordForEmail === 'function') {
-    const { error } = await supabase.auth.api.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    if (error) throw error;
-    return;
-  }
-
-  throw new Error('resetPasswordForEmail is not available on your Supabase client');
-},
-
 
   /**
    * Verify password reset token validity
@@ -314,60 +315,35 @@ completePasswordReset: async (newPassword) => {
   },
   
   /**
- * Update password with reset token
- * @param {string} newPassword - The new password
- * @param {string} token - The password reset token
- * @returns {Promise<Object>} Updated user data
- * @throws {Error} If password update fails
- */
-updatePasswordWithToken: async (newPassword, token) => {
-  try {
-    // First set the session with the token
-    const { data: { session }, error: sessionError } = await supabase.auth.setSession({
-      access_token: token,
-      refresh_token: ''
-    });
-    
-    if (sessionError) {
-      throw sessionError;
-    }
-
-    // Then update the password
-    const { data, error } = await supabase.auth.updateUser({
-      password: newPassword
-    });
-    
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('Password update failed:', error);
-    throw error;
-  }
-},
-
-  /**
-   * Update password for authenticated user
+   * Update password with reset token
    * @param {string} newPassword - The new password
-   * @returns {Promise<{user: object, message: string}>} Updated user data
+   * @param {string} token - The password reset token
+   * @returns {Promise<Object>} Updated user data
    * @throws {Error} If password update fails
    */
-  updatePassword: async (newPassword) => {
-    // — supabase‑js v2 —
-    if (typeof supabase.auth.updateUser === 'function') {
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
-      if (error) throw error;
-      return;
-    }
+  updatePasswordWithToken: async (newPassword, token) => {
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.setSession({
+        access_token: token,
+        refresh_token: ''
+      });
+      
+      if (sessionError) {
+        throw sessionError;
+      }
 
-    // — supabase‑js v1 —
-    if (typeof supabase.auth.update === 'function') {
-      const { error } = await supabase.auth.update({ password: newPassword });
+      const { data, error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+      
       if (error) throw error;
-      return;
+      return data;
+    } catch (error) {
+      console.error('Password update failed:', error);
+      throw error;
     }
-
-    throw new Error('updateUser/update is not available on your Supabase client');
   },
+
   /**
    * Sign out the current user
    * @returns {Promise<{success: boolean}>} Success status

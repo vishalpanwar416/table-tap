@@ -11,6 +11,39 @@ import ReactDOMServer from "react-dom/server";
 import PrintBill from "./PrintBill";
 import PrintKOT from "./PrintKOT";
 
+const STATUS_META = {
+  pending: {
+    label: "Pending",
+    color: "yellow",
+    icon: <Clock className="h-5 w-5 text-yellow-600" />,
+    badge: "bg-yellow-100 text-yellow-800 border border-yellow-200",
+  },
+  preparing: {
+    label: "Preparing",
+    color: "purple",
+    icon: <Truck className="h-5 w-5 text-purple-600" />,
+    badge: "bg-purple-100 text-purple-800 border border-purple-200",
+  },
+  ready: {
+    label: "Ready",
+    color: "green",
+    icon: <CheckCircle className="h-5 w-5 text-green-600" />,
+    badge: "bg-green-100 text-green-800 border border-green-200",
+  },
+  completed: {
+    label: "Completed",
+    color: "teal",
+    icon: <Check className="h-5 w-5 text-teal-600" />,
+    badge: "bg-teal-100 text-teal-800 border border-teal-200",
+  },
+  rejected: {
+    label: "Rejected",
+    color: "red",
+    icon: <X className="h-5 w-5 text-red-600" />,
+    badge: "bg-red-100 text-red-800 border border-red-200",
+  },
+};
+
 const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm }) => {
   const { createNotification } = useAdminNotifications();
   const { restaurant } = useRestaurant();
@@ -61,41 +94,60 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
     setConfirmModal({ show: true, type, order });
   };
   
-  const getStatusBadge = (status) => {
-    const statusClasses = {
-      pending: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
-      preparing: 'bg-purple-100 text-purple-800 border border-purple-200',
-      ready: 'bg-green-100 text-green-800 border border-green-200',
-      rejected: 'bg-red-100 text-red-800 border border-red-200',
-      completed: 'bg-teal-100 text-teal-800 border border-teal-200',
-    };
+  // Helper: Render status dashboard card
+  const StatusCard = ({ status }) => (
+    <div
+      className={`p-3 rounded-lg bg-white shadow-sm border-l-4 border-${STATUS_META[status].color}-400 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === status ? `ring-2 ring-${STATUS_META[status].color}-400` : ''}`}
+      onClick={() => setStatusFilter(statusFilter === status ? 'all' : status)}
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs text-gray-500 uppercase font-medium">{STATUS_META[status].label}</p>
+          <p className="text-2xl font-bold text-gray-800">{statusCounts[status]}</p>
+        </div>
+        <div className={`p-2 rounded-full bg-${STATUS_META[status].color}-100`}>
+          {STATUS_META[status].icon}
+        </div>
+      </div>
+    </div>
+  );
 
-    return (
-      <span
-        className={`px-2 py-1 rounded-full text-xs font-medium ${
-          statusClasses[status] || 'bg-gray-100 text-gray-800 border border-gray-200'
-        }`}
-      >
-        {status?.charAt(0).toUpperCase() + status?.slice(1) || 'Unknown'}
-      </span>
-    );
-  };
-  
-  const getStatusIcon = (status) => {
-    switch(status) {
-      case 'pending':
-        return <Clock className="h-5 w-5 text-yellow-500" />;
-      case 'preparing':
-        return <Truck className="h-5 w-5 text-purple-500" />;
-      case 'ready':
-        return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case 'rejected':
-        return <X className="h-5 w-5 text-red-500" />;
-      case 'completed':
-        return <Check className="h-5 w-5 text-teal-500" />;
-      default:
-        return <Clock className="h-5 w-5 text-gray-400" />;
+  // Helper: Render status badge
+  const getStatusBadge = (status) => (
+    <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_META[status]?.badge || 'bg-gray-100 text-gray-800 border border-gray-200'}`}>
+      {STATUS_META[status]?.label || 'Unknown'}
+    </span>
+  );
+
+  // Helper: Render action buttons for each order status
+  const ActionButtons = ({ order }) => {
+    if (order.status === 'pending') {
+      return (
+        <>
+          <button onClick={() => openConfirmModal(order, 'accept')} className="p-1.5 rounded-full bg-green-100 text-green-600 hover:bg-green-200" title="Accept Order" disabled={isLoading}><Check size={16} /></button>
+          <button onClick={() => openConfirmModal(order, 'rejected')} className="p-1.5 rounded-full bg-red-100 text-red-600 hover:bg-red-200" title="Reject Order" disabled={isLoading}><X size={16} /></button>
+        </>
+      );
     }
+    if (order.status === 'preparing') {
+      return (
+        <>
+          <button onClick={() => handlePrintKOT(order)} className="p-1.5 rounded-full bg-orange-100 text-orange-600 hover:bg-orange-200" title="Print KOT"><Printer size={16} /></button>
+          <button onClick={() => openConfirmModal(order, 'ready')} className="px-4 py-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 flex items-center transition-colors" disabled={isLoading} title="Mark as Ready"><CheckCircle size={16} className="mr-1" /> Ready</button>
+        </>
+      );
+    }
+    if (order.status === 'ready') {
+      return (
+        <button onClick={() => openConfirmModal(order, 'complete')} className="px-4 py-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 flex items-center transition-colors" disabled={isLoading} title="Complete"><Check size={16} className="mr-1" /> Complete</button>
+      );
+    }
+    if (order.status === 'completed') {
+      return (
+        <button onClick={() => handlePrintBill(order)} className="p-1.5 rounded-full bg-orange-100 text-orange-600 hover:bg-orange-200" title="Print Bill"><Printer size={16} /></button>
+      );
+    }
+    return null;
   };
 
   const formatDate = (dateString) => {
@@ -276,80 +328,9 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
       {/* Status Dashboard */}
       <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-4">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div 
-            className={`p-3 rounded-lg bg-white shadow-sm border-l-4 border-yellow-400 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === 'pending' ? 'ring-2 ring-yellow-400' : ''}`}
-            onClick={() => setStatusFilter(statusFilter === 'pending' ? 'all' : 'pending')}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-500 uppercase font-medium">Pending</p>
-                <p className="text-2xl font-bold text-gray-800">{statusCounts.pending}</p>
-              </div>
-              <div className="p-2 rounded-full bg-yellow-100">
-                <Clock className="h-5 w-5 text-yellow-600" />
-              </div>
-            </div>
-          </div>
-          
-          <div 
-            className={`p-3 rounded-lg bg-white shadow-sm border-l-4 border-purple-400 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === 'preparing' ? 'ring-2 ring-purple-400' : ''}`}
-            onClick={() => setStatusFilter(statusFilter === 'preparing' ? 'all' : 'preparing')}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-500 uppercase font-medium">Preparing</p>
-                <p className="text-2xl font-bold text-gray-800">{statusCounts.preparing}</p>
-              </div>
-              <div className="p-2 rounded-full bg-purple-100">
-                <Truck className="h-5 w-5 text-purple-600" />
-              </div>
-            </div>
-          </div>
-          
-          <div 
-            className={`p-3 rounded-lg bg-white shadow-sm border-l-4 border-green-400 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === 'ready' ? 'ring-2 ring-green-400' : ''}`}
-            onClick={() => setStatusFilter(statusFilter === 'ready' ? 'all' : 'ready')}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-500 uppercase font-medium">Ready</p>
-                <p className="text-2xl font-bold text-gray-800">{statusCounts.ready}</p>
-              </div>
-              <div className="p-2 rounded-full bg-green-100">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-              </div>
-            </div>
-          </div>
-          
-          <div 
-            className={`p-3 rounded-lg bg-white shadow-sm border-l-4 border-teal-400 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === 'completed' ? 'ring-2 ring-teal-400' : ''}`}
-            onClick={() => setStatusFilter(statusFilter === 'completed' ? 'all' : 'completed')}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-500 uppercase font-medium">Completed</p>
-                <p className="text-2xl font-bold text-gray-800">{statusCounts.completed}</p>
-              </div>
-              <div className="p-2 rounded-full bg-teal-100">
-                <Check className="h-5 w-5 text-teal-600" />
-              </div>
-            </div>
-          </div>
-          
-          <div 
-            className={`p-3 rounded-lg bg-white shadow-sm border-l-4 border-red-400 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === 'rejected' ? 'ring-2 ring-red-400' : ''}`}
-            onClick={() => setStatusFilter(statusFilter === 'rejected' ? 'all' : 'rejected')}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-500 uppercase font-medium">rejected</p>
-                <p className="text-2xl font-bold text-gray-800">{statusCounts.rejected}</p>
-              </div>
-              <div className="p-2 rounded-full bg-red-100">
-                <X className="h-5 w-5 text-red-600" />
-              </div>
-            </div>
-          </div>
+          {['pending', 'preparing', 'ready', 'completed', 'rejected'].map(status => (
+            <StatusCard key={status} status={status} />
+          ))}
         </div>
       </div>
       
@@ -461,28 +442,11 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
         ) : viewType === 'tiles' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {sortedOrders.map((order) => (
-              <div
-                key={order.id}
-                className={`border rounded-lg hover:shadow-md transition-shadow
-                  ${
-                    order.status === 'pending'
-                      ? 'bg-green-50' // very mild light green
-                      : order.status === 'ready'
-                      ? 'bg-blue-50' // mild light yellow
-                      : order.status === 'rejected'
-                      ? 'bg-red-50' // mild light red
-                      : order.status === 'preparing'
-                      ? 'bg-yellow-50' // default or you can set another color if you want
-                      : 'bg-white'
-                  }
-                `}
-              >
+              <div key={order.id} className={`border rounded-lg hover:shadow-md transition-shadow ${order.status === 'pending' ? 'bg-green-50' : order.status === 'ready' ? 'bg-blue-50' : order.status === 'rejected' ? 'bg-red-50' : order.status === 'preparing' ? 'bg-yellow-50' : 'bg-white'}`}>
                 {/* Order header */}
                 <div className="bg-gray-50 p-3 flex justify-between items-center border-b">
                   <div className="flex items-center">
-                    <div className="mr-2">
-                      {getStatusIcon(order.status)}
-                    </div>
+                    <div className="mr-2">{STATUS_META[order.status]?.icon}</div>
                     <div>
                       <p className="font-medium">{order.order_number || order.id.slice(0, 8)}</p>
                       <p className="text-xs text-gray-500">{formatDate(order.created_at)}</p>
@@ -668,66 +632,7 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
                     </div>
                     
                     <div className="flex space-x-2">
-                      {order.status === 'pending' && (
-                        <>
-                          <button
-                            onClick={() => openConfirmModal(order, 'accept')}
-                            className="p-1.5 rounded-full bg-green-100 text-green-600 hover:bg-green-200"
-                            title="Accept Order"
-                            disabled={isLoading}
-                          >
-                            <Check size={16} />
-                          </button>
-                          <button
-                            onClick={() => openConfirmModal(order, 'rejected')}
-                            className="p-1.5 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
-                            title="Reject Order"
-                            disabled={isLoading}
-                          >
-                            <X size={16} />
-                          </button>
-                        </>
-                      )}
-                      
-                      {order.status === 'preparing' && (
-                        <>
-                          <button
-                            onClick={() => handlePrintKOT(order)}
-                            className="p-1.5 rounded-full bg-orange-100 text-orange-600 hover:bg-orange-200"
-                            title="Print KOT"
-                          >
-                            <Printer size={16} />
-                          </button>
-                          <button
-                            onClick={() => openConfirmModal(order, 'ready')}
-                            className="px-4 py-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 flex items-center transition-colors"
-                            disabled={isLoading}
-                            title="Mark as Ready"
-                          >
-                            <CheckCircle size={16} className="mr-1" /> Ready
-                          </button>
-                        </>
-                      )}
-                      
-                      {order.status === 'ready' && (
-                        <button
-                          onClick={() => openConfirmModal(order, 'complete')}
-                          className="px-4 py-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 flex items-center transition-colors"
-                          disabled={isLoading}
-                          title="Complete"
-                        >
-                          <Check size={16} className="mr-1" /> Complete
-                        </button>
-                      )}
-                      {order.status === 'completed' && (
-                        <button
-                          onClick={() => handlePrintBill(order)}
-                          className="p-1.5 rounded-full bg-orange-100 text-orange-600 hover:bg-orange-200"
-                          title="Print Bill"
-                        >
-                          <Printer size={16} />
-                        </button>
-                      )}
+                      <ActionButtons order={order} />
                     </div>
                   </div>
                 </div>
@@ -804,64 +709,7 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
-                          {order.status === 'pending' && (
-                            <>
-                              <button
-                                onClick={() => openConfirmModal(order, 'accept')}
-                                className="p-1.5 rounded-full bg-green-100 text-green-600 hover:bg-green-200"
-                                title="Accept Order"
-                                disabled={isLoading}
-                              >
-                                <Check size={16} />
-                              </button>
-                              <button
-                                onClick={() => openConfirmModal(order, 'rejected')}
-                                className="p-1.5 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
-                                title="Reject Order"
-                                disabled={isLoading}
-                              >
-                                <X size={16} />
-                              </button>
-                            </>
-                          )}
-                          {order.status === 'preparing' && (
-                            <>
-                              <button
-                                onClick={() => handlePrintKOT(order)}
-                                className="p-1.5 rounded-full bg-orange-100 text-orange-600 hover:bg-orange-200"
-                                title="Print KOT"
-                              >
-                                <Printer size={16} />
-                              </button>
-                              <button
-                                onClick={() => openConfirmModal(order, 'ready')}
-                                className="px-4 py-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 flex items-center transition-colors"
-                                disabled={isLoading}
-                                title="Mark as Ready"
-                              >
-                                <CheckCircle size={16} className="mr-1" /> Ready
-                              </button>
-                            </>
-                          )}
-                          {order.status === 'ready' && (
-                            <button
-                              onClick={() => openConfirmModal(order, 'complete')}
-                              className="px-4 py-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 flex items-center transition-colors"
-                              disabled={isLoading}
-                              title="Complete"
-                            >
-                              <Check size={16} className="mr-1" /> Complete
-                            </button>
-                          )}
-                          {order.status === 'completed' && (
-                            <button
-                              onClick={() => handlePrintBill(order)}
-                              className="p-1.5 rounded-full bg-orange-100 text-orange-600 hover:bg-orange-200"
-                              title="Print Bill"
-                            >
-                              <Printer size={16} />
-                            </button>
-                          )}
+                          <ActionButtons order={order} />
                         </div>
                       </td>
                     </tr>

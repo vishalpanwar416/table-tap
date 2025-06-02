@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate} from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { authService } from '../../api/authService';
+import { toast, ToastContainer, Slide } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 
 export default function CompleteProfile() {
@@ -70,13 +72,46 @@ export default function CompleteProfile() {
       return;
     }
   
+    // Age check (same as SignupPage)
+    const today = new Date();
+    const dob = new Date(dateOfBirth);
+    const age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    const isBirthdayPassed = m > 0 || (m === 0 && today.getDate() >= dob.getDate());
+    const actualAge = isBirthdayPassed ? age : age - 1;
+    if (actualAge < 13) {
+      toast('You must be at least 13 years old to sign up.', {
+        type: 'error',
+        position: 'top-center',
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        style: {
+          background: '#fff',
+          color: '#e53e3e',
+          borderRadius: '8px',
+          fontWeight: 500,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+          fontFamily: 'inherit',
+          fontSize: '15px',
+          padding: '12px 20px'
+        },
+        icon: false,
+        transition: Slide,
+      });
+      return;
+    }
+  
     try {
       setLoading(true);
       setError('');
       
       await authService.updateProfile({
         mobile_number: mobileNumber,
-        date_of_birth: dateOfBirth
+        date_of_birth: dateOfBirth,
+        avatar_url: 'https://vogixryubhpqziivspks.supabase.co/storage/v1/object/public/avatars//default.jpg'
       });
       
       navigate('/home');
@@ -141,6 +176,31 @@ export default function CompleteProfile() {
           </div>
         </form>
       </div>
+      <ToastContainer
+        position="top-center"
+        autoClose={2000}
+        hideProgressBar
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss={false}
+        draggable={false}
+        pauseOnHover={false}
+        theme="light"
+        style={{ width: 'auto', minWidth: 0, maxWidth: 320 }}
+        toastStyle={{
+          background: '#fff',
+          color: '#e53e3e',
+          borderRadius: '8px',
+          fontWeight: 500,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+          fontFamily: 'inherit',
+          fontSize: '15px',
+          padding: '12px 20px'
+        }}
+        transition={Slide}
+        closeButton={false}
+      />
     </div>
     </div>
   );

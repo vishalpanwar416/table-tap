@@ -155,7 +155,8 @@ export default function SignUpPage() {
         email: formData.email,
         password: formData.password,
         mobileNumber: formData.mobileNumber,
-        dateOfBirth: formData.dateOfBirth
+        dateOfBirth: formData.dateOfBirth,
+        avatar_url: 'https://ui-avatars.com/api/?name=' + encodeURIComponent(formData.fullName) + '&background=random'
       });
 
       // Show verification toast

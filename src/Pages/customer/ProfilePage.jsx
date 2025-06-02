@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Camera, LogOut } from 'lucide-react';
+import { ArrowLeft, Camera, LogOut, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabase';
+import DeleteProfilePopup from '../../components/auth/DeleteProfilePopup'; // Import the new component
 
 const ProfilePage = () => {
   const [profileData, setProfileData] = useState({
@@ -16,6 +17,7 @@ const ProfilePage = () => {
   const [user, setUser] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDeletePopup, setShowDeletePopup] = useState(false); // Add state for delete popup
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -265,182 +267,197 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="flex justify-center items-start min-h-screen bg-black p-4">
-      <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
-        <button 
-          className="absolute left-4 top-7 md:left-8 md:top-8 text-orange-500 hover:text-orange-600 transition-colors z-10"
-          onClick={() => navigate(-1)}
-        >
-          <ArrowLeft size={30} className="md:w-8 md:h-8" />
-        </button>
+    <>
+      <div className="flex justify-center items-start min-h-screen bg-black p-4">
+        <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
+          <button 
+            className="absolute left-4 top-7 md:left-8 md:top-8 text-orange-500 hover:text-orange-600 transition-colors z-10"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft size={30} className="md:w-8 md:h-8" />
+          </button>
 
-        <div className="pt-4 md:pt-6 pb-6 relative">
-          <h1 className="text-3xl md:text-3xl text-center text-white font-spartan-medium">
-            My Profile
-          </h1>
-        </div>
+          <div className="pt-4 md:pt-6 pb-6 relative">
+            <h1 className="text-3xl md:text-3xl text-center text-white font-spartan-medium">
+              My Profile
+            </h1>
+          </div>
 
-        <div className="bg-white rounded-3xl p-4 md:p-6 flex-1 flex flex-col min-h-[calc(100vh-200px)] overflow-y-auto shadow-xl">
-          {isEditing ? (
-            <form onSubmit={handleSubmit} className="flex flex-col space-y-6">
-              <div className="flex flex-col items-center justify-center mb-6">
-                <div className="relative">
-                  <div className="w-28 h-28 md:w-36 md:h-36 rounded-full bg-gray-200 overflow-hidden relative">
+          <div className="bg-white rounded-3xl p-4 md:p-6 flex-1 flex flex-col min-h-[calc(100vh-200px)] overflow-y-auto shadow-xl">
+            {isEditing ? (
+              <form onSubmit={handleSubmit} className="flex flex-col space-y-6">
+                <div className="flex flex-col items-center justify-center mb-6">
+                  <div className="relative">
+                    <div className="w-28 h-28 md:w-36 md:h-36 rounded-full bg-gray-200 overflow-hidden relative">
+                      <img 
+                        src={formData.profileImg || "/default-avatar.png"} 
+                        alt="Profile" 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <label className="absolute bottom-0 right-0 bg-black/80 p-2 rounded-full cursor-pointer hover:bg-black transition-colors">
+                      <Camera className="w-5 h-5 text-white" />
+                      <input 
+                        type="file" 
+                        className="hidden" 
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        disabled={uploading}
+                      />
+                    </label>
+                    {uploading && <p className="text-sm text-gray-500 mt-2">Uploading...</p>}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm text-gray-500 ml-1">Full Name</label>
+                    <input 
+                      type="text" 
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      className="w-full p-4 bg-gray-100 rounded-xl border-0 focus:ring-2 focus:ring-orange-500 text-black"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm text-gray-500 ml-1">Date of Birth</label>
+                    <input 
+                      type="text" 
+                      name="dob"
+                      value={formData.dob}
+                      onChange={handleChange}
+                      className="w-full p-4 bg-gray-100 rounded-xl border-0 focus:ring-2 focus:ring-orange-500 text-black"
+                      placeholder="DD-MM-YYYY"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm text-gray-500 ml-1">Email</label>
+                    <input 
+                      type="email" 
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className="w-full p-4 bg-gray-100 rounded-xl border-0 focus:ring-2 focus:ring-orange-500 text-black"
+                      disabled={isSubmitting}
+                      placeholder="example@domain.com"
+                    />
+                    {formData.email !== user?.email && (
+                      <p className="text-xs text-orange-600 mt-1">
+                        ⚠️ Changing your email will require verification
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm text-gray-500 ml-1">Phone</label>
+                    <input 
+                      type="tel" 
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      className="w-full p-4 bg-gray-100 rounded-xl border-0 focus:ring-2 focus:ring-orange-500 text-black"
+                      placeholder="+91 987 654 3210"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex gap-3 justify-center pt-4">
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setFormData({...profileData});
+                      setIsEditing(false);
+                    }}
+                    className="px-6 py-3 bg-gray-200 text-gray-800 rounded-xl font-medium hover:bg-gray-300 transition-colors"
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit"
+                    className="px-6 py-3 bg-black text-white rounded-xl font-medium hover:bg-black/80 transition-colors disabled:opacity-50"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="flex flex-col h-full">
+                <div className="flex flex-col items-center justify-center mb-8">
+                  <div className="w-28 h-28 md:w-36 md:h-36 rounded-full bg-gray-200 overflow-hidden mb-4">
                     <img 
-                      src={formData.profileImg || "/default-avatar.png"} 
+                      src={profileData.profileImg || "/default-avatar.png"} 
                       alt="Profile" 
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <label className="absolute bottom-0 right-0 bg-black/80 p-2 rounded-full cursor-pointer hover:bg-black transition-colors">
-                    <Camera className="w-5 h-5 text-white" />
-                    <input 
-                      type="file" 
-                      className="hidden" 
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      disabled={uploading}
-                    />
-                  </label>
-                  {uploading && <p className="text-sm text-gray-500 mt-2">Uploading...</p>}
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm text-gray-500 ml-1">Full Name</label>
-                  <input 
-                    type="text" 
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="w-full p-4 bg-gray-100 rounded-xl border-0 focus:ring-2 focus:ring-orange-500 text-black"
-                    disabled={isSubmitting}
-                  />
+                  <h2 className="text-xl md:text-2xl font-bold text-black">{profileData.name}</h2>
+                  <p className="text-gray-500">{profileData.email}</p>
                 </div>
                 
-                <div>
-                  <label className="text-sm text-gray-500 ml-1">Date of Birth</label>
-                  <input 
-                    type="text" 
-                    name="dob"
-                    value={formData.dob}
-                    onChange={handleChange}
-                    className="w-full p-4 bg-gray-100 rounded-xl border-0 focus:ring-2 focus:ring-orange-500 text-black"
-                    placeholder="DD-MM-YYYY"
-                    disabled={isSubmitting}
-                  />
+                <div className="space-y-6 flex-1">
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <h3 className="text-sm text-gray-500 mb-1">Full Name</h3>
+                    <p className="text-black font-medium">{profileData.name}</p>
+                  </div>
+                  
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <h3 className="text-sm text-gray-500 mb-1">Date of Birth</h3>
+                    <p className="text-black font-medium">{profileData.dob}</p>
+                  </div>
+                  
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <h3 className="text-sm text-gray-500 mb-1">Email</h3>
+                    <p className="text-black font-medium">{profileData.email}</p>
+                  </div>
+                  
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <h3 className="text-sm text-gray-500 mb-1">Phone</h3>
+                    <p className="text-black font-medium">{profileData.phone}</p>
+                  </div>
                 </div>
                 
-                <div>
-                  <label className="text-sm text-gray-500 ml-1">Email</label>
-                  <input 
-                    type="email" 
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="w-full p-4 bg-gray-100 rounded-xl border-0 focus:ring-2 focus:ring-orange-500 text-black"
-                    disabled={isSubmitting}
-                    placeholder="example@domain.com"
-                  />
-                  {formData.email !== user?.email && (
-                    <p className="text-xs text-orange-600 mt-1">
-                      ⚠️ Changing your email will require verification
-                    </p>
-                  )}
-                </div>
-                
-                <div>
-                  <label className="text-sm text-gray-500 ml-1">Phone</label>
-                  <input 
-                    type="tel" 
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    className="w-full p-4 bg-gray-100 rounded-xl border-0 focus:ring-2 focus:ring-orange-500 text-black"
-                    placeholder="+91 987 654 3210"
-                    disabled={isSubmitting}
-                  />
+                <div className="flex flex-col gap-3 mt-6">
+                  <button 
+                    onClick={() => setIsEditing(true)}
+                    className="w-full py-3 bg-black text-white rounded-xl font-medium hover:bg-black/80 transition-colors"
+                  >
+                    Edit Profile
+                  </button>
+                  <button 
+                    onClick={() => supabase.auth.signOut().then(() => navigate('/login'))}
+                    className="w-full py-3 bg-orange-500 text-white rounded-xl font-medium hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <LogOut className="w-5 h-5" />
+                    <span>Logout</span>
+                  </button>
+                  <button 
+                    onClick={() => setShowDeletePopup(true)}
+                    className="w-full py-3 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                    <span>Delete Account</span>
+                  </button>
                 </div>
               </div>
-              
-              <div className="flex gap-3 justify-center pt-4">
-                <button 
-                  type="button"
-                  onClick={() => {
-                    setFormData({...profileData});
-                    setIsEditing(false);
-                  }}
-                  className="px-6 py-3 bg-gray-200 text-gray-800 rounded-xl font-medium hover:bg-gray-300 transition-colors"
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  className="px-6 py-3 bg-black text-white rounded-xl font-medium hover:bg-black/80 transition-colors disabled:opacity-50"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'Saving...' : 'Save Changes'}
-                </button>
-              </div>
-            </form>
-          ) : (
-            <div className="flex flex-col h-full">
-              <div className="flex flex-col items-center justify-center mb-8">
-                <div className="w-28 h-28 md:w-36 md:h-36 rounded-full bg-gray-200 overflow-hidden mb-4">
-                  <img 
-                    src={profileData.profileImg || "/default-avatar.png"} 
-                    alt="Profile" 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <h2 className="text-xl md:text-2xl font-bold text-black">{profileData.name}</h2>
-                <p className="text-gray-500">{profileData.email}</p>
-              </div>
-              
-              <div className="space-y-6 flex-1">
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <h3 className="text-sm text-gray-500 mb-1">Full Name</h3>
-                  <p className="text-black font-medium">{profileData.name}</p>
-                </div>
-                
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <h3 className="text-sm text-gray-500 mb-1">Date of Birth</h3>
-                  <p className="text-black font-medium">{profileData.dob}</p>
-                </div>
-                
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <h3 className="text-sm text-gray-500 mb-1">Email</h3>
-                  <p className="text-black font-medium">{profileData.email}</p>
-                </div>
-                
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <h3 className="text-sm text-gray-500 mb-1">Phone</h3>
-                  <p className="text-black font-medium">{profileData.phone}</p>
-                </div>
-              </div>
-              
-              <div className="flex flex-col gap-3 mt-6">
-                <button 
-                  onClick={() => setIsEditing(true)}
-                  className="w-full py-3 bg-black text-white rounded-xl font-medium hover:bg-black/80 transition-colors"
-                >
-                  Edit Profile
-                </button>
-                <button 
-                  onClick={() => supabase.auth.signOut().then(() => navigate('/login'))}
-                  className="w-full py-3 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
-                >
-                  <LogOut className="w-5 h-5" />
-                  <span>Logout</span>
-                </button>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Delete Profile Popup */}
+      <DeleteProfilePopup 
+        isOpen={showDeletePopup}
+        onClose={() => setShowDeletePopup(false)}
+      />
+    </>
   );
 };
 
