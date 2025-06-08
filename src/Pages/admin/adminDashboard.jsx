@@ -10,12 +10,13 @@ import OffersManagement from '../../components/admin/OffersManagement';
 import SettingsManagement from '../../components/admin/Settings';
 import LogoutPopup from '../../components/auth/LogoutPopup';
 import AdminNotificationsToast from '../../components/admin/AdminNotificationsToast';
-import { X, ArrowLeft, Package } from 'lucide-react';
+import NotificationSound from '../../components/admin/NotificationSound';
+import NotificationToast from '../../components/admin/NotificationToast';
+import AIAnalyticsChat from '../../components/admin/AIAnalyticsChat';
+import { X, ArrowLeft, Package, BarChart3, Sparkles } from 'lucide-react';
 import { getAllFoodItems } from '../../api/foodService';
 import { supabase } from '../../supabase';
 import { updateOrderStatus as updateOrderStatusService } from '../../api/orderService';
-import NotificationSound from '../../components/admin/NotificationSound';
-import NotificationToast from '../../components/admin/NotificationToast';
 import { useRestaurant } from '../../context/RestaurantContext';
 
 const AdminDashboard = () => {
@@ -46,6 +47,7 @@ const AdminDashboard = () => {
     { id: 'orders', icon: 'ShoppingCart', label: 'Order Management' },
     { id: 'users', icon: 'Users', label: 'User Management' },
     { id: 'offers', icon: 'Tag', label: 'Offers & Promotions' },
+    { id: 'analytics', icon: 'BarChart3', label: 'AI Analytics' },
     { id: 'settings', icon: 'Settings', label: 'Settings' },
   ];
 
@@ -593,6 +595,7 @@ const AdminDashboard = () => {
                   setSuccessMsg={setSuccessMsg}
                 />
               )}
+              {activeTab === 'analytics' && <AIAnalyticsChat />}
               {activeTab === 'settings' && (
                 <SettingsManagement 
                   currentUser={currentUser}
