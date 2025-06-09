@@ -109,12 +109,16 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
           >
             {/* User profile section - fixed at top */}
             <div className="pt-16 pb-6 px-6 flex flex-col items-center border-b border-gray-800 flex-shrink-0">
-              <div className="relative w-20 h-20 rounded-full overflow-hidden mb-4 border-2 border-purple-500">
-              <img 
-                src={userData.profileImg || "/default-avatar.png"} 
-                alt="Profile" 
-                className="w-full h-full object-cover"
-              />
+              <div className="relative w-20 h-20 rounded-full overflow-hidden mb-4 border-2 border-purple-500 bg-gray-700 flex items-center justify-center">
+                {userData.profileImg ? (
+                  <img 
+                    src={userData.profileImg} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="w-12 h-12 text-gray-400" />
+                )}
               </div>
               <h2 className="text-2xl font-bold text-white truncate max-w-full">
                 {userData.userName === 'Loading...' || !userData.userName ? 'Guest' : userData.userName}

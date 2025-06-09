@@ -27,7 +27,7 @@ export const localFoodItems = [
     discountValue: 20,
     description: "Fresh sushi selection",
     category: 'Snacks',
-    tags: ['bestseller']
+    tags: ['bestseller, salad']
   },
   {
     id: 2,
