@@ -191,8 +191,7 @@ export const callAIService = async (prompt) => {
     return `I'm currently unable to connect to the AI service. However, based on your restaurant data:
 
 - You have ${await getBasicInsights()}
-
-Please check your API configuration or try again later.`;
+.`;
   }
 };
 
@@ -203,8 +202,8 @@ const getBasicInsights = async () => {
     const { summary, popularItems } = analytics;
     
     return `
-• ${summary.totalOrders} total orders with $${summary.totalRevenue.toFixed(2)} in revenue
-• Average order value of $${summary.avgOrderValue.toFixed(2)}
+• ${summary.totalOrders} total orders with ₹${summary.totalRevenue.toFixed(2)} in revenue
+• Average order value of ₹${summary.avgOrderValue.toFixed(2)}
 • Top selling item: ${popularItems[0]?.name || 'N/A'}
 • Peak business hour: ${summary.peakHour}
 
