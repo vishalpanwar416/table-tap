@@ -1,14 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Added useEffect
 import { ChevronLeft, Trash2, Minus, Plus } from 'lucide-react';
 import { useCart } from '../../config/CartContent';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../supabase'; // Import supabase to check for user
 
 const OrderConfirmation = () => {
   const navigate = useNavigate();
   const { cartItems, removeItem, updateQuantity, calculateDiscountedPrice } = useCart();
   const [tableNumber, setTableNumber] = useState('');
   const [specialInstructions, setSpecialInstructions] = useState('');
-  const [showTableNumberModal, setShowTableNumberModal] = useState(false);
+  
+  // --- NEW: State for user and guest details ---
+  const [user, setUser] = useState(null);
+  const [guestName, setGuestName] = useState('');
+  const [guestEmail, setGuestEmail] = useState('');
+  const [guestPhone, setGuestPhone] = useState('');
+  const [formError, setFormError] = useState('');
+
+
+  // --- NEW: Check for authenticated user on component load ---
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user);
+    };
+    fetchUser();
+  }, []);
+
 
   const calculatePriceDetails = () => {
     let originalTotal = 0;
@@ -16,11 +34,9 @@ const OrderConfirmation = () => {
     let taxableAmount = 0;
     
     cartItems.forEach(item => {
-      // Calculate original price total
       const originalItemTotal = item.price * item.quantity;
       originalTotal += originalItemTotal;
       
-      // Calculate discount amount
       const effectivePrice = item.effectivePrice !== undefined ? 
         item.effectivePrice : 
         calculateDiscountedPrice(item);
@@ -28,10 +44,8 @@ const OrderConfirmation = () => {
       const itemDiscount = (item.price - effectivePrice) * item.quantity;
       discountAmount += itemDiscount;
       
-      // Calculate subtotal after discount for tax calculation
       const itemSubtotal = effectivePrice * item.quantity;
       
-      // Check if the item is water (exempt from GST)
       const isWater = item.name && 
         (item.name.toLowerCase().includes('water') || 
          item.category?.toLowerCase() === 'water');
@@ -41,14 +55,9 @@ const OrderConfirmation = () => {
       }
     });
     
-    // Calculate taxes (split into CGST and SGST equally, each at 2.5%)
-    const cgst = taxableAmount * 0.025; // 2.5% CGST
-    const sgst = taxableAmount * 0.025; // 2.5% SGST
-    
-    // Subtotal is original total minus discount
+    const cgst = taxableAmount * 0.025;
+    const sgst = taxableAmount * 0.025;
     const subtotalAfterDiscount = originalTotal - discountAmount;
-    
-    // Final total is subtotal plus taxes
     const finalTotal = subtotalAfterDiscount + cgst + sgst;
     
     return {
@@ -84,18 +93,49 @@ const OrderConfirmation = () => {
     navigate(-1);
   };
 
+  // --- UPDATED: handlePlaceOrder with validation for guests ---
   const handlePlaceOrder = () => {
+    setFormError(''); // Clear previous errors
     if (!tableNumber) {
-      setShowTableNumberModal(true);
+      setFormError('Please enter your table number.');
       return;
     }
-    navigate('/payment', { state: { tableNumber, specialInstructions } });
+
+    // If user is a guest, validate guest fields
+    if (!user) {
+      if (!guestName.trim() || !guestEmail.trim() || !guestPhone.trim()) {
+        setFormError('Please fill in your name, email, and phone number to continue.');
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(guestEmail)) {
+        setFormError('Please enter a valid email address.');
+        return;
+      }
+      const phoneRegex = /^[6-9]\d{9}$/;
+      if (!phoneRegex.test(guestPhone)) {
+        setFormError('Please enter a valid 10-digit phone number.');
+        return;
+      }
+    }
+
+    // Navigate with all required state
+    navigate('/payment', { 
+      state: { 
+        tableNumber, 
+        specialInstructions,
+        guestDetails: !user ? {
+          name: guestName,
+          email: guestEmail,
+          phone: guestPhone,
+        } : null
+      } 
+    });
   };
 
   return (
     <div className="flex justify-center items-start min-h-screen bg-black">
       <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
-        {/* Header */}
         <div className="w-full px-6 py-8 relative flex justify-center">
           <button
             onClick={handleGoBack}
@@ -106,11 +146,9 @@ const OrderConfirmation = () => {
           <h1 className="text-gray-100 text-3xl font-medium font-spartan">Confirm Order</h1>
         </div>
 
-        {/* Main content */}
-        <div className="bg-gray-200 w-full flex-1 rounded-t-3xl px-6 pt-10 pb-6 flex flex-col font-spartan">
+        <div className="bg-gray-200 w-full flex-1 rounded-t-3xl px-6 pt-10 pb-6 flex flex-col font-spartan overflow-y-auto">
           <h2 className="justify-center text-center text-black text-3xl font-semibold mb-8">Order Summary</h2>
 
-          {/* Table Number Input */}
           <div className="mb-8">
             <label className="block text-black mb-2 text-lg" htmlFor="tableNumber">
               Table Number
@@ -126,7 +164,27 @@ const OrderConfirmation = () => {
             />
           </div>
 
-          {/* Special Instructions Input */}
+          {/* --- NEW: Guest information form, only shown if user is not logged in --- */}
+          {!user && (
+            <div className="mb-8 p-4 border rounded-lg bg-white">
+                <h3 className="font-bold text-lg mb-4">Guest Information</h3>
+                <div className="space-y-4">
+                    <div>
+                        <label className="text-sm font-medium" htmlFor="guestName">Full Name</label>
+                        <input id="guestName" type="text" value={guestName} onChange={(e) => setGuestName(e.target.value)} className="w-full mt-1 px-4 py-3 border border-gray-300 rounded-xl" required />
+                    </div>
+                    <div>
+                        <label className="text-sm font-medium" htmlFor="guestEmail">Email Address</label>
+                        <input id="guestEmail" type="email" value={guestEmail} onChange={(e) => setGuestEmail(e.target.value)} className="w-full mt-1 px-4 py-3 border border-gray-300 rounded-xl" required />
+                    </div>
+                    <div>
+                        <label className="text-sm font-medium" htmlFor="guestPhone">Phone Number</label>
+                        <input id="guestPhone" type="tel" value={guestPhone} onChange={(e) => setGuestPhone(e.target.value)} maxLength={10} className="w-full mt-1 px-4 py-3 border border-gray-300 rounded-xl" required />
+                    </div>
+                </div>
+            </div>
+          )}
+
           <div className="mb-8">
             <label className="block text-black mb-2 text-lg" htmlFor="specialInstructions">
               Special Instructions (optional)
@@ -140,32 +198,34 @@ const OrderConfirmation = () => {
               rows={3}
             />
           </div>
+          
+          {/* Form Error Display */}
+          {formError && (
+              <div className="my-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+                  {formError}
+              </div>
+          )}
 
-          {/* Order Summary */}
+
           <div className="border-t border-gray-300 pt-6">
             {cartItems.map((item, index) => {
-              // Check if the item is water
               const isWater = item.name && 
                 (item.name.toLowerCase().includes('water') || 
                  item.category?.toLowerCase() === 'water');
               
-              // Check if the item has a discount
               const hasDiscount = item.discounttype && item.discountvalue;
               const originalPrice = Number(item.price).toFixed(2);
               
-              // Use effectivePrice if it exists, otherwise calculate it
               const discountedPrice = item.effectivePrice !== undefined ? 
                 Number(item.effectivePrice).toFixed(2) : 
                 Number(calculateDiscountedPrice(item)).toFixed(2);
               
-              // Calculate price total considering quantity
               const originalTotal = (item.price * item.quantity).toFixed(2);
               const discountedTotal = (Number(discountedPrice) * item.quantity).toFixed(2);
               
               return (
                 <div key={`${item.id}-${item.category}`} className="mb-4">
                   <div className="flex items-start mb-4">
-                    {/* Item image */}
                     <div className="w-20 h-20 overflow-hidden rounded-lg mr-4">
                       <img 
                         src={item.image || `/api/placeholder/80/80`} 
@@ -174,14 +234,12 @@ const OrderConfirmation = () => {
                       />
                     </div>
                     
-                    {/* Item details */}
                     <div className="flex-1">
                       <h3 className="font-bold text-lg">{item.name}</h3>
                       <p className="text-sm text-gray-600">
                         {item.addedAt ? formatDate(item.addedAt) : 'Now'}
                       </p>
                       
-                      {/* Display discounts if available */}
                       {hasDiscount && (
                         <div className="text-green-600 text-sm">
                           {item.discounttype === 'Percentage' && `${item.discountvalue}% off`}
@@ -220,7 +278,6 @@ const OrderConfirmation = () => {
                       </div>
                     </div>
                     
-                    {/* Price */}
                     <div className="text-right">
                       {hasDiscount ? (
                         <>
@@ -247,7 +304,6 @@ const OrderConfirmation = () => {
             })}
           </div>
 
-          {/* Price Summary */}
           <div className="mt-6 space-y-2">
             <div className="flex justify-between">
               <span className="text-gray-600">Original Total</span>
@@ -284,17 +340,15 @@ const OrderConfirmation = () => {
             </div>
           </div>
 
-          {/* Place Order Button */}
           <div className="mt-auto pt-6 flex justify-center">
             <button 
               onClick={handlePlaceOrder}
               className="bg-gray-600 text-white w-full py-3 rounded-full mt-8 font-medium text-lg hover:bg-gray-700 transition-colors"
             >
-              Place Order
+              Proceed to Payment
             </button>
           </div>
           
-          {/* Bottom Spacing */}
           <div className="pb-20"></div>
         </div>
       </div>

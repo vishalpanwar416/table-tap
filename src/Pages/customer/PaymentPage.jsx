@@ -9,20 +9,24 @@ const PaymentPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { cartItems, clearCart, calculateDiscountedPrice } = useCart();
+
+  // --- UPDATED: Receive all details from location state ---
   const tableNumber = location.state?.tableNumber;
+  const specialInstructions = location.state?.specialInstructions || '';
+  const guestDetails = location.state?.guestDetails; // { name, email, phone }
+
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [scriptError, setScriptError] = useState(null);
-  const [isMounted, setIsMounted] = useState(false);
   const [user, setUser] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('razorpay');
   const { restaurant } = useRestaurant();
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [showPhoneInput, setShowPhoneInput] = useState(false);
-  const [phoneError, setPhoneError] = useState('');
-  const specialInstructions = location.state?.specialInstructions || '';
 
-  // Early return if restaurant data isn't loaded yet
+  // --- NEW: State to hold customer contact info (from user or guest) ---
+  const [customerName, setCustomerName] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+
   if (!restaurant) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -31,18 +35,15 @@ const PaymentPage = () => {
     );
   }
 
-  // Updated calculation function to match CartSidebar and OrderConfirmation
   const calculatePriceDetails = () => {
     let originalTotal = 0;
     let discountAmount = 0;
     let taxableAmount = 0;
     
     cartItems.forEach(item => {
-      // Calculate original price total
       const originalItemTotal = item.price * item.quantity;
       originalTotal += originalItemTotal;
       
-      // Calculate discount amount
       const effectivePrice = item.effectivePrice !== undefined ? 
         item.effectivePrice : 
         calculateDiscountedPrice(item);
@@ -50,10 +51,8 @@ const PaymentPage = () => {
       const itemDiscount = (item.price - effectivePrice) * item.quantity;
       discountAmount += itemDiscount;
       
-      // Calculate subtotal after discount for tax calculation
       const itemSubtotal = effectivePrice * item.quantity;
       
-      // Check if the item is water (exempt from GST)
       const isWater = item.name && 
         (item.name.toLowerCase().includes('water') || 
          item.category?.toLowerCase() === 'water');
@@ -63,14 +62,9 @@ const PaymentPage = () => {
       }
     });
     
-    // Calculate taxes (split into CGST and SGST equally, each at 2.5%)
-    const cgst = taxableAmount * 0.025; // 2.5% CGST
-    const sgst = taxableAmount * 0.025; // 2.5% SGST
-    
-    // Subtotal is original total minus discount
+    const cgst = taxableAmount * 0.025;
+    const sgst = taxableAmount * 0.025;
     const subtotalAfterDiscount = originalTotal - discountAmount;
-    
-    // Final total is subtotal plus taxes
     const finalTotal = subtotalAfterDiscount + cgst + sgst;
     
     return {
@@ -92,26 +86,21 @@ const PaymentPage = () => {
     finalTotal 
   } = calculatePriceDetails();
 
-  // Load Razorpay SDK
   useEffect(() => {
     const loadRazorpay = async () => {
       if (window.Razorpay) {
-        console.log('Razorpay already loaded');
         setScriptLoaded(true);
         return;
       }
 
       try {
-        console.log('Loading Razorpay script...');
         const script = document.createElement('script');
         script.src = 'https://checkout.razorpay.com/v1/checkout.js';
         script.async = true;
         script.crossOrigin = 'anonymous';
 
         script.onload = () => {
-          console.log('Razorpay script loaded successfully');
           if (!window.Razorpay) {
-            console.error('Razorpay not found in window object after script load');
             setScriptError('Payment gateway failed to initialize properly');
             return;
           }
@@ -119,8 +108,7 @@ const PaymentPage = () => {
           setScriptError(null);
         };
 
-        script.onerror = (error) => {
-          console.error('Failed to load Razorpay script:', error);
+        script.onerror = () => {
           setScriptError('Failed to load payment gateway. Please try again later or choose Pay At Restaurant.');
         };
 
@@ -132,7 +120,6 @@ const PaymentPage = () => {
           }
         };
       } catch (error) {
-        console.error('Error in Razorpay script loading:', error);
         setScriptError('Payment setup failed. Please try again later.');
       }
     };
@@ -140,38 +127,35 @@ const PaymentPage = () => {
     loadRazorpay();
   }, []);
 
-  // Get current user
+  // --- UPDATED: useEffect to set user and customer details ---
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchUserAndSetDetails = async () => {
       try {
         const { data, error } = await supabase.auth.getUser();
         
-        if (error) {
-          console.error('Error fetching user:', error);
-          return;
-        }
+        if (error) console.error('Error fetching user:', error);
         
         if (data && data.user) {
-          console.log('User authenticated:', data.user.id);
           setUser(data.user);
-          
-          if (data.user.user_metadata && data.user.user_metadata.phone) {
-            setPhoneNumber(data.user.user_metadata.phone);
-          }
+          setCustomerName(data.user.user_metadata?.full_name || '');
+          setCustomerEmail(data.user.email || '');
+          setCustomerPhone(data.user.user_metadata?.phone || '');
         } else {
-          console.log('No authenticated user found');
+          // If no user, use guest details passed from previous page
+          if (guestDetails) {
+            setCustomerName(guestDetails.name);
+            setCustomerEmail(guestDetails.email);
+            setCustomerPhone(guestDetails.phone);
+          }
         }
       } catch (error) {
         console.error('User fetch exception:', error);
       }
     };
   
-    fetchUser();
-    setIsMounted(true);
-    return () => setIsMounted(false);
-  }, []);
+    fetchUserAndSetDetails();
+  }, [guestDetails]);
 
-  // Generate order_number
   const generateOrderNumber = () => {
     const restaurantPrefix = restaurant?.name?.substring(0, 3).toUpperCase() || 'RST';
     const timestamp = new Date().getTime().toString().substring(9, 13);
@@ -179,72 +163,24 @@ const PaymentPage = () => {
     return `${restaurantPrefix}-${timestamp}-${random}`;
   };
 
-  // Handle going back
   const handleGoBack = () => {
     navigate(-1);
   };
 
-  // Validate phone number
-  const validatePhoneNumber = (phone) => {
-    const phoneRegex = /^[6-9]\d{9}$/;
-    return phoneRegex.test(phone);
-  };
-
-  // Handle phone number change
-  const handlePhoneChange = (e) => {
-    const value = e.target.value;
-    setPhoneNumber(value);
-    
-    if (value && !validatePhoneNumber(value)) {
-      setPhoneError('Please enter a valid 10-digit phone number');
-    } else {
-      setPhoneError('');
-    }
-  };
-
-  // Update user phone in database
-  const updateUserPhone = async () => {
-    if (!user || !phoneNumber || !validatePhoneNumber(phoneNumber)) {
-      return false;
-    }
-
-    try {
-      const { error } = await supabase.auth.updateUser({
-        data: { phone: phoneNumber }
-      });
-
-      if (error) {
-        console.error('Error updating user phone:', error);
-        return false;
-      }
-      
-      console.log('User phone updated successfully');
-      return true;
-    } catch (error) {
-      console.error('User phone update exception:', error);
-      return false;
-    }
-  };
-
-  // Handle Razorpay payment with better error handling
   const handlePayment = async () => {
     if (!restaurant) {
       setScriptError('Restaurant data not loaded');
       return;
     }
 
-    if (!isMounted || cartItems.length === 0) {
-      setScriptError('Unable to process payment at this time');
+    if (cartItems.length === 0) {
+      setScriptError('Your cart is empty.');
       return;
     }
     
     setIsProcessing(true);
 
     try {
-      if (user) {
-        await updateUserPhone();
-      }
-      
       if (paymentMethod === 'direct') {
         await processOrder({
           razorpay_payment_id: 'DIRECT-' + Date.now(),
@@ -263,24 +199,17 @@ const PaymentPage = () => {
       const razorpayKeyId = process.env.REACT_APP_RAZORPAY_KEY_ID || restaurant.razorpay_key_id;
       
       if (!razorpayKeyId) {
-        console.error('Missing Razorpay key in both environment and restaurant config');
-        setScriptError('Payment gateway configuration issue. Please try paying at restaurant instead.');
+        setScriptError('Payment gateway configuration issue.');
         setIsProcessing(false);
         return;
       }
 
       const amountInPaise = Math.round(parseFloat(finalTotal) * 100);
       if (isNaN(amountInPaise) || amountInPaise <= 0) {
-        setScriptError('Invalid order amount. Please check your cart and try again.');
+        setScriptError('Invalid order amount.');
         setIsProcessing(false);
         return;
       }
-
-      console.log('Setting up Razorpay with:', {
-        keyId: razorpayKeyId ? 'Valid key present' : 'Missing key',
-        amount: amountInPaise,
-        currency: restaurant.currency || 'INR'
-      });
 
       const options = {
         key: razorpayKeyId,
@@ -297,16 +226,15 @@ const PaymentPage = () => {
           }
           await processOrder(response);
         },
+        // --- UPDATED: Prefill with state holding user or guest data ---
         prefill: {
-          name: user?.user_metadata?.full_name || 'Customer',
-          email: user?.email || '',
-          contact: phoneNumber || ''
+          name: customerName || 'Valued Customer',
+          email: customerEmail,
+          contact: customerPhone
         },
         theme: { color: restaurant.theme_color || '#F37254' },
         modal: {
-          ondismiss: () => {
-            setIsProcessing(false);
-          }
+          ondismiss: () => setIsProcessing(false)
         },
         notes: {
           restaurant_id: restaurant.id || '1',
@@ -318,30 +246,23 @@ const PaymentPage = () => {
       const rzp = new window.Razorpay(options);
       
       rzp.on('payment.failed', (response) => {
-        console.error('Razorpay failure details:', response.error);
         setScriptError(`Payment failed: ${response.error.description || 'Gateway error'}`);
         setIsProcessing(false);
       });
 
       rzp.open();
     } catch (error) {
-      console.error('Payment error:', error);
       setScriptError(`Failed to initialize payment: ${error.message || 'Unknown error'}`);
       setIsProcessing(false);
     }
   };
   
-  // Process the order with better error handling
   const processOrder = async (response) => {
     try {
       if (!response || !response.razorpay_payment_id) {
         throw new Error('Missing payment confirmation details');
       }
 
-      const customer_name = user?.user_metadata?.full_name || 'Customer';
-      const customer_email = user?.email || '';
-      const customer_phone = phoneNumber || '';
-      
       const tracking = {
         confirmed: { status: true, timestamp: new Date().toISOString() },
         preparing: { status: false, timestamp: null },
@@ -349,9 +270,10 @@ const PaymentPage = () => {
         completed: { status: false, timestamp: null }
       };
       
+      // --- UPDATED: Order data now correctly uses state for customer details ---
       const orderData = {
         order_number: generateOrderNumber(),
-        user_id: user?.id || null,
+        user_id: user?.id || null, // Storing null for guest users
         table_number: tableNumber || 'N/A',
         items: cartItems,
         subtotal: parseFloat(subtotalAfterDiscount) || 0,
@@ -366,13 +288,11 @@ const PaymentPage = () => {
         payment_timestamp: new Date().toISOString(),
         status: 'pending',
         tracking: tracking,
-        customer_name: customer_name,
-        customer_email: customer_email,
-        customer_phone: customer_phone,
+        customer_name: customerName,
+        customer_email: customerEmail,
+        customer_phone: customerPhone,
         special_instructions: specialInstructions,
       };
-
-      console.log('Submitting order to database:', orderData.order_number);
 
       const { data: order, error } = await supabase
         .from('orders')
@@ -389,8 +309,6 @@ const PaymentPage = () => {
         throw new Error('Order created but missing ID');
       }
 
-      console.log('Order successfully created:', order.id);
-
       clearCart();
       navigate('/order-success', {
         state: {
@@ -403,7 +321,6 @@ const PaymentPage = () => {
         }
       });
     } catch (error) {
-      console.error('Order processing error:', error);
       setScriptError('Payment successful but order creation failed: ' + (error.message || 'Unknown error'));
       setIsProcessing(false);
     }
@@ -414,10 +331,7 @@ const PaymentPage = () => {
       <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
         {/* Header */}
         <div className="w-full px-6 py-8 relative flex justify-center">
-          <button
-            onClick={handleGoBack}
-            className="absolute left-4 top-8 text-orange-500"
-          >
+          <button onClick={handleGoBack} className="absolute left-4 top-8 text-orange-500">
             <ChevronLeft size={30} />
           </button>
           <h1 className="text-gray-100 text-3xl font-medium font-spartan">Payment</h1>
@@ -435,7 +349,6 @@ const PaymentPage = () => {
         <div className="bg-gray-200 w-full flex-1 rounded-t-3xl px-6 pt-10 pb-6 flex flex-col font-spartan">
           <h2 className="justify-center text-center text-black text-3xl font-semibold mb-8">Complete Your Payment</h2>
 
-          {/* Error Message */}
           {scriptError && (
             <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
               <div className="flex items-center">
@@ -445,10 +358,7 @@ const PaymentPage = () => {
                 <span className="font-medium">{scriptError}</span>
               </div>
               <div className="flex justify-end mt-2">
-                <button 
-                  onClick={() => setScriptError(null)}
-                  className="text-sm underline text-red-700 hover:text-red-900"
-                >
+                <button onClick={() => setScriptError(null)} className="text-sm underline text-red-700 hover:text-red-900">
                   Dismiss
                 </button>
               </div>
@@ -456,34 +366,17 @@ const PaymentPage = () => {
           )}
 
           <div className="flex flex-col space-y-6">
-
-            {/* Payment Method Selection */}
             <div className="flex flex-col space-y-3">
               <h3 className="font-semibold text-lg">Payment Method</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <button
-                  onClick={() => setPaymentMethod('razorpay')}
-                  className={`p-4 rounded-lg border-2 flex items-center gap-3 ${
-                    paymentMethod === 'razorpay' 
-                      ? 'border-orange-500 bg-orange-50' 
-                      : 'border-gray-200'
-                  }`}
-                >
+                <button onClick={() => setPaymentMethod('razorpay')} className={`p-4 rounded-lg border-2 flex items-center gap-3 ${paymentMethod === 'razorpay' ? 'border-orange-500 bg-orange-50' : 'border-gray-200'}`}>
                   <CreditCard className={`${paymentMethod === 'razorpay' ? 'text-orange-500' : 'text-gray-500'}`} />
                   <div className="text-left">
                     <div className="font-semibold">Online Payment</div>
                     <div className="text-sm text-gray-500">Credit/Debit Card, UPI, Net Banking</div>
                   </div>
                 </button>
-                
-                <button
-                  onClick={() => setPaymentMethod('direct')}
-                  className={`p-4 rounded-lg border-2 flex items-center gap-3 ${
-                    paymentMethod === 'direct' 
-                      ? 'border-orange-500 bg-orange-50' 
-                      : 'border-gray-200'
-                  }`}
-                >
+                <button onClick={() => setPaymentMethod('direct')} className={`p-4 rounded-lg border-2 flex items-center gap-3 ${paymentMethod === 'direct' ? 'border-orange-500 bg-orange-50' : 'border-gray-200'}`}>
                   <QrCode className={`${paymentMethod === 'direct' ? 'text-orange-500' : 'text-gray-500'}`} />
                   <div className="text-left">
                     <div className="font-semibold">Pay At Restaurant</div>
@@ -493,136 +386,52 @@ const PaymentPage = () => {
               </div>
             </div>
 
-            {/* Order Summary with Detailed Breakdown */}
             <div className="border border-gray-300 rounded-lg p-4 bg-white">
               <h3 className="font-bold mb-4">Order Summary</h3>
               <p className="text-sm text-gray-600 mb-4">
                 Table: {tableNumber || 'Not specified'}
               </p>
               
-              {/* Individual Items */}
               {cartItems.map(item => {
-                const isWater = item.name && 
-                  (item.name.toLowerCase().includes('water') || 
-                   item.category?.toLowerCase() === 'water');
-                
+                const isWater = item.name && (item.name.toLowerCase().includes('water') || item.category?.toLowerCase() === 'water');
                 const hasDiscount = item.discounttype && item.discountvalue;
-                const originalPrice = Number(item.price).toFixed(2);
-                const discountedPrice = item.effectivePrice !== undefined ? 
-                  Number(item.effectivePrice).toFixed(2) : 
-                  Number(calculateDiscountedPrice(item)).toFixed(2);
-                
                 const originalTotal = (item.price * item.quantity).toFixed(2);
+                const discountedPrice = item.effectivePrice !== undefined ? Number(item.effectivePrice).toFixed(2) : Number(calculateDiscountedPrice(item)).toFixed(2);
                 const discountedTotal = (Number(discountedPrice) * item.quantity).toFixed(2);
                    
                 return (
-                  <div key={`${item.id}-${item.category}`} 
-                    className="flex justify-between py-2 border-b">
+                  <div key={`${item.id}-${item.category}`} className="flex justify-between py-2 border-b">
                     <div>
                       <span>{item.name} × {item.quantity}</span>
-                      {hasDiscount && (
-                        <div className="text-green-600 text-sm">
-                          {item.discounttype === 'Percentage' && `${item.discountvalue}% off`}
-                          {item.discounttype === 'Fixed' && `₹${item.discountvalue * item.quantity} off`}
-                        </div>
-                      )}
-                      {isWater && (
-                        <span className="ml-2 text-xs text-green-600">(GST exempt)</span>
-                      )}
+                      {hasDiscount && ( <div className="text-green-600 text-sm"> {item.discounttype === 'Percentage' && `${item.discountvalue}% off`} {item.discounttype === 'Fixed' && `₹${item.discountvalue * item.quantity} off`} </div> )}
+                      {isWater && ( <span className="ml-2 text-xs text-green-600">(GST exempt)</span> )}
                     </div>
                     <div className="text-right">
-                      {hasDiscount ? (
-                        <>
-                          <p className="text-gray-600 text-sm line-through">₹{originalTotal}</p>
-                          <p className="font-medium">₹{discountedTotal}</p>
-                        </>
-                      ) : (
-                        <span>₹{originalTotal}</span>
-                      )}
+                      {hasDiscount ? ( <> <p className="text-gray-600 text-sm line-through">₹{originalTotal}</p> <p className="font-medium">₹{discountedTotal}</p> </> ) : ( <span>₹{originalTotal}</span> )}
                     </div>
                   </div>
                 );
               })}
               
-              {/* Price Breakdown */}
               <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Original Total</span>
-                  <span>₹{originalTotal.toFixed(2)}</span>
-                </div>
-                
-                {discountAmount > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-green-600">Discount</span>
-                    <span className="text-green-600">- ₹{discountAmount.toFixed(2)}</span>
-                  </div>
-                )}
-                
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Subtotal</span>
-                  <span>₹{subtotalAfterDiscount.toFixed(2)}</span>
-                </div>
-                
-                <div className="flex justify-between">
-                  <span className="text-gray-600">CGST (2.5%)</span>
-                  <span>₹{cgst.toFixed(2)}</span>
-                </div>
-                
-                <div className="flex justify-between">
-                  <span className="text-gray-600">SGST (2.5%)</span>
-                  <span>₹{sgst.toFixed(2)}</span>
-                </div>
-                
+                <div className="flex justify-between"> <span className="text-gray-600">Original Total</span> <span>₹{originalTotal.toFixed(2)}</span> </div>
+                {discountAmount > 0 && ( <div className="flex justify-between"> <span className="text-green-600">Discount</span> <span className="text-green-600">- ₹{discountAmount.toFixed(2)}</span> </div> )}
+                <div className="flex justify-between"> <span className="text-gray-600">Subtotal</span> <span>₹{subtotalAfterDiscount.toFixed(2)}</span> </div>
+                <div className="flex justify-between"> <span className="text-gray-600">CGST (2.5%)</span> <span>₹{cgst.toFixed(2)}</span> </div>
+                <div className="flex justify-between"> <span className="text-gray-600">SGST (2.5%)</span> <span>₹{sgst.toFixed(2)}</span> </div>
                 <div className="border-t border-gray-300 my-4"></div>
-                
-                <div className="flex justify-between font-bold text-xl">
-                  <span>Total</span>
-                  <span>₹{finalTotal.toFixed(2)}</span>
-                </div>
+                <div className="flex justify-between font-bold text-xl"> <span>Total</span> <span>₹{finalTotal.toFixed(2)}</span> </div>
               </div>
             </div>
 
-            {/* Phone Number Input */}
-            {(!phoneNumber || showPhoneInput || phoneError) && (
-              <div className="flex flex-col space-y-2">
-                <label className="font-semibold text-lg" htmlFor="phone-input">
-                  Enter your Phone Number
-                </label>
-                <input
-                  id="phone-input"
-                  type="tel"
-                  value={phoneNumber}
-                  onChange={handlePhoneChange}
-                  maxLength={10}
-                  className="p-3 rounded-lg border border-gray-300 focus:outline-none focus:border-orange-500"
-                  placeholder="10-digit mobile number"
-                  inputMode="numeric"
-                  pattern="[0-9]{10}"
-                />
-                {phoneError && (
-                  <span className="text-red-600 text-sm">{phoneError}</span>
-                )}
-              </div>
-            )}
+            {/* REMOVED the complex phone number input logic from here for simplicity */}
 
-            {/* Place Order Button */}
             <div className="mt-auto pt-6">
-              <button
-                onClick={handlePayment}
-                disabled={isProcessing || cartItems.length === 0}
-                className={`w-full bg-gray-600 text-white py-3 rounded-full font-medium text-lg ${
-                  isProcessing || cartItems.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700'
-                } transition-colors`}
-              >
-                {isProcessing ? 'Processing...' : phoneNumber ? (
-                  paymentMethod === 'razorpay' 
-                    ? `Pay ₹${finalTotal.toFixed(2)} Now` 
-                    : `Place Order - Pay at Restaurant`
-                ) : 'Continue with Phone Number'}
+              <button onClick={handlePayment} disabled={isProcessing || cartItems.length === 0} className={`w-full bg-gray-600 text-white py-3 rounded-full font-medium text-lg ${ isProcessing || cartItems.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700' } transition-colors`}>
+                {isProcessing ? 'Processing...' : paymentMethod === 'razorpay' ? `Pay ₹${finalTotal.toFixed(2)} Now` : `Place Order - Pay at Restaurant`}
               </button>
             </div>
             
-            {/* Bottom Spacing */}
             <div className="pb-5"></div>
           </div>
         </div>
