@@ -129,10 +129,10 @@ export const generateAIPrompt = (userQuestion, analyticsData) => {
 
 RESTAURANT SUMMARY:
 - Total Orders: ${summary.totalOrders}
-- Total Revenue: $${summary.totalRevenue.toFixed(2)}
+- Total Revenue: ₹${summary.totalRevenue.toFixed(2)}
 - Total Menu Items: ${summary.totalMenuItems}
 - Total Customers: ${summary.totalCustomers}
-- Average Order Value: $${summary.avgOrderValue.toFixed(2)}
+- Average Order Value: ₹${summary.avgOrderValue.toFixed(2)}
 - Peak Hour: ${summary.peakHour}
 
 ORDERS BY STATUS:
@@ -142,7 +142,7 @@ TOP 5 POPULAR ITEMS:
 ${popularItems.slice(0, 5).map((item, i) => `${i + 1}. ${item.name} (${item.count} orders)`).join('\n')}
 
 CATEGORY REVENUE:
-${Object.entries(categoryRevenue).map(([category, revenue]) => `- ${category}: $${revenue.toFixed(2)}`).join('\n')}
+${Object.entries(categoryRevenue).map(([category, revenue]) => `- ${category}: ₹${revenue.toFixed(2)}`).join('\n')}
 
 Please provide insights, recommendations, and answer questions about this restaurant's performance. Be specific and actionable in your responses. Use the data to support your recommendations.
 

@@ -149,7 +149,7 @@ const AIAnalyticsChat = () => {
                 <span className="text-sm font-medium text-gray-700">Revenue</span>
               </div>
               <p className="text-lg font-bold text-gray-900">
-                ${analyticsData.summary.totalRevenue.toFixed(2)}
+                ₹{analyticsData.summary.totalRevenue.toFixed(2)}
               </p>
             </div>
             <div className="text-center">
@@ -167,7 +167,7 @@ const AIAnalyticsChat = () => {
                 <span className="text-sm font-medium text-gray-700">Avg Order</span>
               </div>
               <p className="text-lg font-bold text-gray-900">
-                ${analyticsData.summary.avgOrderValue.toFixed(2)}
+                ₹{analyticsData.summary.avgOrderValue.toFixed(2)}
               </p>
             </div>
             <div className="text-center">
@@ -217,7 +217,7 @@ const AIAnalyticsChat = () => {
         {/* Loading indicator */}
         {isLoading && (
           <div className="flex justify-start">
-            <div className="flex flex-row">
+            <div className="flex-row">
               <div className="flex-shrink-0 h-8 w-8 rounded-full bg-gray-200 text-gray-600 mr-2 flex items-center justify-center">
                 <Bot size={16} />
               </div>

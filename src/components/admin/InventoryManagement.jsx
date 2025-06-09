@@ -340,7 +340,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Value</p>
-              <p className="text-2xl font-bold text-green-600">${stats.totalValue.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-green-600">₹{stats.totalValue.toFixed(2)}</p>
             </div>
             <TrendingUp className="w-8 h-8 text-green-500" />
           </div>

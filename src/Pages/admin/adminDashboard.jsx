@@ -224,13 +224,13 @@ const AdminDashboard = () => {
 
               setOrderToastTitle('🔔 New Order Received!');
               setOrderToastMessage(
-                `Order #${orderId} from ${customerName} - $${orderTotal.toFixed(2)}`
+                `Order #${orderId} from ${customerName} - ₹${orderTotal.toFixed(2)}`
               );
               setShowOrderToast(true);
 
               if ('Notification' in window && Notification.permission === 'granted') {
                 new Notification('New Order Received!', {
-                  body: `Order #${orderId} from ${customerName} - Total: ${orderTotal.toFixed(2)}`,
+                  body: `Order #${orderId} from ${customerName} - Total: ₹${orderTotal.toFixed(2)}`,
                   icon: '/favicon.ico',
                   tag: 'new-order',
                   badge: '/favicon.ico',
