@@ -116,8 +116,20 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
                 className="w-full h-full object-cover"
               />
               </div>
-              <h2 className="text-2xl font-bold text-white truncate max-w-full">{userData.userName}</h2>
-              <p className="text-gray-400 text-sm mt-1 truncate max-w-full">{userData.userEmail}</p>
+              <h2 className="text-2xl font-bold text-white truncate max-w-full">
+                {userData.userName === 'Loading...' || !userData.userName ? 'Guest' : userData.userName}
+              </h2>
+              <p className="text-gray-400 text-sm mt-1 truncate max-w-full">
+                {userData.userName === 'Loading...' || !userData.userName ? 'guest' : userData.userEmail}
+              </p>
+              {(userData.userName === 'Loading...' || !userData.userName) && (
+                <button
+                  className="mt-2 px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors duration-200"
+                  onClick={() => window.location.href = '/login'}
+                >
+                  Login
+                </button>
+              )}
               {userData.isAdmin && (
                 <div className="mt-2 px-3 py-1 bg-purple-600 rounded-full">
                   <span className="text-xs font-semibold text-white">Admin</span>

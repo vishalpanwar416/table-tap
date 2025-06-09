@@ -43,11 +43,7 @@ const App = () => {
               <Route path="/reset-password" element={<AuthWrapper publicOnly><ResetPassword /></AuthWrapper>} />
               <Route 
                 path="/home" 
-                element={
-                  <AuthWrapper>
-                    <Homepage/>
-                  </AuthWrapper>
-                } 
+                element={<Homepage />} 
               />
               <Route path="/test" element={<div className="text-white">Test route working!</div>} />
               <Route path="/best-sellers" element={<BestSellerPage />} />
