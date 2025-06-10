@@ -76,7 +76,7 @@ await createNotification({
   message: `Order #${newOrder.id.slice(0, 8)} - ${newOrder.items.length} items`,
   type: 'new_order',
   order_id: newOrder.id,
-  is_admin_notification: true,
+  is_manager_notification: true,
   order_details: {
     items: newOrder.items,
     total: newOrder.total,

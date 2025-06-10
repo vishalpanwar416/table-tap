@@ -9,10 +9,10 @@ import UserManagement from '../../components/admin/UserManagement';
 import OffersManagement from '../../components/admin/OffersManagement';
 import SettingsManagement from '../../components/admin/Settings';
 import LogoutPopup from '../../components/auth/LogoutPopup';
-import AdminNotificationsToast from '../../components/admin/AdminNotificationsToast';
 import NotificationSound from '../../components/admin/NotificationSound';
 import NotificationToast from '../../components/admin/NotificationToast';
 import AIAnalyticsChat from '../../components/admin/AIAnalyticsChat';
+import ManagerNotificationsToast from '../../components/admin/ManagerNotificationsToast';
 import { X, ArrowLeft, Package, BarChart3, Sparkles } from 'lucide-react';
 import { getAllFoodItems } from '../../api/foodService';
 import { supabase } from '../../supabase';
@@ -31,7 +31,7 @@ const AdminDashboard = () => {
   const [successMsg, setSuccessMsg] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isManager, setIsManager] = useState(false);
   const orderChannelRef = useRef(null);
   const [playOrderSound, setPlayOrderSound] = useState(false);
   const [orderSoundType, setOrderSoundType] = useState('order');
@@ -108,22 +108,22 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (!currentUser) return;
 
-    const fetchAdminProfile = async () => {
+    const fetchManagerProfile = async () => {
       try {
-        const { data: adminData, error } = await supabase
+        const { data: profileData, error } = await supabase
           .from('profiles')
-          .select('full_name,avatar_url')
+          .select('profile_role')
           .eq('id', currentUser.id)
           .single();
 
-        if (!error && adminData) {
-          setIsAdmin(adminData);
+        if (!error && profileData) {
+          setIsManager(profileData.profile_role === 'manager');
         }
       } catch (error) {
-        console.error('Error fetching admin profile:', error);
+        console.error('Error fetching manager profile:', error);
       }
     };
-    fetchAdminProfile();
+    fetchManagerProfile();
   }, [currentUser]);
         
   // Fetch food items with error handling
@@ -436,7 +436,7 @@ const AdminDashboard = () => {
         duration={6000} // Show for 6 seconds
       />
 
-      <AdminNotificationsToast />
+      <ManagerNotificationsToast />
   
       <NotificationSound play={playOrderSound} soundType={orderSoundType} />
 
@@ -479,7 +479,7 @@ const AdminDashboard = () => {
           setActiveTab={setActiveTab}
           menuItems={menuItems}
           handleLogout={() => setShowLogoutPopup(true)}
-          currentUser={{...currentUser, ...isAdmin}}
+          currentUser={currentUser}
           restaurantName={restaurant?.name}
         />
 
@@ -491,7 +491,7 @@ const AdminDashboard = () => {
           setActiveTab={setActiveTab}
           menuItems={menuItems}
           handleLogout={() => setShowLogoutPopup(true)}
-          currentUser={{...currentUser, ...isAdmin}}
+          currentUser={currentUser}
         />
         <LogoutPopup 
           isOpen={showLogoutPopup}

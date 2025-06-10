@@ -4,7 +4,7 @@ import {
   Clock, Calendar, MapPin, Phone, Filter, Search, AlertCircle,
   Printer, Download, RefreshCw, AlertTriangle, ShoppingBag, Info
 } from 'lucide-react';
-import { useAdminNotifications } from '../../context/AdminNotificationContext';
+import { useManagerNotifications } from '../../context/ManagerNotificationContext';
 import { format, isToday, isYesterday } from 'date-fns';
 import { useRestaurant } from '../../context/RestaurantContext';
 import ReactDOMServer from "react-dom/server";
@@ -45,7 +45,7 @@ const STATUS_META = {
 };
 
 const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm }) => {
-  const { createNotification } = useAdminNotifications();
+  const { notifications, markAllAsRead } = useManagerNotifications();
   const { restaurant } = useRestaurant();
   const [viewType, setViewType] = useState('tiles');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -75,7 +75,7 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
         completed: 'Order has been completed'
       };
       
-      await createNotification({
+      await notifications.createNotification({
         orderId,
         type: `order_${newStatus}`,
         userId,

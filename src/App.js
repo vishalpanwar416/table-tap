@@ -25,7 +25,7 @@ import QRGeneratorPage from '../src/Pages/QR';
 import { OrderProvider } from './context/OrderContext';
 import { AuthProvider } from './config/AuthContext';
 import OrderTracking from '../src/Pages/customer/OrderTracking';
-import { AdminNotificationProvider } from './context/AdminNotificationContext';
+import { ManagerNotificationProvider } from './context/ManagerNotificationContext';
 import { RestaurantProvider } from './context/RestaurantContext';
 
 const App = () => {
@@ -51,12 +51,12 @@ const App = () => {
               <Route path="/complete-profile" element={<CompleteProfile />} />
               <Route path="/liked-items" element={<LikedItemsPage />} />
               <Route 
-                path="/admindashboard" 
+                path="/managerdashboard" 
                 element={
                   <AuthWrapper>
-                    <AdminNotificationProvider>
+                    <ManagerNotificationProvider>
                       <AdminDashboard />
-                    </AdminNotificationProvider>
+                    </ManagerNotificationProvider>
                   </AuthWrapper>
                 }
               />

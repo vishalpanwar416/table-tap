@@ -202,38 +202,37 @@ export const deleteFoodItem = async (id) => {
   }
 };
 
-// Check if the current user is an admin
-export const checkIsAdmin = async () => {
+// Check if the current user is a manager
+export const checkIsManager = async () => {
   try {
-    console.log('Checking if user is admin');
+    console.log('Checking if user is manager');
     
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const { data: userData, error: userError } = await supabase.auth.getUser();
     
     if (userError) {
-      console.error('Error getting user for admin check:', userError);
+      console.error('Error getting user for manager check:', userError);
       return false;
     }
     
-    if (!user) {
-      console.log('No user logged in');
+    if (!userData.user) {
       return false;
     }
     
     const { data, error } = await supabase
       .from('profiles')
-      .select('is_admin')
-      .eq('id', user.id)
+      .select('profile_role')
+      .eq('id', userData.user.id)
       .single();
     
     if (error) {
-      console.error('Error checking admin status:', error);
+      console.error('Error checking manager status:', error);
       return false;
     }
     
-    console.log('Admin check result:', data?.is_admin || false);
-    return data?.is_admin || false;
+    console.log('Manager check result:', data?.profile_role === 'manager' || false);
+    return data?.profile_role === 'manager' || false;
   } catch (error) {
-    console.error('Error in admin check process:', error);
+    console.error('Error in manager check process:', error);
     return false;
   }
 };

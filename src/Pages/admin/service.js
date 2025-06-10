@@ -276,15 +276,15 @@ export const getCurrentUser = async () => {
   return { ...user, profile: data };
 };
 
-export const isUserAdmin = async (userId) => {
+export const isUserManager = async (userId) => {
   const { data, error } = await supabase
     .from('profiles')
-    .select('is_admin')
+    .select('profile_role')
     .eq('id', userId)
     .single();
   
   if (error) throw error;
-  return data.is_admin;
+  return data.profile_role === 'manager';
 };
 
 // Statistics and Dashboard Data

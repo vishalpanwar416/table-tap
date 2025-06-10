@@ -10,7 +10,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
     profileImg: '',
     userName: 'Loading...',
     userEmail: 'Loading...',
-    isAdmin: false
+    profile_role: 'customer'
   });
 
 
@@ -21,7 +21,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
       if (user && !error) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('full_name, email, is_admin, avatar_url')
+          .select('full_name, email, profile_role, avatar_url')
           .eq('id', user.id)
           .single();
 
@@ -29,7 +29,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
           profileImg: profile?.avatar_url || '',
           userName: profile?.full_name || user.user_metadata.name,
           userEmail: user.email,
-          isAdmin: profile?.is_admin || false
+          profile_role: profile?.profile_role || 'customer'
         });
       }
     };
@@ -47,7 +47,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
             userName: payload.new.full_name,
             userEmail: payload.new.email,
             profileImg: payload.new.avatar_url,
-            isAdmin: payload.new.is_admin
+            profile_role: payload.new.profile_role
           }));
         }
       })
@@ -76,11 +76,11 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
    // { name: 'Settings', icon: <Settings className="w-6 h-6" />, path: '/settings' },
   ];
   
-  // Admin-only menu option
-  const adminOption = { 
-    name: 'Admin Dashboard', 
+  // Manager-only menu option
+  const managerOption = { 
+    name: 'Manager Dashboard', 
     icon: <Shield className="w-6 h-6" />, 
-    path: '/admindashboard' 
+    path: '/managerdashboard' 
   };
   
   const overlayVariants = {
@@ -134,9 +134,9 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
                   Login
                 </button>
               )}
-              {userData.isAdmin && (
+              {userData.profile_role === 'manager' && (
                 <div className="mt-2 px-3 py-1 bg-purple-600 rounded-full">
-                  <span className="text-xs font-semibold text-white">Admin</span>
+                  <span className="text-xs font-semibold text-white">Manager</span>
                 </div>
               )}
             </div>
@@ -148,16 +148,16 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
               msOverflowStyle: 'auto'
             }}>
               <div className="py-4">
-                {userData.isAdmin && (
+                {userData.profile_role === 'manager' && (
                   <div>
                     <button 
-                      onClick={() => handleNavigation(adminOption.path)}
+                      onClick={() => handleNavigation(managerOption.path)}
                       className="w-full py-3 px-6 flex items-center text-left hover:bg-gray-800 transition-colors duration-200 group"
                     >
                       <div className="bg-purple-600 rounded-full p-3 mr-4 group-hover:bg-purple-700 transition-colors">
-                        {React.cloneElement(adminOption.icon, { className: "w-5 h-5 text-white" })}
+                        {React.cloneElement(managerOption.icon, { className: "w-5 h-5 text-white" })}
                       </div>
-                      <span className="text-lg text-white font-medium">{adminOption.name}</span>
+                      <span className="text-lg text-white font-medium">{managerOption.name}</span>
                     </button>
                   </div>
                 )}

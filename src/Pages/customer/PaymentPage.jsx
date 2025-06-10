@@ -262,7 +262,7 @@ const PaymentPage = () => {
       if (!response || !response.razorpay_payment_id) {
         throw new Error('Missing payment confirmation details');
       }
-
+  
       const tracking = {
         confirmed: { status: true, timestamp: new Date().toISOString() },
         preparing: { status: false, timestamp: null },
@@ -270,10 +270,10 @@ const PaymentPage = () => {
         completed: { status: false, timestamp: null }
       };
       
-      // --- UPDATED: Order data now correctly uses state for customer details ---
+      // --- UPDATED: Order data with better null handling ---
       const orderData = {
         order_number: generateOrderNumber(),
-        user_id: user?.id || null, // Storing null for guest users
+        user_id: user?.id || null, // Explicitly set to null for guests
         table_number: tableNumber || 'N/A',
         items: cartItems,
         subtotal: parseFloat(subtotalAfterDiscount) || 0,
@@ -288,27 +288,57 @@ const PaymentPage = () => {
         payment_timestamp: new Date().toISOString(),
         status: 'pending',
         tracking: tracking,
-        customer_name: customerName,
-        customer_email: customerEmail,
-        customer_phone: customerPhone,
-        special_instructions: specialInstructions,
+        customer_name: customerName || 'Guest Customer',
+        customer_email: customerEmail || null,
+        customer_phone: customerPhone || null,
+        special_instructions: specialInstructions || null,
+        created_at: new Date().toISOString(), // Explicitly set created_at
+        updated_at: new Date().toISOString()  // Explicitly set updated_at
       };
-
+  
+      console.log('Attempting to create order with data:', orderData);
+  
+      // Try to insert the order with better error handling
       const { data: order, error } = await supabase
         .from('orders')
         .insert([orderData])
         .select()
         .single();
-
+  
       if (error) {
-        console.error('Order creation error:', error);
-        throw new Error(error.message || 'Database error');
+        console.error('Order creation error details:', {
+          error,
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+  
+        // Handle specific RLS errors
+        if (error.message?.includes('row-level security policy') || 
+            error.message?.includes('RLS') || 
+            error.code === '42501') {
+          throw new Error('Permission denied: Unable to create order. Please contact support.');
+        }
+  
+        // Handle other common errors
+        if (error.code === '23505') {
+          throw new Error('Order number already exists. Please try again.');
+        }
+  
+        if (error.code === '23503') {
+          throw new Error('Invalid data reference. Please try again.');
+        }
+  
+        throw new Error(error.message || 'Database error occurred');
       }
-
+  
       if (!order || !order.id) {
         throw new Error('Order created but missing ID');
       }
-
+  
+      console.log('Order created successfully:', order);
+  
       clearCart();
       navigate('/order-success', {
         state: {
@@ -321,7 +351,21 @@ const PaymentPage = () => {
         }
       });
     } catch (error) {
-      setScriptError('Payment successful but order creation failed: ' + (error.message || 'Unknown error'));
+      console.error('Process order error:', error);
+      
+      // More specific error messages
+      let errorMessage = 'Payment successful but order creation failed: ';
+      
+      if (error.message?.includes('Permission denied') || 
+          error.message?.includes('row-level security policy')) {
+        errorMessage += 'Database permission issue. Please contact support with this error.';
+      } else if (error.message?.includes('network') || error.message?.includes('connection')) {
+        errorMessage += 'Network connection issue. Please check your internet and try again.';
+      } else {
+        errorMessage += error.message || 'Unknown error occurred';
+      }
+      
+      setScriptError(errorMessage);
       setIsProcessing(false);
     }
   };

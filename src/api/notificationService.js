@@ -47,20 +47,20 @@ export const getUserNotifications = async (userId) => {
   }
 };
 
-// Get admin notifications
-export const getAdminNotifications = async () => {
+// Get manager notifications
+export const getManagerNotifications = async () => {
   try {
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
-      .eq('is_admin_notification', true)
+      .eq('is_manager_notification', true)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error fetching admin notifications:', error);
-    throw error;
+    console.error('Error fetching manager notifications:', error);
+    return [];
   }
 };
 
@@ -82,21 +82,21 @@ export const getUnreadNotifications = async (userId) => {
   }
 };
 
-// Get unread admin notifications
-export const getUnreadAdminNotifications = async () => {
+// Get unread manager notifications
+export const getUnreadManagerNotifications = async () => {
   try {
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
-      .eq('is_admin_notification', true)
+      .eq('is_manager_notification', true)
       .eq('read', false)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error fetching unread admin notifications:', error);
-    throw error;
+    console.error('Error fetching unread manager notifications:', error);
+    return [];
   }
 };
 
@@ -136,21 +136,20 @@ export const markAllNotificationsAsRead = async (userId) => {
   }
 };
 
-// Mark all admin notifications as read
-export const markAllAdminNotificationsAsRead = async () => {
+// Mark all manager notifications as read
+export const markAllManagerNotificationsAsRead = async () => {
   try {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('notifications')
       .update({ read: true })
-      .eq('is_admin_notification', true)
-      .eq('read', false)
-      .select();
+      .eq('is_manager_notification', true)
+      .eq('read', false);
 
     if (error) throw error;
-    return data;
+    return true;
   } catch (error) {
-    console.error('Error marking all admin notifications as read:', error);
-    throw error;
+    console.error('Error marking all manager notifications as read:', error);
+    return false;
   }
 };
 
@@ -169,17 +168,15 @@ export const subscribeToUserNotifications = (userId, callback) => {
     .subscribe();
 };
 
-// Subscribe to admin notifications
-export const subscribeToAdminNotifications = (callback) => {
+// Subscribe to manager notifications
+export const subscribeToManagerNotifications = (callback) => {
   return supabase
-    .channel('admin-notifications')
+    .channel('manager-notifications')
     .on('postgres_changes', {
-      event: 'INSERT',
+      event: '*',
       schema: 'public',
       table: 'notifications',
-      filter: 'is_admin_notification=eq.true'
-    }, payload => {
-      callback(payload.new);
-    })
+      filter: 'is_manager_notification=eq.true'
+    }, callback)
     .subscribe();
 };

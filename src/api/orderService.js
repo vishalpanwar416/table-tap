@@ -20,8 +20,8 @@ export const createOrder = async (orderData) => {
 
     if (error) throw error;
     
-    // Create admin notification for new order
-    await createAdminOrderNotification(data);
+    // Create manager notification for new order
+    await createManagerOrderNotification(data);
     
     return data;
   } catch (error) {
@@ -30,31 +30,23 @@ export const createOrder = async (orderData) => {
   }
 };
 
-// Helper function to create admin notification for new orders
-const createAdminOrderNotification = async (order) => {
+// Helper function to create manager notification for new orders
+const createManagerOrderNotification = async (order) => {
   try {
-    const orderItems = order.items || [];
-    const itemCount = orderItems.length;
-    const totalAmount = order.total || 0;
-    
-    // Create detailed notification
-    await createNotification({
-      title: 'New Order Received',
-      message: `Order #${order.id.slice(0, 8)} - ${itemCount} items`,
-      type: 'new_order',
-      order_id: order.id,
-      is_admin_notification: true,
-      order_details: {
-        items: orderItems,
-        total: totalAmount,
-        table: order.table_number || order.tableNumber,
-        customer: order.customerName,
-        created_at: order.created_at
-      }
-    });
+    const { error } = await supabase
+      .from('notifications')
+      .insert([{
+        title: 'New Order',
+        message: `New order #${order.id} received`,
+        type: 'order',
+        is_manager_notification: true,
+        read: false,
+        data: order
+      }]);
+
+    if (error) throw error;
   } catch (error) {
-    console.error('Error creating admin notification:', error);
-    // Don't throw here to prevent order creation from failing
+    console.error('Error creating manager notification:', error);
   }
 };
 

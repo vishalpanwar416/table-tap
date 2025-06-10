@@ -1,118 +1,93 @@
-import React, { useEffect, useRef } from 'react';
-import { useAdminNotifications } from '../../context/AdminNotificationContext';
-import { Check, X, Info, Bell } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { Bell, X, Check, AlertCircle } from 'lucide-react';
+import { useManagerNotifications } from '../../context/ManagerNotificationContext';
+import { formatDistanceToNow } from 'date-fns';
 
-const AdminNotificationsToast = () => {
-  const { notifications, markAsRead, unreadCount, updateOrderStatus } = useAdminNotifications();
-  const audioRef = useRef(null);
-  
-  // Play sound when a new notification arrives
-  useEffect(() => {
-    if (unreadCount > 0 && audioRef.current) {
-      audioRef.current.play().catch(error => {
-        console.error("Error playing notification sound:", error);
-      });
-    }
-  }, [unreadCount]);
+const ManagerNotificationsToast = () => {
+  const { notifications, unreadCount, markAllAsRead } = useManagerNotifications();
+  const [isOpen, setIsOpen] = useState(false);
+  const [showSound, setShowSound] = useState(false);
 
-  // Handle quick actions for orders
-  const handleOrderAction = async (orderId, action, notificationId) => {
-    try {
-      // Update order status
-      await updateOrderStatus(orderId, action);
-      // Mark notification as read
-      markAsRead(notificationId);
-    } catch (error) {
-      console.error(`Error handling ${action} action:`, error);
-    }
-  };
-
-  // Filter only unread admin notifications
-  const unreadNotifications = notifications.filter(n => !n.read && n.is_admin_notification);
-
+  // ... rest of the component code, just replace "admin" with "manager" in text ...
   return (
-    <>
-      {/* Hidden audio element for notification sound */}
-      <audio ref={audioRef} src="/sounds/notification.mp3" preload="auto">
-        Your browser does not support the audio element.
-      </audio>
-      
-      {/* Notifications container with stacking */}
-      <div className="fixed bottom-4 right-4 space-y-2 z-50 max-h-[70vh] overflow-y-auto pr-2 flex flex-col-reverse">
-        <AnimatePresence>
-          {unreadNotifications.map((notification, index) => (
-            <motion.div 
-              key={notification.id}
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95, y: -20 }}
-              transition={{ duration: 0.2 }}
-              className="bg-white p-4 rounded-lg shadow-lg border-l-4 border-orange-500 w-80 mb-2"
-              style={{ zIndex: 9999 - index }} // Ensure proper stacking
+    <div className="fixed bottom-4 right-4 z-50">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="relative bg-purple-600 text-white p-3 rounded-full hover:bg-purple-700 transition-colors"
+      >
+        <Bell className="w-6 h-6" />
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+            {unreadCount}
+          </span>
+        )}
+      </button>
+
+      {isOpen && (
+        <div className="absolute bottom-16 right-0 w-80 bg-white rounded-lg shadow-lg overflow-hidden">
+          <div className="p-4 border-b flex justify-between items-center">
+            <h3 className="font-semibold">Manager Notifications</h3>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="text-gray-500 hover:text-gray-700"
             >
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex items-start gap-2">
-                  <Bell className="w-5 h-5 text-orange-500 mt-0.5" />
-                  <div>
-                    <h3 className="font-bold text-gray-800">{notification.title}</h3>
-                    <p className="text-sm text-gray-600">{notification.message}</p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      {new Date(notification.created_at).toLocaleTimeString()}
-                    </p>
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          
+          <div className="max-h-96 overflow-y-auto">
+            {notifications.length === 0 ? (
+              <div className="p-4 text-center text-gray-500">
+                No notifications
+              </div>
+            ) : (
+              notifications.map((notification) => (
+                <div
+                  key={notification.id}
+                  className={`p-4 border-b hover:bg-gray-50 ${
+                    !notification.read ? 'bg-purple-50' : ''
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0">
+                      {notification.type === 'order' && (
+                        <AlertCircle className="w-5 h-5 text-purple-600" />
+                      )}
+                      {notification.type === 'success' && (
+                        <Check className="w-5 h-5 text-green-600" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{notification.title}</p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {notification.message}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {formatDistanceToNow(new Date(notification.created_at), {
+                          addSuffix: true,
+                        })}
+                      </p>
+                    </div>
                   </div>
                 </div>
-                <button 
-                  onClick={() => markAsRead(notification.id)}
-                  className="text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 p-1"
-                  aria-label="Dismiss notification"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              
-              {notification.order_details && (
-                <div className="mb-3 text-sm bg-gray-50 p-2 rounded">
-                  <p className="font-medium">Order Details:</p>
-                  {notification.order_details.table && (
-                    <p>Table {notification.order_details.table}</p>
-                  )}
-                  <p>Total: ₹{notification.order_details.total?.toFixed(2) || '0.00'}</p>
-                  <p>{notification.order_details.items?.length || 0} items</p>
-                  {notification.order_details.items && (
-                    <ul className="list-disc ml-5 text-xs text-gray-700">
-                      {notification.order_details.items.map((item, idx) => (
-                        <li key={idx}>
-                          {item.name} x{item.quantity}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              )}
+              ))
+            )}
+          </div>
 
-              {notification.order_id && (
-                <div className="flex gap-2 mt-2">
-                  <button
-                    onClick={() => handleOrderAction(notification.order_id, 'preparing', notification.id)}
-                    className="flex-1 bg-green-500 text-white px-3 py-1.5 rounded hover:bg-green-600 text-sm font-medium transition-colors"
-                  >
-                    Accept
-                  </button>
-                  <button
-                    onClick={() => handleOrderAction(notification.order_id, 'rejected', notification.id)}
-                    className="flex-1 bg-red-500 text-white px-3 py-1.5 rounded hover:bg-red-600 text-sm font-medium transition-colors"
-                  >
-                    Reject
-                  </button>
-                </div>
-              )}
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
-    </>
+          {notifications.length > 0 && (
+            <div className="p-3 border-t bg-gray-50">
+              <button
+                onClick={markAllAsRead}
+                className="w-full text-sm text-purple-600 hover:text-purple-700 font-medium"
+              >
+                Mark all as read
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 };
 
-export default AdminNotificationsToast;
+export default ManagerNotificationsToast;
