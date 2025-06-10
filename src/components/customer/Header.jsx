@@ -1,5 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Search, X, ShoppingCart, Bell, User, MapPin } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../config/AuthContext';
 import { useCart } from '../../config/CartContent';
 import { useRestaurant } from '../../context/RestaurantContext';
 
@@ -15,6 +17,8 @@ const Header = ({
   const [searchQuery, setSearchQuery] = useState('');
   const { cartItems } = useCart();
   const { restaurant } = useRestaurant();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (isSearchActive && inputRef.current) {
@@ -131,7 +135,10 @@ const Header = ({
           <Bell className="w-6 h-6 md:w-9 md:h-9" />
         </button>
         
-        <button onClick={toggleSidebar} className="text-white transition-transform duration-300 ease-out hover:scale-110">
+        <button
+          onClick={user ? toggleSidebar : () => navigate('/login')}
+          className="text-white transition-transform duration-300 ease-out hover:scale-110"
+        >
           <User className="w-6 h-6 md:w-9 md:h-9" />
         </button>
       </div>

@@ -60,7 +60,14 @@ const App = () => {
                   </AuthWrapper>
                 }
               />
-              <Route path="/profile" element={<PrfilePage />} />
+              <Route
+                path="/profile"
+                element={
+                  <AuthWrapper>
+                    <PrfilePage />
+                  </AuthWrapper>
+                }
+              />
               <Route 
                 path="/my-orders" 
                 element={

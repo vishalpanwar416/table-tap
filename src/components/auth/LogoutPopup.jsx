@@ -29,10 +29,13 @@ const LogoutPopup = ({ isOpen, onClose, onConfirm }) => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      navigate('/login'); 
+      // Call onConfirm if provided, which should handle navigation and closing the popup
+      if (onConfirm) onConfirm();
     } catch (error) {
       console.error('Logout error:', error);
       toast.error('Failed to log out. Please try again.');
+      // Call onClose if provided, to allow parent to close popup on error
+      if (onClose) onClose();
     }
   };
 
