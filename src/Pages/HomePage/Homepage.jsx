@@ -11,6 +11,7 @@ import NotificationSidebar from '../../components/customer/NotificationSlidebar'
 import CartSidebar from '../../components/customer/CartSidebar';
 import OrderCard from '../../components/customer/itemCard';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../config/CartContent';
 import LogoutPopup from '../../components/auth/LogoutPopup';
 import DynamicGreeting from '../../components/customer/Greetings';
@@ -54,6 +55,7 @@ export default function HomePage() {
   const scrollRef = useRef(null);
   const [allFoodItems, setAllFoodItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
   
   // New state for OrderCard
   const [selectedItem, setSelectedItem] = useState(null);
@@ -133,6 +135,7 @@ export default function HomePage() {
               onConfirm={() => {
                 setIsLogoutOpen(false);
                 setIsSidebarOpen(false);
+                navigate('/login');
               }}
             />
             <AnimatePresence>
