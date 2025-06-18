@@ -1,84 +1,138 @@
 import React from 'react';
-import { LayoutDashboard, Utensils, ShoppingCart, Users, Settings, Tag } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { 
+  Building2, 
+  Users, 
+  LogOut,
+  Menu,
+  X
+} from 'lucide-react';
+import { supabase } from '../../supabase';
 
-const Sidebar = ({ activeTab, setActiveTab, menuItems, handleLogout, currentUser, restaurantName }) => {
-  // Map icon strings to actual components
-  const getIcon = (iconName) => {
-    const icons = {
-      'LayoutDashboard': LayoutDashboard,
-      'Utensils': Utensils,
-      'ShoppingCart': ShoppingCart,
-      'Users': Users,
-      'Tag': Tag,
-      'Settings': Settings
+const Sidebar = ({ activeTab, setActiveTab, menuItems }) => {
+  const navigate = useNavigate();
+  const [showMobileNav, setShowMobileNav] = React.useState(false);
+  const [currentUser, setCurrentUser] = React.useState(null);
+
+  React.useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUser(user);
+      }
     };
-    
-    const IconComponent = icons[iconName];
-    return IconComponent ? <IconComponent className="w-5 h-5 mr-3" /> : null;
+    getCurrentUser();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate('/login');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  const getIcon = (iconName) => {
+    switch (iconName) {
+      case 'Building2':
+        return <Building2 className="w-5 h-5" />;
+      case 'Users':
+        return <Users className="w-5 h-5" />;
+      default:
+        return null;
+    }
   };
 
   return (
-    <div className="hidden md:flex flex-col w-64 bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-      <div className="p-5 border-b border-gray-700">
-        <h1 className="text-xl font-bold flex items-center gap-2">
-          <LayoutDashboard className="w-6 h-6 text-orange-500" />
-          <span>Admin Dashboard</span>
-        </h1>
-      </div>
+    <>
+      {/* Mobile menu button */}
+      <button
+        onClick={() => setShowMobileNav(!showMobileNav)}
+        className="md:hidden fixed top-4 left-4 z-20 p-2 rounded-lg bg-gray-800 text-white"
+      >
+        {showMobileNav ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+      </button>
 
-      <nav className="flex-1 overflow-y-auto py-4 px-3">
-        <ul className="space-y-2">
-          {menuItems.map((item) => (
-            <li key={item.id}>
-              <button
-                onClick={() => setActiveTab(item.id)}
-                className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${
-                  activeTab === item.id 
-                    ? 'bg-orange-500 text-white' 
-                    : 'hover:bg-gray-700 text-gray-300'
-                }`}
-              >
-                {getIcon(item.icon)}
-                <span>{item.label}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </nav>
+      {/* Sidebar */}
+      <div className={`
+        fixed md:static inset-y-0 left-0 z-10
+        w-64 bg-gray-900 text-white
+        transform transition-transform duration-200 ease-in-out
+        ${showMobileNav ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+      `}>
+        <div className="flex flex-col h-full">
+          {/* Logo */}
+          <div className="p-4 border-b border-gray-800">
+            <h1 className="text-xl font-bold">Admin Panel</h1>
+          </div>
 
-      <div className="p-4 border-t border-gray-700">
-        <div className="admin-profile flex items-center gap-4 p-2">
-          {currentUser?.avatar_url ? (
-            <img 
-              src={currentUser.avatar_url} 
-              alt="Admin avatar" 
-              className="w-12 h-12 rounded-full object-cover border-2 border-gray-500"
-            />
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-medium">
-              {currentUser?.email?.charAt(0).toUpperCase()}
+          {/* Navigation */}
+          <nav className="flex-1 overflow-y-auto py-4">
+            <ul className="space-y-2 px-2">
+              {menuItems.map((item) => (
+                <li key={item.id}>
+                  <button
+                    onClick={() => {
+                      setActiveTab(item.id);
+                      setShowMobileNav(false);
+                    }}
+                    className={`flex items-center w-full p-3 rounded-lg transition-colors ${
+                      activeTab === item.id 
+                        ? 'bg-orange-500 text-white' 
+                        : 'hover:bg-gray-800 text-gray-300'
+                    }`}
+                  >
+                    {getIcon(item.icon)}
+                    <span className="ml-3">{item.label}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          {/* User profile and logout */}
+          <div className="p-4 border-t border-gray-800">
+            <div className="admin-profile flex items-center gap-4 p-2">
+              {currentUser?.avatar_url ? (
+                <img 
+                  src={currentUser.avatar_url} 
+                  alt="Admin avatar" 
+                  className="w-12 h-12 rounded-full object-cover border-2 border-gray-500"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-medium">
+                  {currentUser?.email?.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div className="flex flex-col">
+                <p className="admin-name font-medium text-white">
+                  {currentUser?.email}
+                </p>
+                <p className="admin-role text-xs text-gray-400">
+                  Administrator
+                </p>
+              </div>
             </div>
-          )}
-          <div className="flex flex-col">
-            <p className="admin-name font-medium text-gray-800 dark:text-white">
-              {currentUser?.full_name || currentUser?.email}
-            </p>
-            <p className="text-base text-gray-500 dark:text-gray-400">
-              {restaurantName}
-            </p>
-            <p className="admin-role text-xs text-gray-500 dark:text-gray-400">
-              Administrator
-            </p>
+            <button
+              onClick={handleLogout}
+              className="w-full mt-4 px-4 py-2 text-sm text-center rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors flex items-center justify-center gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              Log Out
+            </button>
           </div>
         </div>
-        <button
-          onClick={handleLogout}
-          className="w-full px-4 py-2 text-sm text-center rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors"
-        >
-          Log Out
-        </button>
       </div>
-    </div>
+
+      {/* Mobile overlay */}
+      {showMobileNav && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-0"
+          onClick={() => setShowMobileNav(false)}
+        />
+      )}
+    </>
   );
 };
 

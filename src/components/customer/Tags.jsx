@@ -241,7 +241,8 @@ const Tags = ({ foodItems = [], onItemClick }) => {
         ))}
       </div>
       
-      <style jsx>{`
+      {/* Remove the style jsx block and add these classes to your CSS file or use inline styles */}
+      <style>{`
         @keyframes fadeIn {
           from {
             opacity: 0;

@@ -145,7 +145,9 @@ export default function EnhancedGreetings() {
           if (data?.full_name) {
             // Split the full name and use only the first part as the first name
             const firstName = data.full_name.split(' ')[0];
-            setUserName(firstName);
+            // Capitalize the first letter of the first name
+            const capitalizedFirstName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+            setUserName(capitalizedFirstName);
           }
         } catch (error) {
           console.error("Error fetching user profile:", error);

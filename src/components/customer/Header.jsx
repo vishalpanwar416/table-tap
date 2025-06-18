@@ -136,7 +136,7 @@ const Header = ({
         </button>
         
         <button
-          onClick={user ? toggleSidebar : () => navigate('/login')}
+          onClick={toggleSidebar}
           className="text-white transition-transform duration-300 ease-out hover:scale-110"
         >
           <User className="w-6 h-6 md:w-9 md:h-9" />

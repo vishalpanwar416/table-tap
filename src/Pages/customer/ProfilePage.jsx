@@ -34,9 +34,17 @@ const ProfilePage = () => {
         .single();
 
       if (!profileError) {
-        const dobDate = profile.date_of_birth ? new Date(profile.date_of_birth) : null;
-        const dobString = dobDate ?
-          `${dobDate.getDate().toString().padStart(2, '0')}-${(dobDate.getMonth() + 1).toString().padStart(2, '0')}-${dobDate.getFullYear()}` : '';
+        // Fix: Format date as DD-MM-YYYY for display
+        let dobString = '';
+        if (profile.date_of_birth) {
+          const dobDate = new Date(profile.date_of_birth);
+          if (!isNaN(dobDate.getTime())) {
+            const day = dobDate.getDate().toString().padStart(2, '0');
+            const month = (dobDate.getMonth() + 1).toString().padStart(2, '0');
+            const year = dobDate.getFullYear();
+            dobString = `${day}-${month}-${year}`;
+          }
+        }
 
         const newProfileData = {
           name: profile.full_name || '',
@@ -60,10 +68,17 @@ const ProfilePage = () => {
         table: 'profiles',
       }, (payload) => {
         if (user?.id && payload.new.id === user.id) {
-          const dobDate = payload.new.date_of_birth ?
-            new Date(payload.new.date_of_birth) : null;
-          const dobString = dobDate ?
-            `${dobDate.getDate().toString().padStart(2, '0')}-${(dobDate.getMonth() + 1).toString().padStart(2, '0')}-${dobDate.getFullYear()}` : '';
+          // Fix: Format date as DD-MM-YYYY for display
+          let dobString = '';
+          if (payload.new.date_of_birth) {
+            const dobDate = new Date(payload.new.date_of_birth);
+            if (!isNaN(dobDate.getTime())) {
+              const day = dobDate.getDate().toString().padStart(2, '0');
+              const month = (dobDate.getMonth() + 1).toString().padStart(2, '0');
+              const year = dobDate.getFullYear();
+              dobString = `${day}-${month}-${year}`;
+            }
+          }
 
           setProfileData(prev => ({
             ...prev,
@@ -122,12 +137,36 @@ const ProfilePage = () => {
     }
   };
 
+  const formatDateInput = (value) => {
+    // Remove all non-digits
+    const digits = value.replace(/\D/g, '');
+    
+    // Format as DD-MM-YYYY
+    if (digits.length <= 2) {
+      return digits;
+    } else if (digits.length <= 4) {
+      return `${digits.slice(0, 2)}-${digits.slice(2)}`;
+    } else {
+      return `${digits.slice(0, 2)}-${digits.slice(2, 4)}-${digits.slice(4, 8)}`;
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    if (name === 'dob') {
+      // Format the date input
+      const formattedValue = formatDateInput(value);
+      setFormData(prev => ({
+        ...prev,
+        [name]: formattedValue
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const validateEmail = (email) => {
@@ -156,9 +195,9 @@ const ProfilePage = () => {
         return;
       }
 
-      // Validate date of birth
+      // Fix: Validate DD-MM-YYYY format
       if (!/^\d{2}-\d{2}-\d{4}$/.test(formData.dob)) {
-        alert('Please use DD-MM-YYYY format for date of birth');
+        alert('Please use DD-MM-YYYY format for date of birth (e.g., 25-12-1990)');
         return;
       }
 
@@ -168,10 +207,23 @@ const ProfilePage = () => {
         return;
       }
 
-      // Parse date
+      // Fix: Parse DD-MM-YYYY format to Date object
       const [day, month, year] = formData.dob.split('-');
-      const dobDate = new Date(`${year}-${month}-${day}`);
+      const dobDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
       
+      // Validate the date
+      if (isNaN(dobDate.getTime())) {
+        alert('Please enter a valid date of birth');
+        return;
+      }
+
+      // Additional validation: Check if date is not in the future
+      const today = new Date();
+      if (dobDate > today) {
+        alert('Date of birth cannot be in the future');
+        return;
+      }
+
       // Check if email has changed
       const emailChanged = formData.email !== user.email;
       
@@ -259,8 +311,8 @@ const ProfilePage = () => {
       setIsEditing(false);
 
     } catch (error) {
-      console.error('Update error:', error);
-      alert('Error updating profile: ' + error.message);
+      console.error('Error updating profile:', error);
+      alert('Failed to update profile: ' + error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -329,8 +381,9 @@ const ProfilePage = () => {
                       name="dob"
                       value={formData.dob}
                       onChange={handleChange}
-                      className="w-full p-4 bg-gray-100 rounded-xl border-0 focus:ring-2 focus:ring-orange-500 text-black"
-                      placeholder="DD-MM-YYYY"
+                      placeholder="DD-MM-YYYY (e.g., 25-12-1990)"
+                      className="w-full px-4 py-3 rounded-xl bg-white text-black"
+                      required
                       disabled={isSubmitting}
                     />
                   </div>
