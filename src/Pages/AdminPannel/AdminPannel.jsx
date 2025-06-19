@@ -35,7 +35,7 @@ import {
   toggleRestaurantStatus,
   createStaff,
   updateStaff,
-  deleteStaff
+  deleteStaff,
 } from '../../Pages/AdminPannel/admin_service';
 
 const menuItems = [
@@ -72,7 +72,7 @@ const AdminPanel = () => {
     logo_url: '',
     razorpay_key_id: '',
     currency: 'INR',
-    google_maps_link: '',
+    Maps_link: '',
     gst_number: '',
     fssai_license: '',
     social_media: {
@@ -83,13 +83,13 @@ const AdminPanel = () => {
     },
     manager_name: '',
     manager_email: '',
-    manager_password: ''
+    manager_phone: ''
   });
 
   const [newStaff, setNewStaff] = useState({
     name: '',
     email: '',
-    password: '',
+    phone_number: '',
     role: 'captain',
     restaurant_id: ''
   });
@@ -124,12 +124,12 @@ const AdminPanel = () => {
     }
   };
 
-  const toggleRestaurantStatus = async (id) => {
+  const handleToggleRestaurantStatus = async (id) => {
     try {
       const restaurant = restaurants.find(r => r.id === id);
       const newStatus = !restaurant.is_active;
       
-      const { error } = await updateRestaurant(id, { is_active: newStatus });
+      const { error } = await toggleRestaurantStatus(id, newStatus);
       if (error) {
         handleError('Failed to update restaurant status: ' + error);
         return;
@@ -152,14 +152,12 @@ const AdminPanel = () => {
     setLoading(true);
     
     try {
-      // Validate required fields
-      if (!newRestaurant.name || !newRestaurant.manager_email || !newRestaurant.manager_password) {
+      if (!newRestaurant.name || !newRestaurant.manager_email) {
         handleError('Please fill in all required fields');
         setLoading(false);
         return;
       }
 
-      // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(newRestaurant.manager_email)) {
         handleError('Please enter a valid email address');
@@ -167,14 +165,6 @@ const AdminPanel = () => {
         return;
       }
 
-      // Validate password strength
-      if (newRestaurant.manager_password.length < 6) {
-        handleError('Password must be at least 6 characters long');
-        setLoading(false);
-        return;
-      }
-
-      // Prepare restaurant data with proper location format
       const restaurantData = {
         ...newRestaurant,
         location: newRestaurant.latitude && newRestaurant.longitude 
@@ -185,7 +175,6 @@ const AdminPanel = () => {
         ) ? newRestaurant.social_media : null
       };
 
-      // Remove latitude/longitude as they're now in location
       delete restaurantData.latitude;
       delete restaurantData.longitude;
 
@@ -197,10 +186,8 @@ const AdminPanel = () => {
         return;
       }
 
-      // Reload restaurants data
       await fetchData();
       
-      // Reset form
       setNewRestaurant({
         name: '', 
         address: '', 
@@ -214,7 +201,7 @@ const AdminPanel = () => {
         logo_url: '',
         razorpay_key_id: '',
         currency: 'INR',
-        google_maps_link: '',
+        Maps_link: '',
         gst_number: '',
         fssai_license: '',
         social_media: {
@@ -225,7 +212,7 @@ const AdminPanel = () => {
         },
         manager_name: '', 
         manager_email: '', 
-        manager_password: ''
+        manager_phone: ''
       });
       setShowAddRestaurant(false);
     } catch (err) {
@@ -237,10 +224,8 @@ const AdminPanel = () => {
   };
 
   const handleEditRestaurant = (restaurant) => {
-    // Extract lat/lng from PostGIS POINT if available
     let latitude = '', longitude = '';
     if (restaurant.location) {
-      // Assuming location comes as "POINT(lng lat)" format
       const match = restaurant.location.match(/POINT\(([^)]+)\)/);
       if (match) {
         const [lng, lat] = match[1].split(' ');
@@ -274,11 +259,10 @@ const AdminPanel = () => {
           ? `POINT(${selectedRestaurant.longitude} ${selectedRestaurant.latitude})`
           : null,
         social_media: Object.keys(selectedRestaurant.social_media).some(key => 
-          selectedRestaurant.social_media[key].trim() !== ''
+          selectedRestaurant.social_media[key] && selectedRestaurant.social_media[key].trim() !== ''
         ) ? selectedRestaurant.social_media : null
       };
 
-      // Remove latitude/longitude as they're now in location
       delete restaurantData.latitude;
       delete restaurantData.longitude;
 
@@ -300,21 +284,29 @@ const AdminPanel = () => {
     }
   };
 
+  /**
+   * MODIFIED: Refreshes all data after staff creation to get the final state from the database.
+   */
   const handleAddStaff = async (e) => {
     e.preventDefault();
     setLoading(true);
     
     try {
       const { data, error } = await createStaff(newStaff);
+      
       if (error) {
         handleError('Failed to create staff member: ' + error);
         return;
       }
 
+      // IMPORTANT: Refresh all data to ensure the UI is consistent
+      // with any changes made by the database triggers.
       await fetchData();
-      setNewStaff({ name: '', email: '', password: '', role: 'captain', restaurant_id: '' });
+
+      setNewStaff({ name: '', email: '', phone_number: '', role: 'captain', restaurant_id: '' });
       setShowAddStaff(false);
     } catch (err) {
+      console.error('Error in handleAddStaff:', err);
       handleError('Failed to create staff member: ' + err.message);
     } finally {
       setLoading(false);
@@ -339,7 +331,7 @@ const AdminPanel = () => {
   };
   
   const handleDeleteStaff = async (staffId) => {
-    if (!window.confirm('Are you sure you want to remove this staff member?')) {
+    if (!window.confirm('Are you sure you want to remove this staff member? This may delete their user account if they have no other roles.')) {
       return;
     }
 
@@ -350,7 +342,7 @@ const AdminPanel = () => {
         return;
       }
 
-      setStaff(prev => prev.filter(member => member.id !== staffId));
+      await fetchData(); // Refresh data after deletion
     } catch (err) {
       handleError('Failed to remove staff member: ' + err.message);
     }
@@ -390,7 +382,6 @@ const AdminPanel = () => {
   const handleError = (errorMessage) => {
     setError(errorMessage);
     setShowError(true);
-    // Auto hide after 5 seconds
     setTimeout(() => {
       setShowError(false);
     }, 5000);
@@ -496,7 +487,7 @@ const AdminPanel = () => {
                           </div>
                           <div className="flex items-center space-x-2">
                             <button
-                              onClick={() => toggleRestaurantStatus(restaurant.id)}
+                              onClick={() => handleToggleRestaurantStatus(restaurant.id)}
                               className={`${
                                 restaurant.is_active ? 'text-green-600' : 'text-gray-400'
                               }`}
@@ -535,7 +526,6 @@ const AdminPanel = () => {
                           )}
                         </div>
 
-                        {/* Business Details */}
                         {(restaurant.gst_number || restaurant.fssai_license) && (
                           <div className="mt-3 pt-3 border-t">
                             <p className="text-xs font-medium text-gray-700 mb-2">Business Details</p>
@@ -570,9 +560,9 @@ const AdminPanel = () => {
                               >
                                 <Edit className="h-4 w-4" />
                               </button>
-                              {restaurant.google_maps_link && (
+                              {restaurant.Maps_link && (
                                 <a 
-                                  href={restaurant.google_maps_link}
+                                  href={restaurant.Maps_link}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="text-blue-600 hover:text-blue-800"
@@ -595,6 +585,14 @@ const AdminPanel = () => {
                             <p className="text-sm font-medium text-gray-700">Manager</p>
                             <p className="text-sm text-gray-600">{restaurant.manager.name}</p>
                             <p className="text-xs text-gray-500">{restaurant.manager.email}</p>
+                            {restaurant.manager.phone && (
+                              <p className="text-xs text-gray-500">{restaurant.manager.phone}</p>
+                            )}
+                            {!restaurant.manager.connected && (
+                              <p className="text-xs text-orange-600 mt-1">
+                                ⚠️ Not connected to user account
+                              </p>
+                            )}
                           </div>
                         )}
                       </div>
@@ -603,7 +601,6 @@ const AdminPanel = () => {
                 </div>
               )}
 
-              {/* No restaurants message */}
               {!loading && filteredRestaurants.length === 0 && (
                 <div className="text-center py-8">
                   <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -629,7 +626,6 @@ const AdminPanel = () => {
                 </button>
               </div>
 
-              {/* Loading indicator for staff tab */}
               {loading && (
                 <div className="flex items-center justify-center py-8">
                   <Loader className="h-6 w-6 animate-spin mr-2" />
@@ -637,7 +633,6 @@ const AdminPanel = () => {
                 </div>
               )}
 
-              {/* Staff Table */}
               {!loading && (
                 <div className="bg-white rounded-lg shadow overflow-hidden">
                   <table className="min-w-full divide-y divide-gray-200">
@@ -651,38 +646,48 @@ const AdminPanel = () => {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredStaff.map((member) => (
-                        <tr key={member.id}>
+                      {filteredStaff.map(member => (
+                        <tr key={member.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">{member.name}</div>
-                              <div className="text-sm text-gray-500">{member.email}</div>
+                            <div className="flex items-center">
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">{member.name}</div>
+                                <div className="text-sm text-gray-500">{member.email}</div>
+                                {member.phone_number && (
+                                  <div className="text-sm text-gray-500">{member.phone_number}</div>
+                                )}
+                              </div>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              member.role === 'manager' 
-                              ? 'bg-purple-100 text-purple-800' 
-                              : 'bg-blue-100 text-blue-800'
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                              member.role === 'manager' ? 'bg-purple-100 text-purple-800' :
+                              member.role === 'captain' ? 'bg-blue-100 text-blue-800' :
+                              member.role === 'chef' ? 'bg-orange-100 text-orange-800' :
+                              'bg-gray-100 text-gray-800'
                             }`}>
-                              {member.role}
+                              {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {member.restaurant_name}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              member.status === 'active'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-800'
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                              member.connected ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                             }`}>
-                              {member.status || 'active'}
+                              {member.connected ? 'Connected' : 'Standalone'}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div className="flex space-x-2">
-                              <button className="text-blue-600 hover:text-blue-900">
+                              <button 
+                                onClick={() => {
+                                  setEditingStaff(member);
+                                  setShowEditStaff(true);
+                                }}
+                                className="text-blue-600 hover:text-blue-900"
+                              >
                                 <Edit className="h-4 w-4" />
                               </button>
                               <button 
@@ -700,7 +705,6 @@ const AdminPanel = () => {
                 </div>
               )}
               
-              {/* No staff message */}
               {!loading && filteredStaff.length === 0 && (
                 <div className="text-center py-8">
                   <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -712,7 +716,6 @@ const AdminPanel = () => {
         </div>
       </div>
 
-      {/* Add Restaurant Modal */}
       <RestaurantModal
         show={showAddRestaurant}
         onClose={() => setShowAddRestaurant(false)}
@@ -722,7 +725,6 @@ const AdminPanel = () => {
         isEditing={false}
       />
 
-      {/* Edit Restaurant Modal */}
       <RestaurantModal
         show={showEditRestaurant}
         onClose={() => {
@@ -735,7 +737,6 @@ const AdminPanel = () => {
         isEditing={true}
       />
 
-      {/* Add Staff Modal */}
       <StaffModal
         show={showAddStaff}
         onClose={() => setShowAddStaff(false)}
@@ -746,7 +747,6 @@ const AdminPanel = () => {
         isEditing={false}
       />
 
-      {/* Edit Staff Modal */}
       <StaffModal
         show={showEditStaff}
         onClose={() => {
