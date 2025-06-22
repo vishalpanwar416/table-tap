@@ -253,6 +253,20 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
                       </button>
                     </div>
                   )}
+
+                  {isAuthenticated && userData.profile_role === 'caption' && (
+                    <div>
+                      <button 
+                        onClick={() => handleNavigation(managerOption.path)}
+                        className="w-full py-3 px-6 flex items-center text-left hover:bg-gray-800 transition-colors duration-200 group"
+                      >
+                        <div className="bg-blue-600 rounded-full p-3 mr-4 group-hover:bg-blue-700 transition-colors">
+                          <Shield className="w-5 h-5 text-white" />
+                        </div>
+                        <span className="text-lg text-white font-medium">Admin Dashboard</span>
+                      </button>
+                    </div>
+                  )}
                   
                   {/* Standard menu options - show for all users */}
                   {menuOptions.map((option, index) => (

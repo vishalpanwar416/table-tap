@@ -194,6 +194,9 @@ export const updateRestaurant = async (restaurantId, updateData) => {
       delete updateData.longitude;
     }
 
+    delete updateData.manager;
+    delete updateData.staff_count;
+
     const { data, error } = await supabaseAdmin // USE ADMIN CLIENT
       .from('restaurants')
       .update(updateData)

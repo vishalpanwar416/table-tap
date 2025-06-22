@@ -1,4 +1,5 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { supabase } from '../supabase';
 
 const RestaurantContext = createContext();
 
@@ -8,6 +9,7 @@ const defaultRestaurant = {
   name: "Spice Paradise",
   address: "123 Food Street, Flavor City",
   logo_url: "/images/spice-paradise-logo.png",
+  location: null, // Example: 'POINT(77.5946 12.9716)'
   razorpay_key_id: "rzp_test_o8AUsxck5OfCWm",
   currency: "INR",
   description: "Authentic Indian cuisine with a modern twist.",
@@ -22,10 +24,34 @@ const defaultRestaurant = {
     instagram: "@spiceparadise",
     facebook: "SpiceParadiseOfficial"
   },
+  created_at: null, // Example: new Date().toISOString()
+  updated_at: null  // Example: new Date().toISOString()
 };
 
 export const RestaurantProvider = ({ children }) => {
   const [restaurant, setRestaurant] = useState(defaultRestaurant);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    // Replace '1' with the actual restaurant id as needed
+    const fetchRestaurant = async () => {
+      setLoading(true);
+      setError(null);
+      const { data, error } = await supabase
+        .from('restaurants')
+        .select('*')
+        .eq('id', defaultRestaurant.id)
+        .single();
+      if (error) {
+        setError(error.message);
+      } else if (data) {
+        setRestaurant(data);
+      }
+      setLoading(false);
+    };
+    fetchRestaurant();
+  }, []);
 
   const updateRestaurant = (updates) => {
     setRestaurant(prev => ({ ...prev, ...updates }));
@@ -34,7 +60,9 @@ export const RestaurantProvider = ({ children }) => {
 
   const value = {
     restaurant,
-    updateRestaurant
+    updateRestaurant,
+    loading,
+    error
   };
 
   return (

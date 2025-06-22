@@ -265,6 +265,7 @@ const AdminPanel = () => {
 
       delete restaurantData.latitude;
       delete restaurantData.longitude;
+      delete restaurantData.manager;
 
       const { error } = await updateRestaurant(selectedRestaurant.id, restaurantData);
       
@@ -375,8 +376,8 @@ const AdminPanel = () => {
   );
 
   const filteredStaff = staff.filter(member =>
-    member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (member.restaurant_name && member.restaurant_name.toLowerCase().includes(searchTerm.toLowerCase()))
+    (member?.name && member.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (member?.restaurant_name && member.restaurant_name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleError = (errorMessage) => {
@@ -488,14 +489,26 @@ const AdminPanel = () => {
                           <div className="flex items-center space-x-2">
                             <button
                               onClick={() => handleToggleRestaurantStatus(restaurant.id)}
-                              className={`${
-                                restaurant.is_active ? 'text-green-600' : 'text-gray-400'
-                              }`}
+                              className={`relative w-14 h-8 rounded-full focus:outline-none border-2 transition-all duration-300 shadow-sm group
+                                ${restaurant.is_active
+                                  ? 'bg-gradient-to-r from-green-400 to-green-600 border-green-500 shadow-green-200/60'
+                                  : 'bg-gradient-to-r from-gray-200 to-gray-400 border-gray-300'}
+                              `}
+                              aria-label={restaurant.is_active ? 'Deactivate restaurant' : 'Activate restaurant'}
                             >
-                              {restaurant.is_active ? (
-                                <ToggleRight className="h-6 w-6" />
-                              ) : (
-                                <ToggleLeft className="h-6 w-6" />
+                              <span
+                                className={`absolute top-1 left-1 w-6 h-6 rounded-full bg-white shadow-lg flex items-center justify-center text-xs font-bold transition-all duration-300
+                                  ${restaurant.is_active
+                                    ? 'translate-x-6 scale-110 ring-2 ring-green-400 group-hover:ring-green-500'
+                                    : 'translate-x-0 scale-100 ring-1 ring-gray-300 group-hover:ring-gray-400'}
+                                `}
+                              >
+                                <span className={restaurant.is_active ? 'text-green-500' : 'text-gray-400'}>
+                                  {restaurant.is_active ? 'ON' : 'OFF'}
+                                </span>
+                              </span>
+                              {restaurant.is_active && (
+                                <span className="absolute inset-0 rounded-full blur-md opacity-40 bg-green-300 animate-pulse pointer-events-none"></span>
                               )}
                             </button>
                           </div>
