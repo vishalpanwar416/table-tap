@@ -32,6 +32,12 @@ export const needsRestaurantSelection = () => {
   return true; // Needs restaurant selection
 };
 
+// Check if user has a valid restaurant selection (for direct homepage access)
+export const hasValidRestaurantSelection = () => {
+  const storedSelection = getStoredRestaurantSelection();
+  return storedSelection && storedSelection.restaurantId && storedSelection.tableNumber;
+};
+
 // Store restaurant selection
 export const storeRestaurantSelection = (restaurantId, tableNumber) => {
   // Store in localStorage for persistence across sessions

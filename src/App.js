@@ -30,6 +30,7 @@ import AdminPanel from './Pages/AdminPannel/AdminPannel';
 import { AdminRestaurantProvider } from './context/AdminRestaurantContext';
 import RestaurantSelectionPage from './Pages/customer/RestaurantSelectionPage';
 import RestaurantSelectionWrapper from './components/RestaurantSelectionWrapper';
+import AuthCallback from './Pages/auth/AuthCallback';
 
 const App = () => {
   return (
@@ -47,6 +48,7 @@ const App = () => {
                   <Route path="/reset-password" element={<AuthWrapper publicOnly><ResetPassword /></AuthWrapper>} />
                   <Route path="/signup" element={<SignupPage />} />
                   <Route path="/complete-profile" element={<CompleteProfile />} />
+                  <Route path="/auth-callback" element={<AuthCallback />} />
                   <Route path="/restaurant-selection" element={<RestaurantSelectionPage />} />
                   
                   {/* Protected routes that need restaurant selection */}

@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import GoogleButton from '../../components/auth/GoogleButton';
 import AuthForm from '../../components/auth/AuthForm';
 import { authService } from '../../api/authService';
-import { needsRestaurantSelection } from '../../utils/restaurantCheck';
+import { hasValidRestaurantSelection } from '../../utils/restaurantCheck';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -19,11 +19,11 @@ export default function LoginPage() {
       try {
         const user = await authService.getCurrentUser();
         if (user) {
-          // Check if restaurant selection is needed
-          if (needsRestaurantSelection()) {
-            navigate('/restaurant-selection');
-          } else {
+          // Check if user has restaurant selection
+          if (hasValidRestaurantSelection()) {
             navigate('/home');
+          } else {
+            navigate('/restaurant-selection');
           }
         }
       } catch (err) {
@@ -43,11 +43,11 @@ export default function LoginPage() {
     
     try {
       await authService.signInWithPassword(email, password);
-      // Check if restaurant selection is needed after login
-      if (needsRestaurantSelection()) {
-        navigate('/restaurant-selection');
-      } else {
+      // Check if user has restaurant selection after login
+      if (hasValidRestaurantSelection()) {
         navigate('/home');
+      } else {
+        navigate('/restaurant-selection');
       }
     } catch (err) {
       setError(err.message || 'Login failed');
@@ -62,7 +62,7 @@ export default function LoginPage() {
     
     try {
       // Redirect to restaurant selection if needed, otherwise home
-      const redirectTo = needsRestaurantSelection() ? '/restaurant-selection' : '/home';
+      const redirectTo = hasValidRestaurantSelection() ? '/home' : '/restaurant-selection';
       await authService.signInWithGoogle(redirectTo);
     } catch (err) {
       setError(err.message || 'Google login failed');
@@ -144,7 +144,6 @@ export default function LoginPage() {
           <p className="text-gray-600 text-sm">or sign up with</p>
           <div className="flex justify-center mt-4">
             <GoogleButton 
-              redirectTo="/home"
               loading={loading}
             />
           </div>

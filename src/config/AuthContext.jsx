@@ -17,11 +17,6 @@ export const AuthProvider = ({ children }) => {
         if (mounted) {
           setUser(session?.user ?? null);
           setLoading(false);
-
-          // Add automatic home redirect when session exists
-          if (session?.user && window.location.pathname === '/') {
-            window.location.href = '/home';
-          }
         }
       } catch (error) {
         console.error('Error getting session:', error);
@@ -39,11 +34,6 @@ export const AuthProvider = ({ children }) => {
         if (mounted) {
           setUser(session?.user ?? null);
           setLoading(false);
-
-          // Handle post-login redirect
-          if (event === 'SIGNED_IN' && window.location.pathname === '/') {
-            window.location.href = '/home';
-          }
         }
       }
     );

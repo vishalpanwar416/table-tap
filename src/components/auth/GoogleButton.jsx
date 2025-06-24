@@ -1,24 +1,18 @@
 import React, { useState } from 'react';
 import { FcGoogle } from 'react-icons/fc';
 import { supabase } from '../../supabase';
-import { needsRestaurantSelection } from '../../utils/restaurantCheck';
 
-const GoogleButton = ({ loading = false, redirectTo = '' }) => {
+const GoogleButton = ({ loading = false }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
-      // Determine the correct redirect path
-      let finalRedirectTo = redirectTo;
-      if (!finalRedirectTo) {
-        finalRedirectTo = needsRestaurantSelection() ? '/restaurant-selection' : '/home';
-      }
-      
+      // Always redirect to auth-callback, let the callback handle the final redirect
       await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}${finalRedirectTo}`
+          redirectTo: `${window.location.origin}/auth-callback`
         }
       });
     } catch (error) {

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, MapPin, Phone, Clock, RefreshCw, Store, ArrowRight, Navigation, Crosshair } from 'lucide-react';
 import { getActiveRestaurants } from '../../api/restaurantSelectionService';
 import { useRestaurant } from '../../context/RestaurantContext';
+import { getStoredRestaurantSelection } from '../../utils/restaurantCheck';
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -57,6 +58,14 @@ const RestaurantSelectionPage = () => {
   const navigate = useNavigate();
   const { setRestaurantAndTable } = useRestaurant();
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+
+  // Check for stored table number on component mount
+  useEffect(() => {
+    const storedSelection = getStoredRestaurantSelection();
+    if (storedSelection?.tableNumber) {
+      setTableNumber(storedSelection.tableNumber);
+    }
+  }, []);
 
   useEffect(() => {
     fetchRestaurants();
@@ -320,11 +329,19 @@ const RestaurantSelectionPage = () => {
     // If clicking on the already selected restaurant, deselect it
     if (selectedRestaurant?.id === restaurant.id) {
       setSelectedRestaurant(null);
-      setTableNumber(''); // Reset table number when deselecting
+      // Don't reset table number if it's stored locally
+      const storedSelection = getStoredRestaurantSelection();
+      if (!storedSelection?.tableNumber) {
+        setTableNumber('');
+      }
     } else {
       // Select the new restaurant
       setSelectedRestaurant(restaurant);
-      setTableNumber(''); // Reset table number when selecting a new restaurant
+      // Don't reset table number if it's stored locally
+      const storedSelection = getStoredRestaurantSelection();
+      if (!storedSelection?.tableNumber) {
+        setTableNumber('');
+      }
     }
   };
 
@@ -334,7 +351,10 @@ const RestaurantSelectionPage = () => {
       return;
     }
 
-    if (!tableNumber.trim()) {
+    // Check if we have a table number (either from input or stored)
+    const finalTableNumber = tableNumber.trim() || getStoredRestaurantSelection()?.tableNumber;
+    
+    if (!finalTableNumber) {
       alert('Please enter a table number');
       return;
     }
@@ -344,14 +364,14 @@ const RestaurantSelectionPage = () => {
     try {
       // Save restaurant selection to localStorage
       localStorage.setItem('restaurantId', selectedRestaurant.id);
-      localStorage.setItem('tableNumber', tableNumber.trim());
+      localStorage.setItem('tableNumber', finalTableNumber);
       
       // Also save to sessionStorage for current session
       sessionStorage.setItem('restaurantId', selectedRestaurant.id);
-      sessionStorage.setItem('tableNumber', tableNumber.trim());
+      sessionStorage.setItem('tableNumber', finalTableNumber);
       
       // Set the restaurant and table in context
-      setRestaurantAndTable(selectedRestaurant.id, tableNumber.trim());
+      setRestaurantAndTable(selectedRestaurant.id, finalTableNumber);
       
       // Show success message briefly
       setShowSuccessMessage(true);
@@ -412,6 +432,17 @@ const RestaurantSelectionPage = () => {
   const handleAutoLocationDeny = () => {
     setShowAutoLocationModal(false);
     setLocationPermission('denied');
+  };
+
+  // Check if table number input should be shown
+  const shouldShowTableInput = () => {
+    const storedSelection = getStoredRestaurantSelection();
+    return !storedSelection?.tableNumber;
+  };
+
+  // Get the table number to display (from input or stored)
+  const getDisplayTableNumber = () => {
+    return tableNumber.trim() || getStoredRestaurantSelection()?.tableNumber || '';
   };
 
   // Loading state
@@ -512,22 +543,30 @@ const RestaurantSelectionPage = () => {
             )}
 
             {/* Location Bar */}
-            <div className="flex items-center justify-between mb-6 bg-white rounded-xl py-3 px-4 shadow-sm">
-              <div className="flex items-center flex-1">
-                <MapPin size={20} className="text-gray-600 mr-2" />
+            <div className="mb-6 bg-white rounded-xl py-3 px-4 shadow-sm">
+              <div className="flex items-start gap-3">
+                {/* Location Icon */}
+                <MapPin size={20} className="text-gray-600 mt-0.5 flex-shrink-0" />
+                
+                {/* Location Content */}
                 <div className="flex-1 min-w-0">
                   {userLocation ? (
-                    <div>
-                      <span className="text-sm font-medium text-gray-700 block truncate">
-                        {userLocation.address || 'Current Location'}
-                      </span>
-                      <span className="text-xs text-gray-500">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-700 truncate">
+                          {userLocation.address || 'Current Location'}
+                        </span>
+                        <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0">
+                          ✓ Active
+                        </span>
+                      </div>
+                      <span className="text-xs text-gray-500 block">
                         Location detected
                       </span>
                     </div>
                   ) : (
-                    <div>
-                      <span className="text-sm font-medium text-gray-700">
+                    <div className="space-y-1">
+                      <span className="text-sm font-medium text-gray-700 block">
                         {locationError ? 'Location unavailable' : 'Enable location for nearby restaurants'}
                       </span>
                       {locationError && (
@@ -543,18 +582,12 @@ const RestaurantSelectionPage = () => {
                     </div>
                   )}
                 </div>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                {userLocation && (
-                  <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                    ✓ Active
-                  </span>
-                )}
+                
+                {/* Location Button */}
                 <button 
                   onClick={handleLocationRequest}
                   disabled={locationLoading}
-                  className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors touch-manipulation ${
+                  className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors touch-manipulation flex-shrink-0 ${
                     userLocation 
                       ? 'bg-orange-100 hover:bg-orange-200' 
                       : 'bg-orange-500 hover:bg-orange-600'
@@ -790,33 +823,64 @@ const RestaurantSelectionPage = () => {
                     </div>
                     
                     <div className="space-y-6">
-                      <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ 
-                          opacity: 0, 
-                          x: -20,
-                          transition: { duration: 0.2, delay: 0.05 }
-                        }}
-                        transition={{ duration: 0.3, delay: 0.2 }}
-                      >
-                        <label htmlFor="tableNumber" className="block text-sm font-medium text-gray-700 mb-3">
-                          Table Number
-                        </label>
-                        <input
-                          type="text"
-                          id="tableNumber"
-                          value={tableNumber}
-                          onChange={(e) => setTableNumber(e.target.value)}
-                          placeholder="Enter your table number (e.g., A1, B2, 15)"
-                          className="w-full px-5 py-5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-base touch-manipulation"
-                          style={{
-                            // Improve touch input
-                            minHeight: '52px',
-                            fontSize: '16px' // Prevent zoom on iOS
+                      {/* Show stored table number if available */}
+                      {!shouldShowTableInput() && (
+                        <motion.div
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ 
+                            opacity: 0, 
+                            x: -20,
+                            transition: { duration: 0.2, delay: 0.05 }
                           }}
-                        />
-                      </motion.div>
+                          transition={{ duration: 0.3, delay: 0.2 }}
+                          className="bg-green-50 border border-green-200 rounded-xl p-4"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                              <span className="text-green-600 text-sm font-medium">✓</span>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-green-800">
+                                Table Number: {getDisplayTableNumber()}
+                              </p>
+                              <p className="text-xs text-green-600">
+                                Using your previously saved table number
+                              </p>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {/* Show table input only if no stored table number */}
+                      {shouldShowTableInput() && (
+                        <motion.div
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ 
+                            opacity: 0, 
+                            x: -20,
+                            transition: { duration: 0.2, delay: 0.05 }
+                          }}
+                          transition={{ duration: 0.3, delay: 0.2 }}
+                        >
+                          <label htmlFor="tableNumber" className="block text-sm font-medium text-gray-700 mb-3">
+                            Table Number
+                          </label>
+                          <input
+                            type="text"
+                            id="tableNumber"
+                            value={tableNumber}
+                            onChange={(e) => setTableNumber(e.target.value)}
+                            placeholder="Enter your table number (e.g., A1, B2, 15)"
+                            className="w-full px-5 py-5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-base touch-manipulation"
+                            style={{
+                              minHeight: '52px',
+                              fontSize: '16px'
+                            }}
+                          />
+                        </motion.div>
+                      )}
 
                       <motion.button
                         initial={{ opacity: 0, y: 20 }}
@@ -828,10 +892,10 @@ const RestaurantSelectionPage = () => {
                         }}
                         transition={{ duration: 0.3, delay: 0.3 }}
                         onClick={handleContinue}
-                        disabled={isSelecting || !tableNumber.trim()}
+                        disabled={isSelecting || (!shouldShowTableInput() ? false : !tableNumber.trim())}
                         className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-5 px-6 rounded-xl transition-colors shadow-sm touch-manipulation"
                         style={{
-                          minHeight: '56px' // Ensure touch-friendly button size
+                          minHeight: '56px'
                         }}
                       >
                         {isSelecting ? (

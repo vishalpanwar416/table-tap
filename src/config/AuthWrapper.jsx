@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../supabase';
 import { useAuth } from './AuthContext';
+import { hasValidRestaurantSelection } from '../utils/restaurantCheck';
 
 export default function AuthWrapper({ children, publicOnly = false }) {
   const navigate = useNavigate();
@@ -20,14 +21,24 @@ export default function AuthWrapper({ children, publicOnly = false }) {
 
       // Handle home route redirect
       if (location.pathname === '/' && user) {
-        navigate('/home');
+        // Check if user has restaurant selection, if not redirect to restaurant selection
+        if (hasValidRestaurantSelection()) {
+          navigate('/home');
+        } else {
+          navigate('/restaurant-selection');
+        }
         return;
       }
 
       // Public-only route handling
       if (publicOnly) {
         if (user) {
-          navigate('/home');
+          // Check if user has restaurant selection, if not redirect to restaurant selection
+          if (hasValidRestaurantSelection()) {
+            navigate('/home');
+          } else {
+            navigate('/restaurant-selection');
+          }
         }
         setChecking(false);
         return;
@@ -62,7 +73,12 @@ export default function AuthWrapper({ children, publicOnly = false }) {
           if (needsCompletion && !location.pathname.startsWith('/complete-profile')) {
             navigate('/complete-profile', { state: { from: location.pathname } });
           } else if (!needsCompletion && location.pathname === '/complete-profile') {
-            navigate(location.state?.from || '/home');
+            // After profile completion, check restaurant selection
+            if (hasValidRestaurantSelection()) {
+              navigate(location.state?.from || '/home');
+            } else {
+              navigate('/restaurant-selection');
+            }
           }
         }
       } catch (error) {
