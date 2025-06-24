@@ -139,7 +139,7 @@ const App = () => {
                     }
                   />
                   <Route 
-                    path="/admin" 
+                    path="/Admin-Pannel" 
                     element={
                       <AuthWrapper>
                         <AdminRestaurantProvider>

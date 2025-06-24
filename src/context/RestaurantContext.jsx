@@ -1,6 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { supabase } from '../supabase';
-import { getStoredRestaurantSelection, storeRestaurantSelection, clearRestaurantSelection } from '../utils/restaurantCheck';
 
 const RestaurantContext = createContext();
 
@@ -11,6 +10,20 @@ const getUrlParams = () => {
     restaurantId: urlParams.get('restaurant'),
     tableNumber: urlParams.get('table')
   };
+};
+
+// Helper function to store in session (in-memory for this session)
+const sessionStore = {
+  data: {},
+  set: (key, value) => {
+    sessionStore.data[key] = value;
+  },
+  get: (key) => {
+    return sessionStore.data[key];
+  },
+  clear: () => {
+    sessionStore.data = {};
+  }
 };
 
 export const RestaurantProvider = ({ children }) => {
@@ -26,22 +39,25 @@ export const RestaurantProvider = ({ children }) => {
     
     // Check if we have URL parameters
     if (urlParams.restaurantId && urlParams.tableNumber) {
-      // Store in localStorage for persistence
-      storeRestaurantSelection(urlParams.restaurantId, urlParams.tableNumber);
+      // Store in session
+      sessionStore.set('restaurantId', urlParams.restaurantId);
+      sessionStore.set('tableNumber', urlParams.tableNumber);
       
       setRestaurantId(urlParams.restaurantId);
       setTableNumber(urlParams.tableNumber);
     } else {
-      // Try to get from stored selection
-      const storedSelection = getStoredRestaurantSelection();
+      // Try to get from session storage
+      const storedRestaurantId = sessionStore.get('restaurantId');
+      const storedTableNumber = sessionStore.get('tableNumber');
       
-      if (storedSelection) {
-        setRestaurantId(storedSelection.restaurantId);
-        setTableNumber(storedSelection.tableNumber);
+      if (storedRestaurantId && storedTableNumber) {
+        setRestaurantId(storedRestaurantId);
+        setTableNumber(storedTableNumber);
       } else {
-        // No stored restaurant, will need selection
-        setRestaurantId(null);
-        setTableNumber(null);
+        // Fallback to default restaurant ID
+        const defaultRestaurantId = '8ecc8e4d-f3bf-4116-9010-3436ec1a5baa';
+        setRestaurantId(defaultRestaurantId);
+        sessionStore.set('restaurantId', defaultRestaurantId);
       }
     }
   }, []);
@@ -142,16 +158,17 @@ export const RestaurantProvider = ({ children }) => {
     }
   };
 
-  // Function to manually set restaurant and table
+  // Function to manually set restaurant and table (useful for testing or admin)
   const setRestaurantAndTable = (newRestaurantId, newTableNumber) => {
-    storeRestaurantSelection(newRestaurantId, newTableNumber);
+    sessionStore.set('restaurantId', newRestaurantId);
+    sessionStore.set('tableNumber', newTableNumber);
     setRestaurantId(newRestaurantId);
     setTableNumber(newTableNumber);
   };
 
   // Function to clear session data
   const clearSession = () => {
-    clearRestaurantSelection();
+    sessionStore.clear();
     setRestaurantId(null);
     setTableNumber(null);
     setRestaurant(null);

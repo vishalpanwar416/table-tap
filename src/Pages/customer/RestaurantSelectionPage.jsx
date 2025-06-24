@@ -110,7 +110,7 @@ const RestaurantSelectionPage = () => {
     }, 1500);
 
     return () => clearTimeout(timer);
-  }, [userLocation, hasAttemptedLocation]);
+  }, []);
 
   // Check location permission status
   const checkLocationPermission = async () => {
@@ -154,6 +154,8 @@ const RestaurantSelectionPage = () => {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
+        
+        // Update location state without triggering immediate refetch
         setUserLocation({ latitude, longitude });
         setLocationLoading(false);
         setLocationError(null);
@@ -267,12 +269,11 @@ const RestaurantSelectionPage = () => {
     try {
       if (showRefreshAnimation) {
         setIsRefreshing(true);
-      } else {
+      } else if (restaurants.length === 0) {
         setLoading(true);
       }
       setError(null);
 
-      // Use the updated restaurant service that includes tables
       const data = await getActiveRestaurants();
 
       // Transform the data to match the component's expected format
@@ -323,7 +324,6 @@ const RestaurantSelectionPage = () => {
       }
 
       setRestaurants(transformedData || []);
-
     } catch (err) {
       console.error('Unexpected error fetching restaurants:', err);
       setError('Failed to load restaurants');
@@ -335,11 +335,12 @@ const RestaurantSelectionPage = () => {
     }
   };
 
-  // Refetch restaurants when location changes
+  // When location changes, refresh without loading screen or clearing data
   useEffect(() => {
     if (userLocation) {
-      fetchRestaurants();
+      fetchRestaurants(true); // show only refresh spinner, not loading screen
     }
+    // eslint-disable-next-line
   }, [userLocation]);
 
   // Helper function to get default restaurant images based on cuisine type
@@ -427,7 +428,7 @@ const RestaurantSelectionPage = () => {
   };
 
   const handleRefresh = () => {
-    fetchRestaurants(true);
+    fetchRestaurants(true); // Pass true to show refresh animation instead of loading screen
   };
 
   const handleLocationRequest = async () => {
@@ -536,8 +537,8 @@ const RestaurantSelectionPage = () => {
     }
   }, [availableTables]);
 
-  // Loading state
-  if (loading) {
+  // Loading state: only show if no restaurants at all
+  if (loading && restaurants.length === 0) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-black">
         <div className="flex flex-col items-center">
@@ -732,6 +733,14 @@ const RestaurantSelectionPage = () => {
                   </motion.div>
                 ) : (
                   <motion.div variants={staggerItems}>
+                    {/* Add refresh indicator at the top when refreshing */}
+                    {isRefreshing && (
+                      <div className="flex items-center justify-center py-2 mb-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-orange-500 border-t-transparent mr-2"></div>
+                        <span className="text-orange-500 text-sm">Refreshing...</span>
+                      </div>
+                    )}
+                    
                     {restaurants.map((restaurant, index) => (
                       <motion.div
                         key={restaurant.id}
@@ -1107,56 +1116,6 @@ const RestaurantSelectionPage = () => {
                       Continue without location
                     </button>
                   </div>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Location Prompt Modal - Shows automatically */}
-        <AnimatePresence>
-          {showLocationPrompt && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                className="bg-white rounded-xl p-6 max-w-sm w-full shadow-xl"
-              >
-                <div className="text-center">
-                  <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Navigation size={40} className="text-orange-500" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                    Enable Location Services
-                  </h3>
-                  <p className="text-gray-600 text-sm mb-6 leading-relaxed">
-                    We'd like to show you restaurants near your location. This helps you find the closest dining options and see distance information.
-                  </p>
-                  
-                  <div className="space-y-3">
-                    <button
-                      onClick={handleLocationPromptAllow}
-                      className="w-full bg-orange-500 hover:bg-orange-600 text-white px-6 py-4 rounded-xl font-medium transition-colors shadow-sm"
-                    >
-                      Allow Location Access
-                    </button>
-                    <button
-                      onClick={handleLocationPromptDeny}
-                      className="w-full text-gray-500 hover:text-gray-700 px-6 py-3 text-sm transition-colors"
-                    >
-                      Maybe Later
-                    </button>
-                  </div>
-                  
-                  <p className="text-xs text-gray-400 mt-4">
-                    You can change this later in your browser settings
-                  </p>
                 </div>
               </motion.div>
             </motion.div>
