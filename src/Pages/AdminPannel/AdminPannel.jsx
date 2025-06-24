@@ -38,6 +38,7 @@ import {
   updateStaff,
   deleteStaff,
 } from '../../Pages/AdminPannel/admin_service';
+import AsyncSelect from 'react-select/async';
 
 const menuItems = [
   { id: 'restaurants', icon: 'Building2', label: 'Restaurants' },
@@ -59,6 +60,7 @@ const AdminPanel = () => {
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
   const [editingStaff, setEditingStaff] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedRestaurantId, setSelectedRestaurantId] = useState('');
 
   const [newRestaurant, setNewRestaurant] = useState({
     name: '',
@@ -379,8 +381,11 @@ const AdminPanel = () => {
   );
 
   const filteredStaff = staff.filter(member =>
-    (member?.name && member.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (member?.restaurant_name && member.restaurant_name.toLowerCase().includes(searchTerm.toLowerCase()))
+    (!selectedRestaurantId || member.restaurant_id === selectedRestaurantId) &&
+    (
+      (member?.name && member.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (member?.restaurant_name && member.restaurant_name.toLowerCase().includes(searchTerm.toLowerCase()))
+    )
   );
 
   const handleError = (errorMessage) => {
@@ -394,6 +399,12 @@ const AdminPanel = () => {
   const handleRestaurantClick = (restaurant) => {
     // Navigate to the restaurant management dashboard
     navigate(`/managerdashboard?restaurant=${restaurant.id}`);
+  };
+
+  const loadOptions = async (inputValue) => {
+    const res = await fetch(`/api/restaurants?search=${inputValue}`);
+    const data = await res.json();
+    return data.restaurants.map(r => ({ value: r.id, label: r.name }));
   };
 
   if (loading && (restaurants.length === 0 && staff.length === 0)) {
@@ -691,6 +702,17 @@ const AdminPanel = () => {
                   <UserPlus className="h-5 w-5 mr-2" />
                   Add Staff
                 </button>
+              </div>
+
+              <div className="flex items-center mb-4 gap-4">
+                <label className="text-sm font-medium text-gray-700">Filter by Restaurant:</label>
+                <AsyncSelect
+                  cacheOptions
+                  loadOptions={loadOptions}
+                  defaultOptions
+                  onChange={option => setSelectedRestaurantId(option.value)}
+                  placeholder="Search restaurant..."
+                />
               </div>
 
               {loading && (
