@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import logo1 from '../../assets/icons/logott.png';
+import { storeRestaurantSelection } from '../../utils/restaurantCheck';
 
 // Animation configurations
 const ANIMATIONS = {
@@ -41,15 +42,30 @@ const BUTTON_STYLES = {
 export default function Opening() {
   const [showButtons, setShowButtons] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const timer = setTimeout(() => setShowButtons(true), 2500);
     return () => clearTimeout(timer);
   }, []);
 
-  const handleSkip = useCallback(() => navigate('/skip1'), [navigate]);
-  const handleLogin = useCallback(() => navigate('/login'), [navigate]);
-  const handleSignup = useCallback(() => navigate('/signup'), [navigate]);
+  // Preserve URL parameters when navigating
+  const preserveParams = (path) => {
+    const urlParams = new URLSearchParams(location.search);
+    const restaurant = urlParams.get('restaurant');
+    const table = urlParams.get('table');
+    
+    if (restaurant && table) {
+      // Store the parameters for later use
+      storeRestaurantSelection(restaurant, table);
+      return `${path}?restaurant=${restaurant}&table=${table}`;
+    }
+    return path;
+  };
+
+  const handleSkip = useCallback(() => navigate(preserveParams('/skip1')), [navigate, location.search]);
+  const handleLogin = useCallback(() => navigate(preserveParams('/login')), [navigate, location.search]);
+  const handleSignup = useCallback(() => navigate(preserveParams('/signup')), [navigate, location.search]);
 
   const buttons = [
     { text: "Log In", onClick: handleLogin, style: BUTTON_STYLES.primary },

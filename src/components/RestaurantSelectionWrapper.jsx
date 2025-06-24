@@ -11,6 +11,17 @@ const RestaurantSelectionWrapper = ({ children }) => {
   const { restaurantId, loading: restaurantLoading } = useRestaurant();
   const [checking, setChecking] = useState(true);
 
+  // Get URL parameters
+  const urlParams = new URLSearchParams(location.search);
+  const urlRestaurant = urlParams.get('restaurant');
+  const urlTable = urlParams.get('table');
+
+  // Helper function to preserve parameters in navigation
+  const navigateWithParams = (path) => {
+    const params = urlRestaurant && urlTable ? `?restaurant=${urlRestaurant}&table=${urlTable}` : '';
+    navigate(`${path}${params}`);
+  };
+
   useEffect(() => {
     const checkRestaurantSelection = () => {
       // Don't redirect if we're already on the restaurant selection page
@@ -41,7 +52,7 @@ const RestaurantSelectionWrapper = ({ children }) => {
       // If user is authenticated and needs restaurant selection, redirect
       if (user && !authLoading && !restaurantLoading) {
         if (needsRestaurantSelection()) {
-          navigate('/restaurant-selection');
+          navigateWithParams('/restaurant-selection');
           return;
         }
       }
@@ -53,7 +64,7 @@ const RestaurantSelectionWrapper = ({ children }) => {
     if (!authLoading && !restaurantLoading) {
       checkRestaurantSelection();
     }
-  }, [user, authLoading, restaurantLoading, location.pathname, navigate]);
+  }, [user, authLoading, restaurantLoading, location.pathname, navigate, urlRestaurant, urlTable]);
 
   if (checking || authLoading || restaurantLoading) {
     return (

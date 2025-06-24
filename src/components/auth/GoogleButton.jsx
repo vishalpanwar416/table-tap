@@ -1,18 +1,34 @@
 import React, { useState } from 'react';
 import { FcGoogle } from 'react-icons/fc';
 import { supabase } from '../../supabase';
+import { useLocation } from 'react-router-dom';
 
-const GoogleButton = ({ loading = false }) => {
+const GoogleButton = ({ loading = false, redirectTo = '' }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const location = useLocation();
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
-      // Always redirect to auth-callback, let the callback handle the final redirect
+      // Preserve URL parameters
+      const urlParams = new URLSearchParams(location.search);
+      const restaurant = urlParams.get('restaurant');
+      const table = urlParams.get('table');
+      
+      let finalRedirectTo = redirectTo;
+      if (!finalRedirectTo) {
+        finalRedirectTo = '/auth-callback';
+      }
+      
+      // Add parameters to redirect URL if they exist
+      if (restaurant && table) {
+        finalRedirectTo += `?restaurant=${restaurant}&table=${table}`;
+      }
+      
       await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth-callback`
+          redirectTo: `${window.location.origin}${finalRedirectTo}`
         }
       });
     } catch (error) {

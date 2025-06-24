@@ -4,6 +4,7 @@ import { useCart } from '../../config/CartContent';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabase'; // Import supabase to check for user
 import { useRestaurant } from '../../context/RestaurantContext'; // Import restaurant context
+import { getStoredRestaurantSelection } from '../../utils/restaurantCheck'; // Import to get stored table number
 
 const OrderConfirmation = () => {
   const navigate = useNavigate();
@@ -48,6 +49,21 @@ const OrderConfirmation = () => {
       setAvailableTables([]);
     }
   }, [restaurant]);
+
+  // --- NEW: Auto-select table number from local storage ---
+  useEffect(() => {
+    const storedSelection = getStoredRestaurantSelection();
+    if (storedSelection?.tableNumber && availableTables.length > 0) {
+      // Check if the stored table number exists in available tables
+      const matchingTable = availableTables.find(table => 
+        table.tableNumber === storedSelection.tableNumber
+      );
+      
+      if (matchingTable) {
+        setTableNumber(storedSelection.tableNumber);
+      }
+    }
+  }, [availableTables]);
 
   // --- NEW: Handle table selection ---
   const handleTableSelect = (table) => {
@@ -181,7 +197,7 @@ const OrderConfirmation = () => {
         <div className="bg-gray-200 w-full flex-1 rounded-t-3xl px-6 pt-10 pb-6 flex flex-col font-spartan overflow-y-auto">
           <h2 className="justify-center text-center text-black text-3xl font-semibold mb-8">Order Summary</h2>
 
-          {/* --- UPDATED: Table selection dropdown --- */}
+          {/* --- UPDATED: Table selection dropdown with auto-selection --- */}
           <div className="mb-8">
             <label className="block text-black mb-2 text-lg" htmlFor="tableNumber">
               Table Number
@@ -209,7 +225,9 @@ const OrderConfirmation = () => {
                         key={table.id}
                         type="button"
                         onClick={() => handleTableSelect(table)}
-                        className="w-full px-4 py-3 text-left hover:bg-gray-100 border-b border-gray-200 last:border-b-0 flex justify-between items-center"
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-100 border-b border-gray-200 last:border-b-0 flex justify-between items-center ${
+                          table.tableNumber === tableNumber ? 'bg-blue-50 border-blue-200' : ''
+                        }`}
                       >
                         <div>
                           <span className="font-medium">Table {table.tableNumber}</span>
@@ -217,9 +235,14 @@ const OrderConfirmation = () => {
                             <span className="text-sm text-gray-500 ml-2">({table.location})</span>
                           )}
                         </div>
-                        <span className="text-sm text-gray-500">
-                          {table.capacity} seats
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-500">
+                            {table.capacity} seats
+                          </span>
+                          {table.tableNumber === tableNumber && (
+                            <span className="text-blue-600 text-sm font-medium">✓ Selected</span>
+                          )}
+                        </div>
                       </button>
                     ))
                   ) : (
@@ -240,6 +263,24 @@ const OrderConfirmation = () => {
                     <div>Location: {getSelectedTableDetails().location}</div>
                   )}
                   <div>Capacity: {getSelectedTableDetails().capacity} people</div>
+                </div>
+              </div>
+            )}
+
+            {/* Show message if table was auto-selected from local storage */}
+            {tableNumber && (() => {
+              const storedSelection = getStoredRestaurantSelection();
+              return storedSelection?.tableNumber === tableNumber;
+            })() && (
+              <div className="mt-3 flex items-center gap-3 bg-gradient-to-r from-green-100 to-green-50 border border-green-200 rounded-lg px-4 py-3 shadow-sm">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-200">
+                  <svg className="w-5 h-5 text-green-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <div className="flex-1 text-left">
+                  <div className="text-green-800 font-semibold text-sm">Auto-selected from your QR code</div>
+                  <div className="text-green-700 text-xs">We detected your table from the QR code you scanned for a seamless experience.</div>
                 </div>
               </div>
             )}

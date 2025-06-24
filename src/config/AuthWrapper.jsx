@@ -11,6 +11,17 @@ export default function AuthWrapper({ children, publicOnly = false }) {
   const [checking, setChecking] = useState(true);
   const { user, loading: authLoading } = useAuth();
 
+  // Get URL parameters
+  const urlParams = new URLSearchParams(location.search);
+  const urlRestaurant = urlParams.get('restaurant');
+  const urlTable = urlParams.get('table');
+
+  // Helper function to preserve parameters in navigation
+  const navigateWithParams = (path) => {
+    const params = urlRestaurant && urlTable ? `?restaurant=${urlRestaurant}&table=${urlTable}` : '';
+    navigate(`${path}${params}`);
+  };
+
   useEffect(() => {
     let mounted = true;
 
@@ -23,9 +34,9 @@ export default function AuthWrapper({ children, publicOnly = false }) {
       if (location.pathname === '/' && user) {
         // Check if user has restaurant selection, if not redirect to restaurant selection
         if (hasValidRestaurantSelection()) {
-          navigate('/home');
+          navigateWithParams('/home');
         } else {
-          navigate('/restaurant-selection');
+          navigateWithParams('/restaurant-selection');
         }
         return;
       }
@@ -35,9 +46,9 @@ export default function AuthWrapper({ children, publicOnly = false }) {
         if (user) {
           // Check if user has restaurant selection, if not redirect to restaurant selection
           if (hasValidRestaurantSelection()) {
-            navigate('/home');
+            navigateWithParams('/home');
           } else {
-            navigate('/restaurant-selection');
+            navigateWithParams('/restaurant-selection');
           }
         }
         setChecking(false);
@@ -46,7 +57,7 @@ export default function AuthWrapper({ children, publicOnly = false }) {
 
       // Protected route handling
       if (!user) {
-        navigate('/login', { state: { from: location.pathname } });
+        navigateWithParams('/login');
         setChecking(false);
         return;
       }
@@ -65,19 +76,19 @@ export default function AuthWrapper({ children, publicOnly = false }) {
           console.error("Profile check error:", error);
           if (error.code === 'PGRST116') {
             // Profile doesn't exist, redirect to complete profile
-            navigate('/complete-profile', { state: { from: location.pathname } });
+            navigateWithParams('/complete-profile');
           }
         } else {
           const needsCompletion = !profile?.mobile_number || !profile?.date_of_birth;
 
           if (needsCompletion && !location.pathname.startsWith('/complete-profile')) {
-            navigate('/complete-profile', { state: { from: location.pathname } });
+            navigateWithParams('/complete-profile');
           } else if (!needsCompletion && location.pathname === '/complete-profile') {
             // After profile completion, check restaurant selection
             if (hasValidRestaurantSelection()) {
-              navigate(location.state?.from || '/home');
+              navigateWithParams(location.state?.from || '/home');
             } else {
-              navigate('/restaurant-selection');
+              navigateWithParams('/restaurant-selection');
             }
           }
         }
@@ -95,7 +106,7 @@ export default function AuthWrapper({ children, publicOnly = false }) {
     return () => {
       mounted = false;
     };
-  }, [navigate, location, publicOnly, user, authLoading]);
+  }, [navigate, location, publicOnly, user, authLoading, urlRestaurant, urlTable]);
 
   if (checking || authLoading) {
     return (

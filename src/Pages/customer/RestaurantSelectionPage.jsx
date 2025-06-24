@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, MapPin, Phone, Clock, RefreshCw, Store, ArrowRight, Navigation, Crosshair } from 'lucide-react';
+import { ChevronLeft, MapPin, Phone, Clock, RefreshCw, Store, ArrowRight, Navigation, Crosshair, ChevronDown, Edit3 } from 'lucide-react';
 import { getActiveRestaurants } from '../../api/restaurantSelectionService';
 import { useRestaurant } from '../../context/RestaurantContext';
-import { getStoredRestaurantSelection } from '../../utils/restaurantCheck';
+import { getStoredRestaurantSelection, storeRestaurantSelection } from '../../utils/restaurantCheck';
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -52,12 +52,44 @@ const RestaurantSelectionPage = () => {
   const [showAutoLocationModal, setShowAutoLocationModal] = useState(false);
   const [hasShownLocationPrompt, setHasShownLocationPrompt] = useState(false);
   
+  // Add state for table selection
+  const [showTableDropdown, setShowTableDropdown] = useState(false);
+  const [availableTables, setAvailableTables] = useState([]);
+  const [showTableSelection, setShowTableSelection] = useState(false);
+  
+  // Add state for popup modal
+  const [showTablePopup, setShowTablePopup] = useState(false);
+  
   const scrollRef = useRef(null);
   const scrollTimeoutRef = useRef(null);
   
   const navigate = useNavigate();
+  const location = useLocation();
   const { setRestaurantAndTable } = useRestaurant();
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+
+  // Check for URL parameters and auto-redirect if restaurant and table are provided
+  useEffect(() => {
+    const checkUrlParameters = () => {
+      const urlParams = new URLSearchParams(location.search);
+      const urlRestaurantId = urlParams.get('restaurant');
+      const urlTableNumber = urlParams.get('table');
+      
+      if (urlRestaurantId && urlTableNumber) {
+        // Store the restaurant and table from URL
+        storeRestaurantSelection(urlRestaurantId, urlTableNumber);
+        
+        // Set in context
+        setRestaurantAndTable(urlRestaurantId, urlTableNumber);
+        
+        // Auto-redirect to home page
+        navigate('/home');
+        return;
+      }
+    };
+
+    checkUrlParameters();
+  }, [location.search, navigate, setRestaurantAndTable]);
 
   // Check for stored table number on component mount
   useEffect(() => {
@@ -240,7 +272,7 @@ const RestaurantSelectionPage = () => {
       }
       setError(null);
 
-      // Use the new restaurant service
+      // Use the updated restaurant service that includes tables
       const data = await getActiveRestaurants();
 
       // Transform the data to match the component's expected format
@@ -275,7 +307,8 @@ const RestaurantSelectionPage = () => {
           image_url: restaurant.logo_url || getDefaultRestaurantImage(restaurant.cuisine_type),
           is_active: restaurant.is_active,
           cuisine_type: restaurant.cuisine_type,
-          distance: distance
+          distance: distance,
+          tables: restaurant.tables // Include the tables data
         };
       });
 
@@ -329,6 +362,8 @@ const RestaurantSelectionPage = () => {
     // If clicking on the already selected restaurant, deselect it
     if (selectedRestaurant?.id === restaurant.id) {
       setSelectedRestaurant(null);
+      // Hide table selection when deselecting restaurant
+      setShowTableSelection(false);
       // Don't reset table number if it's stored locally
       const storedSelection = getStoredRestaurantSelection();
       if (!storedSelection?.tableNumber) {
@@ -337,6 +372,8 @@ const RestaurantSelectionPage = () => {
     } else {
       // Select the new restaurant
       setSelectedRestaurant(restaurant);
+      // Hide table selection when selecting a new restaurant
+      setShowTableSelection(false);
       // Don't reset table number if it's stored locally
       const storedSelection = getStoredRestaurantSelection();
       if (!storedSelection?.tableNumber) {
@@ -434,16 +471,70 @@ const RestaurantSelectionPage = () => {
     setLocationPermission('denied');
   };
 
+  // Get selected table details
+  const getSelectedTableDetails = () => {
+    return availableTables.find(table => table.tableNumber === tableNumber);
+  };
+
   // Check if table number input should be shown
   const shouldShowTableInput = () => {
     const storedSelection = getStoredRestaurantSelection();
-    return !storedSelection?.tableNumber;
+    return !storedSelection?.tableNumber || showTableSelection;
   };
 
   // Get the table number to display (from input or stored)
   const getDisplayTableNumber = () => {
     return tableNumber.trim() || getStoredRestaurantSelection()?.tableNumber || '';
   };
+
+  // Check if table was auto-selected from QR code
+  const isTableAutoSelected = () => {
+    const storedSelection = getStoredRestaurantSelection();
+    return storedSelection?.tableNumber === tableNumber && !showTableSelection;
+  };
+
+  // Handle table selection
+  const handleTableSelect = (table) => {
+    setTableNumber(table.tableNumber);
+    setShowTableDropdown(false);
+  };
+
+  // Parse tables from selected restaurant - EXACTLY like OrderConfirmation
+  useEffect(() => {
+    if (selectedRestaurant?.tables) {
+      try {
+        const parsedTables = typeof selectedRestaurant.tables === 'string' 
+          ? JSON.parse(selectedRestaurant.tables) 
+          : selectedRestaurant.tables;
+        setAvailableTables(Array.isArray(parsedTables) ? parsedTables : []);
+      } catch (error) {
+        console.error('Error parsing tables JSON:', error);
+        setAvailableTables([]);
+      }
+    } else {
+      setAvailableTables([]);
+    }
+  }, [selectedRestaurant]);
+
+  // Auto-select table from stored selection - EXACTLY like OrderConfirmation
+  useEffect(() => {
+    const storedSelection = getStoredRestaurantSelection();
+    if (storedSelection?.tableNumber && availableTables.length > 0) {
+      // Check if the stored table number exists in available tables
+      const matchingTable = availableTables.find(table => 
+        table.tableNumber === storedSelection.tableNumber
+      );
+      
+      if (matchingTable) {
+        setTableNumber(storedSelection.tableNumber);
+        setShowTableSelection(false); // Don't show table selection if auto-selected
+      } else {
+        setShowTableSelection(true); // Show table selection if stored table not found
+      }
+    } else if (availableTables.length > 0) {
+      setShowTableSelection(true); // Show table selection if no stored table
+    }
+  }, [availableTables]);
 
   // Loading state
   if (loading) {
@@ -516,27 +607,27 @@ const RestaurantSelectionPage = () => {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-6 bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-xl p-4 shadow-sm"
+                className="mb-4 bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-3 shadow-sm"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center flex-1">
-                    <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center mr-4">
-                      <MapPin size={24} className="text-white" />
+                    <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center mr-3">
+                      <MapPin size={18} className="text-white" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-sm font-semibold text-gray-900 mb-1">
+                      <h3 className="text-xs font-semibold text-gray-900 mb-0.5">
                         Find Restaurants Near You
                       </h3>
                       <p className="text-xs text-gray-600">
-                        Enable location to see nearby restaurants sorted by distance
+                        Enable location to see nearby restaurants
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={getUserLocation}
-                    className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm"
+                    className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors shadow-sm"
                   >
-                    Enable Location
+                    Enable
                   </button>
                 </div>
               </motion.div>
@@ -659,48 +750,42 @@ const RestaurantSelectionPage = () => {
                         onMouseEnter={() => setHoveredRestaurant(restaurant.id)}
                         onMouseLeave={() => setHoveredRestaurant(null)}
                         onClick={() => handleRestaurantClick(restaurant)}
-                        className={`bg-white rounded-xl border-2 cursor-pointer transition-all shadow-sm hover:shadow-md touch-manipulation relative ${
+                        className={`bg-white rounded-xl border-2 cursor-pointer transition-all shadow-sm hover:shadow-md touch-manipulation relative mb-4 ${
                           selectedRestaurant?.id === restaurant.id
                             ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-200'
                             : 'border-gray-200 hover:border-gray-300'
                         }`}
                         style={{
-                          // Add touch-friendly tap area
-                          minHeight: '44px',
-                          // Improve touch responsiveness
+                          height: '140px',
                           touchAction: 'manipulation',
-                          // Prevent text selection on touch
                           WebkitUserSelect: 'none',
                           userSelect: 'none',
-                          // Ensure proper layering for magnification effect
                           transformOrigin: 'center',
                           zIndex: selectedRestaurant?.id === restaurant.id ? 20 : 
                                   hoveredRestaurant === restaurant.id ? 15 : 
                                   index === 0 ? 10 : 1
                         }}
                       >
-                        <div className="p-4">
+                        <div className="p-4 h-full flex items-center">
                           {/* Restaurant Image */}
-                          <div className="relative mb-4">
+                          <div className="relative mr-4 flex-shrink-0">
                             {restaurant.image_url ? (
                               <img
                                 src={restaurant.image_url}
                                 alt={restaurant.name}
-                                className="w-full h-40 object-cover rounded-lg"
-                                loading={index > 2 ? 'lazy' : 'eager'} // Lazy load images below fold
+                                className="w-20 h-20 object-cover rounded-lg"
+                                loading={index > 2 ? 'lazy' : 'eager'}
                                 style={{
-                                  // Prevent image dragging on touch
                                   WebkitUserDrag: 'none',
                                   userDrag: 'none'
                                 }}
                                 onError={(e) => {
-                                  // Fallback to default image if loading fails
                                   e.target.src = getDefaultRestaurantImage(restaurant.cuisine_type);
                                 }}
                               />
                             ) : (
-                              <div className="w-full h-40 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center">
-                                <Store size={48} className="text-gray-400" />
+                              <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center">
+                                <Store size={24} className="text-gray-400" />
                               </div>
                             )}
                             
@@ -709,52 +794,52 @@ const RestaurantSelectionPage = () => {
                               <motion.div 
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
-                                className="absolute top-2 right-2 bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-medium shadow-lg"
+                                className="absolute -top-1 -right-1 bg-orange-500 text-white px-2 py-0.5 rounded-full text-xs font-medium shadow-lg"
                               >
-                                ✓ Selected
+                                ✓
                               </motion.div>
                             )}
 
                             {/* Cuisine Type Badge */}
                             {restaurant.cuisine_type && (
-                              <div className="absolute top-2 left-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded-full text-xs font-medium">
+                              <div className="absolute -top-1 -left-1 bg-black bg-opacity-70 text-white px-2 py-0.5 rounded-full text-xs font-medium">
                                 {restaurant.cuisine_type}
                               </div>
                             )}
                           </div>
 
                           {/* Restaurant Info */}
-                          <div className="space-y-3">
-                            <h3 className="text-xl font-bold text-gray-900 leading-tight">
+                          <div className="flex-1 min-w-0 h-full overflow-y-auto pr-1">
+                            <h3 className="text-lg font-bold text-gray-900 leading-tight mb-1 truncate">
                               {restaurant.name}
                             </h3>
                             
                             {restaurant.description && (
-                              <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">
+                              <p className="text-gray-600 text-xs leading-relaxed line-clamp-2 mb-2">
                                 {restaurant.description}
                               </p>
                             )}
 
-                            {/* Restaurant Details */}
-                            <div className="space-y-2">
+                            {/* Restaurant Details - Compact layout */}
+                            <div className="space-y-1">
                               {restaurant.address && (
-                                <div className="flex items-start gap-3">
-                                  <MapPin size={16} className="text-gray-400 mt-0.5 flex-shrink-0" />
-                                  <span className="text-sm text-gray-600 leading-relaxed">{restaurant.address}</span>
+                                <div className="flex items-start gap-1">
+                                  <MapPin size={12} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                                  <span className="text-xs text-gray-600 leading-relaxed truncate">{restaurant.address}</span>
                                 </div>
                               )}
                               
                               {restaurant.phone && (
-                                <div className="flex items-center gap-3">
-                                  <Phone size={16} className="text-gray-400 flex-shrink-0" />
-                                  <span className="text-sm text-gray-600">{restaurant.phone}</span>
+                                <div className="flex items-center gap-1">
+                                  <Phone size={12} className="text-gray-400 flex-shrink-0" />
+                                  <span className="text-xs text-gray-600 truncate">{restaurant.phone}</span>
                                 </div>
                               )}
                               
                               {restaurant.opening_hours && (
-                                <div className="flex items-center gap-3">
-                                  <Clock size={16} className="text-gray-400 flex-shrink-0" />
-                                  <span className="text-sm text-gray-600">{restaurant.opening_hours}</span>
+                                <div className="flex items-center gap-1">
+                                  <Clock size={12} className="text-gray-400 flex-shrink-0" />
+                                  <span className="text-xs text-gray-600 truncate">{restaurant.opening_hours}</span>
                                 </div>
                               )}
                             </div>
@@ -823,8 +908,8 @@ const RestaurantSelectionPage = () => {
                     </div>
                     
                     <div className="space-y-6">
-                      {/* Show stored table number if available */}
-                      {!shouldShowTableInput() && (
+                      {/* Show auto-selected table with change option */}
+                      {isTableAutoSelected() && (
                         <motion.div
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
@@ -834,26 +919,37 @@ const RestaurantSelectionPage = () => {
                             transition: { duration: 0.2, delay: 0.05 }
                           }}
                           transition={{ duration: 0.3, delay: 0.2 }}
-                          className="bg-green-50 border border-green-200 rounded-xl p-4"
+                          className="bg-gradient-to-r from-green-100 to-green-50 border border-green-200 rounded-xl p-4"
                         >
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                              <span className="text-green-600 text-sm font-medium">✓</span>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-green-200 rounded-full flex items-center justify-center">
+                                <svg className="w-5 h-5 text-green-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold text-green-800">
+                                  Table {getDisplayTableNumber()}
+                                </p>
+                                <p className="text-xs text-green-700">
+                                  Auto-selected from your QR code
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-sm font-medium text-green-800">
-                                Table Number: {getDisplayTableNumber()}
-                              </p>
-                              <p className="text-xs text-green-600">
-                                Using your previously saved table number
-                              </p>
-                            </div>
+                            <button
+                              onClick={() => setShowTableSelection(true)}
+                              className="flex items-center gap-1 text-green-700 hover:text-green-800 text-sm font-medium transition-colors"
+                            >
+                              <Edit3 size={14} />
+                              Change
+                            </button>
                           </div>
                         </motion.div>
                       )}
 
-                      {/* Show table input only if no stored table number */}
-                      {shouldShowTableInput() && (
+                      {/* Show table dropdown when needed */}
+                      {showTableSelection && (
                         <motion.div
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
@@ -864,21 +960,35 @@ const RestaurantSelectionPage = () => {
                           }}
                           transition={{ duration: 0.3, delay: 0.2 }}
                         >
-                          <label htmlFor="tableNumber" className="block text-sm font-medium text-gray-700 mb-3">
-                            Table Number
+                          <label className="block text-sm font-medium text-gray-700 mb-3">
+                            Select Table Number
                           </label>
-                          <input
-                            type="text"
-                            id="tableNumber"
-                            value={tableNumber}
-                            onChange={(e) => setTableNumber(e.target.value)}
-                            placeholder="Enter your table number (e.g., A1, B2, 15)"
-                            className="w-full px-5 py-5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-base touch-manipulation"
-                            style={{
-                              minHeight: '52px',
-                              fontSize: '16px'
-                            }}
-                          />
+                          
+                          {/* Table Selection Button */}
+                          <button
+                            onClick={() => setShowTablePopup(true)}
+                            className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-left hover:border-orange-300 transition-colors"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-700">
+                                {tableNumber ? `Table ${tableNumber}` : 'Select a table'}
+                              </span>
+                              <ChevronDown size={20} className="text-gray-400" />
+                            </div>
+                          </button>
+                          
+                          {/* Show selected table details */}
+                          {tableNumber && getSelectedTableDetails() && (
+                            <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                              <div className="text-sm text-blue-800">
+                                <div className="font-medium">Table {tableNumber}</div>
+                                {getSelectedTableDetails().location && (
+                                  <div>Location: {getSelectedTableDetails().location}</div>
+                                )}
+                                <div>Capacity: {getSelectedTableDetails().capacity} people</div>
+                              </div>
+                            </div>
+                          )}
                         </motion.div>
                       )}
 
@@ -892,7 +1002,7 @@ const RestaurantSelectionPage = () => {
                         }}
                         transition={{ duration: 0.3, delay: 0.3 }}
                         onClick={handleContinue}
-                        disabled={isSelecting || (!shouldShowTableInput() ? false : !tableNumber.trim())}
+                        disabled={isSelecting || (!tableNumber.trim())}
                         className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-5 px-6 rounded-xl transition-colors shadow-sm touch-manipulation"
                         style={{
                           minHeight: '56px'
@@ -1047,6 +1157,100 @@ const RestaurantSelectionPage = () => {
                   <p className="text-xs text-gray-400 mt-4">
                     You can change this later in your browser settings
                   </p>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Table Selection Popup Modal */}
+        <AnimatePresence>
+          {showTablePopup && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+              onClick={() => setShowTablePopup(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                className="bg-white rounded-xl p-6 max-w-sm w-full shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="text-center mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Select Table Number
+                  </h3>
+                  <p className="text-gray-600 text-sm">
+                    Choose your table from the available options
+                  </p>
+                </div>
+                
+                <div className="max-h-64 overflow-y-auto space-y-2">
+                  {availableTables.length > 0 ? (
+                    availableTables.map((table) => (
+                      <button
+                        key={table.id}
+                        onClick={() => {
+                          setTableNumber(table.tableNumber);
+                          setShowTablePopup(false);
+                        }}
+                        className={`w-full p-4 rounded-lg border-2 transition-all duration-200 text-left ${
+                          table.tableNumber === tableNumber
+                            ? 'border-orange-500 bg-orange-50'
+                            : 'border-gray-200 hover:border-orange-300 hover:bg-orange-50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-semibold text-gray-900">
+                              Table {table.tableNumber}
+                            </div>
+                            {table.location && (
+                              <div className="text-sm text-gray-600">
+                                {table.location}
+                              </div>
+                            )}
+                            <div className="text-sm text-gray-500">
+                              Capacity: {table.capacity} people
+                            </div>
+                          </div>
+                          {table.tableNumber === tableNumber && (
+                            <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
+                              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <Store size={48} className="mx-auto mb-4 text-gray-300" />
+                      <p>No tables available</p>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="mt-6 flex gap-3">
+                  <button
+                    onClick={() => setShowTablePopup(false)}
+                    className="flex-1 px-4 py-3 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  {tableNumber && (
+                    <button
+                      onClick={() => setShowTablePopup(false)}
+                      className="flex-1 px-4 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                    >
+                      Confirm
+                    </button>
+                  )}
                 </div>
               </motion.div>
             </motion.div>

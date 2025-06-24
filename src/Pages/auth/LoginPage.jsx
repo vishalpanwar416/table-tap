@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import GoogleButton from '../../components/auth/GoogleButton';
 import AuthForm from '../../components/auth/AuthForm';
 import { authService } from '../../api/authService';
-import { hasValidRestaurantSelection } from '../../utils/restaurantCheck';
+import { hasValidRestaurantSelection, getStoredRestaurantSelection } from '../../utils/restaurantCheck';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -13,6 +13,12 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get URL parameters
+  const urlParams = new URLSearchParams(location.search);
+  const urlRestaurant = urlParams.get('restaurant');
+  const urlTable = urlParams.get('table');
 
   useEffect(() => {
     const checkSession = async () => {
@@ -23,7 +29,9 @@ export default function LoginPage() {
           if (hasValidRestaurantSelection()) {
             navigate('/home');
           } else {
-            navigate('/restaurant-selection');
+            // Preserve URL parameters when redirecting to restaurant selection
+            const params = urlRestaurant && urlTable ? `?restaurant=${urlRestaurant}&table=${urlTable}` : '';
+            navigate(`/restaurant-selection${params}`);
           }
         }
       } catch (err) {
@@ -34,7 +42,7 @@ export default function LoginPage() {
       }
     };
     checkSession();
-  }, [navigate]);
+  }, [navigate, urlRestaurant, urlTable]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -47,7 +55,9 @@ export default function LoginPage() {
       if (hasValidRestaurantSelection()) {
         navigate('/home');
       } else {
-        navigate('/restaurant-selection');
+        // Preserve URL parameters when redirecting to restaurant selection
+        const params = urlRestaurant && urlTable ? `?restaurant=${urlRestaurant}&table=${urlTable}` : '';
+        navigate(`/restaurant-selection${params}`);
       }
     } catch (err) {
       setError(err.message || 'Login failed');
@@ -61,8 +71,9 @@ export default function LoginPage() {
     setError('');
     
     try {
-      // Redirect to restaurant selection if needed, otherwise home
-      const redirectTo = hasValidRestaurantSelection() ? '/home' : '/restaurant-selection';
+      // Preserve URL parameters for Google auth callback
+      const params = urlRestaurant && urlTable ? `?restaurant=${urlRestaurant}&table=${urlTable}` : '';
+      const redirectTo = `/auth-callback${params}`;
       await authService.signInWithGoogle(redirectTo);
     } catch (err) {
       setError(err.message || 'Google login failed');

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { authService } from '../../api/authService';
 import GoogleButton from '../../components/auth/GoogleButton';
 import { toast, ToastContainer, Slide } from 'react-toastify';
@@ -8,6 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 export default function SignUpPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -20,17 +21,26 @@ export default function SignUpPage() {
     dateOfBirth: ''
   });
 
+  // Get URL parameters
+  const urlParams = new URLSearchParams(location.search);
+  const urlRestaurant = urlParams.get('restaurant');
+  const urlTable = urlParams.get('table');
+
   useEffect(() => {
     const checkSession = async () => {
       try {
         const user = await authService.getCurrentUser();
-        if (user) navigate('/home');
+        if (user) {
+          // Preserve URL parameters when redirecting
+          const params = urlRestaurant && urlTable ? `?restaurant=${urlRestaurant}&table=${urlTable}` : '';
+          navigate(`/home${params}`);
+        }
       } catch (err) {
         // User not logged in, stay on signup page
       }
     };
     checkSession();
-  }, [navigate]);
+  }, [navigate, urlRestaurant, urlTable]);
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -239,7 +249,10 @@ export default function SignUpPage() {
     try {
       setLoading(true);
       setError('');
-      await authService.signUpWithGoogle();
+      // Preserve URL parameters for Google auth
+      const params = urlRestaurant && urlTable ? `?restaurant=${urlRestaurant}&table=${urlTable}` : '';
+      const redirectTo = `/auth-callback${params}`;
+      await authService.signUpWithGoogle(redirectTo);
     } catch (error) {
       console.error('Google signup error:', error);
       setError('Google signup failed. Please try again.');

@@ -19,7 +19,8 @@ export const getActiveRestaurants = async () => {
         logo_url,
         is_active,
         cuisine_type,
-        location
+        location,
+        tables
       `)
       .eq('is_active', true)
       .order('name');

@@ -194,7 +194,7 @@ const QRManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
 
   const generateQRUrl = (table) => {
     const baseUrl = window.location.origin;
-    return `${baseUrl}/menu?restaurant=${table.restaurantId}&table=${table.tableNumber}`;
+    return `${baseUrl}/?restaurant=${table.restaurantId}&table=${table.tableNumber}`;
   };
 
   const handleInputChange = (e) => {
