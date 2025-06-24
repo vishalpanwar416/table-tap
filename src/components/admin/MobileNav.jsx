@@ -1,7 +1,17 @@
 import React from 'react';
-import { LayoutDashboard, Utensils, ShoppingCart, Users, Settings, Tag, X } from 'lucide-react';
+import { 
+  LayoutDashboard, 
+  Utensils, 
+  ShoppingCart, 
+  Users, 
+  Settings, 
+  Tag, 
+  X,
+  QrCode,
+  BarChart3
+} from 'lucide-react';
 
-const MobileNav = ({ showMobileNav, setShowMobileNav, activeTab, setActiveTab, menuItems, handleLogout, currentUser }) => {
+const MobileNav = ({ showMobileNav, setShowMobileNav, activeTab, setActiveTab, menuItems, handleLogout, currentUser, restaurantName, userRole }) => {
   // Map icon strings to actual components
   const getIcon = (iconName) => {
     const icons = {
@@ -10,11 +20,33 @@ const MobileNav = ({ showMobileNav, setShowMobileNav, activeTab, setActiveTab, m
       'ShoppingCart': ShoppingCart,
       'Users': Users,
       'Tag': Tag,
+      'QrCode': QrCode,
+      'BarChart3': BarChart3,
       'Settings': Settings
     };
     
     const IconComponent = icons[iconName];
     return IconComponent ? <IconComponent className="w-5 h-5 mr-3" /> : null;
+  };
+
+  // Function to get role display name
+  const getRoleDisplayName = (role) => {
+    switch (role) {
+      case 'admin':
+        return 'Administrator';
+      case 'manager':
+        return 'Manager';
+      case 'captain':
+        return 'Captain';
+      case 'waiter':
+        return 'Waiter';
+      case 'chef':
+        return 'Chef';
+      case 'cashier':
+        return 'Cashier';
+      default:
+        return role ? role.charAt(0).toUpperCase() + role.slice(1) : 'User';
+    }
   };
 
   return (
@@ -70,7 +102,7 @@ const MobileNav = ({ showMobileNav, setShowMobileNav, activeTab, setActiveTab, m
                 {currentUser?.avatar_url ? (
                   <img 
                     src={currentUser.avatar_url} 
-                    alt="Admin avatar" 
+                    alt="User avatar" 
                     className="w-10 h-10 rounded-full object-cover border-2 border-gray-500"
                   />
                 ) : (
@@ -78,12 +110,15 @@ const MobileNav = ({ showMobileNav, setShowMobileNav, activeTab, setActiveTab, m
                     {currentUser?.email?.charAt(0).toUpperCase()}
                   </div>
                 )}
-                <div className="flex flex-col">
-                  <p className="admin-name font-medium text-gray-800 dark:text-white">
-                    {currentUser?.full_name || currentUser?.email}
+                <div className="flex flex-col min-w-0 flex-1">
+                  <p className="restaurant-name font-medium text-white text-sm truncate">
+                    {restaurantName || 'Restaurant'}
                   </p>
-                  <p className="admin-role text-xs text-gray-500 dark:text-gray-400">
-                    Administrator
+                  <p className="user-email text-xs text-gray-400 truncate">
+                    {currentUser?.email}
+                  </p>
+                  <p className="user-role text-xs text-orange-400 font-medium">
+                    {getRoleDisplayName(userRole)}
                   </p>
                 </div>
               </div>

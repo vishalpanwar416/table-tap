@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Building2, 
   Users, 
@@ -25,7 +26,7 @@ import {
   Globe
 } from 'lucide-react';
 import Sidebar from '../../components/admin/Sidebar';
-import { RestaurantModal, StaffModal } from '../../components/admin/Modals';
+import { RestaurantModal, StaffModal } from '../../components/superAdmin/Modals';
 import { 
   getAllRestaurants,
   getAllStaff,
@@ -93,6 +94,8 @@ const AdminPanel = () => {
     role: 'captain',
     restaurant_id: ''
   });
+
+  const navigate = useNavigate();
 
   // Load data on component mount and tab change
   useEffect(() => {
@@ -388,6 +391,11 @@ const AdminPanel = () => {
     }, 5000);
   };
 
+  const handleRestaurantClick = (restaurant) => {
+    // Navigate to the restaurant management dashboard
+    navigate(`/managerdashboard?restaurant=${restaurant.id}`);
+  };
+
   if (loading && (restaurants.length === 0 && staff.length === 0)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -473,7 +481,15 @@ const AdminPanel = () => {
               {!loading && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredRestaurants.map((restaurant) => (
-                    <div key={restaurant.id} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
+                    <div 
+                      key={restaurant.id} 
+                      className={`rounded-lg shadow-md overflow-hidden flex flex-col transition-all duration-300 cursor-pointer hover:shadow-lg hover:scale-[1.02] ${
+                        restaurant.is_active 
+                          ? 'bg-white hover:bg-gray-50' 
+                          : 'bg-red-50 border border-red-100 hover:bg-red-100'
+                      }`}
+                      onClick={() => handleRestaurantClick(restaurant)}
+                    >
                       <div className="p-6 flex-grow">
                         <div className="flex justify-between items-start mb-4">
                           <div className="flex items-center space-x-3">
@@ -481,40 +497,78 @@ const AdminPanel = () => {
                               <img 
                                 src={restaurant.logo_url} 
                                 alt={`${restaurant.name} logo`}
-                                className="w-10 h-10 rounded-full object-cover"
+                                className={`w-10 h-10 rounded-full object-cover transition-all duration-300 ${
+                                  !restaurant.is_active ? 'opacity-60' : ''
+                                }`}
                               />
                             )}
-                            <h3 className="text-lg font-semibold text-gray-900">{restaurant.name}</h3>
+                            <h3 className={`text-lg font-semibold transition-all duration-300 ${
+                              restaurant.is_active ? 'text-gray-900' : 'text-gray-700'
+                            }`}>
+                              {restaurant.name}
+                            </h3>
                           </div>
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
                             <button
                               onClick={() => handleToggleRestaurantStatus(restaurant.id)}
-                              className={`relative w-14 h-8 rounded-full focus:outline-none border-2 transition-all duration-300 shadow-sm group
+                              className={`relative w-20 h-10 rounded-lg focus:outline-none transition-all duration-300 shadow-md group overflow-hidden
                                 ${restaurant.is_active
-                                  ? 'bg-gradient-to-r from-green-400 to-green-600 border-green-500 shadow-green-200/60'
-                                  : 'bg-gradient-to-r from-gray-200 to-gray-400 border-gray-300'}
+                                  ? 'bg-gradient-to-r from-green-500 to-emerald-600 shadow-green-200'
+                                  : 'bg-gradient-to-r from-gray-100 to-gray-200 shadow-gray-200'
+                                }
                               `}
                               aria-label={restaurant.is_active ? 'Deactivate restaurant' : 'Activate restaurant'}
                             >
-                              <span
-                                className={`absolute top-1 left-1 w-6 h-6 rounded-full bg-white shadow-lg flex items-center justify-center text-xs font-bold transition-all duration-300
+                              {/* Toggle slider */}
+                              <div
+                                className={`absolute top-1 w-8 h-8 bg-white rounded-md shadow-lg flex items-center justify-center transition-all duration-300 ease-out
                                   ${restaurant.is_active
-                                    ? 'translate-x-6 scale-110 ring-2 ring-green-400 group-hover:ring-green-500'
-                                    : 'translate-x-0 scale-100 ring-1 ring-gray-300 group-hover:ring-gray-400'}
+                                    ? 'translate-x-11 shadow-green-100'
+                                    : 'translate-x-1 shadow-gray-100'
+                                  }
                                 `}
                               >
-                                <span className={restaurant.is_active ? 'text-green-500' : 'text-gray-400'}>
-                                  {restaurant.is_active ? 'ON' : 'OFF'}
+                                {/* Status icon */}
+                                {restaurant.is_active ? (
+                                  <div className="w-4 h-4 bg-green-500 rounded-sm flex items-center justify-center">
+                                    <div className="w-2 h-2 bg-white rounded-sm"></div>
+                                  </div>
+                                ) : (
+                                  <div className="w-4 h-4 bg-gray-300 rounded-sm flex items-center justify-center">
+                                    <div className="w-2 h-2 bg-gray-100 rounded-sm"></div>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* Text labels */}
+                              <div className="flex justify-between items-center h-full px-3">
+                                <span className={`text-xs font-semibold transition-all duration-300 ${
+                                  restaurant.is_active 
+                                    ? 'text-white' 
+                                    : 'text-gray-400'
+                                }`}>
+                                  ON
                                 </span>
-                              </span>
+                                <span className={`text-xs font-semibold transition-all duration-300 ${
+                                  !restaurant.is_active 
+                                    ? 'text-gray-600' 
+                                    : 'text-white/60'
+                                }`}>
+                                  OFF
+                                </span>
+                              </div>
+                              
+                              {/* Active state glow */}
                               {restaurant.is_active && (
-                                <span className="absolute inset-0 rounded-full blur-md opacity-40 bg-green-300 animate-pulse pointer-events-none"></span>
+                                <div className="absolute inset-0 bg-gradient-to-r from-green-400/20 to-emerald-500/20 rounded-lg"></div>
                               )}
                             </button>
                           </div>
                         </div>
                         
-                        <div className="space-y-2 text-sm text-gray-600">
+                        <div className={`space-y-2 text-sm transition-all duration-300 ${
+                          restaurant.is_active ? 'text-gray-600' : 'text-gray-500'
+                        }`}>
                           <div className="flex items-center">
                             <MapPin className="h-4 w-4 mr-2" />
                             {restaurant.address || 'No address provided'}
@@ -566,7 +620,7 @@ const AdminPanel = () => {
                             }`}>
                               {restaurant.is_active ? 'Active' : 'Inactive'}
                             </span>
-                            <div className="flex space-x-2">
+                            <div className="flex space-x-2" onClick={(e) => e.stopPropagation()}>
                               <button 
                                 onClick={() => handleEditRestaurant(restaurant)}
                                 className="text-gray-600 hover:text-gray-800"

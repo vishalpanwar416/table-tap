@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react'; // Added useEffect
-import { ChevronLeft, Trash2, Minus, Plus } from 'lucide-react';
+import { ChevronLeft, Trash2, Minus, Plus, ChevronDown } from 'lucide-react';
 import { useCart } from '../../config/CartContent';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabase'; // Import supabase to check for user
+import { useRestaurant } from '../../context/RestaurantContext'; // Import restaurant context
 
 const OrderConfirmation = () => {
   const navigate = useNavigate();
   const { cartItems, removeItem, updateQuantity, calculateDiscountedPrice } = useCart();
+  const { restaurant } = useRestaurant(); // Get restaurant data including tables
   const [tableNumber, setTableNumber] = useState('');
   const [specialInstructions, setSpecialInstructions] = useState('');
+  const [showTableDropdown, setShowTableDropdown] = useState(false);
   
   // --- NEW: State for user and guest details ---
   const [user, setUser] = useState(null);
@@ -17,6 +20,8 @@ const OrderConfirmation = () => {
   const [guestPhone, setGuestPhone] = useState('');
   const [formError, setFormError] = useState('');
 
+  // --- NEW: Parse tables from restaurant data ---
+  const [availableTables, setAvailableTables] = useState([]);
 
   // --- NEW: Check for authenticated user on component load ---
   useEffect(() => {
@@ -27,6 +32,33 @@ const OrderConfirmation = () => {
     fetchUser();
   }, []);
 
+  // --- NEW: Parse tables from restaurant data ---
+  useEffect(() => {
+    if (restaurant?.tables) {
+      try {
+        const parsedTables = typeof restaurant.tables === 'string' 
+          ? JSON.parse(restaurant.tables) 
+          : restaurant.tables;
+        setAvailableTables(Array.isArray(parsedTables) ? parsedTables : []);
+      } catch (error) {
+        console.error('Error parsing tables JSON:', error);
+        setAvailableTables([]);
+      }
+    } else {
+      setAvailableTables([]);
+    }
+  }, [restaurant]);
+
+  // --- NEW: Handle table selection ---
+  const handleTableSelect = (table) => {
+    setTableNumber(table.tableNumber);
+    setShowTableDropdown(false);
+  };
+
+  // --- NEW: Get selected table details ---
+  const getSelectedTableDetails = () => {
+    return availableTables.find(table => table.tableNumber === tableNumber);
+  };
 
   const calculatePriceDetails = () => {
     let originalTotal = 0;
@@ -97,7 +129,7 @@ const OrderConfirmation = () => {
   const handlePlaceOrder = () => {
     setFormError(''); // Clear previous errors
     if (!tableNumber) {
-      setFormError('Please enter your table number.');
+      setFormError('Please select your table number.');
       return;
     }
 
@@ -149,19 +181,68 @@ const OrderConfirmation = () => {
         <div className="bg-gray-200 w-full flex-1 rounded-t-3xl px-6 pt-10 pb-6 flex flex-col font-spartan overflow-y-auto">
           <h2 className="justify-center text-center text-black text-3xl font-semibold mb-8">Order Summary</h2>
 
+          {/* --- UPDATED: Table selection dropdown --- */}
           <div className="mb-8">
             <label className="block text-black mb-2 text-lg" htmlFor="tableNumber">
               Table Number
             </label>
-            <input
-              id="tableNumber"
-              type="text"
-              value={tableNumber}
-              onChange={(e) => setTableNumber(e.target.value)}
-              placeholder="Enter your table number"
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
-              required
-            />
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowTableDropdown(!showTableDropdown)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-left flex justify-between items-center"
+              >
+                <span className={tableNumber ? 'text-black' : 'text-gray-500'}>
+                  {tableNumber ? `Table ${tableNumber}` : 'Select your table number'}
+                </span>
+                <ChevronDown 
+                  size={20} 
+                  className={`text-gray-400 transition-transform ${showTableDropdown ? 'rotate-180' : ''}`}
+                />
+              </button>
+              
+              {showTableDropdown && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                  {availableTables.length > 0 ? (
+                    availableTables.map((table) => (
+                      <button
+                        key={table.id}
+                        type="button"
+                        onClick={() => handleTableSelect(table)}
+                        className="w-full px-4 py-3 text-left hover:bg-gray-100 border-b border-gray-200 last:border-b-0 flex justify-between items-center"
+                      >
+                        <div>
+                          <span className="font-medium">Table {table.tableNumber}</span>
+                          {table.location && (
+                            <span className="text-sm text-gray-500 ml-2">({table.location})</span>
+                          )}
+                        </div>
+                        <span className="text-sm text-gray-500">
+                          {table.capacity} seats
+                        </span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-4 py-3 text-gray-500 text-center">
+                      No tables available
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            {/* Show selected table details */}
+            {tableNumber && getSelectedTableDetails() && (
+              <div className="mt-2 p-3 bg-blue-50 rounded-lg">
+                <div className="text-sm text-blue-800">
+                  <div className="font-medium">Table {tableNumber}</div>
+                  {getSelectedTableDetails().location && (
+                    <div>Location: {getSelectedTableDetails().location}</div>
+                  )}
+                  <div>Capacity: {getSelectedTableDetails().capacity} people</div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* --- NEW: Guest information form, only shown if user is not logged in --- */}
@@ -205,7 +286,6 @@ const OrderConfirmation = () => {
                   {formError}
               </div>
           )}
-
 
           <div className="border-t border-gray-300 pt-6">
             {cartItems.map((item, index) => {

@@ -87,6 +87,13 @@ export const createFoodItem = async (foodData) => {
       user_id: userData.user?.id || null
     };
     
+    // If restaurant_id is provided in foodData, use it
+    // Otherwise, try to get it from the current user's context
+    if (!formattedData.restaurant_id) {
+      // You might want to get this from context or pass it as a parameter
+      console.warn('No restaurant_id provided for food item creation');
+    }
+    
     console.log('Formatted data for insertion:', formattedData);
     
     const { data, error } = await supabase
@@ -107,15 +114,45 @@ export const createFoodItem = async (foodData) => {
   }
 };
 
-// Get all food items
-export const getAllFoodItems = async () => {
+// Get all food items for a specific restaurant
+export const getRestaurantFoodItems = async (restaurantId) => {
   try {
-    console.log('Fetching all food items');
+    console.log('Fetching food items for restaurant:', restaurantId);
     
     const { data, error } = await supabase
       .from('fooditems')
       .select('*')
+      .eq('restaurant_id', restaurantId)
       .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Get restaurant food items error:', error);
+      throw error;
+    }
+    
+    console.log(`Retrieved ${data?.length || 0} food items for restaurant`);
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching restaurant food items:', error);
+    throw error;
+  }
+};
+
+// Get all food items (keep existing function for backward compatibility)
+export const getAllFoodItems = async (restaurantId = null) => {
+  try {
+    console.log('Fetching all food items');
+    
+    let query = supabase
+      .from('fooditems')
+      .select('*');
+    
+    // Filter by restaurant if provided
+    if (restaurantId) {
+      query = query.eq('restaurant_id', restaurantId);
+    }
+    
+    const { data, error } = await query.order('created_at', { ascending: false });
     
     if (error) {
       console.error('Get all food items error:', error);
@@ -126,6 +163,31 @@ export const getAllFoodItems = async () => {
     return data || [];
   } catch (error) {
     console.error('Error fetching food items:', error);
+    throw error;
+  }
+};
+
+// Get food items by category for a specific restaurant
+export const getRestaurantFoodItemsByCategory = async (restaurantId, category) => {
+  try {
+    console.log(`Fetching ${category} food items for restaurant:`, restaurantId);
+    
+    const { data, error } = await supabase
+      .from('fooditems')
+      .select('*')
+      .eq('restaurant_id', restaurantId)
+      .eq('category', category)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Get restaurant food items by category error:', error);
+      throw error;
+    }
+    
+    console.log(`Retrieved ${data?.length || 0} ${category} food items for restaurant`);
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching restaurant food items by category:', error);
     throw error;
   }
 };
@@ -255,15 +317,55 @@ export const createOffer = async (offerData) => {
   }
 };
 
-export const getAllOffers = async () => {
+// Get all offers for a specific restaurant
+export const getRestaurantOffers = async (restaurantId) => {
   try {
+    console.log('Fetching offers for restaurant:', restaurantId);
+    
     const { data, error } = await supabase
-      .from('offers')
+      .from('fooditems')
       .select('*')
+      .eq('category', 'Offers')
+      .eq('restaurant_id', restaurantId)
       .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Get restaurant offers error:', error);
+      throw error;
+    }
+    
+    console.log(`Retrieved ${data?.length || 0} offers for restaurant`);
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching restaurant offers:', error);
+    throw error;
+  }
+};
 
-    if (error) throw error;
-    return data;
+// Get all offers (keep existing function for backward compatibility)
+export const getAllOffers = async (restaurantId = null) => {
+  try {
+    console.log('Fetching all offers');
+    
+    let query = supabase
+      .from('fooditems')
+      .select('*')
+      .eq('category', 'Offers');
+    
+    // Filter by restaurant if provided
+    if (restaurantId) {
+      query = query.eq('restaurant_id', restaurantId);
+    }
+    
+    const { data, error } = await query.order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Get all offers error:', error);
+      throw error;
+    }
+    
+    console.log(`Retrieved ${data?.length || 0} offers`);
+    return data || [];
   } catch (error) {
     console.error('Error fetching offers:', error);
     throw error;

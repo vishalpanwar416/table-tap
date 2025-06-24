@@ -63,7 +63,8 @@ export const OrderProvider = ({ children }) => {
         ...orderData,
         userId: user?.id,
         customerName: user?.user_metadata?.full_name || user?.email || 'Guest',
-        customerEmail: user?.email
+        customerEmail: user?.email,
+        restaurant_id: restaurant.id
       };
       
       // Create order in Supabase

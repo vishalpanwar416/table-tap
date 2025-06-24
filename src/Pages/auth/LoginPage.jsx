@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import GoogleButton from '../../components/auth/GoogleButton';
 import AuthForm from '../../components/auth/AuthForm';
 import { authService } from '../../api/authService';
+import { needsRestaurantSelection } from '../../utils/restaurantCheck';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -18,8 +19,10 @@ export default function LoginPage() {
       try {
         const user = await authService.getCurrentUser();
         if (user) {
-          // Check if we're already on home page
-          if (window.location.pathname !== '/home') {
+          // Check if restaurant selection is needed
+          if (needsRestaurantSelection()) {
+            navigate('/restaurant-selection');
+          } else {
             navigate('/home');
           }
         }
@@ -40,7 +43,12 @@ export default function LoginPage() {
     
     try {
       await authService.signInWithPassword(email, password);
-      navigate('/home');
+      // Check if restaurant selection is needed after login
+      if (needsRestaurantSelection()) {
+        navigate('/restaurant-selection');
+      } else {
+        navigate('/home');
+      }
     } catch (err) {
       setError(err.message || 'Login failed');
     } finally {
@@ -53,8 +61,9 @@ export default function LoginPage() {
     setError('');
     
     try {
-      await authService.signInWithGoogle('/home');
-      // Navigate happens in GoogleButton component after redirect
+      // Redirect to restaurant selection if needed, otherwise home
+      const redirectTo = needsRestaurantSelection() ? '/restaurant-selection' : '/home';
+      await authService.signInWithGoogle(redirectTo);
     } catch (err) {
       setError(err.message || 'Google login failed');
       setLoading(false);

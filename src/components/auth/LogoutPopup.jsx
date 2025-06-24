@@ -3,6 +3,7 @@ import { LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { supabase } from '../../supabase';
+import { clearRestaurantSelection } from '../../utils/restaurantCheck';
 
 
 const LogoutPopup = ({ isOpen, onClose, onConfirm }) => {
@@ -29,6 +30,10 @@ const LogoutPopup = ({ isOpen, onClose, onConfirm }) => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      
+      // Clear restaurant selection on logout
+      clearRestaurantSelection();
+      
       // Call onConfirm if provided, which should handle navigation and closing the popup
       if (onConfirm) onConfirm();
     } catch (error) {

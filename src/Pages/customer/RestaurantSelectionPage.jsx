@@ -1,0 +1,996 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronLeft, MapPin, Phone, Clock, RefreshCw, Store, ArrowRight, Navigation, Crosshair } from 'lucide-react';
+import { getActiveRestaurants } from '../../api/restaurantSelectionService';
+import { useRestaurant } from '../../context/RestaurantContext';
+
+const pageVariants = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 }
+};
+
+const slideUp = {
+  initial: { y: 20, opacity: 0 },
+  animate: { y: 0, opacity: 1 },
+  transition: { duration: 0.4, ease: "easeOut" }
+};
+
+const staggerItems = {
+  animate: {
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const RestaurantSelectionPage = () => {
+  const [restaurants, setRestaurants] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedRestaurant, setSelectedRestaurant] = useState(null);
+  const [tableNumber, setTableNumber] = useState('');
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [hoveredRestaurant, setHoveredRestaurant] = useState(null);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [scrollY, setScrollY] = useState(0);
+  
+  // Location states
+  const [userLocation, setUserLocation] = useState(null);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationError, setLocationError] = useState(null);
+  const [locationPermission, setLocationPermission] = useState('prompt');
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false);
+  const [hasAttemptedLocation, setHasAttemptedLocation] = useState(false);
+  
+  // Add state for automatic location modal
+  const [showAutoLocationModal, setShowAutoLocationModal] = useState(false);
+  const [hasShownLocationPrompt, setHasShownLocationPrompt] = useState(false);
+  
+  const scrollRef = useRef(null);
+  const scrollTimeoutRef = useRef(null);
+  
+  const navigate = useNavigate();
+  const { setRestaurantAndTable } = useRestaurant();
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+
+  useEffect(() => {
+    fetchRestaurants();
+    
+    // Show location prompt after a short delay if no location
+    const timer = setTimeout(() => {
+      if (!userLocation && !hasAttemptedLocation) {
+        setShowLocationPrompt(true);
+      }
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [userLocation, hasAttemptedLocation]);
+
+  // Check location permission status
+  const checkLocationPermission = async () => {
+    if (!navigator.permissions) {
+      setLocationPermission('not-supported');
+      return;
+    }
+
+    try {
+      const permission = await navigator.permissions.query({ name: 'geolocation' });
+      setLocationPermission(permission.state);
+      
+      permission.onchange = () => {
+        setLocationPermission(permission.state);
+      };
+    } catch (error) {
+      console.error('Error checking location permission:', error);
+      setLocationPermission('not-supported');
+    }
+  };
+
+  // Get user location with proper error handling
+  const getUserLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation is not supported by this browser');
+      setLocationPermission('not-supported');
+      return;
+    }
+
+    setLocationLoading(true);
+    setLocationError(null);
+    setHasAttemptedLocation(true);
+    setShowLocationPrompt(false);
+
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 300000 // 5 minutes
+    };
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setUserLocation({ latitude, longitude });
+        setLocationLoading(false);
+        setLocationError(null);
+        setLocationPermission('granted');
+        
+        // Get address from coordinates
+        getAddressFromCoordinates(latitude, longitude);
+      },
+      (error) => {
+        setLocationLoading(false);
+        setHasAttemptedLocation(true);
+        
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setLocationError('Location access denied. Please enable location services.');
+            setLocationPermission('denied');
+            setShowLocationModal(true);
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setLocationError('Location information unavailable.');
+            break;
+          case error.TIMEOUT:
+            setLocationError('Location request timed out. Please try again.');
+            break;
+          default:
+            setLocationError('An unknown error occurred while getting location.');
+        }
+      },
+      options
+    );
+  };
+
+  // Get address from coordinates using reverse geocoding
+  const getAddressFromCoordinates = async (latitude, longitude) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
+      );
+      const data = await response.json();
+      
+      if (data.display_name) {
+        setUserLocation(prev => ({
+          ...prev,
+          address: data.display_name.split(',').slice(0, 3).join(',') // Get first 3 parts of address
+        }));
+      }
+    } catch (error) {
+      console.error('Error getting address from coordinates:', error);
+      // Don't set error here as coordinates are still useful
+    }
+  };
+
+  // Calculate distance between two points
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Radius of the Earth in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const distance = R * c; // Distance in kilometers
+    return distance;
+  };
+
+  // Handle scroll detection for hiding table selection and zoom effect
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // Only trigger scroll state if there's significant movement
+      if (Math.abs(currentScrollY - scrollY) > 10) { // Increased threshold from 5 to 10
+        setIsScrolling(true);
+        
+        // Clear scroll state after a delay
+        setTimeout(() => {
+          setIsScrolling(false);
+        }, 150); // Reduced delay from 200 to 150ms
+      }
+      
+      setScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [scrollY]);
+
+  const getRestaurantScale = (restaurantId, index) => {
+    // Base scale logic
+    let baseScale = 1;
+    
+    if (selectedRestaurant?.id === restaurantId) {
+      baseScale = 1.05; // Reduced from 1.15 to 1.05 - Subtle selection zoom
+    } else if (selectedRestaurant && selectedRestaurant.id !== restaurantId) {
+      baseScale = 0.95; // Increased from 0.85 to 0.95 - Less aggressive shrink
+    } else if (hoveredRestaurant === restaurantId) {
+      baseScale = 1.02; // Reduced from 1.12 to 1.02 - Subtle hover effect
+    }
+    
+    // Add scroll-based zoom for top restaurant (only when no restaurant is selected)
+    if (!selectedRestaurant && index === 0 && scrollY > 50) {
+      const scrollProgress = Math.min((scrollY - 50) / 200, 1); // Normalize scroll progress
+      baseScale += scrollProgress * 0.03; // Reduced zoom intensity from 0.08 to 0.03
+    }
+    
+    return baseScale;
+  };
+
+  const fetchRestaurants = async (showRefreshAnimation = false) => {
+    try {
+      if (showRefreshAnimation) {
+        setIsRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+      setError(null);
+
+      // Use the new restaurant service
+      const data = await getActiveRestaurants();
+
+      // Transform the data to match the component's expected format
+      let transformedData = data.map(restaurant => {
+        let distance = null;
+        
+        // Calculate distance if we have user location and restaurant coordinates
+        if (userLocation && restaurant.location) {
+          try {
+            const match = restaurant.location.match(/POINT\(([^)]+)\)/);
+            if (match) {
+              const [lng, lat] = match[1].split(' ');
+              distance = calculateDistance(
+                userLocation.latitude, 
+                userLocation.longitude, 
+                parseFloat(lat), 
+                parseFloat(lng)
+              );
+            }
+          } catch (error) {
+            console.error('Error calculating distance:', error);
+          }
+        }
+
+        return {
+          id: restaurant.id,
+          name: restaurant.name,
+          description: restaurant.description || `Experience the finest ${restaurant.cuisine_type || 'cuisine'} in town.`,
+          address: restaurant.address || 'Address not available',
+          phone: restaurant.contact_phone || 'Phone not available',
+          opening_hours: restaurant.opening_hours || 'Hours not available',
+          image_url: restaurant.logo_url || getDefaultRestaurantImage(restaurant.cuisine_type),
+          is_active: restaurant.is_active,
+          cuisine_type: restaurant.cuisine_type,
+          distance: distance
+        };
+      });
+
+      // Sort by distance if available
+      if (userLocation) {
+        transformedData.sort((a, b) => {
+          if (a.distance === null && b.distance === null) return 0;
+          if (a.distance === null) return 1;
+          if (b.distance === null) return -1;
+          return a.distance - b.distance;
+        });
+      }
+
+      setRestaurants(transformedData || []);
+
+    } catch (err) {
+      console.error('Unexpected error fetching restaurants:', err);
+      setError('Failed to load restaurants');
+    } finally {
+      setLoading(false);
+      if (showRefreshAnimation) {
+        setTimeout(() => setIsRefreshing(false), 500);
+      }
+    }
+  };
+
+  // Refetch restaurants when location changes
+  useEffect(() => {
+    if (userLocation) {
+      fetchRestaurants();
+    }
+  }, [userLocation]);
+
+  // Helper function to get default restaurant images based on cuisine type
+  const getDefaultRestaurantImage = (cuisineType) => {
+    const defaultImages = {
+      'Italian': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop',
+      'Japanese': 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop',
+      'American': 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=400&h=300&fit=crop',
+      'Indian': 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400&h=300&fit=crop',
+      'Seafood': 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400&h=300&fit=crop',
+      'Chinese': 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop',
+      'Mexican': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop',
+      'Thai': 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop'
+    };
+    
+    return defaultImages[cuisineType] || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop';
+  };
+
+  const handleRestaurantClick = (restaurant) => {
+    // If clicking on the already selected restaurant, deselect it
+    if (selectedRestaurant?.id === restaurant.id) {
+      setSelectedRestaurant(null);
+      setTableNumber(''); // Reset table number when deselecting
+    } else {
+      // Select the new restaurant
+      setSelectedRestaurant(restaurant);
+      setTableNumber(''); // Reset table number when selecting a new restaurant
+    }
+  };
+
+  const handleContinue = async () => {
+    if (!selectedRestaurant) {
+      alert('Please select a restaurant');
+      return;
+    }
+
+    if (!tableNumber.trim()) {
+      alert('Please enter a table number');
+      return;
+    }
+
+    setIsSelecting(true);
+
+    try {
+      // Save restaurant selection to localStorage
+      localStorage.setItem('restaurantId', selectedRestaurant.id);
+      localStorage.setItem('tableNumber', tableNumber.trim());
+      
+      // Also save to sessionStorage for current session
+      sessionStorage.setItem('restaurantId', selectedRestaurant.id);
+      sessionStorage.setItem('tableNumber', tableNumber.trim());
+      
+      // Set the restaurant and table in context
+      setRestaurantAndTable(selectedRestaurant.id, tableNumber.trim());
+      
+      // Show success message briefly
+      setShowSuccessMessage(true);
+      
+      // Navigate to home page after a short delay
+      setTimeout(() => {
+        navigate('/home');
+      }, 1000);
+      
+    } catch (err) {
+      console.error('Error setting restaurant:', err);
+      alert('Failed to select restaurant. Please try again.');
+    } finally {
+      setIsSelecting(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    fetchRestaurants(true);
+  };
+
+  const handleLocationRequest = async () => {
+    // First check current permission status
+    await checkLocationPermission();
+    
+    if (locationPermission === 'denied') {
+      setShowLocationModal(true);
+      return;
+    }
+    
+    // This will trigger the browser's permission popup
+    getUserLocation();
+  };
+
+  const handleLocationPromptAllow = () => {
+    setShowLocationPrompt(false);
+    getUserLocation(); // This triggers the browser permission popup
+  };
+
+  const handleLocationPromptDeny = () => {
+    setShowLocationPrompt(false);
+    setHasAttemptedLocation(true);
+  };
+
+  const formatDistance = (distance) => {
+    if (distance === null) return null;
+    if (distance < 1) {
+      return `${Math.round(distance * 1000)}m`;
+    }
+    return `${distance.toFixed(1)}km`;
+  };
+
+  const handleAutoLocationAllow = () => {
+    setShowAutoLocationModal(false);
+    getUserLocation(); // This will trigger the browser's permission popup
+  };
+
+  const handleAutoLocationDeny = () => {
+    setShowAutoLocationModal(false);
+    setLocationPermission('denied');
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-black">
+        <div className="flex flex-col items-center">
+          <div className="relative w-16 h-16">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-orange-500 border-opacity-20"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-transparent border-t-orange-500 absolute top-0 left-0"></div>
+          </div>
+          <p className="text-white mt-4 text-lg font-medium">Loading restaurants...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-black">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 max-w-md shadow-lg">
+          <div className="text-red-500 text-6xl mb-4 text-center">⚠️</div>
+          <h3 className="text-red-600 text-xl font-semibold mb-2 text-center">Error Loading Restaurants</h3>
+          <p className="text-red-500 text-center mb-4">{error}</p>
+          <button
+            onClick={handleRefresh}
+            className="w-full bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg transition-colors font-medium"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex justify-center items-start min-h-screen bg-black">
+      <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
+        {/* Header */}
+        <div className="w-full px-6 py-8 relative flex justify-center">
+          <button 
+            className="absolute left-4 top-8 text-orange-500 touch-manipulation"
+            onClick={() => navigate(-1)}
+            aria-label="Go back"
+          >
+            <ChevronLeft size={30} />
+          </button>
+          <div className="flex flex-col items-center">
+            <h1 className="text-gray-100 text-3xl font-medium">
+              {userLocation ? 'Restaurants Near You' : 'Select Restaurant'}
+            </h1>
+            <p className="text-gray-400 text-sm mt-1">
+              {userLocation ? 'Showing restaurants sorted by distance' : 'Choose a restaurant to view the menu'}
+            </p>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <motion.div
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          variants={pageVariants}
+          className="flex-1 flex flex-col"
+        >
+          <div className="flex-1 flex flex-col bg-gray-200 rounded-t-3xl overflow-hidden min-h-[500px] px-6 pt-10 pb-6">
+            
+            {/* Prominent Location Prompt - Show when no location and no error */}
+            {!userLocation && !locationError && !locationLoading && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-6 bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-xl p-4 shadow-sm"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center flex-1">
+                    <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center mr-4">
+                      <MapPin size={24} className="text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-sm font-semibold text-gray-900 mb-1">
+                        Find Restaurants Near You
+                      </h3>
+                      <p className="text-xs text-gray-600">
+                        Enable location to see nearby restaurants sorted by distance
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={getUserLocation}
+                    className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm"
+                  >
+                    Enable Location
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Location Bar */}
+            <div className="flex items-center justify-between mb-6 bg-white rounded-xl py-3 px-4 shadow-sm">
+              <div className="flex items-center flex-1">
+                <MapPin size={20} className="text-gray-600 mr-2" />
+                <div className="flex-1 min-w-0">
+                  {userLocation ? (
+                    <div>
+                      <span className="text-sm font-medium text-gray-700 block truncate">
+                        {userLocation.address || 'Current Location'}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        Location detected
+                      </span>
+                    </div>
+                  ) : (
+                    <div>
+                      <span className="text-sm font-medium text-gray-700">
+                        {locationError ? 'Location unavailable' : 'Enable location for nearby restaurants'}
+                      </span>
+                      {locationError && (
+                        <span className="text-xs text-red-500 block">
+                          {locationError}
+                        </span>
+                      )}
+                      {!locationError && !userLocation && (
+                        <span className="text-xs text-orange-600 block">
+                          Tap the location button to enable
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {userLocation && (
+                  <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                    ✓ Active
+                  </span>
+                )}
+                <button 
+                  onClick={handleLocationRequest}
+                  disabled={locationLoading}
+                  className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors touch-manipulation ${
+                    userLocation 
+                      ? 'bg-orange-100 hover:bg-orange-200' 
+                      : 'bg-orange-500 hover:bg-orange-600'
+                  }`}
+                  aria-label="Get location"
+                >
+                  {locationLoading ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-orange-500 border-t-transparent"></div>
+                  ) : (
+                    <Crosshair size={18} className={userLocation ? 'text-orange-600' : 'text-white'} />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Restaurants List - Optimized for Touch Scrolling */}
+            <div 
+              className="flex-1 bg-white rounded-xl overflow-hidden shadow-sm"
+              style={{ 
+                maxHeight: selectedRestaurant ? 'calc(100vh - 500px)' : 'calc(100vh - 200px)',
+                WebkitOverflowScrolling: 'touch' // iOS smooth scrolling
+              }}
+            >
+              <div 
+                ref={scrollRef}
+                className="h-full overflow-y-auto overscroll-contain p-4 space-y-4"
+                style={{
+                  scrollBehavior: 'smooth',
+                  WebkitOverflowScrolling: 'touch',
+                  // Add momentum scrolling for iOS
+                  touchAction: 'pan-y'
+                }}
+              >
+                {restaurants.length === 0 ? (
+                  <motion.div {...slideUp} className="flex flex-col items-center justify-center py-12 px-4">
+                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-50 flex items-center justify-center shadow-sm mb-4">
+                      <Store size={32} className="text-gray-400" />
+                    </div>
+                    <h2 className="text-lg md:text-xl font-semibold text-center text-gray-800 mb-2">
+                      No Restaurants Available
+                    </h2>
+                    <p className="text-gray-500 text-center text-sm max-w-xs mb-4">
+                      There are currently no active restaurants in the system.
+                    </p>
+                    <button
+                      onClick={handleRefresh}
+                      className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg transition-colors font-medium touch-manipulation"
+                    >
+                      Refresh
+                    </button>
+                  </motion.div>
+                ) : (
+                  <motion.div variants={staggerItems}>
+                    {restaurants.map((restaurant, index) => (
+                      <motion.div
+                        key={restaurant.id}
+                        variants={slideUp}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ 
+                          opacity: 1, 
+                          y: 0,
+                          scale: getRestaurantScale(restaurant.id, index)
+                        }}
+                        transition={{ 
+                          duration: 0.3, 
+                          ease: "easeOut",
+                          scale: { duration: 0.25, ease: "easeInOut" }
+                        }}
+                        onMouseEnter={() => setHoveredRestaurant(restaurant.id)}
+                        onMouseLeave={() => setHoveredRestaurant(null)}
+                        onClick={() => handleRestaurantClick(restaurant)}
+                        className={`bg-white rounded-xl border-2 cursor-pointer transition-all shadow-sm hover:shadow-md touch-manipulation relative ${
+                          selectedRestaurant?.id === restaurant.id
+                            ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-200'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        style={{
+                          // Add touch-friendly tap area
+                          minHeight: '44px',
+                          // Improve touch responsiveness
+                          touchAction: 'manipulation',
+                          // Prevent text selection on touch
+                          WebkitUserSelect: 'none',
+                          userSelect: 'none',
+                          // Ensure proper layering for magnification effect
+                          transformOrigin: 'center',
+                          zIndex: selectedRestaurant?.id === restaurant.id ? 20 : 
+                                  hoveredRestaurant === restaurant.id ? 15 : 
+                                  index === 0 ? 10 : 1
+                        }}
+                      >
+                        <div className="p-4">
+                          {/* Restaurant Image */}
+                          <div className="relative mb-4">
+                            {restaurant.image_url ? (
+                              <img
+                                src={restaurant.image_url}
+                                alt={restaurant.name}
+                                className="w-full h-40 object-cover rounded-lg"
+                                loading={index > 2 ? 'lazy' : 'eager'} // Lazy load images below fold
+                                style={{
+                                  // Prevent image dragging on touch
+                                  WebkitUserDrag: 'none',
+                                  userDrag: 'none'
+                                }}
+                                onError={(e) => {
+                                  // Fallback to default image if loading fails
+                                  e.target.src = getDefaultRestaurantImage(restaurant.cuisine_type);
+                                }}
+                              />
+                            ) : (
+                              <div className="w-full h-40 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center">
+                                <Store size={48} className="text-gray-400" />
+                              </div>
+                            )}
+                            
+                            {/* Selection Badge */}
+                            {selectedRestaurant?.id === restaurant.id && (
+                              <motion.div 
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                className="absolute top-2 right-2 bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-medium shadow-lg"
+                              >
+                                ✓ Selected
+                              </motion.div>
+                            )}
+
+                            {/* Cuisine Type Badge */}
+                            {restaurant.cuisine_type && (
+                              <div className="absolute top-2 left-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded-full text-xs font-medium">
+                                {restaurant.cuisine_type}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Restaurant Info */}
+                          <div className="space-y-3">
+                            <h3 className="text-xl font-bold text-gray-900 leading-tight">
+                              {restaurant.name}
+                            </h3>
+                            
+                            {restaurant.description && (
+                              <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">
+                                {restaurant.description}
+                              </p>
+                            )}
+
+                            {/* Restaurant Details */}
+                            <div className="space-y-2">
+                              {restaurant.address && (
+                                <div className="flex items-start gap-3">
+                                  <MapPin size={16} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                                  <span className="text-sm text-gray-600 leading-relaxed">{restaurant.address}</span>
+                                </div>
+                              )}
+                              
+                              {restaurant.phone && (
+                                <div className="flex items-center gap-3">
+                                  <Phone size={16} className="text-gray-400 flex-shrink-0" />
+                                  <span className="text-sm text-gray-600">{restaurant.phone}</span>
+                                </div>
+                              )}
+                              
+                              {restaurant.opening_hours && (
+                                <div className="flex items-center gap-3">
+                                  <Clock size={16} className="text-gray-400 flex-shrink-0" />
+                                  <span className="text-sm text-gray-600">{restaurant.opening_hours}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                    
+                    {/* Add bottom padding for better scrolling experience */}
+                    <div className="h-4"></div>
+                  </motion.div>
+                )}
+              </div>
+            </div>
+
+            {/* Table Selection Section - Now positioned inside the main content */}
+            <AnimatePresence mode="wait">
+              {selectedRestaurant && (
+                <motion.div
+                  initial={{ opacity: 0, y: 100, scale: 0.95 }}
+                  animate={{ 
+                    opacity: isScrolling ? 0 : 1, 
+                    y: isScrolling ? 20 : 0,
+                    scale: isScrolling ? 0.95 : 1
+                  }}
+                  exit={{ 
+                    opacity: 0, 
+                    y: 100, 
+                    scale: 0.95,
+                    transition: { 
+                      duration: 0.3, 
+                      ease: "easeIn" 
+                    }
+                  }}
+                  transition={{ 
+                    duration: 0.4, 
+                    ease: "easeOut",
+                    scale: { duration: 0.3, ease: "easeInOut" }
+                  }}
+                  className="mt-4 bg-white rounded-xl shadow-lg border-t-4 border-orange-500 overflow-hidden"
+                  style={{
+                    // Ensure it stays above content
+                    zIndex: 30,
+                    // Smooth transition for visibility
+                    pointerEvents: isScrolling ? 'none' : 'auto',
+                    // Add transform origin for better animation
+                    transformOrigin: 'bottom center'
+                  }}
+                >
+                  <motion.div 
+                    className="p-6"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ 
+                      opacity: 0, 
+                      y: 20,
+                      transition: { duration: 0.2, delay: 0.1 }
+                    }}
+                    transition={{ duration: 0.3, delay: 0.1 }}
+                  >
+                    <div className="flex items-center mb-6">
+                      <Store size={24} className="text-orange-500 mr-3" />
+                      <h3 className="text-xl font-semibold text-gray-900">
+                        {selectedRestaurant.name}
+                      </h3>
+                    </div>
+                    
+                    <div className="space-y-6">
+                      <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ 
+                          opacity: 0, 
+                          x: -20,
+                          transition: { duration: 0.2, delay: 0.05 }
+                        }}
+                        transition={{ duration: 0.3, delay: 0.2 }}
+                      >
+                        <label htmlFor="tableNumber" className="block text-sm font-medium text-gray-700 mb-3">
+                          Table Number
+                        </label>
+                        <input
+                          type="text"
+                          id="tableNumber"
+                          value={tableNumber}
+                          onChange={(e) => setTableNumber(e.target.value)}
+                          placeholder="Enter your table number (e.g., A1, B2, 15)"
+                          className="w-full px-5 py-5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-base touch-manipulation"
+                          style={{
+                            // Improve touch input
+                            minHeight: '52px',
+                            fontSize: '16px' // Prevent zoom on iOS
+                          }}
+                        />
+                      </motion.div>
+
+                      <motion.button
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ 
+                          opacity: 0, 
+                          y: 20,
+                          transition: { duration: 0.2 }
+                        }}
+                        transition={{ duration: 0.3, delay: 0.3 }}
+                        onClick={handleContinue}
+                        disabled={isSelecting || !tableNumber.trim()}
+                        className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-5 px-6 rounded-xl transition-colors shadow-sm touch-manipulation"
+                        style={{
+                          minHeight: '56px' // Ensure touch-friendly button size
+                        }}
+                      >
+                        {isSelecting ? (
+                          <span className="flex items-center justify-center gap-2">
+                            <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                            Setting up...
+                          </span>
+                        ) : (
+                          <span className="flex items-center justify-center gap-2">
+                            Continue to Menu
+                            <ArrowRight size={18} />
+                          </span>
+                        )}
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </motion.div>
+
+        {/* Success Message Modal */}
+        <AnimatePresence>
+          {showSuccessMessage && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-white rounded-xl p-6 max-w-sm w-full shadow-xl text-center"
+              >
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Restaurant Selected!
+                </h3>
+                <p className="text-gray-600 text-sm mb-4">
+                  Redirecting to {selectedRestaurant?.name}...
+                </p>
+                <div className="flex justify-center">
+                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-orange-500 border-t-transparent"></div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Location Permission Modal (for when permission is denied) */}
+        <AnimatePresence>
+          {showLocationModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+              onClick={() => setShowLocationModal(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-white rounded-xl p-6 max-w-sm w-full shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <MapPin size={32} className="text-orange-500" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Location Access Required
+                  </h3>
+                  <p className="text-gray-600 text-sm mb-6">
+                    To show you nearby restaurants, we need access to your location. Please enable location services in your browser settings.
+                  </p>
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => {
+                        setShowLocationModal(false);
+                        // Try to get location again
+                        getUserLocation();
+                      }}
+                      className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-lg font-medium transition-colors"
+                    >
+                      Try Again
+                    </button>
+                    <button
+                      onClick={() => setShowLocationModal(false)}
+                      className="w-full text-gray-500 hover:text-gray-700 px-4 py-2 text-sm transition-colors"
+                    >
+                      Continue without location
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Location Prompt Modal - Shows automatically */}
+        <AnimatePresence>
+          {showLocationPrompt && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                className="bg-white rounded-xl p-6 max-w-sm w-full shadow-xl"
+              >
+                <div className="text-center">
+                  <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Navigation size={40} className="text-orange-500" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                    Enable Location Services
+                  </h3>
+                  <p className="text-gray-600 text-sm mb-6 leading-relaxed">
+                    We'd like to show you restaurants near your location. This helps you find the closest dining options and see distance information.
+                  </p>
+                  
+                  <div className="space-y-3">
+                    <button
+                      onClick={handleLocationPromptAllow}
+                      className="w-full bg-orange-500 hover:bg-orange-600 text-white px-6 py-4 rounded-xl font-medium transition-colors shadow-sm"
+                    >
+                      Allow Location Access
+                    </button>
+                    <button
+                      onClick={handleLocationPromptDeny}
+                      className="w-full text-gray-500 hover:text-gray-700 px-6 py-3 text-sm transition-colors"
+                    >
+                      Maybe Later
+                    </button>
+                  </div>
+                  
+                  <p className="text-xs text-gray-400 mt-4">
+                    You can change this later in your browser settings
+                  </p>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+};
+
+export default RestaurantSelectionPage;

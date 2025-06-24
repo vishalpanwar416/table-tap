@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Tag, Plus, X, Edit, Trash2, Check, ShoppingBag, Eye, AlertCircle, Package, DollarSign, Percent, IndianRupee } from 'lucide-react';
-import { createOffer, updateOffer, deleteOffer, getAllOffers, setCarouselOffer } from '../../api/offerService';
-import { getAllFoodItems } from '../../api/foodService';
+import { createOffer, updateOffer, deleteOffer, getAllOffers, setCarouselOffer, getRestaurantOffers, getCarouselOffers, getRestaurantCarouselOffers, getRestaurantOfferStats } from '../../api/offerService';
+import { getAllFoodItems, getRestaurantFoodItems } from '../../api/foodService';
+import { useAdminRestaurant } from '../../context/AdminRestaurantContext';
 
 const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
   const [foodItems, setFoodItems] = useState([]);
@@ -26,14 +27,27 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
     is_carousel: false
   });
 
+  const { userRestaurantId } = useAdminRestaurant();
+
   // Load data with error handling
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const [items, offerData] = await Promise.all([
-        getAllFoodItems(),
-        getAllOffers()
-      ]);
+      
+      // Use restaurant-specific functions if restaurant ID is available
+      let items, offerData;
+      
+      if (userRestaurantId) {
+        [items, offerData] = await Promise.all([
+          getRestaurantFoodItems(userRestaurantId),
+          getRestaurantOffers(userRestaurantId)
+        ]);
+      } else {
+        [items, offerData] = await Promise.all([
+          getAllFoodItems(),
+          getAllOffers()
+        ]);
+      }
       
       // Filter valid items
       const validItems = items.filter(item => item.id && item.name);
@@ -51,7 +65,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
     } finally {
       setLoading(false);
     }
-  }, [setLoading, setErrorMsg]);
+  }, [setLoading, setErrorMsg, userRestaurantId]);
 
   // Load data on component mount
   useEffect(() => {
@@ -169,7 +183,8 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
         discounted_price: parseFloat(formData.discounted_price),
         items: selectedItems.map(item => item.id),
         image: formData.image || null,
-        is_carousel: formData.is_carousel
+        is_carousel: formData.is_carousel,
+        restaurant_id: userRestaurantId // Add restaurant_id
       };
       
       if (editingOffer) {
@@ -288,6 +303,28 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
     const amount = original - discounted;
     const percentage = ((amount / original) * 100);
     return { amount, percentage };
+  };
+
+  const fetchOffers = async () => {
+    try {
+      setLoading(true);
+      setErrorMsg('');
+      
+      // Use restaurant-specific function if restaurant ID is available
+      let data;
+      if (userRestaurantId) {
+        data = await getRestaurantOffers(userRestaurantId);
+      } else {
+        data = await getAllOffers();
+      }
+      
+      setOffers(data || []);
+    } catch (error) {
+      console.error('Error fetching offers:', error);
+      setErrorMsg('Failed to load offers: ' + (error.message || error));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

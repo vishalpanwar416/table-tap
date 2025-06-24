@@ -8,6 +8,7 @@ export const createOrder = async (orderData) => {
     // Set initial status to 'pending'
     const order = {
       ...orderData,
+      restaurant_id: orderData.restaurant_id,
       status: 'pending',
       created_at: new Date().toISOString()
     };
@@ -63,6 +64,23 @@ export const getUserOrders = async (userId) => {
     return data || [];
   } catch (error) {
     console.error('Error fetching user orders:', error);
+    throw error;
+  }
+};
+
+// Get all orders for a specific restaurant
+export const getRestaurantOrders = async (restaurantId) => {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('restaurant_id', restaurantId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching restaurant orders:', error);
     throw error;
   }
 };
@@ -179,28 +197,39 @@ export const subscribeToOrderUpdates = (orderId, callback) => {
     .subscribe();
 };
 
-// Listen for new orders (admin side)
-export const subscribeToNewOrders = (callback) => {
-  return supabase
+// Listen for new orders (admin side) - filtered by restaurant
+export const subscribeToNewOrders = (callback, restaurantId = null) => {
+  const channel = supabase
     .channel('new-orders')
     .on('postgres_changes', {
       event: 'INSERT',
       schema: 'public',
       table: 'orders'
     }, payload => {
-      callback(payload.new);
+      // Only call callback if it's for the specified restaurant
+      if (!restaurantId || payload.new.restaurant_id === restaurantId) {
+        callback(payload.new);
+      }
     })
     .subscribe();
+  
+  return channel;
 };
 
-// Get orders by status for admin
-export const getOrdersByStatus = async (status) => {
+// Get orders by status for admin (filtered by restaurant)
+export const getOrdersByStatus = async (status, restaurantId = null) => {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('orders')
       .select('*')
-      .eq('status', status)
-      .order('created_at', { ascending: false });
+      .eq('status', status);
+    
+    // Filter by restaurant if provided
+    if (restaurantId) {
+      query = query.eq('restaurant_id', restaurantId);
+    }
+    
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) throw error;
     return data;

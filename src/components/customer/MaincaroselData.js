@@ -1,14 +1,20 @@
 import { supabase } from '../../supabase';
 
-// Fetch carousel items from Supabase
-export const fetchMaincaroselData = async () => {
+// Fetch carousel items from Supabase with restaurant filter
+export const fetchMaincaroselData = async (restaurantId = null) => {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('fooditems')
       .select('*')
       .eq('is_carousel', true)
-      .eq('is_active', true)
-      .order('created_at', { ascending: false });
+      .eq('is_active', true);
+    
+    // Filter by restaurant if restaurantId is provided
+    if (restaurantId) {
+      query = query.eq('restaurant_id', restaurantId);
+    }
+    
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching carousel data:', error);

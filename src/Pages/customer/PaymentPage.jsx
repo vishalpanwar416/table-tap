@@ -293,7 +293,8 @@ const PaymentPage = () => {
         customer_phone: customerPhone || null,
         special_instructions: specialInstructions || null,
         created_at: new Date().toISOString(), // Explicitly set created_at
-        updated_at: new Date().toISOString()  // Explicitly set updated_at
+        updated_at: new Date().toISOString(),  // Explicitly set updated_at
+        restaurant_id: restaurant.id,
       };
   
       console.log('Attempting to create order with data:', orderData);

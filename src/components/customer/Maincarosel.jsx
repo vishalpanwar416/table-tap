@@ -3,6 +3,7 @@ import AliceCarousel from 'react-alice-carousel';
 import 'react-alice-carousel/lib/alice-carousel.css';
 import { fetchMaincaroselData, fallbackMaincaroselData } from './MaincaroselData';
 import OrderCard from './itemCard';
+import { useRestaurant } from '../../context/RestaurantContext';
 
 const responsive = {
   0: { items: 1 },
@@ -14,11 +15,12 @@ const Maincarosel = () => {
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isOrderCardOpen, setIsOrderCardOpen] = useState(false);
+  const { restaurantId } = useRestaurant();
 
   useEffect(() => {
     const loadCarouselData = async () => {
       try {
-        const data = await fetchMaincaroselData();
+        const data = await fetchMaincaroselData(restaurantId);
         
         // If no carousel items found in database, use fallback data
         if (data.length === 0) {
@@ -36,7 +38,7 @@ const Maincarosel = () => {
     };
 
     loadCarouselData();
-  }, []);
+  }, [restaurantId]);
 
   const handleItemClick = (item) => {
     setSelectedItem(item);

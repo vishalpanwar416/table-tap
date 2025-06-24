@@ -2,6 +2,7 @@ import React from 'react';
 import { Edit, Plus, X } from 'lucide-react';
 import { categories } from '../../foodData';
 import { createFoodItem, updateFoodItem, uploadFoodImage } from '../../../api/foodService';
+import { useAdminRestaurant } from '../../../context/AdminRestaurantContext';
 
 const FoodItemForm = ({ 
   formData, 
@@ -15,6 +16,8 @@ const FoodItemForm = ({
   setSuccessMsg, 
   fetchFoodItems 
 }) => {
+  const { userRestaurantId } = useAdminRestaurant();
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -63,7 +66,8 @@ const FoodItemForm = ({
         price: parseFloat(price),
         discountvalue: discountvalue ? parseFloat(discountvalue) : null,
         tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-        image: imageUrl
+        image: imageUrl,
+        restaurant_id: userRestaurantId
       };
   
       // Remove any undefined or null values that might cause issues

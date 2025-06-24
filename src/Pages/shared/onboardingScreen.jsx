@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import logo1 from '../../assets/images/Food/Burger.jpg';
 import logo2 from '../../assets/images/Food/chickencurry.jpg';
 import { useNavigate } from 'react-router-dom';
+import { needsRestaurantSelection } from '../../utils/restaurantCheck';
 
 export default function OnboardingScreens() {
   const [currentScreen, setCurrentScreen] = useState(0);
@@ -28,12 +29,20 @@ export default function OnboardingScreens() {
     if (currentScreen < screens.length - 1) {
       setCurrentScreen(currentScreen + 1);
     } else {
-      navigate('/home');
+      if (needsRestaurantSelection()) {
+        navigate('/restaurant-selection');
+      } else {
+        navigate('/home');
+      }
     }
   };
 
   const handleSkip = () => {
-    navigate('/home');
+    if (needsRestaurantSelection()) {
+      navigate('/restaurant-selection');
+    } else {
+      navigate('/home');
+    }
   };
 
   // Animation variants

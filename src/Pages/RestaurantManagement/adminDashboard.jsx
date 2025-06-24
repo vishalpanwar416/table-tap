@@ -13,11 +13,12 @@ import NotificationSound from '../../components/admin/NotificationSound';
 import NotificationToast from '../../components/admin/NotificationToast';
 import AIAnalyticsChat from '../../components/admin/AIAnalyticsChat';
 import ManagerNotificationsToast from '../../components/admin/ManagerNotificationsToast';
-import { X, ArrowLeft, Package, BarChart3, Sparkles } from 'lucide-react';
-import { getAllFoodItems } from '../../api/foodService';
+import QRManagement from '../../components/admin/QRManagement/QRManagement';
+import { X, ArrowLeft, Package, BarChart3, Sparkles, Plus, Building2, ChevronDown } from 'lucide-react';
+import { getAllFoodItems, getRestaurantFoodItems } from '../../api/foodService';
 import { supabase } from '../../supabase';
 import { updateOrderStatus as updateOrderStatusService } from '../../api/orderService';
-import { useRestaurant } from '../../context/RestaurantContext';
+import { useAdminRestaurant } from '../../context/AdminRestaurantContext';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -32,6 +33,8 @@ const AdminDashboard = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
   const [isManager, setIsManager] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [userRole, setUserRole] = useState(null);
   const orderChannelRef = useRef(null);
   const [playOrderSound, setPlayOrderSound] = useState(false);
   const [orderSoundType, setOrderSoundType] = useState('order');
@@ -39,6 +42,34 @@ const AdminDashboard = () => {
   const [orderToastMessage, setOrderToastMessage] = useState('');
   const [orderToastTitle, setOrderToastTitle] = useState('');
   const [showLoadingOverlay, setShowLoadingOverlay] = useState(false);
+  const [showCreateOrderModal, setShowCreateOrderModal] = useState(false);
+  const [createOrderData, setCreateOrderData] = useState({
+    customer_name: '',
+    customer_phone: '',
+    customer_email: '',
+    table_number: '',
+    items: [],
+    notes: '',
+    address: '',
+    total: 0
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Fix: Properly destructure all values from the context
+  const { 
+    restaurant, 
+    userRestaurantId, 
+    loading: restaurantLoading, 
+    error: restaurantError,
+    userRole: contextUserRole,
+    setAdminRestaurant,
+    isAdmin: contextIsAdmin
+  } = useAdminRestaurant();
+
+  // State for restaurant selector
+  const [allRestaurants, setAllRestaurants] = useState([]);
+  const [showRestaurantSelector, setShowRestaurantSelector] = useState(false);
+  const [loadingRestaurants, setLoadingRestaurants] = useState(false);
 
   // Menu items shared across components
   const menuItems = [
@@ -47,18 +78,81 @@ const AdminDashboard = () => {
     { id: 'orders', icon: 'ShoppingCart', label: 'Order Management' },
     { id: 'users', icon: 'Users', label: 'User Management' },
     { id: 'offers', icon: 'Tag', label: 'Offers & Promotions' },
+    { id: 'qr', icon: 'QrCode', label: 'QR Management' },
     { id: 'analytics', icon: 'BarChart3', label: 'AI Analytics' },
-    { id: 'settings', icon: 'Settings', label: 'Settings' },
+    { id: 'settings', icon: 'Settings', label: 'Restaurant Information' },
   ];
 
   const [notificationPermission, setNotificationPermission] = useState(
     typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'unsupported'
   );
 
-  const { restaurant } = useRestaurant();
-
   // New state for authentication loading
   const [authLoading, setAuthLoading] = useState(true);
+
+  // Fetch all restaurants for admin selector
+  const fetchAllRestaurants = async () => {
+    if (!contextIsAdmin()) return;
+    
+    try {
+      setLoadingRestaurants(true);
+      const { data, error } = await supabase
+        .from('restaurants')
+        .select('id, name, is_active')
+        .eq('is_active', true)
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setAllRestaurants(data || []);
+    } catch (error) {
+      console.error('Error fetching restaurants:', error);
+      setErrorMsg('Failed to load restaurants');
+    } finally {
+      setLoadingRestaurants(false);
+    }
+  };
+
+  // Load restaurants when component mounts for admin users
+  useEffect(() => {
+    if (contextIsAdmin()) {
+      fetchAllRestaurants();
+    }
+  }, [contextIsAdmin]);
+
+  // Handle restaurant selection
+  const handleRestaurantSelect = async (restaurantId) => {
+    if (restaurantId === userRestaurantId) {
+      setShowRestaurantSelector(false);
+      return;
+    }
+
+    try {
+      const success = await setAdminRestaurant(restaurantId);
+      if (success) {
+        setSuccessMsg('Restaurant switched successfully');
+        setShowRestaurantSelector(false);
+      } else {
+        setErrorMsg('Failed to switch restaurant');
+      }
+    } catch (error) {
+      console.error('Error switching restaurant:', error);
+      setErrorMsg('Failed to switch restaurant');
+    }
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showRestaurantSelector && !event.target.closest('.restaurant-selector')) {
+        setShowRestaurantSelector(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showRestaurantSelector]);
 
   // Check authentication and get user on mount
   useEffect(() => {
@@ -108,7 +202,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (!currentUser) return;
 
-    const fetchManagerProfile = async () => {
+    const fetchUserProfile = async () => {
       try {
         const { data: profileData, error } = await supabase
           .from('profiles')
@@ -117,16 +211,28 @@ const AdminDashboard = () => {
           .single();
 
         if (!error && profileData) {
-          setIsManager(profileData.profile_role === 'manager');
+          const role = profileData.profile_role;
+          setUserRole(role);
+          
+          // Allow manager, admin, and captain roles to access the dashboard
+          setIsManager(role === 'manager');
+          setIsAdmin(role === 'admin');
+          
+          // If user is neither manager, admin, nor captain, redirect them
+          if (role !== 'manager' && role !== 'admin' && role !== 'captain') {
+            navigate('/home');
+            return;
+          }
         }
       } catch (error) {
-        console.error('Error fetching manager profile:', error);
+        console.error('Error fetching user profile:', error);
+        navigate('/home');
       }
     };
-    fetchManagerProfile();
-  }, [currentUser]);
-        
-  // Fetch food items with error handling
+    fetchUserProfile();
+  }, [currentUser, navigate]);
+
+  // Fetch food items with restaurant filter
   const fetchFoodItems = async () => {
     let loadingTimeout;
     try {
@@ -138,7 +244,14 @@ const AdminDashboard = () => {
         setErrorMsg('Request took too long. Please try again.');
       }, 15000);
       
-      const data = await getAllFoodItems();
+      // Use restaurant-specific function if restaurant ID is available
+      let data;
+      if (userRestaurantId) {
+        data = await getRestaurantFoodItems(userRestaurantId);
+      } else {
+        data = await getAllFoodItems();
+      }
+      
       setFoodItems(data || []);
       clearTimeout(loadingTimeout);
       return data;
@@ -157,9 +270,9 @@ const AdminDashboard = () => {
     if (currentUser) {
       fetchFoodItems();
     }
-  }, [currentUser]);
+  }, [currentUser, userRestaurantId]); // Add userRestaurantId to dependencies
 
-  // Enhanced fetch orders with real-time subscription
+  // Enhanced fetch orders with restaurant filter
   useEffect(() => {
     if (!currentUser) return;
 
@@ -173,10 +286,16 @@ const AdminDashboard = () => {
           setErrorMsg('Orders request took too long. Please try again.');
         }, 15000);
 
-        const { data, error } = await supabase
+        let query = supabase
           .from('orders')
-          .select('*')
-          .order('created_at', { ascending: false });
+          .select('*');
+        
+        // Filter by restaurant if available
+        if (userRestaurantId) {
+          query = query.eq('restaurant_id', userRestaurantId);
+        }
+        
+        const { data, error } = await query.order('created_at', { ascending: false });
 
         if (error) throw error;
         setOrders(data || []);
@@ -196,7 +315,7 @@ const AdminDashboard = () => {
       supabase.removeChannel(orderChannelRef.current);
     }
 
-    // Enhanced real-time subscription with better notifications
+    // Enhanced real-time subscription with restaurant filtering
     const channel = supabase
       .channel('orders-channel')
       .on(
@@ -207,16 +326,28 @@ const AdminDashboard = () => {
           table: 'orders',
         },
         (payload) => {
-          console.log('Realtime payload:', payload);
+          console.log('🔔 Realtime payload received:', payload);
+          console.log('Event type:', payload.eventType);
+          console.log('New record:', payload.new);
+          console.log('Old record:', payload.old);
+          
           const { eventType, new: newRecord, old: oldRecord } = payload;
 
+          // Filter by restaurant if available
+          if (userRestaurantId && newRecord.restaurant_id !== userRestaurantId) {
+            return; // Skip if not for this restaurant
+          }
+
           setOrders((prevOrders) => {
+            console.log('Previous orders count:', prevOrders.length);
+            
             if (eventType === 'INSERT') {
+              console.log('🆕 Processing INSERT event');
               // Play sound for new order only
               let orderTotal = Number(newRecord.total);
               if (isNaN(orderTotal)) orderTotal = 0;
               const customerName = newRecord.customer_name || 'Unknown Customer';
-              const orderId = newRecord.order_number || 'N/A';
+              const orderId = newRecord.order_number || newRecord.id.slice(0,8);
 
               const soundType = orderTotal > 50 ? 'urgent' : 'order';
               setOrderSoundType(soundType);
@@ -240,31 +371,50 @@ const AdminDashboard = () => {
 
               return [newRecord, ...prevOrders];
             } else if (eventType === 'UPDATE') {
-              // No sound here!
+              console.log('🔄 Processing UPDATE event');
+              console.log('Updated order ID:', newRecord.id);
+              console.log('Updated order status:', newRecord.status);
+              
+              // Handle order updates - match by id field
               const updatedOrder = newRecord;
-              const statusChanged = prevOrders.find(o => o.order_number === updatedOrder.order_number)?.status !== updatedOrder.status;
-
-              if (statusChanged) {
-                setOrderToastTitle('📋 Order Updated');
-                setOrderToastMessage(`Order #${updatedOrder.order_number} status changed to ${updatedOrder.status}`);
-                setShowOrderToast(true);
+              const existingOrder = prevOrders.find(o => o.id === updatedOrder.id);
+              
+              console.log('Found existing order:', existingOrder);
+              
+              if (existingOrder) {
+                const statusChanged = existingOrder.status !== updatedOrder.status;
+                console.log('Status changed:', statusChanged);
+                
+                if (statusChanged) {
+                  setOrderToastTitle('📋 Order Updated');
+                  setOrderToastMessage(`Order #${updatedOrder.order_number || updatedOrder.id.slice(0,8)} status changed to ${updatedOrder.status}`);
+                  setShowOrderToast(true);
+                }
               }
 
-              return prevOrders.map((order) =>
-                order.order_number === updatedOrder.order_number ? updatedOrder : order
+              const updatedOrders = prevOrders.map((order) =>
+                order.id === updatedOrder.id ? updatedOrder : order
               );
+              
+              console.log('Updated orders count:', updatedOrders.length);
+              return updatedOrders;
             } else if (eventType === 'DELETE') {
-              // No sound here!
-              return prevOrders.filter((order) => order.order_number !== oldRecord.order_number);
+              console.log('🗑️ Processing DELETE event');
+              // Handle order deletions - match by id field
+              return prevOrders.filter((order) => order.id !== oldRecord.id);
             }
             return prevOrders;
           });
         }
       )
       .subscribe((status) => {
-        console.log('Subscription status:', status);
+        console.log('📡 Subscription status:', status);
         if (status === 'SUBSCRIBED') {
-          console.log('Successfully subscribed to order changes');
+          console.log('✅ Successfully subscribed to order changes');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Channel error occurred');
+        } else if (status === 'TIMED_OUT') {
+          console.error('⏰ Channel timed out');
         }
       });
 
@@ -277,7 +427,7 @@ const AdminDashboard = () => {
         orderChannelRef.current = null;
       }
     };
-  }, [currentUser]);
+  }, [currentUser, userRestaurantId]); // Add userRestaurantId to dependencies
 
   // Reset playOrderSound after it is triggered
   useEffect(() => {
@@ -297,7 +447,7 @@ const AdminDashboard = () => {
     }
   }, [errorMsg, successMsg]);
 
-  // Enhanced update order status with better notifications
+  // MODIFIED FUNCTION: Enhanced update order status with manual state update
   const updateOrderStatus = async (orderId, status) => {
     let loadingTimeout;
     try {
@@ -311,17 +461,19 @@ const AdminDashboard = () => {
       // Update order status and get updated order data
       const updatedOrder = await updateOrderStatusService(orderId, status);
       
-      // Optimistically update local state
-      setOrders(prevOrders => 
-        prevOrders.map(order => 
-          order.order_number === orderId ? { ...order, status: updatedOrder.status } : order
+      // *** FIX: Manually update the orders state ***
+      // This ensures the UI updates immediately for the current user.
+      // The real-time subscription will still handle updates from other users.
+      setOrders(prevOrders =>
+        prevOrders.map(order =>
+          order.id === updatedOrder.id ? updatedOrder : order
         )
       );
       
       // Use updatedOrder for toast and notification
       setOrderToastTitle('✅ Status Updated');
       setOrderToastMessage(
-        `Order #${updatedOrder.order_number} marked as ${status}`
+        `Order #${updatedOrder.order_number || updatedOrder.id.slice(0,8)} marked as ${status}`
       );
       setShowOrderToast(true);
       setOrderSoundType('success');
@@ -333,9 +485,9 @@ const AdminDashboard = () => {
           await supabase
             .from('notifications')
             .insert({
-              order_id: updatedOrder.order_number,
+              order_id: updatedOrder.order_number || updatedOrder.id,
               title: `Order ${status}`,
-              message: `Your order #${updatedOrder.order_number} has been ${status}`,
+              message: `Your order #${updatedOrder.order_number || updatedOrder.id.slice(0,8)} has been ${status}`,
               user_id: updatedOrder.user_id,
               type: `order_${status}`
             });
@@ -343,7 +495,7 @@ const AdminDashboard = () => {
       } catch (notifError) {
         console.error('Notification error:', notifError);
       }
-  
+
     } catch (error) {
       console.error("Error updating order:", error);
       setErrorMsg('Failed to update order status: ' + (error.message || error));
@@ -380,6 +532,60 @@ const AdminDashboard = () => {
     return () => clearTimeout(timer);
   }, [loading]);
 
+  const handleCreateOrder = async () => {
+    setIsLoading(true);
+    try {
+      // Replace this with your actual order creation logic
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(createOrderData),
+      });
+
+      if (response.ok) {
+        setShowCreateOrderModal(false);
+        setCreateOrderData({
+          customer_name: '',
+          customer_phone: '',
+          customer_email: '',
+          table_number: '',
+          items: [],
+          notes: '',
+          address: '',
+          total: 0
+        });
+        setSuccessMsg('Order created successfully!');
+      } else {
+        setErrorMsg('Failed to create order. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error creating order:', error);
+      setErrorMsg('Failed to create order. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const addItemToOrder = () => {
+    setCreateOrderData(prev => ({ ...prev, items: [...prev.items, { name: '', quantity: 1, price: 0 }] }));
+  };
+
+  const removeItemFromOrder = (index) => {
+    const newItems = createOrderData.items.filter((_, i) => i !== index);
+    setCreateOrderData(prev => ({ ...prev, items: newItems }));
+  };
+
+  const updateOrderItem = (index, field, value) => {
+    setCreateOrderData(prev => ({
+      ...prev,
+      items: prev.items.map((item, i) =>
+        i === index ? { ...item, [field]: value } : item
+      )
+    }));
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -394,6 +600,36 @@ const AdminDashboard = () => {
   if (!currentUser) {
     // Optionally, you can return null or a redirect here, since navigate('/login') will handle it.
     return null;
+  }
+
+  // Add error handling for restaurant context
+  if (restaurantLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center p-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading restaurant data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (restaurantError) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center p-8">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Access Error</h3>
+          <p className="text-gray-600 mb-4">{restaurantError}</p>
+          <button 
+            onClick={() => navigate('/home')}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          >
+            Go to Home
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -481,6 +717,7 @@ const AdminDashboard = () => {
           handleLogout={() => setShowLogoutPopup(true)}
           currentUser={currentUser}
           restaurantName={restaurant?.name}
+          userRole={contextUserRole}
         />
 
         {/* Mobile Navigation */}
@@ -492,6 +729,8 @@ const AdminDashboard = () => {
           menuItems={menuItems}
           handleLogout={() => setShowLogoutPopup(true)}
           currentUser={currentUser}
+          restaurantName={restaurant?.name}
+          userRole={contextUserRole}
         />
         <LogoutPopup 
           isOpen={showLogoutPopup}
@@ -516,6 +755,63 @@ const AdminDashboard = () => {
                   {menuItems.find(item => item.id === activeTab)?.label || 'Dashboard'}
                 </h2>
               </div>
+
+              {/* Restaurant Selector for Admin Users */}
+              {contextIsAdmin() && (
+                <div className="hidden md:block relative restaurant-selector">
+                  <button
+                    onClick={() => setShowRestaurantSelector(!showRestaurantSelector)}
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  >
+                    <Building2 size={18} className="text-gray-600" />
+                    <span className="text-sm font-medium text-gray-700">
+                      {restaurant?.name || 'Select Restaurant'}
+                    </span>
+                    <ChevronDown size={16} className="text-gray-500" />
+                  </button>
+
+                  {/* Restaurant Dropdown */}
+                  {showRestaurantSelector && (
+                    <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                      <div className="p-2">
+                        <div className="text-xs font-medium text-gray-500 px-3 py-1 border-b border-gray-100">
+                          Select Restaurant
+                        </div>
+                        {loadingRestaurants ? (
+                          <div className="flex items-center justify-center py-4">
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-orange-500 border-t-transparent"></div>
+                            <span className="ml-2 text-sm text-gray-500">Loading...</span>
+                          </div>
+                        ) : allRestaurants.length === 0 ? (
+                          <div className="text-center py-4 text-sm text-gray-500">
+                            No restaurants available
+                          </div>
+                        ) : (
+                          allRestaurants.map((rest) => (
+                            <button
+                              key={rest.id}
+                              onClick={() => handleRestaurantSelect(rest.id)}
+                              className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                                rest.id === userRestaurantId
+                                  ? 'bg-orange-100 text-orange-700 font-medium'
+                                  : 'hover:bg-gray-50 text-gray-700'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="truncate">{rest.name}</span>
+                                {rest.id === userRestaurantId && (
+                                  <span className="text-orange-600">✓</span>
+                                )}
+                              </div>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="hidden md:block">
                 <div className="relative text-gray-600">
                   <input 
@@ -541,6 +837,64 @@ const AdminDashboard = () => {
             <div className="px-4 py-6 md:p-6 max-w-7xl mx-auto">
               {/* Mobile Search */}
               <div className="md:hidden mb-4">
+                {/* Mobile Restaurant Selector for Admin Users */}
+                {contextIsAdmin() && (
+                  <div className="mb-4 restaurant-selector">
+                    <button
+                      onClick={() => setShowRestaurantSelector(!showRestaurantSelector)}
+                      className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Building2 size={18} className="text-gray-600" />
+                        <span className="text-sm font-medium text-gray-700">
+                          {restaurant?.name || 'Select Restaurant'}
+                        </span>
+                      </div>
+                      <ChevronDown size={16} className="text-gray-500" />
+                    </button>
+
+                    {/* Mobile Restaurant Dropdown */}
+                    {showRestaurantSelector && (
+                      <div className="mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        <div className="p-2">
+                          <div className="text-xs font-medium text-gray-500 px-3 py-1 border-b border-gray-100">
+                            Select Restaurant
+                          </div>
+                          {loadingRestaurants ? (
+                            <div className="flex items-center justify-center py-4">
+                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-orange-500 border-t-transparent"></div>
+                              <span className="ml-2 text-sm text-gray-500">Loading...</span>
+                            </div>
+                          ) : allRestaurants.length === 0 ? (
+                            <div className="text-center py-4 text-sm text-gray-500">
+                              No restaurants available
+                            </div>
+                          ) : (
+                            allRestaurants.map((rest) => (
+                              <button
+                                key={rest.id}
+                                onClick={() => handleRestaurantSelect(rest.id)}
+                                className={`w-full text-left px-3 py-3 rounded-md text-sm transition-colors ${
+                                  rest.id === userRestaurantId
+                                    ? 'bg-orange-100 text-orange-700 font-medium'
+                                    : 'hover:bg-gray-50 text-gray-700'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="truncate">{rest.name}</span>
+                                  {rest.id === userRestaurantId && (
+                                    <span className="text-orange-600">✓</span>
+                                  )}
+                                </div>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="relative text-gray-600">
                   <input 
                     type="search" 
@@ -595,6 +949,13 @@ const AdminDashboard = () => {
                   setSuccessMsg={setSuccessMsg}
                 />
               )}
+              {activeTab === 'qr' && (
+                <QRManagement 
+                  setLoading={setLoading}
+                  setErrorMsg={setErrorMsg}
+                  setSuccessMsg={setSuccessMsg}
+                />
+              )}
               {activeTab === 'analytics' && <AIAnalyticsChat />}
               {activeTab === 'settings' && (
                 <SettingsManagement 
@@ -605,8 +966,147 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Create Order Modal */}
+      {showCreateOrderModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-6 relative">
+            <button
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+              onClick={() => setShowCreateOrderModal(false)}
+            >
+              <X size={20} />
+            </button>
+            <h3 className="text-lg font-semibold mb-4">Create New Order</h3>
+            <form
+              onSubmit={e => {
+                e.preventDefault();
+                handleCreateOrder();
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name *</label>
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 rounded p-2"
+                  value={createOrderData.customer_name}
+                  onChange={e => setCreateOrderData(prev => ({ ...prev, customer_name: e.target.value }))}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 rounded p-2"
+                  value={createOrderData.customer_phone}
+                  onChange={e => setCreateOrderData(prev => ({ ...prev, customer_phone: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  className="w-full border border-gray-300 rounded p-2"
+                  value={createOrderData.customer_email}
+                  onChange={e => setCreateOrderData(prev => ({ ...prev, customer_email: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Table Number</label>
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 rounded p-2"
+                  value={createOrderData.table_number}
+                  onChange={e => setCreateOrderData(prev => ({ ...prev, table_number: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Order Items *</label>
+                {createOrderData.items.map((item, idx) => (
+                  <div key={idx} className="flex gap-2 mb-2">
+                    <input
+                      type="text"
+                      placeholder="Item name"
+                      className="flex-1 border border-gray-300 rounded p-2"
+                      value={item.name}
+                      onChange={e => updateOrderItem(idx, 'name', e.target.value)}
+                      required
+                    />
+                    <input
+                      type="number"
+                      placeholder="Qty"
+                      className="w-16 border border-gray-300 rounded p-2"
+                      value={item.quantity}
+                      min={1}
+                      onChange={e => updateOrderItem(idx, 'quantity', e.target.value)}
+                      required
+                    />
+                    <input
+                      type="number"
+                      placeholder="Price"
+                      className="w-24 border border-gray-300 rounded p-2"
+                      value={item.price}
+                      min={0}
+                      step="0.01"
+                      onChange={e => updateOrderItem(idx, 'price', e.target.value)}
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="text-red-500 hover:text-red-700"
+                      onClick={() => removeItemFromOrder(idx)}
+                      title="Remove item"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="mt-2 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm flex items-center"
+                  onClick={addItemToOrder}
+                >
+                  <Plus size={14} className="mr-1" />
+                  Add Item
+                </button>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <textarea
+                  className="w-full border border-gray-300 rounded p-2"
+                  value={createOrderData.notes}
+                  onChange={e => setCreateOrderData(prev => ({ ...prev, notes: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 rounded p-2"
+                  value={createOrderData.address}
+                  onChange={e => setCreateOrderData(prev => ({ ...prev, address: e.target.value }))}
+                />
+              </div>
+              <div className="flex justify-between items-center mt-4">
+                <span className="font-semibold text-lg">
+                  Total: ₹{createOrderData.total.toFixed(2)}
+                </span>
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Creating...' : 'Create Order'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
-  );
-};
+  )
+}
 
 export default AdminDashboard;

@@ -1,12 +1,29 @@
 import React, { useState } from 'react';
-import { Settings, Save, RefreshCw } from 'lucide-react';
-import { useRestaurant } from '../../context/RestaurantContext';
+import { Settings, Save, RefreshCw, AlertCircle, Lock } from 'lucide-react';
+import { useAdminRestaurant } from '../../context/AdminRestaurantContext';
 
 const SettingsManagement = () => {
-  const { restaurant, updateRestaurant } = useRestaurant();
-  const [formData, setFormData] = useState(restaurant);
+  const { 
+    restaurant, 
+    updateRestaurant, 
+    loading, 
+    error, 
+    userRole, 
+    canEdit, 
+    canView 
+  } = useAdminRestaurant();
+  
+  const [formData, setFormData] = useState(restaurant || {});
   const [isEditing, setIsEditing] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+
+  // Update formData when restaurant data changes
+  React.useEffect(() => {
+    if (restaurant) {
+      setFormData(restaurant);
+    }
+  }, [restaurant]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -27,39 +44,108 @@ const SettingsManagement = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const success = updateRestaurant(formData);
-    if (success) {
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
-      setIsEditing(false);
+    setSaveError(null);
+    
+    try {
+      const success = await updateRestaurant(formData);
+      if (success) {
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
+        setIsEditing(false);
+      } else {
+        setSaveError('Failed to update restaurant information');
+      }
+    } catch (err) {
+      setSaveError('An error occurred while saving');
     }
   };
 
   const handleReset = () => {
     setFormData(restaurant);
     setIsEditing(false);
+    setSaveError(null);
   };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <span className="ml-2 text-gray-600">Loading restaurant information...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Access Denied</h3>
+            <p className="text-gray-600">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show unauthorized access for non-staff
+  if (!canView()) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <Lock className="mx-auto h-12 w-12 text-red-500 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Unauthorized Access</h3>
+            <p className="text-gray-600">You don't have permission to view restaurant information.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-800">Restaurant Settings</h2>
+        <div>
+          <h2 className="text-xl font-semibold text-gray-800">Restaurant Information</h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Role: <span className="font-medium capitalize">{userRole}</span>
+            {!canEdit() && (
+              <span className="ml-2 text-red-600">(View Only)</span>
+            )}
+          </p>
+        </div>
         <Settings className="w-6 h-6 text-gray-500" />
       </div>
 
-      {isEditing ? (
+      {isEditing && canEdit() ? (
         <form onSubmit={handleSubmit} className="space-y-4">
+          {saveError && (
+            <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+              <div className="flex">
+                <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
+                <p className="text-sm text-red-700">{saveError}</p>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Restaurant Name</label>
               <input
                 type="text"
                 name="name"
-                value={formData.name}
+                value={formData.name || ''}
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded-md"
+                required
               />
             </div>
 
@@ -68,7 +154,7 @@ const SettingsManagement = () => {
               <input
                 type="text"
                 name="contact_phone"
-                value={formData.contact_phone}
+                value={formData.contact_phone || ''}
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded-md"
               />
@@ -79,7 +165,7 @@ const SettingsManagement = () => {
               <input
                 type="email"
                 name="contact_email"
-                value={formData.contact_email}
+                value={formData.contact_email || ''}
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded-md"
               />
@@ -90,7 +176,7 @@ const SettingsManagement = () => {
               <input
                 type="text"
                 name="cuisine_type"
-                value={formData.cuisine_type}
+                value={formData.cuisine_type || ''}
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded-md"
               />
@@ -101,18 +187,19 @@ const SettingsManagement = () => {
               <input
                 type="text"
                 name="opening_hours"
-                value={formData.opening_hours}
+                value={formData.opening_hours || ''}
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded-md"
+                placeholder="e.g., Mon-Sun: 9:00 AM - 10:00 PM"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Google Maps Link</label>
               <input
-                type="text"
+                type="url"
                 name="google_maps_link"
-                value={formData.google_maps_link}
+                value={formData.google_maps_link || ''}
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded-md"
                 placeholder="https://maps.google.com/..."
@@ -124,7 +211,7 @@ const SettingsManagement = () => {
               <input
                 type="text"
                 name="gst_number"
-                value={formData.gst_number}
+                value={formData.gst_number || ''}
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded-md"
                 placeholder="29AADCB2230M1ZP"
@@ -136,7 +223,7 @@ const SettingsManagement = () => {
               <input
                 type="text"
                 name="fssai_license"
-                value={formData.fssai_license}
+                value={formData.fssai_license || ''}
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded-md"
                 placeholder="12345678901234"
@@ -144,19 +231,33 @@ const SettingsManagement = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Radius</label>
-              <input
-                type="text"
-                name="delivery_radius"
-                value={formData.delivery_radius}
+              <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+              <select
+                name="currency"
+                value={formData.currency || 'INR'}
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded-md"
-                placeholder="5 km"
+              >
+                <option value="INR">INR (₹)</option>
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Razorpay Key ID</label>
+              <input
+                type="text"
+                name="razorpay_key_id"
+                value={formData.razorpay_key_id || ''}
+                onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                placeholder="rzp_test_..."
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Instagram Handle</label>
               <input
@@ -187,7 +288,7 @@ const SettingsManagement = () => {
             <input
               type="text"
               name="address"
-              value={formData.address}
+              value={formData.address || ''}
               onChange={handleChange}
               className="w-full p-2 border border-gray-300 rounded-md"
             />
@@ -197,7 +298,7 @@ const SettingsManagement = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
             <textarea
               name="description"
-              value={formData.description}
+              value={formData.description || ''}
               onChange={handleChange}
               rows="3"
               className="w-full p-2 border border-gray-300 rounded-md"
@@ -229,7 +330,7 @@ const SettingsManagement = () => {
               <div className="flex">
                 <div className="ml-3">
                   <p className="text-sm text-green-700">
-                    Restaurant settings updated successfully!
+                    Restaurant information updated successfully!
                   </p>
                 </div>
               </div>
@@ -240,33 +341,33 @@ const SettingsManagement = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6">
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Restaurant Name</h3>
-                <p className="mt-1 text-sm text-gray-900">{restaurant.name}</p>
+                <p className="mt-1 text-sm text-gray-900">{restaurant?.name || 'Not provided'}</p>
               </div>
               
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Contact Phone</h3>
-                <p className="mt-1 text-sm text-gray-900">{restaurant.contact_phone}</p>
+                <p className="mt-1 text-sm text-gray-900">{restaurant?.contact_phone || 'Not provided'}</p>
               </div>
               
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Contact Email</h3>
-                <p className="mt-1 text-sm text-gray-900">{restaurant.contact_email}</p>
+                <p className="mt-1 text-sm text-gray-900">{restaurant?.contact_email || 'Not provided'}</p>
               </div>
               
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Cuisine Type</h3>
-                <p className="mt-1 text-sm text-gray-900">{restaurant.cuisine_type}</p>
+                <p className="mt-1 text-sm text-gray-900">{restaurant?.cuisine_type || 'Not provided'}</p>
               </div>
               
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Opening Hours</h3>
-                <p className="mt-1 text-sm text-gray-900">{restaurant.opening_hours}</p>
+                <p className="mt-1 text-sm text-gray-900">{restaurant?.opening_hours || 'Not provided'}</p>
               </div>
               
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Google Maps Link</h3>
                 <p className="mt-1 text-sm text-gray-900">
-                  {restaurant.google_maps_link ? (
+                  {restaurant?.google_maps_link ? (
                     <a 
                       href={restaurant.google_maps_link} 
                       target="_blank" 
@@ -283,29 +384,29 @@ const SettingsManagement = () => {
 
               <div>
                 <h3 className="text-sm font-medium text-gray-500">GST Number</h3>
-                <p className="mt-1 text-sm text-gray-900">{restaurant.gst_number || "Not provided"}</p>
+                <p className="mt-1 text-sm text-gray-900">{restaurant?.gst_number || "Not provided"}</p>
               </div>
 
               <div>
                 <h3 className="text-sm font-medium text-gray-500">FSSAI License</h3>
-                <p className="mt-1 text-sm text-gray-900">{restaurant.fssai_license || "Not provided"}</p>
+                <p className="mt-1 text-sm text-gray-900">{restaurant?.fssai_license || "Not provided"}</p>
               </div>
 
-              {/* <div>
-                <h3 className="text-sm font-medium text-gray-500">Delivery Radius</h3>
-                <p className="mt-1 text-sm text-gray-900">{restaurant.delivery_radius || "Not specified"}</p>
-              </div> */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Currency</h3>
+                <p className="mt-1 text-sm text-gray-900">{restaurant?.currency || "INR"}</p>
+              </div>
 
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Social Media</h3>
                 <div className="mt-1">
-                  {restaurant.social_media?.instagram && (
+                  {restaurant?.social_media?.instagram && (
                     <p className="text-sm text-gray-900">Instagram: {restaurant.social_media.instagram}</p>
                   )}
-                  {restaurant.social_media?.facebook && (
+                  {restaurant?.social_media?.facebook && (
                     <p className="text-sm text-gray-900">Facebook: {restaurant.social_media.facebook}</p>
                   )}
-                  {!restaurant.social_media?.instagram && !restaurant.social_media?.facebook && (
+                  {!restaurant?.social_media?.instagram && !restaurant?.social_media?.facebook && (
                     <p className="text-sm text-gray-900">No social media profiles provided</p>
                   )}
                 </div>
@@ -314,22 +415,29 @@ const SettingsManagement = () => {
             
             <div className="mt-4">
               <h3 className="text-sm font-medium text-gray-500">Address</h3>
-              <p className="mt-1 text-sm text-gray-900">{restaurant.address}</p>
+              <p className="mt-1 text-sm text-gray-900">{restaurant?.address || 'Not provided'}</p>
             </div>
             
             <div className="mt-4">
               <h3 className="text-sm font-medium text-gray-500">Description</h3>
-              <p className="mt-1 text-sm text-gray-900">{restaurant.description}</p>
+              <p className="mt-1 text-sm text-gray-900">{restaurant?.description || 'Not provided'}</p>
             </div>
           </div>
           
           <div className="flex justify-end">
-            <button
-              onClick={() => setIsEditing(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              Edit Information
-            </button>
+            {canEdit() ? (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Edit Information
+              </button>
+            ) : (
+              <div className="flex items-center text-gray-500">
+                <Lock className="w-4 h-4 mr-2" />
+                <span className="text-sm">View only access</span>
+              </div>
+            )}
           </div>
         </div>
       )}

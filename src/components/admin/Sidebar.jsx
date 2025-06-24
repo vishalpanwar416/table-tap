@@ -5,24 +5,20 @@ import {
   Users, 
   LogOut,
   Menu,
-  X
+  X,
+  LayoutDashboard,
+  Utensils,
+  ShoppingCart,
+  Tag,
+  QrCode,
+  BarChart3,
+  Settings
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 
-const Sidebar = ({ activeTab, setActiveTab, menuItems }) => {
+const Sidebar = ({ activeTab, setActiveTab, menuItems, currentUser, restaurantName, userRole }) => {
   const navigate = useNavigate();
   const [showMobileNav, setShowMobileNav] = React.useState(false);
-  const [currentUser, setCurrentUser] = React.useState(null);
-
-  React.useEffect(() => {
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setCurrentUser(user);
-      }
-    };
-    getCurrentUser();
-  }, []);
 
   const handleLogout = async () => {
     try {
@@ -35,12 +31,46 @@ const Sidebar = ({ activeTab, setActiveTab, menuItems }) => {
 
   const getIcon = (iconName) => {
     switch (iconName) {
-      case 'Building2':
-        return <Building2 className="w-5 h-5" />;
+      case 'LayoutDashboard':
+        return <LayoutDashboard className="w-5 h-5" />;
+      case 'Utensils':
+        return <Utensils className="w-5 h-5" />;
+      case 'ShoppingCart':
+        return <ShoppingCart className="w-5 h-5" />;
       case 'Users':
         return <Users className="w-5 h-5" />;
+      case 'Tag':
+        return <Tag className="w-5 h-5" />;
+      case 'QrCode':
+        return <QrCode className="w-5 h-5" />;
+      case 'BarChart3':
+        return <BarChart3 className="w-5 h-5" />;
+      case 'Settings':
+        return <Settings className="w-5 h-5" />;
+      case 'Building2':
+        return <Building2 className="w-5 h-5" />;
       default:
         return null;
+    }
+  };
+
+  // Function to get role display name
+  const getRoleDisplayName = (role) => {
+    switch (role) {
+      case 'admin':
+        return 'Administrator';
+      case 'manager':
+        return 'Manager';
+      case 'captain':
+        return 'Captain';
+      case 'waiter':
+        return 'Waiter';
+      case 'chef':
+        return 'Chef';
+      case 'cashier':
+        return 'Cashier';
+      default:
+        return role ? role.charAt(0).toUpperCase() + role.slice(1) : 'User';
     }
   };
 
@@ -97,7 +127,7 @@ const Sidebar = ({ activeTab, setActiveTab, menuItems }) => {
               {currentUser?.avatar_url ? (
                 <img 
                   src={currentUser.avatar_url} 
-                  alt="Admin avatar" 
+                  alt="User avatar" 
                   className="w-12 h-12 rounded-full object-cover border-2 border-gray-500"
                 />
               ) : (
@@ -105,12 +135,15 @@ const Sidebar = ({ activeTab, setActiveTab, menuItems }) => {
                   {currentUser?.email?.charAt(0).toUpperCase()}
                 </div>
               )}
-              <div className="flex flex-col">
-                <p className="admin-name font-medium text-white">
+              <div className="flex flex-col min-w-0 flex-1">
+                <p className="restaurant-name font-medium text-white text-sm truncate">
+                  {restaurantName || 'Restaurant'}
+                </p>
+                <p className="user-email text-xs text-gray-400 truncate">
                   {currentUser?.email}
                 </p>
-                <p className="admin-role text-xs text-gray-400">
-                  Administrator
+                <p className="user-role text-xs text-orange-400 font-medium">
+                  {getRoleDisplayName(userRole)}
                 </p>
               </div>
             </div>

@@ -21,13 +21,16 @@ import AuthWrapper from '../src/config/AuthWrapper';
 import ForgotPassword from '../src/Pages/auth/ForgotPassward';
 import ResetPassword from '../src/Pages/auth/ResetPassword';
 import OrderConfirmationPage from  '../src/Pages/customer/OrderConfirmationPage'
-import QRGeneratorPage from '../src/Pages/QR';
 import { OrderProvider } from './context/OrderContext';
 import { AuthProvider } from './config/AuthContext';
 import OrderTracking from '../src/Pages/customer/OrderTracking';
 import { ManagerNotificationProvider } from './context/ManagerNotificationContext';
 import { RestaurantProvider } from './context/RestaurantContext';
 import AdminPanel from './Pages/AdminPannel/AdminPannel';
+import { AdminRestaurantProvider } from './context/AdminRestaurantContext';
+import RestaurantSelectionPage from './Pages/customer/RestaurantSelectionPage';
+import RestaurantSelectionWrapper from './components/RestaurantSelectionWrapper';
+
 const App = () => {
   return (
     <AuthProvider>
@@ -42,61 +45,111 @@ const App = () => {
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/forgot-password" element={<AuthWrapper publicOnly><ForgotPassword/></AuthWrapper>} />
                   <Route path="/reset-password" element={<AuthWrapper publicOnly><ResetPassword /></AuthWrapper>} />
-                  <Route 
-                    path="/home" 
-                    element={<Homepage />} 
-                  />
-                  <Route path="/test" element={<div className="text-white">Test route working!</div>} />
-                  <Route path="/best-sellers" element={<BestSellerPage />} />
                   <Route path="/signup" element={<SignupPage />} />
                   <Route path="/complete-profile" element={<CompleteProfile />} />
-                  <Route path="/liked-items" element={<LikedItemsPage />} />
+                  <Route path="/restaurant-selection" element={<RestaurantSelectionPage />} />
+                  
+                  {/* Protected routes that need restaurant selection */}
                   <Route 
-                    path="/managerdashboard" 
+                    path="/home" 
                     element={
-                      <AuthWrapper>
-                        <ManagerNotificationProvider>
-                          <AdminDashboard />
-                        </ManagerNotificationProvider>
-                      </AuthWrapper>
-                    }
+                      <RestaurantSelectionWrapper>
+                        <Homepage />
+                      </RestaurantSelectionWrapper>
+                    } 
                   />
-                  <Route
-                    path="/profile"
+                  <Route 
+                    path="/best-sellers" 
                     element={
-                      <AuthWrapper>
-                        <PrfilePage />
-                      </AuthWrapper>
-                    }
+                      <RestaurantSelectionWrapper>
+                        <BestSellerPage />
+                      </RestaurantSelectionWrapper>
+                    } 
+                  />
+                  <Route 
+                    path="/liked-items" 
+                    element={
+                      <RestaurantSelectionWrapper>
+                        <LikedItemsPage />
+                      </RestaurantSelectionWrapper>
+                    } 
                   />
                   <Route 
                     path="/my-orders" 
                     element={
-                      <AuthWrapper>
+                      <RestaurantSelectionWrapper>
                         <MyOrders />
-                      </AuthWrapper>
-                    }
+                      </RestaurantSelectionWrapper>
+                    } 
                   />
-                  <Route path="/order-confirmation" element={<OrderConfirmation />} />
-                  <Route path="/payment" element={<PaymentPage />} />
-                  <Route path="/order-success" element={<OrderConfirmationPage />} />
-                  {/* Add the missing route for order tracking */}
                   <Route 
-                      path="/order-tracking/:id" 
-                      element={
-                      <AuthWrapper>
+                    path="/order-confirmation" 
+                    element={
+                      <RestaurantSelectionWrapper>
+                        <OrderConfirmation />
+                      </RestaurantSelectionWrapper>
+                    } 
+                  />
+                  <Route 
+                    path="/payment" 
+                    element={
+                      <RestaurantSelectionWrapper>
+                        <PaymentPage />
+                      </RestaurantSelectionWrapper>
+                    } 
+                  />
+                  <Route 
+                    path="/profile" 
+                    element={
+                      <RestaurantSelectionWrapper>
+                        <PrfilePage />
+                      </RestaurantSelectionWrapper>
+                    } 
+                  />
+                  <Route 
+                    path="/order-tracking" 
+                    element={
+                      <RestaurantSelectionWrapper>
                         <OrderTracking />
+                      </RestaurantSelectionWrapper>
+                    } 
+                  />
+                  <Route 
+                    path="/order-confirmation-page" 
+                    element={
+                      <RestaurantSelectionWrapper>
+                        <OrderConfirmationPage />
+                      </RestaurantSelectionWrapper>
+                    } 
+                  />
+                  
+                  {/* Admin routes */}
+                  <Route 
+                    path="/managerdashboard" 
+                    element={
+                      <AuthWrapper>
+                        <AdminRestaurantProvider>
+                          <ManagerNotificationProvider>
+                            <AdminDashboard />
+                          </ManagerNotificationProvider>
+                        </AdminRestaurantProvider>
                       </AuthWrapper>
                     }
                   />
                   <Route 
-                      path ="/Admin-Pannel"
-                      element = {
-                        <AdminPanel/>
-                      }
+                    path="/admin" 
+                    element={
+                      <AuthWrapper>
+                        <AdminRestaurantProvider>
+                          <ManagerNotificationProvider>
+                            <AdminPanel />
+                          </ManagerNotificationProvider>
+                        </AdminRestaurantProvider>
+                      </AuthWrapper>
+                    }
                   />
-                  <Route path="/qr" element={<QRGeneratorPage />} />
-                  <Route path="*" element={<Navigate to="/" />} />
+                  
+                  <Route path="/test" element={<div className="text-white">Test route working!</div>} />
                 </Routes>
               </div>
             </OrderProvider>

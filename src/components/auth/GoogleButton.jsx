@@ -1,17 +1,25 @@
 import React, { useState } from 'react';
 import { FcGoogle } from 'react-icons/fc';
 import { supabase } from '../../supabase';
+import { needsRestaurantSelection } from '../../utils/restaurantCheck';
+
 const GoogleButton = ({ loading = false, redirectTo = '' }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
+      // Determine the correct redirect path
+      let finalRedirectTo = redirectTo;
+      if (!finalRedirectTo) {
+        finalRedirectTo = needsRestaurantSelection() ? '/restaurant-selection' : '/home';
+      }
+      
       await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}${redirectTo}`
-    }
+          redirectTo: `${window.location.origin}${finalRedirectTo}`
+        }
       });
     } catch (error) {
       console.error('Google sign-in error:', error);

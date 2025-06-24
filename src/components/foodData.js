@@ -131,13 +131,19 @@ export const localFoodItems = [
   // Add more items as needed
 ];
 
-// Function to fetch food items from Supabase with fallback to local data
-export const fetchFoodItems = async () => {
+// Function to fetch food items from Supabase with restaurant filter and fallback to local data
+export const fetchFoodItems = async (restaurantId = null) => {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('fooditems')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .select('*');
+    
+    // Filter by restaurant if restaurantId is provided
+    if (restaurantId) {
+      query = query.eq('restaurant_id', restaurantId);
+    }
+    
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching food items from Supabase:', error);

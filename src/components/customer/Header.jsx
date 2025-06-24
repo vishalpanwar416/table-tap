@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Search, X, ShoppingCart, Bell, User, MapPin } from 'lucide-react';
+import { Search, X, ShoppingCart, Bell, User, MapPin, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../config/AuthContext';
 import { useCart } from '../../config/CartContent';
@@ -16,7 +16,7 @@ const Header = ({
   const inputRef = useRef(null);
   const [searchQuery, setSearchQuery] = useState('');
   const { cartItems } = useCart();
-  const { restaurant } = useRestaurant();
+  const { restaurant, loading, error } = useRestaurant();
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -44,9 +44,13 @@ const Header = ({
   };
 
   const handleLocationClick = () => {
-    if (restaurant.google_maps_link) {
+    if (restaurant?.google_maps_link) {
       window.open(restaurant.google_maps_link, '_blank');
     }
+  };
+
+  const handleChangeRestaurant = () => {
+    navigate('/restaurant-selection');
   };
 
   // Handle search icon click - if search is active and there's a query, trigger search
@@ -58,22 +62,64 @@ const Header = ({
     }
   };
 
+  // Show loading state or error fallback
+  const getRestaurantDisplay = () => {
+    if (loading) {
+      return {
+        name: "Loading...",
+        address: "Please wait..."
+      };
+    }
+    
+    if (error || !restaurant) {
+      return {
+        name: "Restaurant",
+        address: "Unable to load location"
+      };
+    }
+    
+    return {
+      name: restaurant.name,
+      address: restaurant.address
+    };
+  };
+
+  const displayData = getRestaurantDisplay();
+
   return (
     <div className="px-4 flex justify-between items-center w-full relative">
       {/* Left side - Restaurant info */}
       <div className={`flex-1 transition-all duration-500 ease-out ${isSearchActive ? 'opacity-0 pointer-events-none transform -translate-x-4' : 'opacity-100 transform translate-x-0'}`}>
-        <button 
-          onClick={handleLocationClick}
-          className="flex flex-col items-start justify-center text-left hover:opacity-80 transition-opacity duration-200"
-        >
-          <div className="flex items-center gap-1">
-            <MapPin size={14} className="text-white" />
-            <h2 className="text-white text-[17px] font-spartan">{restaurant.name}</h2>
+        <div className="flex flex-col items-start justify-center text-left">
+          <div className="flex items-center gap-2 w-full">
+            <button 
+              onClick={handleLocationClick}
+              disabled={loading || error || !restaurant?.google_maps_link}
+              className={`flex items-center gap-1 transition-opacity duration-200 flex-1 min-w-0 ${
+                loading || error || !restaurant?.google_maps_link 
+                  ? 'cursor-default opacity-70' 
+                  : 'hover:opacity-80 cursor-pointer'
+              }`}
+            >
+              <MapPin size={14} className="text-white flex-shrink-0" />
+              <h2 className="text-white text-[17px] font-spartan truncate" title={displayData.name}>
+                {displayData.name}
+              </h2>
+            </button>
+            {/* Change Restaurant Button - Small and inline */}
+            <button
+              onClick={handleChangeRestaurant}
+              className="flex items-center gap-1 px-2 py-1 text-[8px] text-orange-400 hover:text-orange-300 hover:bg-orange-400/10 rounded-full transition-all duration-200 whitespace-nowrap flex-shrink-0"
+              title="Change Restaurant"
+            >
+              <RefreshCw size={8} />
+              <span>Change</span>
+            </button>
           </div>
           <p className="text-[8px] text-gray-300 truncate max-w-[200px] ml-5">
-            {restaurant.address || "Gourmet Restaurant"}
+            {displayData.address}
           </p>
-        </button>
+        </div>
       </div>
 
       {/* Search input section - positioned absolutely when active */}

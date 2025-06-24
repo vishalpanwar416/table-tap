@@ -94,7 +94,8 @@ export const createOrder = async (orderData) => {
       table_number: orderData.tableNumber,
       customer_name: orderData.customerName,
       total: orderData.total,
-      notes: orderData.notes
+      notes: orderData.notes,
+      restaurant_id: orderData.restaurant_id
     }])
     .select();
   

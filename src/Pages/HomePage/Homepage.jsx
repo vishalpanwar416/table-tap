@@ -20,6 +20,7 @@ import { fetchFoodItems } from '../../components/foodData';
 import FloatingCartButton from '../../components/customer/FloatingCartButton';
 import Tags from '../../components/customer/Tags';
 import RecommendationItems from '../../components/customer/RecommendationItems';
+import { useRestaurant } from '../../context/RestaurantContext';
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -60,15 +61,16 @@ export default function HomePage() {
   // New state for OrderCard
   const [selectedItem, setSelectedItem] = useState(null);
   const [isOrderCardOpen, setIsOrderCardOpen] = useState(false);
+  const { restaurantId } = useRestaurant();
 
   useEffect(() => {
     const loadData = async () => {
-      const data = await fetchFoodItems();
+      const data = await fetchFoodItems(restaurantId);
       setAllFoodItems(data);
       setLoading(false);
     };
     loadData();
-  }, []);
+  }, [restaurantId]);
 
   if (loading) {
     return <div className="text-white text-center p-4">Loading menu...</div>;
