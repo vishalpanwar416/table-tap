@@ -2,14 +2,49 @@
 import { supabase } from '../supabase';
 
 // Get restaurant analytics data
-export const getRestaurantAnalytics = async () => {
+export const getRestaurantAnalytics = async (dateRange = 'last7days', restaurantId = null) => {
   try {
-    // Get orders data with aggregations
-    const { data: ordersData, error: ordersError } = await supabase
+    // Calculate date range
+    let fromDate, toDate = new Date();
+    toDate.setHours(23, 59, 59, 999);
+    switch (dateRange) {
+      case 'today':
+        fromDate = new Date();
+        fromDate.setHours(0, 0, 0, 0);
+        break;
+      case 'last7days':
+        fromDate = new Date();
+        fromDate.setDate(fromDate.getDate() - 6);
+        fromDate.setHours(0, 0, 0, 0);
+        break;
+      case 'last30days':
+        fromDate = new Date();
+        fromDate.setDate(fromDate.getDate() - 29);
+        fromDate.setHours(0, 0, 0, 0);
+        break;
+      case 'thismonth':
+        fromDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+        break;
+      default:
+        fromDate = null; // fetch all
+    }
+
+    let ordersQuery = supabase
       .from('orders')
       .select('*')
       .order('created_at', { ascending: false });
 
+    if (fromDate) {
+      ordersQuery = ordersQuery.gte('created_at', fromDate.toISOString());
+    }
+    if (toDate) {
+      ordersQuery = ordersQuery.lte('created_at', toDate.toISOString());
+    }
+    if (restaurantId) {
+      ordersQuery = ordersQuery.eq('restaurant_id', restaurantId);
+    }
+
+    const { data: ordersData, error: ordersError } = await ordersQuery;
     if (ordersError) throw ordersError;
 
     // Get food items data
