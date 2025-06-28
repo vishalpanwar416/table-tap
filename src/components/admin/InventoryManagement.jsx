@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Package, 
   Plus, 
@@ -15,10 +15,45 @@ import {
   Eye,
   X,
   Save,
-  RefreshCw
+  RefreshCw,
+  BarChart3,
+  Clock,
+  MapPin,
+  Phone,
+  Mail,
+  Barcode,
+  Settings,
+  AlertCircle,
+  CheckCircle,
+  Info,
+  IndianRupee,
+  ShoppingCart,
+  FileText,
+  Printer,
+  Sparkles,
+  Zap,
+  Target,
+  Activity,
+  Minus
 } from 'lucide-react';
+import { useAuth } from '../../config/AuthContext';
+import { useAdminRestaurant } from '../../context/AdminRestaurantContext';
+import { 
+  inventoryService,
+  INVENTORY_CATEGORIES, 
+  INVENTORY_UNITS, 
+  STOCK_STATUS, 
+  getStockStatus, 
+  getStatusColor, 
+  getInventoryStats,
+  getRoleColor,
+  getRoleDisplayName
+} from '../../api/inventoryService';
 
 const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
+  const { user } = useAuth();
+  const { userRestaurantId, userRole, isAdmin } = useAdminRestaurant();
+  
   const [inventoryItems, setInventoryItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
@@ -26,9 +61,21 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showStockUpdateModal, setShowStockUpdateModal] = useState(false);
+  const [showReorderModal, setShowReorderModal] = useState(false);
+  const [showTakeOutModal, setShowTakeOutModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
+  const [viewMode, setViewMode] = useState('table'); // 'table' or 'grid'
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [stats, setStats] = useState({
+    total: 0,
+    lowStock: 0,
+    outOfStock: 0,
+    totalValue: 0,
+    expiringSoon: 0
+  });
 
   // Form state for add/edit
   const [formData, setFormData] = useState({
@@ -40,139 +87,190 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
     unit: '',
     cost_per_unit: '',
     supplier: '',
+    supplier_contact: '',
+    supplier_email: '',
     expiry_date: '',
-    description: ''
+    description: '',
+    barcode: '',
+    location: '',
+    reorder_point: '',
+    lead_time_days: ''
   });
 
-  // Categories for inventory items
-  const categories = [
-    'Vegetables',
-    'Meat & Poultry',
-    'Seafood',
-    'Dairy',
-    'Grains & Cereals',
-    'Spices & Seasonings',
-    'Beverages',
-    'Frozen Foods',
-    'Canned Goods',
-    'Other'
-  ];
+  // Stock update form
+  const [stockUpdateData, setStockUpdateData] = useState({
+    newStockLevel: '',
+    reason: '',
+    notes: ''
+  });
 
-  const units = ['kg', 'lbs', 'pieces', 'liters', 'gallons', 'boxes', 'bags', 'bottles'];
+  // Reorder form
+  const [reorderData, setReorderData] = useState({
+    quantity: '',
+    expectedDelivery: '',
+    notes: ''
+  });
 
-  // Mock data for demonstration
-  useEffect(() => {
-    const mockInventory = [
-      {
-        id: 1,
-        name: 'Fresh Tomatoes',
-        category: 'Vegetables',
-        current_stock: 15,
-        min_stock_level: 10,
-        max_stock_level: 50,
-        unit: 'kg',
-        cost_per_unit: 3.50,
-        supplier: 'Fresh Farm Co.',
-        expiry_date: '2024-12-30',
-        last_updated: '2024-12-20',
-        description: 'Organic Roma tomatoes for pizza sauce'
-      },
-      {
-        id: 2,
-        name: 'Ground Beef',
-        category: 'Meat & Poultry',
-        current_stock: 5,
-        min_stock_level: 8,
-        max_stock_level: 25,
-        unit: 'kg',
-        cost_per_unit: 12.99,
-        supplier: 'Premium Meats Ltd.',
-        expiry_date: '2024-12-25',
-        last_updated: '2024-12-19',
-        description: '80/20 ground beef for burgers'
-      },
-      {
-        id: 3,
-        name: 'Mozzarella Cheese',
-        category: 'Dairy',
-        current_stock: 20,
-        min_stock_level: 15,
-        max_stock_level: 40,
-        unit: 'kg',
-        cost_per_unit: 8.75,
-        supplier: 'Dairy Fresh Inc.',
-        expiry_date: '2024-12-28',
-        last_updated: '2024-12-21',
-        description: 'Part-skim mozzarella for pizzas'
-      },
-      {
-        id: 4,
-        name: 'Olive Oil',
-        category: 'Other',
-        current_stock: 2,
-        min_stock_level: 5,
-        max_stock_level: 15,
-        unit: 'bottles',
-        cost_per_unit: 15.99,
-        supplier: 'Mediterranean Imports',
-        expiry_date: '2025-06-15',
-        last_updated: '2024-12-18',
-        description: 'Extra virgin olive oil for cooking'
-      }
-    ];
-    setInventoryItems(mockInventory);
-  }, []);
+  // Take out form
+  const [takeOutData, setTakeOutData] = useState({
+    quantity: '',
+    reason: '',
+    notes: ''
+  });
 
-  // Get stock status
-  const getStockStatus = (item) => {
-    if (item.current_stock <= 0) return 'out-of-stock';
-    if (item.current_stock <= item.min_stock_level) return 'low-stock';
-    if (item.current_stock >= item.max_stock_level) return 'overstock';
-    return 'in-stock';
+  // Activity logs state
+  const [activityLogs, setActivityLogs] = useState([]);
+  const [showActivityLogsModal, setShowActivityLogsModal] = useState(false);
+
+  // Get current user information for logging
+  const getCurrentUser = () => {
+    if (!user) return null;
+    
+    console.log('Current user:', user);
+    console.log('Current userRole:', userRole);
+    console.log('Current userRestaurantId:', userRestaurantId);
+    
+    return {
+      id: user.id,
+      name: getDisplayName(),
+      email: user.email,
+      role: userRole || 'unknown'
+    };
   };
 
-  // Get status color
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'out-of-stock': return 'text-red-600 bg-red-100';
-      case 'low-stock': return 'text-yellow-600 bg-yellow-100';
-      case 'overstock': return 'text-blue-600 bg-blue-100';
-      default: return 'text-green-600 bg-green-100';
+  // Get display name for user
+  const getDisplayName = () => {
+    if (!user) return 'Unknown User';
+    
+    // Try to get full name from metadata first
+    if (user.user_metadata?.full_name) {
+      return user.user_metadata.full_name;
+    }
+    
+    // Fallback to email
+    return user.email || 'Unknown User';
+  };
+
+  // Get role display name
+  const getRoleDisplayName = (role) => {
+    switch (role) {
+      case 'admin':
+        return 'Super Admin';
+      case 'manager':
+        return 'Restaurant Manager';
+      case 'captain':
+        return 'Restaurant Captain';
+      case 'staff':
+        return 'Staff Member';
+      default:
+        return 'Unknown Role';
     }
   };
 
-  // Filter and sort items
-  const filteredItems = inventoryItems
-    .filter(item => {
-      const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           item.supplier.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = filterCategory === 'all' || item.category === filterCategory;
-      const matchesStatus = filterStatus === 'all' || getStockStatus(item) === filterStatus;
-      return matchesSearch && matchesCategory && matchesStatus;
-    })
-    .sort((a, b) => {
-      let aValue = a[sortBy];
-      let bValue = b[sortBy];
-      
-      if (typeof aValue === 'string') {
-        aValue = aValue.toLowerCase();
-        bValue = bValue.toLowerCase();
-      }
-      
-      if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
-      }
-    });
+  // Load inventory data
+  useEffect(() => {
+    if (userRestaurantId) {
+    loadInventoryData();
+    }
+  }, [userRestaurantId]);
 
-  // Get dashboard stats
-  const stats = {
-    total: inventoryItems.length,
-    lowStock: inventoryItems.filter(item => getStockStatus(item) === 'low-stock').length,
-    outOfStock: inventoryItems.filter(item => getStockStatus(item) === 'out-of-stock').length,
-    totalValue: inventoryItems.reduce((sum, item) => sum + (item.current_stock * item.cost_per_unit), 0)
+  // Update stats when inventory changes
+  useEffect(() => {
+    setStats(getInventoryStats(inventoryItems));
+  }, [inventoryItems]);
+
+  const loadInventoryData = async () => {
+    if (!userRestaurantId) {
+      console.log('No restaurant ID available');
+      setErrorMsg('No restaurant assigned. Please contact an administrator.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { data, error } = await inventoryService.getAllItems(userRestaurantId);
+      
+      if (error) throw new Error(error);
+      
+      console.log('Setting inventory items:', data);
+      setInventoryItems(data);
+      
+      // If no data, show a message
+      if (!data || data.length === 0) {
+        setErrorMsg('No inventory items found. Add some items to get started.');
+      }
+    } catch (error) {
+      console.error('Error loading inventory data:', error);
+      setErrorMsg('Failed to load inventory data: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // Load activity logs
+  const loadActivityLogs = async () => {
+    if (!userRestaurantId) return;
+
+    try {
+      const { data, error } = await inventoryService.getActivityLogs(userRestaurantId);
+        if (error) throw new Error(error);
+      setActivityLogs(data);
+    } catch (error) {
+      console.error('Error loading activity logs:', error);
+      setErrorMsg('Failed to load activity logs: ' + error.message);
+    }
+  };
+
+  // Filter and sort items - Fixed version
+  const filteredItems = useMemo(() => {
+    console.log('Search term:', searchTerm);
+    console.log('Inventory items count:', inventoryItems.length);
+    console.log('Sample item:', inventoryItems[0]);
+    
+    if (!inventoryItems || inventoryItems.length === 0) {
+      return [];
+    }
+    
+    return inventoryItems
+      .filter(item => {
+        // If no search term, only apply category and status filters
+        if (!searchTerm || searchTerm.trim() === '') {
+          const matchesCategory = filterCategory === 'all' || item.category === filterCategory;
+          const matchesStatus = filterStatus === 'all' || getStockStatus(item) === filterStatus;
+          return matchesCategory && matchesStatus;
+        }
+        
+        // Apply search filter
+        const searchLower = searchTerm.toLowerCase().trim();
+        const matchesSearch = 
+          (item.name && item.name.toLowerCase().includes(searchLower)) ||
+          (item.supplier && item.supplier.toLowerCase().includes(searchLower)) ||
+          (item.description && item.description.toLowerCase().includes(searchLower)) ||
+          (item.barcode && item.barcode.toLowerCase().includes(searchLower));
+        
+        const matchesCategory = filterCategory === 'all' || item.category === filterCategory;
+        const matchesStatus = filterStatus === 'all' || getStockStatus(item) === filterStatus;
+        
+        console.log(`Item "${item.name}": search=${matchesSearch}, category=${matchesCategory}, status=${matchesStatus}`);
+        
+        return matchesSearch && matchesCategory && matchesStatus;
+      })
+      .sort((a, b) => {
+        let aValue = a[sortBy];
+        let bValue = b[sortBy];
+        
+        if (typeof aValue === 'string') {
+          aValue = aValue.toLowerCase();
+          bValue = bValue.toLowerCase();
+        }
+        
+        if (sortOrder === 'asc') {
+          return aValue > bValue ? 1 : -1;
+        } else {
+          return aValue < bValue ? 1 : -1;
+        }
+      });
+  }, [inventoryItems, searchTerm, filterCategory, filterStatus, sortBy, sortOrder]);
 
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -180,29 +278,32 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
     
     try {
       setLoading(true);
+      const currentUser = getCurrentUser();
       
       if (showEditModal && selectedItem) {
         // Update existing item
+        const { data, error } = await inventoryService.updateItem(
+          selectedItem.id, 
+          formData, 
+          userRestaurantId,
+          currentUser
+        );
+        if (error) throw new Error(error);
+        
         setInventoryItems(prev => 
-          prev.map(item => 
-            item.id === selectedItem.id 
-              ? { ...item, ...formData, last_updated: new Date().toISOString().split('T')[0] }
-              : item
-          )
+          prev.map(item => item.id === selectedItem.id ? data : item)
         );
         setSuccessMsg('Inventory item updated successfully!');
       } else {
         // Add new item
-        const newItem = {
-          id: Date.now(),
-          ...formData,
-          current_stock: parseFloat(formData.current_stock),
-          min_stock_level: parseFloat(formData.min_stock_level),
-          max_stock_level: parseFloat(formData.max_stock_level),
-          cost_per_unit: parseFloat(formData.cost_per_unit),
-          last_updated: new Date().toISOString().split('T')[0]
-        };
-        setInventoryItems(prev => [...prev, newItem]);
+        const { data, error } = await inventoryService.addItem(
+          formData, 
+          userRestaurantId,
+          currentUser
+        );
+        if (error) throw new Error(error);
+        
+        setInventoryItems(prev => [...prev, data]);
         setSuccessMsg('New inventory item added successfully!');
       }
       
@@ -214,16 +315,90 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
     }
   };
 
+  // Handle stock update
+  const handleStockUpdate = async (e) => {
+    e.preventDefault();
+    
+    try {
+      setLoading(true);
+      const currentUser = getCurrentUser();
+      const { data, error } = await inventoryService.updateStock(
+        selectedItem.id, 
+        parseFloat(stockUpdateData.newStockLevel),
+        stockUpdateData.reason,
+        stockUpdateData.notes,
+        userRestaurantId,
+        currentUser
+      );
+      if (error) throw new Error(error);
+      
+      setInventoryItems(prev => 
+        prev.map(item => item.id === selectedItem.id ? data : item)
+      );
+      setSuccessMsg('Stock level updated successfully!');
+      setShowStockUpdateModal(false);
+      setStockUpdateData({ newStockLevel: '', reason: '', notes: '' });
+    } catch (error) {
+      setErrorMsg('Failed to update stock level: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle reorder
+  const handleReorder = async (e) => {
+    e.preventDefault();
+    
+    try {
+      setLoading(true);
+      // Simulate reorder process
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setSuccessMsg(`Reorder request sent for ${reorderData.quantity} units of ${selectedItem.name}`);
+      setShowReorderModal(false);
+      setReorderData({ quantity: '', expectedDelivery: '', notes: '' });
+    } catch (error) {
+      setErrorMsg('Failed to process reorder: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Handle delete
   const handleDelete = async (itemId) => {
     if (!window.confirm('Are you sure you want to delete this inventory item?')) return;
     
     try {
       setLoading(true);
+      const currentUser = getCurrentUser();
+      const { error } = await inventoryService.deleteItem(itemId, userRestaurantId, currentUser);
+      if (error) throw new Error(error);
+      
       setInventoryItems(prev => prev.filter(item => item.id !== itemId));
       setSuccessMsg('Inventory item deleted successfully!');
     } catch (error) {
       setErrorMsg('Failed to delete inventory item: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle bulk delete
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Are you sure you want to delete ${selectedItems.length} items?`)) return;
+    
+    try {
+      setLoading(true);
+      const currentUser = getCurrentUser();
+      for (const itemId of selectedItems) {
+        await inventoryService.deleteItem(itemId, userRestaurantId, currentUser);
+      }
+      
+      setInventoryItems(prev => prev.filter(item => !selectedItems.includes(item.id)));
+      setSelectedItems([]);
+      setSuccessMsg(`${selectedItems.length} items deleted successfully!`);
+    } catch (error) {
+      setErrorMsg('Failed to delete items: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -234,6 +409,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
     setShowAddModal(false);
     setShowEditModal(false);
     setShowViewModal(false);
+    setShowStockUpdateModal(false);
+    setShowReorderModal(false);
+    setShowTakeOutModal(false);
     setSelectedItem(null);
     setFormData({
       name: '',
@@ -244,8 +422,14 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
       unit: '',
       cost_per_unit: '',
       supplier: '',
+      supplier_contact: '',
+      supplier_email: '',
       expiry_date: '',
-      description: ''
+      description: '',
+      barcode: '',
+      location: '',
+      reorder_point: '',
+      lead_time_days: ''
     });
   };
 
@@ -261,8 +445,14 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
       unit: item.unit,
       cost_per_unit: item.cost_per_unit.toString(),
       supplier: item.supplier,
+      supplier_contact: item.supplier_contact || '',
+      supplier_email: item.supplier_email || '',
       expiry_date: item.expiry_date,
-      description: item.description || ''
+      description: item.description || '',
+      barcode: item.barcode || '',
+      location: item.location || '',
+      reorder_point: item.reorder_point?.toString() || '',
+      lead_time_days: item.lead_time_days?.toString() || ''
     });
     setShowEditModal(true);
   };
@@ -273,6 +463,126 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
     setShowViewModal(true);
   };
 
+  // Handle stock update modal
+  const handleStockUpdateClick = (item) => {
+    setSelectedItem(item);
+    setStockUpdateData({ newStockLevel: item.current_stock.toString(), reason: '', notes: '' });
+    setShowStockUpdateModal(true);
+  };
+
+  // Handle reorder modal
+  const handleReorderClick = (item) => {
+    setSelectedItem(item);
+    setReorderData({ 
+      quantity: Math.max(1, item.max_stock_level - item.current_stock).toString(), 
+      expectedDelivery: '', 
+      notes: '' 
+    });
+    setShowReorderModal(true);
+  };
+
+  // Handle export
+  const handleExport = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await inventoryService.exportInventory();
+      if (error) throw new Error(error);
+      
+      // Simulate download
+      const link = document.createElement('a');
+      link.href = data.url;
+      link.download = data.filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      setSuccessMsg('Inventory exported successfully!');
+    } catch (error) {
+      setErrorMsg('Failed to export inventory: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle import
+  const handleImport = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    try {
+      setLoading(true);
+      const { data, error } = await inventoryService.importInventory(file);
+      if (error) throw new Error(error);
+      
+      setSuccessMsg(`Successfully imported ${data.imported} items!`);
+      loadInventoryData(); // Reload data
+    } catch (error) {
+      setErrorMsg('Failed to import inventory: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle item selection
+  const handleItemSelect = (itemId) => {
+    setSelectedItems(prev => 
+      prev.includes(itemId) 
+        ? prev.filter(id => id !== itemId)
+        : [...prev, itemId]
+    );
+  };
+
+  // Handle select all
+  const handleSelectAll = () => {
+    if (selectedItems.length === filteredItems.length) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems(filteredItems.map(item => item.id));
+    }
+  };
+
+  // Handle take out
+  const handleTakeOut = async (e) => {
+    e.preventDefault();
+    
+    try {
+      setLoading(true);
+      const currentUser = getCurrentUser();
+      const { data, error } = await inventoryService.takeOutStock(
+        selectedItem.id, 
+        parseFloat(stockUpdateData.newStockLevel),
+        stockUpdateData.reason,
+        stockUpdateData.notes,
+        userRestaurantId,
+        currentUser
+      );
+      if (error) throw new Error(error);
+      
+      setInventoryItems(prev => 
+        prev.map(item => item.id === selectedItem.id ? data : item)
+      );
+      setSuccessMsg('Stock taken out successfully!');
+      setShowTakeOutModal(false);
+      setStockUpdateData({ newStockLevel: '', reason: '', notes: '' });
+    } catch (error) {
+      setErrorMsg('Failed to take out stock: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Check if user has permission to manage inventory
+  if (!userRestaurantId) {
+  return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-500">No restaurant selected or access denied.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -282,7 +592,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
             <Package className="w-8 h-8 text-orange-500" />
             Inventory Management
           </h1>
-          <p className="text-gray-600 mt-1">Track and manage your restaurant inventory</p>
+          <p className="text-gray-600 mt-1">
+            Track and manage your restaurant inventory
+          </p>
         </div>
         
         <div className="flex flex-wrap gap-2">
@@ -293,20 +605,52 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
             <Plus className="w-4 h-4" />
             Add Item
           </button>
-          <button className="flex items-center gap-2 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+          <button
+            onClick={() => setShowTakeOutModal(true)}
+            className="flex items-center gap-2 bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors"
+          >
+            <Minus className="w-4 h-4" />
+            Take Out
+          </button>
+          <label className="flex items-center gap-2 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors cursor-pointer">
             <Upload className="w-4 h-4" />
             Import
-          </button>
-          <button className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+            <input
+              type="file"
+              accept=".csv,.xlsx"
+              onChange={handleImport}
+              className="hidden"
+            />
+          </label>
+          <button 
+            onClick={handleExport}
+            className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+          >
             <Download className="w-4 h-4" />
             Export
           </button>
+          <button 
+            onClick={loadInventoryData}
+            className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Refresh
+          </button>
+          {selectedItems.length > 0 && (
+            <button 
+              onClick={handleBulkDelete}
+              className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete ({selectedItems.length})
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-lg shadow border">
+      {/* Enhanced Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="bg-white p-4 rounded-lg shadow border hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Items</p>
@@ -316,7 +660,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
           </div>
         </div>
         
-        <div className="bg-white p-4 rounded-lg shadow border">
+        <div className="bg-white p-4 rounded-lg shadow border hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Low Stock</p>
@@ -326,7 +670,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
           </div>
         </div>
         
-        <div className="bg-white p-4 rounded-lg shadow border">
+        <div className="bg-white p-4 rounded-lg shadow border hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Out of Stock</p>
@@ -336,13 +680,23 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
           </div>
         </div>
         
-        <div className="bg-white p-4 rounded-lg shadow border">
+        <div className="bg-white p-4 rounded-lg shadow border hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Value</p>
               <p className="text-2xl font-bold text-green-600">₹{stats.totalValue.toFixed(2)}</p>
             </div>
-            <TrendingUp className="w-8 h-8 text-green-500" />
+            <IndianRupee className="w-8 h-8 text-green-500" />
+          </div>
+        </div>
+        
+        <div className="bg-white p-4 rounded-lg shadow border hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Expiring Soon</p>
+              <p className="text-2xl font-bold text-orange-600">{stats.expiringSoon}</p>
+            </div>
+            <Clock className="w-8 h-8 text-orange-500" />
           </div>
         </div>
       </div>
@@ -355,7 +709,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
-                placeholder="Search items or suppliers..."
+                placeholder="Search items, suppliers, barcodes, or descriptions..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
@@ -369,7 +723,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
           >
             <option value="all">All Categories</option>
-            {categories.map(category => (
+            {INVENTORY_CATEGORIES.map(category => (
               <option key={category} value={category}>{category}</option>
             ))}
           </select>
@@ -380,10 +734,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
           >
             <option value="all">All Status</option>
-            <option value="in-stock">In Stock</option>
-            <option value="low-stock">Low Stock</option>
-            <option value="out-of-stock">Out of Stock</option>
-            <option value="overstock">Overstock</option>
+            <option value={STOCK_STATUS.IN_STOCK}>In Stock</option>
+            <option value={STOCK_STATUS.LOW_STOCK}>Low Stock</option>
+            <option value={STOCK_STATUS.OUT_OF_STOCK}>Out of Stock</option>
           </select>
           
           <select
@@ -401,16 +754,49 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
             <option value="current_stock-desc">Stock High-Low</option>
             <option value="expiry_date-asc">Expiry Soon</option>
             <option value="cost_per_unit-desc">Cost High-Low</option>
+            <option value="last_updated-desc">Recently Updated</option>
           </select>
+
+          <div className="flex gap-2">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`px-3 py-2 rounded-lg border transition-colors ${
+                viewMode === 'table' 
+                  ? 'bg-orange-500 text-white border-orange-500' 
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <FileText className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`px-3 py-2 rounded-lg border transition-colors ${
+                viewMode === 'grid' 
+                  ? 'bg-orange-500 text-white border-orange-500' 
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <BarChart3 className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Inventory Table */}
+      {/* Enhanced Inventory Table */}
+      {viewMode === 'table' && (
       <div className="bg-white rounded-lg shadow border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <input
+                      type="checkbox"
+                      checked={selectedItems.length === filteredItems.length && filteredItems.length > 0}
+                      onChange={handleSelectAll}
+                      className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                    />
+                  </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Item Details
                 </th>
@@ -440,7 +826,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredItems.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan="9" className="px-6 py-12 text-center text-gray-500">
                     <Package className="w-12 h-12 mx-auto text-gray-300 mb-4" />
                     <p className="text-lg font-medium">No inventory items found</p>
                     <p className="text-sm">Try adjusting your filters or add new items to get started.</p>
@@ -449,12 +835,36 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
               ) : (
                 filteredItems.map((item) => {
                   const status = getStockStatus(item);
+                  const daysUntilExpiry = Math.ceil((new Date(item.expiry_date) - new Date()) / (1000 * 60 * 60 * 24));
+                  const isExpiringSoon = daysUntilExpiry <= 15 && daysUntilExpiry > 0;
+                    
                   return (
                     <tr key={item.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4">
+                          <input
+                            type="checkbox"
+                            checked={selectedItems.includes(item.id)}
+                            onChange={() => handleItemSelect(item.id)}
+                            className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                          />
+                        </td>
                       <td className="px-6 py-4">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{item.name}</div>
-                          <div className="text-sm text-gray-500">Updated: {item.last_updated}</div>
+                            <div className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                              {item.name}
+                              {item.barcode && (
+                                <span className="text-xs text-gray-500">#{item.barcode}</span>
+                              )}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              Updated: {item.last_updated}
+                              {item.location && (
+                                <span className="ml-2 flex items-center gap-1">
+                                  <MapPin className="w-3 h-3" />
+                                  {item.location}
+                                </span>
+                              )}
+                            </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -469,15 +879,34 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                         <div className="text-xs text-gray-500">
                           Min: {item.min_stock_level} | Max: {item.max_stock_level}
                         </div>
+                          {item.reorder_point && (
+                            <div className="text-xs text-blue-600">
+                              Reorder at: {item.reorder_point}
+                            </div>
+                          )}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
-                        ${item.cost_per_unit.toFixed(2)}
+                          ₹{item.cost_per_unit.toFixed(2)}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        {item.supplier}
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900">{item.supplier}</div>
+                          {item.supplier_contact && (
+                            <div className="text-xs text-gray-500 flex items-center gap-1">
+                              <Phone className="w-3 h-3" />
+                              {item.supplier_contact}
+                            </div>
+                          )}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900">
                         {new Date(item.expiry_date).toLocaleDateString()}
+                          </div>
+                          {isExpiringSoon && (
+                            <div className="text-xs text-orange-600 flex items-center gap-1">
+                              <AlertCircle className="w-3 h-3" />
+                              Expires in {daysUntilExpiry} days
+                            </div>
+                          )}
                       </td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
@@ -494,11 +923,27 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                             <Eye className="w-4 h-4" />
                           </button>
                           <button
+                            onClick={() => handleStockUpdateClick(item)}
+                            className="text-green-600 hover:text-green-800"
+                            title="Update Stock"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          {status === STOCK_STATUS.LOW_STOCK || status === STOCK_STATUS.OUT_OF_STOCK ? (
+                            <button
+                              onClick={() => handleReorderClick(item)}
+                              className="text-orange-600 hover:text-orange-800"
+                              title="Reorder"
+                            >
+                              <ShoppingCart className="w-4 h-4" />
+                            </button>
+                          ) : null}
+                          <button
                             onClick={() => handleEdit(item)}
                             className="text-orange-600 hover:text-orange-800"
                             title="Edit Item"
                           >
-                            <Edit3 className="w-4 h-4" />
+                            <Settings className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(item.id)}
@@ -517,11 +962,298 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
           </table>
         </div>
       </div>
+      )}
 
-      {/* Add/Edit Modal */}
+      {/* Grid View */}
+      {viewMode === 'grid' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filteredItems.length === 0 ? (
+            <div className="col-span-full text-center py-12">
+              <Package className="w-12 h-12 mx-auto text-gray-300 mb-4" />
+              <p className="text-lg font-medium text-gray-500">No inventory items found</p>
+              <p className="text-sm text-gray-400">Try adjusting your filters or add new items to get started.</p>
+            </div>
+          ) : (
+            filteredItems.map((item) => {
+              const status = getStockStatus(item);
+              const daysUntilExpiry = Math.ceil((new Date(item.expiry_date) - new Date()) / (1000 * 60 * 60 * 24));
+              const isExpiringSoon = daysUntilExpiry <= 15 && daysUntilExpiry > 0;
+
+              // Add conditional background color based on status
+              let tileBg = "bg-white";
+              if (status === STOCK_STATUS.LOW_STOCK) tileBg = "bg-yellow-50";
+              if (status === STOCK_STATUS.OUT_OF_STOCK) tileBg = "bg-red-50";
+
+              return (
+                <div
+                  key={item.id}
+                  className={`${tileBg} rounded-lg shadow border hover:shadow-md transition-shadow`}
+                >
+                  <div className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <h3 className="text-sm font-medium text-gray-900 truncate">{item.name}</h3>
+                        {item.barcode && (
+                          <p className="text-xs text-gray-500">#{item.barcode}</p>
+                        )}
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={selectedItems.includes(item.id)}
+                        onChange={() => handleItemSelect(item.id)}
+                        className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-500">Category</span>
+                        <span className="text-xs font-medium text-gray-900">{item.category}</span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-500">Stock</span>
+                        <span className="text-xs font-medium text-gray-900">
+                          {item.current_stock} {item.unit}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-500">Cost</span>
+                        <span className="text-xs font-medium text-gray-900">₹{item.cost_per_unit.toFixed(2)}</span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-500">Supplier</span>
+                        <span className="text-xs font-medium text-gray-900 truncate">{item.supplier}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
+                          {status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </span>
+                        {isExpiringSoon && (
+                          <span className="text-xs text-orange-600 flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" />
+                            {daysUntilExpiry}d
+                          </span>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center justify-between gap-1">
+                        <button
+                          onClick={() => handleView(item)}
+                          className="flex-1 text-xs bg-blue-50 text-blue-600 py-1 rounded hover:bg-blue-100 transition-colors"
+                        >
+                          View
+                        </button>
+                        <button
+                          onClick={() => handleStockUpdateClick(item)}
+                          className="flex-1 text-xs bg-green-50 text-green-600 py-1 rounded hover:bg-green-100 transition-colors"
+                        >
+                          Stock
+                        </button>
+                        <button
+                          onClick={() => handleEdit(item)}
+                          className="flex-1 text-xs bg-orange-50 text-orange-600 py-1 rounded hover:bg-orange-100 transition-colors"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          className="flex-1 text-xs bg-red-50 text-red-600 py-1 rounded hover:bg-red-100 transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+
+      {/* Enhanced View Modal */}
+      {showViewModal && selectedItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">Item Details</h3>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleStockUpdateClick(selectedItem)}
+                  className="flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded text-sm hover:bg-green-200 transition-colors"
+                >
+                  <Edit3 className="w-3 h-3" />
+                  Update Stock
+                </button>
+                <button
+                  onClick={handleCloseModal}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              {/* Basic Information */}
+              <div>
+                <h4 className="text-md font-medium text-gray-900 mb-4 flex items-center gap-2">
+                  <Info className="w-4 h-4" />
+                  Basic Information
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
+                    <p className="text-sm text-gray-900">{selectedItem.name}</p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                    <p className="text-sm text-gray-900">{selectedItem.category}</p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Barcode</label>
+                    <p className="text-sm text-gray-900">{selectedItem.barcode || 'Not specified'}</p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                    <p className="text-sm text-gray-900">{selectedItem.location || 'Not specified'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stock Information */}
+              <div>
+                <h4 className="text-md font-medium text-gray-900 mb-4 flex items-center gap-2">
+                  <Package className="w-4 h-4" />
+                  Stock Information
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Current Stock</label>
+                    <p className="text-sm text-gray-900">
+                      {selectedItem.current_stock} {selectedItem.unit}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Stock Range</label>
+                    <p className="text-sm text-gray-900">
+                      Min: {selectedItem.min_stock_level} | Max: {selectedItem.max_stock_level}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Reorder Point</label>
+                    <p className="text-sm text-gray-900">
+                      {selectedItem.reorder_point || 'Not set'}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Lead Time</label>
+                    <p className="text-sm text-gray-900">
+                      {selectedItem.lead_time_days ? `${selectedItem.lead_time_days} days` : 'Not specified'}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(getStockStatus(selectedItem))}`}>
+                      {getStockStatus(selectedItem).replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </span>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Last Updated</label>
+                    <p className="text-sm text-gray-900">{selectedItem.last_updated}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Financial Information */}
+              <div>
+                <h4 className="text-md font-medium text-gray-900 mb-4 flex items-center gap-2">
+                  <IndianRupee className="w-4 h-4" />
+                  Financial Information
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost</label>
+                    <p className="text-sm text-gray-900">
+                      ₹{selectedItem.cost_per_unit.toFixed(2)}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Total Value</label>
+                    <p className="text-sm text-gray-900">
+                      ₹{(selectedItem.current_stock * selectedItem.cost_per_unit).toFixed(2)}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
+                    <p className="text-sm text-gray-900">
+                      {new Date(selectedItem.expiry_date).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+                  
+              {/* Supplier Information */}
+              <div>
+                <h4 className="text-md font-medium text-gray-900 mb-4 flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  Supplier Information
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Supplier Name</label>
+                    <p className="text-sm text-gray-900">{selectedItem.supplier}</p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Contact</label>
+                    <p className="text-sm text-gray-900">{selectedItem.supplier_contact || 'Not specified'}</p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <p className="text-sm text-gray-900">{selectedItem.supplier_email || 'Not specified'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <h4 className="text-md font-medium text-gray-900 mb-4 flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Description
+                </h4>
+                <div>
+                  <p className="text-sm text-gray-900 whitespace-pre-wrap bg-gray-50 p-3 rounded">
+                    {selectedItem.description || 'No description available'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Enhanced Add/Edit Modal */}
       {(showAddModal || showEditModal) && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b">
               <h3 className="text-lg font-semibold text-gray-900">
                 {showEditModal ? 'Edit Inventory Item' : 'Add New Inventory Item'}
@@ -534,7 +1266,13 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
               </button>
             </div>
             
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              {/* Basic Information */}
+              <div>
+                <h4 className="text-md font-medium text-gray-900 mb-4 flex items-center gap-2">
+                  <Info className="w-4 h-4" />
+                  Basic Information
+                </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -560,12 +1298,47 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                   >
                     <option value="">Select Category</option>
-                    {categories.map(category => (
+                      {INVENTORY_CATEGORIES.map(category => (
                       <option key={category} value={category}>{category}</option>
                     ))}
                   </select>
                 </div>
                 
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Barcode
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.barcode}
+                      onChange={(e) => setFormData(prev => ({ ...prev, barcode: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      placeholder="Optional barcode"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Location
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.location}
+                      onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      placeholder="e.g., Refrigerator A1"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Stock Information */}
+              <div>
+                <h4 className="text-md font-medium text-gray-900 mb-4 flex items-center gap-2">
+                  <Package className="w-4 h-4" />
+                  Stock Information
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Current Stock *
@@ -591,7 +1364,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                   >
                     <option value="">Select Unit</option>
-                    {units.map(unit => (
+                      {INVENTORY_UNITS.map(unit => (
                       <option key={unit} value={unit}>{unit}</option>
                     ))}
                   </select>
@@ -625,6 +1398,42 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   />
                 </div>
                 
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Reorder Point
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={formData.reorder_point}
+                      onChange={(e) => setFormData(prev => ({ ...prev, reorder_point: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      placeholder="Auto-reorder threshold"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Lead Time (Days)
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.lead_time_days}
+                      onChange={(e) => setFormData(prev => ({ ...prev, lead_time_days: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      placeholder="Days to receive order"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Financial Information */}
+              <div>
+                <h4 className="text-md font-medium text-gray-900 mb-4 flex items-center gap-2">
+                  <IndianRupee className="w-4 h-4" />
+                  Financial Information
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Cost per Unit *
@@ -641,7 +1450,28 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Supplier *
+                      Expiry Date
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.expiry_date}
+                      onChange={(e) => setFormData(prev => ({ ...prev, expiry_date: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Supplier Information */}
+              <div>
+                <h4 className="text-md font-medium text-gray-900 mb-4 flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  Supplier Information
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Supplier Name *
                   </label>
                   <input
                     type="text"
@@ -652,19 +1482,41 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   />
                 </div>
                 
-                <div className="md:col-span-2">
+                  <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Expiry Date
+                      Supplier Contact
                   </label>
                   <input
-                    type="date"
-                    value={formData.expiry_date}
-                    onChange={(e) => setFormData(prev => ({ ...prev, expiry_date: e.target.value }))}
+                      type="text"
+                      value={formData.supplier_contact}
+                      onChange={(e) => setFormData(prev => ({ ...prev, supplier_contact: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      placeholder="Phone number"
                   />
                 </div>
                 
-                <div className="md:col-span-2">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Supplier Email
+                    </label>
+                    <input
+                      type="email"
+                      value={formData.supplier_email}
+                      onChange={(e) => setFormData(prev => ({ ...prev, supplier_email: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      placeholder="Email address"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <h4 className="text-md font-medium text-gray-900 mb-4 flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Additional Information
+                </h4>
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Description
                   </label>
@@ -699,91 +1551,386 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
         </div>
       )}
 
-      {/* View Modal */}
-      {showViewModal && selectedItem && (
+      {/* Stock Update Modal */}
+      {showStockUpdateModal && selectedItem && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
             <div className="flex items-center justify-between p-6 border-b">
-              <h3 className="text-lg font-semibold text-gray-900">Item Details</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Update Stock Level</h3>
               <button
-                onClick={handleCloseModal}
+                onClick={() => setShowStockUpdateModal(false)}
                 className="text-gray-400 hover:text-gray-600"
                 >
                   <X className="w-6 h-6" />
                 </button>
               </div>
               
-              <div className="p-6 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={handleStockUpdate} className="p-6 space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
-                    <p className="text-sm text-gray-900">{selectedItem.name}</p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Item Name
+                </label>
+                <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">{selectedItem.name}</p>
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                    <p className="text-sm text-gray-900">{selectedItem.category}</p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Current Stock
+                </label>
+                <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                  {selectedItem.current_stock} {selectedItem.unit}
+                </p>
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Current Stock</label>
-                    <p className="text-sm text-gray-900">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  New Stock Level *
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  required
+                  value={stockUpdateData.newStockLevel}
+                  onChange={(e) => setStockUpdateData(prev => ({ ...prev, newStockLevel: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Reason for Update
+                </label>
+                <select
+                  value={stockUpdateData.reason}
+                  onChange={(e) => setStockUpdateData(prev => ({ ...prev, reason: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                >
+                  <option value="">Select Reason</option>
+                  <option value="received">Received from supplier</option>
+                  <option value="used">Used in production</option>
+                  <option value="waste">Waste/Loss</option>
+                  <option value="adjustment">Stock adjustment</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Notes
+                </label>
+                <textarea
+                  rows="2"
+                  value={stockUpdateData.notes}
+                  onChange={(e) => setStockUpdateData(prev => ({ ...prev, notes: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  placeholder="Optional notes about this stock update..."
+                />
+              </div>
+              
+              <div className="flex justify-end space-x-3 pt-4 border-t">
+                <button
+                  type="button"
+                  onClick={() => setShowStockUpdateModal(false)}
+                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                >
+                  <Save className="w-4 h-4" />
+                  Update Stock
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Reorder Modal */}
+      {showReorderModal && selectedItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">Place Reorder</h3>
+              <button
+                onClick={() => setShowReorderModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleReorder} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Item Name
+                </label>
+                <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">{selectedItem.name}</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Current Stock
+                </label>
+                <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
                       {selectedItem.current_stock} {selectedItem.unit}
                     </p>
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Stock Range</label>
-                    <p className="text-sm text-gray-900">
-                      Min: {selectedItem.min_stock_level} | Max: {selectedItem.max_stock_level}
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Supplier
+                </label>
+                <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">{selectedItem.supplier}</p>
+                  </div>
+                  
+                  <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Quantity to Order *
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  required
+                  value={reorderData.quantity}
+                  onChange={(e) => setReorderData(prev => ({ ...prev, quantity: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+                  </div>
+                  
+                  <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Expected Delivery Date
+                </label>
+                <input
+                  type="date"
+                  value={reorderData.expectedDelivery}
+                  onChange={(e) => setReorderData(prev => ({ ...prev, expectedDelivery: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+                  </div>
+                  
+                  <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Notes
+                </label>
+                <textarea
+                  rows="2"
+                  value={reorderData.notes}
+                  onChange={(e) => setReorderData(prev => ({ ...prev, notes: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  placeholder="Any special instructions or notes..."
+                />
+                  </div>
+                  
+              <div className="flex justify-end space-x-3 pt-4 border-t">
+                <button
+                  type="button"
+                  onClick={() => setShowReorderModal(false)}
+                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
+                >
+                  <ShoppingCart className="w-4 h-4" />
+                  Place Order
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Take Out Modal */}
+      {showTakeOutModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">Take Out from Inventory</h3>
+              <button
+                onClick={() => setShowTakeOutModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleTakeOut} className="p-6 space-y-4">
+                  <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Select Item *
+                </label>
+                <select
+                  required
+                  value={selectedItem?.id || ''}
+                  onChange={(e) => {
+                    const item = inventoryItems.find(item => item.id === parseInt(e.target.value));
+                    setSelectedItem(item);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                >
+                  <option value="">Select an item to take out</option>
+                  {inventoryItems
+                    .filter(item => item.current_stock > 0)
+                    .map(item => (
+                      <option key={item.id} value={item.id}>
+                        {item.name} - {item.current_stock} {item.unit}
+                      </option>
+                    ))
+                  }
+                </select>
+                  </div>
+                  
+              {selectedItem && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Current Stock
+                    </label>
+                    <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                      {selectedItem.current_stock} {selectedItem.unit}
                     </p>
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost</label>
-                    <p className="text-sm text-gray-900">
-                      ${selectedItem.cost_per_unit.toFixed(2)}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Supplier</label>
-                    <p className="text-sm text-gray-900">{selectedItem.supplier}</p>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
-                    <p className="text-sm text-gray-900">
-                      {new Date(selectedItem.expiry_date).toLocaleDateString()}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(getStockStatus(selectedItem))}`}>
-                      {getStockStatus(selectedItem).replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                    </span>
-                  </div>
-                  
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                    <p className="text-sm text-gray-900 whitespace-pre-wrap">
-                      {selectedItem.description || 'No description available'}
-                    </p>
-                  </div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Quantity to Remove *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      max={selectedItem.current_stock}
+                      required
+                      value={takeOutData.quantity}
+                      onChange={(e) => setTakeOutData(prev => ({ ...prev, quantity: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      placeholder={`Max: ${selectedItem.current_stock} ${selectedItem.unit}`}
+                    />
                 </div>
                 
-                <div className="pt-4 border-t">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Reason for Removal
+                    </label>
+                    <select
+                      value={takeOutData.reason}
+                      onChange={(e) => setTakeOutData(prev => ({ ...prev, reason: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    >
+                      <option value="">Select Reason</option>
+                      <option value="food_preparation">Food Preparation</option>
+                      <option value="sold">Sold to Customer</option>
+                      <option value="waste">Waste/Expired</option>
+                      <option value="damaged">Damaged/Spilled</option>
+                      <option value="staff_meal">Staff Meal</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Notes
+                    </label>
+                    <textarea
+                      rows="2"
+                      value={takeOutData.notes}
+                      onChange={(e) => setTakeOutData(prev => ({ ...prev, notes: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      placeholder="Optional notes about this removal..."
+                    />
+                  </div>
+                </>
+              )}
+              
+              <div className="flex justify-end space-x-3 pt-4 border-t">
                   <button
                     type="button"
-                    onClick={handleCloseModal}
-                    className="w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
-                  >
-                    Close Details
+                  onClick={() => {
+                    setShowTakeOutModal(false);
+                    setSelectedItem(null);
+                    setTakeOutData({ quantity: '', reason: '', notes: '' });
+                  }}
+                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!selectedItem}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  <Minus className="w-4 h-4" />
+                  Take Out
                   </button>
                 </div>
+            </form>
               </div>
             </div>
+          )}
+
+      {/* Activity Logs Modal */}
+      {showActivityLogsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">Activity Logs</h3>
+              <button
+                onClick={() => setShowActivityLogsModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <div className="space-y-4">
+                {activityLogs.map((log) => (
+                  <div key={log.id} className="bg-gray-50 rounded-lg p-4 border-l-4 border-blue-500">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-gray-900">
+                              {log.user_name}
+                            </span>
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(log.user_role)}`}>
+                              {getRoleDisplayName(log.user_role)}
+                            </span>
+                          </div>
+                          <span className="text-sm text-gray-500">
+                            {new Date(log.timestamp).toLocaleString()}
+                          </span>
+                        </div>
+                        
+                        <div className="text-sm text-gray-700 mb-2">
+                          <span className="font-medium">{log.action.replace('_', ' ').toUpperCase()}</span>
+                          {log.quantity_changed !== 0 && (
+                            <span className={`ml-2 ${log.quantity_changed > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {log.quantity_changed > 0 ? '+' : ''}{log.quantity_changed} {getItemUnit(log.item_id)}
+                            </span>
+                          )}
+                        </div>
+                        
+                        {log.notes && (
+                          <p className="text-sm text-gray-600 mb-2">{log.notes}</p>
+                        )}
+                        
+                        <div className="text-xs text-gray-500">
+                          Stock: {log.old_value} → {log.new_value} {getItemUnit(log.item_id)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
           </div>
           )}
         </div>

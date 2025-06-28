@@ -8,13 +8,15 @@ import OrderManagement from '../../components/admin/OrderManagement';
 import UserManagement from '../../components/admin/UserManagement';
 import OffersManagement from '../../components/admin/OffersManagement';
 import SettingsManagement from '../../components/admin/Settings';
+import InventoryManagement from '../../components/admin/InventoryManagement';
 import LogoutPopup from '../../components/auth/LogoutPopup';
 import NotificationSound from '../../components/admin/NotificationSound';
 import NotificationToast from '../../components/admin/NotificationToast';
 import AIAnalyticsChat from '../../components/admin/AIAnalyticsChat';
 import ManagerNotificationsToast from '../../components/admin/ManagerNotificationsToast';
 import QRManagement from '../../components/admin/QRManagement/QRManagement';
-import { X, ArrowLeft, Package, BarChart3, Sparkles, Plus, Building2, ChevronDown } from 'lucide-react';
+import InventoryActivityLogs from '../../components/admin/InventoryActivityLogs';
+import { X, ArrowLeft, Package, BarChart3, Sparkles, Plus, Building2, ChevronDown, Clock } from 'lucide-react';
 import { getAllFoodItems, getRestaurantFoodItems } from '../../api/foodService';
 import { supabase } from '../../supabase';
 import { updateOrderStatus as updateOrderStatusService } from '../../api/orderService';
@@ -71,17 +73,29 @@ const AdminDashboard = () => {
   const [showRestaurantSelector, setShowRestaurantSelector] = useState(false);
   const [loadingRestaurants, setLoadingRestaurants] = useState(false);
 
-  // Menu items shared across components
-  const menuItems = [
-    { id: 'dashboard', icon: 'LayoutDashboard', label: 'Dashboard' },
-    { id: 'menu', icon: 'Utensils', label: 'Menu Management' },
-    { id: 'orders', icon: 'ShoppingCart', label: 'Order Management' },
-    { id: 'users', icon: 'Users', label: 'User Management' },
-    { id: 'offers', icon: 'Tag', label: 'Offers & Promotions' },
-    { id: 'qr', icon: 'QrCode', label: 'QR Management' },
-    { id: 'analytics', icon: 'BarChart3', label: 'AI Analytics' },
-    { id: 'settings', icon: 'Settings', label: 'Restaurant Information' },
-  ];
+  // Menu items shared across components - with role-based filtering
+  const getMenuItems = () => {
+    const baseItems = [
+      { id: 'dashboard', icon: 'LayoutDashboard', label: 'Dashboard' },
+      { id: 'menu', icon: 'Utensils', label: 'Menu Management' },
+      { id: 'orders', icon: 'ShoppingCart', label: 'Order Management' },
+      { id: 'inventory', icon: 'Package', label: 'Inventory Management' },
+      { id: 'users', icon: 'Users', label: 'User Management' },
+      { id: 'offers', icon: 'Tag', label: 'Offers & Promotions' },
+      { id: 'qr', icon: 'QrCode', label: 'QR Management' },
+      { id: 'settings', icon: 'Settings', label: 'Restaurant Information' },
+      { id: 'activity-logs', label: 'Activity Logs', icon: Clock },
+    ];
+
+    // Add AI Analytics only for managers and admins
+    if (contextUserRole === 'manager' || contextUserRole === 'admin' || contextIsAdmin()) {
+      baseItems.splice(7, 0, { id: 'analytics', icon: 'BarChart3', label: 'AI Analytics' });
+    }
+
+    return baseItems;
+  };
+
+  const menuItems = getMenuItems();
 
   const [notificationPermission, setNotificationPermission] = useState(
     typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'unsupported'
@@ -941,6 +955,14 @@ const AdminDashboard = () => {
                 />
               )}
 
+              {activeTab === 'inventory' && (
+                <InventoryManagement 
+                  setLoading={setLoading}
+                  setErrorMsg={setErrorMsg}
+                  setSuccessMsg={setSuccessMsg}
+                />
+              )}
+
               {activeTab === 'users' && <UserManagement />}
               {activeTab === 'offers' && (
                 <OffersManagement 
@@ -956,10 +978,19 @@ const AdminDashboard = () => {
                   setSuccessMsg={setSuccessMsg}
                 />
               )}
-              {activeTab === 'analytics' && <AIAnalyticsChat />}
+              {activeTab === 'analytics' && (contextUserRole === 'manager' || contextUserRole === 'admin' || contextIsAdmin()) && (
+                <AIAnalyticsChat />
+              )}
               {activeTab === 'settings' && (
                 <SettingsManagement 
                   currentUser={currentUser}
+                />
+              )}
+              {activeTab === 'activity-logs' && (
+                <InventoryActivityLogs 
+                  setLoading={setLoading} 
+                  setErrorMsg={setErrorMsg} 
+                  setSuccessMsg={setSuccessMsg} 
                 />
               )}
             </div>

@@ -13,7 +13,7 @@ import {
   Lightbulb,
   Target,
   Clock,
-  DollarSign,
+  IndianRupee,
   ShoppingCart,
   ChevronRight,
   RefreshCw,
@@ -47,6 +47,10 @@ const AIAnalyticsChat = () => {
   const messagesEndRef = useRef(null);
   const [dateRange, setDateRange] = useState('last7days');
   const [proactiveInsights, setProactiveInsights] = useState([]);
+  const [connectionStatus, setConnectionStatus] = useState({
+    internet: true,
+    lastChecked: new Date()
+  });
 
   // Enhanced suggested questions with categories
   const insightCategories = {
@@ -134,6 +138,54 @@ const AIAnalyticsChat = () => {
     setProactiveInsights(insights);
   };
 
+  // Check internet connectivity
+  const checkInternetConnection = () => {
+    return navigator.onLine;
+  };
+
+  // Update connection status
+  const updateConnectionStatus = () => {
+    const internetStatus = checkInternetConnection();
+    
+    setConnectionStatus({
+      internet: internetStatus,
+      lastChecked: new Date()
+    });
+  };
+
+  // Monitor connection status
+  useEffect(() => {
+    // Initial check
+    updateConnectionStatus();
+
+    // Listen for online/offline events
+    const handleOnline = () => {
+      setConnectionStatus(prev => ({ ...prev, internet: true }));
+    };
+
+    const handleOffline = () => {
+      setConnectionStatus(prev => ({ ...prev, internet: false }));
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Get connection status text and color
+  const getConnectionStatus = () => {
+    if (!connectionStatus.internet) {
+      return { text: 'Offline', color: 'red', dot: 'bg-red-500' };
+    }
+    return { text: 'Online', color: 'green', dot: 'bg-green-500' };
+  };
+
+  const connectionInfo = getConnectionStatus();
+
   useEffect(() => {
     loadAnalyticsData();
     // Add enhanced welcome message
@@ -204,10 +256,26 @@ const AIAnalyticsChat = () => {
       setMessages(prev => [...prev, aiMessage]);
     } catch (error) {
       console.error('Error getting AI response:', error);
+      
+      // Create specific error messages based on error type
+      let errorContent = "I apologize, but I'm having difficulty processing your request right now. Please try again later.";
+      
+      if (error.message.includes('quota exceeded')) {
+        errorContent = "⚠️ OpenAI quota exceeded. Please check your billing and upgrade your plan at https://platform.openai.com/account/billing";
+      } else if (error.message.includes('Rate limit exceeded')) {
+        errorContent = "⏳ Rate limit exceeded. Please wait a moment and try again.";
+      } else if (error.message.includes('Invalid API key')) {
+        errorContent = "🔑 Invalid API key. Please check your OpenAI API key in the .env file.";
+      } else if (error.message.includes('Access denied')) {
+        errorContent = "🚫 Access denied. Please check your OpenAI account status and billing.";
+      } else if (error.message.includes('API key not found')) {
+        errorContent = "🔧 OpenAI API key not found. Please add REACT_APP_OPENAI_API_KEY to your .env file.";
+      }
+      
       const errorMessage = {
         id: Date.now() + 1,
         type: 'ai',
-        content: "I apologize, but I'm having difficulty processing your request right now. Please try again later.",
+        content: errorContent,
         timestamp: new Date(),
         isError: true
       };
@@ -232,15 +300,15 @@ const AIAnalyticsChat = () => {
   };
 
   const getInsightCard = (title, value, icon, color, subtitle = '') => (
-    <div className={`bg-gradient-to-br from-${color}-50 to-white p-4 rounded-xl border border-${color}-100 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer`}>
-      <div className="flex items-center justify-between mb-2">
-        <div className={`p-2 rounded-lg bg-${color}-100`}>
+    <div className={`bg-gradient-to-br from-${color}-50 to-white p-3 rounded-lg border border-${color}-100 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer`}>
+      <div className="flex items-center justify-between mb-1">
+        <div className={`p-1.5 rounded-md bg-${color}-100`}>
           {icon}
         </div>
-        <ChevronRight className={`h-4 w-4 text-${color}-500`} />
+        <ChevronRight className={`h-3 w-3 text-${color}-500`} />
       </div>
-      <h3 className="text-sm font-medium text-gray-600 mb-1">{title}</h3>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
+      <h3 className="text-xs font-medium text-gray-600 mb-1">{title}</h3>
+      <p className="text-lg font-bold text-gray-900">{value}</p>
       {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
     </div>
   );
@@ -343,22 +411,22 @@ const AIAnalyticsChat = () => {
   return (
     <div className="bg-gradient-to-br from-gray-50 to-white min-h-screen">
       {/* Header with Date Range */}
-      <div className="bg-gradient-to-r from-orange-500 via-orange-600 to-amber-600 text-white p-6 rounded-b-3xl shadow-lg">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-              <Brain className="h-8 w-8" />
+      <div className="bg-gradient-to-r from-orange-500 via-orange-600 to-amber-600 text-white p-3 rounded-b-xl shadow-lg">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center space-x-2">
+            <div className="p-1.5 bg-white/20 rounded-md backdrop-blur-sm">
+              <Brain className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Enhanced AI Analytics</h1>
-              <p className="text-orange-100">Interactive insights with visualizations</p>
+              <h1 className="text-lg font-bold">AI Analytics</h1>
+              <p className="text-orange-100 text-xs">Interactive insights with visualizations</p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1.5">
             <select 
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
-              className="bg-white/20 border border-white/30 rounded-lg px-3 py-2 text-white placeholder-white/70 backdrop-blur-sm"
+              className="bg-white/20 border border-white/30 rounded-md px-1.5 py-0.5 text-white placeholder-white/70 backdrop-blur-sm text-xs"
             >
               {dateRangeOptions.map(option => (
                 <option key={option.value} value={option.value} className="text-gray-800">
@@ -368,122 +436,122 @@ const AIAnalyticsChat = () => {
             </select>
             <button 
               onClick={loadAnalyticsData}
-              className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
+              className="p-1 bg-white/20 rounded-md hover:bg-white/30 transition-colors"
               title="Refresh Data"
             >
-              <RefreshCw className="h-5 w-5" />
+              <RefreshCw className="h-3 w-3" />
             </button>
             <button 
               onClick={exportChatHistory}
-              className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors" 
+              className="p-1 bg-white/20 rounded-md hover:bg-white/30 transition-colors" 
               title="Export Chat"
             >
-              <Download className="h-5 w-5" />
+              <Download className="h-3 w-3" />
             </button>
-            <button className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors" title="Share">
-              <Share2 className="h-5 w-5" />
+            <button className="p-1 bg-white/20 rounded-md hover:bg-white/30 transition-colors" title="Share">
+              <Share2 className="h-3 w-3" />
             </button>
           </div>
         </div>
         {/* Stats Cards */}
         {analyticsData && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {getInsightCard(
               "Total Revenue",
               `₹${analyticsData.summary.totalRevenue.toLocaleString()}`,
-              <DollarSign className="h-5 w-5 text-green-600" />,
+              <IndianRupee className="h-3 w-3 text-green-600" />,
               "green",
-              `+${analyticsData.summary.growthRate}% growth`
+              analyticsData.summary.growthRate ? `+${analyticsData.summary.growthRate}% growth` : ''
             )}
             {getInsightCard(
               "Total Orders",
               analyticsData.summary.totalOrders.toLocaleString(),
-              <ShoppingCart className="h-5 w-5 text-blue-600" />,
+              <ShoppingCart className="h-3 w-3 text-blue-600" />,
               "blue"
             )}
             {getInsightCard(
               "Avg Order Value",
               `₹${analyticsData.summary.avgOrderValue.toFixed(0)}`,
-              <Target className="h-5 w-5 text-purple-600" />,
+              <Target className="h-3 w-3 text-purple-600" />,
               "purple"
             )}
             {getInsightCard(
               "Customer Retention",
-              `${analyticsData.summary.customerRetentionRate}%`,
-              <Users className="h-5 w-5 text-orange-600" />,
+              analyticsData.summary.customerRetentionRate ? `${analyticsData.summary.customerRetentionRate}%` : 'N/A',
+              <Users className="h-3 w-3 text-orange-600" />,
               "orange"
             )}
           </div>
         )}
-      </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Proactive Insights */}
+        {/* Proactive Insights Carousel */}
         {proactiveInsights.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-              <Eye className="h-5 w-5 mr-2" />
-              Proactive Insights
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {proactiveInsights.map((insight, index) => (
-                <div key={index} className={`bg-gradient-to-r from-${insight.color}-50 to-white p-4 rounded-xl border border-${insight.color}-200 shadow-sm`}>
-                  <div className="flex items-start space-x-3">
-                    <div className={`p-2 rounded-lg bg-${insight.color}-100 text-${insight.color}-600`}>
-                      {insight.icon}
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-800">{insight.title}</h3>
-                      <p className="text-sm text-gray-600 mt-1">{insight.message}</p>
+          <div className="mt-2">
+            <div className="flex items-center space-x-1.5 mb-1.5">
+              <Eye className="h-3 w-3 text-white" />
+              <h3 className="text-xs font-semibold text-white">Proactive Insights</h3>
+            </div>
+            <div className="overflow-x-auto scrollbar-hide">
+              <div className="flex space-x-2 pb-1">
+                {proactiveInsights.map((insight, index) => (
+                  <div key={index} className={`flex-shrink-0 bg-white/20 backdrop-blur-sm p-1.5 rounded-md border border-white/30 shadow-sm hover:shadow-md transition-all duration-300 min-w-[240px]`}>
+                    <div className="flex items-start space-x-1.5">
+                      <div className={`p-0.5 rounded bg-white/30 text-white`}>
+                        {insight.icon}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-white text-xs">{insight.title}</h4>
+                        <p className="text-white/90 text-xs mt-0.5 leading-tight">{insight.message}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         )}
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Chat Area */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+      <div className="max-w-7xl mx-auto px-3">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          {/* Main Chat Area - Increased size */}
+          <div className="lg:col-span-3">
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 h-[580px] flex flex-col">
               {/* Chat Header */}
-              <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 border-b border-gray-200">
+              <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-3 border-b border-gray-200">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-orange-100 rounded-lg">
-                      <MessageSquare className="h-5 w-5 text-orange-600" />
+                  <div className="flex items-center space-x-2">
+                    <div className="p-1 bg-orange-100 rounded-md">
+                      <MessageSquare className="h-3 w-3 text-orange-600" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-800">Enhanced AI Assistant</h3>
-                      <p className="text-sm text-gray-600">Now with interactive visualizations</p>
+                      <h3 className="font-semibold text-gray-800 text-xs">AI Assistant</h3>
+                      <p className="text-xs text-gray-600">Interactive visualizations</p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="flex items-center space-x-1 text-sm text-gray-500">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <span>AI Online</span>
-                    </div>
+                  <div className="flex items-center space-x-1 text-xs text-gray-500">
+                    <div className={`w-1.5 h-1.5 rounded-full ${connectionInfo.dot} ${connectionInfo.color === 'green' ? 'animate-pulse' : ''}`}></div>
+                    <span>{connectionInfo.text}</span>
                   </div>
                 </div>
               </div>
 
               {/* Messages */}
-              <div className="h-96 overflow-y-auto p-6 space-y-6">
+              <div className="flex-1 overflow-y-auto p-3 space-y-3">
                 {messages.map((message) => (
                   <div
                     key={message.id}
                     className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div className={`flex max-w-xs lg:max-w-md xl:max-w-lg ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                      <div className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center ${
+                      <div className={`flex-shrink-0 h-6 w-6 rounded-full flex items-center justify-center ${
                         message.type === 'user' 
-                          ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white ml-3' 
-                          : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-600 mr-3'
+                          ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white ml-1.5' 
+                          : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-600 mr-1.5'
                       }`}>
-                        {message.type === 'user' ? <User size={20} /> : <Bot size={20} />}
+                        {message.type === 'user' ? <User size={12} /> : <Bot size={12} />}
                       </div>
-                      <div className={`rounded-2xl px-4 py-3 shadow-sm ${
+                      <div className={`rounded-lg px-2 py-1.5 shadow-sm ${
                         message.type === 'user'
                           ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white'
                           : message.isError 
@@ -492,9 +560,9 @@ const AIAnalyticsChat = () => {
                               ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 text-blue-900'
                               : 'bg-gray-50 text-gray-800'
                       }`}>
-                        <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                        <p className="text-xs whitespace-pre-wrap leading-relaxed">{message.content}</p>
                         {message.visualization && renderVisualization(message.visualization)}
-                        <p className={`text-xs mt-2 ${
+                        <p className={`text-xs mt-0.5 ${
                           message.type === 'user' ? 'text-orange-100' : 'text-gray-500'
                         }`}>
                           {formatTimestamp(message.timestamp)}
@@ -506,17 +574,17 @@ const AIAnalyticsChat = () => {
                 {isLoading && (
                   <div className="flex justify-start">
                     <div className="flex-row">
-                      <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gradient-to-r from-gray-100 to-gray-200 text-gray-600 mr-3 flex items-center justify-center">
-                        <Bot size={20} />
+                      <div className="flex-shrink-0 h-6 w-6 rounded-full bg-gradient-to-r from-gray-100 to-gray-200 text-gray-600 mr-1.5 flex items-center justify-center">
+                        <Bot size={12} />
                       </div>
-                      <div className="bg-gray-50 rounded-2xl px-4 py-3 shadow-sm">
-                        <div className="flex items-center space-x-3">
+                      <div className="bg-gray-50 rounded-lg px-2 py-1.5 shadow-sm">
+                        <div className="flex items-center space-x-2">
                           <div className="flex space-x-1">
-                            <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce"></div>
-                            <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                            <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                            <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-bounce"></div>
+                            <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                            <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                           </div>
-                          <p className="text-sm text-gray-600">Generating insights & charts...</p>
+                          <p className="text-xs text-gray-600">Generating insights...</p>
                         </div>
                       </div>
                     </div>
@@ -526,106 +594,68 @@ const AIAnalyticsChat = () => {
               </div>
 
               {/* Input */}
-              <div className="p-4 border-t border-gray-200 bg-gray-50">
-                <div className="flex space-x-3">
+              <div className="p-3 border-t border-gray-200 bg-gray-50">
+                <div className="flex space-x-2">
                   <div className="flex-1 relative">
                     <textarea
                       value={inputMessage}
                       onChange={(e) => setInputMessage(e.target.value)}
                       onKeyPress={handleKeyPress}
                       placeholder="Ask about trends, get visual charts, or request insights..."
-                      className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none bg-white shadow-sm"
+                      className="w-full border border-gray-300 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-transparent resize-none bg-white shadow-sm text-xs"
                       rows="1"
                       disabled={isLoading}
                     />
-                    <div className="absolute right-3 top-3 text-gray-400">
-                      <Wand className="h-4 w-4" />
+                    <div className="absolute right-1.5 top-1.5 text-gray-400">
+                      <Wand className="h-3 w-3" />
                     </div>
                   </div>
                   <button
                     onClick={() => handleSendMessage()}
                     disabled={!inputMessage.trim() || isLoading}
-                    className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-3 rounded-xl hover:from-orange-600 hover:to-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
+                    className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-1.5 rounded-lg hover:from-orange-600 hover:to-orange-700 focus:outline-none focus:ring-1 focus:ring-orange-500 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow-md"
                   >
-                    <Send size={20} />
+                    <Send size={14} />
                   </button>
                 </div>
-                <p className="text-xs text-gray-500 mt-2 flex items-center">
+                <p className="text-xs text-gray-500 mt-1 flex items-center">
                   <Lightbulb className="h-3 w-3 mr-1" />
-                  💡 Ask about sales trends, popular items, peak hours, or get business recommendations
+                  💡 Ask about sales trends, popular items, peak hours
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Sidebar with Quick Actions */}
-          <div className="space-y-6">
-            {/* Quick Actions */}
-            {showQuickActions && (
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-                <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4 text-white">
-                  <div className="flex items-center space-x-2">
-                    <Zap className="h-5 w-5" />
-                    <h3 className="font-semibold">Quick Insights</h3>
-                  </div>
-                  <p className="text-purple-100 text-sm mt-1">Get instant answers to common questions</p>
-                </div>
-                <div className="p-4 space-y-3">
-                  {Object.entries(insightCategories).map(([key, category]) => (
-                    <div key={key} className="space-y-2">
-                      <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        {category.icon}
-                        <span>{category.title}</span>
-                      </div>
-                      <div className="space-y-2">
-                        {category.questions.map((question, index) => (
-                          <button
-                            key={index}
-                            onClick={() => handleSendMessage(question)}
-                            className="w-full text-left p-3 text-sm bg-gray-50 border border-gray-200 rounded-lg hover:bg-orange-50 hover:border-orange-200 transition-all duration-200 group"
-                            disabled={isLoading}
-                          >
-                            <div className="flex items-start justify-between">
-                              <span className="text-gray-700 group-hover:text-orange-700">{question}</span>
-                              <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-orange-500 transition-colors" />
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
+          {/* Sidebar - Reduced size */}
+          <div className="space-y-3">
             {/* Analytics Overview */}
             {analyticsData && (
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-                <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 text-white">
-                  <div className="flex items-center space-x-2">
-                    <Activity className="h-5 w-5" />
-                    <h3 className="font-semibold">Analytics Overview</h3>
+              <div className="bg-white rounded-lg shadow-md border border-gray-100 overflow-hidden">
+                <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-2 text-white">
+                  <div className="flex items-center space-x-1.5">
+                    <Activity className="h-3 w-3" />
+                    <h3 className="font-semibold text-xs">Analytics Overview</h3>
                   </div>
                 </div>
-                <div className="p-4 space-y-4">
+                <div className="p-2 space-y-2">
                   {/* Peak Hours */}
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-3 rounded-lg border border-green-200">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Clock className="h-4 w-4 text-green-600" />
-                      <span className="text-sm font-medium text-green-800">Peak Hours</span>
+                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-1.5 rounded-md border border-green-200">
+                    <div className="flex items-center space-x-1.5 mb-1">
+                      <Clock className="h-3 w-3 text-green-600" />
+                      <span className="text-xs font-medium text-green-800">Peak Hours</span>
                     </div>
-                    <p className="text-lg font-bold text-green-900">{analyticsData.summary.peakHour}</p>
-                    <p className="text-xs text-green-700">Busiest time of day</p>
+                    <p className="text-xs font-bold text-green-900">{analyticsData.summary.peakHour}</p>
+                    <p className="text-xs text-green-700">Busiest time</p>
                   </div>
                   {/* Popular Items */}
-                  <div className="bg-gradient-to-r from-purple-50 to-violet-50 p-3 rounded-lg border border-purple-200">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <PieChart className="h-4 w-4 text-purple-600" />
-                      <span className="text-sm font-medium text-purple-800">Top Items</span>
+                  <div className="bg-gradient-to-r from-purple-50 to-violet-50 p-1.5 rounded-md border border-purple-200">
+                    <div className="flex items-center space-x-1.5 mb-1">
+                      <PieChart className="h-3 w-3 text-purple-600" />
+                      <span className="text-xs font-medium text-purple-800">Top Items</span>
                     </div>
-                    <div className="space-y-1">
+                    <div className="space-y-0.5">
                       {analyticsData.popularItems.slice(0, 3).map((item, index) => (
-                        <div key={index} className="flex justify-between text-sm">
+                        <div key={index} className="flex justify-between text-xs">
                           <span className="text-purple-700 truncate">{item.name}</span>
                           <span className="text-purple-900 font-medium">{item.count}</span>
                         </div>
@@ -633,14 +663,14 @@ const AIAnalyticsChat = () => {
                     </div>
                   </div>
                   {/* Order Status */}
-                  <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-3 rounded-lg border border-orange-200">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <BarChart3 className="h-4 w-4 text-orange-600" />
-                      <span className="text-sm font-medium text-orange-800">Order Status</span>
+                  <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-1.5 rounded-md border border-orange-200">
+                    <div className="flex items-center space-x-1.5 mb-1">
+                      <BarChart3 className="h-3 w-3 text-orange-600" />
+                      <span className="text-xs font-medium text-orange-800">Order Status</span>
                     </div>
-                    <div className="space-y-1">
+                    <div className="space-y-0.5">
                       {Object.entries(analyticsData.ordersByStatus).slice(0, 3).map(([status, count]) => (
-                        <div key={status} className="flex justify-between text-sm">
+                        <div key={status} className="flex justify-between text-xs">
                           <span className="text-orange-700 capitalize">{status}</span>
                           <span className="text-orange-900 font-medium">{count}</span>
                         </div>
@@ -652,32 +682,32 @@ const AIAnalyticsChat = () => {
             )}
 
             {/* AI Capabilities */}
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-              <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 p-4 text-white">
-                <div className="flex items-center space-x-2">
-                  <Brain className="h-5 w-5" />
-                  <h3 className="font-semibold">AI Capabilities</h3>
+            <div className="bg-white rounded-lg shadow-md border border-gray-100 overflow-hidden">
+              <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 p-2 text-white">
+                <div className="flex items-center space-x-1.5">
+                  <Brain className="h-3 w-3" />
+                  <h3 className="font-semibold text-xs">AI Capabilities</h3>
                 </div>
               </div>
-              <div className="p-4 space-y-3">
-                <div className="flex items-center space-x-2 text-sm">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <div className="p-2 space-y-1.5">
+                <div className="flex items-center space-x-1.5 text-xs">
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
                   <span className="text-gray-700">Performance Analysis</span>
                 </div>
-                <div className="flex items-center space-x-2 text-sm">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <div className="flex items-center space-x-1.5 text-xs">
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
                   <span className="text-gray-700">Menu Optimization</span>
                 </div>
-                <div className="flex items-center space-x-2 text-sm">
-                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                <div className="flex items-center space-x-1.5 text-xs">
+                  <div className="w-1.5 h-1.5 bg-purple-500 rounded-full"></div>
                   <span className="text-gray-700">Customer Insights</span>
                 </div>
-                <div className="flex items-center space-x-2 text-sm">
-                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                <div className="flex items-center space-x-1.5 text-xs">
+                  <div className="w-1.5 h-1.5 bg-orange-500 rounded-full"></div>
                   <span className="text-gray-700">Predictive Analytics</span>
                 </div>
-                <div className="flex items-center space-x-2 text-sm">
-                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <div className="flex items-center space-x-1.5 text-xs">
+                  <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
                   <span className="text-gray-700">Operational Recommendations</span>
                 </div>
               </div>
@@ -685,6 +715,57 @@ const AIAnalyticsChat = () => {
           </div>
         </div>
       </div>
+
+      {/* Quick Insights Footer */}
+      {showQuickActions && (
+        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border-t border-purple-200 shadow-lg mt-4">
+          <div className="max-w-7xl mx-auto px-3 py-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-2">
+                <div className="p-1.5 bg-purple-100 rounded-lg">
+                  <Zap className="h-4 w-4 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-sm text-gray-800">Quick Insights</h3>
+                  <p className="text-xs text-gray-600">Tap any question to get instant insights</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowQuickActions(false)}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Hide Quick Insights"
+              >
+                <XCircle className="h-4 w-4" />
+              </button>
+            </div>
+            
+            <div className="overflow-x-auto scrollbar-hide">
+              <div className="flex space-x-3 pb-2">
+                {Object.entries(insightCategories).map(([key, category]) => (
+                  <div key={key} className="flex-shrink-0 min-w-0">
+                    <div className="flex items-center space-x-2 text-xs font-semibold text-purple-700 mb-2 px-2 py-1 bg-purple-100 rounded-full w-fit">
+                      {category.icon}
+                      <span>{category.title}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {category.questions.map((question, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleSendMessage(question)}
+                          className="flex-shrink-0 px-3 py-1.5 text-xs bg-white border border-purple-200 rounded-full hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700 transition-all duration-200 shadow-sm hover:shadow-md font-medium"
+                          disabled={isLoading}
+                        >
+                          {question}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

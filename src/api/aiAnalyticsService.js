@@ -1,5 +1,6 @@
 // src/api/aiAnalyticsService.js
 import { supabase } from '../supabase';
+import { formatCurrency } from '../utils/formatters';
 
 // Get restaurant analytics data
 export const getRestaurantAnalytics = async (dateRange = 'last7days', restaurantId = null) => {
@@ -164,10 +165,10 @@ export const generateAIPrompt = (userQuestion, analyticsData) => {
 
 RESTAURANT SUMMARY:
 - Total Orders: ${summary.totalOrders}
-- Total Revenue: ₹${summary.totalRevenue.toFixed(2)}
+- Total Revenue: ${formatCurrency(summary.totalRevenue)}
 - Total Menu Items: ${summary.totalMenuItems}
 - Total Customers: ${summary.totalCustomers}
-- Average Order Value: ₹${summary.avgOrderValue.toFixed(2)}
+- Average Order Value: ${formatCurrency(summary.avgOrderValue)}
 - Peak Hour: ${summary.peakHour}
 
 ORDERS BY STATUS:
@@ -177,7 +178,7 @@ TOP 5 POPULAR ITEMS:
 ${popularItems.slice(0, 5).map((item, i) => `${i + 1}. ${item.name} (${item.count} orders)`).join('\n')}
 
 CATEGORY REVENUE:
-${Object.entries(categoryRevenue).map(([category, revenue]) => `- ${category}: ₹${revenue.toFixed(2)}`).join('\n')}
+${Object.entries(categoryRevenue).map(([category, revenue]) => `- ${category}: ${formatCurrency(revenue)}`).join('\n')}
 
 Please provide insights, recommendations, and answer questions about this restaurant's performance. Be specific and actionable in your responses. Use the data to support your recommendations.
 
@@ -187,63 +188,153 @@ User Question: ${userQuestion}`;
 };
 
 // Call AI service (you can replace this with your preferred AI service)
-export const callAIService = async (prompt) => {
-  try {
-    // Example using OpenAI API - replace with your preferred AI service
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}` // Add this to your .env file
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a helpful restaurant business analyst AI assistant.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        max_tokens: 1000,
-        temperature: 0.7
-      })
+export const callAIService = async (userQuestion, analyticsData) => {
+  // Generate the AI prompt with restaurant data
+  const prompt = generateAIPrompt(userQuestion, analyticsData);
+  
+  // Check if API key is available
+  const apiKey = process.env.REACT_APP_OPENAI_API_KEY;
+  
+  // Debug logging (remove in production)
+  console.log('Environment check:', {
+    hasApiKey: !!apiKey,
+    apiKeyLength: apiKey ? apiKey.length : 0,
+    apiKeyPrefix: apiKey ? apiKey.substring(0, 7) + '...' : 'none',
+    nodeEnv: process.env.NODE_ENV
+  });
+  
+  if (!apiKey) {
+    throw new Error('OpenAI API key not found. Please check your .env file and ensure REACT_APP_OPENAI_API_KEY is set.');
+  }
+
+  // Call OpenAI API
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a helpful restaurant business analyst AI assistant. Provide specific, actionable insights based on the restaurant data provided. Use the Indian Rupee symbol (₹) for currency values.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      max_tokens: 1000,
+      temperature: 0.7
+    })
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    console.error('OpenAI API Error:', {
+      status: response.status,
+      statusText: response.statusText,
+      error: errorData
     });
 
-    if (!response.ok) {
-      throw new Error(`AI service error: ${response.status}`);
+    // Handle specific error cases
+    if (response.status === 429) {
+      if (errorData.error?.message?.includes('quota')) {
+        throw new Error('OpenAI quota exceeded. Please check your billing and upgrade your plan at https://platform.openai.com/account/billing');
+      } else {
+        throw new Error('Rate limit exceeded. Please wait a moment and try again.');
+      }
+    } else if (response.status === 401) {
+      throw new Error('Invalid API key. Please check your OpenAI API key in the .env file.');
+    } else if (response.status === 403) {
+      throw new Error('Access denied. Please check your OpenAI account status and billing.');
+    } else {
+      throw new Error(`AI service error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
     }
-
-    const data = await response.json();
-    return data.choices[0].message.content;
-  } catch (error) {
-    console.error('Error calling AI service:', error);
-    
-    // Fallback response if AI service is unavailable
-    return `I'm currently unable to connect to the AI service. However, based on your restaurant data:
-
-- You have ${await getBasicInsights()}
-.`;
   }
+
+  const data = await response.json();
+  const aiResponse = data.choices[0].message.content;
+
+  // Generate visualization based on the question and data
+  const visualization = generateVisualization(userQuestion, analyticsData);
+
+  return {
+    textResponse: aiResponse,
+    visualization: visualization
+  };
 };
 
-// Fallback insights function
-const getBasicInsights = async () => {
-  try {
-    const analytics = await getRestaurantAnalytics();
-    const { summary, popularItems } = analytics;
-    
-    return `
-• ${summary.totalOrders} total orders with ₹${summary.totalRevenue.toFixed(2)} in revenue
-• Average order value of ₹${summary.avgOrderValue.toFixed(2)}
-• Top selling item: ${popularItems[0]?.name || 'N/A'}
-• Peak business hour: ${summary.peakHour}
+// Generate visualizations based on user questions
+const generateVisualization = (question, analyticsData) => {
+  if (!analyticsData) return null;
 
-Consider focusing on promoting your popular items and optimizing operations during peak hours.`;
-  } catch (error) {
-    return 'basic restaurant metrics available in your dashboard.';
+  const questionLower = question.toLowerCase();
+  const { dailyRevenue, popularItems, categoryRevenue, hourlyOrders } = analyticsData;
+
+  // Revenue trend visualization
+  if (questionLower.includes('revenue') && questionLower.includes('trend')) {
+    const revenueData = Object.entries(dailyRevenue).map(([date, revenue]) => ({
+      date: new Date(date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }),
+      revenue: revenue
+    })).slice(-7); // Last 7 days
+
+    return {
+      type: 'line',
+      title: 'Revenue Trend (Last 7 Days)',
+      data: revenueData,
+      xKey: 'date',
+      yKey: 'revenue'
+    };
   }
+
+  // Popular items visualization
+  if (questionLower.includes('popular') || questionLower.includes('top') || questionLower.includes('selling')) {
+    const topItems = popularItems.slice(0, 5).map(item => ({
+      name: item.name,
+      orders: item.count
+    }));
+
+    return {
+      type: 'bar',
+      title: 'Top Selling Items',
+      data: topItems,
+      xKey: 'name',
+      yKey: 'orders'
+    };
+  }
+
+  // Category performance visualization
+  if (questionLower.includes('category') || questionLower.includes('menu')) {
+    const categoryData = Object.entries(categoryRevenue).map(([category, revenue]) => ({
+      name: category,
+      value: revenue
+    }));
+
+    return {
+      type: 'pie',
+      title: 'Revenue by Category',
+      data: categoryData
+    };
+  }
+
+  // Peak hours visualization
+  if (questionLower.includes('peak') || questionLower.includes('hour') || questionLower.includes('busy')) {
+    const hourlyData = Object.entries(hourlyOrders).map(([hour, orders]) => ({
+      hour: `${hour}:00`,
+      orders: orders
+    })).sort((a, b) => parseInt(a.hour) - parseInt(b.hour));
+
+    return {
+      type: 'bar',
+      title: 'Orders by Hour',
+      data: hourlyData,
+      xKey: 'hour',
+      yKey: 'orders'
+    };
+  }
+
+  return null;
 };

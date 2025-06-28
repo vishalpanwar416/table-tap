@@ -12,7 +12,8 @@ import {
   Tag,
   QrCode,
   BarChart3,
-  Settings
+  Settings,
+  Package
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 
@@ -37,6 +38,8 @@ const Sidebar = ({ activeTab, setActiveTab, menuItems, currentUser, restaurantNa
         return <Utensils className="w-5 h-5" />;
       case 'ShoppingCart':
         return <ShoppingCart className="w-5 h-5" />;
+      case 'Package':
+        return <Package className="w-5 h-5" />;
       case 'Users':
         return <Users className="w-5 h-5" />;
       case 'Tag':
