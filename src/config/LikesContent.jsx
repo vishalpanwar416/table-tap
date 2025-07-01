@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { useAuth } from './AuthContext';
+import { useRestaurant } from '../Pages/Restaurantselection/RestaurantContext';
 
 const LikesContext = createContext();
 
@@ -8,19 +9,20 @@ export const LikesProvider = ({ children }) => {
   const [likedItems, setLikedItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth(); // Use the centralized auth context
+  const { restaurantId } = useRestaurant(); // Get current restaurant ID
 
-  // Load liked items when user changes
+  // Load liked items when user or restaurant changes
   useEffect(() => {
-    if (user) {
-      loadUserLikes(user.id);
+    if (user && restaurantId) {
+      loadUserLikes(user.id, restaurantId);
     } else {
       setLikedItems([]);
       setLoading(false);
     }
-  }, [user]);
+  }, [user, restaurantId]);
 
-  // Load user liked items from profiles table
-  const loadUserLikes = async (userId) => {
+  // Load user liked items from profiles table, filtered by current restaurant
+  const loadUserLikes = async (userId, currentRestaurantId) => {
     try {
       setLoading(true);
       
@@ -37,13 +39,14 @@ export const LikesProvider = ({ children }) => {
         return;
       }
 
-      // Convert liked items from JSONB to our format
+      // Convert liked items from JSONB to our format, filtered by restaurant
       if (profile?.liked_items && profile.liked_items.length > 0) {
         const { data: foodItems, error: foodError } = await supabase
           .from('fooditems')
           .select('*')
           .in('id', profile.liked_items)
-          .eq('is_active', true);
+          .eq('is_active', true)
+          .eq('restaurant_id', currentRestaurantId); // Filter by current restaurant
 
         if (foodError) {
           console.error('Error fetching liked food items:', foodError);
@@ -84,6 +87,12 @@ export const LikesProvider = ({ children }) => {
   const toggleLike = async (item) => {
     if (!user) {
       console.error('User must be logged in to like items');
+      return;
+    }
+
+    // Check if the item belongs to the current restaurant
+    if (item.restaurant_id !== restaurantId) {
+      console.error('Cannot like items from different restaurants');
       return;
     }
 

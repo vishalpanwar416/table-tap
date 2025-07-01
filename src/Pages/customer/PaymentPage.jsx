@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../../config/CartContent';
 import { supabase } from '../../supabase';
 import { ChevronLeft, CreditCard, QrCode } from 'lucide-react';
-import { useRestaurant } from '../../context/RestaurantContext';
+import { useRestaurant } from '../Restaurantselection/RestaurantContext';
 
 const PaymentPage = () => {
   const navigate = useNavigate();

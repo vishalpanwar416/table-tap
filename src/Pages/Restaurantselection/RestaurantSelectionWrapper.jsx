@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../config/AuthContext';
-import { useRestaurant } from '../context/RestaurantContext';
-import { needsRestaurantSelection, hasValidRestaurantSelection } from '../utils/restaurantCheck';
+import { useAuth } from '../../config/AuthContext';
+import { useRestaurant } from './RestaurantContext';
+import { needsRestaurantSelection, hasValidRestaurantSelection } from '../../utils/restaurantCheck';
 
 const RestaurantSelectionWrapper = ({ children }) => {
   const navigate = useNavigate();

@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, MapPin, Phone, Clock, RefreshCw, Store, ArrowRight, Navigation, Crosshair, ChevronDown, Edit3 } from 'lucide-react';
-import { getActiveRestaurants } from '../../api/restaurantSelectionService';
-import { useRestaurant } from '../../context/RestaurantContext';
+import { getActiveRestaurants } from './restaurantSelectionService';
+import { useRestaurant } from './RestaurantContext';
 import { getStoredRestaurantSelection, storeRestaurantSelection } from '../../utils/restaurantCheck';
 
 const pageVariants = {
@@ -36,7 +36,6 @@ const RestaurantSelectionPage = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hoveredRestaurant, setHoveredRestaurant] = useState(null);
   const [isScrolling, setIsScrolling] = useState(false);
-  const [scrollProgress, setScrollProgress] = useState(0);
   const [scrollY, setScrollY] = useState(0);
   
   // Location states

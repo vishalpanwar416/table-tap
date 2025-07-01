@@ -1,6 +1,6 @@
 import React from 'react';
 import { Edit, Plus, X } from 'lucide-react';
-import { categories } from '../../foodData';
+import { categories } from '../../../api/foodData';
 import { createFoodItem, updateFoodItem, uploadFoodImage } from '../../../api/foodService';
 import { useAdminRestaurant } from '../../../context/AdminRestaurantContext';
 

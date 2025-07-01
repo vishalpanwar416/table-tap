@@ -3,7 +3,7 @@ import AliceCarousel from 'react-alice-carousel';
 import 'react-alice-carousel/lib/alice-carousel.css';
 import { fetchMaincaroselData, fallbackMaincaroselData } from './MaincaroselData';
 import OrderCard from './itemCard';
-import { useRestaurant } from '../../context/RestaurantContext';
+import { useRestaurant } from '../../Pages/Restaurantselection/RestaurantContext';
 
 const responsive = {
   0: { items: 1 },

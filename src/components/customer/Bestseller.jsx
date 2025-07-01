@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, Heart } from 'lucide-react';
 import { useCart } from '../../config/CartContent';
 import { useLikes } from '../../config/LikesContent';
-import PriceDisplay from './PriceDisplay';
 import OrderCard from './itemCard';
 
 const BestSellers = ({ foodItems }) => {
@@ -142,11 +141,7 @@ const BestSellers = ({ foodItems }) => {
         </button>
       </div>
       <div className="flex space-x-4 overflow-x-auto pb-2 scroll-smooth ">
-        {foodItems
-          .filter(item => 
-            item.tags?.some(tag => tag.toLowerCase() === 'bestseller')
-          )
-          .map((item) => (
+        {foodItems.map((item) => (
             <FoodItem 
               key={item.id}
               item={item}

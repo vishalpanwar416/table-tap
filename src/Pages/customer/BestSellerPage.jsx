@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Heart, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../../components/customer/Header';
 import Sidebar from '../../components/customer/Slidebar';
 import CartSidebar from '../../components/customer/CartSidebar';
@@ -9,9 +10,63 @@ import { useCart } from '../../config/CartContent';
 import { useNavigate } from 'react-router-dom';
 import { useLikes } from '../../config/LikesContent';
 import LogoutPopup from '../../components/auth/LogoutPopup';
-import { fetchFoodItems } from '../../components/foodData';
+import { fetchBestSellerItems } from '../../api/foodData';
 import FloatingCartButton from '../../components/customer/FloatingCartButton';
 import OrderCard from '../../components/customer/itemCard';
+import { useRestaurant } from '../../Pages/Restaurantselection/RestaurantContext';
+
+// Page transition variants
+const pageVariants = {
+  initial: { 
+    opacity: 0,
+    x: 20,
+    scale: 0.98
+  },
+  animate: { 
+    opacity: 1,
+    x: 0,
+    scale: 1,
+    transition: {
+      duration: 0.3,
+      ease: "easeOut"
+    }
+  },
+  exit: { 
+    opacity: 0,
+    x: -20,
+    scale: 0.98,
+    transition: {
+      duration: 0.2,
+      ease: "easeIn"
+    }
+  }
+};
+
+// Stagger animation for grid items
+const staggerContainer = {
+  animate: {
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  initial: { 
+    opacity: 0, 
+    y: 20,
+    scale: 0.9
+  },
+  animate: { 
+    opacity: 1, 
+    y: 0,
+    scale: 1,
+    transition: {
+      duration: 0.4,
+      ease: "easeOut"
+    }
+  }
+};
 
 const BestSellerItem = ({ image, name, price, description, item, onImageClick }) => {
   const { toggleLike, likedItems } = useLikes();
@@ -27,8 +82,13 @@ const BestSellerItem = ({ image, name, price, description, item, onImageClick })
       updateQuantity(item.id, item.category, quantity - 1);
     }
   };
+  
   return (
-    <div className="relative h-full flex flex-col group hover:shadow-lg transition-shadow">
+    <motion.div 
+      className="relative h-full flex flex-col group hover:shadow-lg transition-shadow"
+      whileHover={{ scale: 1.02 }}
+      transition={{ duration: 0.2 }}
+    >
       <div className="relative rounded-xl overflow-hidden mb-2 flex-1 aspect-square">
         <img 
           src={image} 
@@ -38,12 +98,17 @@ const BestSellerItem = ({ image, name, price, description, item, onImageClick })
         />
         
         {item.discounttype && item.discountvalue ? (
-          <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-lg font-semibold shadow-lg z-10">
+          <motion.div 
+            className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-lg font-semibold shadow-lg z-10"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, duration: 0.3 }}
+          >
             {item.discounttype === 'Percentage'
               ? `${item.discountvalue}% off`
               : `₹${item.discountvalue} off`
             }
-          </div>
+          </motion.div>
         ) : null}
         
         <button 
@@ -103,13 +168,11 @@ const BestSellerItem = ({ image, name, price, description, item, onImageClick })
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
 const BestSellerPage = () => {
-  const [bestSellerItems, setBestSellerItems] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSearchActive, setIsSearchActive] = useState(false);
@@ -121,16 +184,28 @@ const BestSellerPage = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [isOrderCardOpen, setIsOrderCardOpen] = useState(false);
 
+  const [bestSellerItems, setBestSellerItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { restaurantId } = useRestaurant();
+
   useEffect(() => {
-    const loadData = async () => {
-      const data = await fetchFoodItems();
-      setBestSellerItems(data.filter(item => 
-        item.tags?.some(tag => tag.toLowerCase() === 'bestseller')
-      ));
-      setLoading(false);
+    if (!restaurantId) return;
+
+    const loadBestSellers = async () => {
+      setLoading(true);
+      try {
+        const data = await fetchBestSellerItems(restaurantId);
+        setBestSellerItems(data);
+      } catch (error) {
+        console.error('Error loading best sellers:', error);
+        setBestSellerItems([]);
+      } finally {
+        setLoading(false);
+      }
     };
-    loadData();
-  }, []);
+
+    loadBestSellers();
+  }, [restaurantId]);
 
   const toggle = {
     sidebar: () => setIsSidebarOpen(!isSidebarOpen),
@@ -139,24 +214,40 @@ const BestSellerPage = () => {
     notification: () => setIsNotificationOpen(!isNotificationOpen),
   };
 
-  // Handler to open the item card
   const handleOpenItemCard = (item) => {
     setSelectedItem(item);
     setIsOrderCardOpen(true);
   };
 
-  // Handler to close the item card
   const handleCloseItemCard = () => {
     setIsOrderCardOpen(false);
     setSelectedItem(null);
   };
 
   if (loading) {
-    return <div className="text-white text-center p-4">Loading best sellers...</div>;
+    return (
+      <motion.div 
+        className="text-white text-center p-4 min-h-screen flex items-center justify-center"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className="flex flex-col items-center space-y-4">
+          <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+          <p>Loading best sellers...</p>
+        </div>
+      </motion.div>
+    );
   }
 
   return (
-    <div className="flex justify-center items-start min-h-screen bg-black p-4">
+    <motion.div 
+      className="flex justify-center items-start min-h-screen bg-black p-4"
+      variants={pageVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+    >
       <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
         
       <LogoutPopup 
@@ -180,12 +271,14 @@ const BestSellerPage = () => {
           className="mb-2 md:mb-3"
         />
 
-        <button 
+        <motion.button 
           className="absolute left-4 top-7 md:left-8 md:top-8 text-orange-500 hover:text-orange-600 transition-colors z-10"
           onClick={() => navigate(-1)}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
         >
           <ArrowLeft size={30} className="md:w-8 md:h-8" />
-        </button>
+        </motion.button>
 
         <Sidebar
           isSidebarOpen={isSidebarOpen}
@@ -208,32 +301,55 @@ const BestSellerPage = () => {
             />
           )}
 
-        <div className="pt-4 md:pt-6 pb-6 relative">
+        <motion.div 
+          className="pt-4 md:pt-6 pb-6 relative"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.4 }}
+        >
           <h1 className="text-3xl md:text-3xl text-center text-white font-spartan-medium">
             Best Seller
           </h1>
-        </div>
+        </motion.div>
 
-        <div 
+        <motion.div 
           ref={containerRef}
           className="bg-white rounded-3xl p-4 md:p-6 flex-1 flex flex-col min-h-[calc(100vh-200px)] overflow-y-auto shadow-xl"
+          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ delay: 0.2, duration: 0.5, ease: "easeOut" }}
         >
-          <p className="justify-center text-center text-black font-medium text-lg md:text-xl mb-4 md:mb-6 font-spartan-medium">
+          <motion.p 
+            className="justify-center text-center text-black font-medium text-lg md:text-xl mb-4 md:mb-6 font-spartan-medium"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.3 }}
+          >
             Discover our most popular dishes!
-          </p>
+          </motion.p>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {bestSellerItems.map((item) => (
-              <div key={item.id} className="aspect-square md:aspect-[1/1.1]">
+          <motion.div 
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
+            variants={staggerContainer}
+            initial="initial"
+            animate="animate"
+          >
+            {bestSellerItems.map((item, index) => (
+              <motion.div 
+                key={item.id} 
+                className="aspect-square md:aspect-[1/1.1]"
+                variants={itemVariants}
+                custom={index}
+              >
                 <BestSellerItem {...item} item={item} onImageClick={() => handleOpenItemCard(item)} />
-              </div>
+              </motion.div>
             ))}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
       <FloatingCartButton toggleCart={toggle.cart} />
       <OrderCard isOpen={isOrderCardOpen} onClose={handleCloseItemCard} item={selectedItem} />
-    </div>
+    </motion.div>
   );
 };
 

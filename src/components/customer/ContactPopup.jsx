@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Phone, Mail, MapPin, Clock, Instagram, Facebook } from 'lucide-react';
-import { useRestaurant } from '../../context/RestaurantContext';
+import { useRestaurant } from '../../Pages/Restaurantselection/RestaurantContext';
 
 const ContactPopup = ({ isOpen, onClose }) => {
   const { restaurant } = useRestaurant();

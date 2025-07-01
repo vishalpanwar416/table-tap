@@ -25,139 +25,154 @@ import { OrderProvider } from './context/OrderContext';
 import { AuthProvider } from './config/AuthContext';
 import OrderTracking from '../src/Pages/customer/OrderTracking';
 import { ManagerNotificationProvider } from './context/ManagerNotificationContext';
-import { RestaurantProvider } from './context/RestaurantContext';
+import { RestaurantProvider } from './Pages/Restaurantselection/RestaurantContext';
 import AdminPanel from './Pages/AdminPannel/AdminPannel';
 import { AdminRestaurantProvider } from './context/AdminRestaurantContext';
-import RestaurantSelectionPage from './Pages/customer/RestaurantSelectionPage';
-import RestaurantSelectionWrapper from './components/RestaurantSelectionWrapper';
+import RestaurantSelectionPage from './Pages/Restaurantselection/RestaurantSelectionPage';
+import RestaurantSelectionWrapper from './Pages/Restaurantselection/RestaurantSelectionWrapper';
 import AuthCallback from './Pages/auth/AuthCallback';
+import { NotificationProvider } from './context/NotificationContext';
+import InstallPrompt from './components/InstallPrompt';
+import { register } from './utils/serviceWorkerRegistration';
+
+// Register service worker
+register();
 
 const App = () => {
   return (
     <AuthProvider>
-      <RestaurantProvider>
-        <CartProvider>
-          <LikesProvider>
-            <OrderProvider>
-              <div className="min-h-screen bg-gray-100">
-                <Routes>
-                  <Route path="/" element={<Opening />} />
-                  <Route path="/skip1" element={<OnboardingScreen />} />
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/forgot-password" element={<AuthWrapper publicOnly><ForgotPassword/></AuthWrapper>} />
-                  <Route path="/reset-password" element={<AuthWrapper publicOnly><ResetPassword /></AuthWrapper>} />
-                  <Route path="/signup" element={<SignupPage />} />
-                  <Route path="/complete-profile" element={<CompleteProfile />} />
-                  <Route path="/auth-callback" element={<AuthCallback />} />
-                  <Route path="/restaurant-selection" element={<RestaurantSelectionPage />} />
-                  
-                  {/* Protected routes that need restaurant selection */}
-                  <Route 
-                    path="/home" 
-                    element={
-                      <RestaurantSelectionWrapper>
-                        <Homepage />
-                      </RestaurantSelectionWrapper>
-                    } 
-                  />
-                  <Route 
-                    path="/best-sellers" 
-                    element={
-                      <RestaurantSelectionWrapper>
-                        <BestSellerPage />
-                      </RestaurantSelectionWrapper>
-                    } 
-                  />
-                  <Route 
-                    path="/liked-items" 
-                    element={
-                      <RestaurantSelectionWrapper>
-                        <LikedItemsPage />
-                      </RestaurantSelectionWrapper>
-                    } 
-                  />
-                  <Route 
-                    path="/my-orders" 
-                    element={
-                      <RestaurantSelectionWrapper>
-                        <MyOrders />
-                      </RestaurantSelectionWrapper>
-                    } 
-                  />
-                  <Route 
-                    path="/order-confirmation" 
-                    element={
-                      <RestaurantSelectionWrapper>
-                        <OrderConfirmation />
-                      </RestaurantSelectionWrapper>
-                    } 
-                  />
-                  <Route 
-                    path="/payment" 
-                    element={
-                      <RestaurantSelectionWrapper>
-                        <PaymentPage />
-                      </RestaurantSelectionWrapper>
-                    } 
-                  />
-                  <Route 
-                    path="/profile" 
-                    element={
-                      <RestaurantSelectionWrapper>
-                        <PrfilePage />
-                      </RestaurantSelectionWrapper>
-                    } 
-                  />
-                  <Route 
-                    path="/order-tracking" 
-                    element={
-                      <RestaurantSelectionWrapper>
-                        <OrderTracking />
-                      </RestaurantSelectionWrapper>
-                    } 
-                  />
-                  <Route 
-                    path="/order-confirmation-page" 
-                    element={
-                      <RestaurantSelectionWrapper>
-                        <OrderConfirmationPage />
-                      </RestaurantSelectionWrapper>
-                    } 
-                  />
-                  
-                  {/* Admin routes */}
-                  <Route 
-                    path="/managerdashboard" 
-                    element={
-                      <AuthWrapper>
-                        <AdminRestaurantProvider>
-                          <ManagerNotificationProvider>
-                            <AdminDashboard />
-                          </ManagerNotificationProvider>
-                        </AdminRestaurantProvider>
-                      </AuthWrapper>
-                    }
-                  />
-                  <Route 
-                    path="/Admin-Pannel" 
-                    element={
-                      <AuthWrapper>
-                        <AdminRestaurantProvider>
-                          <ManagerNotificationProvider>
-                            <AdminPanel />
-                          </ManagerNotificationProvider>
-                        </AdminRestaurantProvider>
-                      </AuthWrapper>
-                    }
-                  />
-                  
-                  <Route path="/test" element={<div className="text-white">Test route working!</div>} />
-                </Routes>
-              </div>
-            </OrderProvider>
-          </LikesProvider>
-        </CartProvider>
-      </RestaurantProvider>
+      <NotificationProvider>
+        <ManagerNotificationProvider>
+          <RestaurantProvider>
+            <AdminRestaurantProvider>
+              <CartProvider>
+                <LikesProvider>
+                  <OrderProvider>
+                    <div className="min-h-screen bg-gray-100">
+                      <Routes>
+                        <Route path="/" element={<Opening />} />
+                        <Route path="/skip1" element={<OnboardingScreen />} />
+                        <Route path="/login" element={<LoginPage />} />
+                        <Route path="/forgot-password" element={<AuthWrapper publicOnly><ForgotPassword/></AuthWrapper>} />
+                        <Route path="/reset-password" element={<AuthWrapper publicOnly><ResetPassword /></AuthWrapper>} />
+                        <Route path="/signup" element={<SignupPage />} />
+                        <Route path="/complete-profile" element={<CompleteProfile />} />
+                        <Route path="/auth-callback" element={<AuthCallback />} />
+                        <Route path="/restaurant-selection" element={<RestaurantSelectionPage />} />
+                        
+                        {/* Protected routes that need restaurant selection */}
+                        <Route 
+                          path="/home" 
+                          element={
+                            <RestaurantSelectionWrapper>
+                              <Homepage />
+                            </RestaurantSelectionWrapper>
+                          } 
+                        />
+                        <Route 
+                          path="/best-sellers" 
+                          element={
+                            <RestaurantSelectionWrapper>
+                              <BestSellerPage />
+                            </RestaurantSelectionWrapper>
+                          } 
+                        />
+                        <Route 
+                          path="/liked-items" 
+                          element={
+                            <RestaurantSelectionWrapper>
+                              <LikedItemsPage />
+                            </RestaurantSelectionWrapper>
+                          } 
+                        />
+                        <Route 
+                          path="/my-orders" 
+                          element={
+                            <RestaurantSelectionWrapper>
+                              <MyOrders />
+                            </RestaurantSelectionWrapper>
+                          } 
+                        />
+                        <Route 
+                          path="/order-confirmation" 
+                          element={
+                            <RestaurantSelectionWrapper>
+                              <OrderConfirmation />
+                            </RestaurantSelectionWrapper>
+                          } 
+                        />
+                        <Route 
+                          path="/payment" 
+                          element={
+                            <RestaurantSelectionWrapper>
+                              <PaymentPage />
+                            </RestaurantSelectionWrapper>
+                          } 
+                        />
+                        <Route 
+                          path="/profile" 
+                          element={
+                            <RestaurantSelectionWrapper>
+                              <PrfilePage />
+                            </RestaurantSelectionWrapper>
+                          } 
+                        />
+                        <Route 
+                          path="/order-tracking" 
+                          element={
+                            <RestaurantSelectionWrapper>
+                              <OrderTracking />
+                            </RestaurantSelectionWrapper>
+                          } 
+                        />
+                        <Route 
+                          path="/order-confirmation-page" 
+                          element={
+                            <RestaurantSelectionWrapper>
+                              <OrderConfirmationPage />
+                            </RestaurantSelectionWrapper>
+                          } 
+                        />
+                        
+                        {/* Admin routes */}
+                        <Route 
+                          path="/managerdashboard" 
+                          element={
+                            <AuthWrapper>
+                              <AdminRestaurantProvider>
+                                <ManagerNotificationProvider>
+                                  <AdminDashboard />
+                                </ManagerNotificationProvider>
+                              </AdminRestaurantProvider>
+                            </AuthWrapper>
+                          }
+                        />
+                        <Route 
+                          path="/Admin-Pannel" 
+                          element={
+                            <AuthWrapper>
+                              <AdminRestaurantProvider>
+                                <ManagerNotificationProvider>
+                                  <AdminPanel />
+                                </ManagerNotificationProvider>
+                              </AdminRestaurantProvider>
+                            </AuthWrapper>
+                          }
+                        />
+                        
+                        <Route path="/test" element={<div className="text-white">Test route working!</div>} />
+                      </Routes>
+                      
+                      {/* Install Prompt */}
+                      <InstallPrompt />
+                    </div>
+                  </OrderProvider>
+                </LikesProvider>
+              </CartProvider>
+            </AdminRestaurantProvider>
+          </RestaurantProvider>
+        </ManagerNotificationProvider>
+      </NotificationProvider>
     </AuthProvider>
   );
 };

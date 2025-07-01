@@ -107,19 +107,9 @@ const RecommendationItem = ({ item, onImageClick }) => {
   );
 };
 
-const RecommendationItems = ({ 
-  allFoodItems = [],
-  onItemClick, 
-  scrollRef, 
-  scroll 
-}) => {
-  const recommendedItems = (allFoodItems || []).filter(item => 
-    item?.tags?.some?.(tag => 
-      tag?.toLowerCase?.() === 'recommended'
-    )
-  );
-
-  if (recommendedItems.length === 0) return null;
+const RecommendationItems = ({ allFoodItems = [], onItemClick, scrollRef, scroll }) => {
+  
+  if (allFoodItems.length === 0) return null;
 
   return (
     <div className="px-1 pb-2 text-black flex-1">
@@ -135,15 +125,14 @@ const RecommendationItems = ({
       <div
         ref={scrollRef}
         className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 md:pb-0"
-        style={{ minHeight: recommendedItems.length > 0 ? 'auto' : '0' }}
+        style={{ minHeight: allFoodItems.length > 0 ? 'auto' : '0' }}
       >
-        {recommendedItems.map((item) => (
+        {allFoodItems.map((item) => (
           <div 
             key={item.id}
             className="flex-shrink-0 w-[45vw] md:w-[30vw]"
             style={{ scrollSnapAlign: 'start' }}
           >
-            {/* This is the single item card */}
             <RecommendationItem item={item} onImageClick={onItemClick} />
           </div>
         ))}

@@ -3,7 +3,8 @@ import { ChevronDown, Sandwich, UtensilsCrossed, CupSoda, IceCream, Tag } from '
 const CategoryButtons = ({  
   activeCategory, 
   handleCategoryClick, 
-  categoryButtonsRef 
+  categoryButtonsRef,
+  menuOpen 
 }) => {
   const getCategoryIcon = (name) => {
     switch(name) {
@@ -25,9 +26,10 @@ const CategoryButtons = ({
   const categories = ['Snacks', 'Main Course', 'Beverages', 'Dessert', 'Offers'];
 
   return (
-    <div className="flex justify-center items-center gap-1 md:gap-[10%]" ref={categoryButtonsRef}>
+    <div className="flex justify-center items-center gap-1 md:gap-[10%] mb-4" ref={categoryButtonsRef}>
       {categories.map((categoryName, index) => (
         <button
+          type="button"
           key={index}
           className="flex flex-col items-center relative focus:outline-none justify-center"
           onClick={(e) => handleCategoryClick({ name: categoryName }, e)}
@@ -40,7 +42,7 @@ const CategoryButtons = ({
             {getCategoryIcon(categoryName)}
           </div>
           <span className="text-black text-xs mt-2">{categoryName}</span>
-          {categoryName === activeCategory && (
+          {categoryName === activeCategory && menuOpen && (
             <ChevronDown className="h-3 w-3 text-black absolute -bottom-3" />
           )}
         </button>

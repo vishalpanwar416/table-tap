@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { Plus } from 'lucide-react';
-import { categories } from '../../../components/foodData';
+import { categories } from '../../../api/foodData';
 import FoodItemList from './FoodItemList';
 import FoodItemForm from './FoodItemForm';
 import CategoryFilter from './CategoryFilter';

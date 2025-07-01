@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { useManagerNotifications } from '../../context/ManagerNotificationContext';
 import { format, isToday, isYesterday } from 'date-fns';
-import { useRestaurant } from '../../context/RestaurantContext';
+import { useRestaurant } from '../../Pages/Restaurantselection/RestaurantContext';
 import ReactDOMServer from "react-dom/server";
 import PrintBill from "./PrintBill";
 import PrintKOT from "./PrintKOT";

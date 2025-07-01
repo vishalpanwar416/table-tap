@@ -3,7 +3,7 @@ import { ChevronLeft, Trash2, Minus, Plus, ChevronDown } from 'lucide-react';
 import { useCart } from '../../config/CartContent';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabase'; // Import supabase to check for user
-import { useRestaurant } from '../../context/RestaurantContext'; // Import restaurant context
+import { useRestaurant } from '../Restaurantselection/RestaurantContext'; // Import restaurant context
 import { getStoredRestaurantSelection } from '../../utils/restaurantCheck'; // Import to get stored table number
 
 const OrderConfirmation = () => {

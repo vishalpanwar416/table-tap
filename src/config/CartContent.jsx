@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useRestaurant } from '../Pages/Restaurantselection/RestaurantContext';
 
 const CartContext = createContext();
 
@@ -6,6 +7,7 @@ export function CartProvider({ children, userId, userProfile }) {
   const [cartItems, setCartItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState(null);
+  const { restaurantId } = useRestaurant(); // Get current restaurant ID
 
   // Auto-save to localStorage whenever cart changes
   useEffect(() => {
@@ -13,22 +15,25 @@ export function CartProvider({ children, userId, userProfile }) {
       const cartData = {
         items: cartItems,
         timestamp: Date.now(),
-        userId: userId
+        userId: userId,
+        restaurantId: restaurantId // Include restaurant ID in cart data
       };
       try {
-        localStorage.setItem(`cart_${userId || 'guest'}`, JSON.stringify(cartData));
+        localStorage.setItem(`cart_${userId || 'guest'}_${restaurantId}`, JSON.stringify(cartData));
         console.log("Cart auto-saved to localStorage");
       } catch (error) {
         console.warn("Failed to save cart to localStorage:", error);
       }
     }
-  }, [cartItems, userId]);
+  }, [cartItems, userId, restaurantId]);
 
-  // Load cart from localStorage on mount or user change
+  // Load cart from localStorage on mount, user change, or restaurant change
   useEffect(() => {
     const loadCartFromStorage = () => {
+      if (!restaurantId) return;
+      
       try {
-        const savedCart = localStorage.getItem(`cart_${userId || 'guest'}`);
+        const savedCart = localStorage.getItem(`cart_${userId || 'guest'}_${restaurantId}`);
         if (savedCart) {
           const cartData = JSON.parse(savedCart);
           // Check if cart is not too old (e.g., 7 days)
@@ -37,25 +42,30 @@ export function CartProvider({ children, userId, userProfile }) {
           if (!isExpired && cartData.items) {
             setCartItems(cartData.items);
             setLastSyncTime(cartData.timestamp);
-            console.log("Cart loaded from localStorage");
+            console.log("Cart loaded from localStorage for restaurant:", restaurantId);
           }
+        } else {
+          // Clear cart when switching to a new restaurant
+          setCartItems([]);
+          setLastSyncTime(null);
         }
       } catch (error) {
         console.warn("Failed to load cart from localStorage:", error);
+        setCartItems([]);
       }
     };
 
     loadCartFromStorage();
-  }, [userId]);
+  }, [userId, restaurantId]);
 
   // Sync with server (if you have an API endpoint)
   const syncWithServer = useCallback(async () => {
-    if (!userId) return;
+    if (!userId || !restaurantId) return;
 
     setIsLoading(true);
     try {
       // Example API calls - replace with your actual endpoints
-      const response = await fetch(`/api/cart/${userId}`, {
+      const response = await fetch(`/api/cart/${userId}?restaurantId=${restaurantId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -68,7 +78,7 @@ export function CartProvider({ children, userId, userProfile }) {
         if (serverCart.items && serverCart.timestamp > (lastSyncTime || 0)) {
           setCartItems(serverCart.items);
           setLastSyncTime(serverCart.timestamp);
-          console.log("Cart synced from server");
+          console.log("Cart synced from server for restaurant:", restaurantId);
         }
       }
     } catch (error) {
@@ -76,22 +86,22 @@ export function CartProvider({ children, userId, userProfile }) {
     } finally {
       setIsLoading(false);
     }
-  }, [userId, lastSyncTime]);
+  }, [userId, restaurantId, lastSyncTime]);
 
   // Auto-sync on mount and periodically
   useEffect(() => {
-    if (userId) {
+    if (userId && restaurantId) {
       syncWithServer();
       
       // Set up periodic sync (every 5 minutes)
       const syncInterval = setInterval(syncWithServer, 5 * 60 * 1000);
       return () => clearInterval(syncInterval);
     }
-  }, [userId, syncWithServer]);
+  }, [userId, restaurantId, syncWithServer]);
 
   // Save to server whenever cart changes (debounced)
   useEffect(() => {
-    if (!userId || cartItems.length === 0) return;
+    if (!userId || !restaurantId || cartItems.length === 0) return;
 
     const saveToServer = async () => {
       try {
@@ -103,10 +113,11 @@ export function CartProvider({ children, userId, userProfile }) {
           },
           body: JSON.stringify({
             items: cartItems,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            restaurantId: restaurantId
           })
         });
-        console.log("Cart auto-saved to server");
+        console.log("Cart auto-saved to server for restaurant:", restaurantId);
       } catch (error) {
         console.warn("Failed to save cart to server:", error);
       }
@@ -115,7 +126,7 @@ export function CartProvider({ children, userId, userProfile }) {
     // Debounce server saves
     const timeoutId = setTimeout(saveToServer, 1000);
     return () => clearTimeout(timeoutId);
-  }, [cartItems, userId]);
+  }, [cartItems, userId, restaurantId]);
 
   // Apply user profile preferences/discounts
   useEffect(() => {
@@ -133,8 +144,8 @@ export function CartProvider({ children, userId, userProfile }) {
 
   // Debug: Log cart items state whenever it changes
   useEffect(() => {
-    console.log("Cart state updated:", cartItems);
-  }, [cartItems]);
+    console.log("Cart state updated for restaurant:", restaurantId, cartItems);
+  }, [cartItems, restaurantId]);
 
   // Calculate the actual price after discount (including user discounts)
   const calculateDiscountedPrice = (item) => {
@@ -159,6 +170,12 @@ export function CartProvider({ children, userId, userProfile }) {
   };
 
   const addToCart = (item) => {
+    // Check if the item belongs to the current restaurant
+    if (item.restaurant_id !== restaurantId) {
+      console.error('Cannot add items from different restaurants to cart');
+      return;
+    }
+
     console.log("Adding to cart:", item);
     console.log("Item discount properties:", {
       discounttype: item.discounttype,
@@ -219,11 +236,11 @@ export function CartProvider({ children, userId, userProfile }) {
   };
 
   const clearCart = () => {
-    console.log("Clearing cart");
+    console.log("Clearing cart for restaurant:", restaurantId);
     setCartItems([]);
     // Also clear from localStorage
     try {
-      localStorage.removeItem(`cart_${userId || 'guest'}`);
+      localStorage.removeItem(`cart_${userId || 'guest'}_${restaurantId}`);
     } catch (error) {
       console.warn("Failed to clear cart from localStorage:", error);
     }
@@ -231,18 +248,22 @@ export function CartProvider({ children, userId, userProfile }) {
 
   const mergeCarts = (guestCart, userCart) => {
     // Merge guest cart with user cart when user logs in
+    // Only merge items from the same restaurant
     const mergedItems = [...userCart];
     
     guestCart.forEach(guestItem => {
-      const existingItem = mergedItems.find(item => 
-        item.id === guestItem.id && 
-        (guestItem.category ? item.category === guestItem.category : true)
-      );
-      
-      if (existingItem) {
-        existingItem.quantity += guestItem.quantity;
-      } else {
-        mergedItems.push(guestItem);
+      // Only merge items from the current restaurant
+      if (guestItem.restaurant_id === restaurantId) {
+        const existingItem = mergedItems.find(item => 
+          item.id === guestItem.id && 
+          (guestItem.category ? item.category === guestItem.category : true)
+        );
+        
+        if (existingItem) {
+          existingItem.quantity += guestItem.quantity;
+        } else {
+          mergedItems.push(guestItem);
+        }
       }
     });
     
@@ -274,7 +295,8 @@ export function CartProvider({ children, userId, userProfile }) {
         getTotalItems,
         getTotalPrice,
         isLoading,
-        lastSyncTime
+        lastSyncTime,
+        restaurantId // Expose current restaurant ID
       }}
     >
       {children}
