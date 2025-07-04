@@ -32,7 +32,7 @@ const CategoryButtons = ({
           type="button"
           key={index}
           className="flex flex-col items-center relative focus:outline-none justify-center"
-          onClick={(e) => handleCategoryClick({ name: categoryName }, e)}
+          onClick={(e) => handleCategoryClick(categoryName, e)}
         >
           <div className={`${
             activeCategory === categoryName 
