@@ -368,22 +368,21 @@ const BestSellerPage = memo(() => {
   const navigate = useNavigate();
   const { restaurantId } = useRestaurant();
   const { cartItems } = useCart();
-  
+  const containerRef = useRef(null);
+
   // State management
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isSearchActive, setIsSearchActive] = useState(false);
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const [isLogoutOpen, setIsLogoutOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [isOrderCardOpen, setIsOrderCardOpen] = useState(false);
   const [bestSellerItems, setBestSellerItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isOrderCardOpen, setIsOrderCardOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isSearchActive, setIsSearchActive] = useState(false);
+  const [isLogoutOpen, setIsLogoutOpen] = useState(false);
   const [sortBy, setSortBy] = useState('popularity');
-
-  // Refs
-  const containerRef = useRef(null);
+  const [searchTerm, setSearchTerm] = useState(''); // Search state
 
   // Enhanced data fetching with caching
   useEffect(() => {
@@ -451,11 +450,32 @@ const BestSellerPage = memo(() => {
     navigate('/login');
   }, [navigate]);
 
-  // Filtered and sorted items
+  // Real-time search handler
+  const handleSearch = useCallback((query) => {
+    setSearchTerm(query);
+    // Don't close search - keep it open for real-time filtering
+  }, []);
+
+  // Clear search when search is closed
+  const handleSearchClose = useCallback(() => {
+    setSearchTerm('');
+    setIsSearchActive(false);
+  }, []);
+
+  // Updated filteredAndSortedItems with real-time search
   const filteredAndSortedItems = useMemo(() => {
     let items = bestSellerItems;
 
-    // Sort items
+    // Apply real-time search filter
+    if (searchTerm.trim()) {
+      items = items.filter(item => 
+        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.category?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Then apply sorting
     switch (sortBy) {
       case 'price-low':
         return items.sort((a, b) => a.price - b.price);
@@ -468,7 +488,7 @@ const BestSellerPage = memo(() => {
       default: // popularity
         return items;
     }
-  }, [bestSellerItems, sortBy]);
+  }, [bestSellerItems, searchTerm, sortBy]);
 
   // Loading state with enhanced UX
   if (loading) {
@@ -539,17 +559,19 @@ const BestSellerPage = memo(() => {
           />
         </Suspense>
         
-        {/* Header */}
+        {/* Header with real-time search */}
         <Suspense fallback={<HeaderSkeleton />}>
-        <Header 
-          isSearchActive={isSearchActive}
+          <Header 
+            isSearchActive={isSearchActive}
             toggleSearch={toggles.search}
             toggleSidebar={toggles.sidebar}
             toggleNotifications={toggles.notification}
             toggleCart={toggles.cart}
-          cartItems={cartItems}
-          className="mb-2 md:mb-3"
-        />
+            cartItems={cartItems}
+            onSearch={handleSearch} // Real-time search callback
+            onSearchClose={handleSearchClose} // Add close handler
+            className="mb-2 md:mb-3"
+          />
         </Suspense>
 
         {/* Back Button */}
@@ -645,7 +667,7 @@ const BestSellerPage = memo(() => {
             </select>
           </motion.div>
 
-          {/* Results Count */}
+          {/* Real-time Results Count */}
           <motion.div 
             className="mb-4"
             initial={{ opacity: 0 }}
@@ -653,7 +675,15 @@ const BestSellerPage = memo(() => {
             transition={{ delay: 0.4, duration: 0.3 }}
           >
             <p className="text-gray-600 text-sm">
-              {filteredAndSortedItems.length} item{filteredAndSortedItems.length !== 1 ? 's' : ''} found
+              {searchTerm ? (
+                <>
+                  {filteredAndSortedItems.length} result{filteredAndSortedItems.length !== 1 ? 's' : ''} for "{searchTerm}"
+                </>
+              ) : (
+                <>
+                  {filteredAndSortedItems.length} item{filteredAndSortedItems.length !== 1 ? 's' : ''} found
+                </>
+              )}
             </p>
           </motion.div>
           

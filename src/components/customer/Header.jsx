@@ -11,7 +11,8 @@ const Header = ({
   toggleSidebar,
   toggleNotifications,
   toggleCart,
-  onSearch
+  onSearch,
+  onSearchClose
 }) => {
   const inputRef = useRef(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -26,21 +27,30 @@ const Header = ({
     }
   }, [isSearchActive]);
 
+  // Real-time search as user types
   const handleSearchInput = (e) => {
-    setSearchQuery(e.target.value);
+    const query = e.target.value;
+    setSearchQuery(query);
+    
+    // Call onSearch for real-time filtering
+    if (onSearch) {
+      onSearch(query);
+    }
   };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    if (searchQuery.trim() && onSearch) {
-      onSearch(searchQuery.trim());
-      setSearchQuery(''); // Clear the input after search
-    }
+    // Search is already happening in real-time, so just prevent form submission
   };
 
   const clearSearch = () => {
     setSearchQuery('');
-    toggleSearch();
+    if (onSearch) {
+      onSearch(''); // Clear the search
+    }
+    if (onSearchClose) {
+      onSearchClose(); // Close search
+    }
   };
 
   const handleLocationClick = () => {
@@ -53,11 +63,13 @@ const Header = ({
     navigate('/restaurant-selection');
   };
 
-  // Handle search icon click - if search is active and there's a query, trigger search
+  // Handle search icon click
   const handleSearchIconClick = () => {
-    if (isSearchActive && searchQuery.trim()) {
-      handleSearchSubmit({ preventDefault: () => {} });
+    if (isSearchActive) {
+      // If search is active, clear and close it
+      clearSearch();
     } else {
+      // Open search
       toggleSearch();
     }
   };
@@ -134,13 +146,12 @@ const Header = ({
             <input
               ref={inputRef}
               type="text"
-              placeholder="Search food, drinks, etc."
+              placeholder="Search best sellers..."
               value={searchQuery}
               onChange={handleSearchInput}
               className={`transition-all duration-500 ease-out bg-white text-gray-700 text-sm sm:text-base outline-none font-medium rounded-full px-2 sm:px-3 py-1.5 sm:py-2 ${
                 isSearchActive ? 'w-full opacity-100 pr-4 transform scale-100' : 'w-0 opacity-0 pointer-events-none transform scale-95'
               }`}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearchSubmit(e)}
             />
             <div className="flex items-center ml-1 sm:ml-2">
               {isSearchActive ? (
@@ -163,7 +174,7 @@ const Header = ({
           type="button"
           onClick={handleSearchIconClick}
           className={`cursor-pointer text-white text-lg sm:text-xl transition-all duration-300 ease-out hover:scale-110 ${
-            isSearchActive && searchQuery.trim() ? 'text-blue-300' : ''
+            isSearchActive ? 'text-blue-300' : ''
           }`}
         >
           <Search size={22} className="sm:w-6 sm:h-6" />

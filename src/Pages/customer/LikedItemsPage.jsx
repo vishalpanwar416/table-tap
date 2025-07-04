@@ -177,6 +177,7 @@ const LikedItemsPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSearchActive, setIsSearchActive] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const { cartItems } = useCart();
   const navigate = useNavigate();
   const { likedItems, loading } = useLikes();
@@ -185,14 +186,29 @@ const LikedItemsPage = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [isOrderCardOpen, setIsOrderCardOpen] = useState(false);
 
-  // No need to filter from allFoodItems, we can use the likedItems directly
-  const likedFoodItems = likedItems;
+  // Real-time search handler
+  const handleSearch = useCallback((query) => {
+    setSearchTerm(query);
+  }, []);
 
-  // For debugging
-  useEffect(() => {
-    console.log("likedItems from context:", likedItems);
-    console.log("likedFoodItems to display:", likedFoodItems);
-  }, [likedItems]);
+  // Clear search when search is closed
+  const handleSearchClose = useCallback(() => {
+    setSearchTerm('');
+    setIsSearchActive(false);
+  }, []);
+
+  // Filtered liked items based on search
+  const filteredLikedItems = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return likedItems;
+    }
+    
+    return likedItems.filter(item => 
+      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.category?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [likedItems, searchTerm]);
 
   const toggle = {
     sidebar: () => setIsSidebarOpen(!isSidebarOpen),
@@ -247,6 +263,8 @@ const LikedItemsPage = () => {
           toggleNotifications={toggle.notification}
           toggleCart={toggle.cart}
           cartItems={cartItems}
+          onSearch={handleSearch}
+          onSearchClose={handleSearchClose}
           className="mb-2 md:mb-3"
         />
 
@@ -306,12 +324,56 @@ const LikedItemsPage = () => {
           >
             It's time to buy your favorite dish.
           </motion.p>
+
+          {/* Search Results Count */}
+          {searchTerm && (
+            <motion.div 
+              className="mb-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4, duration: 0.3 }}
+            >
+              <p className="text-gray-600 text-sm">
+                {filteredLikedItems.length} result{filteredLikedItems.length !== 1 ? 's' : ''} for "{searchTerm}"
+              </p>
+            </motion.div>
+          )}
           
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {likedFoodItems.map((item, idx) => (
-              <LikedItemCard key={item.id} item={item} onItemClick={handleImageClick} />
-            ))}
-          </div>
+          {/* Items Grid */}
+          {filteredLikedItems.length > 0 ? (
+            <motion.div 
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"
+              variants={staggerContainer}
+              initial="initial"
+              animate="animate"
+            >
+              {filteredLikedItems.map((item, idx) => (
+                <motion.div
+                  key={item.id}
+                  variants={itemVariants}
+                  layout
+                >
+                  <LikedItemCard item={item} onItemClick={handleImageClick} />
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : searchTerm ? (
+            <motion.div 
+              className="flex flex-col items-center justify-center py-12"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5, duration: 0.4 }}
+            >
+              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <Heart className="w-10 h-10 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">No items found</h3>
+              <p className="text-gray-600 text-center text-sm">
+                No liked items match your search "{searchTerm}"
+              </p>
+            </motion.div>
+          ) : null}
+
           <OrderCard
             isOpen={isOrderCardOpen}
             onClose={() => setIsOrderCardOpen(false)}
