@@ -1,4 +1,4 @@
-import React, { memo, useCallback } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { Heart, ShoppingBag } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useCart } from '../../config/CartContent';
@@ -15,10 +15,20 @@ const OptimizedFoodItem = memo(({
   const { toggleLike, likedItems } = useLikes();
   const { cartItems, addToCart, updateQuantity, removeItem } = useCart();
   
-  const cartItem = cartItems.find(i => i.id === item.id);
+  // Memoize expensive calculations
+  const cartItem = useMemo(() => 
+    cartItems.find(i => i.id === item.id), 
+    [cartItems, item.id]
+  );
+  
   const quantity = cartItem?.quantity || 0;
-  const isLiked = likedItems.some(likedItem => likedItem.id === item.id);
+  
+  const isLiked = useMemo(() => 
+    likedItems.some(likedItem => likedItem.id === item.id), 
+    [likedItems, item.id]
+  );
 
+  // Memoize handlers
   const handleDecrement = useCallback(() => {
     if (quantity === 1) {
       removeItem(item.id, item.category);
@@ -35,35 +45,56 @@ const OptimizedFoodItem = memo(({
     toggleLike(item);
   }, [toggleLike, item]);
 
-  const calculateDiscountedPrice = () => {
-    if (!item.discounttype || !item.discountvalue) {
-      return Number(item.price).toFixed(2);
-    }
-    
-    if (item.discounttype === 'Percentage') {
-      return (item.price - (item.price * (item.discountvalue / 100))).toFixed(2);
-    }
-    
-    return Math.max(0, item.price - item.discountvalue).toFixed(2);
-  };
-
-  const renderPrice = () => {
-    const discountedPrice = calculateDiscountedPrice();
+  // Memoize price calculations
+  const priceInfo = useMemo(() => {
     const originalPrice = Number(item.price).toFixed(2);
     
-    if (item.discounttype && item.discountvalue) {
+    if (!item.discounttype || !item.discountvalue) {
+      return { finalPrice: originalPrice, isDiscounted: false };
+    }
+    
+    let finalPrice;
+    if (item.discounttype === 'Percentage') {
+      finalPrice = (item.price - (item.price * (item.discountvalue / 100))).toFixed(2);
+    } else {
+      finalPrice = Math.max(0, item.price - item.discountvalue).toFixed(2);
+    }
+    
+    return { 
+      finalPrice, 
+      originalPrice, 
+      isDiscounted: true 
+    };
+  }, [item.price, item.discounttype, item.discountvalue]);
+
+  // Memoize variant classes
+  const variantClasses = useMemo(() => {
+    switch (variant) {
+      case "compact":
+        return "h-32 md:h-40";
+      case "featured":
+        return "h-48 md:h-56";
+      default:
+        return "aspect-square";
+    }
+  }, [variant]);
+
+  // Memoize price display
+  const priceDisplay = useMemo(() => {
+    if (priceInfo.isDiscounted) {
       return (
         <div className="flex flex-col items-end">
-          <span className="line-through text-gray-300 text-xs">₹{originalPrice}</span>
-          <span className="text-orange-400 font-semibold text-sm">₹{discountedPrice}</span>
+          <span className="line-through text-gray-300 text-xs">₹{priceInfo.originalPrice}</span>
+          <span className="text-orange-400 font-semibold text-sm">₹{priceInfo.finalPrice}</span>
         </div>
       );
     }
     
-    return <span className="text-white font-semibold text-sm">₹{originalPrice}</span>;
-  };
+    return <span className="text-white font-semibold text-sm">₹{priceInfo.finalPrice}</span>;
+  }, [priceInfo]);
 
-  const renderQuantityControls = () => {
+  // Memoize quantity controls
+  const quantityControls = useMemo(() => {
     if (quantity > 0) {
       return (
         <div className="flex items-center bg-black/90 rounded-lg px-2 py-1 gap-2">
@@ -95,18 +126,7 @@ const OptimizedFoodItem = memo(({
         <ShoppingBag className="w-4 h-4 text-white" />
       </button>
     );
-  };
-
-  const getVariantClasses = () => {
-    switch (variant) {
-      case "compact":
-        return "h-32 md:h-40";
-      case "featured":
-        return "h-48 md:h-56";
-      default:
-        return "aspect-square";
-    }
-  };
+  }, [quantity, handleDecrement, handleAddToCart]);
 
   return (
     <motion.div 
@@ -115,17 +135,17 @@ const OptimizedFoodItem = memo(({
       transition={{ duration: 0.2 }}
       layout
     >
-      <div className={`relative rounded-xl overflow-hidden mb-2 flex-1 ${getVariantClasses()}`}>
+      <div className={`relative rounded-xl overflow-hidden mb-2 flex-1 ${variantClasses}`}>
         <LazyImage 
           src={item.image} 
           alt={item.name}
+          category={item.category}
           className="w-full h-full object-cover cursor-pointer"
           onClick={onImageClick}
-          placeholder="/images/placeholder.jpg"
         />
         
         {/* Discount Badge */}
-        {item.discounttype && item.discountvalue && (
+        {priceInfo.isDiscounted && (
           <motion.div 
             className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-lg font-semibold shadow-lg z-10"
             initial={{ scale: 0 }}
@@ -150,7 +170,7 @@ const OptimizedFoodItem = memo(({
 
         {/* Price Display */}
         <div className="absolute bottom-2 right-2 bg-black/80 text-xs px-2.5 py-1 rounded-lg flex flex-col items-end">
-          {renderPrice()}
+          {priceDisplay}
         </div>
       </div>
       
@@ -172,7 +192,7 @@ const OptimizedFoodItem = memo(({
             </div>
           )}
           
-          {renderQuantityControls()}
+          {quantityControls}
         </div>
       </div>
     </motion.div>

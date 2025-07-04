@@ -6,6 +6,7 @@ import { useCart } from "../../config/CartContent";
 import { useLikes } from "../../config/LikesContent";
 import OrderCard from './itemCard';
 import { useRef } from "react";
+import { LazyImage } from "../../utils/imageOptimization";
 
 const BestSellers = ({ foodItems }) => {
   const navigate = useNavigate();
@@ -98,14 +99,17 @@ const BestSellers = ({ foodItems }) => {
       <motion.div
         className="group bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 overflow-hidden border border-gray-100 min-w-[140px] max-w-[150px] flex flex-col"
         style={{ transform: 'translateZ(0)' }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: index * 0.1 }}
       >
         <div className="relative h-28 overflow-hidden bg-gray-100">
-          <img
+          <LazyImage
             src={item.image}
             alt={item.name}
+            category={item.category}
             className="w-full h-full object-cover"
-            onClick={() => onItemClick(item)}
-            loading="lazy"
+            onClick={() => onItemClick && onItemClick(item)}
           />
           <button 
             className="absolute top-2 left-2 bg-white/70 rounded-full p-1 z-10"

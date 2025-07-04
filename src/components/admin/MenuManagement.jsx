@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Edit, Trash2, Plus, X, ChevronUp, ChevronDown, Search, Tag } from 'lucide-react';
 import { categories } from '../foodData';
 import { createFoodItem, updateFoodItem, deleteFoodItem, uploadFoodImage } from '../../api/foodService';
@@ -30,13 +30,37 @@ const MenuManagement = ({ foodItems, fetchFoodItems, setLoading, setErrorMsg, se
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Create blob URL for preview
+      const blobUrl = URL.createObjectURL(file);
+      
       setFormData({
         ...formData,
         imageFile: file,
-        image: URL.createObjectURL(file)
+        image: blobUrl
       });
     }
   };
+
+  // Add cleanup effect
+  useEffect(() => {
+    return () => {
+      // Clean up any blob URLs when component unmounts
+      if (formData.image && formData.image.startsWith('blob:')) {
+        URL.revokeObjectURL(formData.image);
+      }
+    };
+  }, []);
+
+  // Clean up blob URL when form data changes
+  useEffect(() => {
+    const currentImage = formData.image;
+    
+    return () => {
+      if (currentImage && currentImage.startsWith('blob:')) {
+        URL.revokeObjectURL(currentImage);
+      }
+    };
+  }, [formData.image]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

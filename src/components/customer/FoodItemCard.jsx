@@ -3,6 +3,7 @@ import { ShoppingBag, Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import { useCart } from "../../config/CartContent";
 import { useLikes } from "../../config/LikesContent";
+import { LazyImage } from "../../utils/imageOptimization";
 
 const FoodItemCard = ({ item, onItemClick }) => {
   const { cartItems, addToCart, updateQuantity, removeItem } = useCart();
@@ -45,14 +46,13 @@ const FoodItemCard = ({ item, onItemClick }) => {
       style={{ transform: 'translateZ(0)' }}
     >
       <div className="relative h-28 overflow-hidden bg-gray-100">
-        <img
+        <LazyImage
           src={item.image}
           alt={item.name}
-          className="w-full h-full object-cover"
+          category={item.category}
+          className="w-full h-full object-cover cursor-pointer"
           onClick={() => onItemClick && onItemClick(item)}
-          loading="lazy"
         />
-        {/* Like button, top left on image */}
         <button
           className="absolute top-2 left-2 z-20 bg-white/90 rounded-full p-1 shadow"
           onClick={() => toggleLike(item)}

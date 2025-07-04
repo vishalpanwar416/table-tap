@@ -95,13 +95,37 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
         return;
       }
       
+      // Create blob URL for preview
+      const blobUrl = URL.createObjectURL(file);
+      
       setFormData(prev => ({
         ...prev,
         imageFile: file,
-        image: URL.createObjectURL(file)
+        image: blobUrl
       }));
     }
   };
+
+  // Add cleanup effect
+  useEffect(() => {
+    return () => {
+      // Clean up any blob URLs when component unmounts
+      if (formData.image && formData.image.startsWith('blob:')) {
+        URL.revokeObjectURL(formData.image);
+      }
+    };
+  }, []);
+
+  // Clean up blob URL when form data changes
+  useEffect(() => {
+    const currentImage = formData.image;
+    
+    return () => {
+      if (currentImage && currentImage.startsWith('blob:')) {
+        URL.revokeObjectURL(currentImage);
+      }
+    };
+  }, [formData.image]);
 
   // Calculate price based on selected items
   useEffect(() => {

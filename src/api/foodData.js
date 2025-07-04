@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { useRestaurant } from '../Pages/Restaurantselection/RestaurantContext';
+import { processFoodItems, getFallbackImage } from '../utils/imageOptimization';
 
 export const categories = [
   { name: 'Snacks', icon: 'Sandwich' },
@@ -11,7 +12,7 @@ export const categories = [
 ];
 
 /**
- * Fetches all food items for a restaurant.
+ * Fetches all food items for a restaurant with image fallback handling.
  */
 export const fetchFoodItems = async (restaurantId) => {
   if (!restaurantId) return [];
@@ -21,8 +22,12 @@ export const fetchFoodItems = async (restaurantId) => {
       .select('*')
       .eq('restaurant_id', restaurantId)
       .order('created_at', { ascending: false });
+    
     if (error) throw error;
-    return data || [];
+    
+    // Process items to ensure they have valid images
+    const processedItems = processFoodItems(data || []);
+    return processedItems;
   } catch (error) {
     console.error('Exception while fetching all food items:', error);
     return [];
@@ -30,7 +35,7 @@ export const fetchFoodItems = async (restaurantId) => {
 };
 
 /**
- * OPTIMIZED: Fetches only items tagged as 'bestseller'.
+ * OPTIMIZED: Fetches only items tagged as 'bestseller' with image fallback handling.
  */
 export const fetchBestSellerItems = async (restaurantId) => {
   if (!restaurantId) return [];
@@ -42,7 +47,10 @@ export const fetchBestSellerItems = async (restaurantId) => {
       .contains('tags', ['bestseller']);
 
     if (error) throw error;
-    return data || [];
+    
+    // Process items to ensure they have valid images
+    const processedItems = processFoodItems(data || []);
+    return processedItems;
   } catch (error) {
     console.error('Exception while fetching best seller items:', error);
     return [];
@@ -50,7 +58,7 @@ export const fetchBestSellerItems = async (restaurantId) => {
 };
 
 /**
- * NEW & OPTIMIZED: Fetches only items tagged as 'recommended'.
+ * NEW & OPTIMIZED: Fetches only items tagged as 'recommended' with image fallback handling.
  */
 export const fetchRecommendedItems = async (restaurantId) => {
   if (!restaurantId) return [];
@@ -59,10 +67,13 @@ export const fetchRecommendedItems = async (restaurantId) => {
       .from('fooditems')
       .select('*')
       .eq('restaurant_id', restaurantId)
-      .contains('tags', ['recommended']); // Database does the filtering
+      .contains('tags', ['recommended']);
 
     if (error) throw error;
-    return data || [];
+    
+    // Process items to ensure they have valid images
+    const processedItems = processFoodItems(data || []);
+    return processedItems;
   } catch (error) {
     console.error('Exception while fetching recommended items:', error);
     return [];

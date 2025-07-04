@@ -137,6 +137,7 @@ const useFoodData = (restaurantId) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const cacheRef = useRef(new Map());
+  const abortControllerRef = useRef(null);
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -145,6 +146,14 @@ const useFoodData = (restaurantId) => {
       try {
         setLoading(true);
         setError(null);
+
+        // Cancel any ongoing requests
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+        }
+
+        // Create new abort controller
+        abortControllerRef.current = new AbortController();
 
         const cacheKey = `restaurant_${restaurantId}`;
         const cachedData = cacheRef.current.get(cacheKey);
@@ -158,21 +167,29 @@ const useFoodData = (restaurantId) => {
         }
 
         // Critical data first - parallel loading with timeout
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+        const timeoutId = setTimeout(() => {
+          if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+          }
+        }, 10000); // 10s timeout
 
         const [bestSellers, recommended] = await Promise.all([
           fetchBestSellerItems(restaurantId).catch(err => {
+            if (err.name === 'AbortError') return [];
             console.warn('Failed to load best sellers:', err);
             return [];
           }),
           fetchRecommendedItems(restaurantId).catch(err => {
+            if (err.name === 'AbortError') return [];
             console.warn('Failed to load recommendations:', err);
             return [];
           })
         ]);
 
         clearTimeout(timeoutId);
+
+        // Check if component is still mounted
+        if (abortControllerRef.current?.signal.aborted) return;
 
         setBestSellerItems(bestSellers);
         setRecommendedItems(recommended);
@@ -181,6 +198,7 @@ const useFoodData = (restaurantId) => {
         // Background loading for full menu with caching
         fetchFoodItems(restaurantId)
           .then(allItems => {
+            if (abortControllerRef.current?.signal.aborted) return;
             setAllFoodItems(allItems);
             cacheRef.current.set(cacheKey, {
               bestSellers,
@@ -190,18 +208,31 @@ const useFoodData = (restaurantId) => {
             });
           })
           .catch(err => {
+            if (err.name === 'AbortError') return;
             console.warn('Failed to load all food items:', err);
-            setAllFoodItems([]);
+            if (!abortControllerRef.current?.signal.aborted) {
+              setAllFoodItems([]);
+            }
           });
 
       } catch (error) {
+        if (error.name === 'AbortError') return;
         console.error('Critical data loading failed:', error);
-        setError(error);
-        setLoading(false);
+        if (!abortControllerRef.current?.signal.aborted) {
+          setError(error);
+          setLoading(false);
+        }
       }
     };
 
     loadData();
+
+    // Cleanup function
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [restaurantId]);
 
   return { bestSellerItems, recommendedItems, allFoodItems, loading, error };

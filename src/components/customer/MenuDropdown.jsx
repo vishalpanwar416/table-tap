@@ -1,5 +1,5 @@
 // Enhanced MenuDropdown.jsx with improvements
-import { ChevronUp, Heart, ShoppingBag, Star, Clock, Flame, ImageIcon } from "lucide-react";
+import { ChevronUp, Heart, ShoppingBag, Star, Clock, Flame } from "lucide-react";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useCart } from "../../config/CartContent";
 import { useLikes } from "../../config/LikesContent";
@@ -7,131 +7,9 @@ import PriceDisplay from './PriceDisplay';
 import { motion, AnimatePresence } from 'framer-motion';
 import { flushSync } from 'react-dom';
 import React from 'react';
-
-// Enhanced Progressive Image with error retry
-const ProgressiveImage = ({ src, alt, className, placeholderColor = '#f3f4f6', delay = 0, priority = false }) => {
-  const [imageState, setImageState] = useState('waiting');
-  const [imageSrc, setImageSrc] = useState('');
-  const [retryCount, setRetryCount] = useState(0);
-  const imgRef = useRef();
-  const observerRef = useRef();
-  const timeoutRef = useRef();
-  const isUnmountedRef = useRef(false);
-
-  const loadImage = useCallback((src, retry = false) => {
-    if (retry) setRetryCount(prev => prev + 1);
-    
-    const img = new Image();
-    img.onload = () => {
-      if (!isUnmountedRef.current) {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            setImageSrc(src);
-            setImageState('loaded');
-          });
-        });
-      }
-    };
-    
-    img.onerror = () => {
-      if (!isUnmountedRef.current && retryCount < 2) {
-        // Retry loading with delay
-        setTimeout(() => loadImage(src, true), 1000 * (retryCount + 1));
-      } else if (!isUnmountedRef.current) {
-        setImageState('error');
-      }
-    };
-    
-    img.loading = priority ? 'eager' : 'lazy';
-    img.src = src;
-  }, [retryCount]);
-
-  useEffect(() => {
-    isUnmountedRef.current = false;
-    
-    if (priority) {
-      setImageState('loading');
-      loadImage(src);
-      return;
-    }
-    
-    timeoutRef.current = setTimeout(() => {
-      if (!imgRef.current || isUnmountedRef.current) return;
-
-      setImageState('loading');
-      const observer = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting && !isUnmountedRef.current) {
-            loadImage(src);
-            observer.disconnect();
-          }
-        },
-        { 
-          threshold: 0.1,
-          rootMargin: '50px'
-        }
-      );
-
-      if (imgRef.current) {
-        observer.observe(imgRef.current);
-        observerRef.current = observer;
-      }
-    }, delay);
-
-    return () => {
-      isUnmountedRef.current = true;
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (observerRef.current) observerRef.current.disconnect();
-    };
-  }, [src, delay, priority, loadImage]);
-
-  const handleRetry = () => {
-    setImageState('loading');
-    setRetryCount(0);
-    loadImage(src);
-  };
-
-  return (
-    <div ref={imgRef} className={`${className} relative overflow-hidden`}>
-      {(imageState === 'waiting' || imageState === 'loading') && (
-        <div 
-          className="absolute inset-0 flex items-center justify-center"
-          style={{ backgroundColor: placeholderColor }}
-        >
-          <div className="w-8 h-8 bg-gray-300 rounded animate-pulse"></div>
-        </div>
-      )}
-      
-      {imageState === 'error' && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-200">
-          <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
-          <span className="text-xs text-gray-500 mb-2">Image unavailable</span>
-          <button 
-            onClick={handleRetry}
-            className="text-xs text-blue-500 hover:text-blue-700 underline"
-          >
-            Retry
-          </button>
-        </div>
-      )}
-      
-      {imageState === 'loaded' && (
-        <img
-          src={imageSrc}
-          alt={alt}
-          className={`${className} absolute inset-0 transition-opacity duration-500 will-change-transform`}
-          loading="lazy"
-          decoding="async"
-          style={{ 
-            opacity: 1,
-            transform: 'translateZ(0)',
-            backfaceVisibility: 'hidden'
-          }}
-        />
-      )}
-    </div>
-  );
-};
+import SimpleFoodImage from './SimpleFoodImage';
+import { LazyImage } from '../../utils/imageOptimization';
+import FoodImageWithFallback from './FoodImageWithFallback';
 
 // Enhanced MenuItem with skeleton loading
 const MenuItem = React.memo(({ 
@@ -200,12 +78,11 @@ const MenuItem = React.memo(({
       <div className="relative h-48 overflow-hidden bg-gray-100">
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent z-10 pointer-events-none"></div>
         
-        <ProgressiveImage
+        <FoodImageWithFallback
           src={item.image}
           alt={item.name}
+          category={item.category}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-          placeholderColor={item.primaryColor}
-          priority={index < 4}
         />
         
         <button
@@ -287,26 +164,23 @@ const MenuItem = React.memo(({
         </div>
         
         <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-          {item.description}
+          {item.description || "Delicious food item"}
         </p>
-
-        {item.tags && item.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {item.tags.slice(0, 2).map(tag => (
-              <span
-                key={tag}
-                className="bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-1 rounded-full border border-orange-200"
-              >
-                {tag}
+        
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            {item.category && (
+              <span className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">
+                {item.category}
               </span>
-            ))}
-            {item.tags.length > 2 && (
-              <span className="text-gray-500 text-xs font-medium px-2.5 py-1">
-                +{item.tags.length - 2}
+            )}
+            {item.tags && item.tags.length > 0 && (
+              <span className="bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded-full">
+                {item.tags[0]}
               </span>
             )}
           </div>
-        )}
+        </div>
       </div>
     </motion.div>
   );
@@ -385,7 +259,7 @@ const useInfiniteScroll = (items, itemsPerPage = 8) => {
 };
 
 // Main MenuDropdown component with centered category and orange up arrow
-export const MenuDropdown = ({ menuOpen, handleCloseMenu, activeCategory, menuItems = [] }) => {
+export const MenuDropdown = ({ menuOpen, handleCloseMenu, activeCategory, menuItems = [], error, refetch }) => {
   const { cartItems, addToCart, updateQuantity, removeItem } = useCart();
   const { likedItems, toggleLike } = useLikes();
   
@@ -423,6 +297,17 @@ export const MenuDropdown = ({ menuOpen, handleCloseMenu, activeCategory, menuIt
   }, [toggleLike, menuItems]);
 
   if (!menuOpen) return null;
+
+  if (error) {
+    return (
+      <div className="text-center text-red-500 p-4">
+        <p>Sorry, we couldn't load the menu. Please check your connection and try again.</p>
+        <button onClick={refetch} className="mt-2 px-4 py-2 bg-orange-500 text-white rounded">
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <AnimatePresence>
