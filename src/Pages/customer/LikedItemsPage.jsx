@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Heart, ShoppingBag, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../../components/customer/Header';
@@ -64,102 +64,109 @@ const itemVariants = {
   }
 };
 
-const LikedItem = ({ image, name, price, description, item, onImageClick }) => {
+const LikedItemCard = ({ item, onItemClick }) => {
   const { cartItems, addToCart, updateQuantity, removeItem } = useCart();
   const { toggleLike, likedItems } = useLikes();
-  const cartItem = cartItems.find(i => i.id === item.id);
+  const cartItem = useMemo(() => cartItems.find(i => i.id === item.id), [cartItems, item.id]);
   const quantity = cartItem?.quantity || 0;
-  const isLiked = likedItems.some(li => li.id === item.id);
+  const isLiked = useMemo(() => likedItems.some(likedItem => likedItem.id === item.id), [likedItems, item.id]);
 
-  const handleDecrement = () => {
-    quantity === 1 ? removeItem(item.id, item.category) : updateQuantity(item.id, item.category, quantity - 1);
-  };
+  const handleAddClick = useCallback(() => addToCart(item), [addToCart, item]);
+  const handleIncrement = useCallback(() => addToCart(item), [addToCart, item]);
+  const handleDecrement = useCallback(() => {
+    if (quantity === 1) {
+      removeItem(item.id, item.category);
+    } else {
+      updateQuantity(item.id, item.category, quantity - 1);
+    }
+  }, [quantity, removeItem, updateQuantity, item.id, item.category]);
+
+  // Discount tag
+  const DiscountTag = () =>
+    item.discounttype && item.discountvalue ? (
+      <span className="text-[10px] bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
+        {item.discounttype === 'Percentage'
+          ? `${item.discountvalue}% OFF`
+          : `₹${item.discountvalue} OFF`}
+      </span>
+    ) : null;
+
+  // Price calculation
+  const discountedPrice = useMemo(() => {
+    if (!item.discounttype || !item.discountvalue) return item.price;
+    return item.discounttype === 'Percentage'
+      ? (item.price - (item.price * (item.discountvalue / 100)))
+      : Math.max(0, item.price - item.discountvalue);
+  }, [item.price, item.discounttype, item.discountvalue]);
 
   return (
-    <motion.div 
-      className="relative h-full flex flex-col group hover:shadow-lg transition-shadow"
-      whileHover={{ scale: 1.02 }}
-      transition={{ duration: 0.2 }}
+    <motion.div
+      className="group bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 overflow-hidden border border-gray-100 min-w-[140px] max-w-[150px] flex flex-col"
+      style={{ transform: 'translateZ(0)' }}
     >
-      <div className="relative rounded-xl overflow-hidden mb-2 flex-1 aspect-square">
-        {/* Offer Badge */}
-        {item.discounttype && item.discountvalue ? (
-          <motion.div 
-            className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-lg font-semibold shadow-lg z-10"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, duration: 0.3 }}
-          >
-            {item.discounttype === 'Percentage'
-              ? `${item.discountvalue}% off`
-              : `₹${item.discountvalue} off`
-            }
-          </motion.div>
-        ) : null}
-
-        <img 
-          src={image} 
-          alt={name}
-          className="w-full h-full object-cover cursor-pointer"
-          onClick={() => onImageClick(item)}
+      <div className="relative h-28 overflow-hidden bg-gray-100">
+        <img
+          src={item.image}
+          alt={item.name}
+          className="w-full h-full object-cover"
+          onClick={() => onItemClick(item)}
+          loading="lazy"
         />
-        
-        <button 
-          className="absolute top-2 right-2 bg-white/80 rounded-full p-1.5 backdrop-blur-sm hover:bg-white transition-colors"
+        {/* Like button, top left on image */}
+        <button
+          className="absolute top-2 left-2 z-20 bg-white/90 rounded-full p-1 shadow"
           onClick={() => toggleLike(item)}
         >
-          <Heart className={`h-4 w-4 ${isLiked ? 'text-red-500 fill-red-500' : 'text-gray-600'}`} />
+          <Heart className={`h-4 w-4 ${isLiked ? "text-red-500 fill-red-500" : "text-gray-400"}`} />
         </button>
-
-        {/* Price Tag */}
-        <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2.5 py-1 rounded-lg flex flex-col items-end">
-          {item.discounttype && item.discountvalue ? (
-            <>
-              <span className="line-through text-gray-300 mr-1 whitespace-nowrap">₹{Number(item.price).toFixed(2)}</span>
-              <span className="text-orange-400 font-semibold whitespace-nowrap">
-                ₹{item.discounttype === 'Percentage'
-                  ? (item.price - (item.price * (item.discountvalue / 100))).toFixed(2)
-                  : Math.max(0, item.price - item.discountvalue).toFixed(2)
-                }
-              </span>
-            </>
-          ) : (
-            <span className="font-semibold whitespace-nowrap text-white">₹{Number(item.price).toFixed(2)}</span>
-          )}
-        </div>
       </div>
-      
-      <div className="text-black space-y-1 mt-2">
-        <h3 className="font-medium text-sm md:text-base line-clamp-1">{name}</h3>
-        <div className="flex justify-between items-center">
-          <p className="text-[10px] md:text-xs text-gray-600 line-clamp-2 pr-2 flex-1">
-            {description}
-          </p>
-          
-          {quantity > 0 ? (
-            <div className="flex items-center bg-black/90 rounded-lg px-2 py-1 gap-2">
-              <button 
-                onClick={handleDecrement}
-                className="text-white text-xs md:text-sm hover:bg-black/80 px-1 rounded"
-              >
-                -
-              </button>
-              <span className="text-white text-xs md:text-sm">{quantity}</span>
-              <button 
-                onClick={() => addToCart(item)}
-                className="text-white text-xs md:text-sm hover:bg-black/80 px-1 rounded"
-              >
-                +
-              </button>
+      <div className="flex flex-col flex-1 justify-between py-1 px-2">
+        <div className="flex items-start justify-between">
+          <div className="flex-1 min-w-0">
+            <h4 className="text-xs font-bold text-gray-900 truncate">{item.name}</h4>
+            <div className="flex items-center space-x-1">
+              {item.discounttype && item.discountvalue ? (
+                <>
+                  <span className="text-[10px] text-gray-400 line-through">
+                    ₹{Number(item.price).toFixed(0)}
+                  </span>
+                  <span className="text-sm font-bold text-orange-600">
+                    ₹{discountedPrice.toFixed(0)}
+                  </span>
+                </>
+              ) : (
+                <span className="text-sm font-bold text-gray-900">
+                  ₹{Number(item.price).toFixed(0)}
+                </span>
+              )}
             </div>
-          ) : (
-            <button 
-              className="bg-black/90 hover:bg-black p-1.5 rounded-lg transition-colors"
-              onClick={() => addToCart(item)}
-            >
-              <ShoppingBag className="w-4 h-4 md:w-5 md:h-5 text-white" />
-            </button>
-          )}
+          </div>
+          <div className="ml-1">
+            {quantity > 0 ? (
+              <div className="flex items-center bg-black/90 text-white rounded-full px-2 py-0.5 shadow">
+                <button
+                  onClick={handleDecrement}
+                  className="text-white px-1 text-xs"
+                >−</button>
+                <span className="px-1 text-xs">{quantity}</span>
+                <button
+                  onClick={handleIncrement}
+                  className="text-white px-1 text-xs"
+                >+</button>
+              </div>
+            ) : (
+              <button
+                onClick={handleAddClick}
+                className="bg-black/90 hover:bg-gray-800 text-white rounded-full px-2 py-0.5 flex items-center space-x-1 text-xs shadow"
+              >
+                <ShoppingBag className="h-3 w-3" />
+                <span>Add</span>
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="flex justify-end mt-1">
+          <DiscountTag />
         </div>
       </div>
     </motion.div>
@@ -212,6 +219,15 @@ const LikedItemsPage = () => {
           <p>Loading your liked items...</p>
         </div>
       </motion.div>
+    );
+  }
+
+  if (!likedItems || likedItems.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <h2 className="text-lg font-bold text-gray-700 mb-2">No Liked Items</h2>
+        <p className="text-gray-400">You haven't liked any items yet.</p>
+      </div>
     );
   }
 
@@ -291,59 +307,11 @@ const LikedItemsPage = () => {
             It's time to buy your favorite dish.
           </motion.p>
           
-          {likedFoodItems.length === 0 ? (
-            <motion.div 
-              className="flex flex-col justify-center items-center h-64"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.5, duration: 0.4 }}
-            >
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.7, duration: 0.3 }}
-              >
-                <Heart className="h-16 w-16 text-gray-300 mb-4" />
-              </motion.div>
-              <motion.p 
-                className="text-gray-500 text-lg"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8, duration: 0.3 }}
-              >
-                You haven't liked any items yet.
-              </motion.p>
-              <motion.button 
-                onClick={() => navigate('/')}
-                className="mt-4 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.9, duration: 0.3 }}
-              >
-                Browse Menu
-              </motion.button>
-            </motion.div>
-          ) : (
-            <motion.div 
-              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
-              variants={staggerContainer}
-              initial="initial"
-              animate="animate"
-            >
-              {likedFoodItems.map((item, index) => (
-                <motion.div 
-                  key={item.id} 
-                  className="aspect-square"
-                  variants={itemVariants}
-                  custom={index}
-                >
-                  <LikedItem {...item} item={item} onImageClick={handleImageClick} />
-                </motion.div>
-              ))}
-            </motion.div>
-          )}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {likedFoodItems.map((item, idx) => (
+              <LikedItemCard key={item.id} item={item} onItemClick={handleImageClick} />
+            ))}
+          </div>
           <OrderCard
             isOpen={isOrderCardOpen}
             onClose={() => setIsOrderCardOpen(false)}

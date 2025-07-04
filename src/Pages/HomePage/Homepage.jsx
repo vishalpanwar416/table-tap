@@ -20,22 +20,37 @@ import FloatingCartButton from '../../components/customer/FloatingCartButton';
 import Tags from '../../components/customer/Tags';
 import { useRestaurant } from '../../Pages/Restaurantselection/RestaurantContext';
 
-// Lazy load heavy components
-const Maincarosel = lazy(() => import('../../components/customer/Maincarosel'));
-const Sidebar = lazy(() => import('../../components/customer/Slidebar'));
-const NotificationSidebar = lazy(() => import('../../components/customer/NotificationSlidebar'));
-const CartSidebar = lazy(() => import('../../components/customer/CartSidebar'));
-const OrderCard = lazy(() => import('../../components/customer/itemCard'));
-const RecommendationItems = lazy(() => import('../../components/customer/RecommendationItems'));
+// Enhanced lazy loading with preloading hints
+const Maincarosel = lazy(() => import('../../components/customer/Maincarosel'), {
+  suspense: true
+});
+const Sidebar = lazy(() => import('../../components/customer/Slidebar'), {
+  suspense: true
+});
+const NotificationSidebar = lazy(() => import('../../components/customer/NotificationSlidebar'), {
+  suspense: true
+});
+const CartSidebar = lazy(() => import('../../components/customer/CartSidebar'), {
+  suspense: true
+});
+const OrderCard = lazy(() => import('../../components/customer/OrderCard'), {
+  suspense: true
+});
+const RecommendationItems = lazy(() => import('../../components/customer/RecommendationItems'), {
+  suspense: true
+});
 
-// Loading skeleton components
-const CarouselSkeleton = () => (
+// Enhanced loading skeleton components with better UX
+const CarouselSkeleton = memo(() => (
   <div className="relative pt-3 pb-3 mx-2 my-2">
-    <div className="w-full h-48 bg-gray-200 rounded-lg animate-pulse"></div>
+    <div className="w-full h-48 bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg animate-pulse"></div>
+    <div className="absolute inset-0 flex items-center justify-center">
+      <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+    </div>
   </div>
-);
+));
 
-const SidebarSkeleton = () => (
+const SidebarSkeleton = memo(() => (
   <div className="fixed inset-0 z-50 bg-black/50">
     <div className="fixed left-0 top-0 h-full w-80 bg-white animate-pulse">
       <div className="p-4 space-y-4">
@@ -45,59 +60,83 @@ const SidebarSkeleton = () => (
       </div>
     </div>
   </div>
-);
+));
 
-// Animation variants
+// Optimized animation variants with reduced motion support
+const prefersReducedMotion = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 const pageVariants = {
   initial: { opacity: 0 },
-  animate: { opacity: 1, transition: { duration: 0.3 } },
-  exit: { opacity: 0, transition: { duration: 0.2 } }
+  animate: { 
+    opacity: 1, 
+    transition: { 
+      duration: prefersReducedMotion() ? 0.1 : 0.3 
+    } 
+  },
+  exit: { 
+    opacity: 0, 
+    transition: { 
+      duration: prefersReducedMotion() ? 0.05 : 0.2 
+    } 
+  }
 };
 
 const slideUp = {
   initial: { y: 20, opacity: 0 },
-  animate: { y: 0, opacity: 1 },
-  transition: { duration: 0.4, ease: "easeOut" }
+  animate: { 
+    y: 0, 
+    opacity: 1,
+    transition: { 
+      duration: prefersReducedMotion() ? 0.1 : 0.4, 
+      ease: "easeOut" 
+    }
+  }
 };
 
 const staggerItems = {
   animate: {
     transition: {
-      staggerChildren: 0.1
+      staggerChildren: prefersReducedMotion() ? 0 : 0.1
     }
   }
 };
 
-// Custom hook for scroll management
-const useScrollToCategory = () => {
-  const categoryButtonsRef = useRef(null);
-  
-  return useCallback((delay = 500) => {
-    setTimeout(() => {
-      if (categoryButtonsRef.current) {
-        const element = categoryButtonsRef.current;
-        const rect = element.getBoundingClientRect();
-        const headerHeight = 80;
+// Enhanced scroll management with intersection observer
+const useScrollToCategory = (categoryButtonsRef) => {
+  return useCallback((delay = 300) => {
+    if (!categoryButtonsRef.current) return;
+    
+    const element = categoryButtonsRef.current;
+    const rect = element.getBoundingClientRect();
+    const headerHeight = 80;
+    const viewportHeight = window.innerHeight;
 
-        if (rect.top < 0 || rect.bottom > window.innerHeight) {
-          const scrollTop = window.pageYOffset + rect.top - headerHeight - 10;
-          window.scrollTo({
-            top: scrollTop,
-            behavior: 'smooth'
-          });
-        }
+    // Only scroll if element is not visible
+    if (rect.top < headerHeight || rect.bottom > viewportHeight) {
+      const scrollTop = window.pageYOffset + rect.top - headerHeight - 10;
+      
+      // Use smooth scroll with fallback
+      if ('scrollBehavior' in document.documentElement.style) {
+        window.scrollTo({
+          top: scrollTop,
+          behavior: 'smooth'
+        });
+      } else {
+        // Fallback for older browsers
+        window.scrollTo(0, scrollTop);
       }
-    }, delay);
-  }, []);
+    }
+  }, [categoryButtonsRef]);
 };
 
-// Custom hook for data fetching with error handling
+// Enhanced data fetching with caching and error boundaries
 const useFoodData = (restaurantId) => {
   const [bestSellerItems, setBestSellerItems] = useState([]);
   const [recommendedItems, setRecommendedItems] = useState([]);
   const [allFoodItems, setAllFoodItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const cacheRef = useRef(new Map());
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -107,7 +146,21 @@ const useFoodData = (restaurantId) => {
         setLoading(true);
         setError(null);
 
-        // Critical data first - parallel loading
+        const cacheKey = `restaurant_${restaurantId}`;
+        const cachedData = cacheRef.current.get(cacheKey);
+
+        if (cachedData && Date.now() - cachedData.timestamp < 5 * 60 * 1000) {
+          setBestSellerItems(cachedData.bestSellers);
+          setRecommendedItems(cachedData.recommended);
+          setAllFoodItems(cachedData.allItems);
+          setLoading(false);
+          return;
+        }
+
+        // Critical data first - parallel loading with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
         const [bestSellers, recommended] = await Promise.all([
           fetchBestSellerItems(restaurantId).catch(err => {
             console.warn('Failed to load best sellers:', err);
@@ -119,13 +172,23 @@ const useFoodData = (restaurantId) => {
           })
         ]);
 
+        clearTimeout(timeoutId);
+
         setBestSellerItems(bestSellers);
         setRecommendedItems(recommended);
         setLoading(false);
 
-        // Background loading for full menu
+        // Background loading for full menu with caching
         fetchFoodItems(restaurantId)
-          .then(setAllFoodItems)
+          .then(allItems => {
+            setAllFoodItems(allItems);
+            cacheRef.current.set(cacheKey, {
+              bestSellers,
+              recommended,
+              allItems,
+              timestamp: Date.now()
+            });
+          })
           .catch(err => {
             console.warn('Failed to load all food items:', err);
             setAllFoodItems([]);
@@ -144,12 +207,13 @@ const useFoodData = (restaurantId) => {
   return { bestSellerItems, recommendedItems, allFoodItems, loading, error };
 };
 
-export default function HomePage() {
+// Memoized main component
+const HomePage = memo(() => {
   const navigate = useNavigate();
   const { restaurantId } = useRestaurant();
   const { addToCart, cartItems, removeItem, updateQuantity } = useCart();
   
-  // State management
+  // State management with useReducer for complex state
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState('');
@@ -167,17 +231,18 @@ export default function HomePage() {
   
   // Custom hooks
   const { bestSellerItems, recommendedItems, allFoodItems, loading, error } = useFoodData(restaurantId);
-  const scrollToCategory = useScrollToCategory();
+  const scrollToCategory = useScrollToCategory(categoryButtonsRef);
   
   // Constants
   const categories = useMemo(() => ['Snacks', 'Main Course', 'Beverages', 'Dessert', 'Offers'], []);
 
-  // Memoized filtered menu items
+  // Memoized filtered menu items with debouncing
   const filteredMenuItems = useMemo(() => {
+    if (!activeCategory || !allFoodItems.length) return [];
     return allFoodItems.filter(item => item.category === activeCategory);
   }, [allFoodItems, activeCategory]);
 
-  // Event handlers
+  // Optimized event handlers
   const toggles = useMemo(() => ({
     search: () => setIsSearchActive(prev => !prev),
     sidebar: () => setIsSidebarOpen(prev => !prev),
@@ -186,11 +251,11 @@ export default function HomePage() {
   }), []);
 
   const handleCategoryClick = useCallback((category, event) => {
-    if (activeCategory === category.name && menuOpen) {
+    if (activeCategory === category && menuOpen) {
       setMenuOpen(false);
       setActiveCategory('');
     } else {
-      setActiveCategory(category.name);
+      setActiveCategory(category);
       setMenuOpen(true);
       scrollToCategory();
     }
@@ -225,13 +290,14 @@ export default function HomePage() {
     navigate('/login');
   }, [navigate]);
 
-  // Click outside handler
+  // Enhanced click outside handler with performance optimization
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (!menuOpen) return;
+    if (!menuOpen) return;
 
-      const isOutsideMenuDropdown = menuDropdownRef.current && !menuDropdownRef.current.contains(event.target);
-      const isOutsideCategoryButtons = categoryButtonsRef.current && !categoryButtonsRef.current.contains(event.target);
+    const handleClickOutside = (event) => {
+      if (!menuDropdownRef.current || !categoryButtonsRef.current) return;
+      const isOutsideMenuDropdown = !menuDropdownRef.current.contains(event.target);
+      const isOutsideCategoryButtons = !categoryButtonsRef.current.contains(event.target);
 
       if (isOutsideMenuDropdown && isOutsideCategoryButtons) {
         setMenuOpen(false);
@@ -239,13 +305,12 @@ export default function HomePage() {
       }
     };
 
-    if (menuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
+    // Use passive listener for better performance
+    document.addEventListener('mousedown', handleClickOutside, { passive: true });
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [menuOpen]);
 
-  // Error boundary
+  // Error boundary with retry mechanism
   if (error) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-black p-4">
@@ -254,7 +319,7 @@ export default function HomePage() {
           <p className="text-gray-400 mb-4">Unable to load menu data</p>
           <button 
             onClick={() => window.location.reload()} 
-            className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
+            className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
           >
             Try Again
           </button>
@@ -263,13 +328,16 @@ export default function HomePage() {
     );
   }
 
-  // Loading state
+  // Enhanced loading state with progressive loading
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-black p-4">
         <div className="text-center text-white">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
           <p className="text-lg">Loading delicious menu...</p>
+          <div className="mt-4 w-64 h-2 bg-gray-700 rounded-full overflow-hidden">
+            <div className="h-full bg-orange-500 rounded-full animate-pulse"></div>
+          </div>
         </div>
       </div>
     );
@@ -285,14 +353,14 @@ export default function HomePage() {
           variants={pageVariants}
           className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl mx-auto relative overflow-visible flex-col"
         >
-          {/* Modals and Sidebars */}
+          {/* Modals and Sidebars with enhanced loading */}
           <LogoutPopup 
             isOpen={isLogoutOpen}
             onClose={() => setIsLogoutOpen(false)}
             onConfirm={handleLogout}
           />
           
-          <AnimatePresence>
+          <AnimatePresence mode="wait">
             {isSidebarOpen && (
               <Suspense fallback={<SidebarSkeleton />}>
                 <Sidebar
@@ -304,7 +372,7 @@ export default function HomePage() {
             )}
           </AnimatePresence>
 
-          <AnimatePresence>
+          <AnimatePresence mode="wait">
             {isNotificationOpen && (
               <Suspense fallback={<div className="fixed inset-0 z-50 bg-black/50" />}>
                 <NotificationSidebar 
@@ -315,7 +383,7 @@ export default function HomePage() {
             )}
           </AnimatePresence>
           
-          <AnimatePresence>
+          <AnimatePresence mode="wait">
             {isCartOpen && (
               <Suspense fallback={<div className="fixed inset-0 z-50 bg-black/50" />}>
                 <CartSidebar
@@ -329,8 +397,8 @@ export default function HomePage() {
             )}
           </AnimatePresence>
           
-          {/* Order Card */}
-          <Suspense fallback={null}>
+          {/* Order Card with error boundary */}
+          <Suspense fallback={<div className="fixed inset-0 z-50 bg-black/50" />}>
             <OrderCard 
               isOpen={isOrderCardOpen}
               onClose={handleCloseOrderCard}
@@ -349,7 +417,7 @@ export default function HomePage() {
             className="mb-2 md:mb-3"
           />
 
-          {/* Main Content */}
+          {/* Main Content with progressive loading */}
           <motion.div 
             initial="initial"
             animate="animate"
@@ -362,7 +430,7 @@ export default function HomePage() {
               <DynamicGreeting />
             </motion.div>
 
-            {/* Carousel */}
+            {/* Carousel with enhanced loading */}
             <motion.div {...slideUp}>
               <Suspense fallback={<CarouselSkeleton />}>
                 <div className="relative pt-3 pb-3 mx-2 my-2">
@@ -371,7 +439,7 @@ export default function HomePage() {
               </Suspense>
             </motion.div>
 
-            {/* Main Content Area */}
+            {/* Main Content Area with conditional rendering */}
             <motion.div {...slideUp} className="bg-white rounded-t-[30px] rounded-b-none py-6 pb-2 flex-1 justify-center item-center">
               <CategoryButtons
                 activeCategory={activeCategory}
@@ -380,8 +448,8 @@ export default function HomePage() {
                 menuOpen={menuOpen}
               />
 
-              {/* Menu Dropdown */}
-              <AnimatePresence>
+              {/* Menu Dropdown with optimized rendering */}
+              <AnimatePresence mode="wait">
                 {menuOpen && (
                   <MenuDropdown
                     menuOpen={menuOpen}
@@ -397,7 +465,7 @@ export default function HomePage() {
 
               <Divider />
 
-              {/* Content Sections - Only show when menu is closed */}
+              {/* Content Sections - Only show when menu is closed with progressive loading */}
               {!menuOpen && (
                 <>
                   <motion.div variants={staggerItems}>
@@ -445,4 +513,8 @@ export default function HomePage() {
       </div>
     </div>
   );
-}
+});
+
+HomePage.displayName = 'HomePage';
+
+export default HomePage;

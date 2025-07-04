@@ -15,6 +15,7 @@ body {
 
 html {
   background-color: #000000;
+  scroll-behavior: smooth;
 }
 
 code {
@@ -177,4 +178,24 @@ code {
   .md\:h-9 {
     height: 2.25rem;
   }
+}
+
+/* Hide scrollbar for webkit browsers */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
+/* Smooth scrolling for the entire page */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Better touch scrolling for mobile */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
 }
