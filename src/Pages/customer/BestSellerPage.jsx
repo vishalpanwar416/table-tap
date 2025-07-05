@@ -570,6 +570,7 @@ const BestSellerPage = memo(() => {
             cartItems={cartItems}
             onSearch={handleSearch} // Real-time search callback
             onSearchClose={handleSearchClose} // Add close handler
+            showRestaurantInfo={false} // Hide restaurant info on best seller page
             className="mb-2 md:mb-3"
           />
         </Suspense>

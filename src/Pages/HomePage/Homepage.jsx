@@ -348,6 +348,7 @@ const HomePage = memo(() => {
             toggleNotifications={toggles.notifications}
             toggleCart={toggles.cart}
             cartItems={cartItems}
+            showRestaurantInfo={true}
             className="mb-2 md:mb-3"
           />
 

@@ -265,6 +265,7 @@ const LikedItemsPage = () => {
           cartItems={cartItems}
           onSearch={handleSearch}
           onSearchClose={handleSearchClose}
+          showRestaurantInfo={false}
           className="mb-2 md:mb-3"
         />
 

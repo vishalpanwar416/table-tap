@@ -15,7 +15,7 @@ export const ManagerNotificationProvider = ({ children }) => {
   const fetchManagerNotifications = async () => {
     const data = await getManagerNotifications();
     setNotifications(data);
-    const count = data.filter(n => !n.read && n.is_manager_notification).length;
+    const count = data.filter(n => !n.read && n.is_admin_notification).length;
     setUnreadCount(count);
   };
 
@@ -30,7 +30,7 @@ export const ManagerNotificationProvider = ({ children }) => {
         setNotifications(prev => 
           prev.map(n => n.id === payload.new.id ? payload.new : n)
         );
-        const count = notifications.filter(n => !n.read && n.is_manager_notification).length;
+        const count = notifications.filter(n => !n.read && n.is_admin_notification).length;
         setUnreadCount(count);
       }
     });

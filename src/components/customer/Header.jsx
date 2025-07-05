@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Search, X, ShoppingCart, Bell, User, MapPin, RefreshCw } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../config/AuthContext';
 import { useCart } from '../../config/CartContent';
 import { useRestaurant } from '../../Pages/Restaurantselection/RestaurantContext';
@@ -12,7 +12,8 @@ const Header = ({
   toggleNotifications,
   toggleCart,
   onSearch,
-  onSearchClose
+  onSearchClose,
+  showRestaurantInfo = true // New prop to control restaurant info visibility
 }) => {
   const inputRef = useRef(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -20,6 +21,10 @@ const Header = ({
   const { restaurant, loading, error } = useRestaurant();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Determine if we should show restaurant info based on current route
+  const shouldShowRestaurantInfo = showRestaurantInfo && location.pathname === '/home';
 
   useEffect(() => {
     if (isSearchActive && inputRef.current) {
@@ -100,40 +105,45 @@ const Header = ({
 
   return (
     <div className="px-2 sm:px-4 py-2 sm:py-3 flex justify-between items-center w-full relative">
-      {/* Left side - Restaurant info */}
-      <div className={`flex-1 transition-all duration-500 ease-out ${isSearchActive ? 'opacity-0 pointer-events-none transform -translate-x-4' : 'opacity-100 transform translate-x-0'}`}>
-        <div className="flex flex-col items-start justify-center text-left">
-          <div className="flex items-center gap-1 sm:gap-2 w-full">
-            <button 
-              onClick={handleLocationClick}
-              disabled={loading || error || !restaurant?.google_maps_link}
-              className={`flex items-center gap-1 transition-opacity duration-200 flex-1 min-w-0 ${
-                loading || error || !restaurant?.google_maps_link 
-                  ? 'cursor-default opacity-70' 
-                  : 'hover:opacity-80 cursor-pointer'
-              }`}
-            >
-              <MapPin size={12} className="sm:w-[14px] sm:h-[14px] text-white flex-shrink-0" />
-              <h2 className="text-white text-[14px] sm:text-[17px] font-spartan truncate" title={displayData.name}>
-                {displayData.name}
-              </h2>
-            </button>
-            {/* Change Restaurant Button - Smaller on mobile */}
-            <button
-              onClick={handleChangeRestaurant}
-              className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 text-[7px] sm:text-[8px] text-orange-400 hover:text-orange-300 hover:bg-orange-400/10 rounded-full transition-all duration-200 whitespace-nowrap flex-shrink-0"
-              title="Change Restaurant"
-            >
-              <RefreshCw size={7} className="sm:w-2 sm:h-2" />
-              <span className="hidden xs:inline">Change</span>
-              <span className="xs:hidden">Ch</span>
-            </button>
+      {/* Left side - Restaurant info (only shown on home page) */}
+      {shouldShowRestaurantInfo ? (
+        <div className={`flex-1 transition-all duration-500 ease-out ${isSearchActive ? 'opacity-0 pointer-events-none transform -translate-x-4' : 'opacity-100 transform translate-x-0'}`}>
+          <div className="flex flex-col items-start justify-center text-left">
+            <div className="flex items-center gap-1 sm:gap-2 w-full">
+              <button 
+                onClick={handleLocationClick}
+                disabled={loading || error || !restaurant?.google_maps_link}
+                className={`flex items-center gap-1 transition-opacity duration-200 flex-1 min-w-0 ${
+                  loading || error || !restaurant?.google_maps_link 
+                    ? 'cursor-default opacity-70' 
+                    : 'hover:opacity-80 cursor-pointer'
+                }`}
+              >
+                <MapPin size={12} className="sm:w-[14px] sm:h-[14px] text-white flex-shrink-0" />
+                <h2 className="text-white text-[14px] sm:text-[17px] font-spartan truncate" title={displayData.name}>
+                  {displayData.name}
+                </h2>
+              </button>
+              {/* Change Restaurant Button - Smaller on mobile */}
+              <button
+                onClick={handleChangeRestaurant}
+                className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 text-[7px] sm:text-[8px] text-orange-400 hover:text-orange-300 hover:bg-orange-400/10 rounded-full transition-all duration-200 whitespace-nowrap flex-shrink-0"
+                title="Change Restaurant"
+              >
+                <RefreshCw size={7} className="sm:w-2 sm:h-2" />
+                <span className="hidden xs:inline">Change</span>
+                <span className="xs:hidden">Ch</span>
+              </button>
+            </div>
+            <p className="text-[7px] sm:text-[8px] text-gray-300 truncate max-w-[150px] sm:max-w-[200px] ml-4 sm:ml-5">
+              {displayData.address}
+            </p>
           </div>
-          <p className="text-[7px] sm:text-[8px] text-gray-300 truncate max-w-[150px] sm:max-w-[200px] ml-4 sm:ml-5">
-            {displayData.address}
-          </p>
         </div>
-      </div>
+      ) : (
+        // Empty div to maintain layout when restaurant info is hidden
+        <div className="flex-1"></div>
+      )}
 
       {/* Search input section - positioned absolutely when active */}
       <div className={`transition-all duration-500 ease-out ${
@@ -146,7 +156,7 @@ const Header = ({
             <input
               ref={inputRef}
               type="text"
-              placeholder="Search best sellers..."
+              placeholder={shouldShowRestaurantInfo ? "Search best sellers..." : "Search items..."}
               value={searchQuery}
               onChange={handleSearchInput}
               className={`transition-all duration-500 ease-out bg-white text-gray-700 text-sm sm:text-base outline-none font-medium rounded-full px-2 sm:px-3 py-1.5 sm:py-2 ${
