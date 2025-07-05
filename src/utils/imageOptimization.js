@@ -23,6 +23,155 @@ export const optimizeImageUrl = (url, width = 300, quality = 80) => {
   return url;
 };
 
+// Enhanced image optimization for uploads
+export const optimizeImageForUpload = async (file, options = {}) => {
+  const {
+    maxWidth = 800,
+    maxHeight = 600,
+    quality = 0.8,
+    format = 'webp',
+    maxFileSize = 500 * 1024 // 500KB
+  } = options;
+
+  return new Promise((resolve, reject) => {
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      reject(new Error('File must be an image'));
+      return;
+    }
+
+    // Check if file is already small enough
+    if (file.size <= maxFileSize && file.type === 'image/webp') {
+      resolve(file);
+      return;
+    }
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+
+    img.onload = () => {
+      try {
+        // Calculate new dimensions while maintaining aspect ratio
+        let { width, height } = img;
+        
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+
+        // Set canvas dimensions
+        canvas.width = width;
+        canvas.height = height;
+
+        // Draw and compress image
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Convert to desired format
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error('Failed to process image'));
+              return;
+            }
+
+            // Create new file with optimized data
+            const optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.webp'), {
+              type: 'image/webp',
+              lastModified: Date.now()
+            });
+
+            console.log(`Image optimized: ${file.size} -> ${optimizedFile.size} bytes`);
+            resolve(optimizedFile);
+          },
+          'image/webp',
+          quality
+        );
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    img.onerror = () => {
+      reject(new Error('Failed to load image'));
+    };
+
+    // Load image from file
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      img.src = e.target.result;
+    };
+    reader.onerror = () => {
+      reject(new Error('Failed to read file'));
+    };
+    reader.readAsDataURL(file);
+  });
+};
+
+// Create multiple image sizes for responsive design
+export const createImageVariants = async (file) => {
+  const sizes = [
+    { width: 300, height: 200, suffix: 'thumb' },
+    { width: 600, height: 400, suffix: 'medium' },
+    { width: 800, height: 600, suffix: 'large' }
+  ];
+
+  const variants = {};
+
+  for (const size of sizes) {
+    try {
+      const optimized = await optimizeImageForUpload(file, {
+        maxWidth: size.width,
+        maxHeight: size.height,
+        quality: 0.8
+      });
+      
+      variants[size.suffix] = optimized;
+    } catch (error) {
+      console.error(`Failed to create ${size.suffix} variant:`, error);
+    }
+  }
+
+  return variants;
+};
+
+// Validate image file
+export const validateImageFile = (file) => {
+  const errors = [];
+  
+  // Check file type
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+  if (!allowedTypes.includes(file.type)) {
+    errors.push('Please select a valid image file (JPEG, PNG, WebP, or GIF)');
+  }
+
+  // Check file size (5MB limit)
+  const maxSize = 5 * 1024 * 1024; // 5MB
+  if (file.size > maxSize) {
+    errors.push('Image file size must be less than 5MB');
+  }
+
+  // Check dimensions
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      if (img.width < 100 || img.height < 100) {
+        errors.push('Image must be at least 100x100 pixels');
+      }
+      if (img.width > 4000 || img.height > 4000) {
+        errors.push('Image dimensions must be less than 4000x4000 pixels');
+      }
+      resolve({ isValid: errors.length === 0, errors });
+    };
+    img.onerror = () => {
+      errors.push('Invalid image file');
+      resolve({ isValid: false, errors });
+    };
+    img.src = URL.createObjectURL(file);
+  });
+};
+
 // Get fallback image based on food category - USING BASE64 ENCODED PLACEHOLDERS
 export const getFallbackImage = (category, itemName = '') => {
   // Simple colored rectangles as fallback images (base64 encoded)
@@ -212,16 +361,11 @@ export const ProgressiveImage = ({
       setIsLoading(false);
     };
     img.src = src;
-
-    return () => {
-      img.onload = null;
-      img.onerror = null;
-    };
   }, [src, category]);
 
   return (
     <div className={`${className} relative overflow-hidden`}>
-      {/* Loading skeleton */}
+      {/* Loading state */}
       {isLoading && (
         <div 
           className="absolute inset-0 flex items-center justify-center animate-pulse"
@@ -232,20 +376,60 @@ export const ProgressiveImage = ({
       )}
       
       {/* Image */}
-      {currentSrc && (
-        <img
-          src={currentSrc}
-          alt={alt}
-          className={`${className} transition-opacity duration-300`}
-          style={{ 
-            opacity: isLoading ? 0 : 1,
-            transform: 'translateZ(0)',
-            backfaceVisibility: 'hidden'
-          }}
-          loading="lazy"
-          {...props}
-        />
-      )}
+      <img
+        src={currentSrc}
+        alt={alt}
+        className={`${className} transition-opacity duration-300`}
+        style={{ 
+          opacity: isLoading ? 0 : 1,
+          transform: 'translateZ(0)',
+          backfaceVisibility: 'hidden'
+        }}
+        loading="lazy"
+        {...props}
+      />
     </div>
   );
+};
+
+// Enhanced image upload hook
+export const useImageUpload = () => {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  const processAndUpload = async (file, uploadFunction, options = {}) => {
+    setIsProcessing(true);
+    setProgress(0);
+
+    try {
+      // Validate file
+      const validation = await validateImageFile(file);
+      if (!validation.isValid) {
+        throw new Error(validation.errors.join(', '));
+      }
+
+      setProgress(20);
+
+      // Optimize image
+      const optimizedFile = await optimizeImageForUpload(file, options);
+      setProgress(60);
+
+      // Upload optimized file
+      const result = await uploadFunction(optimizedFile);
+      setProgress(100);
+
+      return result;
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsProcessing(false);
+      setProgress(0);
+    }
+  };
+
+  return {
+    processAndUpload,
+    isProcessing,
+    progress
+  };
 }; 

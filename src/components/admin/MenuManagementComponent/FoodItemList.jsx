@@ -1,6 +1,6 @@
 import React from 'react';
 import FoodItemCard from './FoodtemsCard';
-import { deleteFoodItem } from '../../../api/foodService';
+import { deleteFoodItem, toggleFoodItemActive } from '../../../api/foodService';
 
 const FoodItemList = ({ 
   filteredFoodItems, 
@@ -41,6 +41,7 @@ const FoodItemList = ({
           item={item}
           handleEdit={handleEdit}
           handleDelete={handleDelete}
+          fetchFoodItems={fetchFoodItems}
         />
       ))}
     </div>

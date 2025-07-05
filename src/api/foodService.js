@@ -1,21 +1,38 @@
 import { supabase } from '../supabase';
-
+import { optimizeImageForUpload, validateImageFile } from '../utils/imageOptimization';
 
 export const uploadFoodImage = async (file) => {
   try {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random()}.${fileExt}`;
+    // Validate the file first
+    const validation = await validateImageFile(file);
+    if (!validation.isValid) {
+      throw new Error(validation.errors.join(', '));
+    }
+
+    // Optimize the image before upload
+    const optimizedFile = await optimizeImageForUpload(file, {
+      maxWidth: 800,
+      maxHeight: 600,
+      quality: 0.8,
+      format: 'webp',
+      maxFileSize: 500 * 1024 // 500KB
+    });
+
+    const fileExt = 'webp'; // Always use webp for optimized images
+    const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
     const filePath = `${fileName}`;
 
-    console.log('Starting image upload:', filePath);
+    console.log('Starting optimized image upload:', filePath);
+    console.log(`Original size: ${file.size} bytes, Optimized size: ${optimizedFile.size} bytes`);
 
-    
-    
     // Use the standard supabase client for storage operations
     const { data: uploadData, error: uploadError } = await supabase
       .storage
       .from('food-images')
-      .upload(filePath, file);
+      .upload(filePath, optimizedFile, {
+        contentType: 'image/webp',
+        cacheControl: '3600'
+      });
 
     if (uploadError) {
       console.error('Upload error details:', uploadError);
@@ -432,6 +449,22 @@ export const updateOrderStatus = async (orderId, newStatus) => {
     return data;
   } catch (error) {
     console.error('Error updating order status:', error);
+    throw error;
+  }
+};
+
+export const toggleFoodItemActive = async (id, isActive) => {
+  try {
+    const { data, error } = await supabase
+      .from('fooditems')
+      .update({ is_active: isActive })
+      .eq('id', id)
+      .select();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error toggling food item active status:', error);
     throw error;
   }
 };

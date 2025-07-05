@@ -67,10 +67,10 @@ const MenuManagement = ({ foodItems, fetchFoodItems, setLoading, setErrorMsg, se
   }, [foodItems, searchTerm, filterCategory]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row gap-6">
-        {/* Form Section */}
-        <div className={`bg-white p-6 rounded-xl shadow-sm md:w-1/3 ${showForm ? 'block' : 'hidden md:block'}`}>
+    <div className="h-full">
+      <div className="flex flex-col md:flex-row gap-6 h-full">
+        {/* Form Section - Fixed height and scrollable */}
+        <div className={`bg-white p-6 rounded-xl shadow-sm md:w-1/3 md:sticky md:top-0 md:h-[calc(100vh-200px)] md:overflow-y-auto ${showForm ? 'block' : 'hidden md:block'}`}>
           <FoodItemForm 
             formData={formData}
             setFormData={setFormData}
@@ -85,8 +85,8 @@ const MenuManagement = ({ foodItems, fetchFoodItems, setLoading, setErrorMsg, se
           />
         </div>
 
-        {/* Food Items List */}
-        <div className="md:flex-1">
+        {/* Food Items List - Scrollable on desktop */}
+        <div className="md:flex-1 md:overflow-y-auto">
           <div className="bg-white p-6 rounded-xl shadow-sm">
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-gray-800 mb-2 md:mb-0">Food Items</h2>

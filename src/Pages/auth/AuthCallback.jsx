@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../config/AuthContext';
 import { hasValidRestaurantSelection } from '../../utils/restaurantCheck';
+import { authService } from '../../api/authService';
 
 const AuthCallback = () => {
   const navigate = useNavigate();
@@ -9,20 +10,37 @@ const AuthCallback = () => {
   const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
-    if (!loading && !redirecting) {
+    if (!loading && !redirecting && user) {
       setRedirecting(true);
       
-      if (user) {
-        // User is authenticated, check restaurant selection
-        if (hasValidRestaurantSelection()) {
-          navigate('/home');
-        } else {
-          navigate('/restaurant-selection');
+      const checkProfileAndRedirect = async () => {
+        try {
+          // First check if profile is complete
+          const isProfileComplete = await authService.isProfileComplete(user.id);
+          
+          if (!isProfileComplete) {
+            // Profile is not complete, redirect to complete profile
+            navigate('/complete-profile');
+            return;
+          }
+          
+          // Profile is complete, check restaurant selection
+          if (hasValidRestaurantSelection()) {
+            navigate('/home');
+          } else {
+            navigate('/restaurant-selection');
+          }
+        } catch (error) {
+          console.error('Error checking profile:', error);
+          // If there's an error checking profile, assume it needs completion
+          navigate('/complete-profile');
         }
-      } else {
-        // No user, redirect to login
-        navigate('/login');
-      }
+      };
+      
+      checkProfileAndRedirect();
+    } else if (!loading && !user) {
+      // No user, redirect to login
+      navigate('/login');
     }
   }, [user, loading, navigate, redirecting]);
 
