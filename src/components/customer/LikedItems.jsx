@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useState } from "react";
 import { ShoppingBag, Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import { useCart } from "../../config/CartContent";
@@ -51,14 +51,17 @@ const LikedItemCard = ({ item, onItemClick }) => {
         <img
           src={item.image}
           alt={item.name}
-          className="w-full h-full object-cover"
-          onClick={() => onItemClick(item)}
+          className="w-full h-full object-cover cursor-pointer"
+          onClick={() => onItemClick && onItemClick(item)}
           loading="lazy"
         />
         {/* Like button, top left on image */}
         <button
           className="absolute top-2 left-2 z-20 bg-white/90 rounded-full p-1 shadow"
-          onClick={() => toggleLike(item)}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleLike(item);
+          }}
         >
           <Heart className={`h-4 w-4 ${isLiked ? "text-red-500 fill-red-500" : "text-gray-400"}`} />
         </button>
@@ -121,15 +124,24 @@ const LikedItems = ({ foodItems, onItemClick }) => {
   const { cartItems, addToCart, updateQuantity, removeItem } = useCart();
   const navigate = useNavigate(); 
 
-  const [selectedItem, setSelectedItem] = React.useState(null);
-  const [isOrderCardOpen, setIsOrderCardOpen] = React.useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isOrderCardOpen, setIsOrderCardOpen] = useState(false);
+
+  const handleOpenItemCard = (item) => {
+    setSelectedItem(item);
+    setIsOrderCardOpen(true);
+  };
+
+  const handleCloseItemCard = () => {
+    setIsOrderCardOpen(false);
+    setSelectedItem(null);
+  };
 
   if (!foodItems || !Array.isArray(foodItems)) return null;
   
   const likedFoodItems = foodItems.filter(item => 
     likedItems.some(likedItem => likedItem.id === item.id)
   );
-  console.log(likedFoodItems);
 
   if (likedFoodItems.length === 0) return null;
 
@@ -143,13 +155,17 @@ const LikedItems = ({ foodItems, onItemClick }) => {
       </div>
       <div className="flex space-x-4 overflow-x-auto pb-2 scroll-smooth">
         {likedFoodItems.map((item, idx) => (
-          <LikedItemCard key={item.id} item={item} onItemClick={onItemClick} />
+          <LikedItemCard 
+            key={item.id} 
+            item={item} 
+            onItemClick={handleOpenItemCard} 
+          />
         ))}
       </div>
       <div className="my-4 w-full mx-auto h-px bg-gradient-to-r from-transparent via-orange-200 to-transparent"></div>
       <OrderCard
         isOpen={isOrderCardOpen}
-        onClose={() => setIsOrderCardOpen(false)}
+        onClose={handleCloseItemCard}
         item={selectedItem}
       />
     </div>
