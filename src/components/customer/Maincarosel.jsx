@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AliceCarousel from 'react-alice-carousel';
 import 'react-alice-carousel/lib/alice-carousel.css';
-import { fetchMaincaroselData, fallbackMaincaroselData } from './MaincaroselData';
+import { fetchMaincaroselData, fallbackMaincaroselData } from '../../api/foodData';
 import OrderCard from './itemCard';
 import { useRestaurant } from '../../Pages/Restaurantselection/RestaurantContext';
 
