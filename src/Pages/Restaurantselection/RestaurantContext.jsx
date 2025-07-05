@@ -12,17 +12,37 @@ const getUrlParams = () => {
   };
 };
 
-// Helper function to store in session (in-memory for this session)
-const sessionStore = {
-  data: {},
+// Helper function to store in localStorage
+const localStorageStore = {
   set: (key, value) => {
-    sessionStore.data[key] = value;
+    try {
+      localStorage.setItem(key, value);
+    } catch (error) {
+      console.error('Error storing in localStorage:', error);
+    }
   },
   get: (key) => {
-    return sessionStore.data[key];
+    try {
+      return localStorage.getItem(key);
+    } catch (error) {
+      console.error('Error reading from localStorage:', error);
+      return null;
+    }
+  },
+  remove: (key) => {
+    try {
+      localStorage.removeItem(key);
+    } catch (error) {
+      console.error('Error removing from localStorage:', error);
+    }
   },
   clear: () => {
-    sessionStore.data = {};
+    try {
+      localStorage.removeItem('restaurantId');
+      localStorage.removeItem('tableNumber');
+    } catch (error) {
+      console.error('Error clearing localStorage:', error);
+    }
   }
 };
 
@@ -39,31 +59,35 @@ export const RestaurantProvider = ({ children }) => {
     
     // Check if we have URL parameters
     if (urlParams.restaurantId && urlParams.tableNumber) {
-      // Store in session
-      sessionStore.set('restaurantId', urlParams.restaurantId);
-      sessionStore.set('tableNumber', urlParams.tableNumber);
+      // Store in localStorage
+      localStorageStore.set('restaurantId', urlParams.restaurantId);
+      localStorageStore.set('tableNumber', urlParams.tableNumber);
       
       setRestaurantId(urlParams.restaurantId);
       setTableNumber(urlParams.tableNumber);
     } else {
-      // Try to get from session storage
-      const storedRestaurantId = sessionStore.get('restaurantId');
-      const storedTableNumber = sessionStore.get('tableNumber');
+      // Try to get from localStorage
+      const storedRestaurantId = localStorageStore.get('restaurantId');
+      const storedTableNumber = localStorageStore.get('tableNumber');
       
       if (storedRestaurantId && storedTableNumber) {
+        console.log('Loading stored restaurant:', storedRestaurantId, storedTableNumber);
         setRestaurantId(storedRestaurantId);
         setTableNumber(storedTableNumber);
       } else {
-        // Fallback to default restaurant ID
-        const defaultRestaurantId = '8ecc8e4d-f3bf-4116-9010-3436ec1a5baa';
-        setRestaurantId(defaultRestaurantId);
-        sessionStore.set('restaurantId', defaultRestaurantId);
+        // No stored restaurant, don't set any default
+        console.log('No stored restaurant found, user needs to select one');
+        setLoading(false);
+        return;
       }
     }
   }, []);
 
   useEffect(() => {
-    if (!restaurantId) return;
+    if (!restaurantId) {
+      setLoading(false);
+      return;
+    }
 
     const fetchRestaurant = async () => {
       try {
@@ -158,7 +182,7 @@ export const RestaurantProvider = ({ children }) => {
     }
   };
 
-  // Function to manually set restaurant and table (useful for testing or admin)
+  // Function to manually set restaurant and table
   const setRestaurantAndTable = (newRestaurantId, newTableNumber) => {
     console.log('Setting restaurant and table:', newRestaurantId, newTableNumber);
     
@@ -166,9 +190,9 @@ export const RestaurantProvider = ({ children }) => {
     setRestaurant(null);
     setError(null);
     
-    // Update session store
-    sessionStore.set('restaurantId', newRestaurantId);
-    sessionStore.set('tableNumber', newTableNumber);
+    // Update localStorage
+    localStorageStore.set('restaurantId', newRestaurantId);
+    localStorageStore.set('tableNumber', newTableNumber);
     
     // Update state
     setRestaurantId(newRestaurantId);
@@ -192,7 +216,7 @@ export const RestaurantProvider = ({ children }) => {
 
   // Function to clear session data
   const clearSession = () => {
-    sessionStore.clear();
+    localStorageStore.clear();
     setRestaurantId(null);
     setTableNumber(null);
     setRestaurant(null);

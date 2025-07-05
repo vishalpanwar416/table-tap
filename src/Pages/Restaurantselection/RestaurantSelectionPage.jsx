@@ -399,15 +399,7 @@ const RestaurantSelectionPage = () => {
     setIsSelecting(true);
 
     try {
-      // Save restaurant selection to localStorage
-      localStorage.setItem('restaurantId', selectedRestaurant.id);
-      localStorage.setItem('tableNumber', finalTableNumber);
-      
-      // Also save to sessionStorage for current session
-      sessionStorage.setItem('restaurantId', selectedRestaurant.id);
-      sessionStorage.setItem('tableNumber', finalTableNumber);
-      
-      // Set the restaurant and table in context
+      // Set the restaurant and table in context (this will handle localStorage)
       setRestaurantAndTable(selectedRestaurant.id, finalTableNumber);
       
       // Show success message briefly

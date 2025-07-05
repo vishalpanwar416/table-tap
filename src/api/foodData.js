@@ -35,21 +35,58 @@ export const fetchFoodItems = async (restaurantId) => {
 };
 
 /**
- * OPTIMIZED: Fetches only items tagged as 'bestseller' with image fallback handling.
+ * Helper function to check if an item has a specific tag (case-insensitive)
+ */
+const hasTag = (item, targetTags) => {
+  if (!item.tags || !Array.isArray(item.tags)) return false;
+  
+  // Convert target tags to lowercase for comparison
+  const targetTagsLower = targetTags.map(tag => tag.toLowerCase());
+  
+  // Check if any of the item's tags match any of the target tags (case-insensitive)
+  return item.tags.some(itemTag => {
+    const itemTagLower = itemTag.toLowerCase();
+    return targetTagsLower.includes(itemTagLower);
+  });
+};
+
+/**
+ * OPTIMIZED: Fetches only items tagged as 'bestseller' with case-insensitive filtering and image fallback handling.
  */
 export const fetchBestSellerItems = async (restaurantId) => {
   if (!restaurantId) return [];
   try {
+    // First, fetch all items for the restaurant
     const { data, error } = await supabase
       .from('fooditems')
       .select('*')
       .eq('restaurant_id', restaurantId)
-      .contains('tags', ['bestseller']);
+      .order('created_at', { ascending: false });
 
     if (error) throw error;
     
+    // Define all possible variations of bestseller tags
+    const bestSellerTags = [
+      'bestseller',
+      'best seller',
+      'best-seller',
+      'best_seller',
+      'top seller',
+      'popular',
+      'featured',
+      'trending',
+      'hot'
+    ];
+    
+    // Filter items with case-insensitive tag matching
+    const bestSellerItems = (data || []).filter(item => {
+      return hasTag(item, bestSellerTags);
+    });
+    
+    console.log('Best seller items found:', bestSellerItems.length, 'out of', data?.length || 0);
+    
     // Process items to ensure they have valid images
-    const processedItems = processFoodItems(data || []);
+    const processedItems = processFoodItems(bestSellerItems);
     return processedItems;
   } catch (error) {
     console.error('Exception while fetching best seller items:', error);
@@ -58,21 +95,43 @@ export const fetchBestSellerItems = async (restaurantId) => {
 };
 
 /**
- * NEW & OPTIMIZED: Fetches only items tagged as 'recommended' with image fallback handling.
+ * NEW & OPTIMIZED: Fetches only items tagged as 'recommended' with case-insensitive filtering and image fallback handling.
  */
 export const fetchRecommendedItems = async (restaurantId) => {
   if (!restaurantId) return [];
   try {
+    // First, fetch all items for the restaurant
     const { data, error } = await supabase
       .from('fooditems')
       .select('*')
       .eq('restaurant_id', restaurantId)
-      .contains('tags', ['recommended']);
+      .order('created_at', { ascending: false });
 
     if (error) throw error;
     
+    // Define all possible variations of recommended tags
+    const recommendedTags = [
+      'recommended',
+      'recommend',
+      'suggested',
+      'trending',
+      'hot',
+      'new',
+      'must try',
+      'top pick',
+      'chef choice',
+      'chef\'s choice'
+    ];
+    
+    // Filter items with case-insensitive tag matching
+    const recommendedItems = (data || []).filter(item => {
+      return hasTag(item, recommendedTags);
+    });
+    
+    console.log('Recommended items found:', recommendedItems.length, 'out of', data?.length || 0);
+    
     // Process items to ensure they have valid images
-    const processedItems = processFoodItems(data || []);
+    const processedItems = processFoodItems(recommendedItems);
     return processedItems;
   } catch (error) {
     console.error('Exception while fetching recommended items:', error);

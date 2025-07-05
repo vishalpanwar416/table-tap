@@ -3,12 +3,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../config/AuthContext';
 import { useRestaurant } from './RestaurantContext';
 import { needsRestaurantSelection, hasValidRestaurantSelection } from '../../utils/restaurantCheck';
+import RestaurantSelectionPage from './RestaurantSelectionPage';
 
 const RestaurantSelectionWrapper = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
-  const { restaurantId, loading: restaurantLoading } = useRestaurant();
+  const { restaurantId, loading, error } = useRestaurant();
   const [checking, setChecking] = useState(true);
 
   // Get URL parameters
@@ -50,7 +51,7 @@ const RestaurantSelectionWrapper = ({ children }) => {
       }
 
       // If user is authenticated and needs restaurant selection, redirect
-      if (user && !authLoading && !restaurantLoading) {
+      if (user && !authLoading && !loading) {
         if (needsRestaurantSelection()) {
           navigateWithParams('/restaurant-selection');
           return;
@@ -61,12 +62,12 @@ const RestaurantSelectionWrapper = ({ children }) => {
     };
 
     // Wait for auth and restaurant loading to complete
-    if (!authLoading && !restaurantLoading) {
+    if (!authLoading && !loading) {
       checkRestaurantSelection();
     }
-  }, [user, authLoading, restaurantLoading, location.pathname, navigate, urlRestaurant, urlTable]);
+  }, [user, authLoading, loading, location.pathname, navigate, urlRestaurant, urlTable]);
 
-  if (checking || authLoading || restaurantLoading) {
+  if (checking || authLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
         <div className="flex flex-col items-center">
@@ -75,6 +76,30 @@ const RestaurantSelectionWrapper = ({ children }) => {
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-transparent border-t-orange-500 absolute top-0 left-0"></div>
           </div>
           <p className="text-white mt-4 text-lg font-medium">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If no restaurant is selected, show restaurant selection page
+  if (!restaurantId) {
+    return <RestaurantSelectionPage />;
+  }
+
+  // If there's an error, show error state
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-black">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 max-w-md shadow-lg">
+          <div className="text-red-500 text-6xl mb-4 text-center">⚠️</div>
+          <h3 className="text-red-600 text-xl font-semibold mb-2 text-center">Error Loading Restaurant</h3>
+          <p className="text-red-500 text-center mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="w-full bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );
