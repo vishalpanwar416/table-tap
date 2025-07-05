@@ -5,13 +5,46 @@ import { createNotification } from './notificationService';
 // Create a new order
 export const createOrder = async (orderData) => {
   try {
+    console.log('Creating order with data:', orderData);
+    
+    // Generate order number
+    const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    
+    // Calculate GST (assuming 5% GST)
+    const subtotal = orderData.total || 0;
+    const gst = subtotal * 0.05; // 5% GST
+    const discount = orderData.discount || 0;
+    const total = subtotal + gst - discount;
+    
     // Set initial status to 'pending'
     const order = {
-      ...orderData,
+      order_number: orderNumber,
+      user_id: orderData.userId,
       restaurant_id: orderData.restaurant_id,
+      table_number: orderData.tableNumber || 'N/A',
+      items: orderData.items,
+      subtotal: subtotal,
+      gst: gst,
+      discount: discount,
+      total: total,
+      payment_method: orderData.payment_method || 'razorpay',
+      payment_status: 'pending',
       status: 'pending',
-      created_at: new Date().toISOString()
+      customer_name: orderData.customerName,
+      customer_email: orderData.customerEmail,
+      customer_phone: orderData.customerPhone,
+      special_instructions: orderData.special_instructions,
+      tracking: {
+        ready: { status: false, timestamp: null },
+        completed: { status: false, timestamp: null },
+        confirmed: { status: false, timestamp: null },
+        preparing: { status: false, timestamp: null }
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
+
+    console.log('Processed order data:', order);
 
     const { data, error } = await supabase
       .from('orders')
@@ -19,7 +52,12 @@ export const createOrder = async (orderData) => {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase error:', error);
+      throw error;
+    }
+    
+    console.log('Order created successfully:', data);
     
     // Create manager notification for new order
     await createManagerOrderNotification(data);
@@ -57,7 +95,7 @@ export const getUserOrders = async (userId) => {
     const { data, error } = await supabase
       .from('orders')
       .select('*')
-      .eq('user_id', userId) // Ensure column name matches your DB
+      .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -87,26 +125,58 @@ export const getRestaurantOrders = async (restaurantId) => {
 
 // Update order status
 export const updateOrderStatus = async (orderId, status) => {
-  // Define allowed statuses
   const allowedStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'cancelled', 'rejected', 'completed'];
 
   if (!allowedStatuses.includes(status)) {
-    console.error(`Invalid status: ${status}`);
-    return Promise.reject(new Error(`Invalid status: ${status}`));
+    throw new Error(`Invalid status: ${status}`);
   }
 
   try {
+    const updateData = {
+      status,
+      updated_at: new Date().toISOString()
+    };
+
+    // Update tracking based on status
+    if (status === 'confirmed') {
+      updateData.tracking = {
+        confirmed: { status: true, timestamp: new Date().toISOString() },
+        preparing: { status: false, timestamp: null },
+        ready: { status: false, timestamp: null },
+        completed: { status: false, timestamp: null }
+      };
+    } else if (status === 'preparing') {
+      updateData.tracking = {
+        confirmed: { status: true, timestamp: null },
+        preparing: { status: true, timestamp: new Date().toISOString() },
+        ready: { status: false, timestamp: null },
+        completed: { status: false, timestamp: null }
+      };
+    } else if (status === 'ready') {
+      updateData.tracking = {
+        confirmed: { status: true, timestamp: null },
+        preparing: { status: true, timestamp: null },
+        ready: { status: true, timestamp: new Date().toISOString() },
+        completed: { status: false, timestamp: null }
+      };
+    } else if (status === 'completed') {
+      updateData.tracking = {
+        confirmed: { status: true, timestamp: null },
+        preparing: { status: true, timestamp: null },
+        ready: { status: true, timestamp: null },
+        completed: { status: true, timestamp: new Date().toISOString() }
+      };
+      updateData.completed_at = new Date().toISOString();
+    }
+
     const { data, error } = await supabase
       .from('orders')
-      .update({ status })
+      .update(updateData)
       .eq('id', orderId)
       .select()
       .single();
 
-    if (error) {
-      console.error('Database error updating order status:', error);
-      throw error;
-    }
+    if (error) throw error;
     
     // Create notification for user about status update
     await createOrderStatusNotification(data);
@@ -197,44 +267,98 @@ export const subscribeToOrderUpdates = (orderId, callback) => {
     .subscribe();
 };
 
-// Listen for new orders (admin side) - filtered by restaurant
-export const subscribeToNewOrders = (callback, restaurantId = null) => {
-  const channel = supabase
-    .channel('new-orders')
+// Listen for new orders (admin side)
+export const subscribeToNewOrders = (restaurantId, callback) => {
+  return supabase
+    .channel(`restaurant-orders-${restaurantId}`)
     .on('postgres_changes', {
       event: 'INSERT',
       schema: 'public',
-      table: 'orders'
+      table: 'orders',
+      filter: `restaurant_id=eq.${restaurantId}`
     }, payload => {
-      // Only call callback if it's for the specified restaurant
-      if (!restaurantId || payload.new.restaurant_id === restaurantId) {
-        callback(payload.new);
-      }
+      callback(payload.new);
     })
     .subscribe();
-  
-  return channel;
 };
 
-// Get orders by status for admin (filtered by restaurant)
+// Get orders by status
 export const getOrdersByStatus = async (status, restaurantId = null) => {
   try {
     let query = supabase
       .from('orders')
       .select('*')
       .eq('status', status);
-    
-    // Filter by restaurant if provided
+
     if (restaurantId) {
       query = query.eq('restaurant_id', restaurantId);
     }
-    
+
     const { data, error } = await query.order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching orders by status:', error);
+    throw error;
+  }
+};
+
+// Cancel order
+export const cancelOrder = async (orderId, reason) => {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .update({
+        status: 'cancelled',
+        cancel_reason: reason,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', orderId)
+      .select()
+      .single();
 
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error(`Error fetching ${status} orders:`, error);
+    console.error('Error cancelling order:', error);
+    throw error;
+  }
+};
+
+// Update payment status
+export const updatePaymentStatus = async (orderId, paymentData) => {
+  try {
+    const updateData = {
+      payment_status: paymentData.status,
+      payment_timestamp: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    if (paymentData.razorpay_order_id) {
+      updateData.razorpay_order_id = paymentData.razorpay_order_id;
+    }
+    if (paymentData.razorpay_payment_id) {
+      updateData.razorpay_payment_id = paymentData.razorpay_payment_id;
+    }
+    if (paymentData.razorpay_signature) {
+      updateData.razorpay_signature = paymentData.razorpay_signature;
+    }
+    if (paymentData.notes) {
+      updateData.payment_notes = paymentData.notes;
+    }
+
+    const { data, error } = await supabase
+      .from('orders')
+      .update(updateData)
+      .eq('id', orderId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error updating payment status:', error);
     throw error;
   }
 };

@@ -118,6 +118,10 @@ const ContactUsPage = () => {
     );
   }
 
+  // Debug: Log restaurant data to console
+  console.log('Restaurant Data:', restaurant);
+
+  // Build contact info array with proper null handling
   const contactInfo = [
     {
       icon: MapPin,
@@ -126,7 +130,8 @@ const ContactUsPage = () => {
       color: 'from-orange-400 to-orange-600',
       textColor: 'text-orange-600',
       link: restaurant.google_maps_link,
-      action: restaurant.google_maps_link ? 'Get Directions' : null
+      action: restaurant.google_maps_link ? 'Get Directions' : 'Search on Maps',
+      showAlways: true
     },
     {
       icon: Phone,
@@ -134,7 +139,8 @@ const ContactUsPage = () => {
       value: restaurant.contact_phone,
       color: 'from-green-400 to-green-600',
       textColor: 'text-green-600',
-      link: restaurant.contact_phone ? `tel:${restaurant.contact_phone}` : null
+      link: restaurant.contact_phone ? `tel:${restaurant.contact_phone}` : null,
+      showAlways: true
     },
     {
       icon: Mail,
@@ -142,7 +148,8 @@ const ContactUsPage = () => {
       value: restaurant.contact_email,
       color: 'from-blue-400 to-blue-600',
       textColor: 'text-blue-600',
-      link: restaurant.contact_email ? `mailto:${restaurant.contact_email}` : null
+      link: restaurant.contact_email ? `mailto:${restaurant.contact_email}` : null,
+      showAlways: true
     },
     {
       icon: Clock,
@@ -150,10 +157,12 @@ const ContactUsPage = () => {
       value: restaurant.opening_hours,
       color: 'from-yellow-400 to-yellow-600',
       textColor: 'text-yellow-600',
-      link: null
+      link: null,
+      showAlways: true
     }
-  ].filter(item => item.value);
+  ];
 
+  // Build additional info array
   const additionalInfo = [
     {
       icon: Hash,
@@ -173,7 +182,7 @@ const ContactUsPage = () => {
       value: restaurant.fssai_license,
       color: 'from-teal-400 to-teal-600'
     }
-  ].filter(item => item.value);
+  ];
 
   return (
     <div className="min-h-screen bg-black">
@@ -269,7 +278,9 @@ const ContactUsPage = () => {
                             <info.icon className="w-6 h-6 text-white" />
                           </div>
                           <h3 className="font-semibold text-gray-800 mb-2">{info.title}</h3>
-                          <p className="text-gray-600 text-sm mb-1">{info.value}</p>
+                          <p className="text-gray-600 text-sm mb-1">
+                            {info.value || `${info.title} not available`}
+                          </p>
                           {info.action && (
                             <p className={`text-xs ${info.textColor} font-medium`}>{info.action}</p>
                           )}
@@ -281,7 +292,9 @@ const ContactUsPage = () => {
                           <info.icon className="w-6 h-6 text-white" />
                         </div>
                         <h3 className="font-semibold text-gray-800 mb-2">{info.title}</h3>
-                        <p className="text-gray-600 text-sm">{info.value}</p>
+                        <p className="text-gray-600 text-sm">
+                          {info.value || `${info.title} not available`}
+                        </p>
                       </div>
                     )}
                   </motion.div>
@@ -330,29 +343,29 @@ const ContactUsPage = () => {
               </motion.div>
 
               {/* Additional Restaurant Info */}
-              {additionalInfo.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                  className="bg-gray-50 rounded-2xl p-6 border border-gray-100 mb-8"
-                >
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Restaurant Information</h3>
-                  <div className="grid md:grid-cols-3 gap-4">
-                    {additionalInfo.map((info, index) => (
-                      <div key={info.title} className="flex items-center">
-                        <div className={`w-8 h-8 bg-gradient-to-br ${info.color} rounded-lg flex items-center justify-center mr-3`}>
-                          <info.icon className="w-4 h-4 text-white" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500 font-medium">{info.title}</p>
-                          <p className="text-sm text-gray-800 font-semibold">{info.value}</p>
-                        </div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="bg-gray-50 rounded-2xl p-6 border border-gray-100 mb-8"
+              >
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Restaurant Information</h3>
+                <div className="grid md:grid-cols-3 gap-4">
+                  {additionalInfo.map((info, index) => (
+                    <div key={info.title} className="flex items-center">
+                      <div className={`w-8 h-8 bg-gradient-to-br ${info.color} rounded-lg flex items-center justify-center mr-3`}>
+                        <info.icon className="w-4 h-4 text-white" />
                       </div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
+                      <div>
+                        <p className="text-xs text-gray-500 font-medium">{info.title}</p>
+                        <p className="text-sm text-gray-800 font-semibold">
+                          {info.value || 'Not available'}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
 
               {/* Social Media */}
               {(restaurant.social_media?.instagram || restaurant.social_media?.facebook) && (

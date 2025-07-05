@@ -262,7 +262,12 @@ const PaymentPage = () => {
       if (!response || !response.razorpay_payment_id) {
         throw new Error('Missing payment confirmation details');
       }
-  
+
+      // Ensure restaurant data is available
+      if (!restaurant || !restaurant.id) {
+        throw new Error('Restaurant data not available');
+      }
+
       const tracking = {
         confirmed: { status: true, timestamp: new Date().toISOString() },
         preparing: { status: false, timestamp: null },
@@ -270,12 +275,21 @@ const PaymentPage = () => {
         completed: { status: false, timestamp: null }
       };
       
-      // --- UPDATED: Order data with better null handling ---
+      // Updated order data structure to match your database
       const orderData = {
         order_number: generateOrderNumber(),
-        user_id: user?.id || null, // Explicitly set to null for guests
+        user_id: user?.id || null,
         table_number: tableNumber || 'N/A',
-        items: cartItems,
+        items: cartItems.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          category: item.category,
+          effectivePrice: item.effectivePrice || item.price,
+          discounttype: item.discounttype,
+          discountvalue: item.discountvalue
+        })),
         subtotal: parseFloat(subtotalAfterDiscount) || 0,
         gst: parseFloat(cgst) + parseFloat(sgst) || 0,
         discount: parseFloat(discountAmount) || 0,
@@ -292,57 +306,30 @@ const PaymentPage = () => {
         customer_email: customerEmail || null,
         customer_phone: customerPhone || null,
         special_instructions: specialInstructions || null,
-        created_at: new Date().toISOString(), // Explicitly set created_at
-        updated_at: new Date().toISOString(),  // Explicitly set updated_at
         restaurant_id: restaurant.id,
       };
-  
-      console.log('Attempting to create order with data:', orderData);
-  
-      // Try to insert the order with better error handling
+
+      console.log('Creating order with data:', orderData);
+
       const { data: order, error } = await supabase
         .from('orders')
         .insert([orderData])
         .select()
         .single();
-  
+
       if (error) {
-        console.error('Order creation error details:', {
-          error,
-          code: error.code,
-          message: error.message,
-          details: error.details,
-          hint: error.hint
-        });
-  
-        // Handle specific RLS errors
-        if (error.message?.includes('row-level security policy') || 
-            error.message?.includes('RLS') || 
-            error.code === '42501') {
-          throw new Error('Permission denied: Unable to create order. Please contact support.');
-        }
-  
-        // Handle other common errors
-        if (error.code === '23505') {
-          throw new Error('Order number already exists. Please try again.');
-        }
-  
-        if (error.code === '23503') {
-          throw new Error('Invalid data reference. Please try again.');
-        }
-  
-        throw new Error(error.message || 'Database error occurred');
+        console.error('Order creation error:', error);
+        throw new Error(error.message || 'Failed to create order');
       }
-  
+
       if (!order || !order.id) {
         throw new Error('Order created but missing ID');
       }
-  
+
       console.log('Order created successfully:', order);
-  
       clearCart();
       
-      // FIXED: Redirect to the correct order confirmation page
+      // Navigate to order confirmation
       navigate('/order-confirmation-page', {
         state: {
           orderId: order.id,
@@ -351,7 +338,6 @@ const PaymentPage = () => {
           restaurantName: restaurant.name,
           totalAmount: parseFloat(finalTotal),
           tableNumber,
-          cartItems,
           paymentMethod,
           customerName,
           customerEmail,
@@ -361,20 +347,7 @@ const PaymentPage = () => {
       });
     } catch (error) {
       console.error('Process order error:', error);
-      
-      // More specific error messages
-      let errorMessage = 'Payment successful but order creation failed: ';
-      
-      if (error.message?.includes('Permission denied') || 
-          error.message?.includes('row-level security policy')) {
-        errorMessage += 'Database permission issue. Please contact support with this error.';
-      } else if (error.message?.includes('network') || error.message?.includes('connection')) {
-        errorMessage += 'Network connection issue. Please check your internet and try again.';
-      } else {
-        errorMessage += error.message || 'Unknown error occurred';
-      }
-      
-      setScriptError(errorMessage);
+      setScriptError(`Payment successful but order creation failed: ${error.message}`);
       setIsProcessing(false);
     }
   };

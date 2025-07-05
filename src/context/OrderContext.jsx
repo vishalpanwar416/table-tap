@@ -3,13 +3,13 @@ import React, { createContext, useState, useEffect, useContext, useCallback } fr
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../config/AuthContext';
 import { useRestaurant } from '../Pages/Restaurantselection/RestaurantContext';
-// Correct the import paths to match your actual file structure
 import { 
   createOrder, 
   getUserOrders, 
   subscribeToOrderUpdates,
-  getOrderById
-} from '../api/orderService'; // Updated path
+  getOrderById,
+  updatePaymentStatus
+} from '../api/orderService';
 
 // Create a dummy notification service function if you don't have it yet
 const createNotification = async (data) => {
@@ -25,12 +25,13 @@ export const OrderProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { user } = useAuth();
-  const { restaurant } = useRestaurant();
+  const { restaurant, loading: restaurantLoading } = useRestaurant();
   const navigate = useNavigate();
 
-  // Fetch user orders from Supabase - moved before useEffect
+  // Fetch user orders from Supabase
   const fetchUserOrders = useCallback(async () => {
     if (!user?.id) {
+      setUserOrders([]);
       setLoading(false);
       return;
     }
@@ -50,65 +51,74 @@ export const OrderProvider = ({ children }) => {
 
   // Fetch user orders when component mounts or user changes
   useEffect(() => {
-    if (user) {
-      fetchUserOrders();
-    }
-  }, [user, fetchUserOrders]);
+    fetchUserOrders();
+  }, [fetchUserOrders]);
 
-  // Place a new order
-  const placeOrder = async (orderData) => {
+  // Place a new order with proper null checking
+  const placeOrder = useCallback(async (orderData) => {
     try {
-      setLoading(true);
-      
-      // Add user ID to order data
-      const fullOrderData = {
-        ...orderData,
-        userId: user?.id,
-        customerName: user?.user_metadata?.full_name || user?.email || 'Guest',
-        customerEmail: user?.email,
-        restaurant_id: restaurant?.id
-      };
-      
-      // Create order in Supabase
-      const newOrder = await createOrder(fullOrderData);
+      // Check if restaurant context is still loading
+      if (restaurantLoading) {
+        throw new Error('Restaurant data is still loading. Please try again.');
+      }
 
-      // Create detailed admin notification
-      await createNotification({
-        title: 'New Order Received',
-        message: `Order #${newOrder.id.slice(0, 8)} - ${newOrder.items.length} items`,
-        type: 'new_order',
-        order_id: newOrder.id,
-        is_manager_notification: true,
-        order_details: {
-          items: newOrder.items,
-          total: newOrder.total,
-          table: newOrder.tableNumber,
-          customer: newOrder.customerName,
-          created_at: newOrder.created_at
-        }
-      });
-      // Set current order
-      setCurrentOrder(newOrder);
+      // Check if restaurant is available
+      if (!restaurant) {
+        throw new Error('No restaurant selected. Please select a restaurant first.');
+      }
+
+      if (!restaurant.id) {
+        throw new Error('Restaurant ID is missing. Please try again.');
+      }
+
+      const orderWithRestaurant = {
+        ...orderData,
+        restaurant_id: restaurant.id,
+        user_id: user?.id || null,
+      };
+
+      console.log('Placing order with data:', orderWithRestaurant);
+      const result = await createOrder(orderWithRestaurant);
+      return result;
+    } catch (error) {
+      console.error('Error placing order:', error);
+      throw error;
+    }
+  }, [restaurant, restaurantLoading, user?.id]);
+
+  // Update payment status
+  const updateOrderPayment = async (orderId, paymentData) => {
+    try {
+      const updatedOrder = await updatePaymentStatus(orderId, paymentData);
       
-      // Add order to local state
-      setUserOrders(prev => [newOrder, ...prev]);
+      // Update order in local state
+      setUserOrders(prev => 
+        prev.map(order => 
+          order.id === orderId ? updatedOrder : order
+        )
+      );
       
-      // Subscribe to order updates
-      subscribeToOrderStatus(newOrder.id);
+      if (currentOrder && currentOrder.id === orderId) {
+        setCurrentOrder(updatedOrder);
+      }
       
-      return newOrder;
+      return updatedOrder;
     } catch (err) {
-      console.error('Error placing order:', err);
-      setError('Failed to place your order');
+      console.error('Error updating payment status:', err);
       throw err;
-    } finally {
-      setLoading(false);
     }
   };
 
   // Subscribe to order status updates
   const subscribeToOrderStatus = (orderId) => {
+    if (!orderId) {
+      console.warn('No order ID provided for subscription');
+      return null;
+    }
+
     const subscription = subscribeToOrderUpdates(orderId, (updatedOrder) => {
+      console.log('Order status updated:', updatedOrder);
+      
       // Update order in local state
       setUserOrders(prev => 
         prev.map(order => 
@@ -120,69 +130,25 @@ export const OrderProvider = ({ children }) => {
       if (currentOrder && currentOrder.id === updatedOrder.id) {
         setCurrentOrder(updatedOrder);
       }
-      
-      // Create notification for user based on status
-      handleOrderStatusNotification(updatedOrder);
     });
     
     return subscription;
   };
 
-  // Handle notifications based on order status changes
-  const handleOrderStatusNotification = async (order) => {
-    let notificationData = null;
-    
-    switch (order.status) {
-      case 'accepted':
-        notificationData = {
-          title: 'Order Accepted',
-          message: `Your order #${order.id.slice(0, 8)} has been accepted and is being prepared`,
-          type: 'order_accepted',
-          orderId: order.id,
-          userId: order.userId
-        };
-        break;
-      case 'preparing':
-        notificationData = {
-          title: 'Order Preparing',
-          message: `Your order #${order.id.slice(0, 8)} is now being prepared`,
-          type: 'order_preparing',
-          orderId: order.id,
-          userId: order.userId
-        };
-        break;
-      case 'completed':
-        notificationData = {
-          title: 'Order Completed',
-          message: `Your order #${order.id.slice(0, 8)} is ready!`,
-          type: 'order_completed',
-          orderId: order.id,
-          userId: order.userId
-        };
-        break;
-      case 'rejected':
-        notificationData = {
-          title: 'Order Rejected',
-          message: `Unfortunately, your order #${order.id.slice(0, 8)} could not be fulfilled`,
-          type: 'order_rejected',
-          orderId: order.id,
-          userId: order.userId
-        };
-        break;
-      default:
-        break;
-    }
-    
-    if (notificationData && order.userId) {
-      await createNotification(notificationData);
-    }
-  };
-
   // Get a specific order by ID
   const getOrderDetails = async (orderId) => {
     try {
+      if (!orderId) {
+        throw new Error('Order ID is required');
+      }
+
       setLoading(true);
       const order = await getOrderById(orderId);
+      
+      if (!order) {
+        throw new Error('Order not found');
+      }
+
       setCurrentOrder(order);
       
       // Subscribe to status updates for this order
@@ -201,12 +167,14 @@ export const OrderProvider = ({ children }) => {
   const value = {
     userOrders,
     currentOrder,
-    loading, // Add this line
-    error,   // Add this line
+    loading: loading || restaurantLoading, // Include restaurant loading state
+    error,
     placeOrder,
+    updateOrderPayment,
     fetchUserOrders,
     getOrderDetails,
-    subscribeToOrderStatus
+    subscribeToOrderStatus,
+    restaurant // Expose restaurant data for components that need it
   };
 
   return (

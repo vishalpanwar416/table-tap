@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, CheckCircle, Clock, MapPin } from 'lucide-react';
 import { useOrders } from '../../context/OrderContext';
 import { supabase } from '../../supabase';
 
@@ -16,28 +16,35 @@ const OrderConfirmationPage = () => {
     const initializeOrder = async () => {
       try {
         const orderId = location.state?.orderId;
-        if (!orderId) return navigate('/');
+        if (!orderId) {
+          console.error('No order ID found in location state');
+          return navigate('/');
+        }
 
         const order = await getOrderDetails(orderId);
+        if (!order) {
+          throw new Error('Order not found');
+        }
+
         setOrderDetails(order);
         startStatusUpdates(orderId);
         calculateETA(order.created_at);
 
-        // Automatically redirect to my-orders after 5 seconds
-        setTimeout(() => navigate('/my-orders'), 5000);
+        // Auto-redirect after 8 seconds
+        setTimeout(() => navigate('/my-orders'), 8000);
       } catch (err) {
-        console.error(err);
-        navigate('/payment-failed');
+        console.error('Error initializing order:', err);
+        navigate('/');
       } finally {
         setLoading(false);
       }
     };
 
     initializeOrder();
-  }, []);
+  }, [location.state?.orderId, navigate, getOrderDetails]);
 
   const startStatusUpdates = (orderId) => {
-    supabase
+    const channel = supabase
       .channel(`order-${orderId}`)
       .on('postgres_changes', {
         event: 'UPDATE',
@@ -45,9 +52,14 @@ const OrderConfirmationPage = () => {
         table: 'orders',
         filter: `id=eq.${orderId}`
       }, (payload) => {
+        console.log('Order updated:', payload.new);
         setOrderDetails(payload.new);
       })
       .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   };
 
   const calculateETA = (createdAt) => {
@@ -65,55 +77,111 @@ const OrderConfirmationPage = () => {
     setEta(etaDate.toLocaleString('en-US', options));
   };
 
-  // Handle the track order button click
   const handleTrackOrder = () => {
     if (orderDetails && orderDetails.id) {
       navigate(`/track-order/${orderDetails.id}`);
     }
   };
 
+  const handleGoHome = () => {
+    navigate('/');
+  };
+
   if (loading) {
     return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center text-white">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p>Processing your order...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!orderDetails) {
+    return (
       <div className="min-h-screen bg-black flex items-center justify-center text-white">
-        Processing your order...
+        <div className="text-center">
+          <p>Order not found</p>
+          <button onClick={handleGoHome} className="text-orange-500 mt-4">
+            Go Home
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-between py-10 px-6 text-center">
-      <button onClick={() => navigate('/')} className="text-orange-500 self-start">
-        <ChevronLeft />
-      </button>
-
-      <div className="flex flex-col items-center space-y-6 mt-10">
-        {/* Custom animation */}
-        <div className="relative w-36 h-36">
-          <div className="w-full h-full border-4 border-white rounded-full"></div>
-          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 animate-spin origin-center">
-            <div className="w-4 h-4 bg-orange-500 rounded-full"></div>
-          </div>
-        </div>
-
-        <div>
-          <h1 className="text-2xl font-bold">¡Order Confirmed!</h1>
-          <p className="text-white mt-2">Your order has been placed successfully</p>
-        </div>
-
-        <div>
-          <p className="text-white">Delivery by {eta}</p>
-        </div>
-
-        <button
-          onClick={handleTrackOrder}
-          className="text-orange-500 font-semibold text-lg hover:underline"
-        >
-          Track my order
+    <div className="min-h-screen bg-black text-white flex flex-col">
+      {/* Header */}
+      <div className="px-6 py-8">
+        <button onClick={handleGoHome} className="text-orange-500">
+          <ChevronLeft size={30} />
         </button>
       </div>
 
-      <div className="text-white text-sm mt-10">
-        If you have any questions, please reach out directly to our customer support
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
+        {/* Success Animation */}
+        <div className="mb-8">
+          <div className="relative w-24 h-24 mx-auto mb-6">
+            <CheckCircle className="w-24 h-24 text-green-500" />
+            <div className="absolute inset-0 bg-green-500 rounded-full opacity-20 animate-ping"></div>
+          </div>
+        </div>
+
+        {/* Order Confirmation */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Order Confirmed!</h1>
+          <p className="text-gray-300 mb-4">Your order has been placed successfully</p>
+          
+          {orderDetails.order_number && (
+            <div className="bg-gray-800 rounded-lg p-4 mb-4">
+              <p className="text-sm text-gray-400">Order Number</p>
+              <p className="text-lg font-semibold text-orange-500">{orderDetails.order_number}</p>
+            </div>
+          )}
+
+          {orderDetails.table_number && (
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <MapPin className="w-5 h-5 text-orange-500" />
+              <span>Table {orderDetails.table_number}</span>
+            </div>
+          )}
+        </div>
+
+        {/* ETA */}
+        <div className="mb-8">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <Clock className="w-5 h-5 text-orange-500" />
+            <span className="font-semibold">Estimated Delivery</span>
+          </div>
+          <p className="text-lg">{eta}</p>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="space-y-4 w-full max-w-sm">
+          <button
+            onClick={handleTrackOrder}
+            className="w-full bg-orange-500 text-white py-3 px-6 rounded-lg font-semibold hover:bg-orange-600 transition-colors"
+          >
+            Track My Order
+          </button>
+          
+          <button
+            onClick={() => navigate('/my-orders')}
+            className="w-full border border-orange-500 text-orange-500 py-3 px-6 rounded-lg font-semibold hover:bg-orange-500 hover:text-white transition-colors"
+          >
+            View All Orders
+          </button>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="px-6 py-8 text-center">
+        <p className="text-sm text-gray-400">
+          If you have any questions, please contact our customer support
+        </p>
       </div>
     </div>
   );
