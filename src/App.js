@@ -37,6 +37,7 @@ import { register } from './utils/serviceWorkerRegistration';
 import ErrorBoundary from './components/ErrorBoundary';
 import { FoodDataProvider } from './context/FoodDataContext';
 import ContactUsPage from '../src/Pages/customer/ContactUsPage';
+import HelpFAQPage from '../src/Pages/customer/HelpFAQPage';
 
 // Register service worker
 register();
@@ -143,6 +144,14 @@ const App = () => {
                               element={
                                 <RestaurantSelectionWrapper>
                                   <ContactUsPage />
+                                </RestaurantSelectionWrapper>
+                              } 
+                            />
+                            <Route 
+                              path="/help" 
+                              element={
+                                <RestaurantSelectionWrapper>
+                                  <HelpFAQPage />
                                 </RestaurantSelectionWrapper>
                               } 
                             />
