@@ -11,11 +11,7 @@ import { useCart } from '../../config/CartContent';
 import LogoutPopup from '../../components/auth/LogoutPopup';
 import DynamicGreeting from '../../components/customer/Greetings';
 import LikedItems from '../../components/customer/LikedItems';
-import { 
-  fetchFoodItems, 
-  fetchBestSellerItems, 
-  fetchRecommendedItems 
-} from '../../api/foodData';
+import { useFoodData } from '../../context/FoodDataContext';
 import FloatingCartButton from '../../components/customer/FloatingCartButton';
 import Tags from '../../components/customer/Tags';
 import { useRestaurant } from '../../Pages/Restaurantselection/RestaurantContext';
@@ -129,115 +125,6 @@ const useScrollToCategory = (categoryButtonsRef) => {
   }, [categoryButtonsRef]);
 };
 
-// Enhanced data fetching with caching and error boundaries
-const useFoodData = (restaurantId) => {
-  const [bestSellerItems, setBestSellerItems] = useState([]);
-  const [recommendedItems, setRecommendedItems] = useState([]);
-  const [allFoodItems, setAllFoodItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const cacheRef = useRef(new Map());
-  const abortControllerRef = useRef(null);
-
-  useEffect(() => {
-    if (!restaurantId) return;
-
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Cancel any ongoing requests
-        if (abortControllerRef.current) {
-          abortControllerRef.current.abort();
-        }
-
-        // Create new abort controller
-        abortControllerRef.current = new AbortController();
-
-        const cacheKey = `restaurant_${restaurantId}`;
-        const cachedData = cacheRef.current.get(cacheKey);
-
-        if (cachedData && Date.now() - cachedData.timestamp < 5 * 60 * 1000) {
-          setBestSellerItems(cachedData.bestSellers);
-          setRecommendedItems(cachedData.recommended);
-          setAllFoodItems(cachedData.allItems);
-          setLoading(false);
-          return;
-        }
-
-        // Critical data first - parallel loading with timeout
-        const timeoutId = setTimeout(() => {
-          if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-          }
-        }, 10000); // 10s timeout
-
-        const [bestSellers, recommended] = await Promise.all([
-          fetchBestSellerItems(restaurantId).catch(err => {
-            if (err.name === 'AbortError') return [];
-            console.warn('Failed to load best sellers:', err);
-            return [];
-          }),
-          fetchRecommendedItems(restaurantId).catch(err => {
-            if (err.name === 'AbortError') return [];
-            console.warn('Failed to load recommendations:', err);
-            return [];
-          })
-        ]);
-
-        clearTimeout(timeoutId);
-
-        // Check if component is still mounted
-        if (abortControllerRef.current?.signal.aborted) return;
-
-        setBestSellerItems(bestSellers);
-        setRecommendedItems(recommended);
-        setLoading(false);
-
-        // Background loading for full menu with caching
-        fetchFoodItems(restaurantId)
-          .then(allItems => {
-            if (abortControllerRef.current?.signal.aborted) return;
-            setAllFoodItems(allItems);
-            cacheRef.current.set(cacheKey, {
-              bestSellers,
-              recommended,
-              allItems,
-              timestamp: Date.now()
-            });
-          })
-          .catch(err => {
-            if (err.name === 'AbortError') return;
-            console.warn('Failed to load all food items:', err);
-            if (!abortControllerRef.current?.signal.aborted) {
-              setAllFoodItems([]);
-            }
-          });
-
-      } catch (error) {
-        if (error.name === 'AbortError') return;
-        console.error('Critical data loading failed:', error);
-        if (!abortControllerRef.current?.signal.aborted) {
-          setError(error);
-          setLoading(false);
-        }
-      }
-    };
-
-    loadData();
-
-    // Cleanup function
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
-  }, [restaurantId]);
-
-  return { bestSellerItems, recommendedItems, allFoodItems, loading, error };
-};
-
 // Memoized main component
 const HomePage = memo(() => {
   const navigate = useNavigate();
@@ -260,10 +147,26 @@ const HomePage = memo(() => {
   const menuDropdownRef = useRef(null);
   const scrollRef = useRef(null);
   
-  // Custom hooks
-  const { bestSellerItems, recommendedItems, allFoodItems, loading, error } = useFoodData(restaurantId);
+  // Use the global food data context
+  const { 
+    bestSellerItems, 
+    recommendedItems, 
+    allFoodItems, 
+    loading, 
+    error, 
+    retryLoadData,
+    initializeData
+  } = useFoodData();
+  
   const scrollToCategory = useScrollToCategory(categoryButtonsRef);
   
+  // Initialize data only once when restaurantId is available
+  useEffect(() => {
+    if (restaurantId) {
+      initializeData(restaurantId);
+    }
+  }, [restaurantId, initializeData]);
+
   // Constants
   const categories = useMemo(() => ['Snacks', 'Main Course', 'Beverages', 'Dessert', 'Offers'], []);
 
