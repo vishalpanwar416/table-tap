@@ -160,10 +160,34 @@ export const RestaurantProvider = ({ children }) => {
 
   // Function to manually set restaurant and table (useful for testing or admin)
   const setRestaurantAndTable = (newRestaurantId, newTableNumber) => {
+    console.log('Setting restaurant and table:', newRestaurantId, newTableNumber);
+    
+    // Clear old restaurant data
+    setRestaurant(null);
+    setError(null);
+    
+    // Update session store
     sessionStore.set('restaurantId', newRestaurantId);
     sessionStore.set('tableNumber', newTableNumber);
+    
+    // Update state
     setRestaurantId(newRestaurantId);
     setTableNumber(newTableNumber);
+    
+    // Clear any cached food data for the old restaurant
+    try {
+      const keysToRemove = [];
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i);
+        if (key && key.startsWith('fooddata_')) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => sessionStorage.removeItem(key));
+      console.log('Cleared food data cache');
+    } catch (error) {
+      console.warn('Failed to clear food data cache:', error);
+    }
   };
 
   // Function to clear session data
@@ -172,6 +196,7 @@ export const RestaurantProvider = ({ children }) => {
     setRestaurantId(null);
     setTableNumber(null);
     setRestaurant(null);
+    setError(null);
   };
 
   const value = {

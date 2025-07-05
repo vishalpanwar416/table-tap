@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { fetchFoodItems, fetchBestSellerItems, fetchRecommendedItems } from '../api/foodData';
+import { useRestaurant } from '../Pages/Restaurantselection/RestaurantContext';
 
 const FoodDataContext = createContext();
 
@@ -13,6 +14,9 @@ export const FoodDataProvider = ({ children }) => {
   const abortControllerRef = useRef(null);
   const loadingRef = useRef(false);
   const initializedRef = useRef(false);
+
+  // Get restaurant context to listen for changes
+  const { restaurantId } = useRestaurant();
 
   // Cache duration: 5 minutes
   const CACHE_DURATION = 5 * 60 * 1000;
@@ -51,7 +55,23 @@ export const FoodDataProvider = ({ children }) => {
     }
   }, []);
 
-  // Load food data for a restaurant - only when we don't have data
+  // Clear all data when restaurant changes
+  const clearData = useCallback(() => {
+    setBestSellerItems([]);
+    setRecommendedItems([]);
+    setAllFoodItems([]);
+    setCurrentRestaurantId(null);
+    setError(null);
+    initializedRef.current = false;
+    
+    // Cancel any ongoing requests
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    loadingRef.current = false;
+  }, []);
+
+  // Load food data for a restaurant
   const loadFoodData = useCallback(async (restaurantId, forceRefresh = false) => {
     if (!restaurantId) return;
 
@@ -152,6 +172,15 @@ export const FoodDataProvider = ({ children }) => {
     }
   }, [currentRestaurantId, bestSellerItems.length, loadFromCache, saveToCache]);
 
+  // Watch for restaurant changes and clear data
+  useEffect(() => {
+    if (restaurantId && restaurantId !== currentRestaurantId) {
+      console.log('Restaurant changed from', currentRestaurantId, 'to', restaurantId);
+      clearData();
+      loadFoodData(restaurantId);
+    }
+  }, [restaurantId, currentRestaurantId, clearData, loadFoodData]);
+
   // Initialize data when restaurant context changes
   const initializeData = useCallback((restaurantId) => {
     if (!restaurantId || initializedRef.current) return;
@@ -212,7 +241,8 @@ export const FoodDataProvider = ({ children }) => {
       retryLoadData,
       clearCache,
       clearAllCache,
-      initializeData
+      initializeData,
+      clearData
     }}>
       {children}
     </FoodDataContext.Provider>

@@ -155,17 +155,19 @@ const HomePage = memo(() => {
     loading, 
     error, 
     retryLoadData,
-    initializeData
+    initializeData,
+    currentRestaurantId
   } = useFoodData();
   
   const scrollToCategory = useScrollToCategory(categoryButtonsRef);
   
-  // Initialize data only once when restaurantId is available
+  // Initialize data when restaurantId changes
   useEffect(() => {
-    if (restaurantId) {
+    if (restaurantId && restaurantId !== currentRestaurantId) {
+      console.log('Restaurant changed in Homepage, initializing data for:', restaurantId);
       initializeData(restaurantId);
     }
-  }, [restaurantId, initializeData]);
+  }, [restaurantId, currentRestaurantId, initializeData]);
 
   // Constants
   const categories = useMemo(() => ['Snacks', 'Main Course', 'Beverages', 'Dessert', 'Offers'], []);
