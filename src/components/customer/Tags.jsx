@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useCart } from '../../config/CartContent';
 import { useLikes } from '../../config/LikesContent';
 import { LazyImage } from '../../utils/imageOptimization';
+import OrderCard from './itemCard';
 
 // Individual RecommendationItem component
 const RecommendationItem = ({ item, onImageClick }) => {
@@ -130,6 +131,18 @@ const RecommendationItem = ({ item, onImageClick }) => {
 const Tags = ({ foodItems = [], onItemClick }) => {
   const [expandedTags, setExpandedTags] = useState(new Set());
   const scrollRefs = useRef({});
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isOrderCardOpen, setIsOrderCardOpen] = useState(false);
+
+  const handleOpenItemCard = (item) => {
+    setSelectedItem(item);
+    setIsOrderCardOpen(true);
+  };
+
+  const handleCloseItemCard = () => {
+    setIsOrderCardOpen(false);
+    setSelectedItem(null);
+  };
 
   // Group food items by tags, excluding bestseller and recommended
   const groupedByTags = React.useMemo(() => {
@@ -249,7 +262,7 @@ const Tags = ({ foodItems = [], onItemClick }) => {
                   >
                     <RecommendationItem 
                       item={item} 
-                      onImageClick={onItemClick} 
+                      onImageClick={handleOpenItemCard} 
                     />
                   </div>
                 ))}
@@ -258,6 +271,12 @@ const Tags = ({ foodItems = [], onItemClick }) => {
           </div>
         ))}
       </div>
+      
+      <OrderCard 
+        isOpen={isOrderCardOpen} 
+        onClose={handleCloseItemCard} 
+        item={selectedItem} 
+      />
       
       {/* Remove the style jsx block and add these classes to your CSS file or use inline styles */}
       <style>{`
