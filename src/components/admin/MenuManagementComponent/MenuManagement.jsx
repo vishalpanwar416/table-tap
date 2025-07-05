@@ -68,9 +68,9 @@ const MenuManagement = ({ foodItems, fetchFoodItems, setLoading, setErrorMsg, se
 
   return (
     <div className="h-full">
-      <div className="flex flex-col md:flex-row gap-6 h-full">
+      <div className="flex flex-col md:flex-row gap-4 h-full">
         {/* Form Section - Fixed height and scrollable */}
-        <div className={`bg-white p-6 rounded-xl shadow-sm md:w-1/3 md:sticky md:top-0 md:h-[calc(100vh-200px)] md:overflow-y-auto ${showForm ? 'block' : 'hidden md:block'}`}>
+        <div className={`bg-white rounded-xl shadow-sm md:w-1/3 md:sticky md:top-0 md:h-[calc(100vh-200px)] md:overflow-y-auto ${showForm ? 'block' : 'hidden md:block'}`}>
           <FoodItemForm 
             formData={formData}
             setFormData={setFormData}

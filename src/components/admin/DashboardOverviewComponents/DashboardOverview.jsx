@@ -207,58 +207,6 @@ const DashboardOverview = ({ orders, foodItems, updateOrderStatus, setActiveTab 
 
   return (
     <div className="space-y-6">
-      {/* Download Button with Dropdown */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', position: 'relative' }}>
-        <button
-          onClick={() => setShowDownloadMenu((prev) => !prev)}
-          style={{
-            background: '#f3f4f6',
-            border: 'none',
-            borderRadius: '4px',
-            padding: '6px 12px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            fontSize: '0.9rem'
-          }}
-          title="Download Orders as Excel"
-        >
-          <svg width="16" height="16" fill="currentColor" style={{ marginRight: 4 }}>
-            <path d="M5 8a1 1 0 0 1 2 0v3.586l.293-.293a1 1 0 0 1 1.414 1.414l-2 2a1 1 0 0 1-1.414 0l-2-2A1 1 0 0 1 4.707 11.293L5 11.586V8zm-3 6a1 1 0 0 1 1-1h10a1 1 0 1 1 0 2H3a1 1 0 0 1-1-1z"/>
-          </svg>
-          Download Orders
-        </button>
-        {showDownloadMenu && (
-          <div style={{
-            position: 'absolute',
-            top: '110%',
-            right: 0,
-            background: 'white',
-            border: '1px solid #e5e7eb',
-            borderRadius: '4px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-            zIndex: 10,
-            minWidth: '180px'
-          }}>
-            <div
-              style={{ padding: '8px', cursor: 'pointer' }}
-              onClick={() => handleDownload('daily')}
-            >Download Daily Orders</div>
-            <div
-              style={{ padding: '8px', cursor: 'pointer' }}
-              onClick={() => handleDownload('weekly')}
-            >Download Weekly Orders</div>
-            <div
-              style={{ padding: '8px', cursor: 'pointer' }}
-              onClick={() => handleDownload('monthly')}
-            >Download Monthly Orders</div>
-            <div
-              style={{ padding: '8px', cursor: 'pointer', borderTop: '1px solid #e5e7eb' }}
-              onClick={() => handleDownload('all')}
-            >Download All (3 Sheets)</div>
-          </div>
-        )}
-      </div>
       <StatsCards
         revenueData={revenueData}
         orderStats={orderStats}

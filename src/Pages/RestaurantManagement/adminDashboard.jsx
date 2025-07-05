@@ -928,70 +928,97 @@ const AdminDashboard = () => {
 
               {/* Content Components */}
               {activeTab === 'dashboard' && (
-                <DashboardOverview 
-                  orders={orders}
-                  foodItems={foodItems}
-                  updateOrderStatus={updateOrderStatus}
-                  setActiveTab={setActiveTab}
-                />
+                <div className="px-4 py-6 md:p-6">
+                  <DashboardOverview 
+                    orders={orders}
+                    foodItems={foodItems}
+                    updateOrderStatus={updateOrderStatus}
+                    setActiveTab={setActiveTab}
+                  />
+                </div>
               )}
 
               {activeTab === 'menu' && (
-                <MenuManagement 
-                  foodItems={foodItems}
-                  fetchFoodItems={fetchFoodItems}
-                  setLoading={setLoading}
-                  setErrorMsg={setErrorMsg}
-                  setSuccessMsg={setSuccessMsg}
-                  searchTerm={searchTerm}
-                />
+                <div className="h-full">
+                  <MenuManagement 
+                    foodItems={foodItems}
+                    fetchFoodItems={fetchFoodItems}
+                    setLoading={setLoading}
+                    setErrorMsg={setErrorMsg}
+                    setSuccessMsg={setSuccessMsg}
+                    searchTerm={searchTerm}
+                  />
+                </div>
               )}
 
               {activeTab === 'orders' && (
-                <OrderManagement 
-                  orders={orders}
-                  updateOrderStatus={updateOrderStatus}
-                  searchTerm={searchTerm}
-                />
+                <div className="px-4 py-6 md:p-6">
+                  <OrderManagement 
+                    orders={orders}
+                    updateOrderStatus={updateOrderStatus}
+                    searchTerm={searchTerm}
+                  />
+                </div>
               )}
 
               {activeTab === 'inventory' && (
-                <InventoryManagement 
-                  setLoading={setLoading}
-                  setErrorMsg={setErrorMsg}
-                  setSuccessMsg={setSuccessMsg}
-                />
+                <div className="px-4 py-6 md:p-6">
+                  <InventoryManagement 
+                    setLoading={setLoading}
+                    setErrorMsg={setErrorMsg}
+                    setSuccessMsg={setSuccessMsg}
+                  />
+                </div>
               )}
 
-              {activeTab === 'users' && <UserManagement />}
+              {activeTab === 'users' && (
+                <div className="px-4 py-6 md:p-6">
+                  <UserManagement />
+                </div>
+              )}
+              
               {activeTab === 'offers' && (
-                <OffersManagement 
-                  setLoading={setLoading}
-                  setErrorMsg={setErrorMsg}
-                  setSuccessMsg={setSuccessMsg}
-                />
+                <div className="px-4 py-6 md:p-6">
+                  <OffersManagement 
+                    setLoading={setLoading}
+                    setErrorMsg={setErrorMsg}
+                    setSuccessMsg={setSuccessMsg}
+                  />
+                </div>
               )}
+              
               {activeTab === 'qr' && (
-                <QRManagement 
-                  setLoading={setLoading}
-                  setErrorMsg={setErrorMsg}
-                  setSuccessMsg={setSuccessMsg}
-                />
+                <div className="px-4 py-6 md:p-6">
+                  <QRManagement 
+                    setLoading={setLoading}
+                    setErrorMsg={setErrorMsg}
+                    setSuccessMsg={setSuccessMsg}
+                  />
+                </div>
               )}
+              
               {activeTab === 'analytics' && (contextUserRole === 'manager' || contextUserRole === 'admin' || contextIsAdmin()) && (
-                <AIAnalyticsChat />
+                <div className="px-4 py-6 md:p-6">
+                  <AIAnalyticsChat />
+                </div>
               )}
+              
               {activeTab === 'settings' && (
-                <SettingsManagement 
-                  currentUser={currentUser}
-                />
+                <div className="px-4 py-6 md:p-6">
+                  <SettingsManagement 
+                    currentUser={currentUser}
+                  />
+                </div>
               )}
+              
               {activeTab === 'activity-logs' && (
-                <InventoryActivityLogs 
-                  setLoading={setLoading} 
-                  setErrorMsg={setErrorMsg} 
-                  setSuccessMsg={setSuccessMsg} 
-                />
+                <div className="px-4 py-6 md:p-6">
+                  <InventoryActivityLogs 
+                    setLoading={setLoading} 
+                    setErrorMsg={setErrorMsg} 
+                    setSuccessMsg={setSuccessMsg} 
+                  />
+                </div>
               )}
             </div>
           </div>
