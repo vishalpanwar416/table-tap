@@ -341,14 +341,22 @@ const PaymentPage = () => {
       console.log('Order created successfully:', order);
   
       clearCart();
-      navigate('/order-success', {
+      
+      // FIXED: Redirect to the correct order confirmation page
+      navigate('/order-confirmation-page', {
         state: {
           orderId: order.id,
+          orderNumber: order.order_number,
           restaurantId: restaurant.id,
           restaurantName: restaurant.name,
           totalAmount: parseFloat(finalTotal),
           tableNumber,
-          cartItems
+          cartItems,
+          paymentMethod,
+          customerName,
+          customerEmail,
+          customerPhone,
+          specialInstructions
         }
       });
     } catch (error) {
