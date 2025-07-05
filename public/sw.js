@@ -57,6 +57,11 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  // Skip caching for unsupported schemes
+  if (url.protocol === 'chrome-extension:' || url.protocol === 'chrome:' || url.protocol === 'moz-extension:') {
+    return;
+  }
+
   // Handle API requests
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
@@ -65,7 +70,10 @@ self.addEventListener('fetch', (event) => {
           if (response) {
             // Return cached response and update in background
             fetch(request).then((freshResponse) => {
-              cache.put(request, freshResponse.clone());
+              // Only cache if the response is valid and the request scheme is supported
+              if (freshResponse.status === 200 && url.protocol.startsWith('http')) {
+                cache.put(request, freshResponse.clone());
+              }
             }).catch(() => {
               // Ignore fetch errors for background updates
             });
@@ -74,7 +82,7 @@ self.addEventListener('fetch', (event) => {
           
           // Fetch from network and cache
           return fetch(request).then((response) => {
-            if (response.status === 200) {
+            if (response.status === 200 && url.protocol.startsWith('http')) {
               cache.put(request, response.clone());
             }
             return response;
@@ -90,8 +98,8 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       caches.match(request).then((response) => {
         return response || fetch(request).then((fetchResponse) => {
-          // Cache successful responses
-          if (fetchResponse.status === 200) {
+          // Cache successful responses only for supported schemes
+          if (fetchResponse.status === 200 && url.protocol.startsWith('http')) {
             const responseClone = fetchResponse.clone();
             caches.open(DYNAMIC_CACHE).then((cache) => {
               cache.put(request, responseClone);

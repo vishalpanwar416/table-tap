@@ -2,6 +2,7 @@
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../config/AuthContext';
+import { useRestaurant } from '../Pages/Restaurantselection/RestaurantContext';
 // Correct the import paths to match your actual file structure
 import { 
   createOrder, 
@@ -23,17 +24,11 @@ export const OrderProvider = ({ children }) => {
   const [currentOrder, setCurrentOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { user } = useAuth(); // Get current user from auth context
+  const { user } = useAuth();
+  const { restaurant } = useRestaurant();
   const navigate = useNavigate();
 
-  // Fetch user orders when component mounts or user changes
-  useEffect(() => {
-    if (user) {
-      fetchUserOrders();
-    }
-  }, [user]);
-
-  // Fetch user orders from Supabase
+  // Fetch user orders from Supabase - moved before useEffect
   const fetchUserOrders = useCallback(async () => {
     if (!user?.id) {
       setLoading(false);
@@ -51,8 +46,15 @@ export const OrderProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [user?.id]); 
-  
+  }, [user?.id]);
+
+  // Fetch user orders when component mounts or user changes
+  useEffect(() => {
+    if (user) {
+      fetchUserOrders();
+    }
+  }, [user, fetchUserOrders]);
+
   // Place a new order
   const placeOrder = async (orderData) => {
     try {
@@ -64,28 +66,27 @@ export const OrderProvider = ({ children }) => {
         userId: user?.id,
         customerName: user?.user_metadata?.full_name || user?.email || 'Guest',
         customerEmail: user?.email,
-        restaurant_id: restaurant.id
+        restaurant_id: restaurant?.id
       };
       
       // Create order in Supabase
-      // In placeOrder function
-const newOrder = await createOrder(fullOrderData);
+      const newOrder = await createOrder(fullOrderData);
 
-// Create detailed admin notification
-await createNotification({
-  title: 'New Order Received',
-  message: `Order #${newOrder.id.slice(0, 8)} - ${newOrder.items.length} items`,
-  type: 'new_order',
-  order_id: newOrder.id,
-  is_manager_notification: true,
-  order_details: {
-    items: newOrder.items,
-    total: newOrder.total,
-    table: newOrder.tableNumber,
-    customer: newOrder.customerName,
-    created_at: newOrder.created_at
-  }
-});
+      // Create detailed admin notification
+      await createNotification({
+        title: 'New Order Received',
+        message: `Order #${newOrder.id.slice(0, 8)} - ${newOrder.items.length} items`,
+        type: 'new_order',
+        order_id: newOrder.id,
+        is_manager_notification: true,
+        order_details: {
+          items: newOrder.items,
+          total: newOrder.total,
+          table: newOrder.tableNumber,
+          customer: newOrder.customerName,
+          created_at: newOrder.created_at
+        }
+      });
       // Set current order
       setCurrentOrder(newOrder);
       

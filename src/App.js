@@ -14,7 +14,7 @@ import LikedItemsPage from '../src/Pages/customer/LikedItemsPage';
 import MyOrders from '../src/Pages/customer/MyOrders';
 import OrderConfirmation from '../src/Pages/customer/OrderConfirmation';
 import PaymentPage from '../src/Pages/customer/PaymentPage';
-import PrfilePage from '../src/Pages/customer/ProfilePage';
+import ProfilePage from '../src/Pages/customer/ProfilePage';
 import AdminDashboard from './Pages/RestaurantManagement/adminDashboard';
 import CompleteProfile from '../src/Pages/auth/CompleteProfile';
 import AuthWrapper from '../src/config/AuthWrapper';
@@ -117,7 +117,7 @@ const App = () => {
                               path="/profile" 
                               element={
                                 <RestaurantSelectionWrapper>
-                                  <PrfilePage />
+                                  <ProfilePage />
                                 </RestaurantSelectionWrapper>
                               } 
                             />

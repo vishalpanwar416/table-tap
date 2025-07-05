@@ -66,8 +66,8 @@ const ProgressiveImage = ({ src, alt, className, placeholderColor = '#f3f4f6', d
             setImageState('loaded');
           });
         });
-  }
-};
+      }
+    };
 
     img.onerror = () => {
       if (!isUnmountedRef.current && retryCount < 2) {
