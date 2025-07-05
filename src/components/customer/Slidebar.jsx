@@ -128,13 +128,6 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
   };
   
   const handleNavigation = (path) => {
-    if (path === '/contact') {
-      // Show contact popup instead of navigating
-      setIsContactPopupOpen(true);
-      toggleSidebar();
-      return;
-    }
-    
     if (isAuthenticated) {
       navigate(path);
     } else {

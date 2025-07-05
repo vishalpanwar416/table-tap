@@ -36,6 +36,7 @@ import InstallPrompt from './components/InstallPrompt';
 import { register } from './utils/serviceWorkerRegistration';
 import ErrorBoundary from './components/ErrorBoundary';
 import { FoodDataProvider } from './context/FoodDataContext';
+import ContactUsPage from '../src/Pages/customer/ContactUsPage';
 
 // Register service worker
 register();
@@ -134,6 +135,14 @@ const App = () => {
                               element={
                                 <RestaurantSelectionWrapper>
                                   <OrderConfirmationPage />
+                                </RestaurantSelectionWrapper>
+                              } 
+                            />
+                            <Route 
+                              path="/contact" 
+                              element={
+                                <RestaurantSelectionWrapper>
+                                  <ContactUsPage />
                                 </RestaurantSelectionWrapper>
                               } 
                             />
