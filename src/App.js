@@ -49,10 +49,10 @@ const App = () => {
         <NotificationProvider>
           <ManagerNotificationProvider>
             <RestaurantProvider>
-              <AdminRestaurantProvider>
-                <CartProvider>
-                  <LikesProvider>
-                    <OrderProvider>
+              <OrderProvider>
+                <AdminRestaurantProvider>
+                  <CartProvider>
+                    <LikesProvider>
                       <FoodDataProvider>
                         <div className="min-h-screen bg-gray-100">
                           <Routes>
@@ -189,10 +189,10 @@ const App = () => {
                           <InstallPrompt />
                         </div>
                       </FoodDataProvider>
-                    </OrderProvider>
-                  </LikesProvider>
-                </CartProvider>
-              </AdminRestaurantProvider>
+                    </LikesProvider>
+                  </CartProvider>
+                </AdminRestaurantProvider>
+              </OrderProvider>
             </RestaurantProvider>
           </ManagerNotificationProvider>
         </NotificationProvider>

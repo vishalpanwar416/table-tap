@@ -25,7 +25,15 @@ export const OrderProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { user } = useAuth();
-  const { restaurant, loading: restaurantLoading } = useRestaurant();
+  
+  // Always call useRestaurant hook, but handle the case where context might not be available
+  const restaurantContext = useRestaurant();
+  const { restaurant, loading: restaurantLoading, error: restaurantError } = restaurantContext || {
+    restaurant: null,
+    loading: false,
+    error: null
+  };
+  
   const navigate = useNavigate();
 
   // Fetch user orders from Supabase
@@ -62,6 +70,11 @@ export const OrderProvider = ({ children }) => {
         throw new Error('Restaurant data is still loading. Please try again.');
       }
 
+      // Check if there's a restaurant error
+      if (restaurantError) {
+        throw new Error(`Restaurant error: ${restaurantError}`);
+      }
+
       // Check if restaurant is available
       if (!restaurant) {
         throw new Error('No restaurant selected. Please select a restaurant first.');
@@ -84,7 +97,7 @@ export const OrderProvider = ({ children }) => {
       console.error('Error placing order:', error);
       throw error;
     }
-  }, [restaurant, restaurantLoading, user?.id]);
+  }, [restaurant, restaurantLoading, restaurantError, user?.id]);
 
   // Update payment status
   const updateOrderPayment = async (orderId, paymentData) => {
@@ -168,7 +181,7 @@ export const OrderProvider = ({ children }) => {
     userOrders,
     currentOrder,
     loading: loading || restaurantLoading, // Include restaurant loading state
-    error,
+    error: error || restaurantError, // Include restaurant error state
     placeOrder,
     updateOrderPayment,
     fetchUserOrders,
