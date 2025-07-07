@@ -135,7 +135,7 @@ const FoodItemForm = ({
   const discountTypes = ['Percentage', 'Fixed'];
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="min-h-[80vh] flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between p-4 pb-3 flex-shrink-0 border-b border-gray-100">
         <div className="flex items-center">
@@ -166,48 +166,33 @@ const FoodItemForm = ({
       
       {/* Form */}
       <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
-        <div className="flex-1 space-y-4 overflow-y-auto p-4 pb-0">
+        <div className="flex-1 space-y-6 overflow-y-auto p-4 pb-0">
           {/* Basic Information Section */}
-          <div className="bg-white rounded-lg p-4 border border-gray-100">
-            <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center">
-              <FileText className="w-4 h-4 mr-2 text-orange-500" />
+          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm mb-4">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-orange-500" />
               Basic Information
             </h3>
-            
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Food Name *</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Food Name *</label>
                 <input
                   type="text"
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                  placeholder="Enter food item name"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all shadow-sm"
+                  placeholder="e.g. Margherita Pizza"
                   required
                 />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  rows="3"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all resize-none"
-                  placeholder="Describe the food item..."
-                  required
-                ></textarea>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Category</label>
                 <select
                   name="category"
                   value={formData.category}
                   onChange={handleInputChange}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all shadow-sm"
                 >
                   {categories.map(category => (
                     <option key={category.name} value={category.name}>
@@ -216,27 +201,38 @@ const FoodItemForm = ({
                   ))}
                 </select>
               </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Description *</label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  rows="3"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all shadow-sm resize-none"
+                  placeholder="Describe the food item, e.g. 'Classic Italian pizza with fresh mozzarella and basil.'"
+                  required
+                ></textarea>
+              </div>
             </div>
           </div>
 
           {/* Pricing Section */}
-          <div className="bg-white rounded-lg p-4 border border-gray-100">
-            <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center">
-              <DollarSign className="w-4 h-4 mr-2 text-green-500" />
+          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm mb-4">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-green-500" />
               Pricing & Discounts
             </h3>
-            
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹) *</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Price (₹) *</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">₹</span>
                   <input
                     type="number"
                     name="price"
                     value={formData.price}
                     onChange={handleInputChange}
-                    className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                    className="w-full border border-gray-200 rounded-xl pl-8 pr-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all shadow-sm"
                     placeholder="0.00"
                     min="0"
                     step="0.01"
@@ -244,49 +240,45 @@ const FoodItemForm = ({
                   />
                 </div>
               </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Discount Type</label>
-                  <select
-                    name="discounttype"
-                    value={formData.discounttype || ''}
-                    onChange={handleInputChange}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                  >
-                    <option value="">No Discount</option>
-                    {discountTypes.map(type => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {formData.discounttype === 'Percentage' ? 'Discount (%)' : formData.discounttype === 'Fixed' ? 'Discount (₹)' : 'Discount Value'}
-                  </label>
-                  <input
-                    type="number"
-                    name="discountvalue"
-                    value={formData.discountvalue}
-                    onChange={handleInputChange}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                    placeholder="0"
-                    min="0"
-                    step={formData.discounttype === 'Percentage' ? '0.1' : '0.01'}
-                    disabled={!formData.discounttype}
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Discount Type</label>
+                <select
+                  name="discounttype"
+                  value={formData.discounttype || ''}
+                  onChange={handleInputChange}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all shadow-sm"
+                >
+                  <option value="">No Discount</option>
+                  {discountTypes.map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  {formData.discounttype === 'Percentage' ? 'Discount (%)' : formData.discounttype === 'Fixed' ? 'Discount (₹)' : 'Discount Value'}
+                </label>
+                <input
+                  type="number"
+                  name="discountvalue"
+                  value={formData.discountvalue}
+                  onChange={handleInputChange}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all shadow-sm"
+                  placeholder="0"
+                  min="0"
+                  step={formData.discounttype === 'Percentage' ? '0.1' : '0.01'}
+                  disabled={!formData.discounttype}
+                />
               </div>
             </div>
           </div>
 
           {/* Tags Section */}
-          <div className="bg-white rounded-lg p-4 border border-gray-100">
-            <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center">
-              <Tag className="w-4 h-4 mr-2 text-purple-500" />
+          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm mb-4">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <Tag className="w-5 h-5 text-purple-500" />
               Tags & Keywords
             </h3>
-            
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
               <input
@@ -297,76 +289,60 @@ const FoodItemForm = ({
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                 placeholder="spicy, veg, bestseller (comma separated)"
               />
-              <p className="text-xs text-gray-500 mt-1">Add tags to help customers find this item</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Comma separated, e.g. 'spicy, veg, bestseller'
+              </p>
+              <p className="text-xs text-orange-500 mt-1">
+                To feature an item in the <b>Bestseller</b> or <b>Recommendation</b> tabs, add the tags <b>bestseller</b> and/or <b>recommended</b>.
+              </p>
             </div>
           </div>
 
           {/* Image Section */}
-          <div className="bg-white rounded-lg p-4 border border-gray-100">
-            <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center">
-              <ImageIcon className="w-4 h-4 mr-2 text-blue-500" />
+          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm mb-4">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <ImageIcon className="w-5 h-5 text-blue-500" />
               Food Image
             </h3>
-            
-            <div className="space-y-3">
-              {/* File Input */}
-              <div className="flex items-center space-x-3">
-                <label className="flex items-center px-3 py-2 bg-orange-50 text-orange-700 rounded-lg cursor-pointer hover:bg-orange-100 transition-colors text-sm">
-                  <Upload className="w-4 h-4 mr-2" />
-                  Choose Image
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    disabled={imageProcessing}
-                    className="hidden"
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <label className="flex items-center px-4 py-2 bg-orange-50 text-orange-700 rounded-xl cursor-pointer hover:bg-orange-100 transition-colors text-sm shadow-sm">
+                <Upload className="w-5 h-5 mr-2" />
+                Choose Image
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  disabled={imageProcessing}
+                  className="hidden"
+                />
+              </label>
+              {(formData.image || imagePreview) && (
+                <div className="relative">
+                  <img
+                    src={imagePreview || formData.image}
+                    alt="Preview"
+                    className="h-24 w-24 object-cover rounded-xl border border-gray-200 shadow"
                   />
-                </label>
-                {imageProcessing && (
-                  <div className="flex items-center text-sm text-orange-600">
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-orange-500 border-t-transparent mr-2"></div>
-                    Optimizing...
-                  </div>
-                )}
-              </div>
-
-              {/* Image Preview */}
-              <div className="border-2 border-dashed border-gray-200 rounded-lg p-3 bg-gray-50">
-                {(formData.image || imagePreview) ? (
-                  <div className="flex items-center space-x-3">
-                    <div className="relative">
-                      <img 
-                        src={imagePreview || formData.image} 
-                        alt="Preview" 
-                        className="h-16 w-16 object-cover rounded-lg border border-gray-200"
-                      />
-                      {formData.imageFile && (
-                        <div className="absolute -top-1 -right-1 bg-green-500 text-white text-xs px-1 py-0.5 rounded-full">
-                          ✓
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">Image Preview</p>
-                      <p className="text-xs text-gray-500">Image will be optimized for better performance</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-4">
-                    <ImageIcon className="w-8 h-8 mx-auto mb-1 text-gray-400" />
-                    <p className="text-sm text-gray-500">No image selected</p>
-                    <p className="text-xs text-gray-400">Upload an image to make your item more appealing</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Image Info */}
-              {formData.imageFile && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-2">
-                  <div className="flex items-center text-sm text-green-700">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                    Image optimized and ready for upload
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, image: '', imageFile: null })}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow hover:bg-red-600 transition"
+                    title="Remove image"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
+              {!formData.image && !imagePreview && (
+                <div className="text-center py-4 text-gray-400">
+                  <ImageIcon className="w-8 h-8 mx-auto mb-1" />
+                  <p className="text-sm">No image selected</p>
+                </div>
+              )}
+              {imageProcessing && (
+                <div className="flex items-center text-sm text-orange-600 mt-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-orange-500 border-t-transparent mr-2"></div>
+                  Optimizing...
                 </div>
               )}
             </div>
@@ -374,21 +350,21 @@ const FoodItemForm = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-between p-4 border-t border-gray-200 flex-shrink-0">
+        <div className="flex items-center justify-between p-6 border-t border-gray-100 bg-white rounded-b-2xl shadow-sm">
           <button
             type="button"
             onClick={resetForm}
-            className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors shadow"
           >
-            <RotateCcw className="w-4 h-4 mr-2" />
+            <RotateCcw className="w-5 h-5 mr-2" />
             Reset
           </button>
           <button
             type="submit"
             disabled={imageProcessing}
-            className="flex items-center px-6 py-2 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center px-6 py-2 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-xl transition-colors shadow disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Save className="w-4 h-4 mr-2" />
+            <Save className="w-5 h-5 mr-2" />
             {editItem ? 'Update Item' : 'Add Item'}
           </button>
         </div>

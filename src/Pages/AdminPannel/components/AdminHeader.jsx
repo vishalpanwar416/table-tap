@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Search, Bell, Building2, Users, X, Filter, ChevronDown, RefreshCw } from 'lucide-react';
+import { Search, Bell, Building2, Users, X, Filter, ChevronDown, RefreshCw, ArrowLeft } from 'lucide-react';
 import { useManagerNotifications } from '../../../context/ManagerNotificationContext';
+import { useNavigate } from 'react-router-dom';
 
 const AdminHeader = ({ 
   activeTab, 
@@ -21,6 +22,7 @@ const AdminHeader = ({
   const { notifications, unreadCount, markAllAsRead } = useManagerNotifications();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const navigate = useNavigate();
 
   // Calculate real-time statistics
   const getStats = () => {
@@ -97,6 +99,14 @@ const AdminHeader = ({
     <div className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 shadow-sm z-20 p-4 md:p-6 relative font-spartan">
       <div className="flex justify-between items-center">
         <div className="flex items-center space-x-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center px-2 py-1 mr-2 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded transition"
+            title="Go Back"
+          >
+            <ArrowLeft className="mr-1" size={18} />
+            <span className="hidden sm:inline">Back</span>
+          </button>
           <div>
             <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-spartan">
               {activeTab === 'restaurants' ? 'Restaurants' : 'Staff Management'}
