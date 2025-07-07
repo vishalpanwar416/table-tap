@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Sidebar from '../../components/admin/Sidebar';
 import MobileNav from '../../components/admin/MobileNav';
 import DashboardOverview from '../../components/admin/DashboardOverviewComponents/DashboardOverview';
@@ -24,6 +24,7 @@ import { useAdminRestaurant } from '../../context/AdminRestaurantContext';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const { restaurantId } = useParams();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [foodItems, setFoodItems] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -997,9 +998,17 @@ const AdminDashboard = () => {
                 </div>
               )}
               
-              {activeTab === 'analytics' && (contextUserRole === 'manager' || contextUserRole === 'admin' || contextIsAdmin()) && (
+              {activeTab === 'analytics' && (contextUserRole === 'manager' || contextUserRole === 'admin' || restaurant.ai_enabled==true || contextIsAdmin()) && (
                 <div className="px-4 py-6 md:p-6">
-                  <AIAnalyticsChat />
+                  {restaurant.ai_enabled ? (
+                    <AIAnalyticsChat restaurantId={restaurant.id} />
+                  ) : (
+                    <div className="p-4 mb-8 bg-yellow-50 border border-yellow-200 rounded">
+                      <p className="text-yellow-800 font-medium">
+                        AI Analytics is disabled for this restaurant.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
               

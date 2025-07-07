@@ -1,15 +1,14 @@
-const CACHE_NAME = 'table-tap-v2';
-const STATIC_CACHE = 'static-v2';
-const DYNAMIC_CACHE = 'dynamic-v2';
-const API_CACHE = 'api-v2';
+const CACHE_NAME = 'table-tap-v3';
+const STATIC_CACHE = 'static-v3';
+const DYNAMIC_CACHE = 'dynamic-v3';
+const API_CACHE = 'api-v3';
 
 const STATIC_ASSETS = [
   '/',
   '/static/js/bundle.js',
   '/static/css/main.css',
   '/manifest.json',
-  '/favicon.ico',
-  '/images/logo.png'
+  '/favicon.ico'
 ];
 
 const API_ENDPOINTS = [
@@ -142,8 +141,8 @@ async function doBackgroundSync() {
 self.addEventListener('push', (event) => {
   const options = {
     body: event.data ? event.data.text() : 'New notification',
-    icon: '/images/logo.png',
-    badge: '/images/badge.png',
+    icon: '/favicon.ico',
+    badge: '/favicon.ico',
     vibrate: [100, 50, 100],
     data: {
       dateOfArrival: Date.now(),

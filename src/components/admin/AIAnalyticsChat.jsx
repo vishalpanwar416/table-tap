@@ -688,6 +688,7 @@ const AIAnalyticsChat = () => {
                   <Brain className="h-3 w-3" />
                   <h3 className="font-semibold text-xs">AI Capabilities</h3>
                 </div>
+
               </div>
               <div className="p-2 space-y-1.5">
                 <div className="flex items-center space-x-1.5 text-xs">

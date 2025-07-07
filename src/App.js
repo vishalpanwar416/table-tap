@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
+import './styles/admin-panel.css';
 import Opening from '../src/Pages/shared/opening';
 import Homepage from './Pages/HomePage/Homepage';
 import BestSellerPage from '../src/Pages/customer/BestSellerPage';

@@ -13,11 +13,15 @@ import {
   QrCode,
   BarChart3,
   Settings,
-  Package
+  Package,
+  Star,
+  Camera,
+  Clock
 } from 'lucide-react';
 import { supabase } from '../../supabase';
+import tableTapLogo from '../../assets/icons/logott.png'; // Adjust path if needed
 
-const Sidebar = ({ activeTab, setActiveTab, menuItems, currentUser, restaurantName, userRole }) => {
+const Sidebar = ({ activeTab, setActiveTab, menuItems, currentUser, restaurantName, userRole, onProfilePhotoClick }) => {
   const navigate = useNavigate();
   const [showMobileNav, setShowMobileNav] = React.useState(false);
 
@@ -26,8 +30,13 @@ const Sidebar = ({ activeTab, setActiveTab, menuItems, currentUser, restaurantNa
       await supabase.auth.signOut();
       navigate('/login');
     } catch (error) {
-      console.error('Error signing out:', error);
+      // Error handling without console
     }
+  };
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    setShowMobileNav(false);
   };
 
   const getIcon = (iconName) => {
@@ -52,6 +61,8 @@ const Sidebar = ({ activeTab, setActiveTab, menuItems, currentUser, restaurantNa
         return <Settings className="w-5 h-5" />;
       case 'Building2':
         return <Building2 className="w-5 h-5" />;
+      case 'Clock':
+        return <Clock className="w-5 h-5" />;
       default:
         return null;
     }
@@ -97,7 +108,33 @@ const Sidebar = ({ activeTab, setActiveTab, menuItems, currentUser, restaurantNa
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="p-4 border-b border-gray-800">
-            <h1 className="text-xl font-bold">Admin Panel</h1>
+            <div className="flex flex-col items-center space-y-2">
+              {currentUser?.restaurant_logo_url || restaurantName ? (
+                currentUser?.restaurant_logo_url ? (
+                  <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center overflow-hidden shadow">
+                    <img 
+                      src={currentUser.restaurant_logo_url}
+                      alt={restaurantName || "Restaurant Logo"}
+                      className="w-10 h-10 object-contain"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center shadow">
+                    <Building2 className="w-8 h-8 text-white" />
+                  </div>
+                )
+              ) : (
+                <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center shadow">
+                  <Building2 className="w-8 h-8 text-white" />
+                </div>
+              )}
+              <h1 className="text-lg font-extrabold text-white tracking-tight mt-2">
+                {restaurantName || 'Restaurant Name'}
+              </h1>
+              <span className="text-xs text-gray-400 font-semibold tracking-wide">
+                Admin Dashboard
+              </span>
+            </div>
           </div>
 
           {/* Navigation */}
@@ -106,10 +143,7 @@ const Sidebar = ({ activeTab, setActiveTab, menuItems, currentUser, restaurantNa
               {menuItems.map((item) => (
                 <li key={item.id}>
                   <button
-                    onClick={() => {
-                      setActiveTab(item.id);
-                      setShowMobileNav(false);
-                    }}
+                    onClick={() => handleTabChange(item.id)}
                     className={`flex items-center w-full p-3 rounded-lg transition-colors ${
                       activeTab === item.id 
                         ? 'bg-orange-500 text-white' 
@@ -127,17 +161,28 @@ const Sidebar = ({ activeTab, setActiveTab, menuItems, currentUser, restaurantNa
           {/* User profile and logout */}
           <div className="p-4 border-t border-gray-800">
             <div className="admin-profile flex items-center gap-4 p-2">
-              {currentUser?.avatar_url ? (
-                <img 
-                  src={currentUser.avatar_url} 
-                  alt="User avatar" 
-                  className="w-12 h-12 rounded-full object-cover border-2 border-gray-500"
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-medium">
-                  {currentUser?.email?.charAt(0).toUpperCase()}
+              <div className="relative group">
+                {currentUser?.avatar_url ? (
+                  <img 
+                    src={currentUser.avatar_url} 
+                    alt="User avatar" 
+                    className="w-12 h-12 rounded-full object-cover border-2 border-gray-500 cursor-pointer transition-transform group-hover:scale-105"
+                    onClick={onProfilePhotoClick}
+                  />
+                ) : (
+                  <div 
+                    className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-medium cursor-pointer transition-transform group-hover:scale-105"
+                    onClick={onProfilePhotoClick}
+                  >
+                    {currentUser?.email?.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                
+                {/* Camera icon overlay */}
+                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Camera className="w-3 h-3 text-white" />
                 </div>
-              )}
+              </div>
               <div className="flex flex-col min-w-0 flex-1">
                 <p className="restaurant-name font-medium text-white text-sm truncate">
                   {restaurantName || 'Restaurant'}

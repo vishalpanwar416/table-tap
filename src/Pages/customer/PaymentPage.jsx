@@ -214,7 +214,7 @@ const PaymentPage = () => {
       const options = {
         key: razorpayKeyId,
         amount: amountInPaise,
-        currency: restaurant.currency || 'INR',
+        currency: 'INR',
         name: restaurant.name || 'Restaurant Order',
         description: `Order at ${restaurant.name || 'Restaurant'}`,
         image: restaurant.logo_url || '/logo.png',
@@ -226,7 +226,6 @@ const PaymentPage = () => {
           }
           await processOrder(response);
         },
-        // --- UPDATED: Prefill with state holding user or guest data ---
         prefill: {
           name: customerName || 'Valued Customer',
           email: customerEmail,
@@ -277,36 +276,27 @@ const PaymentPage = () => {
       
       // Updated order data structure to match your database
       const orderData = {
-        order_number: generateOrderNumber(),
-        user_id: user?.id || null,
-        table_number: tableNumber || 'N/A',
-        items: cartItems.map(item => ({
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity,
-          category: item.category,
-          effectivePrice: item.effectivePrice || item.price,
-          discounttype: item.discounttype,
-          discountvalue: item.discountvalue
-        })),
-        subtotal: parseFloat(subtotalAfterDiscount) || 0,
-        gst: parseFloat(cgst) + parseFloat(sgst) || 0,
-        discount: parseFloat(discountAmount) || 0,
-        total: parseFloat(finalTotal) || 0,
-        razorpay_payment_id: response.razorpay_payment_id,
-        razorpay_order_id: response.razorpay_order_id || '',
-        razorpay_signature: response.razorpay_signature || '',
-        payment_method: paymentMethod,
-        payment_status: 'completed',
-        payment_timestamp: new Date().toISOString(),
-        status: 'pending',
-        tracking: tracking,
-        customer_name: customerName || 'Guest Customer',
-        customer_email: customerEmail || null,
-        customer_phone: customerPhone || null,
-        special_instructions: specialInstructions || null,
         restaurant_id: restaurant.id,
+        customer_name: user?.full_name || 'Guest',
+        customer_email: user?.email || '',
+        customer_phone: user?.phone || '',
+        table_number: tableNumber,
+        items: cartItems.map(item => ({
+          food_item_id: item.id,
+          quantity: item.quantity,
+          price: item.price,
+          name: item.name
+        })),
+        total_amount: finalTotal,
+        status: 'pending',
+        payment_method: 'online',
+        notes: {
+          restaurant_id: restaurant.id || '1',
+          table_number: tableNumber || 'N/A',
+          special_instructions: specialInstructions
+        },
+        address: '',
+        delivery_type: 'delivery'
       };
 
       console.log('Creating order with data:', orderData);
@@ -336,7 +326,7 @@ const PaymentPage = () => {
           orderNumber: order.order_number,
           restaurantId: restaurant.id,
           restaurantName: restaurant.name,
-          totalAmount: parseFloat(finalTotal),
+          totalAmount: finalTotal,
           tableNumber,
           paymentMethod,
           customerName,

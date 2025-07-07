@@ -10,16 +10,9 @@
     "background_color": "#ffffff",
     "icons": [
       {
-        "src": "/images/logo-192.png",
-        "type": "image/png",
-        "sizes": "192x192",
-        "purpose": "any maskable"
-      },
-      {
-        "src": "/images/logo-512.png",
-        "type": "image/png",
-        "sizes": "512x512",
-        "purpose": "any maskable"
+        "src": "/favicon.ico",
+        "type": "image/x-icon",
+        "sizes": "16x16 32x32 48x48"
       }
     ],
     "categories": ["food", "business", "productivity"],

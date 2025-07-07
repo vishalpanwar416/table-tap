@@ -26,13 +26,23 @@ export const OrderProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const { user } = useAuth();
   
-  // Always call useRestaurant hook, but handle the case where context might not be available
-  const restaurantContext = useRestaurant();
-  const { restaurant, loading: restaurantLoading, error: restaurantError } = restaurantContext || {
-    restaurant: null,
-    loading: false,
-    error: null
-  };
+  // Safely access restaurant context with proper error handling
+  let restaurantContext = null;
+  let restaurant = null;
+  let restaurantLoading = false;
+  let restaurantError = null;
+  
+  try {
+    restaurantContext = useRestaurant();
+    if (restaurantContext) {
+      restaurant = restaurantContext.restaurant;
+      restaurantLoading = restaurantContext.loading;
+      restaurantError = restaurantContext.error;
+    }
+  } catch (err) {
+    console.warn('Restaurant context not available:', err);
+    // Continue without restaurant context - this is normal for admin pages
+  }
   
   const navigate = useNavigate();
 
