@@ -12,7 +12,8 @@ import {
   QrCode,
   BarChart3,
   Camera,
-  Building2
+  Building2,
+  CreditCard
 } from 'lucide-react';
 import { supabase } from '../../../supabase';
 // Import the existing TableTap logo
@@ -53,6 +54,8 @@ const AdminSidebar = ({ activeTab, setActiveTab, menuItems, currentUser, restaur
         return <BarChart3 className="w-5 h-5" />;
       case 'Building2':
         return <Building2 className="w-5 h-5" />;
+      case 'CreditCard':
+        return <CreditCard className="w-5 h-5" />;
       default:
         return null;
     }

@@ -24,10 +24,12 @@ import {
 } from './admin_service';
 import ProfilePhotoModal from './components/ProfilePhotoModal';
 import { ManagerNotificationProvider } from '../../context/ManagerNotificationContext';
+import SubscriptionManagement from './components/SubscriptionManagement';
 
 const menuItems = [
   { id: 'restaurants', icon: 'Building2', label: 'Restaurants' },
   { id: 'staff', icon: 'Users', label: 'Staff Management' },
+  { id: 'subscriptions', icon: 'CreditCard', label: 'Subscriptions' },
 ];
 
 const AdminPanel = () => {
@@ -556,6 +558,42 @@ const AdminPanel = () => {
     }));
   };
 
+  const renderActiveTab = () => {
+    switch (activeTab) {
+      case 'restaurants':
+        return (
+          <RestaurantManagement
+            restaurants={filteredRestaurants}
+            loading={loading}
+            onAddRestaurant={() => setShowAddRestaurant(true)}
+            onToggleStatus={handleToggleRestaurantStatus}
+            onToggleAI={handleToggleRestaurantAI}
+            onEdit={handleEditRestaurant}
+            onDelete={handleDeleteRestaurant}
+            onClick={handleRestaurantClick}
+          />
+        );
+      case 'staff':
+        return (
+          <div className="-mx-4 md:mx-0 px-4 md:px-0">
+            <StaffManagement
+              staff={filteredStaff}
+              restaurants={restaurants}
+              selectedRestaurantId={selectedRestaurantId}
+              setSelectedRestaurantId={setSelectedRestaurantId}
+              onAddStaff={() => setShowAddStaff(true)}
+              onEdit={handleEditStaffClick}
+              onDelete={handleDeleteStaff}
+            />
+          </div>
+        );
+      case 'subscriptions':
+        return <SubscriptionManagement />;
+      default:
+        return null;
+    }
+  };
+
   if (loading && (restaurants.length === 0 && staff.length === 0)) {
     return <LoadingSpinner />;
   }
@@ -622,32 +660,7 @@ const AdminPanel = () => {
             {loading ? (
               <LoadingSpinner />
             ) : (
-              <>
-                {activeTab === 'restaurants' ? (
-                  <RestaurantManagement
-                    restaurants={filteredRestaurants}
-                    loading={loading}
-                    onAddRestaurant={() => setShowAddRestaurant(true)}
-                    onToggleStatus={handleToggleRestaurantStatus}
-                    onToggleAI={handleToggleRestaurantAI}
-                    onEdit={handleEditRestaurant}
-                    onDelete={handleDeleteRestaurant}
-                    onClick={handleRestaurantClick}
-                  />
-                ) : (
-                  <div className="-mx-4 md:mx-0 px-4 md:px-0">
-                    <StaffManagement
-                      staff={filteredStaff}
-                      restaurants={restaurants}
-                      selectedRestaurantId={selectedRestaurantId}
-                      setSelectedRestaurantId={setSelectedRestaurantId}
-                      onAddStaff={() => setShowAddStaff(true)}
-                      onEdit={handleEditStaffClick}
-                      onDelete={handleDeleteStaff}
-                    />
-                  </div>
-                )}
-              </>
+              renderActiveTab()
             )}
           </div>
         </div>

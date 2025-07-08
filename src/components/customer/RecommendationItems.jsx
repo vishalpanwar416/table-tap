@@ -2,13 +2,14 @@ import { Heart, ShoppingBag, ArrowRight } from 'lucide-react';
 import { useCart } from '../../config/CartContent';
 import { useLikes } from '../../config/LikesContent';
 import { LazyImage } from '../../utils/imageOptimization';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useMemo, useCallback, memo, useState } from 'react';
 import OrderCard from './itemCard';
 
 const RecommendationItem = memo(({ item, onImageClick, index = 0 }) => {
   const { toggleLike, likedItems } = useLikes();
   const { cartItems, addToCart, updateQuantity, removeItem } = useCart();
+  const [isLikedAnimating, setIsLikedAnimating] = useState(false);
   
   const cartItem = useMemo(() => cartItems.find(i => i.id === item.id), [cartItems, item.id]);
   const quantity = cartItem?.quantity || 0;
@@ -24,14 +25,26 @@ const RecommendationItem = memo(({ item, onImageClick, index = 0 }) => {
     }
   }, [quantity, removeItem, updateQuantity, item.id, item.category]);
 
+  const handleLikeClick = useCallback((e) => {
+    e.stopPropagation();
+    setIsLikedAnimating(true);
+    toggleLike(item);
+    setTimeout(() => setIsLikedAnimating(false), 600);
+  }, [toggleLike, item]);
+
   // Helper for the discount tag
   const DiscountTag = () =>
     item.discounttype && item.discountvalue ? (
-      <span className="text-sm bg-green-100 text-green-700 font-semibold px-3 py-1.5 rounded-full whitespace-nowrap">
+      <motion.span 
+        className="text-sm bg-gradient-to-r from-green-400 to-green-600 text-white font-semibold px-3 py-1.5 rounded-full whitespace-nowrap shadow-sm"
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.2, duration: 0.3 }}
+      >
         {item.discounttype === 'Percentage'
           ? `${item.discountvalue}% OFF`
           : `₹${item.discountvalue} OFF`}
-      </span>
+      </motion.span>
     ) : null;
 
   // Helper for the price display
@@ -44,75 +57,153 @@ const RecommendationItem = memo(({ item, onImageClick, index = 0 }) => {
 
   return (
     <motion.div
-      className="group bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 overflow-hidden border border-gray-100 w-[280px] h-[320px] flex flex-col"
-      style={{ transform: 'translateZ(0)' }}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.1 }}
+      className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 w-[280px] h-[320px] flex flex-col relative"
+      style={{ willChange: 'transform' }}
+      initial={{ transform: 'translateY(25px) scale(0.9)' }}
+      animate={{ transform: 'translateY(0px) scale(1)' }}
+      whileHover={{ transform: 'translateY(-6px) scale(1.03)' }}
+      transition={{
+        delay: index * 0.06,
+        duration: 0.7,
+        ease: [0.25, 0.46, 0.45, 0.94]
+      }}
     >
       <div className="relative h-48 overflow-hidden bg-gray-100 flex-shrink-0">
-        <LazyImage
-          src={item.image}
-          alt={item.name}
-          category={item.category}
-          className="w-full h-full object-cover cursor-pointer"
-          onClick={() => onImageClick && onImageClick(item)}
-        />
-        <button 
-          className="absolute top-4 left-4 bg-white/70 rounded-full p-2 z-10"
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleLike(item);
-          }}
+        <motion.div
+          whileHover={{ scale: 1.1 }}
+          transition={{ duration: 0.3 }}
         >
-          <Heart 
-            className={`h-6 w-6 md:w-7 md:h-7 ${isLiked ? 'text-red-500 fill-red-500' : 'text-gray-500'}`}
+          <LazyImage
+            src={item.image}
+            alt={item.name}
+            category={item.category}
+            className="w-full h-full object-cover cursor-pointer"
+            onClick={() => onImageClick && onImageClick(item)}
           />
-        </button>
+        </motion.div>
+        
+        {/* Enhanced like button */}
+        <motion.button 
+          className="absolute top-4 left-4 bg-white/80 backdrop-blur-sm rounded-full p-2 z-10 shadow-sm"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={handleLikeClick}
+        >
+          <motion.div
+            animate={isLikedAnimating ? { 
+              scale: [1, 1.3, 1],
+              rotate: [0, 10, -10, 0]
+            } : {}}
+            transition={{ duration: 0.6 }}
+          >
+            <Heart 
+              className={`h-6 w-6 md:w-7 md:h-7 transition-colors duration-200 ${
+                isLiked ? 'text-red-500 fill-red-500' : 'text-gray-500 hover:text-red-400'
+              }`}
+            />
+          </motion.div>
+        </motion.button>
       </div>
+      
       <div className="flex flex-col flex-1 justify-between py-3 px-4 min-h-0">
         <div className="flex items-start justify-between flex-1">
           <div className="flex-1 min-w-0 mr-3">
-            <h4 className="text-base font-bold text-gray-900 truncate mb-2 leading-tight">{item.name}</h4>
+            <motion.h4 
+              className="text-base font-bold text-gray-900 truncate mb-2 leading-tight"
+              whileHover={{ color: '#f97316' }}
+              transition={{ duration: 0.2 }}
+            >
+              {item.name}
+            </motion.h4>
             <div className="flex items-center space-x-2">
               {item.discounttype && item.discountvalue ? (
                 <>
-                  <span className="text-sm text-gray-400 line-through">
+                  <motion.span 
+                    className="text-sm text-gray-400 line-through"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                  >
                     ₹{Number(item.price).toFixed(0)}
-                  </span>
-                  <span className="text-lg font-bold text-orange-600">
+                  </motion.span>
+                  <motion.span 
+                    className="text-lg font-bold text-orange-600"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.4 }}
+                  >
                     ₹{discountedPrice.toFixed(0)}
-                  </span>
+                  </motion.span>
                 </>
               ) : (
-                <span className="text-lg font-bold text-gray-900">
+                <motion.span 
+                  className="text-lg font-bold text-gray-900"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                >
                   ₹{Number(item.price).toFixed(0)}
-                </span>
+                </motion.span>
               )}
             </div>
           </div>
           <div className="flex-shrink-0">
-            {quantity > 0 ? (
-              <div className="flex items-center bg-black/90 text-white rounded-full px-4 py-2 shadow">
-                <button
-                  onClick={handleDecrement}
-                  className="text-white px-2 text-base font-bold"
-                >−</button>
-                <span className="px-3 text-base">{quantity}</span>
-                <button
-                  onClick={handleIncrement}
-                  className="text-white px-2 text-base font-bold"
-                >+</button>
-              </div>
-            ) : (
-              <button
-                onClick={handleAddClick}
-                className="bg-black/90 hover:bg-gray-800 text-white rounded-full px-4 py-2 flex items-center space-x-2 text-base shadow"
-              >
-                <ShoppingBag className="h-5 w-5" />
-                <span>Add</span>
-              </button>
-            )}
+            <AnimatePresence mode="wait">
+              {quantity > 0 ? (
+                <motion.div 
+                  key="quantity-controls"
+                  className="flex items-center bg-gradient-to-r from-black to-gray-800 text-white rounded-full px-4 py-2 shadow-lg"
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.8, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <motion.button
+                    onClick={handleDecrement}
+                    className="text-white px-2 text-base font-bold hover:text-orange-300 transition-colors"
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.8 }}
+                  >
+                    −
+                  </motion.button>
+                  <motion.span 
+                    className="px-3 text-base font-semibold"
+                    key={quantity}
+                    initial={{ scale: 1.2 }}
+                    animate={{ scale: 1 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {quantity}
+                  </motion.span>
+                  <motion.button
+                    onClick={handleIncrement}
+                    className="text-white px-2 text-base font-bold hover:text-green-300 transition-colors"
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.8 }}
+                  >
+                    +
+                  </motion.button>
+                </motion.div>
+              ) : (
+                <motion.button
+                  key="add-button"
+                  onClick={handleAddClick}
+                  className="bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white rounded-full px-4 py-2 flex items-center space-x-2 text-base shadow-lg transition-all duration-200"
+                  whileHover={{ 
+                    scale: 1.05,
+                    boxShadow: "0 10px 25px rgba(0,0,0,0.2)"
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.8, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ShoppingBag className="h-5 w-5" />
+                  <span>Add</span>
+                </motion.button>
+              )}
+            </AnimatePresence>
           </div>
         </div>
         <div className="flex justify-end mt-3 flex-shrink-0">
@@ -142,8 +233,8 @@ const RecommendationItems = ({ allFoodItems = [], onItemClick, scrollRef, scroll
   };
 
   return (
-    <div className="px-1 pb-2 text-black flex-1">
-      <div className="flex justify-between items-center mb-4">
+    <div className="pb-2 text-black flex-1">
+      <div className="flex justify-between items-center mb-4 px-4">
         <h2 className="text-xl font-thick font-spartan-bold md:text-3xl">Our Best Recommendations</h2>
         <button 
           onClick={() => scroll(scrollRef.current?.clientWidth || 300)}
@@ -154,7 +245,7 @@ const RecommendationItems = ({ allFoodItems = [], onItemClick, scrollRef, scroll
       </div>
       <div
         ref={scrollRef}
-        className="flex gap-5 overflow-x-auto scrollbar-hide pb-2 md:pb-0"
+        className="flex gap-5 overflow-x-auto scrollbar-hide pb-2 md:pb-0 px-4"
         style={{ minHeight: allFoodItems.length > 0 ? 'auto' : '0' }}
       >
         {allFoodItems.map((item, index) => (

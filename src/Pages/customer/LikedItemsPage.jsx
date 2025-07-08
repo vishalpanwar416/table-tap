@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLikes } from '../../config/LikesContent';
 import NotificationSidebar from '../../components/customer/NotificationSlidebar';
 import OrderCard from '../../components/customer/itemCard';
+import FoodImageWithFallback from '../../components/customer/FoodImageWithFallback';
 
 // Page transition variants
 const pageVariants = {
@@ -64,9 +65,11 @@ const itemVariants = {
   }
 };
 
-const LikedItemCard = ({ item, onItemClick }) => {
+const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
   const { cartItems, addToCart, updateQuantity, removeItem } = useCart();
   const { toggleLike, likedItems } = useLikes();
+  const [isLikedAnimating, setIsLikedAnimating] = useState(false);
+  
   const cartItem = useMemo(() => cartItems.find(i => i.id === item.id), [cartItems, item.id]);
   const quantity = cartItem?.quantity || 0;
   const isLiked = useMemo(() => likedItems.some(likedItem => likedItem.id === item.id), [likedItems, item.id]);
@@ -81,14 +84,26 @@ const LikedItemCard = ({ item, onItemClick }) => {
     }
   }, [quantity, removeItem, updateQuantity, item.id, item.category]);
 
+  const handleLikeClick = useCallback((e) => {
+    e.stopPropagation();
+    setIsLikedAnimating(true);
+    toggleLike(item);
+    setTimeout(() => setIsLikedAnimating(false), 600);
+  }, [toggleLike, item]);
+
   // Discount tag
   const DiscountTag = () =>
     item.discounttype && item.discountvalue ? (
-      <span className="text-[10px] bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
+      <motion.span 
+        className="text-[10px] bg-gradient-to-r from-green-400 to-green-600 text-white font-semibold px-2 py-0.5 rounded-full whitespace-nowrap shadow-sm"
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.2, duration: 0.3 }}
+      >
         {item.discounttype === 'Percentage'
           ? `${item.discountvalue}% OFF`
           : `₹${item.discountvalue} OFF`}
-      </span>
+      </motion.span>
     ) : null;
 
   // Price calculation
@@ -101,68 +116,155 @@ const LikedItemCard = ({ item, onItemClick }) => {
 
   return (
     <motion.div
-      className="group bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 overflow-hidden border border-gray-100 min-w-[140px] max-w-[150px] flex flex-col"
-      style={{ transform: 'translateZ(0)' }}
+      className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 min-w-[140px] max-w-[150px] flex flex-col relative"
+      style={{ willChange: 'transform' }}
+      initial={{ transform: 'translateY(25px) scale(0.9)' }}
+      animate={{ transform: 'translateY(0px) scale(1)' }}
+      whileHover={{ transform: 'translateY(-6px) scale(1.03)' }}
+      transition={{
+        delay: index * 0.06,
+        duration: 0.7,
+        ease: [0.25, 0.46, 0.45, 0.94]
+      }}
     >
       <div className="relative h-28 overflow-hidden bg-gray-100">
-        <img
-          src={item.image}
-          alt={item.name}
-          className="w-full h-full object-cover"
-          onClick={() => onItemClick(item)}
-          loading="lazy"
-        />
-        {/* Like button, top left on image */}
-        <button
-          className="absolute top-2 left-2 z-20 bg-white/90 rounded-full p-1 shadow"
-          onClick={() => toggleLike(item)}
+        <motion.div
+          whileHover={{ scale: 1.1 }}
+          transition={{ duration: 0.3 }}
         >
-          <Heart className={`h-4 w-4 ${isLiked ? "text-red-500 fill-red-500" : "text-gray-400"}`} />
-        </button>
+          <FoodImageWithFallback
+            src={item.image}
+            alt={item.name}
+            className="w-full h-full object-cover cursor-pointer"
+            category={item.category}
+            itemName={item.name}
+            onClick={() => onItemClick(item)}
+            loading="lazy"
+          />
+        </motion.div>
+        
+        {/* Enhanced like button */}
+        <motion.button
+          className="absolute top-2 left-2 z-20 bg-white/80 backdrop-blur-sm rounded-full p-1 shadow-sm"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={handleLikeClick}
+        >
+          <motion.div
+            animate={isLikedAnimating ? { 
+              scale: [1, 1.3, 1],
+              rotate: [0, 10, -10, 0]
+            } : {}}
+            transition={{ duration: 0.6 }}
+          >
+            <Heart 
+              className={`h-4 w-4 transition-colors duration-200 ${
+                isLiked ? "text-red-500 fill-red-500" : "text-gray-400 hover:text-red-400"
+              }`} 
+            />
+          </motion.div>
+        </motion.button>
       </div>
+      
       <div className="flex flex-col flex-1 justify-between py-1 px-2">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
-            <h4 className="text-xs font-bold text-gray-900 truncate">{item.name}</h4>
+            <motion.h4 
+              className="text-xs font-bold text-gray-900 truncate"
+              whileHover={{ color: '#f97316' }}
+              transition={{ duration: 0.2 }}
+            >
+              {item.name}
+            </motion.h4>
             <div className="flex items-center space-x-1">
               {item.discounttype && item.discountvalue ? (
                 <>
-                  <span className="text-[10px] text-gray-400 line-through">
+                  <motion.span 
+                    className="text-[10px] text-gray-400 line-through"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                  >
                     ₹{Number(item.price).toFixed(0)}
-                  </span>
-                  <span className="text-sm font-bold text-orange-600">
+                  </motion.span>
+                  <motion.span 
+                    className="text-sm font-bold text-orange-600"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.4 }}
+                  >
                     ₹{discountedPrice.toFixed(0)}
-                  </span>
+                  </motion.span>
                 </>
               ) : (
-                <span className="text-sm font-bold text-gray-900">
+                <motion.span 
+                  className="text-sm font-bold text-gray-900"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                >
                   ₹{Number(item.price).toFixed(0)}
-                </span>
+                </motion.span>
               )}
             </div>
           </div>
           <div className="ml-1">
-            {quantity > 0 ? (
-              <div className="flex items-center bg-black/90 text-white rounded-full px-2 py-0.5 shadow">
-                <button
-                  onClick={handleDecrement}
-                  className="text-white px-1 text-xs"
-                >−</button>
-                <span className="px-1 text-xs">{quantity}</span>
-                <button
-                  onClick={handleIncrement}
-                  className="text-white px-1 text-xs"
-                >+</button>
-              </div>
-            ) : (
-              <button
-                onClick={handleAddClick}
-                className="bg-black/90 hover:bg-gray-800 text-white rounded-full px-2 py-0.5 flex items-center space-x-1 text-xs shadow"
-              >
-                <ShoppingBag className="h-3 w-3" />
-                <span>Add</span>
-              </button>
-            )}
+            <AnimatePresence mode="wait">
+              {quantity > 0 ? (
+                <motion.div 
+                  key="quantity-controls"
+                  className="flex items-center bg-gradient-to-r from-black to-gray-800 text-white rounded-full px-2 py-0.5 shadow-lg"
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.8, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <motion.button
+                    onClick={handleDecrement}
+                    className="text-white px-1 text-xs hover:text-orange-300 transition-colors"
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.8 }}
+                  >
+                    −
+                  </motion.button>
+                  <motion.span 
+                    className="px-1 text-xs font-semibold"
+                    key={quantity}
+                    initial={{ scale: 1.2 }}
+                    animate={{ scale: 1 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {quantity}
+                  </motion.span>
+                  <motion.button
+                    onClick={handleIncrement}
+                    className="text-white px-1 text-xs hover:text-green-300 transition-colors"
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.8 }}
+                  >
+                    +
+                  </motion.button>
+                </motion.div>
+              ) : (
+                <motion.button
+                  key="add-button"
+                  onClick={handleAddClick}
+                  className="bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white rounded-full px-2 py-0.5 flex items-center space-x-1 text-xs shadow-lg transition-all duration-200"
+                  whileHover={{ 
+                    scale: 1.05,
+                    boxShadow: "0 10px 25px rgba(0,0,0,0.2)"
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.8, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ShoppingBag className="h-3 w-3" />
+                  <span>Add</span>
+                </motion.button>
+              )}
+            </AnimatePresence>
           </div>
         </div>
         <div className="flex justify-end mt-1">
@@ -354,7 +456,7 @@ const LikedItemsPage = () => {
                   variants={itemVariants}
                   layout
                 >
-                  <LikedItemCard item={item} onItemClick={handleImageClick} />
+                  <LikedItemCard item={item} onItemClick={handleImageClick} index={idx} />
                 </motion.div>
               ))}
             </motion.div>

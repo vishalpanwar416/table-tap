@@ -280,7 +280,7 @@ const HomePage = memo(() => {
   }
 
   return (
-    <div className="flex justify-center items-start min-h-screen bg-black p-4">
+    <div className="flex justify-center items-start min-h-screen bg-black">
       <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
         <motion.div
           initial="initial"
@@ -363,14 +363,14 @@ const HomePage = memo(() => {
             className="flex-1 flex flex-col"
           >
             {/* Greeting */}
-            <motion.div {...slideUp} className="px-4 text-white">
+            <motion.div {...slideUp} className="px-0 text-white">
               <DynamicGreeting />
             </motion.div>
 
             {/* Carousel with enhanced loading */}
             <motion.div {...slideUp}>
               <Suspense fallback={<CarouselSkeleton />}>
-                <div className="relative pt-3 pb-3 mx-2 my-2">
+                <div className="relative pt-3 pb-3 my-2">
                   <Maincarosel />
                 </div>
               </Suspense>
