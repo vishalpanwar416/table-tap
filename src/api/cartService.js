@@ -27,7 +27,6 @@ class CartService {
           validateCartItem(item);
           validItems.push(item);
         } catch (validationError) {
-          console.warn('Invalid cart item found:', validationError.message);
         }
       }
       
@@ -40,7 +39,6 @@ class CartService {
         cartId: cart.id
       };
     } catch (error) {
-      console.error('Failed to load user cart:', error);
       throw new Error('Failed to load cart from server');
     }
   }
@@ -72,7 +70,6 @@ class CartService {
         timestamp: new Date().toISOString()
       };
     } catch (error) {
-      console.error('Failed to save user cart:', error);
       throw new Error('Failed to save cart to server');
     }
   }
@@ -90,7 +87,6 @@ class CartService {
       
       return { success: true };
     } catch (error) {
-      console.error('Failed to delete user cart:', error);
       throw new Error('Failed to delete cart');
     }
   }
@@ -124,7 +120,6 @@ class CartService {
               validateCartItem(item);
               validItems.push(item);
             } catch (validationError) {
-              console.warn('Invalid cart item:', validationError.message);
             }
           }
           
@@ -137,13 +132,11 @@ class CartService {
             restaurant: cart.restaurants
           });
         } catch (error) {
-          console.warn('Failed to process cart:', error);
         }
       }
       
       return processedCarts;
     } catch (error) {
-      console.error('Failed to get user carts:', error);
       throw new Error('Failed to load carts');
     }
   }
@@ -181,7 +174,6 @@ class CartService {
         totalItems: mergedItems.reduce((sum, item) => sum + item.quantity, 0)
       };
     } catch (error) {
-      console.error('Failed to merge guest cart:', error);
       throw new Error('Failed to merge cart');
     }
   }
@@ -276,7 +268,6 @@ class CartService {
       
       return analytics;
     } catch (error) {
-      console.error('Failed to get cart analytics:', error);
       throw new Error('Failed to load cart analytics');
     }
   }
@@ -300,7 +291,6 @@ class CartService {
         backupId: data[0]?.id
       };
     } catch (error) {
-      console.error('Failed to backup cart:', error);
       throw new Error('Failed to create backup');
     }
   }
@@ -330,7 +320,6 @@ class CartService {
         restaurantId: backup.restaurant_id
       };
     } catch (error) {
-      console.error('Failed to restore cart:', error);
       throw new Error('Failed to restore cart');
     }
   }
@@ -354,7 +343,6 @@ class CartService {
       
       return backups || [];
     } catch (error) {
-      console.error('Failed to get cart backups:', error);
       throw new Error('Failed to load backups');
     }
   }
@@ -377,7 +365,6 @@ class CartService {
         deletedCount: data?.length || 0
       };
     } catch (error) {
-      console.error('Failed to cleanup old carts:', error);
       throw new Error('Failed to cleanup old carts');
     }
   }
@@ -400,7 +387,6 @@ class CartService {
       // This is a placeholder for future integrations
       // You could sync with POS systems, inventory systems, etc.
       
-      console.log('Syncing cart with external system:', {
         userId,
         restaurantId,
         itemCount: cartData.items?.length || 0
@@ -408,7 +394,6 @@ class CartService {
       
       return { success: true, synced: true };
     } catch (error) {
-      console.error('Failed to sync with external system:', error);
       throw new Error('Failed to sync with external system');
     }
   }

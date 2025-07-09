@@ -37,7 +37,6 @@ export const FoodDataProvider = ({ children }) => {
         }
       }
     } catch (error) {
-      console.warn('Failed to load from cache:', error);
     }
     return false;
   }, []);
@@ -51,7 +50,6 @@ export const FoodDataProvider = ({ children }) => {
         timestamp: Date.now()
       }));
     } catch (error) {
-      console.warn('Failed to save to cache:', error);
     }
   }, []);
 
@@ -77,13 +75,11 @@ export const FoodDataProvider = ({ children }) => {
 
     // If we already have data for this restaurant and not forcing refresh, do nothing
     if (!forceRefresh && currentRestaurantId === restaurantId && bestSellerItems.length > 0) {
-      console.log('Data already available for restaurant:', restaurantId);
       return;
     }
 
     // Prevent multiple simultaneous loads
     if (loadingRef.current && !forceRefresh) {
-      console.log('Already loading data, skipping...');
       return;
     }
 
@@ -107,7 +103,6 @@ export const FoodDataProvider = ({ children }) => {
         return;
       }
 
-      console.log('Loading food data for restaurant:', restaurantId);
 
       // Critical data first - parallel loading with timeout
       const timeoutId = setTimeout(() => {
@@ -119,12 +114,10 @@ export const FoodDataProvider = ({ children }) => {
       const [bestSellers, recommended] = await Promise.all([
         fetchBestSellerItems(restaurantId).catch(err => {
           if (err.name === 'AbortError') return [];
-          console.warn('Failed to load best sellers:', err);
           return [];
         }),
         fetchRecommendedItems(restaurantId).catch(err => {
           if (err.name === 'AbortError') return [];
-          console.warn('Failed to load recommendations:', err);
           return [];
         })
       ]);
@@ -155,7 +148,6 @@ export const FoodDataProvider = ({ children }) => {
         })
         .catch(err => {
           if (err.name === 'AbortError') return;
-          console.warn('Failed to load all food items:', err);
           if (!abortControllerRef.current?.signal.aborted) {
             setAllFoodItems([]);
           }
@@ -163,7 +155,6 @@ export const FoodDataProvider = ({ children }) => {
 
     } catch (error) {
       if (error.name === 'AbortError') return;
-      console.error('Critical data loading failed:', error);
       if (!abortControllerRef.current?.signal.aborted) {
         setError(error);
         setLoading(false);
@@ -175,7 +166,6 @@ export const FoodDataProvider = ({ children }) => {
   // Watch for restaurant changes and clear data
   useEffect(() => {
     if (restaurantId && restaurantId !== currentRestaurantId) {
-      console.log('Restaurant changed from', currentRestaurantId, 'to', restaurantId);
       clearData();
       loadFoodData(restaurantId);
     }
@@ -209,7 +199,6 @@ export const FoodDataProvider = ({ children }) => {
       const cacheKey = `fooddata_${restaurantId}`;
       sessionStorage.removeItem(cacheKey);
     } catch (error) {
-      console.warn('Failed to clear cache:', error);
     }
   }, []);
 
@@ -225,7 +214,6 @@ export const FoodDataProvider = ({ children }) => {
       }
       keysToRemove.forEach(key => sessionStorage.removeItem(key));
     } catch (error) {
-      console.warn('Failed to clear all cache:', error);
     }
   }, []);
 

@@ -38,7 +38,6 @@ const cleanupStaleCartItems = async (cartItems, restaurantId) => {
       .eq('is_active', true);
     
     if (error) {
-      console.error('Error checking valid cart items:', error);
       return cartItems; // Return original if check fails
     }
     
@@ -49,12 +48,10 @@ const cleanupStaleCartItems = async (cartItems, restaurantId) => {
     });
     
     if (cleanedItems.length !== cartItems.length) {
-      console.log(`Cleaned up ${cartItems.length - cleanedItems.length} stale cart items`);
     }
     
     return cleanedItems;
   } catch (error) {
-    console.error('Error cleaning up stale cart items:', error);
     return cartItems;
   }
 };
@@ -136,7 +133,6 @@ export function CartProvider({ children }) {
       const isExpired = Date.now() - cartData.timestamp > 7 * 24 * 60 * 60 * 1000;
       
       if (isExpired) {
-        console.log('Cart expired, clearing...');
         localStorage.removeItem(cartKey);
         setCartItems([]);
         setLastSyncTime(null);
@@ -163,10 +159,8 @@ export function CartProvider({ children }) {
             validateCartItem(convertedItem);
             validItems.push(convertedItem);
           } else {
-            console.warn('Invalid cart item format:', item);
           }
         } catch (validationError) {
-          console.warn('Invalid cart item found:', validationError.message, item);
         }
       }
       
@@ -180,10 +174,8 @@ export function CartProvider({ children }) {
       setLastSyncTime(cartData.timestamp);
       setError(null);
       
-      console.log(`Cart loaded: ${finalItems.length} items for restaurant ${restaurantId}`);
       
     } catch (error) {
-      console.error('Failed to load cart from localStorage:', error);
       setError('Failed to load cart');
       setCartItems([]);
       setLastSyncTime(null);
@@ -192,7 +184,6 @@ export function CartProvider({ children }) {
       try {
         localStorage.removeItem(getCartKey());
       } catch (e) {
-        console.warn('Failed to clear corrupted cart data:', e);
       }
     }
   }, [restaurantId, user, getCartKey]);
@@ -212,7 +203,6 @@ export function CartProvider({ children }) {
       localStorage.setItem(getCartKey(), JSON.stringify(cartData));
       setError(null);
     } catch (error) {
-      console.error('Failed to save cart to localStorage:', error);
       setError('Failed to save cart');
       
       // Handle localStorage quota exceeded
@@ -225,7 +215,6 @@ export function CartProvider({ children }) {
           localStorage.setItem(getCartKey(), JSON.stringify(cartData));
           setError(null);
         } catch (retryError) {
-          console.error('Failed to save cart even after cleanup:', retryError);
         }
       }
     }
@@ -277,9 +266,7 @@ export function CartProvider({ children }) {
       
       setLastSyncTime(Date.now());
       setError(null);
-      console.log('Cart saved to server');
     } catch (error) {
-      console.error('Failed to save cart to server:', error);
       setError('Failed to sync cart');
     }
   }, [user?.id, restaurantId]);
@@ -336,7 +323,6 @@ export function CartProvider({ children }) {
           .map(cartItem => {
             const foodItem = foodItemsMap.get(cartItem.food_item_id);
             if (!foodItem) {
-              console.warn(`Food item ${cartItem.food_item_id} not found or inactive`);
               return null;
             }
             
@@ -356,14 +342,12 @@ export function CartProvider({ children }) {
         // Update localStorage with enriched data
         saveCartToStorage(enrichedCartItems);
         
-        console.log(`Cart synced from server: ${enrichedCartItems.length} items`);
       } else {
         setCartItems([]);
         setLastSyncTime(Date.now());
         setError(null);
       }
     } catch (error) {
-      console.error('Failed to load cart from server:', error);
       setError('Failed to sync cart');
     } finally {
       setIsLoading(false);
@@ -391,7 +375,6 @@ export function CartProvider({ children }) {
     try {
       localStorage.removeItem(getCartKey());
     } catch (error) {
-      console.warn('Failed to clear cart from localStorage:', error);
     }
     
     // Clear from server
@@ -445,7 +428,6 @@ export function CartProvider({ children }) {
       
       setError(null);
     } catch (validationError) {
-      console.error('Failed to add item to cart:', validationError);
       setError('Invalid item data');
     }
   }, [restaurantId, calculateEffectivePrice]);

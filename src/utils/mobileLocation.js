@@ -70,7 +70,6 @@ export const checkMobileLocationPermission = async () => {
     const permission = await navigator.permissions.query({ name: 'geolocation' });
     return permission.state;
   } catch (error) {
-    console.error('Error checking location permission:', error);
     return 'not-supported';
   }
 };

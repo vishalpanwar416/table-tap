@@ -74,7 +74,6 @@ const OptimizedLikedItemsPage = memo(() => {
     try {
       await removeLike(item);
     } catch (error) {
-      console.error('Error removing like:', error);
     } finally {
       setIsRemoving(null);
     }

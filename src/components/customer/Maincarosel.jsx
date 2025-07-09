@@ -29,7 +29,6 @@ const Maincarosel = () => {
           setCarouselData(data);
         }
       } catch (error) {
-        console.error('Error loading carousel data:', error);
         // Use fallback data on error
         setCarouselData(fallbackMaincaroselData);
       } finally {

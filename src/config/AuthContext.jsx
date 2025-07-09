@@ -19,7 +19,6 @@ export const AuthProvider = ({ children }) => {
           setLoading(false);
         }
       } catch (error) {
-        console.error('Error getting session:', error);
         if (mounted) {
           setUser(null);
           setLoading(false);

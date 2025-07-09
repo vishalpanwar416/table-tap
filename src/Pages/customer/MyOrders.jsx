@@ -3,6 +3,7 @@ import { ChevronLeft, ShoppingBag, Loader, Filter, RefreshCw } from 'lucide-reac
 import { useNavigate } from 'react-router-dom';
 import { useOrders } from '../../context/OrderContext';
 import OrderCard from '../../components/customer/OrderCard';
+import { getActiveRestaurants } from '../Restaurantselection/restaurantSelectionService';
 
 const statusComponents = {
   pending: {
@@ -49,6 +50,7 @@ const MyOrders = () => {
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [sortBy, setSortBy] = useState('newest'); // 'newest' or 'oldest'
+  const [restaurantMap, setRestaurantMap] = useState({});
   
   const navigate = useNavigate();
   const { userOrders, fetchUserOrders, loading, error } = useOrders();
@@ -63,7 +65,6 @@ const MyOrders = () => {
       await fetchUserOrders();
       setLastRefresh(new Date());
     } catch (err) {
-      console.error("Error fetching orders:", err);
     } finally {
       if (isInitialLoad) {
         setIsInitialLoad(false);
@@ -85,6 +86,32 @@ const MyOrders = () => {
     
     return () => clearInterval(interval);
   }, [handleFetchOrders]);
+
+  // Fetch all restaurants for mapping
+  useEffect(() => {
+    async function fetchRestaurants() {
+      try {
+        const restaurants = await getActiveRestaurants();
+        
+        if (!restaurants || restaurants.length === 0) {
+          setRestaurantMap({});
+          return;
+        }
+        
+        // Map restaurant_id to name
+        const map = {};
+        (restaurants || []).forEach(r => {
+          if (r.id && r.name) {
+            map[r.id] = r.name;
+          }
+        });
+        setRestaurantMap(map);
+      } catch (err) {
+        setRestaurantMap({});
+      }
+    }
+    fetchRestaurants();
+  }, [userOrders]); // Re-fetch when orders change to ensure we have all restaurant IDs
 
   // Manual refresh handler for pull-to-refresh
   const handleManualRefresh = () => {
@@ -284,14 +311,18 @@ const MyOrders = () => {
               
               {filteredOrders.length > 0 ? (
                 <div className="space-y-4">
-                  {filteredOrders.map(order => (
-                    <OrderCard 
-                      key={order.id}
-                      order={order}
-                      isExpanded={expandedOrderId === order.id}
-                      onClick={() => handleOrderClick(order.id)}
-                    />
-                  ))}
+                  {filteredOrders.map(order => {
+                    const restaurantName = restaurantMap[order.restaurant_id] || 'Unknown Restaurant';
+                    return (
+                      <OrderCard 
+                        key={order.id}
+                        order={order}
+                        restaurantName={restaurantName}
+                        isExpanded={expandedOrderId === order.id}
+                        onClick={() => handleOrderClick(order.id)}
+                      />
+                    );
+                  })}
                 </div>
               ) : (
                 <EmptyState tab={activeTab} />

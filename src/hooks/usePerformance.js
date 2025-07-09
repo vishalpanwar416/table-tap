@@ -75,7 +75,6 @@ export const usePerformanceMonitor = (componentName) => {
     
     if (process.env.NODE_ENV === 'development') {
       const endTime = performance.now();
-      console.log(`${componentName} rendered ${renderCount.current} times in ${(endTime - startTime.current).toFixed(2)}ms`);
     }
   });
 

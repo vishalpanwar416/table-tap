@@ -65,7 +65,6 @@ const ProfilePage = () => {
         }
       } catch (err) {
         setError('Failed to load profile');
-        console.error('Error fetching profile:', err);
       } finally {
         setLoading(false);
       }
@@ -111,7 +110,6 @@ const ProfilePage = () => {
       setFormData(prev => ({ ...prev, profileImg: publicUrl }));
       
     } catch (error) {
-      console.error('Error uploading image:', error);
       alert('Error uploading image: ' + error.message);
     } finally {
       setUploading(false);
@@ -229,7 +227,6 @@ const ProfilePage = () => {
           });
 
           if (authError) {
-            console.error('Auth error:', authError);
             
             if (authError.message.includes('User already registered') || 
                 authError.message.includes('already exists') ||
@@ -258,7 +255,6 @@ const ProfilePage = () => {
             }
           }
         } catch (emailError) {
-          console.error('Email update error:', emailError);
           alert(`Profile information updated, but email update failed: ${emailError.message}\n\nPlease try updating your email again later.`);
         }
       } else {
@@ -268,7 +264,6 @@ const ProfilePage = () => {
       setIsEditing(false);
 
     } catch (error) {
-      console.error('Error updating profile:', error);
       alert('Failed to update profile: ' + error.message);
     } finally {
       setIsSubmitting(false);
@@ -280,7 +275,6 @@ const ProfilePage = () => {
       await supabase.auth.signOut();
       navigate('/login');
     } catch (error) {
-      console.error('Logout error:', error);
       alert('Error logging out. Please try again.');
     }
   }, [navigate]);

@@ -15,7 +15,6 @@ export const getSubscriptionPlans = async () => {
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error('Error fetching subscription plans:', error);
     return { data: null, error: error.message };
   }
 };
@@ -48,7 +47,6 @@ export const getRestaurantSubscriptions = async () => {
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error('Error fetching restaurant subscriptions:', error);
     return { data: null, error: error.message };
   }
 };
@@ -79,7 +77,6 @@ export const getRestaurantSubscription = async (restaurantId) => {
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error('Error fetching restaurant subscription:', error);
     return { data: null, error: error.message };
   }
 };
@@ -108,7 +105,6 @@ export const createSubscriptionPlan = async (planData) => {
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error('Error creating subscription plan:', error);
     return { data: null, error: error.message };
   }
 };
@@ -128,7 +124,6 @@ export const updateSubscriptionPlan = async (planId, updates) => {
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error('Error updating subscription plan:', error);
     return { data: null, error: error.message };
   }
 };
@@ -159,7 +154,6 @@ export const deleteSubscriptionPlan = async (planId) => {
     if (error) throw error;
     return { error: null };
   } catch (error) {
-    console.error('Error deleting subscription plan:', error);
     return { error: error.message };
   }
 };
@@ -192,7 +186,6 @@ export const assignSubscriptionToRestaurant = async (subscriptionData) => {
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error('Error assigning subscription:', error);
     return { data: null, error: error.message };
   }
 };
@@ -216,7 +209,6 @@ export const updateRestaurantSubscription = async (subscriptionId, updates) => {
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error('Error updating restaurant subscription:', error);
     return { data: null, error: error.message };
   }
 };
@@ -239,7 +231,6 @@ export const cancelRestaurantSubscription = async (subscriptionId) => {
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error('Error cancelling subscription:', error);
     return { data: null, error: error.message };
   }
 };
@@ -295,7 +286,6 @@ export const getSubscriptionStats = async () => {
       error: null
     };
   } catch (error) {
-    console.error('Error fetching subscription stats:', error);
     return { data: null, error: error.message };
   }
 };
@@ -323,7 +313,6 @@ export const getUpcomingRenewals = async (days = 30) => {
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error('Error fetching upcoming renewals:', error);
     return { data: null, error: error.message };
   }
 }; 

@@ -31,7 +31,6 @@ const AuthCallback = () => {
             navigate('/restaurant-selection');
           }
         } catch (error) {
-          console.error('Error checking profile:', error);
           // If there's an error checking profile, assume it needs completion
           navigate('/complete-profile');
         }

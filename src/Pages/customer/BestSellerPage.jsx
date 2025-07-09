@@ -555,7 +555,6 @@ const BestSellerPage = memo(() => {
           timestamp: Date.now()
         }));
       } catch (error) {
-        console.error('Error loading best sellers:', error);
         setError('Failed to load best sellers. Please try again.');
         setBestSellerItems([]);
       } finally {

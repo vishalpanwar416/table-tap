@@ -7,6 +7,7 @@ import {
   getUnreadNotifications, 
   markNotificationAsRead,
   markAllNotificationsAsRead,
+  deleteNotification as deleteNotificationService,
   subscribeToUserNotifications
 } from '../api/notificationService';
 
@@ -65,7 +66,6 @@ export const NotificationProvider = ({ children }) => {
       
       setError(null);
     } catch (err) {
-      console.error('Error fetching notifications:', err);
       setError('Failed to load notifications');
     } finally {
       setLoading(false);
@@ -87,7 +87,6 @@ export const NotificationProvider = ({ children }) => {
       // Update unread count
       setUnreadCount(prevCount => Math.max(0, prevCount - 1));
     } catch (err) {
-      console.error('Error marking notification as read:', err);
     }
   };
 
@@ -106,7 +105,25 @@ export const NotificationProvider = ({ children }) => {
       // Reset unread count
       setUnreadCount(0);
     } catch (err) {
-      console.error('Error marking all notifications as read:', err);
+    }
+  };
+
+  // Delete notification
+  const deleteNotification = async (notificationId) => {
+    try {
+      const result = await deleteNotificationService(notificationId);
+      
+      if (result.success) {
+        // Remove notification from local state
+        setNotifications(prev => prev.filter(notification => notification.id !== notificationId));
+        
+        // Update unread count if the deleted notification was unread
+        const deletedNotification = notifications.find(n => n.id === notificationId);
+        if (deletedNotification && !deletedNotification.read) {
+          setUnreadCount(prevCount => Math.max(0, prevCount - 1));
+        }
+      }
+    } catch (err) {
     }
   };
 
@@ -156,7 +173,8 @@ export const NotificationProvider = ({ children }) => {
     error,
     fetchNotifications,
     markAsRead,
-    markAllAsRead
+    markAllAsRead,
+    deleteNotification
   };
 
   return (

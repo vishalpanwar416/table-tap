@@ -73,7 +73,6 @@ export default function AuthWrapper({ children, publicOnly = false }) {
         if (!mounted) return;
 
         if (error) {
-          console.error("Profile check error:", error);
           if (error.code === 'PGRST116') {
             // Profile doesn't exist, redirect to complete profile
             navigateWithParams('/complete-profile');
@@ -93,7 +92,6 @@ export default function AuthWrapper({ children, publicOnly = false }) {
           }
         }
       } catch (error) {
-        console.error("Unexpected error in profile check:", error);
       } finally {
         if (mounted) {
           setChecking(false);

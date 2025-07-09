@@ -39,7 +39,6 @@ const OptimizedMyOrders = memo(() => {
       await fetchUserOrders();
       setLastRefresh(new Date());
     } catch (err) {
-      console.error("Error fetching orders:", err);
     } finally {
       if (isInitialLoad) {
         setIsInitialLoad(false);

@@ -115,7 +115,6 @@ const OptimizedProfilePage = memo(() => {
       setProfileData(newProfileData);
       setFormData(newProfileData);
     } catch (err) {
-      console.error('Error loading profile:', err);
       setError('Failed to load profile data');
     } finally {
       setLoading(false);
@@ -288,7 +287,6 @@ const OptimizedProfilePage = memo(() => {
       setIsEditing(false);
       setHasChanges(false);
     } catch (err) {
-      console.error('Error updating profile:', err);
       setError('Failed to update profile');
     } finally {
       setIsSubmitting(false);

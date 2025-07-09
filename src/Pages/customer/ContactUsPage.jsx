@@ -119,7 +119,6 @@ const ContactUsPage = () => {
   }
 
   // Debug: Log restaurant data to console
-  console.log('Restaurant Data:', restaurant);
 
   // Build contact info array with proper null handling
   const contactInfo = [

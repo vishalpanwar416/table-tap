@@ -6,21 +6,17 @@ const supabaseClient = supabase;
 
 // Debug function to check client configuration
 const debugClientConfig = () => {
-  console.log('Supabase URL:', process.env.REACT_APP_SUPABASE_URL);
-  console.log('Using anon key with admin permissions');
 };
 
 // Test function to check database connection
 export const testDatabaseConnection = async () => {
   try {
-    console.log('=== TESTING DATABASE CONNECTION ===');
     
     // Test 1: Simple count query
     const { count, error: countError } = await supabase
       .from('restaurants')
       .select('*', { count: 'exact', head: true });
     
-    console.log('Count query result:', { count, error: countError });
     
     // Test 2: Simple select query
     const { data, error } = await supabase
@@ -28,15 +24,12 @@ export const testDatabaseConnection = async () => {
       .select('id, name, created_at')
       .limit(5);
     
-    console.log('Simple select result:', { data, error });
     
     // Test 3: Check if user is authenticated
     const { data: { user } } = await supabase.auth.getUser();
-    console.log('Current user:', user);
     
     return { success: true, count, data, user };
   } catch (error) {
-    console.error('Database connection test failed:', error);
     return { success: false, error: error.message };
   }
 };
@@ -90,7 +83,6 @@ export const uploadRestaurantPhotoForAdmin = async (file, restaurantId) => {
       error: null
     };
   } catch (error) {
-    console.error('Error uploading restaurant photo:', error);
     return {
       url: null,
       path: null,
@@ -122,7 +114,6 @@ export const deleteRestaurantPhotoForAdmin = async (url) => {
 
     return { success: true, error: null };
   } catch (error) {
-    console.error('Error deleting restaurant photo:', error);
     return { success: false, error: error.message };
   }
 };
@@ -134,7 +125,6 @@ export const deleteRestaurantPhotoForAdmin = async (url) => {
  */
 export const getAllRestaurants = async () => {
   try {
-    console.log('=== GETTING ALL RESTAURANTS ===');
     
     // Step 1: Try a very simple query first
     const { data: simpleData, error: simpleError } = await supabase
@@ -142,19 +132,15 @@ export const getAllRestaurants = async () => {
       .select('id, name, is_active')
       .order('created_at', { ascending: false });
 
-    console.log('Simple query result:', { simpleData, simpleError });
 
     if (simpleError) {
-      console.error('Simple query failed:', simpleError);
       throw simpleError;
     }
 
     if (!simpleData || simpleData.length === 0) {
-      console.log('No restaurants found in simple query');
       return { data: [], error: null };
     }
 
-    console.log(`Found ${simpleData.length} restaurants in simple query`);
 
     // Step 2: If simple query works, try the complex query
     const { data, error } = await supabase
@@ -177,17 +163,14 @@ export const getAllRestaurants = async () => {
       `)
       .order('created_at', { ascending: false });
 
-    console.log('Complex query result:', { data, error });
 
     if (error) {
-      console.error('Complex query failed:', error);
       // If complex query fails, return simple data
       return { data: simpleData, error: null };
     }
 
     // Step 3: Transform the data
     const transformedData = data.map(restaurant => {
-      console.log('Processing restaurant:', restaurant);
       
       const managerStaff = restaurant.restaurant_staff?.find(
         staff => staff.staff_role === 'manager'
@@ -252,11 +235,9 @@ export const getAllRestaurants = async () => {
         ai_enabled: restaurant.ai_enabled
       };
 
-      console.log('Transformed restaurant:', transformed);
       return transformed;
     });
 
-    console.log('Final transformed data:', transformedData);
 
     // Step 4: Get staff counts (simplified)
     for (let restaurant of transformedData) {
@@ -267,14 +248,12 @@ export const getAllRestaurants = async () => {
           .eq('restaurant_id', restaurant.id);
         restaurant.staff_count = count || 0;
       } catch (error) {
-        console.error(`Error getting staff count for restaurant ${restaurant.id}:`, error);
         restaurant.staff_count = 0;
       }
     }
 
     return { data: transformedData, error: null };
   } catch (error) {
-    console.error('Error in getAllRestaurants:', error);
     return { data: [], error: error.message };
   }
 };
@@ -290,12 +269,10 @@ export const getRestaurantStaffCount = async (restaurantId) => {
       .eq('restaurant_id', restaurantId);
 
     if (error) {
-      console.error(`Error getting staff count for restaurant ${restaurantId}:`, error);
       return 0;
     }
     return count || 0;
   } catch (error) {
-    console.error('Error getting staff count:', error);
     return 0;
   }
 };
@@ -428,13 +405,11 @@ export const createRestaurant = async (restaurantData) => {
         });
 
       if (staffError) {
-        console.error('Error creating manager staff record:', staffError);
       }
     }
 
     return { data: restaurant, error: null };
   } catch (error) {
-    console.error('Error creating restaurant:', error);
     return { data: null, error: error.message };
   }
 };
@@ -452,7 +427,6 @@ export const toggleRestaurantStatus = async (restaurantId, newStatus) => {
     if (error) throw error;
     return { success: true, error: null };
   } catch (error) {
-    console.error('Error toggling restaurant status:', error);
     return { success: false, error: error.message };
   }
 };
@@ -507,7 +481,6 @@ export const updateRestaurant = async (restaurantId, updateData) => {
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error('Error updating restaurant:', error);
     return { data: null, error: error.message };
   }
 };
@@ -524,7 +497,6 @@ export const deleteRestaurant = async (restaurantId) => {
       .eq('restaurant_id', restaurantId);
 
     if (staffError) {
-      console.error('Error deleting restaurant staff:', staffError);
     }
 
     // Then delete the restaurant
@@ -536,7 +508,6 @@ export const deleteRestaurant = async (restaurantId) => {
     if (error) throw error;
     return { success: true, error: null };
   } catch (error) {
-    console.error('Error deleting restaurant:', error);
     return { success: false, error: error.message };
   }
 };
@@ -548,7 +519,6 @@ export const deleteRestaurant = async (restaurantId) => {
  */
 export const getAllStaff = async () => {
   try {
-    console.log('Fetching staff...');
     
     const { data, error } = await supabase
       .from('restaurant_staff')
@@ -568,11 +538,9 @@ export const getAllStaff = async () => {
       `);
 
     if (error) {
-      console.error('Error in getAllStaff query:', error);
       throw error;
     }
 
-    console.log('Raw staff data:', data);
 
     // Transform data to match component structure
     const transformedData = data.map(staff => ({
@@ -590,11 +558,9 @@ export const getAllStaff = async () => {
       updated_at: staff.updated_at || null
     }));
 
-    console.log('Transformed staff data:', transformedData);
 
     return { data: transformedData, error: null };
   } catch (error) {
-    console.error('Error fetching staff:', error);
     return { data: [], error: error.message };
   }
 };
@@ -626,7 +592,6 @@ export const createStaff = async (staffData) => {
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error('Error creating staff:', error);
     return { data: null, error: error.message };
   }
 };
@@ -659,7 +624,6 @@ export const updateStaff = async (staffId, updates) => {
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error('Error updating staff:', error);
     return { data: null, error: error.message };
   }
 };
@@ -677,7 +641,6 @@ export const deleteStaff = async (staffId) => {
     if (error) throw error;
     return { success: true, error: null };
   } catch (error) {
-    console.error('Error deleting staff:', error);
     return { success: false, error: error.message };
   }
 };

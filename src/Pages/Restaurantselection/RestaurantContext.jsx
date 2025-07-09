@@ -18,14 +18,12 @@ const localStorageStore = {
     try {
       localStorage.setItem(key, value);
     } catch (error) {
-      console.error('Error storing in localStorage:', error);
     }
   },
   get: (key) => {
     try {
       return localStorage.getItem(key);
     } catch (error) {
-      console.error('Error reading from localStorage:', error);
       return null;
     }
   },
@@ -33,7 +31,6 @@ const localStorageStore = {
     try {
       localStorage.removeItem(key);
     } catch (error) {
-      console.error('Error removing from localStorage:', error);
     }
   },
   clear: () => {
@@ -41,7 +38,6 @@ const localStorageStore = {
       localStorage.removeItem('restaurantId');
       localStorage.removeItem('tableNumber');
     } catch (error) {
-      console.error('Error clearing localStorage:', error);
     }
   }
 };
@@ -71,12 +67,10 @@ export const RestaurantProvider = ({ children }) => {
       const storedTableNumber = localStorageStore.get('tableNumber');
       
       if (storedRestaurantId && storedTableNumber) {
-        console.log('Loading stored restaurant:', storedRestaurantId, storedTableNumber);
         setRestaurantId(storedRestaurantId);
         setTableNumber(storedTableNumber);
       } else {
         // No stored restaurant, don't set any default
-        console.log('No stored restaurant found, user needs to select one');
         setLoading(false);
         return;
       }
@@ -102,7 +96,6 @@ export const RestaurantProvider = ({ children }) => {
           .single();
 
         if (error) {
-          console.error('Error fetching restaurant:', error);
           setError(error.message);
           return;
         }
@@ -115,7 +108,6 @@ export const RestaurantProvider = ({ children }) => {
         setRestaurant(data);
         
       } catch (err) {
-        console.error('Unexpected error:', err);
         setError('Failed to load restaurant data');
       } finally {
         setLoading(false);
@@ -140,7 +132,6 @@ export const RestaurantProvider = ({ children }) => {
         .single();
 
       if (error) {
-        console.error('Error updating restaurant:', error);
         return false;
       }
 
@@ -148,7 +139,6 @@ export const RestaurantProvider = ({ children }) => {
       return true;
       
     } catch (err) {
-      console.error('Unexpected error updating restaurant:', err);
       return false;
     }
   };
@@ -184,7 +174,6 @@ export const RestaurantProvider = ({ children }) => {
 
   // Function to manually set restaurant and table
   const setRestaurantAndTable = (newRestaurantId, newTableNumber) => {
-    console.log('Setting restaurant and table:', newRestaurantId, newTableNumber);
     
     // Clear old restaurant data
     setRestaurant(null);
@@ -208,9 +197,7 @@ export const RestaurantProvider = ({ children }) => {
         }
       }
       keysToRemove.forEach(key => sessionStorage.removeItem(key));
-      console.log('Cleared food data cache');
     } catch (error) {
-      console.warn('Failed to clear food data cache:', error);
     }
   };
 

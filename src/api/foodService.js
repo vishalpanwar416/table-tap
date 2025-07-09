@@ -22,8 +22,6 @@ export const uploadFoodImage = async (file) => {
     const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
     const filePath = `${fileName}`;
 
-    console.log('Starting optimized image upload:', filePath);
-    console.log(`Original size: ${file.size} bytes, Optimized size: ${optimizedFile.size} bytes`);
 
     // Use the standard supabase client for storage operations
     const { data: uploadData, error: uploadError } = await supabase
@@ -35,11 +33,9 @@ export const uploadFoodImage = async (file) => {
       });
 
     if (uploadError) {
-      console.error('Upload error details:', uploadError);
       throw uploadError;
     }
 
-    console.log('Upload successful:', uploadData);
 
     // Get the public URL for the uploaded file
     const { data } = supabase
@@ -47,10 +43,8 @@ export const uploadFoodImage = async (file) => {
       .from('food-images')
       .getPublicUrl(filePath);
     
-    console.log('Image public URL:', data.publicUrl);
     return data.publicUrl;
   } catch (error) {
-    console.error('Error uploading image:', error);
     throw error;
   }
 };
@@ -63,7 +57,6 @@ export const deleteFoodImage = async (url) => {
     // Extract the file name from the URL
     const fileName = url.split('/').pop();
     
-    console.log('Deleting image:', fileName);
     
     // Use the standard supabase client for storage operations
     const { error } = await supabase
@@ -72,14 +65,11 @@ export const deleteFoodImage = async (url) => {
       .remove([fileName]);
     
     if (error) {
-      console.error('Delete image error:', error);
       throw error;
     }
     
-    console.log('Image deleted successfully');
     return true;
   } catch (error) {
-    console.error('Error deleting image:', error);
     throw error;
   }
 };
@@ -87,13 +77,11 @@ export const deleteFoodImage = async (url) => {
 // Create a new food item
 export const createFoodItem = async (foodData) => {
   try {
-    console.log('Creating food item with data:', foodData);
     
     // Get the current user
     const { data: userData, error: userError } = await supabase.auth.getUser();
     
     if (userError) {
-      console.error('Error getting user:', userError);
       throw userError;
     }
     
@@ -108,10 +96,8 @@ export const createFoodItem = async (foodData) => {
     // Otherwise, try to get it from the current user's context
     if (!formattedData.restaurant_id) {
       // You might want to get this from context or pass it as a parameter
-      console.warn('No restaurant_id provided for food item creation');
     }
     
-    console.log('Formatted data for insertion:', formattedData);
     
     const { data, error } = await supabase
       .from('fooditems')
@@ -119,14 +105,11 @@ export const createFoodItem = async (foodData) => {
       .select(); // Add select to return the created item
     
     if (error) {
-      console.error('Create food item error details:', error);
       throw error;
     }
     
-    console.log('Food item created successfully:', data);
     return data;
   } catch (error) {
-    console.error('Error creating food item:', error);
     throw error;
   }
 };
@@ -134,7 +117,6 @@ export const createFoodItem = async (foodData) => {
 // Get all food items for a specific restaurant
 export const getRestaurantFoodItems = async (restaurantId) => {
   try {
-    console.log('Fetching food items for restaurant:', restaurantId);
     
     const { data, error } = await supabase
       .from('fooditems')
@@ -143,14 +125,11 @@ export const getRestaurantFoodItems = async (restaurantId) => {
       .order('created_at', { ascending: false });
     
     if (error) {
-      console.error('Get restaurant food items error:', error);
       throw error;
     }
     
-    console.log(`Retrieved ${data?.length || 0} food items for restaurant`);
     return data || [];
   } catch (error) {
-    console.error('Error fetching restaurant food items:', error);
     throw error;
   }
 };
@@ -158,7 +137,6 @@ export const getRestaurantFoodItems = async (restaurantId) => {
 // Get all food items (keep existing function for backward compatibility)
 export const getAllFoodItems = async (restaurantId = null) => {
   try {
-    console.log('Fetching all food items');
     
     let query = supabase
       .from('fooditems')
@@ -172,14 +150,11 @@ export const getAllFoodItems = async (restaurantId = null) => {
     const { data, error } = await query.order('created_at', { ascending: false });
     
     if (error) {
-      console.error('Get all food items error:', error);
       throw error;
     }
     
-    console.log(`Retrieved ${data?.length || 0} food items`);
     return data || [];
   } catch (error) {
-    console.error('Error fetching food items:', error);
     throw error;
   }
 };
@@ -187,7 +162,6 @@ export const getAllFoodItems = async (restaurantId = null) => {
 // Get food items by category for a specific restaurant
 export const getRestaurantFoodItemsByCategory = async (restaurantId, category) => {
   try {
-    console.log(`Fetching ${category} food items for restaurant:`, restaurantId);
     
     const { data, error } = await supabase
       .from('fooditems')
@@ -197,14 +171,11 @@ export const getRestaurantFoodItemsByCategory = async (restaurantId, category) =
       .order('created_at', { ascending: false });
     
     if (error) {
-      console.error('Get restaurant food items by category error:', error);
       throw error;
     }
     
-    console.log(`Retrieved ${data?.length || 0} ${category} food items for restaurant`);
     return data || [];
   } catch (error) {
-    console.error('Error fetching restaurant food items by category:', error);
     throw error;
   }
 };
@@ -212,7 +183,6 @@ export const getRestaurantFoodItemsByCategory = async (restaurantId, category) =
 // Update food item
 export const updateFoodItem = async (id, foodData) => {
   try {
-    console.log(`Updating food item with id: ${id}`, foodData);
     
     // Ensure data is properly formatted
     const formattedData = {
@@ -227,14 +197,11 @@ export const updateFoodItem = async (id, foodData) => {
       .select(); // Add select to return the updated item
     
     if (error) {
-      console.error('Update food item error:', error);
       throw error;
     }
     
-    console.log('Food item updated successfully:', data);
     return data;
   } catch (error) {
-    console.error('Error updating food item:', error);
     throw error;
   }
 };
@@ -242,7 +209,6 @@ export const updateFoodItem = async (id, foodData) => {
 // Delete food item
 export const deleteFoodItem = async (id) => {
   try {
-    console.log(`Deleting food item with id: ${id}`);
     
     // First get the item to check if there's an image to delete
     const { data: itemData, error: getError } = await supabase
@@ -252,13 +218,11 @@ export const deleteFoodItem = async (id) => {
       .single();
     
     if (getError) {
-      console.error('Error getting item before delete:', getError);
     } else if (itemData?.image) {
       // Try to delete the associated image
       try {
         await deleteFoodImage(itemData.image);
       } catch (imgError) {
-        console.error('Error deleting associated image:', imgError);
         // Continue with deletion even if image deletion fails
       }
     }
@@ -269,14 +233,11 @@ export const deleteFoodItem = async (id) => {
       .eq('id', id);
     
     if (error) {
-      console.error('Delete food item error:', error);
       throw error;
     }
     
-    console.log('Food item deleted successfully');
     return true;
   } catch (error) {
-    console.error('Error deleting food item:', error);
     throw error;
   }
 };
@@ -284,12 +245,10 @@ export const deleteFoodItem = async (id) => {
 // Check if the current user is a manager
 export const checkIsManager = async () => {
   try {
-    console.log('Checking if user is manager');
     
     const { data: userData, error: userError } = await supabase.auth.getUser();
     
     if (userError) {
-      console.error('Error getting user for manager check:', userError);
       return false;
     }
     
@@ -304,14 +263,11 @@ export const checkIsManager = async () => {
       .single();
     
     if (error) {
-      console.error('Error checking manager status:', error);
       return false;
     }
     
-    console.log('Manager check result:', data?.profile_role === 'manager' || false);
     return data?.profile_role === 'manager' || false;
   } catch (error) {
-    console.error('Error in manager check process:', error);
     return false;
   }
 };
@@ -329,7 +285,6 @@ export const createOffer = async (offerData) => {
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error creating offer:', error);
     throw error;
   }
 };
@@ -337,7 +292,6 @@ export const createOffer = async (offerData) => {
 // Get all offers for a specific restaurant
 export const getRestaurantOffers = async (restaurantId) => {
   try {
-    console.log('Fetching offers for restaurant:', restaurantId);
     
     const { data, error } = await supabase
       .from('fooditems')
@@ -347,14 +301,11 @@ export const getRestaurantOffers = async (restaurantId) => {
       .order('created_at', { ascending: false });
     
     if (error) {
-      console.error('Get restaurant offers error:', error);
       throw error;
     }
     
-    console.log(`Retrieved ${data?.length || 0} offers for restaurant`);
     return data || [];
   } catch (error) {
-    console.error('Error fetching restaurant offers:', error);
     throw error;
   }
 };
@@ -362,7 +313,6 @@ export const getRestaurantOffers = async (restaurantId) => {
 // Get all offers (keep existing function for backward compatibility)
 export const getAllOffers = async (restaurantId = null) => {
   try {
-    console.log('Fetching all offers');
     
     let query = supabase
       .from('fooditems')
@@ -377,14 +327,11 @@ export const getAllOffers = async (restaurantId = null) => {
     const { data, error } = await query.order('created_at', { ascending: false });
     
     if (error) {
-      console.error('Get all offers error:', error);
       throw error;
     }
     
-    console.log(`Retrieved ${data?.length || 0} offers`);
     return data || [];
   } catch (error) {
-    console.error('Error fetching offers:', error);
     throw error;
   }
 };
@@ -400,7 +347,6 @@ export const updateOffer = async (id, offerData) => {
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error updating offer:', error);
     throw error;
   }
 };
@@ -415,7 +361,6 @@ export const deleteOffer = async (id) => {
     if (error) throw error;
     return true;
   } catch (error) {
-    console.error('Error deleting offer:', error);
     throw error;
   }
 };
@@ -431,7 +376,6 @@ export const setCarouselOffer = async (id, isCarousel) => {
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error updating carousel status:', error);
     throw error;
   }
 };
@@ -448,7 +392,6 @@ export const updateOrderStatus = async (orderId, newStatus) => {
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error updating order status:', error);
     throw error;
   }
 };
@@ -464,7 +407,6 @@ export const toggleFoodItemActive = async (id, isActive) => {
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error toggling food item active status:', error);
     throw error;
   }
 };

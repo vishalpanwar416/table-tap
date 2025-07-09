@@ -1,7 +1,15 @@
 // src/hooks/useNotifications.js
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../config/AuthContext';
-import NotificationServiceuser from '../api/NotificationServiceuser';
+import { 
+  getUserNotifications,
+  getUnreadNotifications,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+  deleteNotification,
+  formatNotificationForDisplay,
+  subscribeToUserNotifications
+} from '../api/notificationService';
 
 export const useNotifications = () => {
   const { user } = useAuth();
@@ -18,19 +26,16 @@ export const useNotifications = () => {
     setError(null);
     
     try {
-      const { data, error } = await NotificationServiceuser.getUserNotifications(user.id);
-      
-      if (error) throw error;
+      const data = await getUserNotifications(user.id);
       
       if (data) {
         const formattedNotifications = data.map(notif => 
-          NotificationServiceuser.formatNotificationForDisplay(notif)
+          formatNotificationForDisplay(notif)
         );  
         setNotifications(formattedNotifications);
       }
     } catch (err) {
       setError(err.message);
-      console.error('Error fetching notifications:', err);
     } finally {
       setLoading(false);
     }
@@ -41,34 +46,25 @@ export const useNotifications = () => {
     if (!user) return;
     
     try {
-      const { count, error } = await NotificationServiceuser.getUnreadCount(user.id);
-      
-      if (!error) {
-        setUnreadCount(count);
-      }
+      const unreadData = await getUnreadNotifications(user.id);
+      setUnreadCount(unreadData.length);
     } catch (err) {
-      console.error('Error fetching unread count:', err);
     }
   }, [user]);
 
   // Mark notification as read
   const markAsRead = useCallback(async (notificationId) => {
     try {
-      const { success, error } = await NotificationServiceuser.markAsRead(notificationId);
+      await markNotificationAsRead(notificationId);
       
-      if (success) {
-        setNotifications(prev => 
-          prev.map(notif => 
-            notif.id === notificationId ? { ...notif, read: true } : notif
-          )
-        );
-        await fetchUnreadCount();
-        return { success: true };
-      } else {
-        throw new Error(error?.message || 'Failed to mark as read');
-      }
+      setNotifications(prev => 
+        prev.map(notif => 
+          notif.id === notificationId ? { ...notif, read: true } : notif
+        )
+      );
+      await fetchUnreadCount();
+      return { success: true };
     } catch (err) {
-      console.error('Error marking notification as read:', err);
       return { success: false, error: err.message };
     }
   }, [fetchUnreadCount]);
@@ -78,63 +74,48 @@ export const useNotifications = () => {
     if (!user) return;
     
     try {
-      const { success, error } = await NotificationServiceuser.markAllAsRead(user.id);
+      await markAllNotificationsAsRead(user.id);
       
-      if (success) {
-        setNotifications(prev => 
-          prev.map(notif => ({ ...notif, read: true }))
-        );
-        setUnreadCount(0);
-        return { success: true };
-      } else {
-        throw new Error(error?.message || 'Failed to mark all as read');
-      }
+      setNotifications(prev => 
+        prev.map(notif => ({ ...notif, read: true }))
+      );
+      setUnreadCount(0);
+      return { success: true };
     } catch (err) {
-      console.error('Error marking all notifications as read:', err);
       return { success: false, error: err.message };
     }
   }, [user]);
 
   // Delete notification
-  const deleteNotification = useCallback(async (notificationId) => {
+  const deleteNotificationHandler = useCallback(async (notificationId) => {
     try {
-      const { success, error } = await NotificationServiceuser.deleteNotification(notificationId);
+      const result = await deleteNotification(notificationId);
       
-      if (success) {
+      if (result.success) {
         setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
         await fetchUnreadCount();
         return { success: true };
       } else {
-        throw new Error(error?.message || 'Failed to delete notification');
+        throw new Error(result.error?.message || 'Failed to delete notification');
       }
     } catch (err) {
-      console.error('Error deleting notification:', err);
       return { success: false, error: err.message };
     }
   }, [fetchUnreadCount]);
 
   // Handle real-time notifications
-  const handleRealtimeNotification = useCallback((event, notification) => {
-    if (event === 'INSERT') {
-      const formatted = NotificationServiceuser.formatNotificationForDisplay(notification);
-      setNotifications(prev => [formatted, ...prev]);
-      setUnreadCount(prev => prev + 1);
-      
-      // Show browser notification if permission is granted
-      if (Notification.permission === 'granted') {
-        new Notification(notification.title, {
-          body: notification.message,
-          icon: '/favicon.ico', // Add your app icon
-          badge: '/favicon.ico'
-        });
-      }
-    } else if (event === 'UPDATE') {
-      const formatted = NotificationServiceuser.formatNotificationForDisplay(notification);
-      setNotifications(prev => 
-        prev.map(notif => 
-          notif.id === notification.id ? formatted : notif
-        )
-      );
+  const handleRealtimeNotification = useCallback((notification) => {
+    const formatted = formatNotificationForDisplay(notification);
+    setNotifications(prev => [formatted, ...prev]);
+    setUnreadCount(prev => prev + 1);
+    
+    // Show browser notification if permission is granted
+    if (Notification.permission === 'granted') {
+      new Notification(notification.title, {
+        body: notification.message,
+        icon: '/favicon.ico', // Add your app icon
+        badge: '/favicon.ico'
+      });
     }
   }, []);
 
@@ -155,7 +136,7 @@ export const useNotifications = () => {
     fetchUnreadCount();
 
     // Subscribe to real-time notifications
-    const subscription = NotificationServiceuser.subscribeToNotifications(
+    const subscription = subscribeToUserNotifications(
       user.id,
       handleRealtimeNotification
     );
@@ -178,7 +159,7 @@ export const useNotifications = () => {
     error,
     markAsRead,
     markAllAsRead,
-    deleteNotification,
+    deleteNotification: deleteNotificationHandler,
     refresh,
     requestNotificationPermission
   };

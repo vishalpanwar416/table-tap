@@ -7,7 +7,6 @@ export function clearAllCaches() {
     return caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
-          console.log('Clearing cache:', cacheName);
           return caches.delete(cacheName);
         })
       );
@@ -22,7 +21,6 @@ export function unregisterServiceWorker() {
     return navigator.serviceWorker.getRegistrations().then(registrations => {
       return Promise.all(
         registrations.map(registration => {
-          console.log('Unregistering service worker');
           return registration.unregister();
         })
       );
@@ -38,7 +36,6 @@ export function register() {
 
       // In development mode, clear caches and unregister old service workers
       if (process.env.NODE_ENV === 'development') {
-        console.log('Development mode: Clearing caches and unregistering service workers');
         Promise.all([
           clearAllCaches(),
           unregisterServiceWorker()
@@ -76,19 +73,16 @@ function registerServiceWorker(swUrl) {
               
               // In development, force reload to get latest content
               if (process.env.NODE_ENV === 'development') {
-                console.log('Development mode: Reloading to get latest content');
                 window.location.reload();
               }
             } else {
               // At this point, everything has been precached.
-              console.log('Content is cached for offline use.');
             }
           }
         };
       };
     })
     .catch((error) => {
-      console.error('Error during service worker registration:', error);
     });
 }
 
@@ -99,7 +93,6 @@ export function unregister() {
         registration.unregister();
       })
       .catch((error) => {
-        console.error(error.message);
       });
   }
 }
@@ -121,7 +114,6 @@ export const devHelpers = {
   clearCaches: () => {
     if (process.env.NODE_ENV === 'development') {
       clearAllCaches().then(() => {
-        console.log('All caches cleared');
       });
     }
   },
@@ -130,7 +122,6 @@ export const devHelpers = {
   unregisterSW: () => {
     if (process.env.NODE_ENV === 'development') {
       unregisterServiceWorker().then(() => {
-        console.log('Service worker unregistered');
       });
     }
   }
@@ -139,6 +130,4 @@ export const devHelpers = {
 // Make dev helpers available globally in development
 if (process.env.NODE_ENV === 'development') {
   window.devHelpers = devHelpers;
-  console.log('Development helpers available: window.devHelpers');
-  console.log('Use window.devHelpers.forceRefresh() to clear cache and reload');
 } 

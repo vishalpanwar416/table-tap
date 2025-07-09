@@ -9,11 +9,27 @@ export const createNotification = async (notification) => {
       throw new Error('Missing required notification fields: title, message, type');
     }
 
+    // Validate notification type
+    const allowedTypes = [
+      'order_received',
+      'order_accepted', 
+      'order_preparing',
+      'order_ready',
+      'order_rejected',
+      'payment_success',
+      'payment_failed'
+    ];
+    
+    if (!allowedTypes.includes(notification.type)) {
+      throw new Error(`Invalid notification type. Must be one of: ${allowedTypes.join(', ')}`);
+    }
+
     // Set default values if not provided
     const notificationData = {
       ...notification,
-      created_at: new Date().toISOString(),
-      read: false
+      read: notification.read || false,
+      is_admin_notification: notification.is_admin_notification || false,
+      metadata: notification.metadata || {}
     };
 
     const { data, error } = await supabase
@@ -25,9 +41,40 @@ export const createNotification = async (notification) => {
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error creating notification:', error);
     throw error;
   }
+};
+
+// Delete notification
+export const deleteNotification = async (notificationId) => {
+  try {
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('id', notificationId);
+
+    if (error) throw error;
+    return { success: true, error: null };
+  } catch (error) {
+    return { success: false, error };
+  }
+};
+
+// Format notification for display
+export const formatNotificationForDisplay = (notification) => {
+  return {
+    id: notification.id,
+    title: notification.title || 'Notification',
+    message: notification.message || '',
+    type: notification.type || 'order_received',
+    read: notification.read || false,
+    created_at: notification.created_at,
+    updated_at: notification.updated_at,
+    order_id: notification.order_id,
+    user_id: notification.user_id,
+    metadata: notification.metadata || {},
+    is_admin_notification: notification.is_admin_notification || false
+  };
 };
 
 // Get user notifications
@@ -42,12 +89,11 @@ export const getUserNotifications = async (userId) => {
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error fetching notifications:', error);
     throw error;
   }
 };
 
-// Get admin notifications (fixed column name)
+// Get admin notifications
 export const getManagerNotifications = async () => {
   try {
     const { data, error } = await supabase
@@ -59,7 +105,6 @@ export const getManagerNotifications = async () => {
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error fetching admin notifications:', error);
     return [];
   }
 };
@@ -77,12 +122,11 @@ export const getUnreadNotifications = async (userId) => {
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error fetching unread notifications:', error);
     throw error;
   }
 };
 
-// Get unread admin notifications (fixed column name)
+// Get unread admin notifications
 export const getUnreadManagerNotifications = async () => {
   try {
     const { data, error } = await supabase
@@ -95,7 +139,6 @@ export const getUnreadManagerNotifications = async () => {
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error fetching unread admin notifications:', error);
     return [];
   }
 };
@@ -113,7 +156,6 @@ export const markNotificationAsRead = async (notificationId) => {
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error marking notification as read:', error);
     throw error;
   }
 };
@@ -131,12 +173,11 @@ export const markAllNotificationsAsRead = async (userId) => {
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error marking all notifications as read:', error);
     throw error;
   }
 };
 
-// Mark all admin notifications as read (fixed column name)
+// Mark all admin notifications as read
 export const markAllManagerNotificationsAsRead = async () => {
   try {
     const { error } = await supabase
@@ -148,7 +189,6 @@ export const markAllManagerNotificationsAsRead = async () => {
     if (error) throw error;
     return true;
   } catch (error) {
-    console.error('Error marking all admin notifications as read:', error);
     return false;
   }
 };
@@ -168,7 +208,7 @@ export const subscribeToUserNotifications = (userId, callback) => {
     .subscribe();
 };
 
-// Subscribe to admin notifications (fixed column name)
+// Subscribe to admin notifications
 export const subscribeToManagerNotifications = (callback) => {
   return supabase
     .channel('admin-notifications')

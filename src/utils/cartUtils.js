@@ -59,7 +59,6 @@ export const cleanupStaleCartItems = async (cartItems, restaurantId) => {
       .eq('is_active', true);
     
     if (error) {
-      console.error('Error checking valid cart items:', error);
       return cartItems; // Return original if check fails
     }
     
@@ -67,12 +66,10 @@ export const cleanupStaleCartItems = async (cartItems, restaurantId) => {
     const cleanedItems = cartItems.filter(item => validIds.has(item.id));
     
     if (cleanedItems.length !== cartItems.length) {
-      console.log(`Cleaned up ${cartItems.length - cleanedItems.length} stale cart items`);
     }
     
     return cleanedItems;
   } catch (error) {
-    console.error('Error cleaning up stale cart items:', error);
     return cartItems;
   }
 };
@@ -278,7 +275,6 @@ export const importCartData = (exportedData) => {
       validateCartItem(item);
       validItems.push(item);
     } catch (error) {
-      console.warn('Skipping invalid item during import:', error.message);
     }
   }
   

@@ -24,7 +24,6 @@ export const authService = {
       if (error) throw error;
       return data.user;
     } catch (error) {
-      console.error('Failed to get current user:', error.message);
       throw error;
     }
   },
@@ -46,7 +45,6 @@ export const authService = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Failed to get profile:', error.message);
       throw error;
     }
   },
@@ -61,7 +59,6 @@ export const authService = {
       const profile = await authService.getProfile(userId);
       return Boolean(profile?.mobile_number && profile?.date_of_birth);
     } catch (error) {
-      console.error('Profile completion check failed:', error.message);
       return false;
     }
   },
@@ -83,7 +80,6 @@ export const authService = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Sign in failed:', error.message);
       throw error;
     }
   },
@@ -107,7 +103,6 @@ export const authService = {
         user: data.user
       };
     } catch (error) {
-      console.error('Password reset failed:', error.message);
       throw new Error('Failed to update password. The link may have expired.');
     }
   },
@@ -138,7 +133,6 @@ export const authService = {
 
       return data;
     } catch (error) {
-      console.error('Google sign in failed:', error.message);
       throw error;
     }
   },
@@ -186,7 +180,6 @@ export const authService = {
       if (profileError) throw profileError;
       return user;
     } catch (error) {
-      console.error('Sign up failed:', error.message);
       throw error;
     }
   },
@@ -222,7 +215,6 @@ export const authService = {
 
       return data;
     } catch (error) {
-      console.error('Google sign up failed:', error.message);
       throw error;
     }
   },
@@ -250,7 +242,6 @@ export const authService = {
       if (error) throw error;
       return { success: true };
     } catch (error) {
-      console.error('Profile update failed:', error.message);
       throw error;
     }
   },
@@ -270,7 +261,6 @@ export const authService = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Password reset failed:', error.message);
       throw error;
     }
   },
@@ -309,7 +299,6 @@ export const authService = {
       const { data: { user }, error } = await supabase.auth.getUser(token);
       return { isValid: !error, user };
     } catch (error) {
-      console.error('Token verification failed:', error);
       return { isValid: false };
     }
   },
@@ -339,7 +328,6 @@ export const authService = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Password update failed:', error);
       throw error;
     }
   },
@@ -355,7 +343,6 @@ export const authService = {
       if (error) throw error;
       return { success: true };
     } catch (error) {
-      console.error('Sign out failed:', error.message);
       throw error;
     }
   }

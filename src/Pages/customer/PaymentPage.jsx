@@ -133,7 +133,6 @@ const PaymentPage = () => {
       try {
         const { data, error } = await supabase.auth.getUser();
         
-        if (error) console.error('Error fetching user:', error);
         
         if (data && data.user) {
           setUser(data.user);
@@ -149,7 +148,6 @@ const PaymentPage = () => {
           }
         }
       } catch (error) {
-        console.error('User fetch exception:', error);
       }
     };
   
@@ -299,7 +297,6 @@ const PaymentPage = () => {
         delivery_type: 'delivery'
       };
 
-      console.log('Creating order with data:', orderData);
 
       const { data: order, error } = await supabase
         .from('orders')
@@ -308,7 +305,6 @@ const PaymentPage = () => {
         .single();
 
       if (error) {
-        console.error('Order creation error:', error);
         throw new Error(error.message || 'Failed to create order');
       }
 
@@ -316,7 +312,6 @@ const PaymentPage = () => {
         throw new Error('Order created but missing ID');
       }
 
-      console.log('Order created successfully:', order);
       clearCart();
       
       // Navigate to order confirmation
@@ -336,7 +331,6 @@ const PaymentPage = () => {
         }
       });
     } catch (error) {
-      console.error('Process order error:', error);
       setScriptError(`Payment successful but order creation failed: ${error.message}`);
       setIsProcessing(false);
     }

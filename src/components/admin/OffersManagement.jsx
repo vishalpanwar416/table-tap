@@ -60,7 +60,6 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
       const carouselItems = validOffers.filter(offer => offer.is_carousel);
       setCarouselOffers(carouselItems);
     } catch (error) {
-      console.error('Error loading data:', error);
       setErrorMsg('Failed to load data: ' + error.message);
     } finally {
       setLoading(false);
@@ -226,7 +225,6 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
       resetForm();
       setShowForm(false);
     } catch (error) {
-      console.error('Error saving offer:', error);
       setErrorMsg(error.message || 'Failed to save offer');
     } finally {
       setIsUpdating(false);
@@ -270,7 +268,6 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
       setShowForm(true);
       setViewingOffer(null);
     } catch (error) {
-      console.error('Error editing offer:', error);
       setErrorMsg('Failed to load offer for editing');
     }
   };
@@ -284,7 +281,6 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
         setSuccessMsg('Offer deleted successfully!');
         setViewingOffer(null);
       } catch (error) {
-        console.error('Error deleting offer:', error);
         setErrorMsg('Failed to delete offer: ' + error.message);
       } finally {
         setLoading(false);
@@ -306,7 +302,6 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
       
       setSuccessMsg(`Offer ${!offer.is_carousel ? 'added to' : 'removed from'} carousel successfully!`);
     } catch (error) {
-      console.error('Error updating carousel status:', error);
       setErrorMsg(error.message || 'Failed to update carousel status');
     } finally {
       setLoading(false);
@@ -344,7 +339,6 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
       
       setOffers(data || []);
     } catch (error) {
-      console.error('Error fetching offers:', error);
       setErrorMsg('Failed to load offers: ' + (error.message || error));
     } finally {
       setLoading(false);

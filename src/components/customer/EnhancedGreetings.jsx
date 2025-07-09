@@ -150,7 +150,6 @@ export default function EnhancedGreetings() {
             setUserName(capitalizedFirstName);
           }
         } catch (error) {
-          console.error("Error fetching user profile:", error);
         }
       }
     };

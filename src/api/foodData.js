@@ -29,7 +29,6 @@ export const fetchFoodItems = async (restaurantId) => {
     const processedItems = processFoodItems(data || []);
     return processedItems;
   } catch (error) {
-    console.error('Exception while fetching all food items:', error);
     return [];
   }
 };
@@ -83,13 +82,11 @@ export const fetchBestSellerItems = async (restaurantId) => {
       return hasTag(item, bestSellerTags);
     });
     
-    console.log('Best seller items found:', bestSellerItems.length, 'out of', data?.length || 0);
     
     // Process items to ensure they have valid images
     const processedItems = processFoodItems(bestSellerItems);
     return processedItems;
   } catch (error) {
-    console.error('Exception while fetching best seller items:', error);
     return [];
   }
 };
@@ -128,13 +125,11 @@ export const fetchRecommendedItems = async (restaurantId) => {
       return hasTag(item, recommendedTags);
     });
     
-    console.log('Recommended items found:', recommendedItems.length, 'out of', data?.length || 0);
     
     // Process items to ensure they have valid images
     const processedItems = processFoodItems(recommendedItems);
     return processedItems;
   } catch (error) {
-    console.error('Exception while fetching recommended items:', error);
     return [];
   }
 };
@@ -158,7 +153,6 @@ export const fetchMaincaroselData = async (restaurantId = null) => {
     const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching carousel data:', error);
       return [];
     }
 
@@ -175,7 +169,6 @@ export const fetchMaincaroselData = async (restaurantId = null) => {
       tags: item.tags || []
     }));
   } catch (error) {
-    console.error('Unexpected error fetching carousel data:', error);
     return [];
   }
 };
@@ -298,10 +291,8 @@ export const fetchFoodItemsWithContext = () => {
   const { restaurantId, loading: restaurantLoading } = useRestaurant();
   
   const fetchItems = async () => {
-    console.log('fetchFoodItemsWithContext called with restaurantId:', restaurantId);
     
     if (!restaurantId || restaurantLoading) {
-      console.warn('Restaurant ID not available or still loading');
       return [];
     }
     
@@ -320,10 +311,8 @@ export const useFoodItems = () => {
   const { restaurantId, loading: restaurantLoading } = useRestaurant();
   
   const getFoodItems = async () => {
-    console.log('getFoodItems called with restaurantId:', restaurantId);
     
     if (!restaurantId) {
-      console.warn('No restaurant ID available from context, restaurant loading:', restaurantLoading);
       return [];
     }
     
@@ -341,10 +330,8 @@ export const useFoodItemsData = () => {
   const [error, setError] = useState(null);
 
   const loadFoodItems = async () => {
-    console.log('loadFoodItems called with restaurantId:', restaurantId);
     
     if (!restaurantId) {
-      console.warn('No restaurant ID available from context, restaurant loading:', restaurantLoading);
       setFoodItems([]);
       return;
     }
@@ -355,7 +342,6 @@ export const useFoodItemsData = () => {
       const items = await fetchFoodItems(restaurantId);
       setFoodItems(items);
     } catch (err) {
-      console.error('Error loading food items:', err);
       setError(err.message);
     } finally {
       setLoading(false);

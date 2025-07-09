@@ -17,12 +17,12 @@ export const getRestaurants = async () => {
           email
         )
       `)
+      .eq('is_active', true)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error fetching restaurants:', error);
     throw error;
   }
 };
@@ -101,7 +101,6 @@ export const addRestaurant = async (restaurantData) => {
 
     return { data: restaurant, error: null };
   } catch (error) {
-    console.error('Error adding restaurant:', error);
     return { data: null, error: error.message };
   }
 };
@@ -121,7 +120,6 @@ export const updateRestaurant = async (id, updates) => {
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error('Error updating restaurant:', error);
     return { data: null, error: error.message };
   }
 };
@@ -159,7 +157,6 @@ export const deleteRestaurant = async (id) => {
 
     return { error: null };
   } catch (error) {
-    console.error('Error deleting restaurant:', error);
     return { error: error.message };
   }
 };
@@ -202,7 +199,6 @@ export const getStaff = async () => {
 
     return transformedData;
   } catch (error) {
-    console.error('Error fetching staff:', error);
     throw error;
   }
 };
@@ -243,7 +239,6 @@ export const addStaff = async (staffData) => {
 
     return { data: userData.user, error: null };
   } catch (error) {
-    console.error('Error adding staff:', error);
     return { data: null, error: error.message };
   }
 };
@@ -261,7 +256,6 @@ export const updateStaff = async (id, updates) => {
     if (error) throw error;
     return { error: null };
   } catch (error) {
-    console.error('Error updating staff:', error);
     return { error: error.message };
   }
 };
@@ -283,7 +277,6 @@ export const deleteStaff = async (id) => {
     if (error) throw error;
     return { error: null };
   } catch (error) {
-    console.error('Error deleting staff:', error);
     return { error: error.message };
   }
 }; 

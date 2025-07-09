@@ -44,7 +44,6 @@ const OrderManagementMain = ({ orders: initialOrders, updateOrderStatus }) => {
         message: `Order #${orderId.slice(0,8)} ${notificationMessages[newStatus] || `status updated to ${newStatus}`}`
       });
     } catch (error) {
-      console.error(`Error updating order to ${newStatus}:`, error);
     } finally {
       setIsLoading(false);
     }

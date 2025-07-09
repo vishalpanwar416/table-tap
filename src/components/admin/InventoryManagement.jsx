@@ -126,9 +126,6 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
   const getCurrentUser = () => {
     if (!user) return null;
     
-    console.log('Current user:', user);
-    console.log('Current userRole:', userRole);
-    console.log('Current userRestaurantId:', userRestaurantId);
     
     return {
       id: user.id,
@@ -181,7 +178,6 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
 
   const loadInventoryData = async () => {
     if (!userRestaurantId) {
-      console.log('No restaurant ID available');
       setErrorMsg('No restaurant assigned. Please contact an administrator.');
       return;
     }
@@ -192,7 +188,6 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
       
       if (error) throw new Error(error);
       
-      console.log('Setting inventory items:', data);
       setInventoryItems(data);
       
       // If no data, show a message
@@ -200,7 +195,6 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
         setErrorMsg('No inventory items found. Add some items to get started.');
       }
     } catch (error) {
-      console.error('Error loading inventory data:', error);
       setErrorMsg('Failed to load inventory data: ' + error.message);
     } finally {
       setLoading(false);
@@ -216,16 +210,12 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
         if (error) throw new Error(error);
       setActivityLogs(data);
     } catch (error) {
-      console.error('Error loading activity logs:', error);
       setErrorMsg('Failed to load activity logs: ' + error.message);
     }
   };
 
   // Filter and sort items - Fixed version
   const filteredItems = useMemo(() => {
-    console.log('Search term:', searchTerm);
-    console.log('Inventory items count:', inventoryItems.length);
-    console.log('Sample item:', inventoryItems[0]);
     
     if (!inventoryItems || inventoryItems.length === 0) {
       return [];
@@ -251,7 +241,6 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
         const matchesCategory = filterCategory === 'all' || item.category === filterCategory;
         const matchesStatus = filterStatus === 'all' || getStockStatus(item) === filterStatus;
         
-        console.log(`Item "${item.name}": search=${matchesSearch}, category=${matchesCategory}, status=${matchesStatus}`);
         
         return matchesSearch && matchesCategory && matchesStatus;
       })

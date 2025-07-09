@@ -41,7 +41,7 @@ const formatDate = (dateString) => {
   });
 };
 
-const OrderCard = ({ order, onClick }) => {
+const OrderCard = ({ order, onClick, restaurantName }) => {
   const [expanded, setExpanded] = useState(false);
   
   if (!order) return null;
@@ -74,6 +74,11 @@ const OrderCard = ({ order, onClick }) => {
                 #{order.order_number || (order.id && order.id.slice(0, 8))}
               </span>
             </h3>
+            {restaurantName && (
+              <div className="text-xs text-gray-500 mt-0.5 font-medium">
+                {restaurantName}
+              </div>
+            )}
             <div className="flex items-center text-xs text-gray-500 mt-1">
               <Calendar size={12} className="mr-1" />
               <span>{formatDate(order.created_at || new Date())}</span>

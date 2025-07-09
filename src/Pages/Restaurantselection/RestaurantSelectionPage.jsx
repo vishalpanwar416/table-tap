@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, MapPin, Phone, Clock, RefreshCw, Store, ArrowRight, Navigation, Crosshair, ChevronDown, Edit3 } from 'lucide-react';
-import { getActiveRestaurants } from './restaurantSelectionService';
+import { getActiveRestaurants, getClosestRestaurants } from './restaurantSelectionService';
 import { useRestaurant } from './RestaurantContext';
 import { getStoredRestaurantSelection, storeRestaurantSelection } from '../../utils/restaurantCheck';
 
@@ -126,7 +126,6 @@ const RestaurantSelectionPage = () => {
         setLocationPermission(permission.state);
       };
     } catch (error) {
-      console.error('Error checking location permission:', error);
       setLocationPermission('not-supported');
     }
   };
@@ -202,7 +201,6 @@ const RestaurantSelectionPage = () => {
         }));
       }
     } catch (error) {
-      console.error('Error getting address from coordinates:', error);
       // Don't set error here as coordinates are still useful
     }
   };
@@ -273,14 +271,21 @@ const RestaurantSelectionPage = () => {
       }
       setError(null);
 
-      const data = await getActiveRestaurants();
+      let data = [];
+      if (userLocation && userLocation.latitude && userLocation.longitude) {
+        // Use geospatial filtering: only restaurants within 5km
+        data = await getClosestRestaurants(userLocation.latitude, userLocation.longitude, 5000);
+      } else {
+        // Fallback: all active restaurants
+        data = await getActiveRestaurants();
+      }
 
       // Transform the data to match the component's expected format
       let transformedData = data.map(restaurant => {
         let distance = null;
-        
-        // Calculate distance if we have user location and restaurant coordinates
-        if (userLocation && restaurant.location) {
+        if (typeof restaurant.distance === 'number') {
+          distance = restaurant.distance / 1000; // convert meters to km for display
+        } else if (userLocation && restaurant.location) {
           try {
             const match = restaurant.location.match(/POINT\(([^)]+)\)/);
             if (match) {
@@ -292,23 +297,11 @@ const RestaurantSelectionPage = () => {
                 parseFloat(lng)
               );
             }
-          } catch (error) {
-            console.error('Error calculating distance:', error);
-          }
+          } catch (error) {}
         }
-
         return {
-          id: restaurant.id,
-          name: restaurant.name,
-          description: restaurant.description || `Experience the finest ${restaurant.cuisine_type || 'cuisine'} in town.`,
-          address: restaurant.address || 'Address not available',
-          phone: restaurant.contact_phone || 'Phone not available',
-          opening_hours: restaurant.opening_hours || 'Hours not available',
-          image_url: restaurant.logo_url || getDefaultRestaurantImage(restaurant.cuisine_type),
-          is_active: restaurant.is_active,
-          cuisine_type: restaurant.cuisine_type,
-          distance: distance,
-          tables: restaurant.tables // Include the tables data
+          ...restaurant,
+          distance,
         };
       });
 
@@ -324,7 +317,6 @@ const RestaurantSelectionPage = () => {
 
       setRestaurants(transformedData || []);
     } catch (err) {
-      console.error('Unexpected error fetching restaurants:', err);
       setError('Failed to load restaurants');
     } finally {
       setLoading(false);
@@ -411,7 +403,6 @@ const RestaurantSelectionPage = () => {
       }, 1000);
       
     } catch (err) {
-      console.error('Error setting restaurant:', err);
       alert('Failed to select restaurant. Please try again.');
     } finally {
       setIsSelecting(false);
@@ -500,7 +491,6 @@ const RestaurantSelectionPage = () => {
           : selectedRestaurant.tables;
         setAvailableTables(Array.isArray(parsedTables) ? parsedTables : []);
       } catch (error) {
-        console.error('Error parsing tables JSON:', error);
         setAvailableTables([]);
       }
     } else {
@@ -566,11 +556,12 @@ const RestaurantSelectionPage = () => {
     <div className="flex justify-center items-start min-h-screen bg-black">
       <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
         {/* Header */}
-        <div className="w-full px-6 py-8 relative flex justify-center">
+        <div className="w-full px-6 py-8 relative flex justify-center bg-black z-20 sticky top-0 md:static md:bg-transparent" style={{minHeight: 72}}>
           <button 
             className="absolute left-4 top-8 text-orange-500 touch-manipulation"
             onClick={() => navigate(-1)}
             aria-label="Go back"
+            style={{minWidth: 44, minHeight: 44}}
           >
             <ChevronLeft size={30} />
           </button>
@@ -691,16 +682,15 @@ const RestaurantSelectionPage = () => {
               className="flex-1 bg-white rounded-xl overflow-hidden shadow-sm"
               style={{ 
                 maxHeight: selectedRestaurant ? 'calc(100vh - 500px)' : 'calc(100vh - 200px)',
-                WebkitOverflowScrolling: 'touch' // iOS smooth scrolling
+                WebkitOverflowScrolling: 'touch'
               }}
             >
               <div 
                 ref={scrollRef}
-                className="h-full overflow-y-auto overscroll-contain p-4 space-y-4"
+                className="h-full overflow-y-auto overscroll-contain p-2 md:p-4 space-y-4"
                 style={{
                   scrollBehavior: 'smooth',
                   WebkitOverflowScrolling: 'touch',
-                  // Add momentum scrolling for iOS
                   touchAction: 'pan-y'
                 }}
               >
@@ -724,7 +714,6 @@ const RestaurantSelectionPage = () => {
                   </motion.div>
                 ) : (
                   <motion.div variants={staggerItems}>
-                    {/* Add refresh indicator at the top when refreshing */}
                     {isRefreshing && (
                       <div className="flex items-center justify-center py-2 mb-2">
                         <div className="animate-spin rounded-full h-4 w-4 border-2 border-orange-500 border-t-transparent mr-2"></div>
@@ -747,16 +736,19 @@ const RestaurantSelectionPage = () => {
                           ease: "easeOut",
                           scale: { duration: 0.25, ease: "easeInOut" }
                         }}
+                        whileTap={{ scale: 0.97 }}
+                        whileHover={{ scale: 1.03 }}
                         onMouseEnter={() => setHoveredRestaurant(restaurant.id)}
                         onMouseLeave={() => setHoveredRestaurant(null)}
                         onClick={() => handleRestaurantClick(restaurant)}
-                        className={`bg-white rounded-xl border-2 cursor-pointer transition-all shadow-sm hover:shadow-md touch-manipulation relative mb-4 ${
+                        className={`bg-white rounded-2xl border-2 cursor-pointer transition-all shadow-sm hover:shadow-md touch-manipulation relative mb-4 flex items-center px-2 py-3 md:px-4 md:py-4 ${
                           selectedRestaurant?.id === restaurant.id
                             ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-200'
                             : 'border-gray-200 hover:border-gray-300'
                         }`}
                         style={{
-                          height: '140px',
+                          minHeight: 88,
+                          minWidth: 0,
                           touchAction: 'manipulation',
                           WebkitUserSelect: 'none',
                           userSelect: 'none',
@@ -765,84 +757,87 @@ const RestaurantSelectionPage = () => {
                                   hoveredRestaurant === restaurant.id ? 15 : 
                                   index === 0 ? 10 : 1
                         }}
+                        tabIndex={0}
+                        aria-label={`Select ${restaurant.name}`}
+                        role="button"
                       >
-                        <div className="p-4 h-full flex items-center">
-                          {/* Restaurant Image */}
-                          <div className="relative mr-4 flex-shrink-0">
-                            {restaurant.image_url ? (
-                              <img
-                                src={restaurant.image_url}
-                                alt={restaurant.name}
-                                className="w-20 h-20 object-cover rounded-lg"
-                                loading={index > 2 ? 'lazy' : 'eager'}
-                                style={{
-                                  WebkitUserDrag: 'none',
-                                  userDrag: 'none'
-                                }}
-                                onError={(e) => {
-                                  e.target.src = getDefaultRestaurantImage(restaurant.cuisine_type);
-                                }}
-                              />
-                            ) : (
-                              <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center">
-                                <Store size={24} className="text-gray-400" />
-                              </div>
-                            )}
-                            
-                            {/* Selection Badge */}
-                            {selectedRestaurant?.id === restaurant.id && (
-                              <motion.div 
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                className="absolute -top-1 -right-1 bg-orange-500 text-white px-2 py-0.5 rounded-full text-xs font-medium shadow-lg"
-                              >
-                                ✓
-                              </motion.div>
-                            )}
-
-                            {/* Cuisine Type Badge */}
-                            {restaurant.cuisine_type && (
-                              <div className="absolute -top-1 -left-1 bg-black bg-opacity-70 text-white px-2 py-0.5 rounded-full text-xs font-medium">
-                                {restaurant.cuisine_type}
-                              </div>
+                        {/* Restaurant Image */}
+                        <div className="relative mr-3 flex-shrink-0">
+                          {restaurant.restaurant_photo_url && restaurant.restaurant_photo_url.trim() !== '' ? (
+                            <img
+                              src={restaurant.restaurant_photo_url}
+                              alt={restaurant.name}
+                              className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg"
+                              loading={index > 2 ? 'lazy' : 'eager'}
+                              style={{
+                                WebkitUserDrag: 'none',
+                                userDrag: 'none',
+                                minWidth: 64, minHeight: 64
+                              }}
+                              onError={e => { e.target.onerror = null; e.target.src = ''; }}
+                            />
+                          ) : restaurant.logo_url && restaurant.logo_url.trim() !== '' ? (
+                            <img
+                              src={restaurant.logo_url}
+                              alt={restaurant.name + ' logo'}
+                              className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg"
+                              loading={index > 2 ? 'lazy' : 'eager'}
+                              style={{
+                                WebkitUserDrag: 'none',
+                                userDrag: 'none',
+                                minWidth: 64, minHeight: 64
+                              }}
+                              onError={e => { e.target.onerror = null; e.target.src = ''; }}
+                            />
+                          ) : getDefaultRestaurantImage(restaurant.cuisine_type) ? (
+                            <img
+                              src={getDefaultRestaurantImage(restaurant.cuisine_type)}
+                              alt={restaurant.cuisine_type ? `${restaurant.cuisine_type} cuisine` : 'Restaurant'}
+                              className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg"
+                              loading={index > 2 ? 'lazy' : 'eager'}
+                              style={{
+                                WebkitUserDrag: 'none',
+                                userDrag: 'none',
+                                minWidth: 64, minHeight: 64
+                              }}
+                              onError={e => { e.target.onerror = null; e.target.src = ''; }}
+                            />
+                          ) : (
+                            <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center text-3xl select-none" role="img" aria-label="Restaurant">
+                              🍽️
+                            </div>
+                          )}
+                          {/* Selection Badge */}
+                          {selectedRestaurant?.id === restaurant.id && (
+                            <motion.div 
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              className="absolute -top-1 -right-1 bg-orange-500 text-white px-2 py-0.5 rounded-full text-xs font-medium shadow-lg"
+                            >
+                              ✓
+                            </motion.div>
+                          )}
+                          {/* Cuisine Type Badge */}
+                          {restaurant.cuisine_type && (
+                            <div className="absolute -top-1 -left-1 bg-black bg-opacity-70 text-white px-2 py-0.5 rounded-full text-xs font-medium">
+                              {restaurant.cuisine_type}
+                            </div>
+                          )}
+                        </div>
+                        {/* Restaurant Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-semibold text-base text-gray-900 truncate">{restaurant.name}</span>
+                            {restaurant.distance !== null && (
+                              <span className="ml-2 text-xs bg-orange-100 text-orange-600 rounded-full px-2 py-0.5 font-medium">
+                                {formatDistance(restaurant.distance)}
+                              </span>
                             )}
                           </div>
-
-                          {/* Restaurant Info */}
-                          <div className="flex-1 min-w-0 h-full overflow-y-auto pr-1">
-                            <h3 className="text-lg font-bold text-gray-900 leading-tight mb-1 truncate">
-                              {restaurant.name}
-                            </h3>
-                            
-                            {restaurant.description && (
-                              <p className="text-gray-600 text-xs leading-relaxed line-clamp-2 mb-2">
-                                {restaurant.description}
-                              </p>
-                            )}
-
-                            {/* Restaurant Details - Compact layout */}
-                            <div className="space-y-1">
-                              {restaurant.address && (
-                                <div className="flex items-start gap-1">
-                                  <MapPin size={12} className="text-gray-400 mt-0.5 flex-shrink-0" />
-                                  <span className="text-xs text-gray-600 leading-relaxed truncate">{restaurant.address}</span>
-                                </div>
-                              )}
-                              
-                              {restaurant.phone && (
-                                <div className="flex items-center gap-1">
-                                  <Phone size={12} className="text-gray-400 flex-shrink-0" />
-                                  <span className="text-xs text-gray-600 truncate">{restaurant.phone}</span>
-                                </div>
-                              )}
-                              
-                              {restaurant.opening_hours && (
-                                <div className="flex items-center gap-1">
-                                  <Clock size={12} className="text-gray-400 flex-shrink-0" />
-                                  <span className="text-xs text-gray-600 truncate">{restaurant.opening_hours}</span>
-                                </div>
-                              )}
-                            </div>
+                          <div className="text-xs text-gray-600 truncate mb-1">{restaurant.description}</div>
+                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <MapPin size={14} className="inline-block mr-1" />
+                            <span className="truncate">{restaurant.address}</span>
                           </div>
                         </div>
                       </motion.div>
@@ -1120,25 +1115,29 @@ const RestaurantSelectionPage = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-end md:items-center justify-center p-0 md:p-4 z-50"
               onClick={() => setShowTablePopup(false)}
+              style={{ zIndex: 100 }}
             >
               <motion.div
-                initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                className="bg-white rounded-xl p-6 max-w-sm w-full shadow-xl"
+                initial={{ y: 40, scale: 1, opacity: 0 }}
+                animate={{ y: 0, scale: 1, opacity: 1 }}
+                exit={{ y: 40, scale: 1, opacity: 0 }}
+                className="bg-white rounded-t-2xl md:rounded-xl p-4 md:p-6 w-full max-w-md mx-auto shadow-xl"
                 onClick={(e) => e.stopPropagation()}
+                style={{ minHeight: 200, maxHeight: '80vh', overflowY: 'auto' }}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Select Table Number"
               >
-                <div className="text-center mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <div className="text-center mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">
                     Select Table Number
                   </h3>
                   <p className="text-gray-600 text-sm">
                     Choose your table from the available options
                   </p>
                 </div>
-                
                 <div className="max-h-64 overflow-y-auto space-y-2">
                   {availableTables.length > 0 ? (
                     availableTables.map((table) => (
@@ -1148,11 +1147,13 @@ const RestaurantSelectionPage = () => {
                           setTableNumber(table.tableNumber);
                           setShowTablePopup(false);
                         }}
-                        className={`w-full p-4 rounded-lg border-2 transition-all duration-200 text-left ${
+                        className={`w-full p-4 rounded-lg border-2 transition-all duration-200 text-left text-base font-medium focus:outline-none focus:ring-2 focus:ring-orange-400 ${
                           table.tableNumber === tableNumber
                             ? 'border-orange-500 bg-orange-50'
                             : 'border-gray-200 hover:border-orange-300 hover:bg-orange-50'
                         }`}
+                        style={{ minHeight: 48 }}
+                        aria-label={`Select table ${table.tableNumber}`}
                       >
                         <div className="flex items-center justify-between">
                           <div>
@@ -1185,11 +1186,12 @@ const RestaurantSelectionPage = () => {
                     </div>
                   )}
                 </div>
-                
                 <div className="mt-6 flex gap-3">
                   <button
                     onClick={() => setShowTablePopup(false)}
                     className="flex-1 px-4 py-3 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    style={{ minHeight: 44 }}
+                    aria-label="Cancel table selection"
                   >
                     Cancel
                   </button>
@@ -1197,6 +1199,8 @@ const RestaurantSelectionPage = () => {
                     <button
                       onClick={() => setShowTablePopup(false)}
                       className="flex-1 px-4 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                      style={{ minHeight: 44 }}
+                      aria-label="Confirm table selection"
                     >
                       Confirm
                     </button>

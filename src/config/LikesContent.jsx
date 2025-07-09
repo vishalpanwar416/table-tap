@@ -34,7 +34,6 @@ export const LikesProvider = ({ children }) => {
         .eq('id', userId)
         .single();
       if (error) {
-        console.error('Error loading user likes:', error);
         setLikedItems([]);
         setLikedItemIds([]);
         return;
@@ -50,7 +49,6 @@ export const LikesProvider = ({ children }) => {
           .eq('is_active', true)
           .eq('restaurant_id', currentRestaurantId);
         if (foodError) {
-          console.error('Error fetching liked food items:', foodError);
           setLikedItems([]);
         } else {
           setLikedItems(foodItems || []);
@@ -60,7 +58,6 @@ export const LikesProvider = ({ children }) => {
         setLikedItems([]);
       }
     } catch (error) {
-      console.error('Error loading user likes:', error);
       setLikedItems([]);
       setLikedItemIds([]);
     } finally {
@@ -78,18 +75,15 @@ export const LikesProvider = ({ children }) => {
         .eq('id', user.id);
       if (error) throw error;
     } catch (error) {
-      console.error('Error updating liked items:', error);
     }
   };
 
   // Toggle like for an item (update global list, then filter for current restaurant)
   const toggleLike = async (item) => {
     if (!user) {
-      console.error('User must be logged in to like items');
       return;
     }
     if (item.restaurant_id !== restaurantId) {
-      console.error('Cannot like items from different restaurants');
       return;
     }
     let newLikedItemIds;
@@ -108,7 +102,6 @@ export const LikesProvider = ({ children }) => {
         .eq('is_active', true)
         .eq('restaurant_id', restaurantId);
       if (error) {
-        console.error('Error fetching liked food items:', error);
         setLikedItems([]);
       } else {
         setLikedItems(foodItems || []);

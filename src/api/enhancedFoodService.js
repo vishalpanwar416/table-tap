@@ -107,7 +107,6 @@ class EnhancedFoodService {
       const { data, error, count } = await query;
 
       if (error) {
-        console.error('Error fetching best seller items:', error);
         throw new Error(`Failed to fetch best seller items: ${error.message}`);
       }
 
@@ -160,7 +159,6 @@ class EnhancedFoodService {
       const { data, error } = await query;
 
       if (error) {
-        console.error('Error fetching recommended items:', error);
         throw new Error(`Failed to fetch recommended items: ${error.message}`);
       }
 
@@ -215,7 +213,6 @@ class EnhancedFoodService {
       const { data, error, count } = await query;
 
       if (error) {
-        console.error('Error fetching all food items:', error);
         throw new Error(`Failed to fetch food items: ${error.message}`);
       }
 

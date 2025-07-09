@@ -5,7 +5,6 @@ import { supabase } from '../../supabase';
  */
 export const getActiveRestaurants = async () => {
   try {
-    console.log('Fetching active restaurants...');
     
     const { data, error } = await supabase
       .from('restaurants')
@@ -17,6 +16,7 @@ export const getActiveRestaurants = async () => {
         contact_phone,
         opening_hours,
         logo_url,
+        restaurant_photo_url,
         is_active,
         cuisine_type,
         location,
@@ -26,14 +26,11 @@ export const getActiveRestaurants = async () => {
       .order('name');
 
     if (error) {
-      console.error('Error fetching restaurants:', error);
       throw error;
     }
 
-    console.log(`Retrieved ${data?.length || 0} active restaurants`);
     return data || [];
   } catch (error) {
-    console.error('Error in getActiveRestaurants:', error);
     throw error;
   }
 };
@@ -43,7 +40,6 @@ export const getActiveRestaurants = async () => {
  */
 export const getRestaurantById = async (restaurantId) => {
   try {
-    console.log('Fetching restaurant by ID:', restaurantId);
     
     const { data, error } = await supabase
       .from('restaurants')
@@ -65,14 +61,11 @@ export const getRestaurantById = async (restaurantId) => {
       .single();
 
     if (error) {
-      console.error('Error fetching restaurant by ID:', error);
       throw error;
     }
 
-    console.log('Retrieved restaurant:', data?.name);
     return data;
   } catch (error) {
-    console.error('Error in getRestaurantById:', error);
     throw error;
   }
 };
@@ -82,7 +75,6 @@ export const getRestaurantById = async (restaurantId) => {
  */
 export const getRestaurantTables = async (restaurantId) => {
   try {
-    console.log('Fetching tables for restaurant:', restaurantId);
     
     const { data, error } = await supabase
       .from('restaurants')
@@ -92,7 +84,6 @@ export const getRestaurantTables = async (restaurantId) => {
       .single();
 
     if (error) {
-      console.error('Error fetching restaurant tables:', error);
       throw error;
     }
 
@@ -102,15 +93,12 @@ export const getRestaurantTables = async (restaurantId) => {
       try {
         tables = typeof data.tables === 'string' ? JSON.parse(data.tables) : data.tables;
       } catch (parseError) {
-        console.error('Error parsing tables JSON:', parseError);
         tables = [];
       }
     }
 
-    console.log(`Retrieved ${tables.length} tables for restaurant`);
     return tables;
   } catch (error) {
-    console.error('Error in getRestaurantTables:', error);
     throw error;
   }
 };
@@ -120,7 +108,6 @@ export const getRestaurantTables = async (restaurantId) => {
  */
 export const updateRestaurantTables = async (restaurantId, tables) => {
   try {
-    console.log('Updating tables for restaurant:', restaurantId);
     
     const { data, error } = await supabase
       .from('restaurants')
@@ -133,14 +120,11 @@ export const updateRestaurantTables = async (restaurantId, tables) => {
       .single();
 
     if (error) {
-      console.error('Error updating restaurant tables:', error);
       throw error;
     }
 
-    console.log('Successfully updated restaurant tables');
     return data;
   } catch (error) {
-    console.error('Error in updateRestaurantTables:', error);
     throw error;
   }
 };
@@ -150,7 +134,6 @@ export const updateRestaurantTables = async (restaurantId, tables) => {
  */
 export const searchRestaurants = async (searchTerm) => {
   try {
-    console.log('Searching restaurants with term:', searchTerm);
     
     const { data, error } = await supabase
       .from('restaurants')
@@ -171,14 +154,11 @@ export const searchRestaurants = async (searchTerm) => {
       .order('name');
 
     if (error) {
-      console.error('Error searching restaurants:', error);
       throw error;
     }
 
-    console.log(`Found ${data?.length || 0} restaurants matching search term`);
     return data || [];
   } catch (error) {
-    console.error('Error in searchRestaurants:', error);
     throw error;
   }
 };
@@ -188,7 +168,6 @@ export const searchRestaurants = async (searchTerm) => {
  */
 export const getRestaurantsByCuisine = async (cuisineType) => {
   try {
-    console.log('Fetching restaurants by cuisine type:', cuisineType);
     
     const { data, error } = await supabase
       .from('restaurants')
@@ -209,14 +188,11 @@ export const getRestaurantsByCuisine = async (cuisineType) => {
       .order('name');
 
     if (error) {
-      console.error('Error fetching restaurants by cuisine:', error);
       throw error;
     }
 
-    console.log(`Retrieved ${data?.length || 0} ${cuisineType} restaurants`);
     return data || [];
   } catch (error) {
-    console.error('Error in getRestaurantsByCuisine:', error);
     throw error;
   }
 };
@@ -226,7 +202,6 @@ export const getRestaurantsByCuisine = async (cuisineType) => {
  */
 export const getRestaurantStats = async (restaurantId) => {
   try {
-    console.log('Fetching restaurant statistics:', restaurantId);
     
     // Get restaurant data
     const { data: restaurant, error: restaurantError } = await supabase
@@ -236,7 +211,6 @@ export const getRestaurantStats = async (restaurantId) => {
       .single();
 
     if (restaurantError) {
-      console.error('Error fetching restaurant data:', restaurantError);
       throw restaurantError;
     }
 
@@ -247,7 +221,6 @@ export const getRestaurantStats = async (restaurantId) => {
       .eq('restaurant_id', restaurantId);
 
     if (orderError) {
-      console.error('Error fetching order count:', orderError);
       // Don't throw error for order count, just log it
     }
 
@@ -258,7 +231,6 @@ export const getRestaurantStats = async (restaurantId) => {
       .eq('restaurant_id', restaurantId);
 
     if (foodError) {
-      console.error('Error fetching food item count:', foodError);
       // Don't throw error for food count, just log it
     }
 
@@ -269,10 +241,8 @@ export const getRestaurantStats = async (restaurantId) => {
       isActive: restaurant?.is_active || false
     };
 
-    console.log('Retrieved restaurant statistics:', stats);
     return stats;
   } catch (error) {
-    console.error('Error in getRestaurantStats:', error);
     throw error;
   }
 };
@@ -282,7 +252,6 @@ export const getRestaurantStats = async (restaurantId) => {
  */
 export const getRestaurantsNearLocation = async (latitude, longitude, radiusKm = 50) => {
   try {
-    console.log('Fetching restaurants near location:', { latitude, longitude, radiusKm });
     
     // Note: This is a simplified approach. For production, you might want to use
     // PostGIS functions for more accurate distance calculations
@@ -304,7 +273,6 @@ export const getRestaurantsNearLocation = async (latitude, longitude, radiusKm =
       .order('name');
 
     if (error) {
-      console.error('Error fetching restaurants near location:', error);
       throw error;
     }
 
@@ -327,7 +295,6 @@ export const getRestaurantsNearLocation = async (latitude, longitude, radiusKm =
               );
             }
           } catch (error) {
-            console.error('Error calculating distance for restaurant:', restaurant.id, error);
           }
         }
         
@@ -344,10 +311,49 @@ export const getRestaurantsNearLocation = async (latitude, longitude, radiusKm =
         return a.distance - b.distance;
       });
 
-    console.log(`Found ${restaurantsWithDistance.length} restaurants within ${radiusKm}km`);
     return restaurantsWithDistance;
   } catch (error) {
-    console.error('Error in getRestaurantsNearLocation:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get closest restaurants within a radius (in meters) from a point
+ * @param {number} latitude
+ * @param {number} longitude
+ * @param {number} radiusMeters
+ * @returns {Promise<Array>} List of restaurants with distance (meters)
+ */
+export const getClosestRestaurants = async (latitude, longitude, radiusMeters = 5000) => {
+  try {
+    const { data, error } = await supabase
+      .from('restaurants')
+      .select(`
+        id,
+        name,
+        description,
+        address,
+        contact_phone,
+        opening_hours,
+        logo_url,
+        restaurant_photo_url,
+        is_active,
+        cuisine_type,
+        location,
+        tables,
+        distance:ST_Distance(location, ST_MakePoint(${longitude}, ${latitude})::geography)
+      `)
+      .eq('is_active', true)
+      .filter('location', 'is not', null)
+      .lte('distance', radiusMeters)
+      .order('distance', { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    return data || [];
+  } catch (error) {
     throw error;
   }
 };

@@ -72,7 +72,6 @@ const NotificationSound = ({ play, soundType = 'order' }) => {
       }, 3000);
       
     } catch (error) {
-      console.warn('Could not play notification sound:', error);
       // Enhanced fallback with multiple attempts
       try {
         // Try HTML5 audio with base64 encoded beep
@@ -80,10 +79,8 @@ const NotificationSound = ({ play, soundType = 'order' }) => {
         audio.volume = 0.3;
         audio.play().catch(() => {
           // Final fallback - system beep (may not work in all browsers)
-          console.log('\u0007'); // Bell character
         });
       } catch (fallbackError) {
-        console.warn('All sound fallbacks failed:', fallbackError);
       }
     }
   };

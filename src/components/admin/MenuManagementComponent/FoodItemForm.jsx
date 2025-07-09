@@ -63,10 +63,8 @@ const FoodItemForm = ({
         image: previewUrl
       });
 
-      console.log(`Image optimized: ${file.size} -> ${optimizedFile.size} bytes (${Math.round((1 - optimizedFile.size / file.size) * 100)}% reduction)`);
 
     } catch (error) {
-      console.error('Error processing image:', error);
       setErrorMsg('Failed to process image. Please try again.');
     } finally {
       setImageProcessing(false);

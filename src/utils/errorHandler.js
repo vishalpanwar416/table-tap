@@ -52,7 +52,6 @@ export const handleError = (error, context = '') => {
   }
 
   // Log error for debugging
-  console.error(`[${context}] Error:`, {
     type: errorType,
     message: userMessage,
     originalError: error,

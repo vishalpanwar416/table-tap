@@ -210,7 +210,6 @@ const AIAnalyticsChat = () => {
       setAnalyticsData(data);
       generateProactiveInsights(data);
     } catch (error) {
-      console.error('Error loading analytics:', error);
       setMessages(prev => [...prev, {
         id: Date.now(),
         type: 'ai',
@@ -255,7 +254,6 @@ const AIAnalyticsChat = () => {
       };
       setMessages(prev => [...prev, aiMessage]);
     } catch (error) {
-      console.error('Error getting AI response:', error);
       
       // Create specific error messages based on error type
       let errorContent = "I apologize, but I'm having difficulty processing your request right now. Please try again later.";

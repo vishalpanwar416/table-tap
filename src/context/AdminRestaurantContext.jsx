@@ -18,14 +18,12 @@ const localStorageStore = {
     try {
       localStorage.setItem(key, value);
     } catch (error) {
-      console.error('Error storing in localStorage:', error);
     }
   },
   get: (key) => {
     try {
       return localStorage.getItem(key);
     } catch (error) {
-      console.error('Error reading from localStorage:', error);
       return null;
     }
   },
@@ -33,7 +31,6 @@ const localStorageStore = {
     try {
       localStorage.removeItem(key);
     } catch (error) {
-      console.error('Error removing from localStorage:', error);
     }
   }
 };
@@ -102,7 +99,6 @@ export const AdminRestaurantProvider = ({ children }) => {
           .single();
 
         if (profileError) {
-          console.error('Error fetching profile data:', profileError);
           setError('Access denied: Profile not found');
           setLoading(false);
           return;
@@ -136,7 +132,6 @@ export const AdminRestaurantProvider = ({ children }) => {
               .single();
 
             if (restaurantError) {
-              console.error('Error fetching restaurant for admin:', restaurantError);
               setError('Restaurant not found or inactive');
               setLoading(false);
               return;
@@ -161,7 +156,6 @@ export const AdminRestaurantProvider = ({ children }) => {
             .single();
 
           if (staffError || !staffData) {
-            console.error('Error fetching staff data for captain/manager:', staffError);
             setError(`Access denied: ${profileData.profile_role} not assigned to restaurant`);
             setLoading(false);
             return;
@@ -178,7 +172,6 @@ export const AdminRestaurantProvider = ({ children }) => {
             .single();
 
           if (restaurantError) {
-            console.error('Error fetching restaurant:', restaurantError);
             setError('Restaurant not found or inactive');
             setLoading(false);
             return;
@@ -198,7 +191,6 @@ export const AdminRestaurantProvider = ({ children }) => {
           .single();
 
         if (staffError) {
-          console.error('Error fetching staff data:', staffError);
           setError('Access denied: Not a staff member');
           setLoading(false);
           return;
@@ -230,7 +222,6 @@ export const AdminRestaurantProvider = ({ children }) => {
           .single();
 
         if (restaurantError) {
-          console.error('Error fetching restaurant:', restaurantError);
           setError('Restaurant not found or inactive');
           return;
         }
@@ -238,7 +229,6 @@ export const AdminRestaurantProvider = ({ children }) => {
         setRestaurant(restaurantData);
         
       } catch (err) {
-        console.error('Unexpected error:', err);
         setError('Failed to load restaurant data');
       } finally {
         setLoading(false);
@@ -251,7 +241,6 @@ export const AdminRestaurantProvider = ({ children }) => {
   // Function to set restaurant for admin users
   const setAdminRestaurant = async (restaurantId) => {
     if (userRole !== 'admin') {
-      console.error('Only admin users can set restaurant');
       return false;
     }
 
@@ -266,7 +255,6 @@ export const AdminRestaurantProvider = ({ children }) => {
         .single();
 
       if (restaurantError) {
-        console.error('Error fetching restaurant:', restaurantError);
         setError('Restaurant not found or inactive');
         return false;
       }
@@ -284,7 +272,6 @@ export const AdminRestaurantProvider = ({ children }) => {
       return true;
       
     } catch (err) {
-      console.error('Unexpected error setting restaurant:', err);
       setError('Failed to set restaurant');
       return false;
     } finally {
@@ -295,7 +282,6 @@ export const AdminRestaurantProvider = ({ children }) => {
   // Function to clear admin restaurant selection
   const clearAdminRestaurant = () => {
     if (userRole !== 'admin') {
-      console.error('Only admin users can clear restaurant selection');
       return false;
     }
 
@@ -314,13 +300,11 @@ export const AdminRestaurantProvider = ({ children }) => {
   const updateRestaurant = async (updates) => {
     // Admin can update any restaurant, staff need specific restaurant ID
     if (userRole !== 'admin' && !userRestaurantId) {
-      console.error('No restaurant ID available');
       return false;
     }
 
     // Check if user has permission to update (admin or manager only)
     if (!['admin', 'manager'].includes(userRole)) {
-      console.error('Access denied: Only admin and manager can update restaurant data');
       return false;
     }
 
@@ -330,7 +314,6 @@ export const AdminRestaurantProvider = ({ children }) => {
       const restaurantId = userRole === 'admin' ? updates.restaurant_id || userRestaurantId : userRestaurantId;
       
       if (!restaurantId) {
-        console.error('No restaurant ID specified for update');
         return false;
       }
 
@@ -346,7 +329,6 @@ export const AdminRestaurantProvider = ({ children }) => {
         .single();
 
       if (error) {
-        console.error('Error updating restaurant:', error);
         return false;
       }
 
@@ -357,7 +339,6 @@ export const AdminRestaurantProvider = ({ children }) => {
       return true;
       
     } catch (err) {
-      console.error('Unexpected error updating restaurant:', err);
       return false;
     }
   };

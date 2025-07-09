@@ -152,7 +152,6 @@ export const getRestaurantAnalytics = async (dateRange = 'last7days', restaurant
       }
     };
   } catch (error) {
-    console.error('Error fetching restaurant analytics:', error);
     throw error;
   }
 };
@@ -196,7 +195,7 @@ export const callAIService = async (userQuestion, analyticsData) => {
   const apiKey = process.env.REACT_APP_OPENAI_API_KEY;
   
   // Debug logging (remove in production)
-  console.log('Environment check:', {
+  console.log({
     hasApiKey: !!apiKey,
     apiKeyLength: apiKey ? apiKey.length : 0,
     apiKeyPrefix: apiKey ? apiKey.substring(0, 7) + '...' : 'none',
@@ -233,7 +232,7 @@ export const callAIService = async (userQuestion, analyticsData) => {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    console.error('OpenAI API Error:', {
+    console.log({
       status: response.status,
       statusText: response.statusText,
       error: errorData

@@ -100,7 +100,6 @@ const AdminPanel = () => {
     const loadUserProfile = async () => {
       if (user) {
         try {
-          console.log('Loading user profile for user:', user.id);
           const { data: profile, error } = await supabase
             .from('profiles')
             .select('full_name, email, avatar_url, profile_role')
@@ -108,16 +107,12 @@ const AdminPanel = () => {
             .single();
 
           if (!error && profile) {
-            console.log('User profile loaded:', profile);
             setCurrentUserProfile(profile);
           } else {
-            console.error('Error loading user profile:', error);
           }
         } catch (error) {
-          console.error('Exception loading user profile:', error);
         }
       } else {
-        console.log('No user found');
       }
     };
 
@@ -126,13 +121,11 @@ const AdminPanel = () => {
 
   // Load data on component mount and tab change
   useEffect(() => {
-    console.log('AdminPanel mounted, fetching data...');
     fetchData();
   }, []);
 
   const fetchData = async () => {
     try {
-      console.log('Starting to fetch data...');
       setLoading(true);
       
       const [restaurantsResponse, staffResponse] = await Promise.all([
@@ -140,25 +133,18 @@ const AdminPanel = () => {
         getAllStaff()
       ]);
 
-      console.log('Restaurants response:', restaurantsResponse);
-      console.log('Staff response:', staffResponse);
 
       if (restaurantsResponse.error) {
-        console.error('Restaurants error:', restaurantsResponse.error);
         throw new Error(restaurantsResponse.error);
       }
       if (staffResponse.error) {
-        console.error('Staff error:', staffResponse.error);
         throw new Error(staffResponse.error);
       }
 
-      console.log('Setting restaurants:', restaurantsResponse.data);
-      console.log('Setting staff:', staffResponse.data);
       
       setRestaurants(restaurantsResponse.data);
       setStaff(staffResponse.data);
     } catch (error) {
-      console.error('Error in fetchData:', error);
       handleError('Failed to load data: ' + error.message);
     } finally {
       setLoading(false);

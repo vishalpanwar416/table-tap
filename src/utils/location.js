@@ -74,7 +74,6 @@ export const checkLocationPermission = async () => {
     const permission = await navigator.permissions.query({ name: 'geolocation' });
     return permission.state;
   } catch (error) {
-    console.error('Error checking location permission:', error);
     return 'not-supported';
   }
 };
@@ -108,7 +107,6 @@ export const getAddressFromCoordinates = async (latitude, longitude) => {
     }
     return null;
   } catch (error) {
-    console.error('Error getting address from coordinates:', error);
     return null;
   }
 };

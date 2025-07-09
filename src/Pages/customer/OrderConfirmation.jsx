@@ -42,7 +42,6 @@ const OrderConfirmation = () => {
           : restaurant.tables;
         setAvailableTables(Array.isArray(parsedTables) ? parsedTables : []);
       } catch (error) {
-        console.error('Error parsing tables JSON:', error);
         setAvailableTables([]);
       }
     } else {

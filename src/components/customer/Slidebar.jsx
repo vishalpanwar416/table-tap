@@ -20,20 +20,22 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
 
+  // 1. Fetch user data only when sidebar is opened
   useEffect(() => {
+    if (!isSidebarOpen) return;
+    let isMounted = true;
     const fetchUserData = async () => {
       try {
         setIsLoading(true);
         const { data: { user }, error } = await supabase.auth.getUser();
-        
         if (user && !error) {
+          if (!isMounted) return;
           setIsAuthenticated(true);
           const { data: profile } = await supabase
             .from('profiles')
             .select('full_name, email, profile_role, avatar_url')
             .eq('id', user.id)
             .single();
-
           setUserData({
             profileImg: profile?.avatar_url || '',
             userName: profile?.full_name || user.user_metadata?.name || user.email,
@@ -41,6 +43,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
             profile_role: profile?.profile_role || 'customer'
           });
         } else {
+          if (!isMounted) return;
           setIsAuthenticated(false);
           setUserData({
             profileImg: '',
@@ -50,7 +53,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
           });
         }
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        if (!isMounted) return;
         setIsAuthenticated(false);
         setUserData({
           profileImg: '',
@@ -59,67 +62,47 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
           profile_role: 'customer'
         });
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
-
     fetchUserData();
+    return () => { isMounted = false; };
+  }, [isSidebarOpen]);
 
-    // Set up real-time subscription only if user is authenticated
+  // 4. Only subscribe to real-time updates when sidebar is open and user is authenticated
+  useEffect(() => {
+    if (!isSidebarOpen || !isAuthenticated) return;
     let channel;
-    if (isAuthenticated) {
-      channel = supabase.channel('sidebar-profile')
-        .on('postgres_changes', {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'profiles',
-        }, (payload) => {
-          if (userData.userEmail === payload.old.email) {
-            setUserData(prev => ({
-              ...prev,
-              userName: payload.new.full_name,
-              userEmail: payload.new.email,
-              profileImg: payload.new.avatar_url,
-              profile_role: payload.new.profile_role
-            }));
-          }
-        })
-        .subscribe();
-    }
-
+    channel = supabase.channel('sidebar-profile')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'profiles',
+      }, (payload) => {
+        if (userData.userEmail === payload.old.email) {
+          setUserData(prev => ({
+            ...prev,
+            userName: payload.new.full_name,
+            userEmail: payload.new.email,
+            profileImg: payload.new.avatar_url,
+            profile_role: payload.new.profile_role
+          }));
+        }
+      })
+      .subscribe();
     return () => {
-      if (channel) {
-        channel.unsubscribe();
-      }
+      if (channel) channel.unsubscribe();
     };
-  }, [isAuthenticated]);
+  }, [isSidebarOpen, isAuthenticated, userData.userEmail]);
 
-  const slideVariants = {
-    hidden: { x: '100%', opacity: 0 },
-    visible: { 
-      x: 0, 
-      opacity: 1,
-      transition: { type: 'spring', stiffness: 300, damping: 30 }
-    },
-    exit: { 
-      x: '100%', 
-      opacity: 0, 
-      transition: { 
-        type: 'spring', 
-        stiffness: 400, 
-        damping: 40,
-        duration: 0.4
-      } 
-    }
-  };
-  
-  const menuOptions = [
+  // 2. Memoize menu options and handlers
+  const menuOptions = React.useMemo(() => [
     { name: 'My Orders', icon: <ShoppingBag className="w-6 h-6" />, path: '/my-orders' }, 
     { name: 'My Profile', icon: <User className="w-6 h-6" />, path: '/profile' },
     { name: 'Payment Methods', icon: <CreditCard className="w-6 h-6" />, path: '/payment-methods' },
     { name: 'Contact Us', icon: <Phone className="w-6 h-6" />, path: '/contact' },
     { name: 'Help & FAQs', icon: <HelpCircle className="w-6 h-6" />, path: '/help' },
-  ];
+  ], []);
   
   const managerOption = { 
     name: 'Manager Dashboard', 
@@ -133,35 +116,53 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
     path: '/Admin-Pannel'
   };
   
+  // 3. Reduce animation durations for snappier feel
+  const slideVariants = {
+    hidden: { x: '100%', opacity: 0 },
+    visible: { 
+      x: 0, 
+      opacity: 1,
+      transition: { type: 'spring', stiffness: 400, damping: 24, duration: 0.18 }
+    },
+    exit: { 
+      x: '100%', 
+      opacity: 0, 
+      transition: { 
+        type: 'spring', 
+        stiffness: 500, 
+        damping: 30,
+        duration: 0.15
+      } 
+    }
+  };
   const overlayVariants = {
     hidden: { opacity: 0 },
     visible: { 
       opacity: 1,
-      transition: { duration: 0.3 }
+      transition: { duration: 0.15 }
     },
     exit: { 
       opacity: 0, 
       transition: { 
-        duration: 0.3,
+        duration: 0.15,
         ease: 'easeOut'
       } 
     }
   };
   
-  const handleNavigation = (path) => {
+  const handleNavigation = React.useCallback((path) => {
     if (isAuthenticated) {
       navigate(path);
     } else {
-      // Redirect to login with return path
       navigate('/login', { state: { from: path } });
     }
     toggleSidebar();
-  };
+  }, [isAuthenticated, navigate, toggleSidebar]);
 
-  const handleLogin = () => {
+  const handleLogin = React.useCallback(() => {
     navigate('/login');
     toggleSidebar();
-  };
+  }, [navigate, toggleSidebar]);
 
   const handleCloseContactPopup = () => {
     setIsContactPopupOpen(false);
@@ -202,6 +203,11 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isSidebarOpen, toggleSidebar]);
+  
+  // Skeleton shimmer style
+  const Skeleton = ({ className }) => (
+    <div className={`bg-gradient-to-r from-white/10 via-white/20 to-white/10 animate-pulse ${className}`}></div>
+  );
   
   return (
     <>
@@ -244,7 +250,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
                 <div className="pt-16 pb-6 px-6 flex flex-col items-center border-b border-white/20 flex-shrink-0">
                   <div className="relative w-20 h-20 rounded-full overflow-hidden mb-4 border-2 border-purple-500 bg-white/10 backdrop-blur-md flex items-center justify-center shadow-xl">
                     {isLoading ? (
-                      <div className="w-12 h-12 border-2 border-white/40 border-t-transparent rounded-full animate-spin"></div>
+                      <Skeleton className="w-12 h-12 rounded-full" />
                     ) : userData.profileImg ? (
                       <img 
                         src={userData.profileImg} 
@@ -257,7 +263,10 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
                   </div>
                   
                   {isLoading ? (
-                    <div className="h-8 w-32 bg-white/10 rounded animate-pulse mb-2"></div>
+                    <>
+                      <Skeleton className="h-8 w-32 rounded mb-2" />
+                      <Skeleton className="h-4 w-24 rounded mb-1" />
+                    </>
                   ) : isAuthenticated ? (
                     <>
                       <h2 className="text-2xl font-bold text-white truncate max-w-full drop-shadow-lg">

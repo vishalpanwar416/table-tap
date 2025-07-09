@@ -27,7 +27,6 @@ export const useBestSellerData = (restaurantId) => {
         }
       }
     } catch (error) {
-      console.warn('Failed to load from cache:', error);
     }
     return false;
   }, [cacheKey]);
@@ -40,7 +39,6 @@ export const useBestSellerData = (restaurantId) => {
         timestamp: Date.now()
       }));
     } catch (error) {
-      console.warn('Failed to save to cache:', error);
     }
   }, [cacheKey]);
 
@@ -63,7 +61,6 @@ export const useBestSellerData = (restaurantId) => {
       setLastFetch(Date.now());
       saveToCache(data);
     } catch (error) {
-      console.error('Error loading best sellers:', error);
       setError(error.message || 'Failed to load best sellers');
       
       // Try to load from cache as fallback
@@ -85,7 +82,6 @@ export const useBestSellerData = (restaurantId) => {
     try {
       sessionStorage.removeItem(cacheKey);
     } catch (error) {
-      console.warn('Failed to clear cache:', error);
     }
   }, [cacheKey]);
 

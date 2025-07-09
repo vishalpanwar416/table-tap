@@ -46,7 +46,6 @@ export const inventoryService = {
       if (error) throw error;
       return { data: data || [], error: null };
     } catch (error) {
-      console.error('Error fetching inventory items:', error);
       return { data: [], error: error.message };
     }
   },
@@ -71,7 +70,6 @@ export const inventoryService = {
       if (error) throw error;
       return { data: data || [], error: null };
     } catch (error) {
-      console.error('Error fetching activity logs:', error);
       return { data: [], error: error.message };
     }
   },
@@ -107,7 +105,6 @@ export const inventoryService = {
 
       return { data, error: null };
     } catch (error) {
-      console.error('Error adding inventory item:', error);
       return { data: null, error: error.message };
     }
   },
@@ -153,7 +150,6 @@ export const inventoryService = {
 
       return { data, error: null };
     } catch (error) {
-      console.error('Error updating inventory item:', error);
       return { data: null, error: error.message };
     }
   },
@@ -194,7 +190,6 @@ export const inventoryService = {
 
       return { data: currentItem, error: null };
     } catch (error) {
-      console.error('Error deleting inventory item:', error);
       return { data: null, error: error.message };
     }
   },
@@ -242,7 +237,6 @@ export const inventoryService = {
 
       return { data, error: null };
     } catch (error) {
-      console.error('Error updating stock:', error);
       return { data: null, error: error.message };
     }
   },
@@ -294,7 +288,6 @@ export const inventoryService = {
 
       return { data, error: null };
     } catch (error) {
-      console.error('Error taking out stock:', error);
       return { data: null, error: error.message };
     }
   },
@@ -302,18 +295,14 @@ export const inventoryService = {
   // Helper function to add activity logs
   async addActivityLog(logData) {
     try {
-      console.log('Adding activity log:', logData);
       const { error } = await supabase
         .from('inventory_activity_logs')
         .insert(logData);
 
       if (error) {
-        console.error('Error adding activity log:', error);
       } else {
-        console.log('Activity log added successfully');
       }
     } catch (error) {
-      console.error('Error adding activity log:', error);
     }
   }
 };

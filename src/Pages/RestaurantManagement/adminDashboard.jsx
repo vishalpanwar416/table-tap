@@ -120,7 +120,6 @@ const AdminDashboard = () => {
       if (error) throw error;
       setAllRestaurants(data || []);
     } catch (error) {
-      console.error('Error fetching restaurants:', error);
       setErrorMsg('Failed to load restaurants');
     } finally {
       setLoadingRestaurants(false);
@@ -150,7 +149,6 @@ const AdminDashboard = () => {
         setErrorMsg('Failed to switch restaurant');
       }
     } catch (error) {
-      console.error('Error switching restaurant:', error);
       setErrorMsg('Failed to switch restaurant');
     }
   };
@@ -182,7 +180,6 @@ const AdminDashboard = () => {
         }
         setCurrentUser(user);
       } catch (error) {
-        console.error('Auth check failed:', error);
         navigate('/login');
       } finally {
         setAuthLoading(false); // End loading
@@ -240,7 +237,6 @@ const AdminDashboard = () => {
           }
         }
       } catch (error) {
-        console.error('Error fetching user profile:', error);
         navigate('/home');
       }
     };
@@ -271,7 +267,6 @@ const AdminDashboard = () => {
       clearTimeout(loadingTimeout);
       return data;
     } catch (error) {
-      console.error('Error fetching food items:', error);
       setErrorMsg('Failed to load menu items: ' + (error.message || error));
       return [];
     } finally {
@@ -315,7 +310,6 @@ const AdminDashboard = () => {
         if (error) throw error;
         setOrders(data || []);
       } catch (error) {
-        console.error("Error fetching orders:", error);
         setErrorMsg('Failed to load orders: ' + (error.message || error));
       } finally {
         clearTimeout(loadingTimeout);
@@ -341,10 +335,6 @@ const AdminDashboard = () => {
           table: 'orders',
         },
         (payload) => {
-          console.log('🔔 Realtime payload received:', payload);
-          console.log('Event type:', payload.eventType);
-          console.log('New record:', payload.new);
-          console.log('Old record:', payload.old);
           
           const { eventType, new: newRecord, old: oldRecord } = payload;
 
@@ -354,10 +344,8 @@ const AdminDashboard = () => {
           }
 
           setOrders((prevOrders) => {
-            console.log('Previous orders count:', prevOrders.length);
             
             if (eventType === 'INSERT') {
-              console.log('🆕 Processing INSERT event');
               // Play sound for new order only
               let orderTotal = Number(newRecord.total);
               if (isNaN(orderTotal)) orderTotal = 0;
@@ -386,19 +374,14 @@ const AdminDashboard = () => {
 
               return [newRecord, ...prevOrders];
             } else if (eventType === 'UPDATE') {
-              console.log('🔄 Processing UPDATE event');
-              console.log('Updated order ID:', newRecord.id);
-              console.log('Updated order status:', newRecord.status);
               
               // Handle order updates - match by id field
               const updatedOrder = newRecord;
               const existingOrder = prevOrders.find(o => o.id === updatedOrder.id);
               
-              console.log('Found existing order:', existingOrder);
               
               if (existingOrder) {
                 const statusChanged = existingOrder.status !== updatedOrder.status;
-                console.log('Status changed:', statusChanged);
                 
                 if (statusChanged) {
                   setOrderToastTitle('📋 Order Updated');
@@ -411,10 +394,8 @@ const AdminDashboard = () => {
                 order.id === updatedOrder.id ? updatedOrder : order
               );
               
-              console.log('Updated orders count:', updatedOrders.length);
               return updatedOrders;
             } else if (eventType === 'DELETE') {
-              console.log('🗑️ Processing DELETE event');
               // Handle order deletions - match by id field
               return prevOrders.filter((order) => order.id !== oldRecord.id);
             }
@@ -423,13 +404,9 @@ const AdminDashboard = () => {
         }
       )
       .subscribe((status) => {
-        console.log('📡 Subscription status:', status);
         if (status === 'SUBSCRIBED') {
-          console.log('✅ Successfully subscribed to order changes');
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Channel error occurred');
         } else if (status === 'TIMED_OUT') {
-          console.error('⏰ Channel timed out');
         }
       });
 
@@ -497,6 +474,27 @@ const AdminDashboard = () => {
       // Create notification for customer (handle separately)
       try {
         if (updatedOrder?.user_id) {
+          let notificationType;
+          switch (status) {
+            case 'confirmed':
+              notificationType = 'order_accepted';
+              break;
+            case 'preparing':
+              notificationType = 'order_preparing';
+              break;
+            case 'ready':
+              notificationType = 'order_ready';
+              break;
+            case 'rejected':
+              notificationType = 'order_rejected';
+              break;
+            case 'completed':
+              notificationType = 'order_ready';
+              break;
+            default:
+              notificationType = 'order_received';
+          }
+
           await supabase
             .from('notifications')
             .insert({
@@ -504,15 +502,15 @@ const AdminDashboard = () => {
               title: `Order ${status}`,
               message: `Your order #${updatedOrder.order_number || updatedOrder.id.slice(0,8)} has been ${status}`,
               user_id: updatedOrder.user_id,
-              type: `order_${status}`
+              type: notificationType,
+              read: false,
+              metadata: { order_status: status }
             });
         }
       } catch (notifError) {
-        console.error('Notification error:', notifError);
       }
 
     } catch (error) {
-      console.error("Error updating order:", error);
       setErrorMsg('Failed to update order status: ' + (error.message || error));
       setOrderSoundType('error');
       setPlayOrderSound(true);
@@ -576,7 +574,6 @@ const AdminDashboard = () => {
         setErrorMsg('Failed to create order. Please try again.');
       }
     } catch (error) {
-      console.error('Error creating order:', error);
       setErrorMsg('Failed to create order. Please try again.');
     } finally {
       setIsLoading(false);

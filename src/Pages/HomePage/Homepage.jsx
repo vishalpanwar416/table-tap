@@ -194,7 +194,6 @@ const HomePage = memo(() => {
   // Initialize data when restaurantId changes
   useEffect(() => {
     if (restaurantId && restaurantId !== currentRestaurantId) {
-      console.log('Restaurant changed in Homepage, initializing data for:', restaurantId);
       initializeData(restaurantId);
     }
   }, [restaurantId, currentRestaurantId, initializeData]);

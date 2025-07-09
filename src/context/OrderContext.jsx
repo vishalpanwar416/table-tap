@@ -13,7 +13,6 @@ import {
 
 // Create a dummy notification service function if you don't have it yet
 const createNotification = async (data) => {
-  console.log("Notification created:", data);
   // Implement the actual notification creation when ready
 };
 
@@ -40,7 +39,6 @@ export const OrderProvider = ({ children }) => {
       restaurantError = restaurantContext.error;
     }
   } catch (err) {
-    console.warn('Restaurant context not available:', err);
     // Continue without restaurant context - this is normal for admin pages
   }
   
@@ -60,7 +58,6 @@ export const OrderProvider = ({ children }) => {
       setUserOrders(orders);
       setError(null);
     } catch (err) {
-      console.error('Error fetching orders:', err);
       setError('Failed to load orders');
     } finally {
       setLoading(false);
@@ -100,11 +97,9 @@ export const OrderProvider = ({ children }) => {
         user_id: user?.id || null,
       };
 
-      console.log('Placing order with data:', orderWithRestaurant);
       const result = await createOrder(orderWithRestaurant);
       return result;
     } catch (error) {
-      console.error('Error placing order:', error);
       throw error;
     }
   }, [restaurant, restaurantLoading, restaurantError, user?.id]);
@@ -127,7 +122,6 @@ export const OrderProvider = ({ children }) => {
       
       return updatedOrder;
     } catch (err) {
-      console.error('Error updating payment status:', err);
       throw err;
     }
   };
@@ -135,12 +129,10 @@ export const OrderProvider = ({ children }) => {
   // Subscribe to order status updates
   const subscribeToOrderStatus = (orderId) => {
     if (!orderId) {
-      console.warn('No order ID provided for subscription');
       return null;
     }
 
     const subscription = subscribeToOrderUpdates(orderId, (updatedOrder) => {
-      console.log('Order status updated:', updatedOrder);
       
       // Update order in local state
       setUserOrders(prev => 
@@ -179,7 +171,6 @@ export const OrderProvider = ({ children }) => {
       
       return order;
     } catch (err) {
-      console.error('Error fetching order details:', err);
       setError('Failed to load order details');
       throw err;
     } finally {

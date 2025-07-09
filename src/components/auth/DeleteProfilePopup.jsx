@@ -53,7 +53,6 @@ const DeleteProfilePopup = ({ isOpen, onClose }) => {
         await supabase.storage
           .from('avatars')
           .remove([filePath])
-          .catch(console.warn);
         toast('Avatar delete attempted');
       }
 
@@ -71,14 +70,12 @@ const DeleteProfilePopup = ({ isOpen, onClose }) => {
       const { error: signOutError } = await supabase.auth.signOut();
       if (signOutError) {
         toast.error('Sign out error');
-        console.warn('Sign out error:', signOutError);
       }
       toast('Signed out');
 
       toast.success('Your profile has been deleted successfully.');
       navigate('/login');
     } catch (error) {
-      console.error('Delete profile error:', error);
       toast.error(error.message || 'Failed to delete account. Please try again.');
     } finally {
       setIsDeleting(false);

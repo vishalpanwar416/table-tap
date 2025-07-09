@@ -92,7 +92,6 @@ const QRManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
           : restaurant.tables;
         setTables(Array.isArray(parsedTables) ? parsedTables : []);
       } catch (error) {
-        console.error('Error parsing tables JSON:', error);
         setTables([]);
       }
     } else {
@@ -121,7 +120,6 @@ const QRManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching table orders:', error);
         return;
       }
 
@@ -139,7 +137,6 @@ const QRManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
 
       setTableOrders(ordersByTable);
     } catch (error) {
-      console.error('Error fetching table orders:', error);
     }
   };
 
@@ -226,7 +223,6 @@ const QRManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
         .single();
 
       if (error) {
-        console.error('Error saving tables:', error);
         setErrorMsg('Failed to save tables data');
         return false;
       }
@@ -236,7 +232,6 @@ const QRManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
       return true;
 
     } catch (err) {
-      console.error('Unexpected error saving tables:', err);
       setErrorMsg('Failed to save tables data');
       return false;
     } finally {

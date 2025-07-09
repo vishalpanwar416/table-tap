@@ -17,7 +17,6 @@ const OrderConfirmationPage = () => {
       try {
         const orderId = location.state?.orderId;
         if (!orderId) {
-          console.error('No order ID found in location state');
           return navigate('/');
         }
 
@@ -33,7 +32,6 @@ const OrderConfirmationPage = () => {
         // Auto-redirect after 8 seconds
         setTimeout(() => navigate('/my-orders'), 8000);
       } catch (err) {
-        console.error('Error initializing order:', err);
         navigate('/');
       } finally {
         setLoading(false);
@@ -52,7 +50,6 @@ const OrderConfirmationPage = () => {
         table: 'orders',
         filter: `id=eq.${orderId}`
       }, (payload) => {
-        console.log('Order updated:', payload.new);
         setOrderDetails(payload.new);
       })
       .subscribe();

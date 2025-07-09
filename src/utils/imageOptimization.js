@@ -82,7 +82,6 @@ export const optimizeImageForUpload = async (file, options = {}) => {
               lastModified: Date.now()
             });
 
-            console.log(`Image optimized: ${file.size} -> ${optimizedFile.size} bytes`);
             resolve(optimizedFile);
           },
           'image/webp',
@@ -129,7 +128,6 @@ export const createImageVariants = async (file) => {
       
       variants[size.suffix] = optimized;
     } catch (error) {
-      console.error(`Failed to create ${size.suffix} variant:`, error);
     }
   }
 
@@ -433,3 +431,62 @@ export const useImageUpload = () => {
     progress
   };
 }; 
+
+// Optimize an image file for profile avatars (resize and compress)
+// Usage: optimizeProfileImage(file, { maxSize: 256, quality: 0.7 })
+export async function optimizeProfileImage(file, { maxSize = 256, quality = 0.7 } = {}) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new window.Image();
+      img.onload = () => {
+        // Calculate new size
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > maxSize) {
+            height = Math.round((height * maxSize) / width);
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width = Math.round((width * maxSize) / height);
+            height = maxSize;
+          }
+        }
+        // Draw to canvas
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        // Compress to JPEG (or PNG if transparent)
+        let dataUrl;
+        if (file.type === 'image/png' && hasAlpha(img)) {
+          dataUrl = canvas.toDataURL('image/png', quality);
+        } else {
+          dataUrl = canvas.toDataURL('image/jpeg', quality);
+        }
+        resolve(dataUrl);
+      };
+      img.onerror = reject;
+      img.src = event.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// Helper: check if image has alpha channel (transparency)
+function hasAlpha(img) {
+  const canvas = document.createElement('canvas');
+  canvas.width = img.width;
+  canvas.height = img.height;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0);
+  const data = ctx.getImageData(0, 0, img.width, img.height).data;
+  for (let i = 3; i < data.length; i += 4) {
+    if (data[i] < 255) return true;
+  }
+  return false;
+} 

@@ -5,7 +5,6 @@ import { createNotification } from './notificationService';
 // Create a new order
 export const createOrder = async (orderData) => {
   try {
-    console.log('Creating order with data:', orderData);
     
     // Generate order number
     const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
@@ -44,7 +43,6 @@ export const createOrder = async (orderData) => {
       updated_at: new Date().toISOString()
     };
 
-    console.log('Processed order data:', order);
 
     const { data, error } = await supabase
       .from('orders')
@@ -53,23 +51,20 @@ export const createOrder = async (orderData) => {
       .single();
 
     if (error) {
-      console.error('Supabase error:', error);
       throw error;
     }
     
-    console.log('Order created successfully:', data);
     
     // Create manager notification for new order
     await createManagerOrderNotification(data);
     
     return data;
   } catch (error) {
-    console.error('Error creating order:', error);
     throw error;
   }
 };
 
-// Helper function to create manager notification for new orders
+// Helper function to create admin notification for new orders
 const createManagerOrderNotification = async (order) => {
   try {
     const { error } = await supabase
@@ -77,15 +72,14 @@ const createManagerOrderNotification = async (order) => {
       .insert([{
         title: 'New Order',
         message: `New order #${order.id} received`,
-        type: 'order',
-        is_manager_notification: true,
+        type: 'order_received',
+        is_admin_notification: true,
         read: false,
-        data: order
+        metadata: { order: order }
       }]);
 
     if (error) throw error;
   } catch (error) {
-    console.error('Error creating manager notification:', error);
   }
 };
 
@@ -101,7 +95,6 @@ export const getUserOrders = async (userId) => {
     if (error) throw error;
     return data || [];
   } catch (error) {
-    console.error('Error fetching user orders:', error);
     throw error;
   }
 };
@@ -118,7 +111,6 @@ export const getRestaurantOrders = async (restaurantId) => {
     if (error) throw error;
     return data || [];
   } catch (error) {
-    console.error('Error fetching restaurant orders:', error);
     throw error;
   }
 };
@@ -181,10 +173,8 @@ export const updateOrderStatus = async (orderId, status) => {
     // Create notification for user about status update
     await createOrderStatusNotification(data);
     
-    console.log(`Order ${orderId} status updated to ${status} successfully`);
     return data;
   } catch (error) {
-    console.error('Error updating order status:', error);
     throw error;
   }
 };
@@ -195,43 +185,49 @@ const createOrderStatusNotification = async (order) => {
     // Skip if no user_id
     if (!order.user_id) return;
     
-    let title, message;
+    let title, message, type;
     
     switch (order.status) {
-      case 'preparing':
+      case 'confirmed':
         title = 'Order Accepted';
+        message = `Your order #${order.id.slice(0, 8)} has been accepted`;
+        type = 'order_accepted';
+        break;
+      case 'preparing':
+        title = 'Order Preparing';
         message = `Your order #${order.id.slice(0, 8)} is now being prepared`;
+        type = 'order_preparing';
         break;
       case 'ready':
         title = 'Order Ready';
         message = `Your order #${order.id.slice(0, 8)} is ready for pickup/delivery`;
-        break;
-      case 'delivered':
-        title = 'Order Delivered';
-        message = `Your order #${order.id.slice(0, 8)} has been delivered`;
+        type = 'order_ready';
         break;
       case 'rejected':
         title = 'Order Rejected';
         message = `Your order #${order.id.slice(0, 8)} has been rejected`;
+        type = 'order_rejected';
         break;
       case 'completed':
         title = 'Order Completed';
         message = `Your order #${order.id.slice(0, 8)} has been completed`;
+        type = 'order_ready'; // Using order_ready for completed orders
         break;
       default:
         title = `Order ${order.status}`;
         message = `Your order #${order.id.slice(0, 8)} status: ${order.status}`;
+        type = 'order_received';
     }
     
     await createNotification({
       title,
       message,
-      type: `order_${order.status}`,
+      type,
       order_id: order.id,
-      user_id: order.user_id
+      user_id: order.user_id,
+      metadata: { order_status: order.status }
     });
   } catch (error) {
-    console.error('Error creating order status notification:', error);
   }
 };
 
@@ -247,7 +243,6 @@ export const getOrderById = async (orderId) => {
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error fetching order:', error);
     throw error;
   }
 };
@@ -299,7 +294,6 @@ export const getOrdersByStatus = async (status, restaurantId = null) => {
     if (error) throw error;
     return data || [];
   } catch (error) {
-    console.error('Error fetching orders by status:', error);
     throw error;
   }
 };
@@ -321,7 +315,6 @@ export const cancelOrder = async (orderId, reason) => {
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error cancelling order:', error);
     throw error;
   }
 };
@@ -358,7 +351,6 @@ export const updatePaymentStatus = async (orderId, paymentData) => {
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error updating payment status:', error);
     throw error;
   }
 };

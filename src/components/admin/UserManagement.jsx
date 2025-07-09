@@ -62,12 +62,10 @@ const StaffManagement = () => {
       
       // Check if userRestaurantId is available
       if (!userRestaurantId) {
-        console.error('No restaurant ID available');
         setError('No restaurant assigned. Please contact an administrator.');
         return;
       }
       
-      console.log('Fetching staff for restaurant ID:', userRestaurantId);
       
       // Try a simpler query first to test access
       const { data: simpleData, error: simpleError } = await supabase
@@ -77,7 +75,6 @@ const StaffManagement = () => {
         .limit(1);
       
       if (simpleError) {
-        console.error('Simple query failed:', simpleError);
         throw new Error(`Database access denied: ${simpleError.message}`);
       }
       
@@ -103,14 +100,11 @@ const StaffManagement = () => {
         .order('id', { ascending: false }); // Changed from created_at to id
 
       if (error) {
-        console.error('Full query error:', error);
         throw error;
       }
       
-      console.log('Successfully fetched staff members:', data);
       setStaff(data || []);
     } catch (error) {
-      console.error('Error fetching staff:', error);
       
       // Provide more specific error messages
       if (error.message.includes('permission')) {
@@ -164,7 +158,6 @@ const StaffManagement = () => {
       setIsCreating(false);
       fetchStaff();
     } catch (error) {
-      console.error('Error adding staff:', error);
       setError(error.message || 'Failed to add staff member');
     } finally {
       setLoading(false);
@@ -193,7 +186,6 @@ const StaffManagement = () => {
       setSuccess('Staff member removed successfully');
       fetchStaff();
     } catch (error) {
-      console.error('Error removing staff:', error);
       setError('Failed to remove staff member');
     }
   };
@@ -231,7 +223,6 @@ const StaffManagement = () => {
       setSuccess('Staff member connected to user account successfully');
       fetchStaff();
     } catch (error) {
-      console.error('Error connecting staff:', error);
       setError('Failed to connect staff member to user account');
     }
   };
@@ -291,7 +282,6 @@ const StaffManagement = () => {
       setEditingStaff(null);
       fetchStaff();
     } catch (error) {
-      console.error('Error updating staff:', error);
       setError(error.message || 'Failed to update staff member');
     } finally {
       setLoading(false);
@@ -307,7 +297,7 @@ const StaffManagement = () => {
 
   // Also add a debug section to show current state
   useEffect(() => {
-    console.log('Current state:', {
+    console.log({
       userRestaurantId,
       userRole,
       isAdmin: isAdmin(),
