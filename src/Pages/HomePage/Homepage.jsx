@@ -15,6 +15,7 @@ import { useFoodData } from '../../context/FoodDataContext';
 import FloatingCartButton from '../../components/customer/FloatingCartButton';
 import Tags from '../../components/customer/Tags';
 import { useRestaurant } from '../../Pages/Restaurantselection/RestaurantContext';
+import { useScrollLock, useMultiScrollLock } from '../../hooks/useScrollLock';
 
 // Enhanced lazy loading with preloading hints
 const Maincarosel = lazy(() => import('../../components/customer/Maincarosel'), {
@@ -246,6 +247,13 @@ const HomePage = memo(() => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [menuOpen]);
 
+  // Lock scroll when any sidebar is open
+  useMultiScrollLock({
+    cart: isCartOpen,
+    sidebar: isSidebarOpen,
+    notifications: isNotificationOpen
+  });
+
   // Error boundary with retry mechanism
   if (error) {
     return (
@@ -446,7 +454,12 @@ const HomePage = memo(() => {
           </motion.div>
         </motion.div>
         
-        <FloatingCartButton toggleCart={toggles.cart} />
+        <FloatingCartButton 
+          toggleCart={toggles.cart}
+          isCartOpen={isCartOpen}
+          isSidebarOpen={isSidebarOpen}
+          isNotificationOpen={isNotificationOpen}
+        />
       </div>
     </div>
   );

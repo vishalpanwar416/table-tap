@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { X, Heart, ShoppingBag, Minus, Plus } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { X, Heart, ShoppingBag, Minus, Plus, Star, Clock, Flame } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../../config/CartContent';
 import { useLikes } from '../../config/LikesContent';
@@ -9,6 +9,8 @@ import { useMotionValue, useTransform } from 'framer-motion';
 const OrderCard = ({ isOpen, onClose, item }) => {
   const { cartItems, addToCart, updateQuantity, removeItem } = useCart();
   const { toggleLike, likedItems } = useLikes();
+  const [isLikedAnimating, setIsLikedAnimating] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const isLiked = item ? likedItems.some(likedItem => likedItem.id === item.id) : false;
   const cartItem = item ? cartItems.find(i => i.id === item.id) : null;
@@ -46,6 +48,13 @@ const OrderCard = ({ isOpen, onClose, item }) => {
     }
   };
 
+  const handleLikeClick = (e) => {
+    e.stopPropagation();
+    setIsLikedAnimating(true);
+    toggleLike(item);
+    setTimeout(() => setIsLikedAnimating(false), 600);
+  };
+
   if (!item) return null;
 
   return (
@@ -55,151 +64,327 @@ const OrderCard = ({ isOpen, onClose, item }) => {
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.5 }}
+            animate={{ opacity: 0.7 }}
             exit={{ opacity: 0 }}
             style={{ opacity: backdropOpacity }}
-            className="fixed inset-0 bg-black z-40"
+            className="fixed inset-0 bg-gradient-to-br from-black/80 via-black/60 to-black/40 backdrop-blur-sm z-40"
             onClick={onClose}
           />
           
           {/* Order Card */}
           <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
+            initial={{ y: '100%', scale: 0.95, opacity: 0 }}
+            animate={{ y: 0, scale: 1, opacity: 1 }}
+            exit={{ y: '100%', scale: 0.95, opacity: 0 }}
             transition={{ 
-              type: 'tween', 
-              duration: 0.3, 
-              ease: [0.25, 0.46, 0.45, 0.94] // Custom cubic-bezier for smooth animation
+              type: 'spring', 
+              duration: 0.5, 
+              bounce: 0.3,
+              ease: [0.25, 0.46, 0.45, 0.94]
             }}
-            className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 shadow-xl overflow-hidden max-h-[85vh] max-w-[450px] md:max-w-4xl mx-auto"
+            className="fixed bottom-0 left-0 right-0 bg-gradient-to-br from-white via-gray-50 to-white rounded-t-[32px] z-50 shadow-2xl overflow-hidden max-h-[90vh] max-w-[450px] md:max-w-4xl mx-auto border border-gray-100"
             drag="y"
-            dragConstraints={{ top: 0, bottom: 0 }}
+            dragConstraints={{ top: 0, bottom: 300 }}
             dragElastic={0.3}
             style={{ y }}
             onDragEnd={(event, info) => {
-              if (info.point.y > 150 || info.velocity.y > 800) { // More dynamic threshold
+              // Only close if dragged down (positive y values)
+              if (info.offset.y > 150 || (info.velocity.y > 800 && info.offset.y > 0)) {
                 onClose();
               }
             }}
           >
             {/* Close button */}
-            <button
+            <motion.button
               onClick={onClose}
-              className="absolute top-4 right-4 bg-white rounded-full p-2 shadow-md z-10"
+              className="absolute top-4 right-4 bg-white/90 backdrop-blur-md rounded-full p-2.5 shadow-lg z-10 border border-gray-200/50"
+              whileHover={{ scale: 1.1, rotate: 90 }}
+              whileTap={{ scale: 0.9 }}
+              transition={{ duration: 0.2 }}
             >
-              <X className="h-6 w-6 text-gray-800" />
-            </button>
+              <X className="h-5 w-5 text-gray-700" />
+            </motion.button>
             
             {/* Image and like button */}
-            <div className="relative w-full h-56 md:h-72">
-              <img
+            <div className="relative w-full h-64 md:h-80 overflow-hidden">
+              {/* Loading skeleton */}
+              {!imageLoaded && (
+                <motion.div 
+                  className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse"
+                  initial={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                />
+              )}
+              
+              <motion.img
                 src={item.image}
                 alt={item.name}
                 className="w-full h-full object-cover"
+                initial={{ scale: 1.1 }}
+                animate={{ scale: imageLoaded ? 1 : 1.1 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                onLoad={() => setImageLoaded(true)}
               />
-              <button
-                className="absolute top-4 left-4 bg-white bg-opacity-70 rounded-full p-1.5 shadow-md hover:bg-opacity-100 transition-colors"
-                onClick={() => toggleLike(item)}
+              
+              {/* Gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+              
+              {/* Badge for popular items */}
+              {item.tags?.includes('popular') && (
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ delay: 0.3, duration: 0.5, type: "spring" }}
+                  className="absolute top-4 right-16 bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-lg"
+                >
+                  <Flame className="h-3 w-3" />
+                  Popular
+                </motion.div>
+              )}
+              
+              {/* Rating badge */}
+              {item.rating && (
+                <motion.div
+                  initial={{ scale: 0, rotate: 180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ delay: 0.4, duration: 0.5, type: "spring" }}
+                  className="absolute top-4 right-4 bg-white/90 backdrop-blur-md text-gray-800 px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-lg border border-gray-200/50"
+                >
+                  <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                  {item.rating}
+                </motion.div>
+              )}
+              
+              {/* Enhanced like button */}
+              <motion.button
+                className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-md rounded-full p-2.5 shadow-lg z-10 border border-gray-200/50"
+                whileHover={{ scale: 1.15, y: -2 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={handleLikeClick}
               >
-                <Heart
-                  className={`h-6 w-6 ${
-                    isLiked ? "text-red-500 fill-red-500" : "text-gray-500"
-                  }`}
-                />
-              </button>
+                <motion.div
+                  animate={isLikedAnimating ? { 
+                    scale: [1, 1.4, 1],
+                    rotate: [0, 15, -15, 0]
+                  } : {}}
+                  transition={{ duration: 0.6 }}
+                >
+                  <Heart
+                    className={`h-6 w-6 transition-all duration-300 ${
+                      isLiked ? "text-red-500 fill-red-500 drop-shadow-lg" : "text-gray-600 hover:text-red-400"
+                    }`}
+                  />
+                </motion.div>
+              </motion.button>
             </div>
             
             {/* Content */}
-            <div className="p-6 pb-24 overflow-y-auto " style={{ maxHeight: 'calc(85vh - 224px)' }}>
-              <div className="flex justify-between items-center mb-2">
-                <h2 className="text-2xl font-bold text-gray-900">{item.name}</h2>
-                <PriceDisplay item={item} className="text-xl font-bold text-black" />
-              </div>
-              <p className="text-gray-600 mb-6">{item.description || "No description available."}</p>
+            <div className="p-6 pb-28 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 320px)' }}>
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.5 }}
+                className="flex justify-between items-start mb-3"
+              >
+                <div className="flex-1">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-1 leading-tight">{item.name}</h2>
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    {item.preparationTime && (
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        <span>{item.preparationTime}</span>
+                      </div>
+                    )}
+                    {item.category && (
+                      <span className="px-2 py-0.5 bg-gray-100 rounded-full text-xs capitalize">
+                        {item.category}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.3, duration: 0.4 }}
+                >
+                  <PriceDisplay item={item} className="text-2xl font-bold text-black" />
+                </motion.div>
+              </motion.div>
+              
+              <motion.p 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
+                className="text-gray-600 mb-6 leading-relaxed"
+              >
+                {item.description || "No description available."}
+              </motion.p>
               
               {/* Order Details Section */}
-              <div className="bg-gray-50 rounded-xl p-4 mb-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">Order Details</h3>
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.5 }}
+                className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-5 mb-6 border border-gray-200/50"
+              >
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <div className="w-1 h-5 bg-gradient-to-b from-orange-500 to-red-500 rounded-full"></div>
+                  Order Details
+                </h3>
                 
-                {/* Price removed from here since it's now shown next to the name */}
-                
-                {item.preparationTime && (
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-gray-700">Preparation Time</span>
-                    <span className="text-gray-900">{item.preparationTime}</span>
-                  </div>
-                )}
-                
-                {item.category && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-700">Category</span>
-                    <span className="text-gray-900 capitalize">{item.category}</span>
-                  </div>
-                )}
-              </div>
+                <div className="space-y-3">
+                  {item.preparationTime && (
+                    <div className="flex justify-between items-center p-3 bg-white/70 rounded-xl">
+                      <span className="text-gray-700 font-medium">Preparation Time</span>
+                      <span className="text-gray-900 font-semibold">{item.preparationTime}</span>
+                    </div>
+                  )}
+                  
+                  {item.category && (
+                    <div className="flex justify-between items-center p-3 bg-white/70 rounded-xl">
+                      <span className="text-gray-700 font-medium">Category</span>
+                      <span className="text-gray-900 font-semibold capitalize">{item.category}</span>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
               
               {/* Nutrition facts if available */}
               {item.nutritionFacts && (
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">Nutrition Facts</h3>
-                  <div className="flex flex-wrap gap-3">
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5, duration: 0.5 }}
+                  className="mb-6"
+                >
+                  <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <div className="w-1 h-5 bg-gradient-to-b from-green-500 to-blue-500 rounded-full"></div>
+                    Nutrition Facts
+                  </h3>
+                  <div className="grid grid-cols-2 gap-3">
                     {Object.entries(item.nutritionFacts).map(([key, value]) => (
-                      <div key={key} className="bg-gray-100 rounded-lg px-3 py-1">
-                        <span className="text-gray-500 text-sm capitalize">{key}:</span>
-                        <span className="text-gray-800 text-sm ml-1">{value}</span>
-                      </div>
+                      <motion.div 
+                        key={key} 
+                        className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl px-4 py-3 border border-green-200/50"
+                        whileHover={{ scale: 1.02 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <span className="text-gray-600 text-sm capitalize font-medium">{key}:</span>
+                        <span className="text-gray-800 text-sm ml-1 font-semibold">{value}</span>
+                      </motion.div>
                     ))}
                   </div>
-                </div>
+                </motion.div>
               )}
               
               {/* Tags if available */}
               {item.tags && item.tags.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">Details</h3>
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6, duration: 0.5 }}
+                  className="mb-6"
+                >
+                  <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <div className="w-1 h-5 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full"></div>
+                    Details
+                  </h3>
                   <div className="flex flex-wrap gap-2">
-                    {item.tags.map(tag => (
-                      <span 
+                    {item.tags.map((tag, index) => (
+                      <motion.span 
                         key={tag} 
-                        className="bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded-full"
+                        className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 text-xs font-medium px-3 py-1.5 rounded-full border border-purple-200/50"
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ delay: 0.7 + index * 0.1, duration: 0.3 }}
+                        whileHover={{ scale: 1.05 }}
                       >
                         {tag}
-                      </span>
+                      </motion.span>
                     ))}
                   </div>
-                </div>
+                </motion.div>
               )}
             </div>
             
             {/* Add to cart button (fixed at bottom) */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 flex justify-between items-center">
-              {quantity > 0 ? (
-                <div className="flex items-center bg-black rounded-full w-full justify-between px-6 py-3">
-                  <button
-                    onClick={handleDecrementQuantity}
-                    className="bg-white rounded-full h-8 w-8 flex items-center justify-center text-black"
+            <motion.div 
+              className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white via-white/95 to-white/90 backdrop-blur-md border-t border-gray-200/50"
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.7, duration: 0.5 }}
+            >
+              <AnimatePresence mode="wait">
+                {quantity > 0 ? (
+                  <motion.div 
+                    key="quantity-controls"
+                    className="flex items-center bg-gradient-to-r from-black via-gray-900 to-black text-white rounded-2xl w-full justify-between px-8 py-4 shadow-2xl"
+                    initial={{ scale: 0.8, opacity: 0, y: 20 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.8, opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3, type: "spring" }}
                   >
-                    <Minus className="h-4 w-4" />
-                  </button>
-                  <span className="text-white text-lg font-medium">{quantity}</span>
-                  <button
+                    <motion.button
+                      onClick={handleDecrementQuantity}
+                      className="bg-white/20 backdrop-blur-sm rounded-full h-10 w-10 flex items-center justify-center text-white border border-white/30"
+                      whileHover={{ scale: 1.15, backgroundColor: "rgba(255,255,255,0.3)" }}
+                      whileTap={{ scale: 0.9 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <Minus className="h-5 w-5" />
+                    </motion.button>
+                    <motion.span 
+                      className="text-white text-xl font-bold"
+                      key={quantity}
+                      initial={{ scale: 1.3, y: -10 }}
+                      animate={{ scale: 1, y: 0 }}
+                      transition={{ duration: 0.3, type: "spring" }}
+                    >
+                      {quantity}
+                    </motion.span>
+                    <motion.button
+                      onClick={handleAddToCart}
+                      className="bg-white/20 backdrop-blur-sm rounded-full h-10 w-10 flex items-center justify-center text-white border border-white/30"
+                      whileHover={{ scale: 1.15, backgroundColor: "rgba(255,255,255,0.3)" }}
+                      whileTap={{ scale: 0.9 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <Plus className="h-5 w-5" />
+                    </motion.button>
+                  </motion.div>
+                ) : (
+                  <motion.button
+                    key="add-button"
                     onClick={handleAddToCart}
-                    className="bg-white rounded-full h-8 w-8 flex items-center justify-center text-black"
+                    className="bg-gradient-to-r from-black via-gray-900 to-black hover:from-gray-900 hover:via-black hover:to-gray-900 text-white rounded-2xl w-full py-4 flex items-center justify-center gap-3 text-lg font-semibold shadow-2xl transition-all duration-300 group"
+                    whileHover={{ 
+                      scale: 1.02,
+                      boxShadow: "0 20px 40px rgba(0,0,0,0.3)"
+                    }}
+                    whileTap={{ scale: 0.98 }}
+                    initial={{ scale: 0.8, opacity: 0, y: 20 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.8, opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3, type: "spring" }}
                   >
-                    <Plus className="h-4 w-4" />
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={handleAddToCart}
-                  className="bg-black hover:bg-gray-900 text-white rounded-full w-full py-3 flex items-center justify-center gap-2 text-lg font-medium transition-colors"
-                >
-                  <ShoppingBag className="h-5 w-5" />
-                  <span>Add to Cart</span>
-                </button>
-              )}
-            </div>
+                    <motion.div
+                      whileHover={{ rotate: 360 }}
+                      transition={{ duration: 0.6 }}
+                    >
+                      <ShoppingBag className="h-6 w-6" />
+                    </motion.div>
+                    <span>Add to Cart</span>
+                    <motion.div
+                      className="w-2 h-2 bg-white rounded-full opacity-0 group-hover:opacity-100"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.1, duration: 0.2 }}
+                    />
+                  </motion.button>
+                )}
+              </AnimatePresence>
+            </motion.div>
           </motion.div>
         </>
       )}

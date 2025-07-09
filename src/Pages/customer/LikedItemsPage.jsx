@@ -11,6 +11,7 @@ import { useLikes } from '../../config/LikesContent';
 import NotificationSidebar from '../../components/customer/NotificationSlidebar';
 import OrderCard from '../../components/customer/itemCard';
 import FoodImageWithFallback from '../../components/customer/FoodImageWithFallback';
+import { useMultiScrollLock } from '../../hooks/useScrollLock';
 
 // Page transition variants
 const pageVariants = {
@@ -287,6 +288,13 @@ const LikedItemsPage = () => {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isOrderCardOpen, setIsOrderCardOpen] = useState(false);
+
+  // Lock scroll when any sidebar is open
+  useMultiScrollLock({
+    cart: isCartOpen,
+    sidebar: isSidebarOpen,
+    notifications: isNotificationOpen
+  });
 
   // Real-time search handler
   const handleSearch = useCallback((query) => {

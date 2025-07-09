@@ -5,6 +5,7 @@ import { useCart } from '../../config/CartContent';
 import Header from './Header';
 import LogoutPopup from '../auth/LogoutPopup';
 import FloatingCartButton from './FloatingCartButton';
+import { useMultiScrollLock } from '../../hooks/useScrollLock';
 
 // Lazy load heavy components
 const Sidebar = lazy(() => import('./Slidebar'));
@@ -149,6 +150,13 @@ const OptimizedPageWrapper = memo(({
     return <PageSkeleton />;
   }
 
+  // Lock scroll when any sidebar is open
+  useMultiScrollLock({
+    cart: isCartOpen,
+    sidebar: isSidebarOpen,
+    notifications: isNotificationOpen
+  });
+
   return (
     <div className="flex justify-center items-start min-h-screen bg-black p-4">
       <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
@@ -228,7 +236,12 @@ const OptimizedPageWrapper = memo(({
           </motion.div>
         </motion.div>
         
-        <FloatingCartButton toggleCart={toggles.cart} />
+        <FloatingCartButton 
+          toggleCart={toggles.cart}
+          isCartOpen={isCartOpen}
+          isSidebarOpen={isSidebarOpen}
+          isNotificationOpen={isNotificationOpen}
+        />
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import { useRestaurant } from "../../Pages/Restaurantselection/RestaurantContext
 import { fetchBestSellerItems } from "../../api/foodData";
 import { useNavigate } from 'react-router-dom';
 import FoodImageWithFallback from '../../components/customer/FoodImageWithFallback';
+import { useScrollLock, useMultiScrollLock } from '../../hooks/useScrollLock';
 
 // Lazy load components for better performance
 const Header = lazy(() => import('../../components/customer/Header'));
@@ -647,6 +648,13 @@ const BestSellerPage = memo(() => {
     );
   }
 
+  // Lock scroll when cart is open
+  useMultiScrollLock({
+    cart: isCartOpen,
+    sidebar: isSidebarOpen,
+    notifications: isNotificationOpen
+  });
+
   return (
     <motion.div 
       className="flex justify-center items-start min-h-screen bg-black p-4"
@@ -841,7 +849,12 @@ const BestSellerPage = memo(() => {
 
       {/* Floating Cart Button */}
       <Suspense fallback={null}>
-        <FloatingCartButton toggleCart={toggles.cart} />
+        <FloatingCartButton 
+          toggleCart={toggles.cart}
+          isCartOpen={isCartOpen}
+          isSidebarOpen={isSidebarOpen}
+          isNotificationOpen={isNotificationOpen}
+        />
       </Suspense>
 
       {/* Order Card */}

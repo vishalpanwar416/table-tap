@@ -4,8 +4,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../../config/CartContent';
 import { useNavigate } from 'react-router-dom';
 
-const FloatingCartButton = ({ toggleCart }) => {
-  const { cartItems, calculateDiscountedPrice } = useCart();
+const FloatingCartButton = ({ 
+  toggleCart, 
+  isCartOpen = false, 
+  isSidebarOpen = false, 
+  isNotificationOpen = false 
+}) => {
+  const { cartItems, calculateEffectivePrice } = useCart();
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
   const [showAddedAnimation, setShowAddedAnimation] = useState(false);
@@ -27,7 +32,7 @@ const FloatingCartButton = ({ toggleCart }) => {
       // Calculate discount amount
       const effectivePrice = item.effectivePrice !== undefined ? 
         item.effectivePrice : 
-        calculateDiscountedPrice(item);
+        calculateEffectivePrice(item);
       
       const itemDiscount = (item.price - effectivePrice) * item.quantity;
       discountAmount += itemDiscount;
@@ -63,7 +68,7 @@ const FloatingCartButton = ({ toggleCart }) => {
       sgst,
       finalTotal
     };
-  }, [cartItems, calculateDiscountedPrice]);
+  }, [cartItems, calculateEffectivePrice]);
   
   // Memoize calculations to prevent unnecessary recalculations
   const { totalQuantity, totalPrice, recentItems, priceDetails } = useMemo(() => {
@@ -146,8 +151,11 @@ const FloatingCartButton = ({ toggleCart }) => {
     navigate('/order-confirmation');
   }, [navigate]);
 
-  // Only continue rendering if there are items in the cart
-  if (cartItems.length === 0) {
+  // Check if any sidebar is open
+  const isAnySidebarOpen = isCartOpen || isSidebarOpen || isNotificationOpen;
+  
+  // Only continue rendering if there are items in the cart AND no sidebars are open
+  if (cartItems.length === 0 || isAnySidebarOpen) {
     return null;
   }
 

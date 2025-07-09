@@ -8,7 +8,7 @@ import { getStoredRestaurantSelection } from '../../utils/restaurantCheck'; // I
 
 const OrderConfirmation = () => {
   const navigate = useNavigate();
-  const { cartItems, removeItem, updateQuantity, calculateDiscountedPrice } = useCart();
+  const { cartItems, removeItem, updateQuantity, calculateEffectivePrice } = useCart();
   const { restaurant } = useRestaurant(); // Get restaurant data including tables
   const [tableNumber, setTableNumber] = useState('');
   const [specialInstructions, setSpecialInstructions] = useState('');
@@ -87,7 +87,7 @@ const OrderConfirmation = () => {
       
       const effectivePrice = item.effectivePrice !== undefined ? 
         item.effectivePrice : 
-        calculateDiscountedPrice(item);
+        calculateEffectivePrice(item);
       
       const itemDiscount = (item.price - effectivePrice) * item.quantity;
       discountAmount += itemDiscount;
@@ -337,9 +337,7 @@ const OrderConfirmation = () => {
               const hasDiscount = item.discounttype && item.discountvalue;
               const originalPrice = Number(item.price).toFixed(2);
               
-              const discountedPrice = item.effectivePrice !== undefined ? 
-                Number(item.effectivePrice).toFixed(2) : 
-                Number(calculateDiscountedPrice(item)).toFixed(2);
+              const discountedPrice = item.effectivePrice !== undefined ? Number(item.effectivePrice).toFixed(2) : Number(calculateEffectivePrice(item)).toFixed(2);
               
               const originalTotal = (item.price * item.quantity).toFixed(2);
               const discountedTotal = (Number(discountedPrice) * item.quantity).toFixed(2);

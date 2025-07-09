@@ -8,7 +8,7 @@ import { useRestaurant } from '../Restaurantselection/RestaurantContext';
 const PaymentPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { cartItems, clearCart, calculateDiscountedPrice } = useCart();
+  const { cartItems, clearCart, calculateEffectivePrice } = useCart();
 
   // --- UPDATED: Receive all details from location state ---
   const tableNumber = location.state?.tableNumber;
@@ -46,7 +46,7 @@ const PaymentPage = () => {
       
       const effectivePrice = item.effectivePrice !== undefined ? 
         item.effectivePrice : 
-        calculateDiscountedPrice(item);
+        calculateEffectivePrice(item);
       
       const itemDiscount = (item.price - effectivePrice) * item.quantity;
       discountAmount += itemDiscount;
@@ -412,7 +412,7 @@ const PaymentPage = () => {
                 const isWater = item.name && (item.name.toLowerCase().includes('water') || item.category?.toLowerCase() === 'water');
                 const hasDiscount = item.discounttype && item.discountvalue;
                 const originalTotal = (item.price * item.quantity).toFixed(2);
-                const discountedPrice = item.effectivePrice !== undefined ? Number(item.effectivePrice).toFixed(2) : Number(calculateDiscountedPrice(item)).toFixed(2);
+                const discountedPrice = item.effectivePrice !== undefined ? Number(item.effectivePrice).toFixed(2) : Number(calculateEffectivePrice(item)).toFixed(2);
                 const discountedTotal = (Number(discountedPrice) * item.quantity).toFixed(2);
                    
                 return (

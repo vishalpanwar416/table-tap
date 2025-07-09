@@ -1,258 +1,497 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { supabase } from '../supabase';
+import { useAuth } from './AuthContext';
 import { useRestaurant } from '../Pages/Restaurantselection/RestaurantContext';
 
 const CartContext = createContext();
 
-export function CartProvider({ children, userId, userProfile }) {
+// Validate simplified cart item
+const validateCartItem = (item) => {
+  const required = ['food_item_id', 'restaurant_id', 'quantity'];
+  const missing = required.filter(field => !item[field]);
+  
+  if (missing.length > 0) {
+    throw new Error(`Invalid cart item: missing ${missing.join(', ')}`);
+  }
+  
+  if (typeof item.quantity !== 'number' || item.quantity < 1) {
+    throw new Error('Invalid quantity');
+  }
+  
+  return true;
+};
+
+// Clean up stale cart items (items that no longer exist or are inactive)
+const cleanupStaleCartItems = async (cartItems, restaurantId) => {
+  if (!cartItems.length) return cartItems;
+  
+  try {
+    // Extract food item IDs from cart items (handle both old and new formats)
+    const itemIds = cartItems.map(item => item.food_item_id || item.id);
+    
+    // Check which items still exist and are active
+    const { data: validItems, error } = await supabase
+      .from('fooditems')
+      .select('id, name, price, image, category, discounttype, discountvalue, is_active')
+      .in('id', itemIds)
+      .eq('restaurant_id', restaurantId)
+      .eq('is_active', true);
+    
+    if (error) {
+      console.error('Error checking valid cart items:', error);
+      return cartItems; // Return original if check fails
+    }
+    
+    const validIds = new Set(validItems.map(item => item.id));
+    const cleanedItems = cartItems.filter(item => {
+      const itemId = item.food_item_id || item.id;
+      return validIds.has(itemId);
+    });
+    
+    if (cleanedItems.length !== cartItems.length) {
+      console.log(`Cleaned up ${cartItems.length - cleanedItems.length} stale cart items`);
+    }
+    
+    return cleanedItems;
+  } catch (error) {
+    console.error('Error cleaning up stale cart items:', error);
+    return cartItems;
+  }
+};
+
+export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState(null);
-  const { restaurantId } = useRestaurant(); // Get current restaurant ID
+  const [error, setError] = useState(null);
+  const { user } = useAuth();
+  const { restaurantId } = useRestaurant();
+  
+  // Refs for debouncing and cleanup
+  const saveTimeoutRef = useRef(null);
+  const syncIntervalRef = useRef(null);
+  const isInitializedRef = useRef(false);
+  const prevRestaurantIdRef = useRef();
 
-  // Auto-save to localStorage whenever cart changes
-  useEffect(() => {
-    if (cartItems.length > 0) {
-      const cartData = {
-        items: cartItems,
-        timestamp: Date.now(),
-        userId: userId,
-        restaurantId: restaurantId // Include restaurant ID in cart data
-      };
-      try {
-        localStorage.setItem(`cart_${userId || 'guest'}_${restaurantId}`, JSON.stringify(cartData));
-        console.log("Cart auto-saved to localStorage");
-      } catch (error) {
-        console.warn("Failed to save cart to localStorage:", error);
+  // Generate cart key for localStorage
+  const getCartKey = useCallback(() => {
+    return `cart_${user?.id || 'guest'}_${restaurantId}`;
+  }, [user?.id, restaurantId]);
+
+  // Calculate effective price with discounts
+  const calculateEffectivePrice = useCallback((item) => {
+    if (!item) return 0;
+    
+    let price = item.price || 0;
+    
+    // Apply item discounts
+    if (item.discounttype && item.discountvalue) {
+      if (item.discounttype === 'Percentage') {
+        price = price * (1 - item.discountvalue / 100);
+      } else if (item.discounttype === 'Fixed') {
+        price = Math.max(0, price - item.discountvalue);
       }
     }
-  }, [cartItems, userId, restaurantId]);
+    
+    // Apply user discounts
+    if (item.userDiscount) {
+      price = price * (1 - item.userDiscount / 100);
+    }
+    
+    return Math.round(price * 100) / 100; // Round to 2 decimal places
+  }, []);
 
-  // Load cart from localStorage on mount, user change, or restaurant change
-  useEffect(() => {
-    const loadCartFromStorage = () => {
-      if (!restaurantId) return;
-      
-      try {
-        const savedCart = localStorage.getItem(`cart_${userId || 'guest'}_${restaurantId}`);
-        if (savedCart) {
-          const cartData = JSON.parse(savedCart);
-          // Check if cart is not too old (e.g., 7 days)
-          const isExpired = Date.now() - cartData.timestamp > 7 * 24 * 60 * 60 * 1000;
-          
-          if (!isExpired && cartData.items) {
-            setCartItems(cartData.items);
-            setLastSyncTime(cartData.timestamp);
-            console.log("Cart loaded from localStorage for restaurant:", restaurantId);
-          }
-        } else {
-          // Clear cart when switching to a new restaurant
-          setCartItems([]);
-          setLastSyncTime(null);
-        }
-      } catch (error) {
-        console.warn("Failed to load cart from localStorage:", error);
-        setCartItems([]);
-      }
+  // Simplified cart item structure - only store essential data
+  const createCartItem = useCallback((item) => {
+    return {
+      food_item_id: item.id,
+      restaurant_id: item.restaurant_id,
+      quantity: 1,
+      addedAt: Date.now()
     };
+  }, []);
 
-    loadCartFromStorage();
-  }, [userId, restaurantId]);
+  // Load cart from localStorage with validation
+  const loadCartFromStorage = useCallback(async () => {
+    if (!restaurantId) return;
+    
+    try {
+      const cartKey = getCartKey();
+      const savedCart = localStorage.getItem(cartKey);
+      
+      if (!savedCart) {
+        setCartItems([]);
+        setLastSyncTime(null);
+        return;
+      }
+      
+      const cartData = JSON.parse(savedCart);
+      
+      // Validate cart data structure
+      if (!cartData.items || !Array.isArray(cartData.items)) {
+        throw new Error('Invalid cart data structure');
+      }
+      
+      // Check if cart is expired (7 days)
+      const isExpired = Date.now() - cartData.timestamp > 7 * 24 * 60 * 60 * 1000;
+      
+      if (isExpired) {
+        console.log('Cart expired, clearing...');
+        localStorage.removeItem(cartKey);
+        setCartItems([]);
+        setLastSyncTime(null);
+        return;
+      }
+      
+      // Handle both old and new cart item formats
+      const validItems = [];
+      for (const item of cartData.items) {
+        try {
+          // Check if it's the old format (has 'id') or new format (has 'food_item_id')
+          if (item.food_item_id) {
+            // New format - validate as minimal cart item
+            validateCartItem(item);
+            validItems.push(item);
+          } else if (item.id) {
+            // Old format - convert to new format
+            const convertedItem = {
+              food_item_id: item.id,
+              restaurant_id: item.restaurant_id,
+              quantity: item.quantity || 1,
+              addedAt: item.addedAt || Date.now()
+            };
+            validateCartItem(convertedItem);
+            validItems.push(convertedItem);
+          } else {
+            console.warn('Invalid cart item format:', item);
+          }
+        } catch (validationError) {
+          console.warn('Invalid cart item found:', validationError.message, item);
+        }
+      }
+      
+      // Clean up stale items if user is logged in
+      let finalItems = validItems;
+      if (user) {
+        finalItems = await cleanupStaleCartItems(validItems, restaurantId);
+      }
+      
+      setCartItems(finalItems);
+      setLastSyncTime(cartData.timestamp);
+      setError(null);
+      
+      console.log(`Cart loaded: ${finalItems.length} items for restaurant ${restaurantId}`);
+      
+    } catch (error) {
+      console.error('Failed to load cart from localStorage:', error);
+      setError('Failed to load cart');
+      setCartItems([]);
+      setLastSyncTime(null);
+      
+      // Clear corrupted data
+      try {
+        localStorage.removeItem(getCartKey());
+      } catch (e) {
+        console.warn('Failed to clear corrupted cart data:', e);
+      }
+    }
+  }, [restaurantId, user, getCartKey]);
 
-  // Sync with server (if you have an API endpoint)
-  const syncWithServer = useCallback(async () => {
-    if (!userId || !restaurantId) return;
+  // Save cart to localStorage with error handling
+  const saveCartToStorage = useCallback((items) => {
+    if (!restaurantId) return;
+    
+    try {
+      const cartData = {
+        items,
+        timestamp: Date.now(),
+        userId: user?.id,
+        restaurantId
+      };
+      
+      localStorage.setItem(getCartKey(), JSON.stringify(cartData));
+      setError(null);
+    } catch (error) {
+      console.error('Failed to save cart to localStorage:', error);
+      setError('Failed to save cart');
+      
+      // Handle localStorage quota exceeded
+      if (error.name === 'QuotaExceededError') {
+        // Try to clear old carts and retry
+        try {
+          const keys = Object.keys(localStorage);
+          const oldCartKeys = keys.filter(key => key.startsWith('cart_') && key !== getCartKey());
+          oldCartKeys.forEach(key => localStorage.removeItem(key));
+          localStorage.setItem(getCartKey(), JSON.stringify(cartData));
+          setError(null);
+        } catch (retryError) {
+          console.error('Failed to save cart even after cleanup:', retryError);
+        }
+      }
+    }
+  }, [restaurantId, user?.id, getCartKey]);
 
+  // Save cart to server with minimal data
+  const saveCartToServer = useCallback(async (items) => {
+    if (!user?.id || !restaurantId) return;
+    
+    try {
+      // Convert enriched cart items back to minimal format
+      const minimalCartItems = items.map(item => ({
+        food_item_id: item.id,
+        restaurant_id: item.restaurant_id,
+        quantity: item.quantity,
+        addedAt: item.addedAt
+      }));
+      
+      // First, get current cart items from profile
+      const { data: profile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('cart_items')
+        .eq('id', user.id)
+        .single();
+      
+      if (fetchError) {
+        throw fetchError;
+      }
+      
+      // Get existing cart items (default to empty array if null)
+      const existingCartItems = profile?.cart_items || [];
+      
+      // Remove items for current restaurant and add new items
+      const updatedCartItems = [
+        ...existingCartItems.filter(item => item.restaurant_id !== restaurantId),
+        ...minimalCartItems
+      ];
+      
+      // Update the profile with new cart items
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ 
+          cart_items: updatedCartItems,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+      
+      if (updateError) throw updateError;
+      
+      setLastSyncTime(Date.now());
+      setError(null);
+      console.log('Cart saved to server');
+    } catch (error) {
+      console.error('Failed to save cart to server:', error);
+      setError('Failed to sync cart');
+    }
+  }, [user?.id, restaurantId]);
+
+  // Load cart from server with food item details
+  const loadCartFromServer = useCallback(async () => {
+    if (!user?.id || !restaurantId) return;
+    
     setIsLoading(true);
     try {
-      // Example API calls - replace with your actual endpoints
-      const response = await fetch(`/api/cart/${userId}?restaurantId=${restaurantId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          // Add your auth headers here
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('cart_items')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (profile && profile.cart_items && Array.isArray(profile.cart_items)) {
+        // Find cart items for current restaurant
+        const restaurantCartItems = profile.cart_items.filter(item => 
+          item.restaurant_id === restaurantId
+        );
+        
+        if (restaurantCartItems.length === 0) {
+          setCartItems([]);
+          setLastSyncTime(Date.now());
+          setError(null);
+          return;
         }
-      });
-
-      if (response.ok) {
-        const serverCart = await response.json();
-        if (serverCart.items && serverCart.timestamp > (lastSyncTime || 0)) {
-          setCartItems(serverCart.items);
-          setLastSyncTime(serverCart.timestamp);
-          console.log("Cart synced from server for restaurant:", restaurantId);
+        
+        // Get food item IDs
+        const foodItemIds = restaurantCartItems.map(item => item.food_item_id);
+        
+        // Fetch food item details from fooditems table
+        const { data: foodItems, error: foodError } = await supabase
+          .from('fooditems')
+          .select('*')
+          .in('id', foodItemIds)
+          .eq('restaurant_id', restaurantId)
+          .eq('is_active', true);
+        
+        if (foodError) {
+          throw foodError;
         }
+        
+        // Create a map of food items by ID
+        const foodItemsMap = new Map(foodItems.map(item => [item.id, item]));
+        
+        // Merge cart items with food item details
+        const enrichedCartItems = restaurantCartItems
+          .map(cartItem => {
+            const foodItem = foodItemsMap.get(cartItem.food_item_id);
+            if (!foodItem) {
+              console.warn(`Food item ${cartItem.food_item_id} not found or inactive`);
+              return null;
+            }
+            
+            return {
+              ...foodItem,
+              quantity: cartItem.quantity,
+              addedAt: cartItem.addedAt,
+              effectivePrice: calculateEffectivePrice(foodItem)
+            };
+          })
+          .filter(Boolean); // Remove null items
+        
+        setCartItems(enrichedCartItems);
+        setLastSyncTime(Date.now());
+        setError(null);
+        
+        // Update localStorage with enriched data
+        saveCartToStorage(enrichedCartItems);
+        
+        console.log(`Cart synced from server: ${enrichedCartItems.length} items`);
+      } else {
+        setCartItems([]);
+        setLastSyncTime(Date.now());
+        setError(null);
       }
     } catch (error) {
-      console.warn("Failed to sync cart with server:", error);
+      console.error('Failed to load cart from server:', error);
+      setError('Failed to sync cart');
     } finally {
       setIsLoading(false);
     }
-  }, [userId, restaurantId, lastSyncTime]);
+  }, [user?.id, restaurantId, saveCartToStorage, calculateEffectivePrice]);
 
-  // Auto-sync on mount and periodically
-  useEffect(() => {
-    if (userId && restaurantId) {
-      syncWithServer();
-      
-      // Set up periodic sync (every 5 minutes)
-      const syncInterval = setInterval(syncWithServer, 5 * 60 * 1000);
-      return () => clearInterval(syncInterval);
-    }
-  }, [userId, restaurantId, syncWithServer]);
-
-  // Save to server whenever cart changes (debounced)
-  useEffect(() => {
-    if (!userId || !restaurantId || cartItems.length === 0) return;
-
-    const saveToServer = async () => {
-      try {
-        await fetch(`/api/cart/${userId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            // Add your auth headers here
-          },
-          body: JSON.stringify({
-            items: cartItems,
-            timestamp: Date.now(),
-            restaurantId: restaurantId
-          })
-        });
-        console.log("Cart auto-saved to server for restaurant:", restaurantId);
-      } catch (error) {
-        console.warn("Failed to save cart to server:", error);
-      }
-    };
-
-    // Debounce server saves
-    const timeoutId = setTimeout(saveToServer, 1000);
-    return () => clearTimeout(timeoutId);
-  }, [cartItems, userId, restaurantId]);
-
-  // Apply user profile preferences/discounts
-  useEffect(() => {
-    if (userProfile && cartItems.length > 0) {
-      setCartItems(prevItems => 
-        prevItems.map(item => ({
-          ...item,
-          // Apply user-specific discounts or preferences
-          userDiscount: userProfile.membershipDiscount || 0,
-          // You can add more user-specific modifications here
-        }))
-      );
-    }
-  }, [userProfile]);
-
-  // Debug: Log cart items state whenever it changes
-  useEffect(() => {
-    console.log("Cart state updated for restaurant:", restaurantId, cartItems);
-  }, [cartItems, restaurantId]);
-
-  // Calculate the actual price after discount (including user discounts)
-  const calculateDiscountedPrice = (item) => {
-    if (!item.discounttype || !item.discountvalue) {
-      return item.price;
+  // Debounced save to server
+  const debouncedSaveToServer = useCallback((items) => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
     }
     
-    let finalPrice = item.price;
-    
-    if (item.discounttype === 'Percentage') {
-      finalPrice = item.price * (1 - item.discountvalue/100);
-    } else if (item.discounttype === 'Fixed') {
-      finalPrice = Math.max(0, item.price - item.discountvalue);
-    }
+    saveTimeoutRef.current = setTimeout(() => {
+      saveCartToServer(items);
+    }, 2000); // 2 second debounce
+  }, [saveCartToServer]);
 
-    // Apply user-specific discount if available
-    if (item.userDiscount) {
-      finalPrice = finalPrice * (1 - item.userDiscount/100);
+  // Clear entire cart - DEFINE THIS BEFORE THE useEffect THAT USES IT
+  const clearCart = useCallback(() => {
+    setCartItems([]);
+    setLastSyncTime(null);
+    setError(null);
+    
+    // Clear from localStorage
+    try {
+      localStorage.removeItem(getCartKey());
+    } catch (error) {
+      console.warn('Failed to clear cart from localStorage:', error);
     }
     
-    return finalPrice;
-  };
+    // Clear from server
+    if (user) {
+      saveCartToServer([]);
+    }
+  }, [user, getCartKey, saveCartToServer]);
 
-  const addToCart = (item) => {
-    // Check if the item belongs to the current restaurant
-    if (item.restaurant_id !== restaurantId) {
-      console.error('Cannot add items from different restaurants to cart');
+  // Add item to cart with minimal data
+  const addToCart = useCallback((item) => {
+    if (!restaurantId) {
+      setError('No restaurant selected');
       return;
     }
-
-    console.log("Adding to cart:", item);
-    console.log("Item discount properties:", {
-      discounttype: item.discounttype,
-      discountvalue: item.discountvalue,
-      price: item.price
-    });
-
-    setCartItems(prev => {
-      const existingItem = prev.find(i => 
-        i.id === item.id && 
-        (item.category ? i.category === item.category : true)
-      );
-      
-      if (existingItem) {
-        console.log("Found existing item, updating quantity");
-        return prev.map(i => 
-          (i.id === item.id && 
-           (item.category ? i.category === item.category : true)) 
-            ? { ...i, quantity: i.quantity + 1 } 
-            : i
-        );
-      }
-      
-      const effectivePrice = calculateDiscountedPrice(item);
-      console.log(`Original price: ${item.price}, Effective price after discount: ${effectivePrice}`);
-      
-      const newItem = { 
-        ...item, 
-        effectivePrice: effectivePrice,
+    
+    if (item.restaurant_id !== restaurantId) {
+      setError('Cannot add items from different restaurants');
+      return;
+    }
+    
+    try {
+      // Create enriched item for local state
+      const enrichedItem = {
+        ...item,
         quantity: 1,
         addedAt: Date.now(),
-        userDiscount: userProfile?.membershipDiscount || 0
+        effectivePrice: calculateEffectivePrice(item)
       };
       
-      console.log("New item created:", newItem);
-      return [...prev, newItem];
+      setCartItems(prev => {
+        const existingItem = prev.find(i => 
+          i.id === item.id && 
+          (item.category ? i.category === item.category : true)
+        );
+        
+        if (existingItem) {
+          return prev.map(i => 
+            (i.id === item.id && 
+             (item.category ? i.category === item.category : true)) 
+              ? { 
+                  ...i, 
+                  quantity: i.quantity + 1,
+                  effectivePrice: calculateEffectivePrice(i)
+                } 
+              : i
+          );
+        }
+        
+        return [...prev, enrichedItem];
+      });
+      
+      setError(null);
+    } catch (validationError) {
+      console.error('Failed to add item to cart:', validationError);
+      setError('Invalid item data');
+    }
+  }, [restaurantId, calculateEffectivePrice]);
+
+  // Remove item from cart
+  const removeItem = useCallback((id, category) => {
+    setCartItems(prev => {
+      const filtered = prev.filter(item => 
+        !(item.id === id && (category ? item.category === category : true))
+      );
+      
+      // Recalculate effective prices for remaining items
+      return filtered.map(item => ({
+        ...item,
+        effectivePrice: calculateEffectivePrice(item)
+      }));
     });
-  };
+    setError(null);
+  }, [calculateEffectivePrice]);
 
-  const removeItem = (id, category) => {
-    console.log(`Removing item: ${id}, category: ${category}`);
-    setCartItems(prev => prev.filter(item => 
-      !(item.id === id && (category ? item.category === category : true))
-    ));
-  };
-
-  const updateQuantity = (id, category, quantity) => {
-    console.log(`Updating quantity for item: ${id}, category: ${category}, new quantity: ${quantity}`);
-    if (quantity < 1) return removeItem(id, category);
+  // Update item quantity
+  const updateQuantity = useCallback((id, category, quantity) => {
+    if (quantity < 1) {
+      removeItem(id, category);
+      return;
+    }
     
     setCartItems(prev =>
       prev.map(item => 
         (item.id === id && (category ? item.category === category : true)) 
-          ? { ...item, quantity } 
+          ? { 
+              ...item, 
+              quantity,
+              effectivePrice: calculateEffectivePrice(item) // Recalculate effective price
+            } 
           : item
       )
     );
-  };
+    setError(null);
+  }, [removeItem, calculateEffectivePrice]);
 
-  const clearCart = () => {
-    console.log("Clearing cart for restaurant:", restaurantId);
-    setCartItems([]);
-    // Also clear from localStorage
-    try {
-      localStorage.removeItem(`cart_${userId || 'guest'}_${restaurantId}`);
-    } catch (error) {
-      console.warn("Failed to clear cart from localStorage:", error);
-    }
-  };
-
-  const mergeCarts = (guestCart, userCart) => {
-    // Merge guest cart with user cart when user logs in
-    // Only merge items from the same restaurant
+  // Merge guest cart with user cart
+  const mergeCarts = useCallback((guestCart, userCart) => {
     const mergedItems = [...userCart];
     
     guestCart.forEach(guestItem => {
-      // Only merge items from the current restaurant
       if (guestItem.restaurant_id === restaurantId) {
         const existingItem = mergedItems.find(item => 
           item.id === guestItem.id && 
@@ -268,18 +507,85 @@ export function CartProvider({ children, userId, userProfile }) {
     });
     
     return mergedItems;
-  };
+  }, [restaurantId]);
 
-  const getTotalItems = () => {
-    return cartItems.reduce((total, item) => total + item.quantity, 0);
-  };
+  // Calculate totals
+  const getTotalItems = useCallback(() => {
+    return cartItems.reduce((total, item) => total + (item.quantity || 0), 0);
+  }, [cartItems]);
 
-  const getTotalPrice = () => {
+  const getTotalPrice = useCallback(() => {
     return cartItems.reduce((total, item) => {
-      const price = item.effectivePrice || calculateDiscountedPrice(item);
-      return total + (price * item.quantity);
+      const price = item.effectivePrice || calculateEffectivePrice(item);
+      return total + (price * (item.quantity || 0));
     }, 0);
-  };
+  }, [cartItems, calculateEffectivePrice]);
+
+  // Manual sync function
+  const syncWithServer = useCallback(async () => {
+    if (user) {
+      await loadCartFromServer();
+    }
+  }, [user, loadCartFromServer]);
+
+  // Initialize cart on mount and restaurant/user changes
+  useEffect(() => {
+    if (!isInitializedRef.current && restaurantId) {
+      isInitializedRef.current = true;
+      loadCartFromStorage();
+      
+      // Load from server if user is logged in
+      if (user) {
+        loadCartFromServer();
+      }
+    }
+  }, [restaurantId, user, loadCartFromStorage, loadCartFromServer]);
+
+  // Auto-save to localStorage and server when cart changes
+  useEffect(() => {
+    if (!isInitializedRef.current) return;
+    
+    saveCartToStorage(cartItems);
+    
+    if (user) {
+      debouncedSaveToServer(cartItems);
+    }
+  }, [cartItems, user, saveCartToStorage, debouncedSaveToServer]);
+
+  // Set up periodic server sync for logged-in users
+  useEffect(() => {
+    if (user && restaurantId) {
+      syncIntervalRef.current = setInterval(() => {
+        loadCartFromServer();
+      }, 5 * 60 * 1000); // Every 5 minutes
+      
+      return () => {
+        if (syncIntervalRef.current) {
+          clearInterval(syncIntervalRef.current);
+        }
+      };
+    }
+  }, [user, restaurantId, loadCartFromServer]);
+
+  // Clear cart when restaurant changes (but not on initial mount)
+  useEffect(() => {
+    if (prevRestaurantIdRef.current && prevRestaurantIdRef.current !== restaurantId) {
+      clearCart();
+    }
+    prevRestaurantIdRef.current = restaurantId;
+  }, [restaurantId, clearCart]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current);
+      }
+    };
+  }, []);
 
   return (
     <CartContext.Provider
@@ -289,14 +595,15 @@ export function CartProvider({ children, userId, userProfile }) {
         removeItem,
         updateQuantity,
         clearCart,
-        calculateDiscountedPrice,
+        calculateEffectivePrice,
         syncWithServer,
         mergeCarts,
         getTotalItems,
         getTotalPrice,
         isLoading,
         lastSyncTime,
-        restaurantId // Expose current restaurant ID
+        error,
+        restaurantId
       }}
     >
       {children}

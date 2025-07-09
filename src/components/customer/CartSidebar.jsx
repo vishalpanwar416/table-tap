@@ -1,13 +1,54 @@
-import React from 'react';
+import React, { useMemo, useCallback, useRef, useEffect } from 'react';
 import { ShoppingCart, Minus, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../../config/CartContent';
 import { useNavigate } from 'react-router-dom';
 
 const CartSidebar = ({ isOpen, onClose }) => {
-  const { cartItems, updateQuantity, removeItem, calculateDiscountedPrice } = useCart();
+  const { cartItems, updateQuantity, removeItem, calculateEffectivePrice } = useCart();
+  const navigate = useNavigate();
+  const sidebarRef = useRef(null);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
 
-  const calculatePriceDetails = () => {
+  // Swipe detection
+  const handleTouchStart = useCallback((e) => {
+    touchStartX.current = e.touches[0].clientX;
+  }, []);
+
+  const handleTouchMove = useCallback((e) => {
+    touchEndX.current = e.touches[0].clientX;
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    const swipeThreshold = 50; // Minimum swipe distance
+    const swipeDistance = touchEndX.current - touchStartX.current;
+    
+    // If swiped right (positive distance) and distance is significant
+    if (swipeDistance > swipeThreshold) {
+      onClose();
+    }
+  }, [onClose]);
+
+  // Add keyboard support for escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
+  // Memoize price calculations to prevent unnecessary recalculations
+  const priceDetails = useMemo(() => {
     let originalTotal = 0;
     let discountAmount = 0;
     let taxableAmount = 0;
@@ -20,7 +61,7 @@ const CartSidebar = ({ isOpen, onClose }) => {
       // Calculate discount amount
       const effectivePrice = item.effectivePrice !== undefined ? 
         item.effectivePrice : 
-        calculateDiscountedPrice(item);
+        calculateEffectivePrice(item);
       
       const itemDiscount = (item.price - effectivePrice) * item.quantity;
       discountAmount += itemDiscount;
@@ -56,7 +97,7 @@ const CartSidebar = ({ isOpen, onClose }) => {
       sgst,
       finalTotal
     };
-  };
+  }, [cartItems, calculateEffectivePrice]);
 
   const { 
     originalTotal, 
@@ -65,10 +106,22 @@ const CartSidebar = ({ isOpen, onClose }) => {
     cgst, 
     sgst, 
     finalTotal 
-  } = calculatePriceDetails();
+  } = priceDetails;
   
-  const navigate = useNavigate();
-  
+  // Memoize event handlers
+  const handleCheckout = useCallback(() => {
+    onClose();
+    navigate('/order-confirmation');
+  }, [onClose, navigate]);
+
+  const handleQuantityUpdate = useCallback((itemId, category, newQuantity) => {
+    if (newQuantity < 1) {
+      removeItem(itemId, category);
+    } else {
+      updateQuantity(itemId, category, newQuantity);
+    }
+  }, [removeItem, updateQuantity]);
+
   const slideVariants = {
     hidden: { x: '100%', opacity: 0 },
     visible: { 
@@ -76,43 +129,82 @@ const CartSidebar = ({ isOpen, onClose }) => {
       opacity: 1,
       transition: { type: 'spring', stiffness: 300, damping: 30 }
     },
-    exit: { x: '100%', opacity: 0, transition: { duration: 0.3 } }
+    exit: { 
+      x: '100%', 
+      opacity: 0, 
+      transition: { 
+        type: 'spring', 
+        stiffness: 400, 
+        damping: 40,
+        duration: 0.4
+      } 
+    }
   };
 
   const overlayVariants = {
     hidden: { opacity: 0 },
-    visible: { opacity: 1 },
-    exit: { opacity: 0 }
+    visible: { 
+      opacity: 1,
+      transition: { duration: 0.3 }
+    },
+    exit: { 
+      opacity: 0, 
+      transition: { 
+        duration: 0.3,
+        ease: 'easeOut'
+      } 
+    }
   };
-
 
   return (
     <AnimatePresence>
       {isOpen && (
         <>
           <motion.div
+            ref={sidebarRef}
             key="cart-content"
-            className="fixed top-0 right-0 h-full w-full md:w-8/12 lg:w-7/10 bg-black z-50 overflow-hidden rounded-tl-[80px] rounded-bl-[80px]"
+            className="fixed top-0 right-0 h-full w-full md:w-8/12 lg:w-7/10 z-50 overflow-hidden rounded-tl-[80px] rounded-bl-[80px]"
             style={{ maxWidth: '70%' }}
             variants={slideVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
-            <div className="h-full flex flex-col">
-              {/* Header with cart icon and title */}
+            {/* Enhanced glassy background with multiple layers */}
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-2xl"></div>
+            
+            {/* Glass effect layers */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-black/20"></div>
+            <div className="absolute inset-0 bg-gradient-to-tl from-transparent via-white/5 to-transparent"></div>
+            
+            {/* Additional glass highlights */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+            
+            {/* Border glow effect */}
+            <div className="absolute inset-0 rounded-tl-[80px] rounded-bl-[80px] border border-white/20 shadow-2xl"></div>
+            
+            {/* Inner glass border */}
+            <div className="absolute inset-1 rounded-tl-[75px] rounded-bl-[75px] border border-white/10"></div>
+            
+            {/* Main content */}
+            <div className="relative h-full flex flex-col">
+              {/* Header with enhanced glass effect */}
               <div className="flex justify-center items-center pt-8 pb-4">
-                <div className="bg-white rounded-full p-3 mr-3">
-                  <ShoppingCart className="h-6 w-6 text-black" />
+                <div className="bg-white/30 backdrop-blur-md rounded-full p-3 mr-3 border border-white/30 shadow-xl">
+                  <ShoppingCart className="h-6 w-6 text-white" />
                 </div>
-                <h2 className="text-2xl font-bold text-white">Cart</h2>
+                <h2 className="text-2xl font-bold text-white drop-shadow-lg">Cart</h2>
               </div>
 
-              <div className="border-t border-gray-700 w-full my-4"></div>
+              <div className="border-t border-white/30 w-full my-4"></div>
 
               {/* Cart items count */}
               <div className="px-6 mb-4">
-                <h3 className="text-white text-xl">
+                <h3 className="text-white text-sm drop-shadow-sm whitespace-nowrap text-center">
                   You have {cartItems.length} items in the cart
                 </h3>
               </div>
@@ -121,10 +213,10 @@ const CartSidebar = ({ isOpen, onClose }) => {
               <div className="flex-1 overflow-y-auto px-6">
                 {cartItems.length === 0 ? (
                   <div className="flex flex-col items-center justify-center mt-8">
-                    <p className="text-gray-400 text-center mb-4">Your cart is empty</p>
+                    <p className="text-white/70 text-center mb-4 drop-shadow-sm">Your cart is empty</p>
                     <button
                       onClick={onClose}
-                      className="bg-white text-black rounded-full w-12 h-12 flex items-center justify-center text-3xl shadow-lg hover:bg-gray-200 transition"
+                      className="bg-white/30 backdrop-blur-md text-white rounded-full w-12 h-12 flex items-center justify-center text-3xl shadow-xl hover:bg-white/40 transition-all border border-white/30"
                       aria-label="Close Cart"
                     >
                       +
@@ -144,13 +236,13 @@ const CartSidebar = ({ isOpen, onClose }) => {
                     // Use effectivePrice if it exists, otherwise calculate it
                     const discountedPrice = item.effectivePrice !== undefined ? 
                       Number(item.effectivePrice).toFixed(2) : 
-                      Number(calculateDiscountedPrice(item)).toFixed(2);
+                      Number(calculateEffectivePrice(item)).toFixed(2);
                     
                     return (
                       <div key={`${item.id}-${item.category}`}>
-                        <div className="flex items-start mb-4">
-                          {/* Item image */}
-                          <div className="w-24 h-24 overflow-hidden rounded-lg mr-4">
+                        <div className="flex items-start mb-4 p-3 rounded-lg bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/15 transition-all shadow-lg">
+                          {/* Item image with glass effect */}
+                          <div className="w-24 h-24 overflow-hidden rounded-lg mr-4 border border-white/30 shadow-xl">
                             <img 
                               src={item.image} 
                               alt={item.name} 
@@ -160,52 +252,44 @@ const CartSidebar = ({ isOpen, onClose }) => {
                           
                           {/* Item details */}
                           <div className="flex-1">
-                            <h3 className="text-white font-medium text-lg">{item.name}</h3>
+                            <h3 className="text-white font-medium text-lg drop-shadow-sm">{item.name}</h3>
                             
                             {/* Price display with discounts if available */}
                             {hasDiscount ? (
                               <div>
-                                <p className="text-gray-400 text-sm line-through">₹{originalPrice}</p>
-                                <p className="text-white font-medium">₹{discountedPrice}</p>
+                                <p className="text-white/60 text-sm line-through drop-shadow-sm">₹{originalPrice}</p>
+                                <p className="text-white font-medium drop-shadow-sm">₹{discountedPrice}</p>
                                 {item.discounttype === 'Percentage' && (
-                                  <span className="text-green-400 text-sm">{item.discountvalue}% off</span>
+                                  <span className="text-green-300 text-sm drop-shadow-sm">{item.discountvalue}% off</span>
                                 )}
                                 {item.discounttype === 'Fixed' && (
-                                  <span className="text-green-400 text-sm">₹{item.discountvalue} off</span>
+                                  <span className="text-green-300 text-sm drop-shadow-sm">₹{item.discountvalue} off</span>
                                 )}
                               </div>
                             ) : (
-                              <p className="text-white font-medium">₹{originalPrice}</p>
+                              <p className="text-white font-medium drop-shadow-sm">₹{originalPrice}</p>
                             )}
                             
                             {isWater && (
-                              <p className="text-green-400 text-sm">GST exempt</p>
+                              <p className="text-green-300 text-sm drop-shadow-sm">GST exempt</p>
                             )}
                           </div>
                           
-                          {/* Date and time (using placeholders) */}
+                          {/* Quantity controls with enhanced glass effect */}
                           <div className="text-right">
-                          <p className="text-white">{new Date().toLocaleDateString()}</p>
-                          <p>" "</p>
-                            
-                            {/* Quantity controls */}
                             <div className="flex items-center justify-end mt-2">
                               <button 
-                                onClick={() => {
-                                  if (item.quantity === 1) {
-                                    removeItem(item.id, item.category);
-                                  } else {
-                                    updateQuantity(item.id, item.category, item.quantity - 1);
-                                  }
-                                }}
-                                className="bg-black border border-white rounded-full w-6 h-6 flex items-center justify-center"
+                                onClick={() => handleQuantityUpdate(item.id, item.category, item.quantity - 1)}
+                                className="bg-white/30 backdrop-blur-md border border-white/40 rounded-full w-6 h-6 flex items-center justify-center hover:bg-white/40 transition-all shadow-lg"
+                                aria-label={`Decrease ${item.name} quantity`}
                               >
                                 <Minus className="h-3 w-3 text-white" />
                               </button>
-                              <span className="mx-2 text-white">{item.quantity}</span>
+                              <span className="mx-2 text-white font-medium drop-shadow-sm">{item.quantity}</span>
                               <button 
-                                onClick={() => updateQuantity(item.id, item.category, item.quantity + 1)}
-                                className="bg-black border border-white rounded-full w-6 h-6 flex items-center justify-center"
+                                onClick={() => handleQuantityUpdate(item.id, item.category, item.quantity + 1)}
+                                className="bg-white/30 backdrop-blur-md border border-white/40 rounded-full w-6 h-6 flex items-center justify-center hover:bg-white/40 transition-all shadow-lg"
+                                aria-label={`Increase ${item.name} quantity`}
                               >
                                 <Plus className="h-3 w-3 text-white" />
                               </button>
@@ -213,55 +297,57 @@ const CartSidebar = ({ isOpen, onClose }) => {
                           </div>
                         </div>
                         
-                        {/* Divider between items */}
-                        <div className="border-t border-gray-700 w-full my-4"></div>
+                        {/* Divider with glass effect */}
+                        <div className="border-t border-white/30 w-full my-4"></div>
                       </div>
                     );
                   })
                 )}
               </div>
 
-              {/* Pricing information with detailed breakdown */}
+              {/* Pricing information with enhanced glass effect */}
               {cartItems.length > 0 && (
-                <div className="px-6 pb-20">
-                  <div className="flex justify-between mb-4">
-                    <span className="text-white text-lg">Original Total</span>
-                    <span className="text-white text-lg font-medium">₹{originalTotal.toFixed(2)}</span>
-                  </div>
-                  
-                  {discountAmount > 0 && (
-                    <div className="flex justify-between mb-4">
-                      <span className="text-green-400 text-lg">Discount</span>
-                      <span className="text-green-400 text-lg font-medium">- ₹{discountAmount.toFixed(2)}</span>
+                <div className="px-6 pb-4">
+                  {/* Enhanced glassy pricing display */}
+                  <div className="bg-white/15 backdrop-blur-xl border border-white/30 rounded-lg p-4 mb-3 shadow-2xl">
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-white/70">Original</span>
+                        <span className="text-white">₹{originalTotal.toFixed(2)}</span>
+                      </div>
+                      
+                      {discountAmount > 0 && (
+                        <div className="flex justify-between text-xs">
+                          <span className="text-green-300">Discount</span>
+                          <span className="text-green-300">- ₹{discountAmount.toFixed(2)}</span>
+                        </div>
+                      )}
+                      
+                      <div className="flex justify-between text-xs">
+                        <span className="text-white/70">Subtotal</span>
+                        <span className="text-white">₹{subtotalAfterDiscount.toFixed(2)}</span>
+                      </div>
+                      
+                      <div className="flex justify-between text-xs text-white/50">
+                        <span>CGST + SGST (5%)</span>
+                        <span>₹{(cgst + sgst).toFixed(2)}</span>
+                      </div>
+                      
+                      <div className="border-t border-white/30 my-1"></div>
+                      
+                      <div className="flex justify-between text-sm">
+                        <span className="text-white font-semibold">Total</span>
+                        <span className="text-white font-bold">₹{finalTotal.toFixed(2)}</span>
+                      </div>
                     </div>
-                  )}
-                  
-                  <div className="flex justify-between mb-4">
-                    <span className="text-white text-lg">Subtotal</span>
-                    <span className="text-white text-lg font-medium">₹{subtotalAfterDiscount.toFixed(2)}</span>
                   </div>
                   
-                  <div className="flex justify-between mb-2">
-                    <span className="text-white text-lg">CGST (2.5%)</span>
-                    <span className="text-white text-lg font-medium">₹{cgst.toFixed(2)}</span>
-                  </div>
-                  
-                  <div className="flex justify-between mb-4">
-                    <span className="text-white text-lg">SGST (2.5%)</span>
-                    <span className="text-white text-lg font-medium">₹{sgst.toFixed(2)}</span>
-                  </div>
-                  
-                  <div className="border-t border-gray-600 my-4"></div>
-                  
-                  <div className="flex justify-between mb-8">
-                    <span className="text-white text-xl font-medium">Total</span>
-                    <span className="text-white text-xl font-medium">₹{finalTotal.toFixed(2)}</span>
-                  </div>
-                  
-                  {/* Checkout button */}
+                  {/* Checkout button with enhanced glass effect */}
                   <div className="w-full flex justify-center">
-                    <button className="bg-gray-300 text-black font-medium py-3 px-12 rounded-full text-lg hover:bg-gray-400 transition-colors"
-                      onClick={() => {navigate('/order-confirmation')}}>
+                    <button 
+                      className="bg-gray-600 text-white font-medium py-3 px-12 rounded-full text-lg hover:bg-gray-700 transition-all shadow-xl hover:shadow-2xl"
+                      onClick={handleCheckout}
+                    >
                       Checkout
                     </button>
                   </div>
@@ -272,7 +358,7 @@ const CartSidebar = ({ isOpen, onClose }) => {
 
           <motion.div
             key="cart-overlay"
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40"
             variants={overlayVariants}
             initial="hidden"
             animate="visible"
