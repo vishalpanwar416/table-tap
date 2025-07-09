@@ -1,11 +1,24 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback, memo } from 'react';
 import { Search, X, ShoppingCart, Bell, User, MapPin, RefreshCw } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../config/AuthContext';
 import { useCart } from '../../config/CartContent';
 import { useRestaurant } from '../../Pages/Restaurantselection/RestaurantContext';
 
-const Header = ({ 
+// Debounce utility
+function useDebouncedCallback(callback, delay) {
+  const timeoutRef = useRef();
+  const callbackRef = useRef(callback);
+  useEffect(() => { callbackRef.current = callback; }, [callback]);
+  return useCallback((...args) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      callbackRef.current(...args);
+    }, delay);
+  }, [delay]);
+}
+
+const Header = memo(({ 
   isSearchActive, 
   toggleSearch, 
   toggleSidebar,
@@ -13,9 +26,10 @@ const Header = ({
   toggleCart,
   onSearch,
   onSearchClose,
-  showRestaurantInfo = true // New prop to control restaurant info visibility
+  showRestaurantInfo = true
 }) => {
   const inputRef = useRef(null);
+  const searchBarRef = useRef(null);
   const [searchQuery, setSearchQuery] = useState('');
   const { cartItems } = useCart();
   const { restaurant, loading, error } = useRestaurant();
@@ -23,8 +37,12 @@ const Header = ({
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Determine if we should show restaurant info based on current route
   const shouldShowRestaurantInfo = showRestaurantInfo && location.pathname === '/home';
+
+  // Debounced search callback
+  const debouncedSearch = useDebouncedCallback((query) => {
+    if (onSearch) onSearch(query);
+  }, 250);
 
   useEffect(() => {
     if (isSearchActive && inputRef.current) {
@@ -32,74 +50,76 @@ const Header = ({
     }
   }, [isSearchActive]);
 
-  // Real-time search as user types
-  const handleSearchInput = (e) => {
+  // Close search on outside click or Escape
+  useEffect(() => {
+    if (!isSearchActive) return;
+    function handleClick(e) {
+      if (searchBarRef.current && !searchBarRef.current.contains(e.target)) {
+        handleCloseSearch();
+      }
+    }
+    function handleKey(e) {
+      if (e.key === 'Escape') {
+        handleCloseSearch();
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, [isSearchActive]);
+
+  const handleSearchInput = useCallback((e) => {
     const query = e.target.value;
     setSearchQuery(query);
-    
-    // Call onSearch for real-time filtering
-    if (onSearch) {
-      onSearch(query);
-    }
-  };
+    debouncedSearch(query);
+  }, [debouncedSearch]);
 
-  const handleSearchSubmit = (e) => {
+  const handleSearchSubmit = useCallback((e) => {
     e.preventDefault();
-    // Search is already happening in real-time, so just prevent form submission
-  };
+  }, []);
 
-  const clearSearch = () => {
+  const clearSearch = useCallback(() => {
     setSearchQuery('');
-    if (onSearch) {
-      onSearch(''); // Clear the search
-    }
-    if (onSearchClose) {
-      onSearchClose(); // Close search
-    }
-  };
+    if (onSearch) onSearch('');
+    if (onSearchClose) onSearchClose();
+  }, [onSearch, onSearchClose]);
 
-  const handleLocationClick = () => {
+  // Unified close handler
+  const handleCloseSearch = useCallback(() => {
+    clearSearch();
+    if (isSearchActive) toggleSearch();
+  }, [clearSearch, isSearchActive, toggleSearch]);
+
+  const handleLocationClick = useCallback(() => {
     if (restaurant?.google_maps_link) {
       window.open(restaurant.google_maps_link, '_blank');
     }
-  };
+  }, [restaurant]);
 
-  const handleChangeRestaurant = () => {
+  const handleChangeRestaurant = useCallback(() => {
     navigate('/restaurant-selection');
-  };
+  }, [navigate]);
 
-  // Handle search icon click
-  const handleSearchIconClick = () => {
+  const handleSearchIconClick = useCallback(() => {
     if (isSearchActive) {
-      // If search is active, clear and close it
-      clearSearch();
+      handleCloseSearch();
     } else {
-      // Open search
       toggleSearch();
     }
-  };
+  }, [isSearchActive, handleCloseSearch, toggleSearch]);
 
-  // Show loading state or error fallback
-  const getRestaurantDisplay = () => {
+  const getRestaurantDisplay = useCallback(() => {
     if (loading) {
-      return {
-        name: "Loading...",
-        address: "Please wait..."
-      };
+      return { name: 'Loading...', address: 'Please wait...' };
     }
-    
     if (error || !restaurant) {
-      return {
-        name: "Restaurant",
-        address: "Unable to load location"
-      };
+      return { name: 'Restaurant', address: 'Unable to load location' };
     }
-    
-    return {
-      name: restaurant.name,
-      address: restaurant.address
-    };
-  };
+    return { name: restaurant.name, address: restaurant.address };
+  }, [loading, error, restaurant]);
 
   const displayData = getRestaurantDisplay();
 
@@ -113,6 +133,7 @@ const Header = ({
               <button 
                 onClick={handleLocationClick}
                 disabled={loading || error || !restaurant?.google_maps_link}
+                aria-label="Open restaurant location in Google Maps"
                 className={`flex items-center gap-1 transition-opacity duration-200 flex-1 min-w-0 ${
                   loading || error || !restaurant?.google_maps_link 
                     ? 'cursor-default opacity-70' 
@@ -127,6 +148,7 @@ const Header = ({
               {/* Change Restaurant Button - Smaller on mobile */}
               <button
                 onClick={handleChangeRestaurant}
+                aria-label="Change restaurant"
                 className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 text-[7px] sm:text-[8px] text-orange-400 hover:text-orange-300 hover:bg-orange-400/10 rounded-full transition-all duration-200 whitespace-nowrap flex-shrink-0"
                 title="Change Restaurant"
               >
@@ -141,16 +163,18 @@ const Header = ({
           </div>
         </div>
       ) : (
-        // Empty div to maintain layout when restaurant info is hidden
         <div className="flex-1"></div>
       )}
 
       {/* Search input section - positioned absolutely when active */}
-      <div className={`transition-all duration-500 ease-out ${
-        isSearchActive 
-          ? 'absolute left-2 sm:left-4 right-2 sm:right-4 top-1/2 transform -translate-y-1/2 z-10' 
-          : 'relative'
-      }`}>
+      <div
+        ref={searchBarRef}
+        className={`transition-all duration-500 ease-out ${
+          isSearchActive 
+            ? 'absolute left-2 sm:left-4 right-2 sm:right-4 top-1/2 transform -translate-y-1/2 z-10' 
+            : 'relative'
+        }`}
+      >
         <form onSubmit={handleSearchSubmit} className="SearchBar">
           <div className={`flex items-center ${isSearchActive ? 'px-4 sm:px-6 py-4 sm:py-6' : 'px-1 sm:px-2 py-1 sm:py-2'} rounded-xl bg-transparent overflow-hidden transition-all duration-500 ease-out`}>
             <input
@@ -159,6 +183,7 @@ const Header = ({
               placeholder={shouldShowRestaurantInfo ? "Search best sellers..." : "Search items..."}
               value={searchQuery}
               onChange={handleSearchInput}
+              aria-label="Search menu items"
               className={`transition-all duration-500 ease-out bg-white text-gray-700 text-sm sm:text-base outline-none font-medium rounded-full px-2 sm:px-3 py-1.5 sm:py-2 ${
                 isSearchActive ? 'w-full opacity-100 pr-4 transform scale-100' : 'w-0 opacity-0 pointer-events-none transform scale-95'
               }`}
@@ -167,7 +192,8 @@ const Header = ({
               {isSearchActive ? (
                 <button
                   type="button"
-                  onClick={clearSearch}
+                  onClick={handleCloseSearch}
+                  aria-label="Clear search"
                   className="cursor-pointer text-white text-lg sm:text-xl flex-shrink-0 transition-all duration-300 ease-out transform hover:scale-110"
                 >
                   <X size={18} className="sm:w-5 sm:h-5" />
@@ -183,15 +209,16 @@ const Header = ({
         <button
           type="button"
           onClick={handleSearchIconClick}
+          aria-label="Toggle search bar"
           className={`cursor-pointer text-white text-lg sm:text-xl transition-all duration-300 ease-out hover:scale-110 ${
             isSearchActive ? 'text-blue-300' : ''
           }`}
         >
-          <Search size={22} className="sm:w-6 sm:h-6" />
+          <Search size={28} className="sm:w-8 sm:h-8" />
         </button>
         
-        <button onClick={toggleCart} className="relative transition-transform duration-300 ease-out hover:scale-110">
-          <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 md:w-9 md:h-9 text-white" />
+        <button onClick={toggleCart} aria-label="Open cart" className="relative transition-transform duration-300 ease-out hover:scale-110">
+          <ShoppingCart className="w-7 h-7 sm:w-9 sm:h-9 md:w-11 md:h-11 text-white" />
           {cartItems.length > 0 && (
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] sm:text-xs w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full flex items-center justify-center">
               {cartItems.length}
@@ -199,19 +226,20 @@ const Header = ({
           )}
         </button>
         
-        <button onClick={toggleNotifications} className="text-white transition-transform duration-300 ease-out hover:scale-110">
-          <Bell className="w-5 h-5 sm:w-6 sm:h-6 md:w-9 md:h-9" />
+        <button onClick={toggleNotifications} aria-label="Open notifications" className="text-white transition-transform duration-300 ease-out hover:scale-110">
+          <Bell className="w-7 h-7 sm:w-9 sm:h-9 md:w-11 md:h-11" />
         </button>
         
         <button
           onClick={toggleSidebar}
+          aria-label="Open sidebar menu"
           className="text-white transition-transform duration-300 ease-out hover:scale-110"
         >
-          <User className="w-5 h-5 sm:w-6 sm:h-6 md:w-9 md:h-9" />
+          <User className="w-7 h-7 sm:w-9 sm:h-9 md:w-11 md:h-11" />
         </button>
       </div>
     </div>
   );
-};
+});
 
 export default Header;

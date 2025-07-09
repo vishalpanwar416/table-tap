@@ -39,6 +39,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { FoodDataProvider } from './context/FoodDataContext';
 import ContactUsPage from '../src/Pages/customer/ContactUsPage';
 import HelpFAQPage from '../src/Pages/customer/HelpFAQPage';
+import DevelopmentTools from './components/DevelopmentTools';
 
 // Register service worker
 register();
@@ -188,6 +189,9 @@ const App = () => {
                           
                           {/* Install Prompt */}
                           <InstallPrompt />
+                          
+                          {/* Development Tools - only visible in development */}
+                          <DevelopmentTools />
                         </div>
                       </FoodDataProvider>
                     </LikesProvider>

@@ -16,6 +16,7 @@ import FloatingCartButton from '../../components/customer/FloatingCartButton';
 import Tags from '../../components/customer/Tags';
 import { useRestaurant } from '../../Pages/Restaurantselection/RestaurantContext';
 import { useScrollLock, useMultiScrollLock } from '../../hooks/useScrollLock';
+import SearchResultsOverlay from '../../components/customer/SearchResultsOverlay';
 
 // Enhanced lazy loading with preloading hints
 const Maincarosel = lazy(() => import('../../components/customer/Maincarosel'), {
@@ -132,23 +133,7 @@ const HomePage = memo(() => {
   const { restaurantId } = useRestaurant();
   const { addToCart, cartItems, removeItem, updateQuantity } = useCart();
   
-  // State management with useReducer for complex state
-  const [isSearchActive, setIsSearchActive] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeCategory, setActiveCategory] = useState('');
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isLogoutOpen, setIsLogoutOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [isOrderCardOpen, setIsOrderCardOpen] = useState(false);
-  
-  // Refs
-  const categoryButtonsRef = useRef(null);
-  const menuDropdownRef = useRef(null);
-  const scrollRef = useRef(null);
-  
-  // Use the global food data context
+  // Use the global food data context (move this to the top)
   const { 
     bestSellerItems, 
     recommendedItems, 
@@ -159,6 +144,47 @@ const HomePage = memo(() => {
     initializeData,
     currentRestaurantId
   } = useFoodData();
+  
+  // State management with useReducer for complex state
+  const [isSearchActive, setIsSearchActive] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isLogoutOpen, setIsLogoutOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isOrderCardOpen, setIsOrderCardOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  // Debounced search handler
+  const searchTimeout = useRef();
+  const handleSearch = useCallback((query) => {
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    searchTimeout.current = setTimeout(() => {
+      setSearchTerm(query);
+    }, 250);
+  }, []);
+  const handleSearchClose = useCallback(() => {
+    setSearchTerm('');
+    setIsSearchActive(false);
+  }, []);
+
+  // Filter all food items by search term
+  const searchedItems = useMemo(() => {
+    if (!searchTerm.trim()) return [];
+    const q = searchTerm.toLowerCase();
+    return allFoodItems.filter(item =>
+      (item.name && item.name.toLowerCase().includes(q)) ||
+      (item.description && item.description.toLowerCase().includes(q)) ||
+      (item.category && item.category.toLowerCase().includes(q)) ||
+      (Array.isArray(item.tags) && item.tags.some(tag => tag.toLowerCase().includes(q)))
+    );
+  }, [allFoodItems, searchTerm]);
+  
+  // Refs
+  const categoryButtonsRef = useRef(null);
+  const menuDropdownRef = useRef(null);
+  const scrollRef = useRef(null);
   
   const scrollToCategory = useScrollToCategory(categoryButtonsRef);
   
@@ -360,7 +386,17 @@ const HomePage = memo(() => {
             cartItems={cartItems}
             showRestaurantInfo={true}
             className="mb-2 md:mb-3"
+            onSearch={handleSearch}
+            onSearchClose={handleSearchClose}
           />
+
+          {/* Overlay for search results */}
+          {isSearchActive && searchTerm.trim() && (
+            <SearchResultsOverlay
+              items={searchedItems}
+              onClose={handleSearchClose}
+            />
+          )}
 
           {/* Main Content with progressive loading */}
           <motion.div 

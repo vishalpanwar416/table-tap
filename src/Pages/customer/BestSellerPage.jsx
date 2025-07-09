@@ -471,6 +471,19 @@ const staggerContainer = {
   }
 };
 
+// Debounce utility
+function useDebouncedCallback(callback, delay) {
+  const timeoutRef = useRef();
+  const callbackRef = useRef(callback);
+  useEffect(() => { callbackRef.current = callback; }, [callback]);
+  return useCallback((...args) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      callbackRef.current(...args);
+    }, delay);
+  }, [delay]);
+}
+
 // Enhanced BestSeller Page
 const BestSellerPage = memo(() => {
   const navigate = useNavigate();
@@ -491,6 +504,25 @@ const BestSellerPage = memo(() => {
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
   const [sortBy, setSortBy] = useState('popularity');
   const [searchTerm, setSearchTerm] = useState(''); // Search state
+
+  // Debounced search callback
+  const debouncedSetSearchTerm = useDebouncedCallback((query) => {
+    setSearchTerm(query);
+  }, 250);
+
+  // Real-time search handler (debounced)
+  const handleSearch = useCallback((query) => {
+    debouncedSetSearchTerm(query);
+  }, [debouncedSetSearchTerm]);
+
+  // Clear search when search is closed
+  const handleSearchClose = useCallback(() => {
+    setSearchTerm('');
+    setIsSearchActive(false);
+  }, []);
+
+  const closeSearch = useCallback(() => setIsSearchActive(false), []);
+  const openSearch = useCallback(() => setIsSearchActive(true), []);
 
   // Enhanced data fetching with caching
   useEffect(() => {
@@ -558,18 +590,6 @@ const BestSellerPage = memo(() => {
     navigate('/login');
   }, [navigate]);
 
-  // Real-time search handler
-  const handleSearch = useCallback((query) => {
-    setSearchTerm(query);
-    // Don't close search - keep it open for real-time filtering
-  }, []);
-
-  // Clear search when search is closed
-  const handleSearchClose = useCallback(() => {
-    setSearchTerm('');
-    setIsSearchActive(false);
-  }, []);
-
   // Updated filteredAndSortedItems with real-time search
   const filteredAndSortedItems = useMemo(() => {
     let items = bestSellerItems;
@@ -597,6 +617,13 @@ const BestSellerPage = memo(() => {
         return items;
     }
   }, [bestSellerItems, searchTerm, sortBy]);
+
+  // Lock scroll when cart is open
+  useMultiScrollLock({
+    cart: isCartOpen,
+    sidebar: isSidebarOpen,
+    notifications: isNotificationOpen
+  });
 
   // Loading state with enhanced UX
   if (loading) {
@@ -648,13 +675,6 @@ const BestSellerPage = memo(() => {
     );
   }
 
-  // Lock scroll when cart is open
-  useMultiScrollLock({
-    cart: isCartOpen,
-    sidebar: isSidebarOpen,
-    notifications: isNotificationOpen
-  });
-
   return (
     <motion.div 
       className="flex justify-center items-start min-h-screen bg-black p-4"
@@ -678,13 +698,10 @@ const BestSellerPage = memo(() => {
         <Suspense fallback={<HeaderSkeleton />}>
           <Header 
             isSearchActive={isSearchActive}
-            toggleSearch={toggles.search}
-            toggleSidebar={toggles.sidebar}
-            toggleNotifications={toggles.notification}
-            toggleCart={toggles.cart}
+            toggleSearch={isSearchActive ? closeSearch : openSearch}
+            onSearch={handleSearch}
+            onSearchClose={handleSearchClose}
             cartItems={cartItems}
-            onSearch={handleSearch} // Real-time search callback
-            onSearchClose={handleSearchClose} // Add close handler
             showRestaurantInfo={false} // Hide restaurant info on best seller page
             className="mb-2 md:mb-3"
           />
