@@ -127,7 +127,10 @@ const Header = memo(({
     <div className="px-2 sm:px-4 py-2 sm:py-3 flex justify-between items-center w-full relative">
       {/* Left side - Restaurant info (only shown on home page) */}
       {shouldShowRestaurantInfo ? (
-        <div className={`flex-1 transition-all duration-500 ease-out ${isSearchActive ? 'opacity-0 pointer-events-none transform -translate-x-4' : 'opacity-100 transform translate-x-0'}`}>
+        <div className={`flex-1 transition-all duration-700 ease-out ${isSearchActive ? 'opacity-0 pointer-events-none transform -translate-x-4 scale-95' : 'opacity-100 transform translate-x-0 scale-100'}`}
+             style={{
+               transitionDelay: isSearchActive ? '0ms' : '300ms'
+             }}>
           <div className="flex flex-col items-start justify-center text-left">
             <div className="flex items-center gap-1 sm:gap-2 w-full">
               <button 
@@ -169,14 +172,15 @@ const Header = memo(({
       {/* Search input section - positioned absolutely when active */}
       <div
         ref={searchBarRef}
-        className={`transition-all duration-500 ease-out ${
+        data-searchbar-area
+        className={`transition-all duration-700 ease-out ${
           isSearchActive 
             ? 'absolute left-2 sm:left-4 right-2 sm:right-4 top-1/2 transform -translate-y-1/2 z-10' 
             : 'relative'
         }`}
       >
         <form onSubmit={handleSearchSubmit} className="SearchBar">
-          <div className={`flex items-center ${isSearchActive ? 'px-4 sm:px-6 py-4 sm:py-6' : 'px-1 sm:px-2 py-1 sm:py-2'} rounded-xl bg-transparent overflow-hidden transition-all duration-500 ease-out`}>
+          <div className={`flex items-center ${isSearchActive ? 'px-4 sm:px-6 py-4 sm:py-6' : 'px-1 sm:px-2 py-1 sm:py-2'} rounded-xl bg-transparent overflow-hidden transition-all duration-700 ease-out`}>
             <input
               ref={inputRef}
               type="text"
@@ -184,17 +188,26 @@ const Header = memo(({
               value={searchQuery}
               onChange={handleSearchInput}
               aria-label="Search menu items"
-              className={`transition-all duration-500 ease-out bg-white text-gray-700 text-sm sm:text-base outline-none font-medium rounded-full px-2 sm:px-3 py-1.5 sm:py-2 ${
+              className={`transition-all duration-700 ease-out bg-white text-gray-700 text-sm sm:text-base outline-none font-medium rounded-full px-2 sm:px-3 py-1.5 sm:py-2 ${
                 isSearchActive ? 'w-full opacity-100 pr-4 transform scale-100' : 'w-0 opacity-0 pointer-events-none transform scale-95'
               }`}
+              style={{
+                transformOrigin: 'center',
+                transition: 'all 700ms cubic-bezier(0.4, 0, 0.2, 1)',
+                transitionDelay: isSearchActive ? '0ms' : '100ms'
+              }}
             />
             <div className="flex items-center ml-1 sm:ml-2">
-              {isSearchActive ? (
+              {isSearchActive && searchQuery ? (
                 <button
                   type="button"
                   onClick={handleCloseSearch}
                   aria-label="Clear search"
-                  className="cursor-pointer text-white text-lg sm:text-xl flex-shrink-0 transition-all duration-300 ease-out transform hover:scale-110"
+                  className="cursor-pointer text-white text-lg sm:text-xl flex-shrink-0 transition-all duration-500 ease-out transform hover:scale-110 animate-in fade-in slide-in-from-right-2"
+                  style={{
+                    animationDelay: '200ms',
+                    animationFillMode: 'both'
+                  }}
                 >
                   <X size={18} className="sm:w-5 sm:h-5" />
                 </button>
@@ -205,13 +218,16 @@ const Header = memo(({
       </div>
 
       {/* Right side - Icons section */}
-      <div className={`flex space-x-2 sm:space-x-4 transition-all duration-500 ease-out ${isSearchActive ? 'opacity-20 transform translate-x-2' : 'opacity-100 transform translate-x-0'}`}>
+      <div className={`flex space-x-2 sm:space-x-4 transition-all duration-700 ease-out ${isSearchActive ? 'opacity-20 transform translate-x-2 scale-95' : 'opacity-100 transform translate-x-0 scale-100'}`}
+           style={{
+             transitionDelay: isSearchActive ? '0ms' : '300ms'
+           }}>
         <button
           type="button"
           onClick={handleSearchIconClick}
           aria-label="Toggle search bar"
-          className={`cursor-pointer text-white text-lg sm:text-xl transition-all duration-300 ease-out hover:scale-110 ${
-            isSearchActive ? 'text-blue-300' : ''
+          className={`cursor-pointer text-white text-lg sm:text-xl transition-all duration-500 ease-out hover:scale-110 ${
+            isSearchActive ? 'text-blue-300 scale-110' : ''
           }`}
         >
           <Search size={28} className="sm:w-8 sm:h-8" />

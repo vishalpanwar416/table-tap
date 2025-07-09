@@ -425,8 +425,15 @@ export const MenuDropdown = ({ menuOpen, handleCloseMenu, activeCategory, menuIt
         exit="exit"
         className="w-full bg-gray-50 rounded-t-3xl shadow-2xl border-t border-gray-200 mt-6"
       >
-        <header className="sticky top-0 bg-gray-50/95 backdrop-blur-lg z-30 p-4 border-b border-gray-200">
-          <div className="flex justify-center items-center max-w-7xl mx-auto relative">
+      
+
+        <main className="p-0  max-h-[70vh] overflow-y-auto">
+
+        <header className="sticky top-0 z-30 p-4">
+          {/* Blur with white to transparent gradient */}
+          <div className="absolute inset-0 bg-gradient-to-b from-white/95 to-transparent backdrop-blur-xl"></div>
+          
+          <div className="flex justify-center items-center max-w-7xl mx-auto relative z-10">
             <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
               <Flame className="w-6 h-6 text-orange-500" />
               {activeCategory} Menu
@@ -440,8 +447,6 @@ export const MenuDropdown = ({ menuOpen, handleCloseMenu, activeCategory, menuIt
             </button>
           </div>
         </header>
-
-        <main className="p-4 md:p-6 max-h-[70vh] overflow-y-auto">
           {menuItems.length === 0 ? (
             <div className="text-center py-16">
               <ShoppingBag className="mx-auto h-12 w-12 text-gray-400" />

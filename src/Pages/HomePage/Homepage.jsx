@@ -168,7 +168,8 @@ const HomePage = memo(() => {
     setSearchTerm('');
     setIsSearchActive(false);
   }, []);
-
+  const [pendingOrderItem, setPendingOrderItem] = useState(null);
+  
   // Filter all food items by search term
   const searchedItems = useMemo(() => {
     if (!searchTerm.trim()) return [];
@@ -185,6 +186,8 @@ const HomePage = memo(() => {
   const categoryButtonsRef = useRef(null);
   const menuDropdownRef = useRef(null);
   const scrollRef = useRef(null);
+  const searchBarContainerRef = useRef(null);
+  const pendingItemRef = useRef(null);
   
   const scrollToCategory = useScrollToCategory(categoryButtonsRef);
   
@@ -225,10 +228,18 @@ const HomePage = memo(() => {
   }, [activeCategory, menuOpen, scrollToCategory]);
   
   const handleItemClick = useCallback((item) => {
-    setSelectedItem(item);
-    setIsOrderCardOpen(true);
+    setPendingOrderItem(item);
+    setIsSearchActive(false);
     if (menuOpen) setMenuOpen(false);
   }, [menuOpen]);
+
+  const handleOverlayExit = useCallback(() => {
+    if (pendingOrderItem) {
+      setSelectedItem(pendingOrderItem);
+      setIsOrderCardOpen(true);
+      setPendingOrderItem(null);
+    }
+  }, [pendingOrderItem]);
 
   const handleScroll = useCallback((scrollOffset) => {
     if (scrollRef.current) {
@@ -241,7 +252,10 @@ const HomePage = memo(() => {
   }, []);
 
   const handleCloseMenu = useCallback(() => setMenuOpen(false), []);
-  const handleCloseOrderCard = useCallback(() => setIsOrderCardOpen(false), []);
+  const handleCloseOrderCard = useCallback(() => {
+    setIsOrderCardOpen(false);
+    setSelectedItem(null);
+  }, []);
   
   const handleCategoryChange = useCallback((category) => {
     setActiveCategory(category);
@@ -272,6 +286,15 @@ const HomePage = memo(() => {
     document.addEventListener('mousedown', handleClickOutside, { passive: true });
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [menuOpen]);
+
+  // Custom backdrop click handler
+  const handleBackdropClick = useCallback((e) => {
+    if (e.target.closest('[data-searchbar-area]')) {
+      // Clicked inside searchbar, do nothing
+      return;
+    }
+    handleSearchClose();
+  }, [handleSearchClose]);
 
   // Lock scroll when any sidebar is open
   useMultiScrollLock({
@@ -313,9 +336,23 @@ const HomePage = memo(() => {
     );
   }
 
+  const handleSearchResultClick = (item) => {
+    setSelectedItem(item);
+    setIsOrderCardOpen(true);
+    // Do NOT close the overlay here; only X button should close it
+  };
+
   return (
     <div className="flex justify-center items-start min-h-screen bg-black">
       <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
+        {/* Backdrop for searchbar close - only for homepage search */}
+        {isSearchActive && (
+          <div
+            className="fixed left-0 right-0 bottom-0 top-16 z-40 bg-black/40 transition-opacity duration-300 pointer-events-auto"
+            aria-hidden="true"
+            onClick={handleBackdropClick}
+          />
+        )}
         <motion.div
           initial="initial"
           animate="animate"
@@ -377,26 +414,35 @@ const HomePage = memo(() => {
           </Suspense>
 
           {/* Header */}
-          <Header 
-            isSearchActive={isSearchActive}
-            toggleSearch={toggles.search}
-            toggleSidebar={toggles.sidebar}
-            toggleNotifications={toggles.notifications}
-            toggleCart={toggles.cart}
-            cartItems={cartItems}
-            showRestaurantInfo={true}
-            className="mb-2 md:mb-3"
-            onSearch={handleSearch}
-            onSearchClose={handleSearchClose}
-          />
+          <div ref={searchBarContainerRef}>
+            <Header 
+              isSearchActive={isSearchActive}
+              toggleSearch={toggles.search}
+              toggleSidebar={toggles.sidebar}
+              toggleNotifications={toggles.notifications}
+              toggleCart={toggles.cart}
+              cartItems={cartItems}
+              showRestaurantInfo={true}
+              className="mb-2 md:mb-3"
+              onSearch={handleSearch}
+              onSearchClose={handleSearchClose}
+            />
+          </div>
 
           {/* Overlay for search results */}
-          {isSearchActive && searchTerm.trim() && (
-            <SearchResultsOverlay
-              items={searchedItems}
-              onClose={handleSearchClose}
-            />
-          )}
+          <AnimatePresence onExitComplete={handleOverlayExit}>
+            {isSearchActive && searchTerm.trim() && (
+              <SearchResultsOverlay
+                items={searchedItems}
+                onItemClick={handleSearchResultClick}
+                onRequestCloseOverlay={() => setIsSearchActive(false)}
+                cartItems={cartItems}
+                onAddToCart={addToCart}
+                onUpdateQuantity={updateQuantity}
+                onRemoveItem={removeItem}
+              />
+            )}
+          </AnimatePresence>
 
           {/* Main Content with progressive loading */}
           <motion.div 
