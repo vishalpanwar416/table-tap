@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react'; // Added useEffect
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ChevronLeft, Trash2, Minus, Plus, ChevronDown } from 'lucide-react';
 import { useCart } from '../../config/CartContent';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../supabase'; // Import supabase to check for user
-import { useRestaurant } from '../Restaurantselection/RestaurantContext'; // Import restaurant context
-import { getStoredRestaurantSelection } from '../../utils/restaurantCheck'; // Import to get stored table number
+import { supabase } from '../../supabase';
+import { useRestaurant } from '../Restaurantselection/RestaurantContext';
+import { getStoredRestaurantSelection } from '../../utils/restaurantCheck';
 
 const OrderConfirmation = () => {
   const navigate = useNavigate();
   const { cartItems, removeItem, updateQuantity, calculateEffectivePrice } = useCart();
-  const { restaurant } = useRestaurant(); // Get restaurant data including tables
+  const { restaurant } = useRestaurant();
   const [tableNumber, setTableNumber] = useState('');
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [showTableDropdown, setShowTableDropdown] = useState(false);
@@ -20,20 +20,38 @@ const OrderConfirmation = () => {
   const [guestEmail, setGuestEmail] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
   const [formError, setFormError] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
   // --- NEW: Parse tables from restaurant data ---
   const [availableTables, setAvailableTables] = useState([]);
+  
+  // --- FIXED: Ref for dropdown click outside handling ---
+  const dropdownRef = useRef(null);
 
-  // --- NEW: Check for authenticated user on component load ---
+  // --- FIXED: Check for authenticated user on component load with error handling ---
   useEffect(() => {
     const fetchUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user);
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase.auth.getUser();
+        
+        if (error) {
+          console.error('Error fetching user:', error);
+        }
+        
+        setUser(data?.user || null);
+      } catch (error) {
+        console.error('Error in fetchUser:', error);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
     };
+    
     fetchUser();
   }, []);
 
-  // --- NEW: Parse tables from restaurant data ---
+  // --- FIXED: Parse tables from restaurant data with better error handling ---
   useEffect(() => {
     if (restaurant?.tables) {
       try {
@@ -42,6 +60,7 @@ const OrderConfirmation = () => {
           : restaurant.tables;
         setAvailableTables(Array.isArray(parsedTables) ? parsedTables : []);
       } catch (error) {
+        console.error('Error parsing tables:', error);
         setAvailableTables([]);
       }
     } else {
@@ -49,7 +68,7 @@ const OrderConfirmation = () => {
     }
   }, [restaurant]);
 
-  // --- NEW: Auto-select table number from local storage ---
+  // --- FIXED: Auto-select table number from local storage ---
   useEffect(() => {
     const storedSelection = getStoredRestaurantSelection();
     if (storedSelection?.tableNumber && availableTables.length > 0) {
@@ -64,18 +83,33 @@ const OrderConfirmation = () => {
     }
   }, [availableTables]);
 
-  // --- NEW: Handle table selection ---
+  // --- FIXED: Handle click outside dropdown ---
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowTableDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // --- FIXED: Handle table selection ---
   const handleTableSelect = (table) => {
     setTableNumber(table.tableNumber);
     setShowTableDropdown(false);
   };
 
-  // --- NEW: Get selected table details ---
+  // --- FIXED: Get selected table details with null check ---
   const getSelectedTableDetails = () => {
-    return availableTables.find(table => table.tableNumber === tableNumber);
+    return availableTables.find(table => table.tableNumber === tableNumber) || null;
   };
 
-  const calculatePriceDetails = () => {
+  // --- FIXED: Moved to useCallback to prevent stale calculations ---
+  const calculatePriceDetails = useCallback(() => {
     let originalTotal = 0;
     let discountAmount = 0;
     let taxableAmount = 0;
@@ -115,7 +149,7 @@ const OrderConfirmation = () => {
       sgst,
       finalTotal
     };
-  };
+  }, [cartItems, calculateEffectivePrice]);
 
   const { 
     originalTotal, 
@@ -140,9 +174,16 @@ const OrderConfirmation = () => {
     navigate(-1);
   };
 
-  // --- UPDATED: handlePlaceOrder with validation for guests ---
+  // --- FIXED: handlePlaceOrder with better validation ---
   const handlePlaceOrder = () => {
     setFormError(''); // Clear previous errors
+    
+    // --- FIXED: Check if cart is empty ---
+    if (cartItems.length === 0) {
+      setFormError('Your cart is empty. Please add items before proceeding.');
+      return;
+    }
+    
     if (!tableNumber) {
       setFormError('Please select your table number.');
       return;
@@ -180,6 +221,24 @@ const OrderConfirmation = () => {
     });
   };
 
+  // --- FIXED: Show loading state ---
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  // --- FIXED: Show error if no restaurant ---
+  if (!restaurant) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white text-xl">Restaurant not found</div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex justify-center items-start min-h-screen bg-black">
       <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
@@ -196,12 +255,12 @@ const OrderConfirmation = () => {
         <div className="bg-gray-200 w-full flex-1 rounded-t-3xl px-6 pt-10 pb-6 flex flex-col font-spartan overflow-y-auto">
           <h2 className="justify-center text-center text-black text-3xl font-semibold mb-8">Order Summary</h2>
 
-          {/* --- UPDATED: Table selection dropdown with auto-selection --- */}
+          {/* --- FIXED: Table selection dropdown with click outside handling --- */}
           <div className="mb-8">
             <label className="block text-black mb-2 text-lg" htmlFor="tableNumber">
               Table Number
             </label>
-            <div className="relative">
+            <div className="relative" ref={dropdownRef}>
               <button
                 type="button"
                 onClick={() => setShowTableDropdown(!showTableDropdown)}
@@ -258,10 +317,10 @@ const OrderConfirmation = () => {
               <div className="mt-2 p-3 bg-blue-50 rounded-lg">
                 <div className="text-sm text-blue-800">
                   <div className="font-medium">Table {tableNumber}</div>
-                  {getSelectedTableDetails().location && (
+                  {getSelectedTableDetails()?.location && (
                     <div>Location: {getSelectedTableDetails().location}</div>
                   )}
-                  <div>Capacity: {getSelectedTableDetails().capacity} people</div>
+                  <div>Capacity: {getSelectedTableDetails()?.capacity} people</div>
                 </div>
               </div>
             )}
@@ -285,22 +344,44 @@ const OrderConfirmation = () => {
             )}
           </div>
 
-          {/* --- NEW: Guest information form, only shown if user is not logged in --- */}
+          {/* --- FIXED: Guest information form with better validation --- */}
           {!user && (
             <div className="mb-8 p-4 border rounded-lg bg-white">
                 <h3 className="font-bold text-lg mb-4">Guest Information</h3>
                 <div className="space-y-4">
                     <div>
-                        <label className="text-sm font-medium" htmlFor="guestName">Full Name</label>
-                        <input id="guestName" type="text" value={guestName} onChange={(e) => setGuestName(e.target.value)} className="w-full mt-1 px-4 py-3 border border-gray-300 rounded-xl" required />
+                        <label className="text-sm font-medium" htmlFor="guestName">Full Name *</label>
+                        <input 
+                          id="guestName" 
+                          type="text" 
+                          value={guestName} 
+                          onChange={(e) => setGuestName(e.target.value)} 
+                          className="w-full mt-1 px-4 py-3 border border-gray-300 rounded-xl" 
+                          required 
+                        />
                     </div>
                     <div>
-                        <label className="text-sm font-medium" htmlFor="guestEmail">Email Address</label>
-                        <input id="guestEmail" type="email" value={guestEmail} onChange={(e) => setGuestEmail(e.target.value)} className="w-full mt-1 px-4 py-3 border border-gray-300 rounded-xl" required />
+                        <label className="text-sm font-medium" htmlFor="guestEmail">Email Address *</label>
+                        <input 
+                          id="guestEmail" 
+                          type="email" 
+                          value={guestEmail} 
+                          onChange={(e) => setGuestEmail(e.target.value)} 
+                          className="w-full mt-1 px-4 py-3 border border-gray-300 rounded-xl" 
+                          required 
+                        />
                     </div>
                     <div>
-                        <label className="text-sm font-medium" htmlFor="guestPhone">Phone Number</label>
-                        <input id="guestPhone" type="tel" value={guestPhone} onChange={(e) => setGuestPhone(e.target.value)} maxLength={10} className="w-full mt-1 px-4 py-3 border border-gray-300 rounded-xl" required />
+                        <label className="text-sm font-medium" htmlFor="guestPhone">Phone Number *</label>
+                        <input 
+                          id="guestPhone" 
+                          type="tel" 
+                          value={guestPhone} 
+                          onChange={(e) => setGuestPhone(e.target.value)} 
+                          maxLength={10} 
+                          className="w-full mt-1 px-4 py-3 border border-gray-300 rounded-xl" 
+                          required 
+                        />
                     </div>
                 </div>
             </div>
@@ -327,6 +408,16 @@ const OrderConfirmation = () => {
               </div>
           )}
 
+          {/* --- FIXED: Show message if cart is empty --- */}
+          {cartItems.length === 0 && (
+            <div className="my-4 p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded-lg">
+              <div className="text-center">
+                <p className="font-medium">Your cart is empty</p>
+                <p className="text-sm">Please add items to your cart before proceeding.</p>
+              </div>
+            </div>
+          )}
+
           <div className="border-t border-gray-300 pt-6">
             {cartItems.map((item, index) => {
               const isWater = item.name && 
@@ -349,6 +440,9 @@ const OrderConfirmation = () => {
                         src={item.image || `/api/placeholder/80/80`} 
                         alt={item.name} 
                         className="w-full h-full object-cover" 
+                        onError={(e) => {
+                          e.target.src = '/api/placeholder/80/80';
+                        }}
                       />
                     </div>
                     
@@ -461,9 +555,14 @@ const OrderConfirmation = () => {
           <div className="mt-auto pt-6 flex justify-center">
             <button 
               onClick={handlePlaceOrder}
-              className="bg-gray-600 text-white w-full py-3 rounded-full mt-8 font-medium text-lg hover:bg-gray-700 transition-colors"
+              disabled={cartItems.length === 0}
+              className={`w-full py-3 rounded-full mt-8 font-medium text-lg transition-colors ${
+                cartItems.length === 0 
+                  ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
+                  : 'bg-gray-600 text-white hover:bg-gray-700'
+              }`}
             >
-              Proceed to Payment
+              {cartItems.length === 0 ? 'Cart is Empty' : 'Proceed to Payment'}
             </button>
           </div>
           

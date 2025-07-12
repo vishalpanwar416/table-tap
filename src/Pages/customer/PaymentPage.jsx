@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../../config/CartContent';
 import { supabase } from '../../supabase';
@@ -35,7 +35,8 @@ const PaymentPage = () => {
     );
   }
 
-  const calculatePriceDetails = () => {
+  // --- FIXED: Moved to useCallback to prevent stale calculations ---
+  const calculatePriceDetails = useCallback(() => {
     let originalTotal = 0;
     let discountAmount = 0;
     let taxableAmount = 0;
@@ -75,7 +76,7 @@ const PaymentPage = () => {
       sgst,
       finalTotal
     };
-  };
+  }, [cartItems, calculateEffectivePrice]);
 
   const { 
     originalTotal, 
@@ -87,6 +88,8 @@ const PaymentPage = () => {
   } = calculatePriceDetails();
 
   useEffect(() => {
+    let scriptElement = null;
+    
     const loadRazorpay = async () => {
       if (window.Razorpay) {
         setScriptLoaded(true);
@@ -94,12 +97,12 @@ const PaymentPage = () => {
       }
 
       try {
-        const script = document.createElement('script');
-        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-        script.async = true;
-        script.crossOrigin = 'anonymous';
+        scriptElement = document.createElement('script');
+        scriptElement.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        scriptElement.async = true;
+        scriptElement.crossOrigin = 'anonymous';
 
-        script.onload = () => {
+        scriptElement.onload = () => {
           if (!window.Razorpay) {
             setScriptError('Payment gateway failed to initialize properly');
             return;
@@ -108,31 +111,35 @@ const PaymentPage = () => {
           setScriptError(null);
         };
 
-        script.onerror = () => {
+        scriptElement.onerror = () => {
           setScriptError('Failed to load payment gateway. Please try again later or choose Pay At Restaurant.');
         };
 
-        document.body.appendChild(script);
-        
-        return () => {
-          if (document.body.contains(script)) {
-            document.body.removeChild(script);
-          }
-        };
+        document.body.appendChild(scriptElement);
       } catch (error) {
         setScriptError('Payment setup failed. Please try again later.');
       }
     };
 
     loadRazorpay();
+    
+    // --- FIXED: Proper cleanup ---
+    return () => {
+      if (scriptElement && document.body.contains(scriptElement)) {
+        document.body.removeChild(scriptElement);
+      }
+    };
   }, []);
 
-  // --- UPDATED: useEffect to set user and customer details ---
+  // --- FIXED: useEffect to set user and customer details with proper error handling ---
   useEffect(() => {
     const fetchUserAndSetDetails = async () => {
       try {
         const { data, error } = await supabase.auth.getUser();
         
+        if (error) {
+          console.error('Error fetching user:', error);
+        }
         
         if (data && data.user) {
           setUser(data.user);
@@ -142,12 +149,19 @@ const PaymentPage = () => {
         } else {
           // If no user, use guest details passed from previous page
           if (guestDetails) {
-            setCustomerName(guestDetails.name);
-            setCustomerEmail(guestDetails.email);
-            setCustomerPhone(guestDetails.phone);
+            setCustomerName(guestDetails.name || '');
+            setCustomerEmail(guestDetails.email || '');
+            setCustomerPhone(guestDetails.phone || '');
           }
         }
       } catch (error) {
+        console.error('Error in fetchUserAndSetDetails:', error);
+        // If there's an error, still try to use guest details
+        if (guestDetails) {
+          setCustomerName(guestDetails.name || '');
+          setCustomerEmail(guestDetails.email || '');
+          setCustomerPhone(guestDetails.phone || '');
+        }
       }
     };
   
@@ -180,11 +194,16 @@ const PaymentPage = () => {
 
     try {
       if (paymentMethod === 'direct') {
-        await processOrder({
+        const result = await processOrder({
           razorpay_payment_id: 'DIRECT-' + Date.now(),
           razorpay_order_id: 'DIRECT-ORDER-' + Date.now(),
           razorpay_signature: 'NA'
         });
+        
+        // --- FIXED: Check if processOrder succeeded ---
+        if (!result) {
+          setIsProcessing(false);
+        }
         return;
       }
       
@@ -265,38 +284,51 @@ const PaymentPage = () => {
         throw new Error('Restaurant data not available');
       }
 
-      const tracking = {
-        confirmed: { status: true, timestamp: new Date().toISOString() },
-        preparing: { status: false, timestamp: null },
-        ready: { status: false, timestamp: null },
-        completed: { status: false, timestamp: null }
-      };
-      
-      // Updated order data structure to match your database
+      // Calculate price details for the order
+      const { 
+        originalTotal, 
+        discountAmount, 
+        subtotalAfterDiscount, 
+        cgst, 
+        sgst, 
+        finalTotal 
+      } = calculatePriceDetails();
+
+      // Updated order data structure to match your database schema
       const orderData = {
         restaurant_id: restaurant.id,
-        customer_name: user?.full_name || 'Guest',
-        customer_email: user?.email || '',
-        customer_phone: user?.phone || '',
+        user_id: user?.id || null, // Set user_id if user is logged in
+        customer_name: customerName || user?.user_metadata?.full_name || 'Guest',
+        customer_email: customerEmail || user?.email || '',
+        customer_phone: customerPhone || user?.user_metadata?.phone || '',
         table_number: tableNumber,
         items: cartItems.map(item => ({
           food_item_id: item.id,
           quantity: item.quantity,
           price: item.price,
-          name: item.name
+          name: item.name,
+          category: item.category,
+          image: item.image
         })),
-        total_amount: finalTotal,
-        status: 'pending',
-        payment_method: 'online',
-        notes: {
-          restaurant_id: restaurant.id || '1',
-          table_number: tableNumber || 'N/A',
-          special_instructions: specialInstructions
-        },
-        address: '',
-        delivery_type: 'delivery'
+        subtotal: subtotalAfterDiscount, // Subtotal after discounts
+        gst: cgst + sgst, // Total GST (CGST + SGST)
+        discount: discountAmount, // Total discount amount
+        total: finalTotal, // Final total including GST
+        razorpay_order_id: response.razorpay_order_id || null,
+        razorpay_payment_id: response.razorpay_payment_id || null,
+        razorpay_signature: response.razorpay_signature || null,
+        payment_method: paymentMethod === 'razorpay' ? 'razorpay' : 'direct',
+        payment_status: 'completed', // Since payment was successful
+        payment_timestamp: new Date().toISOString(),
+        status: 'pending', // Order status starts as pending
+        special_instructions: specialInstructions || null,
+        tracking: {
+          confirmed: { status: true, timestamp: new Date().toISOString() },
+          preparing: { status: false, timestamp: null },
+          ready: { status: false, timestamp: null },
+          completed: { status: false, timestamp: null }
+        }
       };
-
 
       const { data: order, error } = await supabase
         .from('orders')
@@ -330,9 +362,12 @@ const PaymentPage = () => {
           specialInstructions
         }
       });
+      
+      return true; // --- FIXED: Return success indicator ---
     } catch (error) {
       setScriptError(`Payment successful but order creation failed: ${error.message}`);
       setIsProcessing(false);
+      return false; // --- FIXED: Return failure indicator ---
     }
   };
 
