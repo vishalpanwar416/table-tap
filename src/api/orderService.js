@@ -2,67 +2,8 @@
 import { supabase } from '../supabase';
 import { createNotification } from './notificationService';
 
-// Create a new order
-export const createOrder = async (orderData) => {
-  try {
-    
-    // Generate order number
-    const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-    
-    // Calculate GST (assuming 5% GST)
-    const subtotal = orderData.total || 0;
-    const gst = subtotal * 0.05; // 5% GST
-    const discount = orderData.discount || 0;
-    const total = subtotal + gst - discount;
-    
-    // Set initial status to 'pending'
-    const order = {
-      order_number: orderNumber,
-      user_id: orderData.userId,
-      restaurant_id: orderData.restaurant_id,
-      table_number: orderData.tableNumber || 'N/A',
-      items: orderData.items,
-      subtotal: subtotal,
-      gst: gst,
-      discount: discount,
-      total: total,
-      payment_method: orderData.payment_method || 'razorpay',
-      payment_status: 'pending',
-      status: 'pending',
-      customer_name: orderData.customerName,
-      customer_email: orderData.customerEmail,
-      customer_phone: orderData.customerPhone,
-      special_instructions: orderData.special_instructions,
-      tracking: {
-        ready: { status: false, timestamp: null },
-        completed: { status: false, timestamp: null },
-        confirmed: { status: false, timestamp: null },
-        preparing: { status: false, timestamp: null }
-      },
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-
-
-    const { data, error } = await supabase
-      .from('orders')
-      .insert([order])
-      .select()
-      .single();
-
-    if (error) {
-      throw error;
-    }
-    
-    
-    // Create manager notification for new order
-    await createManagerOrderNotification(data);
-    
-    return data;
-  } catch (error) {
-    throw error;
-  }
-};
+// Note: Order creation has been moved to paymentService.js
+// This file now focuses on order management and status updates
 
 // Helper function to create admin notification for new orders
 const createManagerOrderNotification = async (order) => {
@@ -319,38 +260,4 @@ export const cancelOrder = async (orderId, reason) => {
   }
 };
 
-// Update payment status
-export const updatePaymentStatus = async (orderId, paymentData) => {
-  try {
-    const updateData = {
-      payment_status: paymentData.status,
-      payment_timestamp: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-
-    if (paymentData.razorpay_order_id) {
-      updateData.razorpay_order_id = paymentData.razorpay_order_id;
-    }
-    if (paymentData.razorpay_payment_id) {
-      updateData.razorpay_payment_id = paymentData.razorpay_payment_id;
-    }
-    if (paymentData.razorpay_signature) {
-      updateData.razorpay_signature = paymentData.razorpay_signature;
-    }
-    if (paymentData.notes) {
-      updateData.payment_notes = paymentData.notes;
-    }
-
-    const { data, error } = await supabase
-      .from('orders')
-      .update(updateData)
-      .eq('id', orderId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    throw error;
-  }
-};
+// Note: Payment status updates have been moved to paymentService.js

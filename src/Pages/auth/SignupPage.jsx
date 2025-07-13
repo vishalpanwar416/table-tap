@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { authService } from '../../api/authService';
 import GoogleButton from '../../components/auth/GoogleButton';
@@ -8,6 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { optimizeProfileImage } from '../../utils/imageOptimization';
 import { User as UserIcon } from 'lucide-react';
+import { validatePassword, validateEmail, validatePhoneNumber, sanitizeInput, rateLimiter } from '../../utils/security';
 
 export default function SignUpPage() {
   const navigate = useNavigate();
@@ -122,30 +123,50 @@ export default function SignUpPage() {
   };
 
   const validateForm = () => {
-    if (!formData.fullName.trim()) {
+    // Sanitize inputs
+    const sanitizedFullName = sanitizeInput(formData.fullName.trim());
+    const sanitizedEmail = sanitizeInput(formData.email.trim());
+    
+    if (!sanitizedFullName) {
       setError('Full name is required');
       return false;
     }
-    if (!formData.email.trim()) {
+    
+    if (!sanitizedEmail) {
       setError('Email is required');
       return false;
     }
+    
+    // Validate email
+    if (!validateEmail(sanitizedEmail)) {
+      setError('Please enter a valid email address');
+      return false;
+    }
+    
     if (!formData.password.trim()) {
       setError('Password is required');
       return false;
     }
-    if (formData.password.length < 6) {
-      setError('Password should be at least 6 characters');
+    
+    // Validate password with enhanced security
+    const passwordValidation = validatePassword(formData.password);
+    if (!passwordValidation.isValid) {
+      setError(passwordValidation.errors.join(', '));
       return false;
     }
-    if (formData.mobileNumber.length < 12) {
+    
+    // Validate phone number
+    const cleanPhone = formData.mobileNumber.replace(/\D/g, '');
+    if (!validatePhoneNumber(cleanPhone)) {
       setError('Please enter a valid mobile number');
       return false;
     }
+    
     if (!formData.dateOfBirth) {
       setError('Date of birth is required');
       return false;
     }
+    
     // Age check
     const today = new Date();
     const dob = new Date(formData.dateOfBirth);
@@ -177,10 +198,12 @@ export default function SignUpPage() {
       });
       return false;
     }
+    
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return false;
     }
+    
     return true;
   };
   

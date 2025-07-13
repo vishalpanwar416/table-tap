@@ -42,6 +42,7 @@ import HelpFAQPage from '../src/Pages/customer/HelpFAQPage';
 import DevelopmentTools from './components/DevelopmentTools';
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
+import SecurityManager from './components/SecurityManager';
 
 // Register service worker
 register();
@@ -198,6 +199,9 @@ const App = () => {
                           {/* Vercel Analytics and Speed Insights */}
                           <Analytics />
                           <SpeedInsights />
+                          
+                          {/* Security Manager */}
+                          <SecurityManager />
                         </div>
                       </FoodDataProvider>
                     </LikesProvider>

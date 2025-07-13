@@ -11,20 +11,25 @@ const OrderConfirmationPage = () => {
   const [orderDetails, setOrderDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [eta, setEta] = useState('');
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const initializeOrder = async () => {
+      console.log('OrderConfirmationPage: Initializing with state:', location.state);
+      
       try {
         const orderId = location.state?.orderId;
+        console.log('OrderConfirmationPage: Order ID:', orderId);
+        
         if (!orderId) {
-          return navigate('/');
+          setError('No order ID provided');
+          setLoading(false);
+          return;
         }
 
         const order = await getOrderDetails(orderId);
-        if (!order) {
-          throw new Error('Order not found');
-        }
-
+        console.log('OrderConfirmationPage: Retrieved order:', order);
+        
         setOrderDetails(order);
         startStatusUpdates(orderId);
         calculateETA(order.created_at);
@@ -32,7 +37,8 @@ const OrderConfirmationPage = () => {
         // Auto-redirect after 8 seconds
         setTimeout(() => navigate('/my-orders'), 8000);
       } catch (err) {
-        navigate('/');
+        console.error('OrderConfirmationPage: Error:', err);
+        setError(err.message || 'Failed to load order details');
       } finally {
         setLoading(false);
       }
@@ -90,6 +96,22 @@ const OrderConfirmationPage = () => {
         <div className="text-center text-white">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
           <p>Processing your order...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center text-white">
+        <div className="text-center">
+          <p className="text-red-400 mb-4">{error}</p>
+          <button onClick={() => navigate('/my-orders')} className="text-orange-500 mt-4">
+            View My Orders
+          </button>
+          <button onClick={() => navigate('/')} className="text-orange-500 mt-4 ml-4">
+            Go Home
+          </button>
         </div>
       </div>
     );

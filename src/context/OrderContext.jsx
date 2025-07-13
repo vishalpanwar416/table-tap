@@ -6,10 +6,10 @@ import { useRestaurant } from '../Pages/Restaurantselection/RestaurantContext';
 import { 
   createOrder, 
   getUserOrders, 
-  subscribeToOrderUpdates,
   getOrderById,
   updatePaymentStatus
-} from '../api/orderService';
+} from '../api/paymentService';
+import { subscribeToOrderUpdates } from '../api/orderService'; // Add this import
 
 // Create a dummy notification service function if you don't have it yet
 const createNotification = async (data) => {

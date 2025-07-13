@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import GoogleButton from '../../components/auth/GoogleButton';
 import AuthForm from '../../components/auth/AuthForm';
 import { authService } from '../../api/authService';
 import { hasValidRestaurantSelection, getStoredRestaurantSelection } from '../../utils/restaurantCheck';
 import { motion, AnimatePresence } from 'framer-motion';
+import { validateEmail, sanitizeInput, rateLimiter, sessionManager } from '../../utils/security';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -50,8 +51,34 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
     
+    // Sanitize inputs
+    const sanitizedEmail = sanitizeInput(email.trim());
+    
+    // Validate email
+    if (!validateEmail(sanitizedEmail)) {
+      setError('Please enter a valid email address');
+      setLoading(false);
+      return;
+    }
+    
+    // Check rate limiting
+    const rateLimitKey = `login_${sanitizedEmail}`;
+    if (!rateLimiter.isAllowed(rateLimitKey)) {
+      const remainingTime = Math.ceil(rateLimiter.getRemainingAttempts(rateLimitKey) / 60);
+      setError(`Too many login attempts. Please try again in ${remainingTime} minutes.`);
+      setLoading(false);
+      return;
+    }
+    
     try {
-      await authService.signInWithPassword(email, password);
+      await authService.signInWithPassword(sanitizedEmail, password);
+      
+      // Clear rate limiting on successful login
+      rateLimiter.clearAttempts(rateLimitKey);
+      
+      // Update session activity
+      sessionManager.updateActivity();
+      
       // Check if user has restaurant selection after login
       if (hasValidRestaurantSelection()) {
         navigate('/home');
@@ -61,7 +88,15 @@ export default function LoginPage() {
         navigate(`/restaurant-selection${params}`);
       }
     } catch (err) {
+      // Record failed attempt
+      rateLimiter.recordAttempt(rateLimitKey);
+      
+      const remainingAttempts = rateLimiter.getRemainingAttempts(rateLimitKey);
+      if (remainingAttempts <= 2) {
+        setError(`Login failed. ${remainingAttempts} attempts remaining before temporary lockout.`);
+      } else {
       setError(err.message || 'Login failed');
+      }
     } finally {
       setLoading(false);
     }
