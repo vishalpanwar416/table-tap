@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Clock, CheckCircle, XCircle, ChefHat, Calendar, ChevronDown, ChevronUp, DollarSign } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, ChefHat, Calendar, ChevronDown, ChevronUp, DollarSign, IndianRupee, CreditCard, Wallet, Landmark } from 'lucide-react';
 
 const statusIcons = {
   pending: <Clock className="w-4 h-4 text-yellow-500" />,
@@ -59,34 +59,36 @@ const OrderCard = ({ order, onClick, restaurantName }) => {
     setExpanded(!expanded);
   };
   
+  console.log('OrderCard order:', order);
+  
   return (
     <div 
       onClick={handleCardClick}
-      className={`bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all border mx-auto max-w-full ${expanded ? 'border-orange-200' : 'border-gray-100'}`}
+      className={`bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all border mx-auto max-w-full ${expanded ? 'border-orange-300' : 'border-gray-100'} cursor-pointer`}
+      style={{ fontSize: '0.95rem' }}
     >
-      <div className={`p-4 ${expanded ? 'pb-3' : ''}`}>
+      <div className={`p-3 ${expanded ? 'pb-2' : ''}`}>
         {/* Order Header - Always visible */}
-        <div className="flex justify-between items-center mb-2">
+        <div className="flex justify-between items-center mb-1">
           <div>
-            <h3 className="font-semibold text-gray-900 flex items-center">
+            <h3 className="font-semibold text-gray-900 flex items-center text-sm">
               <span className="mr-1">Order</span>
-              <span className="font-mono text-sm bg-gray-100 px-2 py-0.5 rounded">
+              <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded">
                 #{order.order_number || (order.id && order.id.slice(0, 8))}
               </span>
             </h3>
             {restaurantName && (
-              <div className="text-xs text-gray-500 mt-0.5 font-medium">
+              <div className="text-xs text-gray-500 mt-0.5 font-medium truncate max-w-[120px]">
                 {restaurantName}
               </div>
             )}
-            <div className="flex items-center text-xs text-gray-500 mt-1">
-              <Calendar size={12} className="mr-1" />
+            <div className="flex items-center text-xs text-gray-400 mt-0.5">
+              <Calendar size={11} className="mr-1" />
               <span>{formatDate(order.created_at || new Date())}</span>
             </div>
           </div>
-          
-          <div className={`flex items-center px-3 py-1.5 rounded-full text-xs font-medium border ${statusColors[order.status]}`}>
-            <div className="mr-1.5">
+          <div className={`flex items-center px-2 py-1 rounded-full text-xs font-medium border ${statusColors[order.status]}`}>
+            <div className="mr-1">
               {statusIcons[order.status]}
             </div>
             {statusLabels[order.status]}
@@ -94,59 +96,55 @@ const OrderCard = ({ order, onClick, restaurantName }) => {
         </div>
         
         {/* Compact Item Summary - Always visible */}
-        <div className="flex items-center justify-between py-2 border-t border-b border-gray-100">
-          <div className="flex items-center py-1">
-            <div className="bg-gray-50 rounded-full px-2 py-1 text-xs font-medium text-gray-600">
-              {(order.items || []).length} {(order.items || []).length === 1 ? 'item' : 'items'}
+        <div className="flex items-center justify-between py-1 border-t border-b border-gray-100">
+          <div className="flex items-center py-0.5">
+            <div className="bg-gray-50 rounded-full px-2 py-0.5 text-xs font-medium text-gray-600">
+              {(order.items || []).length} item{(order.items || []).length !== 1 && 's'}
             </div>
           </div>
-          
-          <div className="flex items-center font-medium text-gray-900">
+          <div className="flex items-center font-semibold text-gray-900 text-sm">
             <span>₹{order.total?.toFixed(2) || '0.00'}</span>
           </div>
-          
           <button 
             onClick={handleViewDetails}
-            className={`flex items-center text-sm font-medium rounded-lg px-2 py-1 ${expanded ? 'bg-orange-50 text-orange-600' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'} transition-colors`}
+            className={`flex items-center text-xs font-medium rounded px-2 py-0.5 ${expanded ? 'bg-orange-50 text-orange-600' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'} transition-colors`}
+            tabIndex={0}
           >
-            {expanded ? 'Hide' : 'View'} 
-            {expanded ? <ChevronUp size={14} className="ml-0.5" /> : <ChevronDown size={14} className="ml-0.5" />}
+            {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
           </button>
         </div>
         
         {/* Expanded Content */}
         {expanded && (
-          <div className="mt-3 pt-1 overflow-hidden transition-all duration-300 ease-in-out">
+          <div className="mt-2 pt-1 overflow-hidden transition-all duration-300 ease-in-out bg-gray-50 rounded-lg">
             {/* Order Items */}
-            <div className="mb-3">
-              <h4 className="text-xs uppercase font-medium text-gray-500 mb-2 tracking-wider">Order Items</h4>
-              <div className="space-y-2">
+            <div className="mb-2">
+              <h4 className="text-xs uppercase font-medium text-gray-500 mb-1 tracking-wider">Order Items</h4>
+              <div className="divide-y divide-gray-100">
                 {order.items && order.items.map((item, index) => (
-                  <div key={index} className="flex items-center rounded-lg px-3 py-2 border border-gray-100 hover:bg-gray-50 transition-colors">
+                  <div key={index} className="flex items-center px-2 py-2">
                     {item.image && (
-                      <div className="w-10 h-10 rounded-md overflow-hidden mr-3 flex-shrink-0 border border-gray-200">
+                      <div className="w-8 h-8 rounded-md overflow-hidden mr-2 flex-shrink-0 border border-gray-200">
                         <img 
                           src={item.image} 
                           alt={item.name} 
                           className="w-full h-full object-cover"
                           onError={(e) => {
-                            e.target.style.display = 'none'; // Hide image on error
+                            e.target.style.display = 'none';
                           }}
                         />
                       </div>
                     )}
-                    <div className="flex-1">
-                      <span className="text-sm font-medium text-gray-800">{item.name}</span>
-                      {item.quantity > 1 && (
-                        <span className="ml-2 text-xs bg-gray-100 px-1.5 py-0.5 rounded-full text-gray-600">
-                          x{item.quantity}
-                        </span>
-                      )}
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs font-medium text-gray-800 truncate">{item.name}</span>
+                      <span className="ml-2 text-[10px] bg-gray-100 px-1 py-0.5 rounded-full text-gray-600">
+                        x{item.quantity}
+                      </span>
                       {item.variant && (
-                        <p className="text-xs text-gray-500 mt-0.5">{item.variant}</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">{item.variant}</p>
                       )}
                     </div>
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-xs font-medium text-gray-900">
                       ₹{(item.price * (item.quantity || 1)).toFixed(2)}
                     </div>
                   </div>
@@ -155,44 +153,86 @@ const OrderCard = ({ order, onClick, restaurantName }) => {
             </div>
             
             {/* Additional Order Details */}
-            <div className="mt-2 space-y-2">
+            <div className="mt-1 space-y-2">
               {order.tableNumber && (
-                <div className="bg-blue-50 text-blue-700 rounded-lg p-2 text-sm flex items-center justify-center">
+                <div className="bg-blue-50 text-blue-700 rounded-lg p-1.5 text-xs flex items-center justify-center">
                   <span className="font-medium">Table {order.tableNumber}</span>
                 </div>
               )}
               
               {order.specialInstructions && (
-                <div className="bg-gray-50 rounded-lg p-3 text-sm border border-gray-200">
-                  <span className="font-medium text-xs uppercase text-gray-500 block mb-1">Special Instructions</span>
+                <div className="bg-gray-50 rounded-lg p-2 text-xs border border-gray-200">
+                  <span className="font-medium text-[10px] uppercase text-gray-500 block mb-1">Special Instructions</span>
                   <p className="text-gray-700">{order.specialInstructions}</p>
                 </div>
               )}
               
               {/* Payment details */}
-              <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                <span className="font-medium text-xs uppercase text-gray-500 block mb-1">Payment Summary</span>
-                <div className="flex justify-between text-sm mb-1">
+              <div className="bg-gray-50 rounded-lg p-2 border border-gray-200">
+                <span className="font-medium text-[10px] uppercase text-gray-500 block mb-1">Payment Summary</span>
+                <div className="flex justify-between text-xs mb-1">
                   <span className="text-gray-600">Subtotal</span>
                   <span className="text-gray-900">₹{order.subtotal?.toFixed(2) || '0.00'}</span>
                 </div>
                 {order.discount !== undefined && (
-                  <div className="flex justify-between text-sm mb-1">
+                  <div className="flex justify-between text-xs mb-1">
                     <span className="text-gray-600">Discount</span>
                     <span className="text-gray-900">-₹{order.discount?.toFixed(2) || '0.00'}</span>
                   </div>
                 )}
                 {order.deliveryFee && (
-                  <div className="flex justify-between text-sm mb-1">
+                  <div className="flex justify-between text-xs mb-1">
                     <span className="text-gray-600">Delivery Fee</span>
                     <span className="text-gray-900">₹{order.deliveryFee.toFixed(2)}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-sm mb-1">
+                <div className="flex justify-between text-xs mb-1">
                   <span className="text-gray-600">Tax</span>
                   <span className="text-gray-900">₹{order.gst?.toFixed(2) || '0.00'}</span>
                 </div>
-                <div className="border-t border-gray-200 mt-2 pt-2 flex justify-between font-medium">
+                <div className="flex justify-between text-xs mb-1 items-center">
+                  <span className="text-gray-600">Payment Method</span>
+                  <span className="flex items-center gap-1">
+                    {order.payment_method === 'upi_at_restaurant' && (
+                      <span className="inline-flex items-center bg-green-50 text-green-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                        <Landmark size={13} className="mr-1" />
+                        <span>UPI at Restaurant</span>
+                      </span>
+                    )}
+                    {order.payment_method === 'razorpay' && (
+                      <span className="inline-flex items-center bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                        <CreditCard size={13} className="mr-1" />
+                        <span>Online Payment</span>
+                      </span>
+                    )}
+                    {order.payment_method === 'cash' && (
+                      <span className="inline-flex items-center bg-yellow-50 text-yellow-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                        <Wallet size={13} className="mr-1" />
+                        <span>Pay at Restaurant</span>
+                      </span>
+                    )}
+                    {/* Fallback for unknown methods */}
+                    {!['upi_at_restaurant', 'razorpay', 'cash'].includes(order.payment_method) && (
+                      <span className="inline-flex items-center bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                        <CreditCard size={13} className="mr-1" />
+                        <span>{order.payment_method?.toUpperCase() || 'UNKNOWN'}</span>
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-gray-600">Payment Status</span>
+                  <span className={`font-medium ${
+                    order.payment_status === 'completed'
+                      ? 'text-green-600'
+                      : order.payment_status === 'pending'
+                      ? 'text-yellow-600'
+                      : 'text-gray-900'
+                  }`}>
+                    {order.payment_status ? order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1) : 'Unknown'}
+                  </span>
+                </div>
+                <div className="border-t border-gray-200 mt-2 pt-2 flex justify-between font-semibold">
                   <span className="text-gray-800">Total</span>
                   <span className="text-gray-900">₹{order.total?.toFixed(2) || '0.00'}</span>
                 </div>

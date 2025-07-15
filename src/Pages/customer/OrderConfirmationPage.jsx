@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ChevronLeft, CheckCircle, Clock, MapPin } from 'lucide-react';
+import { ChevronLeft, CheckCircle, MapPin } from 'lucide-react';
 import { useOrders } from '../../context/OrderContext';
 import { supabase } from '../../supabase';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const OrderConfirmationPage = () => {
   const navigate = useNavigate();
@@ -10,7 +11,6 @@ const OrderConfirmationPage = () => {
   const { getOrderDetails } = useOrders();
   const [orderDetails, setOrderDetails] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [eta, setEta] = useState('');
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -32,7 +32,6 @@ const OrderConfirmationPage = () => {
         
         setOrderDetails(order);
         startStatusUpdates(orderId);
-        calculateETA(order.created_at);
 
         // Auto-redirect after 8 seconds
         setTimeout(() => navigate('/my-orders'), 8000);
@@ -65,21 +64,6 @@ const OrderConfirmationPage = () => {
     };
   };
 
-  const calculateETA = (createdAt) => {
-    const etaDate = new Date(createdAt);
-    etaDate.setMinutes(etaDate.getMinutes() + 45);
-
-    const options = {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-      weekday: 'short',
-      day: 'numeric'
-    };
-
-    setEta(etaDate.toLocaleString('en-US', options));
-  };
-
   const handleTrackOrder = () => {
     if (orderDetails && orderDetails.id) {
       navigate(`/track-order/${orderDetails.id}`);
@@ -87,7 +71,7 @@ const OrderConfirmationPage = () => {
   };
 
   const handleGoHome = () => {
-    navigate('/');
+    navigate('/home');
   };
 
   if (loading) {
@@ -134,7 +118,7 @@ const OrderConfirmationPage = () => {
     <div className="min-h-screen bg-black text-white flex flex-col">
       {/* Header */}
       <div className="px-6 py-8">
-        <button onClick={handleGoHome} className="text-orange-500">
+        <button onClick={handleGoHome} className="text-orange-500 hover:text-orange-400 transition">
           <ChevronLeft size={30} />
         </button>
       </div>
@@ -142,66 +126,89 @@ const OrderConfirmationPage = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
         {/* Success Animation */}
-        <div className="mb-8">
+        <motion.div
+          className="mb-8"
+          initial={{ opacity: 0, scale: 0.7 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: "spring", stiffness: 200, damping: 15 }}
+        >
           <div className="relative w-24 h-24 mx-auto mb-6">
-            <CheckCircle className="w-24 h-24 text-green-500" />
-            <div className="absolute inset-0 bg-green-500 rounded-full opacity-20 animate-ping"></div>
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 12 }}
+            >
+              <CheckCircle className="w-24 h-24 text-green-500 drop-shadow-lg" />
+            </motion.div>
+            <motion.div
+              className="absolute inset-0 bg-green-500 rounded-full opacity-20"
+              animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.3, 0.2] }}
+              transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+            />
           </div>
-        </div>
+        </motion.div>
 
         {/* Order Confirmation */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Order Confirmed!</h1>
+        <motion.div
+          className="mb-8"
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <h1 className="text-3xl font-bold mb-2 tracking-tight">Order Confirmed!</h1>
           <p className="text-gray-300 mb-4">Your order has been placed successfully</p>
           
           {orderDetails.order_number && (
-            <div className="bg-gray-800 rounded-lg p-4 mb-4">
-              <p className="text-sm text-gray-400">Order Number</p>
-              <p className="text-lg font-semibold text-orange-500">{orderDetails.order_number}</p>
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 mb-4 shadow-lg border border-white/10">
+              <p className="text-xs text-gray-400">Order Number</p>
+              <p className="text-lg font-semibold text-orange-400 tracking-wider">{orderDetails.order_number}</p>
             </div>
           )}
 
           {orderDetails.table_number && (
             <div className="flex items-center justify-center gap-2 mb-4">
-              <MapPin className="w-5 h-5 text-orange-500" />
-              <span>Table {orderDetails.table_number}</span>
+              <MapPin className="w-5 h-5 text-orange-400" />
+              <span className="font-medium">Table {orderDetails.table_number}</span>
             </div>
           )}
-        </div>
-
-        {/* ETA */}
-        <div className="mb-8">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Clock className="w-5 h-5 text-orange-500" />
-            <span className="font-semibold">Estimated Delivery</span>
-          </div>
-          <p className="text-lg">{eta}</p>
-        </div>
+        </motion.div>
 
         {/* Action Buttons */}
-        <div className="space-y-4 w-full max-w-sm">
-          <button
-            onClick={handleTrackOrder}
-            className="w-full bg-orange-500 text-white py-3 px-6 rounded-lg font-semibold hover:bg-orange-600 transition-colors"
+        <motion.div
+          className="space-y-4 w-full max-w-sm"
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+        >
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => navigate('/my-orders')}
+            className="w-full bg-orange-500 text-white py-3 px-6 rounded-lg font-semibold shadow-lg hover:bg-orange-600 transition-colors"
           >
             Track My Order
-          </button>
+          </motion.button>
           
-          <button
-            onClick={() => navigate('/my-orders')}
-            className="w-full border border-orange-500 text-orange-500 py-3 px-6 rounded-lg font-semibold hover:bg-orange-500 hover:text-white transition-colors"
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={handleGoHome}
+            className="w-full border border-orange-500 text-orange-400 py-3 px-6 rounded-lg font-semibold hover:bg-orange-500 hover:text-white transition-colors"
           >
-            View All Orders
-          </button>
-        </div>
+            Order More
+          </motion.button>
+        </motion.div>
       </div>
 
       {/* Footer */}
-      <div className="px-6 py-8 text-center">
+      <motion.div
+        className="px-6 py-8 text-center"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.8 }}
+      >
         <p className="text-sm text-gray-400">
           If you have any questions, please contact our customer support
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 };

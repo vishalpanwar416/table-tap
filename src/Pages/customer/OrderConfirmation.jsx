@@ -1,10 +1,88 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { ChevronLeft, Trash2, Minus, Plus, ChevronDown, CheckCircle, Clock, MapPin, User, Mail, Phone, AlertCircle, Info } from 'lucide-react';
+import { ChevronLeft, Trash2, Minus, Plus, ChevronDown, CheckCircle, Clock, MapPin, User, Mail, Phone, AlertCircle, Info, LogIn, X } from 'lucide-react';
 import { useCart } from '../../config/CartContent';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabase';
 import { useRestaurant } from '../Restaurantselection/RestaurantContext';
 import { getStoredRestaurantSelection } from '../../utils/restaurantCheck';
+import { authService } from '../../api/authService';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// Enhanced theme-matching popup for email already registered (LogoutPopup-inspired)
+const EmailExistsPopup = ({ show, onClose, onAccept, onReject, email }) => {
+  const popupVariants = {
+    hidden: { y: 100, opacity: 0, scale: 0.98 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      scale: 1,
+      transition: { type: 'spring', stiffness: 300, damping: 30 }
+    },
+    exit: { y: 100, opacity: 0, scale: 0.98, transition: { duration: 0.25 } }
+  };
+  const overlayVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1 },
+    exit: { opacity: 0 }
+  };
+  return (
+    <AnimatePresence>
+      {show && (
+        <>
+          <motion.div
+            key="popup-overlay"
+            className="fixed inset-0 bg-black/40 z-40 backdrop-blur-[3px]"
+            variants={overlayVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            onClick={onClose}
+          />
+          <motion.div
+            key="popup-content"
+            className="fixed bottom-3 left-0 right-0 z-50 mx-auto p-6 shadow-2xl border border-orange-100"
+            style={{ maxWidth: '390px', background: 'linear-gradient(135deg, rgba(255,255,255,0.85) 60%, rgba(255,240,220,0.85) 100%)', backdropFilter: 'blur(12px)', borderRadius: '3rem' }}
+            variants={popupVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            <div className="flex flex-col items-center mb-4">
+              <motion.div
+                className="w-14 h-14 rounded-full bg-orange-100 flex items-center justify-center mb-2 shadow-lg"
+                initial={{ boxShadow: '0 0 0 0 rgba(255,140,0,0.3)' }}
+                animate={{ boxShadow: ['0 0 0 0 rgba(255,140,0,0.3)', '0 0 0 8px rgba(255,140,0,0.08)', '0 0 0 0 rgba(255,140,0,0.3)'] }}
+                transition={{ repeat: Infinity, duration: 2 }}
+              >
+                <svg className="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z" /></svg>
+              </motion.div>
+              <h2 className="text-2xl font-extrabold text-gray-900 mb-1 tracking-tight">Account Found</h2>
+              <p className="text-base text-gray-700 font-medium">The email <span className="font-semibold text-orange-600">{email}</span> is already registered.</p>
+            </div>
+            <p className="text-gray-500 text-xs text-center mb-6">Would you like to login to your existing account?</p>
+            <div className="flex gap-4 justify-center px-2 mb-2">
+              <button
+                onClick={onReject}
+                className="flex-1 bg-gray-200 text-gray-800 py-3 hover:bg-gray-300 transition-colors font-semibold shadow-sm"
+                style={{ borderRadius: '3rem' }}
+              >
+                Use Different Email
+              </button>
+              <button
+                onClick={onAccept}
+                className="flex-1 bg-gray-800 text-white py-3 hover:bg-gray-700 transition-colors font-semibold shadow-lg flex items-center justify-center gap-2"
+                style={{ borderRadius: '3rem' }}
+              >
+                <LogIn className="w-5 h-5" />
+                Login
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
 
 const OrderConfirmation = () => {
   const navigate = useNavigate();
@@ -22,6 +100,11 @@ const OrderConfirmation = () => {
   const [formError, setFormError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [animateItems, setAnimateItems] = useState(false);
+
+  // Email check states
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [showLoginToast, setShowLoginToast] = useState(false);
+  const [emailExists, setEmailExists] = useState(false);
 
   // Parse tables from restaurant data
   const [availableTables, setAvailableTables] = useState([]);
@@ -128,6 +211,65 @@ const OrderConfirmation = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Email check function (using RPC)
+  const checkEmailExists = async (email) => {
+    if (!email || !email.trim()) {
+      setEmailExists(false);
+      return;
+    }
+    try {
+      setIsCheckingEmail(true);
+      console.log('Starting email check for:', email);
+      const result = await authService.checkEmailExistsRPC(email);
+      console.log('Email check result:', result);
+      setEmailExists(result.exists);
+      if (result.exists) {
+        setShowLoginToast(true);
+        setFormError('');
+      }
+    } catch (error) {
+      console.error('Error checking email:', error);
+      setEmailExists(false);
+    } finally {
+      setIsCheckingEmail(false);
+    }
+  };
+
+  // Debounced email check useEffect
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (guestEmail && !user) {
+        checkEmailExists(guestEmail);
+      } else {
+        setEmailExists(false);
+        setIsCheckingEmail(false);
+      }
+    }, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [guestEmail, user]);
+
+  // Close keyboard when popup appears
+  useEffect(() => {
+    if (showLoginToast) {
+      const active = document.activeElement;
+      if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
+        active.blur();
+      }
+    }
+  }, [showLoginToast]);
+
+  // Email input change handler
+  const handleEmailChange = (e) => {
+    const newEmail = e.target.value;
+    setGuestEmail(newEmail);
+    setEmailExists(false);
+    setShowLoginToast(false);
+    setFormError('');
+    if (!newEmail.trim()) {
+      setIsCheckingEmail(false);
+    }
+  };
+
   // Handle table selection
   const handleTableSelect = (table) => {
     setTableNumber(table.tableNumber);
@@ -216,6 +358,16 @@ const OrderConfirmation = () => {
     
     if (!tableNumber) {
       setFormError('Please select your table number.');
+      return;
+    }
+
+    if (isCheckingEmail) {
+      setFormError('Please wait while we check your email...');
+      return;
+    }
+
+    if (!user && emailExists) {
+      setFormError('This email is already registered. Please login to continue.');
       return;
     }
 
@@ -446,15 +598,32 @@ const OrderConfirmation = () => {
                     <label className="text-sm font-semibold text-gray-700 flex items-center gap-2" htmlFor="guestEmail">
                       <Mail size={16} />
                       Email Address *
+                      {isCheckingEmail && (
+                        <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                      )}
                     </label>
                     <input 
                       id="guestEmail" 
                       type="email" 
                       value={guestEmail} 
-                      onChange={(e) => setGuestEmail(e.target.value)} 
-                      className="w-full mt-2 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" 
+                      onChange={handleEmailChange}
+                      className={`w-full mt-2 px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
+                        emailExists ? 'border-orange-300 bg-orange-50' : 'border-gray-200'
+                      }`}
                       required 
+                      autoComplete="email"
                     />
+                    {emailExists && (
+                      <div className="mt-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                        <div className="flex items-center gap-2 text-orange-700">
+                          <Info size={16} />
+                          <span className="text-sm font-medium">This email is already registered</span>
+                        </div>
+                        <p className="text-xs text-orange-600 mt-1">
+                          Please login to continue with your existing account or use a different email
+                        </p>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="text-sm font-semibold text-gray-700 flex items-center gap-2" htmlFor="guestPhone">
@@ -664,9 +833,13 @@ const OrderConfirmation = () => {
           <div className="max-w-[390px] md:max-w-4xl lg:max-w-6xl mx-auto">
             <button 
               onClick={handlePlaceOrder}
-              disabled={cartItems.length === 0}
+              disabled={
+                cartItems.length === 0 ||
+                isCheckingEmail ||
+                (!user && emailExists)
+              }
               className={`w-full py-4 rounded-full font-bold text-lg transition-all duration-300 transform hover:scale-105 ${
-                cartItems.length === 0 
+                cartItems.length === 0 || isCheckingEmail || (!user && emailExists)
                   ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
                   : 'bg-gray-600 text-white hover:bg-gray-700 shadow-lg hover:shadow-xl'
               }`}
@@ -687,6 +860,26 @@ const OrderConfirmation = () => {
             </button>
           </div>
         </div>
+
+        {/* Login Toast Notification */}
+        <EmailExistsPopup
+          show={showLoginToast}
+          email={guestEmail}
+          onClose={() => setShowLoginToast(false)}
+          onAccept={() => {
+            setShowLoginToast(false);
+            navigate('/login', {
+              state: {
+                email: guestEmail,
+                returnTo: '/order-confirmation'
+              }
+            });
+          }}
+          onReject={() => {
+            setShowLoginToast(false);
+            setEmailExists(false);
+          }}
+        />
       </div>
     </div>
   );

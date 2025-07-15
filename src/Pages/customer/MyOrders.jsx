@@ -4,6 +4,58 @@ import { useNavigate } from 'react-router-dom';
 import { useOrders } from '../../context/OrderContext';
 import OrderCard from '../../components/customer/OrderCard';
 import { getActiveRestaurants } from '../Restaurantselection/restaurantSelectionService';
+import { motion, AnimatePresence } from "framer-motion";
+
+const tabs = [
+  { key: "pending", label: "Waiting Acceptance" },
+  { key: "preparing", label: "In Preparation" },
+  { key: "completed", label: "Order History" },
+];
+
+function SegmentedTabs({ activeTab, setActiveTab }) {
+  // For indicator position/width
+  const tabRefs = React.useRef([]);
+  const [indicatorProps, setIndicatorProps] = React.useState({ left: 0, width: 0 });
+
+  React.useEffect(() => {
+    const idx = tabs.findIndex((t) => t.key === activeTab);
+    const node = tabRefs.current[idx];
+    if (node) {
+      setIndicatorProps({
+        left: node.offsetLeft,
+        width: node.offsetWidth,
+      });
+    }
+  }, [activeTab]);
+
+  return (
+    <div className="relative flex bg-gray-200 rounded-full p-1 w-fit mx-auto shadow-sm">
+      {/* Sliding indicator */}
+      <motion.div
+        className="absolute top-0 left-0 h-full bg-gray-700 rounded-full z-0"
+        layout
+        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+        style={{
+          width: indicatorProps.width,
+          left: indicatorProps.left,
+        }}
+      />
+      {tabs.map((tab, idx) => (
+        <button
+          key={tab.key}
+          ref={el => (tabRefs.current[idx] = el)}
+          onClick={() => setActiveTab(tab.key)}
+          className={`relative z-10 px-3 py-1 rounded-full font-medium transition-colors duration-200 text-xs
+            ${activeTab === tab.key ? "text-white" : "text-gray-700"}
+          `}
+          style={{ minWidth: 0, whiteSpace: 'nowrap' }} // Ensures no wrapping
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 const statusComponents = {
   pending: {
@@ -43,8 +95,8 @@ const statusComponents = {
   }
 };
 
-const MyOrders = () => {
-  const [activeTab, setActiveTab] = useState('pending');
+export default function MyOrders() {
+  const [activeTab, setActiveTab] = useState("pending");
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(new Date());
@@ -239,38 +291,7 @@ const MyOrders = () => {
           <div className="flex-1 flex flex-col bg-gray-200 rounded-t-3xl overflow-hidden min-h-[500px] px-6 pt-10 pb-6">
             {/* Tabs */}
             <div className="flex justify-center mb-6">
-              <div className="inline-flex gap-1 overflow-x-auto scrollbar-hide bg-gray-300 rounded-full p-1 shadow-sm">
-                <button 
-                  className={`px-3 py-2 md:px-5 rounded-full text-xs md:text-sm font-medium whitespace-nowrap transition-all ${
-                    activeTab === 'pending' 
-                      ? 'bg-gray-600 text-white shadow-sm' 
-                      : 'bg-transparent text-gray-600 hover:bg-gray-400'
-                  }`}
-                  onClick={() => handleTabChange('pending')}
-                >
-                  Waiting Acceptance
-                </button>
-                <button 
-                  className={`px-3 py-2 md:px-5 rounded-full text-xs md:text-sm font-medium whitespace-nowrap transition-all ${
-                    activeTab === 'preparing' 
-                      ? 'bg-gray-600 text-white shadow-sm' 
-                      : 'bg-transparent text-gray-600 hover:bg-gray-400'
-                  }`}
-                  onClick={() => handleTabChange('preparing')}
-                >
-                  In Preparation
-                </button>
-                <button 
-                  className={`px-3 py-2 md:px-5 rounded-full text-xs md:text-sm font-medium whitespace-nowrap transition-all ${
-                    activeTab === 'completed' 
-                      ? 'bg-gray-600 text-white shadow-sm' 
-                      : 'bg-transparent text-gray-600 hover:bg-gray-400'
-                  }`}
-                  onClick={() => handleTabChange('completed')}
-                >
-                  Order History
-                </button>
-              </div>
+              <SegmentedTabs activeTab={activeTab} setActiveTab={setActiveTab} />
             </div>
 
             {/* Filter and Refresh Bar */}
@@ -364,5 +385,3 @@ const MyOrders = () => {
     </div>
   );
 };
-
-export default MyOrders;

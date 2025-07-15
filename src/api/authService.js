@@ -345,6 +345,30 @@ export const authService = {
     } catch (error) {
       throw error;
     }
+  },
+
+  /**
+   * Check if an email is already registered using RPC (more secure)
+   * @param {string} email - Email to check
+   * @returns {Promise<{exists: boolean}>} Check result
+   */
+  checkEmailExistsRPC: async (email) => {
+    try {
+      const trimmedEmail = email.trim().toLowerCase();
+      
+      const { data, error } = await supabase
+        .rpc('check_email_exists', { email_to_check: trimmedEmail });
+      
+      if (error) {
+        console.error('RPC error:', error);
+        return { exists: false };
+      }
+      
+      return { exists: data || false };
+    } catch (error) {
+      console.error('Error in checkEmailExistsRPC:', error);
+      return { exists: false };
+    }
   }
 };
 

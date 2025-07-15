@@ -146,32 +146,15 @@ export const calculateOrderTotals = (items, discountPercentage = 0) => {
  */
 export const createOrder = async (orderData) => {
   try {
-    // ✅ Get current auth user context from Supabase
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError) {
-      console.error('Auth error:', authError);
-    }
-    console.log("Current Supabase user:", user);
+    // FIX: Add robust, final validation for guest user data before insertion.
+    // This acts as a final guard against invalid data, regardless of frontend state.
+    if (!orderData.userId) { // This logic runs only for guest users
+      console.log('Guest order validation - checking required fields:', {
+        customerName: orderData.customerName,
+        customerEmail: orderData.customerEmail,
+        customerPhone: orderData.customerPhone
+      });
 
-    let userIdToSend = null;
-
-    if (user) {
-      // User is authenticated ➜ auth.uid() will be NOT NULL
-      userIdToSend = user.id;
-
-      // ✅ Enforce: user must order as themselves
-      if (user.email.toLowerCase() !== orderData.customerEmail.toLowerCase()) {
-        throw new Error("You are logged in. Use your own email to place the order, or log out to order as a guest.");
-      }
-      // If you store phone number in user metadata, validate that too
-      if (user.user_metadata?.phone && user.user_metadata?.phone !== orderData.customerPhone) {
-        throw new Error("Your phone number must match your profile when logged in.");
-      }
-    } else {
-      // Guest ➜ let triggers link user_id if needed
-      userIdToSend = null;
-      
-      // Enhanced validation for guest users
       if (!orderData.customerName || orderData.customerName.trim() === '') {
         throw new Error('Customer name is required for guest orders.');
       }
@@ -181,18 +164,6 @@ export const createOrder = async (orderData) => {
       if (!orderData.customerPhone || orderData.customerPhone.trim() === '') {
         throw new Error('Customer phone is required for guest orders.');
       }
-
-      // Validate email format for guests
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(orderData.customerEmail.trim())) {
-        throw new Error('Please enter a valid email address');
-      }
-
-      // Validate phone format for guests
-      const phoneRegex = /^[6-9]\d{9}$/;
-      if (!phoneRegex.test(orderData.customerPhone.trim())) {
-        throw new Error('Please enter a valid 10-digit phone number');
-      }
     }
 
     // Calculate price details
@@ -201,11 +172,10 @@ export const createOrder = async (orderData) => {
     // Generate order number
     const orderNumber = generateOrderNumber(orderData.restaurantName);
 
-    // ✅ Final payload with proper validation
     const order = {
       order_number: orderNumber,
       restaurant_id: orderData.restaurantId,
-      user_id: userIdToSend, // Use validated user ID
+      user_id: orderData.userId || null, // null for guest users
       // Ensure data is trimmed to prevent whitespace issues with RLS
       customer_name: orderData.customerName.trim(),
       customer_email: orderData.customerEmail.trim(),
@@ -250,10 +220,9 @@ export const createOrder = async (orderData) => {
       tableNumber: order.table_number,
       total: order.total,
       itemsCount: order.items.length,
-      isGuest: !userIdToSend
+      isGuest: !orderData.userId
     });
 
-    // ✅ Insert order
     const { data, error } = await supabase
       .from('orders')
       .insert([order])
