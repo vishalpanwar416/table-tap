@@ -46,49 +46,50 @@ export const loadRazorpayScript = () => {
 /**
  * Initialize Razorpay payment
  */
-export const initializeRazorpayPayment = async (paymentData) => {
+export const initializeRazorpayPayment = ({
+  razorpayKeyId,
+  amount,
+  restaurantName,
+  restaurantLogo,
+  restaurantId,
+  customerName,
+  customerEmail,
+  customerPhone,
+  tableNumber,
+  specialInstructions,
+  themeColor,
+  onSuccess,
+  onDismiss,
+  onFailure
+}) => {
   try {
-    const Razorpay = await loadRazorpayScript();
-    
-    const razorpayKeyId = process.env.REACT_APP_RAZORPAY_KEY_ID;
-    if (!razorpayKeyId) {
-      throw new Error('Razorpay key not configured in environment variables');
-    }
-
-    const amountInPaise = Math.round(parseFloat(paymentData.amount) * 100);
-    if (isNaN(amountInPaise) || amountInPaise <= 0) {
-      throw new Error('Invalid order amount');
-    }
-
-    const options = {
+    const rzp = new window.Razorpay({
       key: razorpayKeyId,
-      amount: amountInPaise,
+      amount: amount,
       currency: 'INR',
-      name: paymentData.restaurantName || 'Restaurant Order',
-      description: `Order at ${paymentData.restaurantName || 'Restaurant'}`,
-      image: paymentData.restaurantLogo || '/logo.png',
-      handler: paymentData.onSuccess,
+      name: restaurantName || 'Restaurant Order',
+      description: `Order at ${restaurantName || 'Restaurant'}`,
+      image: restaurantLogo || '/logo.png',
+      handler: onSuccess,
       prefill: {
-        name: paymentData.customerName || 'Valued Customer',
-        email: paymentData.customerEmail,
-        contact: paymentData.customerPhone
+        name: customerName || 'Valued Customer',
+        email: customerEmail,
+        contact: customerPhone
       },
-      theme: { color: paymentData.themeColor || '#F37254' },
+      theme: { color: themeColor || '#F37254' },
       modal: {
-        ondismiss: paymentData.onDismiss
+        ondismiss: onDismiss
       },
       notes: {
-        restaurant_id: paymentData.restaurantId || '1',
-        table_number: paymentData.tableNumber || 'N/A',
-        special_instructions: paymentData.specialInstructions
+        restaurant_id: restaurantId || '1',
+        table_number: tableNumber || 'N/A',
+        special_instructions: specialInstructions
       }
-    };
-
-    const rzp = new Razorpay(options);
+    });
     
     rzp.on('payment.failed', (response) => {
-      if (paymentData.onFailure) {
-        paymentData.onFailure(response.error.description || 'Gateway error');
+      if (onFailure) {
+        onFailure(response.error.description || 'Gateway error');
       }
     });
 
@@ -577,6 +578,376 @@ export const getPaymentStatusColor = (status) => {
   return colors[status?.toLowerCase()] || 'text-gray-600';
 };
 
+// Helper: Retry mechanism for order creation
+const createOrderWithRetry = async (orderData, maxRetries = 3) => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const orderDataWithAttempt = { ...orderData, creationAttempt: attempt };
+      const order = await createOrder(orderDataWithAttempt);
+      if (order && order.id) {
+        return order;
+      } else {
+        throw new Error('Order creation returned empty response');
+      }
+    } catch (error) {
+      if (attempt === maxRetries) {
+        throw new Error(`Order creation failed after ${maxRetries} attempts: ${error.message}`);
+      }
+      const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+};
+
+// Helper: Notify backend about payment-order mismatch
+const notifyPaymentOrderMismatch = async (failedOrderData) => {
+  const response = await fetch('/api/payment-order-mismatch', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      type: 'payment_success_order_failed',
+      data: failedOrderData,
+      urgency: 'high'
+    })
+  });
+  if (!response.ok) throw new Error('Failed to notify backend');
+};
+
+// Helper: Send order failure notification to customer
+const sendOrderFailureNotification = async (failedOrderData, restaurant) => {
+  const response = await fetch('/api/send-order-failure-notification', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      customerEmail: failedOrderData.customerEmail,
+      customerName: failedOrderData.customerName,
+      paymentId: failedOrderData.paymentId,
+      amount: failedOrderData.amount,
+      restaurantName: restaurant.name,
+      tableNumber: failedOrderData.tableNumber
+    })
+  });
+  if (!response.ok) throw new Error('Failed to send notification email');
+};
+
+// Helper: Show recovery options to user
+const showPaymentRecoveryOptions = (paymentId, {
+  retryOrderCreation,
+  contactSupport,
+  closeRecoveryDialog
+}) => {
+  const recoveryDialog = document.createElement('div');
+  recoveryDialog.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+  recoveryDialog.innerHTML = `
+    <div class="bg-white p-6 rounded-2xl max-w-md mx-4">
+      <h3 class="text-lg font-bold mb-4 text-red-600">Payment Successful, Order Issue</h3>
+      <p class="text-gray-700 mb-4">
+        Your payment was processed successfully, but there was an issue creating your order. 
+        Don't worry - your money is safe!
+      </p>
+      <div class="mb-4">
+        <p class="text-sm text-gray-600">Payment ID: <span class="font-mono">${paymentId}</span></p>
+      </div>
+      <div class="space-y-3">
+        <button id="retryOrderBtn" class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">
+          Retry Order Creation
+        </button>
+        <button id="contactSupportBtn" class="w-full bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600">
+          Contact Support
+        </button>
+        <button id="closeRecoveryBtn" class="w-full bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300">
+          Close
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(recoveryDialog);
+
+  document.getElementById('retryOrderBtn').onclick = retryOrderCreation;
+  document.getElementById('contactSupportBtn').onclick = contactSupport;
+  document.getElementById('closeRecoveryBtn').onclick = closeRecoveryDialog;
+};
+
+const closeRecoveryDialog = () => {
+  const dialog = document.querySelector('.fixed.inset-0');
+  if (dialog) dialog.remove();
+};
+
+export const processOrderWithPayment = async ({
+  paymentResponse,
+  restaurant,
+  user,
+  cartItems,
+  finalCustomerName,
+  finalCustomerEmail,
+  finalCustomerPhone,
+  tableNumber,
+  specialInstructions,
+  paymentMethod,
+  finalTotal,
+  clearCart,
+  navigate,
+  setScriptError,
+  setIsProcessing,
+}) => {
+  try {
+    if (!paymentResponse || !paymentResponse.razorpay_payment_id) {
+      throw new Error('Missing payment confirmation details');
+    }
+    if (!restaurant || !restaurant.id) {
+      throw new Error('Restaurant data not available');
+    }
+    // Guest validation
+    if (!user) {
+      if (!finalCustomerName || finalCustomerName.trim() === '') {
+        throw new Error('Customer name is required');
+      }
+      if (!finalCustomerEmail || finalCustomerEmail.trim() === '') {
+        throw new Error('Customer email is required');
+      }
+      if (!finalCustomerPhone || finalCustomerPhone.trim() === '') {
+        throw new Error('Customer phone is required');
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(finalCustomerEmail.trim())) {
+        throw new Error('Please enter a valid email address');
+      }
+      const phoneRegex = /^[6-9]\d{9}$/;
+      if (!phoneRegex.test(finalCustomerPhone.trim())) {
+        throw new Error('Please enter a valid 10-digit phone number');
+      }
+    }
+
+    // Store payment data before order creation
+    const paymentData = {
+      paymentId: paymentResponse.razorpay_payment_id,
+      orderId: paymentResponse.razorpay_order_id,
+      signature: paymentResponse.razorpay_signature,
+      amount: finalTotal,
+      currency: 'INR',
+      status: 'captured',
+      method: paymentMethod,
+      timestamp: new Date().toISOString(),
+      customerEmail: finalCustomerEmail.trim(),
+      customerPhone: finalCustomerPhone.trim(),
+      restaurantId: restaurant.id
+    };
+    localStorage.setItem(`payment_${paymentResponse.razorpay_payment_id}`, JSON.stringify(paymentData));
+
+    // Try to create order with retry mechanism
+    const order = await createOrderWithRetry({
+      restaurantId: restaurant.id,
+      userId: user ? user.id : null,
+      customerName: finalCustomerName.trim(),
+      customerEmail: finalCustomerEmail.trim(),
+      customerPhone: finalCustomerPhone.trim(),
+      tableNumber,
+      items: cartItems.map(item => ({
+        id: item.id,
+        quantity: item.quantity,
+        price: item.price,
+        name: item.name,
+        category: item.category,
+        image: item.image
+      })),
+      razorpayOrderId: paymentResponse.razorpay_order_id || null,
+      razorpayPaymentId: paymentResponse.razorpay_payment_id || null,
+      razorpaySignature: paymentResponse.razorpay_signature || null,
+      paymentMethod: paymentMethod === 'razorpay' ? 'razorpay' : paymentMethod === 'upi' ? 'upi' : 'direct',
+      paymentStatus: 'completed',
+      specialInstructions,
+      totalAmount: finalTotal
+    });
+
+    // Order created successfully - clear backup payment data
+    localStorage.removeItem(`payment_${paymentResponse.razorpay_payment_id}`);
+
+    clearCart();
+    navigate('/order-confirmation-page', {
+      state: {
+        orderId: order.id,
+        orderNumber: order.order_number,
+        restaurantId: restaurant.id,
+        restaurantName: restaurant.name,
+        totalAmount: order.total,
+        tableNumber,
+        paymentMethod,
+        customerName: finalCustomerName,
+        customerEmail: finalCustomerEmail,
+        customerPhone: finalCustomerPhone,
+        specialInstructions,
+        paymentId: paymentResponse.razorpay_payment_id
+      }
+    });
+    return true;
+
+  } catch (error) {
+    // Handle payment success but order creation failure
+    if (paymentResponse.razorpay_payment_id && !paymentResponse.razorpay_payment_id.startsWith('DIRECT-')) {
+      await handlePaymentSuccessOrderFailure({
+        paymentResponse,
+        restaurant,
+        cartItems,
+        finalCustomerName,
+        finalCustomerEmail,
+        finalCustomerPhone,
+        tableNumber,
+        specialInstructions,
+        paymentMethod,
+        finalTotal,
+        setScriptError,
+        setIsProcessing,
+        user,
+        navigate,
+        clearCart
+      });
+    } else {
+      setScriptError(`Order creation failed: ${error.message}`);
+      setIsProcessing(false);
+    }
+    return false;
+  }
+};
+
+const handlePaymentSuccessOrderFailure = async ({
+  paymentResponse,
+  restaurant,
+  cartItems,
+  finalCustomerName,
+  finalCustomerEmail,
+  finalCustomerPhone,
+  tableNumber,
+  specialInstructions,
+  paymentMethod,
+  finalTotal,
+  setScriptError,
+  setIsProcessing,
+  user,
+  navigate,
+  clearCart
+}) => {
+  try {
+    setScriptError(
+      `IMPORTANT: Your payment was successful but there was an issue creating your order. ` +
+      `Please don't worry - your money is safe. Our team has been notified and will contact you shortly. ` +
+      `Payment ID: ${paymentResponse.razorpay_payment_id}`
+    );
+    // 1. Store the failed order attempt for manual processing
+    const failedOrderData = {
+      paymentId: paymentResponse.razorpay_payment_id,
+      orderId: paymentResponse.razorpay_order_id,
+      signature: paymentResponse.razorpay_signature,
+      amount: finalTotal,
+      currency: 'INR',
+      customerName: finalCustomerName,
+      customerEmail: finalCustomerEmail,
+      customerPhone: finalCustomerPhone,
+      restaurantId: restaurant.id,
+      tableNumber,
+      items: cartItems,
+      specialInstructions,
+      paymentMethod,
+      errorMessage: 'Order creation failed after payment',
+      timestamp: new Date().toISOString(),
+      status: 'payment_success_order_failed'
+    };
+    localStorage.setItem(`failed_order_${paymentResponse.razorpay_payment_id}`, JSON.stringify(failedOrderData));
+    // 2. Try to notify the backend about the failure
+    try {
+      await notifyPaymentOrderMismatch(failedOrderData);
+    } catch (notifyError) {
+      // log error
+    }
+    // 3. Send email notification to customer
+    try {
+      await sendOrderFailureNotification(failedOrderData, restaurant);
+    } catch (emailError) {
+      // log error
+    }
+    // 4. Show recovery options to user
+    showPaymentRecoveryOptions(paymentResponse.razorpay_payment_id, {
+      retryOrderCreation: async () => {
+        try {
+          const storedData = localStorage.getItem(`failed_order_${paymentResponse.razorpay_payment_id}`);
+          if (!storedData) throw new Error('No stored order data found');
+          const failedOrderData = JSON.parse(storedData);
+          const order = await createOrderWithRetry({
+            restaurantId: failedOrderData.restaurantId,
+            userId: user ? user.id : null,
+            customerName: failedOrderData.customerName,
+            customerEmail: failedOrderData.customerEmail,
+            customerPhone: failedOrderData.customerPhone,
+            tableNumber: failedOrderData.tableNumber,
+            items: failedOrderData.items,
+            razorpayOrderId: failedOrderData.orderId,
+            razorpayPaymentId: failedOrderData.paymentId,
+            razorpaySignature: failedOrderData.signature,
+            paymentMethod: failedOrderData.paymentMethod,
+            paymentStatus: 'completed',
+            specialInstructions: failedOrderData.specialInstructions,
+            totalAmount: failedOrderData.amount,
+            isRetry: true
+          });
+          if (order) {
+            localStorage.removeItem(`failed_order_${paymentResponse.razorpay_payment_id}`);
+            clearCart();
+            navigate('/order-confirmation-page', {
+              state: {
+                orderId: order.id,
+                orderNumber: order.order_number,
+                restaurantId: failedOrderData.restaurantId,
+                restaurantName: restaurant.name,
+                totalAmount: order.total,
+                tableNumber: failedOrderData.tableNumber,
+                paymentMethod: failedOrderData.paymentMethod,
+                customerName: failedOrderData.customerName,
+                customerEmail: failedOrderData.customerEmail,
+                customerPhone: failedOrderData.customerPhone,
+                specialInstructions: failedOrderData.specialInstructions,
+                paymentId: paymentResponse.razorpay_payment_id,
+                wasRetry: true
+              }
+            });
+            closeRecoveryDialog();
+          }
+        } catch (error) {
+          alert('Retry failed. Please contact customer support.');
+        }
+      },
+      contactSupport: () => {
+        const supportPhone = restaurant.phone || '1800-xxx-xxxx';
+        const supportEmail = restaurant.email || 'support@restaurant.com';
+        const message = `Payment ID: ${paymentResponse.razorpay_payment_id}\nAmount: ₹${finalTotal}\nRestaurant: ${restaurant.name}\nTable: ${tableNumber}\nIssue: Payment successful but order creation failed`;
+        if (supportPhone) {
+          window.open(`https://wa.me/${supportPhone}?text=${encodeURIComponent(message)}`, '_blank');
+        } else {
+          window.open(`mailto:${supportEmail}?subject=Payment Issue - ${paymentResponse.razorpay_payment_id}&body=${encodeURIComponent(message)}`, '_blank');
+        }
+      },
+      closeRecoveryDialog
+    });
+  } catch (error) {
+    setScriptError(
+      `Payment successful but order creation failed. Payment ID: ${paymentResponse.razorpay_payment_id}. ` +
+      `Please contact customer support immediately.`
+    );
+  }
+  setIsProcessing(false);
+};
+
+// Optionally, add a function to check for pending failed orders on load
+export const checkPendingFailedOrders = (showPaymentRecoveryOptions) => {
+  const keys = Object.keys(localStorage);
+  const failedOrderKeys = keys.filter(key => key.startsWith('failed_order_'));
+  if (failedOrderKeys.length > 0) {
+    const latestFailedOrder = failedOrderKeys[0];
+    const paymentId = latestFailedOrder.replace('failed_order_', '');
+    setTimeout(() => {
+      showPaymentRecoveryOptions(paymentId);
+    }, 1000);
+  }
+};
+
 export default {
   // Razorpay functions
   loadRazorpayScript,
@@ -602,5 +973,7 @@ export default {
   validatePaymentData,
   getPaymentMethodDisplayName,
   isPaymentCompleted,
-  getPaymentStatusColor
+  getPaymentStatusColor,
+  processOrderWithPayment,
+  checkPendingFailedOrders
 };
