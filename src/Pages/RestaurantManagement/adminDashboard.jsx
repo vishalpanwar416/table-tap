@@ -174,13 +174,15 @@ const AdminDashboard = () => {
         setAuthLoading(true); // Start loading
         const { data: { session } } = await supabase.auth.getSession();
         const user = session?.user;
-        if (!user) {
+        if (!user && !authLoading) { // Only redirect if not loading
           navigate('/login');
           return;
         }
         setCurrentUser(user);
       } catch (error) {
-        navigate('/login');
+        if (!authLoading) {
+          navigate('/login');
+        }
       } finally {
         setAuthLoading(false); // End loading
       }
@@ -202,7 +204,7 @@ const AdminDashboard = () => {
         authListener.subscription.unsubscribe();
       }
     };
-  }, [navigate]);
+  }, [navigate, authLoading]);
 
   // Request notification permission on component mount
   useEffect(() => {

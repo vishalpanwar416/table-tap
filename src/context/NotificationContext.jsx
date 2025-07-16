@@ -195,12 +195,6 @@ export const NotificationProvider = ({ children }) => {
   return (
     <NotificationContext.Provider value={value}>
       {children}
-      {process.env.NODE_ENV === 'development' && (
-        <div style={{ position: 'fixed', bottom: 0, right: 0, zIndex: 9999, maxWidth: 400, background: 'rgba(0,0,0,0.7)', color: '#fff', fontSize: 12, padding: 8, borderRadius: 8, pointerEvents: 'auto' }}>
-          <div style={{ fontWeight: 'bold', marginBottom: 4 }}>[Debug] Notifications State</div>
-          <pre style={{ maxHeight: 200, overflow: 'auto', whiteSpace: 'pre-wrap' }}>{JSON.stringify(notifications, null, 2)}</pre>
-        </div>
-      )}
     </NotificationContext.Provider>
   );
 };

@@ -26,7 +26,7 @@ export default function AuthWrapper({ children, publicOnly = false }) {
     let mounted = true;
 
     const checkAuthAndProfile = async () => {
-      if (authLoading) return;
+      if (authLoading) return; // Wait for auth to finish loading
 
       if (!mounted) return;
 

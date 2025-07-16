@@ -19,10 +19,13 @@ const SecurityManager = () => {
   // Check session validity
   const checkSession = () => {
     if (user && !sessionManager.isSessionValid()) {
-      // Session expired, logout user
-      console.log('Session expired, logging out user');
-      // You can call your logout function here
-      navigate('/login?message=session_expired');
+      // Add a debounce or grace period here if needed
+      setTimeout(() => {
+        // Double-check session before navigating
+        if (!sessionManager.isSessionValid()) {
+          navigate('/login?message=session_expired');
+        }
+      }, 2000); // 2-second grace period
     }
   };
 
