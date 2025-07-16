@@ -131,32 +131,32 @@ const createOrderStatusNotification = async (order) => {
     switch (order.status) {
       case 'confirmed':
         title = 'Order Accepted';
-        message = `Your order #${order.id.slice(0, 8)} has been accepted`;
+        message = `Your order #${order.order_number} has been accepted`;
         type = 'order_accepted';
         break;
       case 'preparing':
         title = 'Order Preparing';
-        message = `Your order #${order.id.slice(0, 8)} is now being prepared`;
+        message = `Your order #${order.order_number} is now being prepared`;
         type = 'order_preparing';
         break;
       case 'ready':
         title = 'Order Ready';
-        message = `Your order #${order.id.slice(0, 8)} is ready for pickup/delivery`;
+        message = `Your order #${order.order_number} is ready for pickup`;
         type = 'order_ready';
         break;
       case 'rejected':
         title = 'Order Rejected';
-        message = `Your order #${order.id.slice(0, 8)} has been rejected`;
+        message = `Your order #${order.order_number} has been rejected`;
         type = 'order_rejected';
         break;
       case 'completed':
         title = 'Order Completed';
-        message = `Your order #${order.id.slice(0, 8)} has been completed`;
+        message = `Your order #${order.order_number} has been completed`;
         type = 'order_ready'; // Using order_ready for completed orders
         break;
       default:
         title = `Order ${order.status}`;
-        message = `Your order #${order.id.slice(0, 8)} status: ${order.status}`;
+        message = `Your order #${order.order_number} status: ${order.status}`;
         type = 'order_received';
     }
     

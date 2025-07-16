@@ -29,6 +29,7 @@ export const NotificationProvider = ({ children }) => {
       
       // Subscribe to new notifications
       const subscription = subscribeToUserNotifications(user.id, (newNotification) => {
+        console.log('[Realtime] New notification received:', newNotification);
         // Add notification to state
         setNotifications(prev => [newNotification, ...prev]);
         
@@ -41,9 +42,17 @@ export const NotificationProvider = ({ children }) => {
         }
       });
       
+      if (subscription && subscription.on) {
+        subscription.on('status', (status) => {
+          console.log('[Supabase Realtime] Channel status:', status);
+        });
+      }
+      console.log('[Realtime] Subscribed to notifications for user:', user.id);
+      
       return () => {
         if (subscription) {
           subscription.unsubscribe();
+          console.log('[Realtime] Unsubscribed from notifications for user:', user.id);
         }
       };
     }
@@ -65,8 +74,10 @@ export const NotificationProvider = ({ children }) => {
       setUnreadCount(unreadNotifications.length);
       
       setError(null);
+      console.log('[Debug] Notifications fetched:', userNotifications);
     } catch (err) {
       setError('Failed to load notifications');
+      console.error('[NotificationContext] Error fetching notifications:', err);
     } finally {
       setLoading(false);
     }
@@ -86,7 +97,9 @@ export const NotificationProvider = ({ children }) => {
       
       // Update unread count
       setUnreadCount(prevCount => Math.max(0, prevCount - 1));
+      console.log('[Debug] Notification marked as read:', notificationId);
     } catch (err) {
+      console.error('[NotificationContext] Error marking as read:', err);
     }
   };
 
@@ -122,8 +135,10 @@ export const NotificationProvider = ({ children }) => {
         if (deletedNotification && !deletedNotification.read) {
           setUnreadCount(prevCount => Math.max(0, prevCount - 1));
         }
+        console.log('[Debug] Notification deleted:', notificationId);
       }
     } catch (err) {
+      console.error('[NotificationContext] Error deleting notification:', err);
     }
   };
 
@@ -180,6 +195,12 @@ export const NotificationProvider = ({ children }) => {
   return (
     <NotificationContext.Provider value={value}>
       {children}
+      {process.env.NODE_ENV === 'development' && (
+        <div style={{ position: 'fixed', bottom: 0, right: 0, zIndex: 9999, maxWidth: 400, background: 'rgba(0,0,0,0.7)', color: '#fff', fontSize: 12, padding: 8, borderRadius: 8, pointerEvents: 'auto' }}>
+          <div style={{ fontWeight: 'bold', marginBottom: 4 }}>[Debug] Notifications State</div>
+          <pre style={{ maxHeight: 200, overflow: 'auto', whiteSpace: 'pre-wrap' }}>{JSON.stringify(notifications, null, 2)}</pre>
+        </div>
+      )}
     </NotificationContext.Provider>
   );
 };

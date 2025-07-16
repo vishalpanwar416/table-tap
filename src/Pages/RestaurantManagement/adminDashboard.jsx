@@ -500,7 +500,7 @@ const AdminDashboard = () => {
             .insert({
               order_id: updatedOrder.order_number || updatedOrder.id,
               title: `Order ${status}`,
-              message: `Your order #${updatedOrder.order_number || updatedOrder.id.slice(0,8)} has been ${status}`,
+              message: `Your order #${updatedOrder.order_number} has been ${status}`,
               user_id: updatedOrder.user_id,
               type: notificationType,
               read: false,
