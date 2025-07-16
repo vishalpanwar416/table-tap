@@ -58,7 +58,7 @@ const ProgressiveImage = ({ src, alt, className, placeholderColor = '#f3f4f6', d
 
   const loadImage = useCallback((src, retry = false) => {
     if (retry) setRetryCount(prev => prev + 1);
-    
+
     const img = new Image();
     img.onload = () => {
       if (!isUnmountedRef.current) {
@@ -78,20 +78,20 @@ const ProgressiveImage = ({ src, alt, className, placeholderColor = '#f3f4f6', d
         setImageState('error');
       }
     };
-    
+
     img.loading = priority ? 'eager' : 'lazy';
     img.src = src;
   }, [retryCount]);
 
   useEffect(() => {
     isUnmountedRef.current = false;
-    
+
     if (priority) {
       setImageState('loading');
       loadImage(src);
       return;
     }
-    
+
     timeoutRef.current = setTimeout(() => {
       if (!imgRef.current || isUnmountedRef.current) return;
 
@@ -103,7 +103,7 @@ const ProgressiveImage = ({ src, alt, className, placeholderColor = '#f3f4f6', d
             observer.disconnect();
           }
         },
-        { 
+        {
           threshold: 0.1,
           rootMargin: '50px'
         }
@@ -125,14 +125,14 @@ const ProgressiveImage = ({ src, alt, className, placeholderColor = '#f3f4f6', d
   return (
     <div ref={imgRef} className={`${className} relative overflow-hidden`}>
       {(imageState === 'waiting' || imageState === 'loading') && (
-        <div 
+        <div
           className="absolute inset-0 flex items-center justify-center"
           style={{ backgroundColor: placeholderColor }}
         >
           <div className="w-8 h-8 bg-gray-300 rounded animate-pulse"></div>
         </div>
       )}
-      
+
       {imageState === 'loaded' && (
         <img
           src={imageSrc}
@@ -140,8 +140,8 @@ const ProgressiveImage = ({ src, alt, className, placeholderColor = '#f3f4f6', d
           className={`${className} absolute inset-0 transition-opacity duration-500 will-change-transform`}
           loading="lazy"
           decoding="async"
-          style={{ 
-    opacity: 1, 
+          style={{
+    opacity: 1,
             transform: 'translateZ(0)',
             backfaceVisibility: 'hidden'
           }}
@@ -164,20 +164,15 @@ const PriceDisplay = ({ item }) => {
     <div className="flex items-center space-x-1 mt-0.5">
       {item.discounttype && item.discountvalue ? (
         <>
-          <span className="text-[10px] text-gray-400 line-through">
+          <span className="text-xs md:text-sm text-gray-400 line-through">
             ₹{Number(item.price).toFixed(0)}
           </span>
-          <span className="text-sm font-bold text-orange-600">
+          <span className="text-lg md:text-xl font-extrabold text-orange-600">
             ₹{discountedPrice.toFixed(0)}
-          </span>
-          <span className="text-[9px] bg-green-100 text-green-700 font-semibold px-1.5 py-0.5 rounded-full">
-            {item.discounttype === 'Percentage'
-              ? `${item.discountvalue}% OFF`
-              : `₹${item.discountvalue} OFF`}
           </span>
         </>
       ) : (
-        <span className="text-sm font-bold text-gray-900">
+        <span className="text-lg md:text-xl font-extrabold text-gray-900">
           ₹{Number(item.price).toFixed(0)}
         </span>
       )}
@@ -190,7 +185,7 @@ const BestSellerItem = memo(({ item, onItemClick, index = 0 }) => {
   const { toggleLike, likedItems } = useLikes();
   const { cartItems, addToCart, updateQuantity, removeItem } = useCart();
   const [isLikedAnimating, setIsLikedAnimating] = useState(false);
-  
+
   const cartItem = useMemo(() => cartItems.find(i => i.id === item.id), [cartItems, item.id]);
   const quantity = cartItem?.quantity || 0;
   const isLiked = useMemo(() => likedItems.some(likedItem => likedItem.id === item.id), [likedItems, item.id]);
@@ -216,13 +211,25 @@ const BestSellerItem = memo(({ item, onItemClick, index = 0 }) => {
   // Discount tag component
   const DiscountTag = () => {
     if (!item.discounttype || !item.discountvalue) return null;
-    
     return (
-      <motion.span 
-        className="text-[10px] bg-gradient-to-r from-green-400 to-green-600 text-white font-semibold px-2 py-0.5 rounded-full whitespace-nowrap shadow-sm"
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.3 }}
+      <motion.span
+        className="
+          text-xs md:text-sm
+          font-semibold tracking-wide
+          px-3 py-1
+          rounded-full
+          bg-gradient-to-r from-green-300/80 via-green-500/90 to-emerald-400/90
+          text-white
+          shadow-md
+          ring-1 ring-white/40
+          backdrop-blur-sm
+          border border-white/10
+          drop-shadow
+        "
+        initial={{ scale: 0.7, opacity: 0, y: -10 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20, duration: 0.5, delay: 0.2 }}
+        whileHover={{ scale: 1.08, filter: "brightness(1.1)" }}
       >
         {item.discounttype === 'Percentage'
           ? `${item.discountvalue}% OFF`
@@ -230,7 +237,7 @@ const BestSellerItem = memo(({ item, onItemClick, index = 0 }) => {
       </motion.span>
     );
   };
-  
+
   return (
     <motion.div
       className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 relative"
@@ -245,8 +252,12 @@ const BestSellerItem = memo(({ item, onItemClick, index = 0 }) => {
       }}
     >
       <div className="relative h-48 overflow-hidden bg-gray-100">
+        {/* Discount Tag moved to top-right */}
+        <div className="absolute top-3 right-3 z-30">
+          <DiscountTag />
+        </div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent z-10 pointer-events-none"></div>
-        
+
         <motion.div
           whileHover={{ scale: 1.1 }}
           transition={{ duration: 0.3 }}
@@ -261,9 +272,9 @@ const BestSellerItem = memo(({ item, onItemClick, index = 0 }) => {
             loading="lazy"
           />
         </motion.div>
-        
+
         {/* Enhanced like button */}
-        <motion.button 
+        <motion.button
           className="absolute top-3 left-3 z-20 bg-white/80 backdrop-blur-sm rounded-full p-2 shadow-sm"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
@@ -271,7 +282,7 @@ const BestSellerItem = memo(({ item, onItemClick, index = 0 }) => {
           aria-label={isLiked ? "Remove from favorites" : "Add to favorites"}
         >
           <motion.div
-            animate={isLikedAnimating ? { 
+            animate={isLikedAnimating ? {
               scale: [1, 1.3, 1],
               rotate: [0, 10, -10, 0]
             } : {}}
@@ -288,7 +299,7 @@ const BestSellerItem = memo(({ item, onItemClick, index = 0 }) => {
         </motion.button>
 
         {item.rating && (
-          <motion.div 
+          <motion.div
             className="absolute top-3 right-3 z-20 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1 flex items-center space-x-1"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -300,7 +311,7 @@ const BestSellerItem = memo(({ item, onItemClick, index = 0 }) => {
         )}
 
         {item.prep_time && (
-          <motion.div 
+          <motion.div
             className="absolute bottom-3 left-3 z-20 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 flex items-center space-x-1"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -310,128 +321,115 @@ const BestSellerItem = memo(({ item, onItemClick, index = 0 }) => {
             <span className="text-gray-800 text-xs font-medium">{item.prep_time}</span>
           </motion.div>
         )}
-
-        <div className="absolute bottom-3 right-3 z-20">
-          <AnimatePresence mode="wait">
-            {quantity > 0 ? (
-              <motion.div 
-                key="quantity-controls"
-                className="flex items-center bg-gradient-to-r from-black to-gray-800 backdrop-blur-sm rounded-full px-3 py-2 shadow-lg"
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.8, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <motion.button 
-                  onClick={handleDecrement}
-                  className="text-white hover:text-orange-300 rounded-full w-7 h-7 flex items-center justify-center transition-colors font-bold"
-                  whileHover={{ scale: 1.2 }}
-                  whileTap={{ scale: 0.8 }}
-                  aria-label="Decrease quantity"
-                >
-                  −
-                </motion.button>
-                <motion.span 
-                  className="text-white text-sm font-medium px-3 select-none" 
-                  role="status" 
-                  aria-live="polite"
-                  key={quantity}
-                  initial={{ scale: 1.2 }}
-                  animate={{ scale: 1 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {quantity}
-                </motion.span>
-                <motion.button 
-                  onClick={handleIncrement}
-                  className="text-white hover:text-green-300 rounded-full w-7 h-7 flex items-center justify-center transition-colors font-bold"
-                  whileHover={{ scale: 1.2 }}
-                  whileTap={{ scale: 0.8 }}
-                  aria-label="Increase quantity"
-                >
-                  +
-                </motion.button>
-              </motion.div>
-            ) : (
-              <motion.button 
-                key="add-button"
-                onClick={handleAddClick}
-                className="bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white rounded-full px-4 py-2 shadow-lg transition-all duration-200 flex items-center space-x-2"
-                whileHover={{ 
-                  scale: 1.05,
-                  boxShadow: "0 10px 25px rgba(0,0,0,0.2)"
-                }}
-                whileTap={{ scale: 0.95 }}
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.8, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                aria-label={`Add ${item.name} to cart`}
-              >
-                <ShoppingBag className="h-4 w-4" />
-                <span className="text-sm font-medium">Add</span>
-              </motion.button>
-            )}
-          </AnimatePresence>
-        </div>
       </div>
 
-      <div className="p-5">
-        <div className="flex justify-between items-start mb-2">
-          <motion.h4 
-            className="text-lg font-bold text-gray-900 group-hover:text-orange-600 transition-colors line-clamp-1"
-            whileHover={{ color: '#f97316' }}
-            transition={{ duration: 0.2 }}
-          >
+      {/* Redesigned bottom part */}
+      <div className="p-5 flex flex-col gap-1 h-full justify-between">
+        {/* Name and Price Row */}
+        <div className="flex items-center justify-between">
+          <h4 className="text-xl md:text-2xl font-extrabold text-gray-900 truncate font-spartan">
             {item.name}
-          </motion.h4>
-          <motion.div
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <PriceDisplay item={item} />
-          </motion.div>
+          </h4>
+          <div className="flex items-end gap-2">
+            {item.discounttype && item.discountvalue ? (
+              <>
+                <span className="text-xs md:text-sm text-gray-400 line-through font-spartan">
+                  ₹{Number(item.price).toFixed(0)}
+                </span>
+                <span className="text-xl md:text-2xl font-extrabold text-orange-600 leading-none font-spartan">
+                  ₹{(
+                    item.discounttype === "Percentage"
+                      ? item.price - (item.price * (item.discountvalue / 100))
+                      : Math.max(0, item.price - item.discountvalue)
+                  ).toFixed(0)}
+                </span>
+              </>
+            ) : (
+              <span className="text-xl md:text-2xl font-extrabold text-gray-900 leading-none font-spartan">
+                ₹{Number(item.price).toFixed(0)}
+              </span>
+            )}
+          </div>
         </div>
-        
-        <motion.p 
-          className="text-gray-600 text-sm mb-3 line-clamp-2"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-        >
-          {item.description}
-        </motion.p>
-
+        {/* Description and Add/Quantity Row */}
+        <div className="flex items-center justify-between">
+          <p className="text-gray-600 text-sm line-clamp-2 flex-1 font-spartan">
+            {item.description}
+          </p>
+          <div className="ml-2">
+            <AnimatePresence mode="wait">
+              {quantity > 0 ? (
+                <motion.div
+                  key="quantity-controls"
+                  className="flex items-center bg-gradient-to-r from-black to-gray-800 rounded-full px-2 py-1 shadow"
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.8, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <motion.button
+                    onClick={handleDecrement}
+                    className="text-white hover:text-orange-300 rounded-full w-7 h-7 flex items-center justify-center text-lg font-bold transition-colors font-spartan"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    aria-label="Decrease quantity"
+                  >
+                    −
+                  </motion.button>
+                  <span className="text-white text-base font-semibold select-none px-2 font-spartan">
+                    {quantity}
+                  </span>
+                  <motion.button
+                    onClick={handleIncrement}
+                    className="text-white hover:text-green-300 rounded-full w-7 h-7 flex items-center justify-center text-lg font-bold transition-colors font-spartan"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    aria-label="Increase quantity"
+                  >
+                    +
+                  </motion.button>
+                </motion.div>
+              ) : (
+                <motion.button
+                  key="add-button"
+                  onClick={handleAddClick}
+                  className="bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white rounded-full px-4 py-1.5 shadow flex items-center gap-1 text-base font-semibold font-spartan"
+                  whileHover={{
+                    scale: 1.08,
+                    boxShadow: "0 6px 16px rgba(0,0,0,0.15)"
+                  }}
+                  whileTap={{ scale: 0.96 }}
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.8, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  aria-label={`Add ${item.name} to cart`}
+                >
+                  <ShoppingBag className="h-4 w-4" />
+                  Add
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+        {/* Tags */}
         {item.tags && item.tags.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {item.tags.slice(0, 2).map((tag, tagIndex) => (
-              <motion.span
+              <span
                 key={tag}
-                className="bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-1 rounded-full border border-orange-200"
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.5 + tagIndex * 0.1 }}
+                className="bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-1 rounded-full border border-orange-200 font-spartan"
               >
                 {tag}
-              </motion.span>
+              </span>
             ))}
             {item.tags.length > 2 && (
-              <motion.span 
-                className="text-gray-500 text-xs font-medium px-2.5 py-1"
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.7 }}
-              >
+              <span className="text-gray-500 text-xs font-medium px-2.5 py-1 font-spartan">
                 +{item.tags.length - 2}
-              </motion.span>
+              </span>
             )}
           </div>
         )}
-        
-        <div className="flex justify-end mt-2">
-          <DiscountTag />
-        </div>
       </div>
     </motion.div>
   );
@@ -441,11 +439,11 @@ BestSellerItem.displayName = 'BestSellerItem';
 
 // Optimized animation variants
 const pageVariants = {
-  initial: { 
+  initial: {
     opacity: 0,
     y: 20
   },
-  animate: { 
+  animate: {
     opacity: 1,
     y: 0,
     transition: {
@@ -453,7 +451,7 @@ const pageVariants = {
       ease: "easeOut"
     }
   },
-  exit: { 
+  exit: {
     opacity: 0,
     y: -20,
     transition: {
@@ -531,12 +529,12 @@ const BestSellerPage = memo(() => {
     const loadBestSellers = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
         // Check cache first
         const cacheKey = `bestsellers_${restaurantId}`;
         const cached = sessionStorage.getItem(cacheKey);
-        
+
         if (cached) {
           const { data, timestamp } = JSON.parse(cached);
           if (Date.now() - timestamp < 5 * 60 * 1000) { // 5 min cache
@@ -548,7 +546,7 @@ const BestSellerPage = memo(() => {
 
         const data = await fetchBestSellerItems(restaurantId);
         setBestSellerItems(data);
-        
+
         // Cache the data
         sessionStorage.setItem(cacheKey, JSON.stringify({
           data,
@@ -595,7 +593,7 @@ const BestSellerPage = memo(() => {
 
     // Apply real-time search filter
     if (searchTerm.trim()) {
-      items = items.filter(item => 
+      items = items.filter(item =>
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.category?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -627,7 +625,7 @@ const BestSellerPage = memo(() => {
   // Loading state with enhanced UX
   if (loading) {
     return (
-      <motion.div 
+      <motion.div
         className="flex justify-center items-center min-h-screen bg-black p-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -651,7 +649,7 @@ const BestSellerPage = memo(() => {
   // Error state
   if (error) {
     return (
-      <motion.div 
+      <motion.div
         className="flex justify-center items-center min-h-screen bg-black p-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -663,8 +661,8 @@ const BestSellerPage = memo(() => {
           </div>
           <h2 className="text-xl font-semibold mb-2">Oops! Something went wrong</h2>
           <p className="text-gray-400 mb-4">{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
+          <button
+            onClick={() => window.location.reload()}
             className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition-colors"
           >
             Try Again
@@ -675,7 +673,7 @@ const BestSellerPage = memo(() => {
   }
 
   return (
-    <motion.div 
+    <motion.div
       className="flex justify-center items-start min-h-screen bg-black p-4"
       variants={pageVariants}
       initial="initial"
@@ -683,19 +681,19 @@ const BestSellerPage = memo(() => {
       exit="exit"
     >
       <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
-        
+
         {/* Modals and Sidebars */}
         <Suspense fallback={null}>
-      <LogoutPopup 
+      <LogoutPopup
           isOpen={isLogoutOpen}
           onClose={() => setIsLogoutOpen(false)}
             onConfirm={handleLogout}
           />
         </Suspense>
-        
+
         {/* Header with real-time search */}
         <Suspense fallback={<HeaderSkeleton />}>
-          <Header 
+          <Header
             isSearchActive={isSearchActive}
             toggleSearch={isSearchActive ? closeSearch : openSearch}
             onSearch={handleSearch}
@@ -707,7 +705,7 @@ const BestSellerPage = memo(() => {
         </Suspense>
 
         {/* Back Button */}
-        <motion.button 
+        <motion.button
           className="absolute left-4 top-7 md:left-8 md:top-8 text-orange-500 hover:text-orange-600 transition-colors z-10"
           onClick={() => navigate(-1)}
           whileHover={{ scale: 1.1 }}
@@ -744,7 +742,7 @@ const BestSellerPage = memo(() => {
         <AnimatePresence mode="wait">
           {isNotificationOpen && (
             <Suspense fallback={<div className="fixed inset-0 z-50 bg-black/50" />}>
-           <NotificationSidebar 
+           <NotificationSidebar
              isOpen={isNotificationOpen}
                 onClose={toggles.notification}
             />
@@ -753,7 +751,7 @@ const BestSellerPage = memo(() => {
         </AnimatePresence>
 
         {/* Page Title */}
-        <motion.div 
+        <motion.div
           className="pt-4 md:pt-6 pb-4 relative"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -768,15 +766,15 @@ const BestSellerPage = memo(() => {
         </motion.div>
 
         {/* Main Content */}
-        <motion.div 
+        <motion.div
           ref={containerRef}
-          className="bg-white rounded-3xl p-4 md:p-6 flex-1 flex flex-col min-h-[calc(100vh-200px)] overflow-y-auto shadow-xl"
+          className="bg-white rounded-3xl p-4 md:p-6 flex-1 flex flex-col min-h-[calc(100vh-200px)] overflow-y-auto shadow-xl pb-28"
           initial={{ opacity: 0, y: 20, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ delay: 0.2, duration: 0.5, ease: "easeOut" }}
         >
           {/* Sort Options */}
-          <motion.div 
+          <motion.div
             className="mb-4 flex items-center justify-between"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -800,7 +798,7 @@ const BestSellerPage = memo(() => {
           </motion.div>
 
           {/* Real-time Results Count */}
-          <motion.div 
+          <motion.div
             className="mb-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -818,26 +816,26 @@ const BestSellerPage = memo(() => {
               )}
             </p>
           </motion.div>
-          
+
           {/* Items Grid - Matching MenuDropdown style */}
           {filteredAndSortedItems.length > 0 ? (
-          <motion.div 
+          <motion.div
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
             variants={staggerContainer}
             initial="initial"
             animate="animate"
           >
               {filteredAndSortedItems.map((item, index) => (
-              <motion.div 
-                key={item.id} 
+              <motion.div
+                key={item.id}
                   variants={{
                     hidden: { opacity: 0, y: 20 },
                     visible: { opacity: 1, y: 0 }
                   }}
                   transition={{ duration: 0.3, ease: "easeOut", delay: index * 0.05 }}
               >
-                  <BestSellerItem 
-                    item={item} 
+                  <BestSellerItem
+                    item={item}
                     index={index}
                     onItemClick={handleOpenItemCard}
                   />
@@ -845,7 +843,7 @@ const BestSellerPage = memo(() => {
             ))}
           </motion.div>
           ) : (
-            <motion.div 
+            <motion.div
               className="flex flex-col items-center justify-center py-12"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -865,7 +863,7 @@ const BestSellerPage = memo(() => {
 
       {/* Floating Cart Button */}
       <Suspense fallback={null}>
-        <FloatingCartButton 
+        <FloatingCartButton
           toggleCart={toggles.cart}
           isCartOpen={isCartOpen}
           isSidebarOpen={isSidebarOpen}
@@ -875,10 +873,10 @@ const BestSellerPage = memo(() => {
 
       {/* Order Card */}
       <Suspense fallback={null}>
-        <OrderCard 
-          isOpen={isOrderCardOpen} 
-          onClose={handleCloseItemCard} 
-          item={selectedItem} 
+        <OrderCard
+          isOpen={isOrderCardOpen}
+          onClose={handleCloseItemCard}
+          item={selectedItem}
         />
       </Suspense>
     </motion.div>

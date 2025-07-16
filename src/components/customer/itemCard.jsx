@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Heart, ShoppingBag, Minus, Plus, Star, Clock, Flame } from 'lucide-react';
+import { X, Heart, ShoppingBag, Minus, Plus, Star, Clock, Flame, Tag, Leaf } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../../config/CartContent';
 import { useLikes } from '../../config/LikesContent';
@@ -82,7 +82,7 @@ const OrderCard = ({ isOpen, onClose, item }) => {
               bounce: 0.3,
               ease: [0.25, 0.46, 0.45, 0.94]
             }}
-            className="fixed bottom-0 left-0 right-0 bg-gradient-to-br from-white via-gray-50 to-white rounded-t-[32px] z-50 shadow-2xl overflow-hidden max-h-[90vh] max-w-[450px] md:max-w-4xl mx-auto border border-gray-100"
+            className="fixed bottom-0 left-0 right-0 bg-gradient-to-br from-white via-gray-50 to-white rounded-t-[32px] z-50 shadow-2xl overflow-hidden max-h-[75vh] max-w-[450px] md:max-w-4xl mx-auto border border-gray-100"
             drag="y"
             dragConstraints={{ top: 0, bottom: 300 }}
             dragElastic={0.3}
@@ -94,16 +94,14 @@ const OrderCard = ({ isOpen, onClose, item }) => {
               }
             }}
           >
-            {/* Close button */}
-            <motion.button
+            {/* REMOVE OR COMMENT OUT THE CROSS BUTTON */}
+            {/* <button
+              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
               onClick={onClose}
-              className="absolute top-4 right-4 bg-white/90 backdrop-blur-md rounded-full p-2.5 shadow-lg z-10 border border-gray-200/50"
-              whileHover={{ scale: 1.1, rotate: 90 }}
-              whileTap={{ scale: 0.9 }}
-              transition={{ duration: 0.2 }}
+              aria-label="Close"
             >
-              <X className="h-5 w-5 text-gray-700" />
-            </motion.button>
+              <X className="w-5 h-5 text-gray-500" />
+            </button> */}
             
             {/* Image and like button */}
             <div className="relative w-full h-64 md:h-80 overflow-hidden">
@@ -212,21 +210,12 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                 </motion.div>
               </motion.div>
               
-              <motion.p 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3, duration: 0.5 }}
-                className="text-gray-600 mb-6 leading-relaxed"
-              >
-                {item.description || "No description available."}
-              </motion.p>
-              
               {/* Order Details Section */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.5 }}
-                className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-5 mb-6 border border-gray-200/50"
+                className="bg-white/40 backdrop-blur-md rounded-2xl p-5 mb-6 border border-gray-200/50"
               >
                 <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                   <div className="w-1 h-5 bg-gradient-to-b from-orange-500 to-red-500 rounded-full"></div>
@@ -234,17 +223,52 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                 </h3>
                 
                 <div className="space-y-3">
+                  {/* Preparation Time */}
                   {item.preparationTime && (
                     <div className="flex justify-between items-center p-3 bg-white/70 rounded-xl">
-                      <span className="text-gray-700 font-medium">Preparation Time</span>
+                      <span className="flex items-center gap-2 text-gray-700 font-medium">
+                        <Clock className="h-4 w-4 text-orange-500" /> Preparation Time
+                      </span>
                       <span className="text-gray-900 font-semibold">{item.preparationTime}</span>
                     </div>
                   )}
-                  
+                  {/* Description (no label) */}
+                  {item.description && (
+                    <div className="p-3 bg-white/70 rounded-xl text-gray-600 text-sm mb-2">
+                      {item.description}
+                    </div>
+                  )}
+                  {/* Category */}
                   {item.category && (
                     <div className="flex justify-between items-center p-3 bg-white/70 rounded-xl">
-                      <span className="text-gray-700 font-medium">Category</span>
+                      <span className="flex items-center gap-2 text-gray-700 font-medium">
+                        <Tag className="h-4 w-4 text-purple-500" /> Category
+                      </span>
                       <span className="text-gray-900 font-semibold capitalize">{item.category}</span>
+                    </div>
+                  )}
+                  {/* Tags */}
+                  {item.tags && item.tags.length > 0 && (
+                    <div className="p-3 bg-white/40 backdrop-blur-md rounded-xl">
+                      <div className="flex flex-wrap gap-2">
+                        {item.tags.map((tag, idx) => {
+                          const tagLower = tag.toLowerCase();
+                          let tagClass = "bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800";
+                          if (tagLower === "veg") {
+                            tagClass = "bg-green-100 text-green-700 border-green-200";
+                          } else if (tagLower === "non veg" || tagLower === "non-veg" || tagLower === "nonvegetarian" || tagLower === "non vegetarian") {
+                            tagClass = "bg-red-100 text-red-700 border-red-200";
+                          }
+                          return (
+                            <span
+                              key={tag}
+                              className={`text-xs font-medium px-3 py-1.5 rounded-full border shadow-sm ${tagClass}`}
+                            >
+                              {tag}
+                            </span>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -279,38 +303,12 @@ const OrderCard = ({ isOpen, onClose, item }) => {
               )}
               
               {/* Tags if available */}
-              {item.tags && item.tags.length > 0 && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6, duration: 0.5 }}
-                  className="mb-6"
-                >
-                  <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                    <div className="w-1 h-5 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full"></div>
-                    Details
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {item.tags.map((tag, index) => (
-                      <motion.span 
-                        key={tag} 
-                        className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 text-xs font-medium px-3 py-1.5 rounded-full border border-purple-200/50"
-                        initial={{ scale: 0, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ delay: 0.7 + index * 0.1, duration: 0.3 }}
-                        whileHover={{ scale: 1.05 }}
-                      >
-                        {tag}
-                      </motion.span>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
+              {/* This block is removed as tags are now part of Order Details */}
             </div>
             
             {/* Add to cart button (fixed at bottom) */}
             <motion.div 
-              className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white via-white/95 to-white/90 backdrop-blur-md border-t border-gray-200/50"
+              className="absolute bottom-0 left-0 right-0 p-6"
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.7, duration: 0.5 }}

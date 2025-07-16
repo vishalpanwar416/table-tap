@@ -1,8 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Camera, LogOut, Trash2, User, Mail, Phone, Calendar, Edit3, Save, X, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Camera, LogOut, Trash2, User, Mail, Phone, Calendar, Edit3, Save, X, AlertCircle, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../supabase';
 import DeleteProfilePopup from '../../components/auth/DeleteProfilePopup';
+import { optimizeProfileImage, validateImageFile, ProgressiveImage } from '../../utils/imageOptimization';
+import authService from '../../api/authService';
+
+// DefaultAvatar component - moved outside the main component
+const DefaultAvatar = ({ className = "w-full h-full", iconClassName = "w-12 h-12 text-gray-400" }) => (
+  <div className={`bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center ${className}`}>
+    <User className={iconClassName} />
+  </div>
+);
 
 const ProfilePage = () => {
   const [profileData, setProfileData] = useState({
@@ -21,26 +29,23 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         setLoading(true);
-        const { data: { user }, error } = await supabase.auth.getUser();
-        if (!user || error) {
+        const user = await authService.getCurrentUser();
+        if (!user) {
           setError('Authentication required');
           return;
         }
 
         setUser(user);
         
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('full_name, email, mobile_number, date_of_birth, avatar_url')
-          .eq('id', user.id)
-          .single();
+        const profile = await authService.getProfile(user.id);
 
-        if (!profileError) {
+        if (profile) {
           let dobString = '';
           if (profile.date_of_birth) {
             const dobDate = new Date(profile.date_of_birth);
@@ -73,48 +78,77 @@ const ProfilePage = () => {
     fetchProfile();
   }, []);
 
+  // --- Optimized Image Upload with Better Error Handling ---
   const handleImageUpload = useCallback(async (e) => {
     try {
       setUploading(true);
       const file = e.target.files[0];
       if (!file) return;
-  
-      const { data: { user } } = await supabase.auth.getUser();
+
+      // 1. Validate the image file first
+      const validation = await validateImageFile(file);
+      if (!validation.isValid) {
+        alert(validation.errors.join(', '));
+        return;
+      }
+
+      // 2. Optimize the image for profile avatar with error handling
+      let optimizedDataUrl;
+      try {
+        optimizedDataUrl = await optimizeProfileImage(file, { maxSize: 256, quality: 0.7 });
+      } catch (optimizeError) {
+        console.error('Image optimization failed:', optimizeError);
+        // Fallback: use the original file if optimization fails
+        optimizedDataUrl = URL.createObjectURL(file);
+      }
+
+      // 3. Convert data URL to Blob with error handling
+      let optimizedFile;
+      try {
+        const res = await fetch(optimizedDataUrl);
+        if (!res.ok) {
+          throw new Error('Failed to fetch optimized image');
+        }
+        const blob = await res.blob();
+        optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), { type: 'image/jpeg' });
+      } catch (blobError) {
+        console.error('Blob conversion failed:', blobError);
+        // Fallback: use the original file
+        optimizedFile = file;
+      }
+
+      const user = await authService.getCurrentUser();
       if (!user) throw new Error('Authentication required');
-  
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}-${Date.now()}.jpg`;
       const filePath = `profile-photos/${user.id}/${fileName}`;
-  
-      const { error: uploadError } = await supabase.storage
+      const { data, error } = await window.supabase.storage
         .from('avatars')
-        .upload(filePath, file, {
+        .upload(filePath, optimizedFile, {
           cacheControl: '3600',
           upsert: true
         });
-  
-      if (uploadError) throw uploadError;
-  
-      const { data: { publicUrl } } = supabase.storage
+      if (error) throw error;
+      const { data: { publicUrl } } = window.supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
-  
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: publicUrl })
-        .eq('id', user.id);
-  
-      if (updateError) throw updateError;
-  
+      await authService.updateProfile({ avatar_url: publicUrl });
+
       setProfileData(prev => ({ ...prev, profileImg: publicUrl }));
       setFormData(prev => ({ ...prev, profileImg: publicUrl }));
-      
+
+      // Clean up the object URL if we created one
+      if (optimizedDataUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(optimizedDataUrl);
+      }
+
     } catch (error) {
+      console.error('Upload error:', error);
       alert('Error uploading image: ' + error.message);
     } finally {
       setUploading(false);
     }
   }, []);
+  // --- End Optimized Image Upload ---
 
   const formatDateInput = useCallback((value) => {
     const digits = value.replace(/\D/g, '');
@@ -195,16 +229,11 @@ const ProfilePage = () => {
 
       const emailChanged = formData.email !== user.email;
       
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          full_name: formData.name,
-          mobile_number: cleanPhone,
-          date_of_birth: dobDate.toISOString()
-        })
-        .eq('id', user.id);
-
-      if (profileError) throw profileError;
+      await authService.updateProfile({
+        full_name: formData.name,
+        mobile_number: cleanPhone,
+        date_of_birth: dobDate.toISOString()
+      });
 
       setProfileData(prev => ({
         ...prev,
@@ -222,7 +251,7 @@ const ProfilePage = () => {
         const cleanEmail = formData.email.trim().toLowerCase();
         
         try {
-          const { data: { user: updatedUser }, error: authError } = await supabase.auth.updateUser({
+          const { data: { user: updatedUser }, error: authError } = await window.supabase.auth.updateUser({
             email: cleanEmail
           });
 
@@ -272,7 +301,7 @@ const ProfilePage = () => {
 
   const handleLogout = useCallback(async () => {
     try {
-      await supabase.auth.signOut();
+      await authService.signOut();
       navigate('/login');
     } catch (error) {
       alert('Error logging out. Please try again.');
@@ -283,7 +312,7 @@ const ProfilePage = () => {
     return (
       <div className="flex justify-center items-center min-h-screen bg-black p-4">
         <div className="text-center text-white">
-          <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <h2 className="text-xl font-semibold mb-2">Loading Profile</h2>
           <p className="text-gray-400">Getting your information...</p>
         </div>
@@ -302,7 +331,7 @@ const ProfilePage = () => {
           <p className="text-gray-400 mb-4">{error}</p>
           <button 
             onClick={() => window.location.reload()} 
-            className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition-colors"
+            className="bg-white text-black px-6 py-2 rounded-lg hover:bg-gray-100 transition-colors"
           >
             Try Again
           </button>
@@ -317,7 +346,7 @@ const ProfilePage = () => {
         
         {/* Back Button */}
         <button 
-          className="absolute left-4 top-7 md:left-8 md:top-8 text-orange-500 hover:text-orange-600 transition-colors z-10"
+          className="absolute left-4 top-7 md:left-8 md:top-8 text-white hover:text-gray-300 transition-colors z-10 p-2 rounded-full hover:bg-white/10"
           onClick={() => navigate(-1)}
         >
           <ArrowLeft size={30} className="md:w-8 md:h-8" />
@@ -334,20 +363,27 @@ const ProfilePage = () => {
         </div>
 
         {/* Main Content */}
-        <div className="bg-white rounded-3xl p-4 md:p-6 flex-1 flex flex-col min-h-[calc(100vh-200px)] overflow-y-auto shadow-xl">
+        <div className="bg-white rounded-t-[30px] p-4 md:p-6 flex-1 flex flex-col min-h-[calc(100vh-200px)] overflow-y-auto shadow-xl">
           {isEditing ? (
             <form onSubmit={handleSubmit} className="flex flex-col space-y-6">
-              {/* Profile Image Section */}
-              <div className="flex flex-col items-center justify-center mb-6">
+              {/* Profile Image Section - Editing Mode */}
+              <div className="flex flex-col items-center justify-center mb-8">
                 <div className="relative group">
-                  <div className="w-32 h-32 md:w-36 md:h-36 rounded-full bg-gradient-to-br from-orange-100 to-orange-200 overflow-hidden relative shadow-lg">
-                    <img 
-                      src={formData.profileImg || "/default-avatar.png"} 
-                      alt="Profile" 
-                      className="w-full h-full object-cover"
-                    />
+                  <div className="w-32 h-32 md:w-36 md:h-36 rounded-full bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden relative shadow-xl ring-4 ring-white">
+                    {formData.profileImg ? (
+                      <img 
+                        src={formData.profileImg} 
+                        alt="Profile" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <DefaultAvatar 
+                        className="w-full h-full" 
+                        iconClassName="w-16 h-16 md:w-20 md:h-20 text-gray-400" 
+                      />
+                    )}
                   </div>
-                  <label className="absolute bottom-2 right-2 bg-black/80 backdrop-blur-sm p-3 rounded-full cursor-pointer hover:bg-black transition-all duration-200 group-hover:scale-110 shadow-lg">
+                  <label className="absolute bottom-2 right-2 bg-black/90 backdrop-blur-sm p-3 rounded-full cursor-pointer hover:bg-black transition-all duration-300 group-hover:scale-110 shadow-xl ring-2 ring-white">
                     <Camera className="w-5 h-5 text-white" />
                     <input 
                       type="file" 
@@ -358,21 +394,21 @@ const ProfilePage = () => {
                     />
                   </label>
                   {uploading && (
-                    <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center backdrop-blur-sm">
                       <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     </div>
                   )}
                 </div>
-                <p className="text-sm text-gray-500 mt-2 text-center">
+                <p className="text-sm text-gray-500 mt-3 text-center font-medium">
                   Tap the camera icon to change your photo
                 </p>
               </div>
 
               {/* Form Fields */}
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                    <User className="w-4 h-4 text-orange-500" />
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                    <User className="w-4 h-4 text-gray-600" />
                     Full Name
                   </label>
                   <input 
@@ -380,15 +416,15 @@ const ProfilePage = () => {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    className="w-full p-4 bg-gray-50 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-transparent text-black transition-all duration-200"
+                    className="w-full p-4 bg-gray-50 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-black focus:border-transparent text-black transition-all duration-300 shadow-sm hover:shadow-md"
                     placeholder="Enter your full name"
                     disabled={isSubmitting}
                   />
                 </div>
                 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-orange-500" />
+                <div className="space-y-3">
+                  <label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-gray-600" />
                     Date of Birth
                   </label>
                   <input 
@@ -397,15 +433,15 @@ const ProfilePage = () => {
                     value={formData.dob}
                     onChange={handleChange}
                     placeholder="DD-MM-YYYY (e.g., 25-12-1990)"
-                    className="w-full p-4 bg-gray-50 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-transparent text-black transition-all duration-200"
+                    className="w-full p-4 bg-gray-50 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-black focus:border-transparent text-black transition-all duration-300 shadow-sm hover:shadow-md"
                     required
                     disabled={isSubmitting}
                   />
                 </div>
                 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-orange-500" />
+                <div className="space-y-3">
+                  <label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-gray-600" />
                     Email
                   </label>
                   <input 
@@ -413,21 +449,21 @@ const ProfilePage = () => {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full p-4 bg-gray-50 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-transparent text-black transition-all duration-200"
+                    className="w-full p-4 bg-gray-50 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-black focus:border-transparent text-black transition-all duration-300 shadow-sm hover:shadow-md"
                     placeholder="example@domain.com"
                     disabled={isSubmitting}
                   />
                   {formData.email !== user?.email && (
-                    <div className="flex items-center gap-2 text-xs text-orange-600 mt-1">
-                      <AlertCircle className="w-3 h-3" />
-                      <span>Changing your email will require verification</span>
+                    <div className="flex items-center gap-2 text-xs text-gray-600 mt-2 p-3 bg-yellow-50 rounded-xl border border-yellow-200">
+                      <AlertCircle className="w-3 h-3 text-yellow-600" />
+                      <span className="font-medium">Changing your email will require verification</span>
                     </div>
                   )}
                 </div>
                 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-orange-500" />
+                <div className="space-y-3">
+                  <label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-gray-600" />
                     Phone Number
                   </label>
                   <input 
@@ -435,7 +471,7 @@ const ProfilePage = () => {
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    className="w-full p-4 bg-gray-50 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-transparent text-black transition-all duration-200"
+                    className="w-full p-4 bg-gray-50 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-black focus:border-transparent text-black transition-all duration-300 shadow-sm hover:shadow-md"
                     placeholder="+91 987 654 3210"
                     disabled={isSubmitting}
                   />
@@ -443,14 +479,14 @@ const ProfilePage = () => {
               </div>
               
               {/* Action Buttons */}
-              <div className="flex gap-3 justify-center pt-4">
+              <div className="flex gap-4 justify-center pt-6">
                 <button 
                   type="button"
                   onClick={() => {
                     setFormData({...profileData});
                     setIsEditing(false);
                   }}
-                  className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-all duration-200 flex items-center gap-2"
+                  className="px-8 py-4 bg-gray-100 text-gray-700 rounded-2xl font-semibold hover:bg-gray-200 transition-all duration-300 flex items-center gap-2 shadow-sm hover:shadow-md"
                   disabled={isSubmitting}
                 >
                   <X className="w-4 h-4" />
@@ -458,7 +494,7 @@ const ProfilePage = () => {
                 </button>
                 <button 
                   type="submit"
-                  className="px-6 py-3 bg-orange-500 text-white rounded-xl font-medium hover:bg-orange-600 transition-all duration-200 flex items-center gap-2 disabled:opacity-50"
+                  className="px-8 py-4 bg-black text-white rounded-2xl font-semibold hover:bg-gray-800 transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
@@ -477,89 +513,106 @@ const ProfilePage = () => {
             </form>
           ) : (
             <div className="flex flex-col h-full">
-              {/* Profile Header */}
-              <div className="flex flex-col items-center justify-center mb-8">
-                <div className="w-32 h-32 md:w-36 md:h-36 rounded-full bg-gradient-to-br from-orange-100 to-orange-200 overflow-hidden mb-4 shadow-lg">
-                  <img 
-                    src={profileData.profileImg || "/default-avatar.png"} 
-                    alt="Profile" 
-                    className="w-full h-full object-cover"
-                  />
+              {/* Profile Header - Viewing Mode */}
+              <div className="flex flex-col items-center justify-center mb-10">
+                <div className="relative mb-6">
+                  <div className="w-32 h-32 md:w-36 md:h-36 rounded-full bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden shadow-2xl ring-4 ring-white">
+                    {profileData.profileImg ? (
+                      <ProgressiveImage 
+                        src={profileData.profileImg}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <DefaultAvatar 
+                        className="w-full h-full" 
+                        iconClassName="w-16 h-16 md:w-20 md:h-20 text-gray-400" 
+                      />
+                    )}
+                  </div>
+                  <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
+                    <div className="w-2 h-2 bg-white rounded-full"></div>
+                  </div>
                 </div>
-                <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">{profileData.name || 'User'}</h2>
-                <p className="text-gray-500 text-sm">{profileData.email}</p>
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{profileData.name || 'User'}</h2>
+                <p className="text-gray-500 text-sm font-medium">{profileData.email}</p>
+                <div className="flex items-center gap-2 mt-2 text-xs text-gray-400">
+                  <Shield className="w-3 h-3" />
+                  <span>Verified Account</span>
+                </div>
               </div>
               
               {/* Profile Information Cards */}
               <div className="space-y-4 flex-1">
-                <div className="bg-gradient-to-r from-orange-50 to-orange-100 p-4 rounded-xl border border-orange-200">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
-                      <User className="w-5 h-5 text-white" />
+                <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 md:p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+                  <div className="flex items-center gap-3 md:gap-4">
+                    <div className="w-10 h-10 md:w-12 md:h-12 bg-black rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
+                      <User className="w-5 h-5 md:w-6 md:h-6 text-white" />
                     </div>
-                    <div className="flex-1">
-                      <h3 className="text-sm text-gray-500 mb-1">Full Name</h3>
-                      <p className="text-gray-900 font-medium">{profileData.name || 'Not provided'}</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                      <Calendar className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-sm text-gray-500 mb-1">Date of Birth</h3>
-                      <p className="text-gray-900 font-medium">{profileData.dob || 'Not provided'}</p>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm text-gray-500 mb-1 font-medium">Full Name</h3>
+                      <p className="text-gray-900 font-semibold text-base md:text-lg truncate">{profileData.name || 'Not provided'}</p>
                     </div>
                   </div>
                 </div>
                 
-                <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-xl border border-green-200">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                      <Mail className="w-5 h-5 text-white" />
+                <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 md:p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+                  <div className="flex items-center gap-3 md:gap-4">
+                    <div className="w-10 h-10 md:w-12 md:h-12 bg-black rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
+                      <Calendar className="w-5 h-5 md:w-6 md:h-6 text-white" />
                     </div>
-                    <div className="flex-1">
-                      <h3 className="text-sm text-gray-500 mb-1">Email</h3>
-                      <p className="text-gray-900 font-medium">{profileData.email}</p>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm text-gray-500 mb-1 font-medium">Date of Birth</h3>
+                      <p className="text-gray-900 font-semibold text-base md:text-lg truncate">{profileData.dob || 'Not provided'}</p>
                     </div>
                   </div>
                 </div>
                 
-                <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-4 rounded-xl border border-purple-200">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
-                      <Phone className="w-5 h-5 text-white" />
+                <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 md:p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+                  <div className="flex items-center gap-3 md:gap-4">
+                    <div className="w-10 h-10 md:w-12 md:h-12 bg-black rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
+                      <Mail className="w-5 h-5 md:w-6 md:h-6 text-white" />
                     </div>
-                    <div className="flex-1">
-                      <h3 className="text-sm text-gray-500 mb-1">Phone Number</h3>
-                      <p className="text-gray-900 font-medium">{profileData.phone || 'Not provided'}</p>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm text-gray-500 mb-1 font-medium">Email</h3>
+                      <p className="text-gray-900 font-semibold text-base md:text-lg break-all">{profileData.email}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 md:p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+                  <div className="flex items-center gap-3 md:gap-4">
+                    <div className="w-10 h-10 md:w-12 md:h-12 bg-black rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
+                      <Phone className="w-5 h-5 md:w-6 md:h-6 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm text-gray-500 mb-1 font-medium">Phone Number</h3>
+                      <p className="text-gray-900 font-semibold text-base md:text-lg truncate">{profileData.phone || 'Not provided'}</p>
                     </div>
                   </div>
                 </div>
               </div>
               
               {/* Action Buttons */}
-              <div className="flex flex-col gap-3 mt-6">
+              <div className="flex flex-col gap-4 mt-8">
                 <button 
+                  aria-label="Edit profile information"
                   onClick={() => setIsEditing(true)}
-                  className="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-medium hover:from-orange-600 hover:to-orange-700 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                  className="w-full py-4 bg-black text-white rounded-2xl font-semibold hover:bg-gray-800 transition-all duration-300 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
                   <Edit3 className="w-5 h-5" />
                   Edit Profile
                 </button>
                 <button 
                   onClick={handleLogout}
-                  className="w-full py-4 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl font-medium hover:from-gray-700 hover:to-gray-800 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                  className="w-full py-4 bg-gray-600 text-white rounded-2xl font-semibold hover:bg-gray-700 transition-all duration-300 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
                   <LogOut className="w-5 h-5" />
                   Logout
                 </button>
                 <button 
                   onClick={() => setShowDeletePopup(true)}
-                  className="w-full py-4 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-medium hover:from-red-600 hover:to-red-700 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                  className="w-full py-4 bg-red-600 text-white rounded-2xl font-semibold hover:bg-red-700 transition-all duration-300 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
                   <Trash2 className="w-5 h-5" />
                   Delete Account

@@ -1,8 +1,10 @@
-import React, { useState, useCallback } from 'react';
-import { ArrowLeft, MapPin, Phone, Mail, Globe, MessageCircle, Send, Building, Users, Clock, CheckCircle, AlertCircle, Instagram, Facebook, FileText, Hash, Star, MessageSquare } from 'lucide-react';
+import React, { useState, useCallback, useEffect } from 'react';
+import { ArrowLeft, MapPin, Phone, Mail, Globe, MessageCircle, Send, Building, Users, Clock, CheckCircle, AlertCircle, Instagram, Facebook, FileText, Hash, Star, MessageSquare, Medal, Heart, Utensils } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useRestaurant } from '../Restaurantselection/RestaurantContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { authService } from '../../api/authService';
+import { Link } from 'react-router-dom'; // If you want to use a link
 
 const ContactUsPage = () => {
   const { restaurant, loading, error, tableNumber } = useRestaurant();
@@ -16,6 +18,33 @@ const ContactUsPage = () => {
   const [submitStatus, setSubmitStatus] = useState(null);
   const [activeField, setActiveField] = useState(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const user = await authService.getCurrentUser();
+        if (user) {
+          // Try to get full profile for name
+          let name = user.user_metadata?.full_name || user.user_metadata?.name || '';
+          let email = user.email || '';
+          // Optionally, fetch profile for more accurate name
+          try {
+            const profile = await authService.getProfile(user.id);
+            if (profile?.full_name) name = profile.full_name;
+            if (profile?.email) email = profile.email;
+          } catch {}
+          setContactForm(prev => ({
+            ...prev,
+            name,
+            email
+          }));
+        }
+      } catch (err) {
+        // Not authenticated or error, do nothing
+      }
+    }
+    fetchUser();
+  }, []);
 
   const handleInputChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -164,7 +193,7 @@ const ContactUsPage = () => {
   // Build additional info array
   const additionalInfo = [
     {
-      icon: Hash,
+      icon: Utensils,
       title: 'Cuisine Type',
       value: restaurant.cuisine_type,
       color: 'from-purple-400 to-purple-600'
@@ -184,44 +213,43 @@ const ContactUsPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-black">
-      {/* Sticky Header */}
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-black/80 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-10"
-      >
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+    <div className="min-h-screen bg-black font-spartan">
+      {/* Sticky Header with only back button */}
+      <div className="bg-black/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-4xl mx-auto px-3 py-3 flex items-center relative">
+          <button
             onClick={handleBack}
-            className="flex items-center text-white/80 hover:text-white transition-colors duration-300"
+            className="absolute left-0 top-4 md:top-12 text-orange-500 hover:text-orange-600 transition-colors duration-200 p-2 rounded-full hover:bg-orange-500/10"
+            aria-label="Go back"
           >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            <span className="font-medium">Back</span>
-          </motion.button>
-          <h1 className="text-xl font-bold text-white">Contact Us</h1>
-          <div className="w-20" />
+            <ArrowLeft size={30} />
+          </button>
         </div>
-      </motion.div>
+      </div>
 
-      <div className="flex justify-center items-center py-12 px-4 min-h-[85vh]">
-        <motion.div 
-          initial={{ opacity: 0, y: 30, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          className="w-full max-w-4xl"
-        >
+      {/* Title and subtitle, visually lower */}
+      <div className="max-w-4xl mx-auto flex flex-col items-center mt-6 mb-2 px-2">
+        <h1 className="text-2xl md:text-3xl font-bold text-white font-spartan-medium mb-1">
+          Contact Us
+        </h1>
+        <span className="text-orange-200 text-sm md:text-base font-medium">
+          <a
+            href="#contact-form"
+            className="hover:underline transition-colors"
+          >
+            We’d love to hear from you!
+          </a>
+        </span>
+      </div>
+
+      <div className="flex justify-center items-center py-12 px-1 min-h-[85vh]">
+        <div className="w-full max-w-2xl">
           {/* Main Card */}
-          <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
-            
+          <div className="bg-white rounded-t-[30px] shadow-xl overflow-hidden">
             {/* Restaurant Header */}
-            <div className="relative bg-gradient-to-r from-orange-500 via-red-500 to-purple-600 p-8 text-white">
-              <div className="absolute inset-0 bg-black/20"></div>
-              <div className="relative z-10">
+            <div className="relative p-8 text-black border-b border-gray-200">
                 <div className="flex items-center mb-4">
-                  <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mr-4">
+                <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mr-4">
                     {restaurant.logo_url ? (
                       <img 
                         src={restaurant.logo_url} 
@@ -229,117 +257,75 @@ const ContactUsPage = () => {
                         className="w-12 h-12 rounded-lg object-cover"
                       />
                     ) : (
-                      <Building className="w-8 h-8" />
+                    <Building className="w-8 h-8 text-gray-400" />
                     )}
                   </div>
                   <div>
-                    <h2 className="text-3xl font-bold mb-1">{restaurant.name}</h2>
-                    <p className="text-white/80">{restaurant.description || 'Get in touch with us'}</p>
-                  </div>
+                  <h2 className="text-2xl md:text-3xl font-bold mb-1 text-gray-900">{restaurant.name}</h2>
+                  <p className="text-gray-500">{restaurant.description || 'Get in touch with us'}</p>
                 </div>
-                
-                {/* Table Number Badge - Centered */}
-                {tableNumber && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex justify-center"
-                  >
-                    <div className="inline-flex items-center bg-white/20 backdrop-blur-sm rounded-full px-6 py-3 border border-white/30">
-                      <Users className="w-5 h-5 mr-2" />
-                      <span className="font-semibold text-lg">Table {tableNumber}</span>
-                    </div>
-                  </motion.div>
-                )}
               </div>
+                {tableNumber && (
+  <div className="flex flex-row items-center justify-center mt-2 gap-3 w-full overflow-x-auto">
+    <div className="inline-flex items-center bg-gray-100 rounded-full px-4 py-2 border border-gray-200 whitespace-nowrap">
+      <Users className="w-5 h-5 mr-2 text-gray-500" />
+      <span className="font-semibold text-base text-gray-700">Table {tableNumber}</span>
+    </div>
+    <motion.button
+      onClick={() => {
+        if (restaurant.google_maps_link) {
+          window.open(restaurant.google_maps_link, '_blank');
+        } else {
+          handleGoogleMapsFeedback();
+        }
+      }}
+      className="flex items-center px-4 py-2 bg-gradient-to-r from-orange-400 to-orange-600 text-white rounded-full font-spartan-medium shadow-lg border-2 border-orange-500 hover:scale-105 transition-transform duration-200 whitespace-nowrap"
+      animate={{ scale: [1, 1.08, 1] }}
+      transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }}
+    >
+      <Heart className="w-5 h-5 md:w-6 md:h-6 drop-shadow heart-beat-fill" fill="white" stroke="none" />
+      <span className="ml-2 font-spartan-medium">Rate Us</span>
+    </motion.button>
+  </div>
+)}
             </div>
 
             <div className="p-8">
-              {/* Contact Information Grid */}
-              <div className="grid md:grid-cols-2 gap-6 mb-8">
-                {contactInfo.map((info, index) => (
-                  <motion.div
-                    key={info.title}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="group"
-                  >
-                    {info.link ? (
-                      <a
-                        href={info.link}
-                        target={info.title === 'Address' ? '_blank' : undefined}
-                        rel={info.title === 'Address' ? 'noopener noreferrer' : undefined}
-                        className="block"
-                      >
-                        <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-all duration-300 group-hover:scale-105">
-                          <div className={`w-12 h-12 bg-gradient-to-br ${info.color} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                            <info.icon className="w-6 h-6 text-white" />
-                          </div>
-                          <h3 className="font-semibold text-gray-800 mb-2">{info.title}</h3>
-                          <p className="text-gray-600 text-sm mb-1">
-                            {info.value || `${info.title} not available`}
-                          </p>
-                          {info.action && (
-                            <p className={`text-xs ${info.textColor} font-medium`}>{info.action}</p>
-                          )}
-                        </div>
-                      </a>
-                    ) : (
-                      <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-                        <div className={`w-12 h-12 bg-gradient-to-br ${info.color} rounded-xl flex items-center justify-center mb-4`}>
-                          <info.icon className="w-6 h-6 text-white" />
-                        </div>
-                        <h3 className="font-semibold text-gray-800 mb-2">{info.title}</h3>
-                        <p className="text-gray-600 text-sm">
-                          {info.value || `${info.title} not available`}
-                        </p>
+              {/* Contact Info - Responsive 2-column grid */}
+              <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4 font-spartan">
+                {contactInfo.map((info, idx) => (
+                  <div key={info.title} className="flex flex-col h-full bg-gray-50 rounded-2xl border border-gray-200 p-4">
+                    <div className="flex items-center gap-3 mb-2 w-full">
+                      <div className="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 bg-black rounded-lg flex items-center justify-center">
+                        <info.icon className="w-4 h-4 md:w-5 md:h-5 text-white" />
                       </div>
-                    )}
-                  </motion.div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-xs font-semibold text-gray-500">{info.title}</h3>
+                        {info.link ? (
+                          <a
+                            href={info.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-gray-900 text-sm font-medium block break-words hover:underline"
+                          >
+                            {info.value || 'Not available'}
+                          </a>
+                        ) : (
+                          <p className="text-gray-900 text-sm font-medium break-words">{info.value || 'Not available'}</p>
+                        )}
+                      </div>
+                      {info.link && info.action && (
+                        <button
+                          onClick={() => window.open(info.link, '_blank')}
+                          className="ml-2 px-3 py-2 bg-orange-500 text-white rounded-xl font-medium hover:bg-orange-600 transition-colors text-xs shadow whitespace-nowrap"
+                        >
+                          {info.action}
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 ))}
               </div>
-
-              {/* Quick Actions */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6 border border-blue-100 mb-8"
-              >
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Quick Actions</h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleGoogleMapsFeedback}
-                    className="flex items-center justify-center p-4 bg-white rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 group"
-                  >
-                    <div className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">
-                      <Star className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="text-left">
-                      <p className="font-semibold text-gray-800">Give Us Feedback</p>
-                      <p className="text-sm text-gray-600">Rate us on Google Maps</p>
-                    </div>
-                  </motion.button>
-
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => document.getElementById('contact-form').scrollIntoView({ behavior: 'smooth' })}
-                    className="flex items-center justify-center p-4 bg-white rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 group"
-                  >
-                    <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">
-                      <MessageSquare className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="text-left">
-                      <p className="font-semibold text-gray-800">Send Message</p>
-                      <p className="text-sm text-gray-600">Contact us directly</p>
-                    </div>
-                  </motion.button>
-                </div>
-              </motion.div>
 
               {/* Additional Restaurant Info */}
               <motion.div
@@ -350,19 +336,21 @@ const ContactUsPage = () => {
               >
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Restaurant Information</h3>
                 <div className="grid md:grid-cols-3 gap-4">
-                  {additionalInfo.map((info, index) => (
-                    <div key={info.title} className="flex items-center">
-                      <div className={`w-8 h-8 bg-gradient-to-br ${info.color} rounded-lg flex items-center justify-center mr-3`}>
-                        <info.icon className="w-4 h-4 text-white" />
+                  {additionalInfo
+                    .filter(info => !!info.value)
+                    .map((info, index) => (
+                      <div key={info.title} className="flex items-center">
+                        <div className={`w-8 h-8 bg-gradient-to-br ${info.color} rounded-lg flex items-center justify-center mr-3`}>
+                          <info.icon className="w-4 h-4 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 font-medium">{info.title}</p>
+                          <p className="text-sm text-gray-800 font-semibold">
+                            {info.value}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-xs text-gray-500 font-medium">{info.title}</p>
-                        <p className="text-sm text-gray-800 font-semibold">
-                          {info.value || 'Not available'}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </motion.div>
 
@@ -408,15 +396,19 @@ const ContactUsPage = () => {
                 transition={{ delay: 0.6 }}
                 className="bg-gray-50 rounded-2xl p-8 border border-gray-100"
               >
-                <div className="flex items-center mb-6">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-xl flex items-center justify-center mr-4">
-                    <MessageCircle className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-800">Send us a Message</h2>
-                    <p className="text-gray-500">We'd love to hear from you!</p>
-                  </div>
-                </div>
+                <div className="flex items-center mb-8 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-4 border border-blue-100 shadow-sm">
+  <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-purple-500 rounded-2xl flex items-center justify-center shadow-md mr-5">
+    <MessageCircle className="w-7 h-7 text-white" />
+  </div>
+  <div className="min-w-0">
+    <h2 className="text-2xl md:text-3xl font-extrabold text-gray-800 leading-tight mb-1">
+      Send us a Message
+    </h2>
+    <p className="text-gray-500 text-base md:text-lg font-medium break-words">
+      We'd love to hear from you!
+    </p>
+  </div>
+</div>
                 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-6">
@@ -554,7 +546,7 @@ const ContactUsPage = () => {
               </motion.div>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

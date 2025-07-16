@@ -57,7 +57,7 @@ const RecommendationItem = memo(({ item, onImageClick, index = 0 }) => {
 
   return (
     <motion.div
-      className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 w-[280px] h-[320px] flex flex-col relative"
+      className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 w-[280px] h-[280px] flex flex-col relative"
       style={{ willChange: 'transform' }}
       initial={{ transform: 'translateY(25px) scale(0.9)' }}
       animate={{ transform: 'translateY(0px) scale(1)' }}
@@ -69,6 +69,17 @@ const RecommendationItem = memo(({ item, onImageClick, index = 0 }) => {
       }}
     >
       <div className="relative h-48 overflow-hidden bg-gray-100 flex-shrink-0">
+        {/* Discount badge in top right with animation */}
+        <motion.div
+          className="absolute top-3 right-3 z-20"
+          initial={{ scale: 0.5, opacity: 0, rotate: -15 }}
+          animate={{ scale: 1, opacity: 1, rotate: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
+          whileHover={{ scale: 1.15, rotate: 5 }}
+        >
+          <DiscountTag />
+        </motion.div>
+        
         <motion.div
           whileHover={{ scale: 1.1 }}
           transition={{ duration: 0.3 }}
@@ -105,11 +116,11 @@ const RecommendationItem = memo(({ item, onImageClick, index = 0 }) => {
         </motion.button>
       </div>
       
-      <div className="flex flex-col flex-1 justify-between py-3 px-4 min-h-0">
+      <div className="flex flex-col flex-1 justify-between py-2 px-4 min-h-0">
         <div className="flex items-start justify-between flex-1">
           <div className="flex-1 min-w-0 mr-3">
             <motion.h4 
-              className="text-base font-bold text-gray-900 truncate mb-2 leading-tight"
+              className="text-base font-bold text-gray-900 truncate mb-1 leading-tight"
               whileHover={{ color: '#f97316' }}
               transition={{ duration: 0.2 }}
             >
@@ -205,9 +216,6 @@ const RecommendationItem = memo(({ item, onImageClick, index = 0 }) => {
               )}
             </AnimatePresence>
           </div>
-        </div>
-        <div className="flex justify-end mt-3 flex-shrink-0">
-          <DiscountTag />
         </div>
       </div>
     </motion.div>

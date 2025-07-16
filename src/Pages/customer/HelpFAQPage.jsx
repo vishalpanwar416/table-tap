@@ -37,8 +37,8 @@ const HelpFAQPage = () => {
       color: 'from-green-400 to-blue-500'
     },
     {
-      id: 'delivery',
-      title: 'Service & Delivery',
+      id: 'service',
+      title: 'Services',
       icon: <Truck className="w-5 h-5" />,
       color: 'from-purple-400 to-pink-500'
     },
@@ -115,28 +115,22 @@ const HelpFAQPage = () => {
       answer: 'Yes! Check our offers section for current promotions, first-time user discounts, and loyalty rewards.'
     },
 
-    // Service & Delivery
+    // Service
     {
-      id: 'delivery-1',
-      category: 'delivery',
-      question: 'How long does food preparation take?',
+      id: 'service-1',
+      category: 'service',
+      question: 'How long does food preparation take at the restaurant?',
       answer: 'Typical preparation time is 15-25 minutes, depending on order complexity and current restaurant volume.'
     },
     {
-      id: 'delivery-2',
-      category: 'delivery',
-      question: 'What if my food arrives late or cold?',
-      answer: 'We guarantee food quality and timely service. If you experience issues, contact us immediately for resolution.'
-    },
-    {
-      id: 'delivery-3',
-      category: 'delivery',
+      id: 'service-2',
+      category: 'service',
       question: 'Can I request special dietary accommodations?',
       answer: 'Absolutely! We accommodate various dietary needs including vegetarian, vegan, gluten-free, and allergen-free options.'
     },
     {
-      id: 'delivery-4',
-      category: 'delivery',
+      id: 'service-3',
+      category: 'service',
       question: 'What are your operating hours?',
       answer: `Our current operating hours are: ${restaurant?.opening_hours || 'Please check our contact page for current hours.'}`
     },
@@ -267,27 +261,28 @@ const HelpFAQPage = () => {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Sticky Header */}
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-black/80 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-10"
-      >
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+      {/* Transparent sticky header with only the back button */}
+      <div className="sticky top-0 z-10">
+        <div className="max-w-4xl mx-auto px-6 py-6 flex items-center relative">
+          <button
             onClick={handleBack}
-            className="flex items-center text-white/80 hover:text-white transition-colors duration-300"
+            className="absolute left-0 top-1/2 -translate-y-1/2 text-orange-500 hover:text-orange-600 transition-colors duration-200 p-2 rounded-full hover:bg-orange-500/10"
+            aria-label="Go back"
           >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            <span className="font-medium">Back</span>
-          </motion.button>
-          <h1 className="text-xl font-bold text-white">Help & FAQ</h1>
-          <div className="w-20" />
+            <ArrowLeft size={30} />
+          </button>
         </div>
-      </motion.div>
+      </div>
 
+      {/* Title and subtitle, visually lower */}
+      <div className="max-w-4xl mx-auto flex flex-col items-center mt-8 mb-4 px-6">
+        <h1 className="text-2xl md:text-3xl font-bold text-white font-spartan-medium mb-2">
+          Help and FAQ's
+        </h1>
+        <span className="text-orange-200 text-sm md:text-base font-medium">
+          Everything you need to know, all in one place.
+        </span>
+      </div>
       <div className="flex justify-center items-center py-12 px-4 min-h-[85vh]">
         <motion.div 
           initial={{ opacity: 0, y: 30, scale: 0.95 }}
@@ -298,35 +293,7 @@ const HelpFAQPage = () => {
           {/* Main Card */}
           <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
             
-            {/* Header */}
-            <div className="relative bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 p-8 text-white">
-              <div className="absolute inset-0 bg-black/20"></div>
-              <div className="relative z-10">
-                <div className="flex items-center mb-4">
-                  <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mr-4">
-                    <HelpCircle className="w-8 h-8" />
-                  </div>
-                  <div>
-                    <h2 className="text-3xl font-bold mb-1">Help & FAQ</h2>
-                    <p className="text-white/80">Find answers to common questions</p>
-                  </div>
-                </div>
-                
-                {/* Table Number Badge - Centered */}
-                {tableNumber && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex justify-center"
-                  >
-                    <div className="inline-flex items-center bg-white/20 backdrop-blur-sm rounded-full px-6 py-3 border border-white/30">
-                      <User className="w-5 h-5 mr-2" />
-                      <span className="font-semibold text-lg">Table {tableNumber}</span>
-                    </div>
-                  </motion.div>
-                )}
-              </div>
-            </div>
+            
 
             <div className="p-8">
               {/* Search Bar */}

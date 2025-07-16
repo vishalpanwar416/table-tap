@@ -66,7 +66,7 @@ const RecommendationItem = memo(({ item, onImageClick, index }) => {
 
   return (
     <motion.div
-      className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 min-w-[140px] max-w-[150px] h-[180px] flex flex-col relative"
+      className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 min-w-[140px] max-w-[150px] h-[160px] flex flex-col relative"
       style={{ willChange: 'transform' }}
       initial={{ transform: 'translateY(25px) scale(0.9)' }}
       animate={{ transform: 'translateY(0px) scale(1)' }}
@@ -85,6 +85,17 @@ const RecommendationItem = memo(({ item, onImageClick, index }) => {
       />
 
       <div className="relative h-28 overflow-hidden bg-gray-100 flex-shrink-0">
+        {/* Discount badge in top right with animation */}
+        <motion.div
+          className="absolute top-1 right-2 z-20"
+          initial={{ scale: 0.5, opacity: 0, rotate: -15 }}
+          animate={{ scale: 1, opacity: 1, rotate: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
+          whileHover={{ scale: 1.15, rotate: 5 }}
+        >
+          <DiscountTag />
+        </motion.div>
+        
         <motion.div
           whileHover={{ scale: 1.1 }}
           transition={{ duration: 0.3 }}
@@ -170,7 +181,7 @@ const RecommendationItem = memo(({ item, onImageClick, index }) => {
               {quantity > 0 ? (
                 <motion.div 
                   key="quantity-controls"
-                  className="flex items-center bg-gradient-to-r from-black to-gray-800 text-white rounded-full px-2 py-0.5 shadow-lg"
+                  className="flex items-center bg-gradient-to-r from-black to-gray-800 text-white rounded-full px-2 py-1 shadow-lg"
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.8, opacity: 0 }}
@@ -206,7 +217,7 @@ const RecommendationItem = memo(({ item, onImageClick, index }) => {
                 <motion.button
                   key="add-button"
                   onClick={handleAddToCart}
-                  className="bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white rounded-full px-2 py-0.5 flex items-center space-x-1 text-xs shadow-lg transition-all duration-200"
+                  className="bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white rounded-full px-3 py-1.5 flex items-center space-x-1 text-xs shadow-lg transition-all duration-200"
                   whileHover={{ 
                     scale: 1.05,
                     boxShadow: "0 10px 25px rgba(0,0,0,0.2)"
@@ -224,9 +235,7 @@ const RecommendationItem = memo(({ item, onImageClick, index }) => {
             </AnimatePresence>
           </div>
         </div>
-        <div className="flex justify-end mt-1 flex-shrink-0">
-          <DiscountTag />
-        </div>
+        {/* Removed the bottom DiscountTag section */}
       </div>
     </motion.div>
   );

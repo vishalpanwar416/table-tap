@@ -110,6 +110,22 @@ const FloatingCartButton = ({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isExpanded]);
+
+  // Add scroll lock when expanded panel is open
+  useEffect(() => {
+    if (isExpanded) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+    } else {
+      document.body.style.overflow = 'auto';
+      document.body.style.touchAction = 'auto';
+    }
+
+    return () => {
+      document.body.style.overflow = 'auto';
+      document.body.style.touchAction = 'auto';
+    };
+  }, [isExpanded]);
   
   // Check if new items were added to show animation
   useEffect(() => {
@@ -133,8 +149,14 @@ const FloatingCartButton = ({
 
   // Memoize event handlers to prevent unnecessary re-renders
   const handleCheckoutClick = useCallback(() => {
-    toggleCart();
-  }, [toggleCart]);
+    if (isExpanded) {
+      // If expanded panel is open, close it instead of opening cart
+      setIsExpanded(false);
+    } else {
+      // If not expanded, open the cart sidebar
+      toggleCart();
+    }
+  }, [toggleCart, isExpanded]);
 
   const handleExpandClick = useCallback((e) => {
     e.stopPropagation();
@@ -178,12 +200,26 @@ const FloatingCartButton = ({
         }}
         exit={{ y: 100, opacity: 0, transition: { duration: 0.2 } }}
       >
+        {/* Background overlay when expanded */}
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.div
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsExpanded(false)}
+              style={{ touchAction: 'none' }}
+            />
+          )}
+        </AnimatePresence>
+
         {/* Expanded panel showing recent items and price breakdown */}
         <AnimatePresence>
           {isExpanded && (
             <motion.div 
               ref={expandedPanelRef}
-              className="bg-white rounded-2xl shadow-xl mb-3 p-4"
+              className="bg-white rounded-2xl shadow-xl mb-3 p-4 z-50 relative"
               style={{ 
                 width: "85%", 
                 maxWidth: "350px",
@@ -200,6 +236,7 @@ const FloatingCartButton = ({
                 }
               }}
               exit={{ height: 0, opacity: 0, transition: { duration: 0.2 } }}
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-between items-center mb-3">
                 <h3 className="font-bold text-black">Recent Items</h3>
@@ -286,7 +323,7 @@ const FloatingCartButton = ({
         {/* Main cart button */}
         <motion.button
           onClick={handleCheckoutClick}
-          className="flex items-center justify-between bg-black text-white px-6 py-4 rounded-full shadow-lg relative overflow-hidden"
+          className="flex items-center justify-between bg-black text-white px-6 py-4 rounded-full shadow-lg relative overflow-hidden z-50"
           style={{ 
             minWidth: '260px', 
             maxWidth: '85%',
