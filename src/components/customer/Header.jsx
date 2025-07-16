@@ -111,6 +111,11 @@ const Header = memo(({
     }
   }, [isSearchActive, handleCloseSearch, toggleSearch]);
 
+  // Handler for get location button
+  const handleGetLocation = useCallback(() => {
+    navigate('/restaurant-selection?autoLocation=1');
+  }, [navigate]);
+
   const getRestaurantDisplay = useCallback(() => {
     if (loading) {
       return { name: 'Loading...', address: 'Please wait...' };
@@ -147,17 +152,6 @@ const Header = memo(({
                 <h2 className="text-white text-[14px] sm:text-[17px] font-spartan truncate" title={displayData.name}>
                   {displayData.name}
                 </h2>
-              </button>
-              {/* Change Restaurant Button - Smaller on mobile */}
-              <button
-                onClick={handleChangeRestaurant}
-                aria-label="Change restaurant"
-                className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 text-[7px] sm:text-[8px] text-orange-400 hover:text-orange-300 hover:bg-orange-400/10 rounded-full transition-all duration-200 whitespace-nowrap flex-shrink-0"
-                title="Change Restaurant"
-              >
-                <RefreshCw size={7} className="sm:w-2 sm:h-2" />
-                <span className="hidden xs:inline">Change</span>
-                <span className="xs:hidden">Ch</span>
               </button>
             </div>
             <p className="text-[7px] sm:text-[8px] text-gray-300 truncate max-w-[150px] sm:max-w-[200px] ml-4 sm:ml-5">
@@ -222,6 +216,16 @@ const Header = memo(({
            style={{
              transitionDelay: isSearchActive ? '0ms' : '300ms'
            }}>
+        {/* FIRST ICON: Get Location (MapPin, Orange) */}
+        <button
+          onClick={handleGetLocation}
+          aria-label="Detect location and select restaurant"
+          title="Detect location and select restaurant"
+          className="transition-transform duration-300 ease-out hover:scale-110"
+        >
+          <MapPin className="w-7 h-7 sm:w-9 sm:h-9 md:w-11 md:h-11 text-orange-400 hover:text-orange-300 transition-colors" />
+        </button>
+
         <button
           type="button"
           onClick={handleSearchIconClick}

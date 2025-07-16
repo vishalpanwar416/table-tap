@@ -59,7 +59,7 @@ const App = () => {
                   <CartProvider>
                     <LikesProvider>
                       <FoodDataProvider>
-                        <div className="min-h-screen bg-gray-100">
+                        <div className="min-h-screen bg-black font-spartan">
                           <Routes>
                             <Route path="/" element={<Opening />} />
                             <Route path="/skip1" element={<OnboardingScreen />} />

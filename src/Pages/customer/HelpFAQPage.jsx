@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { ArrowLeft, Search, ChevronDown, ChevronUp, HelpCircle, MessageCircle, Phone, Mail, Clock, Star, BookOpen, Shield, CreditCard, Truck, User, Settings, Smartphone } from 'lucide-react';
+import { ChevronLeft, Search, ChevronDown, ChevronUp, HelpCircle, MessageCircle, Phone, Mail, Clock, Star, BookOpen, Shield, CreditCard, Truck, User, Settings, Smartphone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useRestaurant } from '../Restaurantselection/RestaurantContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -260,16 +260,16 @@ const HelpFAQPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-black font-spartan">
       {/* Transparent sticky header with only the back button */}
       <div className="sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-6 py-6 flex items-center relative">
+        <div className="max-w-4xl mx-auto px-3 py-3 flex items-center relative">
           <button
             onClick={handleBack}
-            className="absolute left-0 top-1/2 -translate-y-1/2 text-orange-500 hover:text-orange-600 transition-colors duration-200 p-2 rounded-full hover:bg-orange-500/10"
+            className="fixed left-0 top-10 md:top-12 z-20 text-orange-500 hover:text-orange-600 transition-colors duration-200 p-2 rounded-full hover:bg-orange-500/10"
             aria-label="Go back"
           >
-            <ArrowLeft size={30} />
+            <ChevronLeft size={30} />
           </button>
         </div>
       </div>
@@ -283,15 +283,15 @@ const HelpFAQPage = () => {
           Everything you need to know, all in one place.
         </span>
       </div>
-      <div className="flex justify-center items-center py-12 px-4 min-h-[85vh]">
+      <div className="flex justify-center items-center pt-12 px-4 min-h-[85vh]">
         <motion.div 
           initial={{ opacity: 0, y: 30, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="w-full max-w-4xl"
+          className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl mx-auto"
         >
           {/* Main Card */}
-          <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+          <div className="bg-white rounded-3xl shadow-2xl overflow-hidden w-full">
             
             
 

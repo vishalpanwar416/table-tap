@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { Heart, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { Heart, ShoppingBag, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../../components/customer/Header';
 import Sidebar from '../../components/customer/Slidebar';
@@ -385,7 +385,7 @@ const LikedItemsPage = () => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
         >
-          <ArrowLeft size={30} className="md:w-8 md:h-8" />
+          <ChevronLeft size={30} className="md:w-8 md:h-8" />
         </motion.button>
 
         <Sidebar

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Camera, LogOut, Trash2, User, Mail, Phone, Calendar, Edit3, Save, X, AlertCircle, Shield } from 'lucide-react';
+import { ChevronLeft, Camera, LogOut, Trash2, User, Mail, Phone, Calendar, Edit3, Save, X, AlertCircle, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import DeleteProfilePopup from '../../components/auth/DeleteProfilePopup';
 import { optimizeProfileImage, validateImageFile, ProgressiveImage } from '../../utils/imageOptimization';
@@ -346,10 +346,11 @@ const ProfilePage = () => {
         
         {/* Back Button */}
         <button 
-          className="absolute left-4 top-7 md:left-8 md:top-8 text-white hover:text-gray-300 transition-colors z-10 p-2 rounded-full hover:bg-white/10"
           onClick={() => navigate(-1)}
+          className="text-orange-500 hover:text-orange-600 transition-colors duration-200 p-2 rounded-full hover:bg-orange-500/10"
+          aria-label="Go back"
         >
-          <ArrowLeft size={30} className="md:w-8 md:h-8" />
+          <ChevronLeft size={30} />
         </button>
 
         {/* Page Title */}

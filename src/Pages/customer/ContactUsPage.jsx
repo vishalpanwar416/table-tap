@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { ArrowLeft, MapPin, Phone, Mail, Globe, MessageCircle, Send, Building, Users, Clock, CheckCircle, AlertCircle, Instagram, Facebook, FileText, Hash, Star, MessageSquare, Medal, Heart, Utensils } from 'lucide-react';
+import { ChevronLeft, MapPin, Phone, Mail, Globe, MessageCircle, Send, Building, Users, Clock, CheckCircle, AlertCircle, Instagram, Facebook, FileText, Hash, Star, MessageSquare, Medal, Heart, Utensils } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useRestaurant } from '../Restaurantselection/RestaurantContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -219,10 +219,10 @@ const ContactUsPage = () => {
         <div className="max-w-4xl mx-auto px-3 py-3 flex items-center relative">
           <button
             onClick={handleBack}
-            className="absolute left-0 top-4 md:top-12 text-orange-500 hover:text-orange-600 transition-colors duration-200 p-2 rounded-full hover:bg-orange-500/10"
+            className="fixed left-0 top-10 md:top-12 z-20 text-orange-500 hover:text-orange-600 transition-colors duration-200 p-2 rounded-full hover:bg-orange-500/10"
             aria-label="Go back"
           >
-            <ArrowLeft size={30} />
+            <ChevronLeft size={30} />
           </button>
         </div>
       </div>
@@ -243,9 +243,9 @@ const ContactUsPage = () => {
       </div>
 
       <div className="flex justify-center items-center py-12 px-1 min-h-[85vh]">
-        <div className="w-full max-w-2xl">
+        <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl mx-auto">
           {/* Main Card */}
-          <div className="bg-white rounded-t-[30px] shadow-xl overflow-hidden">
+          <div className="bg-white rounded-t-[30px] shadow-xl overflow-hidden w-full">
             {/* Restaurant Header */}
             <div className="relative p-8 text-black border-b border-gray-200">
                 <div className="flex items-center mb-4">

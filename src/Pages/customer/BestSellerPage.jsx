@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback, useEffect, useState, lazy, Suspense, memo, useRef } from "react";
-import { ShoppingBag, Heart, ArrowLeft, Filter, Star, Clock } from "lucide-react";
+import { ShoppingBag, Heart, ArrowLeft, Filter, Star, Clock, ChevronLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "../../config/CartContent";
 import { useLikes } from "../../config/LikesContent";
@@ -711,7 +711,7 @@ const BestSellerPage = memo(() => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
         >
-          <ArrowLeft size={30} className="md:w-8 md:h-8" />
+          <ChevronLeft size={30} className="md:w-8 md:h-8" />
         </motion.button>
 
         {/* Sidebars */}

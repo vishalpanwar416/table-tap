@@ -111,6 +111,14 @@ const RestaurantSelectionPage = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Auto-trigger location popup if query param is present
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('autoLocation') === '1') {
+      handleLocationRequest();
+    }
+  }, [location.search]);
+
   // Check location permission status
   const checkLocationPermission = async () => {
     if (!navigator.permissions) {

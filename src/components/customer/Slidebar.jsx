@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, ShoppingBag, User, CreditCard, Phone, HelpCircle, Shield } from 'lucide-react';
+import { LogOut, ShoppingBag, User, CreditCard, Phone, HelpCircle, Shield, Globe } from 'lucide-react';
 import { useNavigate} from 'react-router-dom';
 import { supabase } from '../../supabase';
 import ContactPopup from './ContactPopup';
@@ -99,7 +99,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
   const menuOptions = React.useMemo(() => [
     { name: 'My Orders', icon: <ShoppingBag className="w-6 h-6" />, path: '/my-orders' }, 
     { name: 'My Profile', icon: <User className="w-6 h-6" />, path: '/profile' },
-    { name: 'Payment Methods', icon: <CreditCard className="w-6 h-6" />, path: '/payment-methods' },
+    { name: 'Change Restaurant', icon: <Globe className="w-6 h-6" />, path: '/restaurant-selection' },
     { name: 'Contact Us', icon: <Phone className="w-6 h-6" />, path: '/contact' },
     { name: 'Help & FAQs', icon: <HelpCircle className="w-6 h-6" />, path: '/help' },
   ], []);
