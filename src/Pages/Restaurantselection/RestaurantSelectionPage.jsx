@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, MapPin, Phone, Clock, RefreshCw, Store, ArrowRight, Navigation, Crosshair, ChevronDown, Edit3 } from 'lucide-react';
-import { getActiveRestaurants, getClosestRestaurants } from './restaurantSelectionService';
+import { ChevronLeft, MapPin, Phone, Clock, RefreshCw, Store, ArrowRight, Navigation, Crosshair, ChevronDown, Edit3, Search, X } from 'lucide-react';
+import { getActiveRestaurants, getClosestRestaurants, getAllRestaurants, searchRestaurants } from './restaurantSelectionService';
 import { useRestaurant } from './RestaurantContext';
 import { getStoredRestaurantSelection, storeRestaurantSelection } from '../../utils/restaurantCheck';
+import { FixedSizeList as List } from 'react-window';
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -58,6 +59,73 @@ const RestaurantSelectionPage = () => {
   
   // Add state for popup modal
   const [showTablePopup, setShowTablePopup] = useState(false);
+  
+  // Add state for nearest restaurant popup
+  const [showNearestRestaurantPopup, setShowNearestRestaurantPopup] = useState(false);
+  const [nearestRestaurant, setNearestRestaurant] = useState(null);
+  
+  // Add state for toggling between nearby and all restaurants
+  const [showAllRestaurants, setShowAllRestaurants] = useState(false);
+  
+  // Add state for nearby toggle animation
+  const [hasShownNearbyToggle, setHasShownNearbyToggle] = useState(false);
+
+  // Add these states at the top with other useState hooks
+  const [cachedNearby, setCachedNearby] = useState(null);
+  const [cachedAll, setCachedAll] = useState(null);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Add state for search results and loading
+  const [searchResults, setSearchResults] = useState(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState(null);
+
+  const handleSearchToggle = () => {
+    setShowSearch(!showSearch);
+    if (!showSearch) setSearchQuery('');
+  };
+
+  const searchTimeout = useRef();
+
+  useEffect(() => {
+    if (!showSearch) return;
+    if (!searchQuery.trim()) {
+      setSearchResults(null);
+      setSearchError(null);
+      setSearchLoading(false);
+      return;
+    }
+    setSearchLoading(true);
+    setSearchError(null);
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    searchTimeout.current = setTimeout(async () => {
+      try {
+        const results = await searchRestaurants(searchQuery.trim());
+        setSearchResults(results);
+      } catch (err) {
+        setSearchError('Failed to search restaurants.');
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 300);
+    return () => {
+      if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    };
+  }, [searchQuery, showSearch]);
+
+  // Update handleSearchSubmit to just trigger the effect
+  const handleSearchSubmit = (e) => {
+    if (e) e.preventDefault();
+    // No-op: search is now live
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setSearchResults(null);
+    setSearchError(null);
+  };
   
   const scrollRef = useRef(null);
   const scrollTimeoutRef = useRef(null);
@@ -118,6 +186,18 @@ const RestaurantSelectionPage = () => {
       handleLocationRequest();
     }
   }, [location.search]);
+
+  // After fetching restaurants with location:
+  useEffect(() => {
+    if (userLocation && restaurants.length > 0) {
+      // Find the closest restaurant within 100 meters (0.1 km)
+      const closest = restaurants.find(r => r.distance !== null && r.distance < 0.1);
+      if (closest && !selectedRestaurant && !showNearestRestaurantPopup) {
+        setNearestRestaurant(closest);
+        setShowNearestRestaurantPopup(true);
+      }
+    }
+  }, [userLocation, restaurants, selectedRestaurant, showNearestRestaurantPopup]);
 
   // Check location permission status
   const checkLocationPermission = async () => {
@@ -270,7 +350,8 @@ const RestaurantSelectionPage = () => {
     return baseScale;
   };
 
-  const fetchRestaurants = async (showRefreshAnimation = false) => {
+  // Update fetchRestaurants to use and update cache
+  const fetchRestaurants = async (showRefreshAnimation = false, force = false) => {
     try {
       if (showRefreshAnimation) {
         setIsRefreshing(true);
@@ -280,50 +361,59 @@ const RestaurantSelectionPage = () => {
       setError(null);
 
       let data = [];
-      if (userLocation && userLocation.latitude && userLocation.longitude) {
-        // Use geospatial filtering: only restaurants within 5km
-        data = await getClosestRestaurants(userLocation.latitude, userLocation.longitude, 5000);
-      } else {
-        // Fallback: all active restaurants
-        data = await getActiveRestaurants();
-      }
-
-      // Transform the data to match the component's expected format
-      let transformedData = data.map(restaurant => {
+      if (showAllRestaurants) {
+        // Use cache if available and not forcing
+        if (cachedAll && !force) {
+          setRestaurants(cachedAll);
+          setLoading(false);
+          if (showRefreshAnimation) setTimeout(() => setIsRefreshing(false), 500);
+          return;
+        }
+        data = await getAllRestaurants();
+        if (userLocation) {
+          data = data.map(restaurant => {
         let distance = null;
-        if (typeof restaurant.distance === 'number') {
-          distance = restaurant.distance / 1000; // convert meters to km for display
-        } else if (userLocation && restaurant.location) {
-          try {
+            if (restaurant.location) {
             const match = restaurant.location.match(/POINT\(([^)]+)\)/);
             if (match) {
               const [lng, lat] = match[1].split(' ');
               distance = calculateDistance(
                 userLocation.latitude, 
                 userLocation.longitude, 
-                parseFloat(lat), 
-                parseFloat(lng)
+                  parseFloat(lat), // restaurant latitude
+                  parseFloat(lng)  // restaurant longitude
               );
             }
-          } catch (error) {}
         }
-        return {
-          ...restaurant,
-          distance,
-        };
+            return { ...restaurant, distance };
       });
-
-      // Sort by distance if available
-      if (userLocation) {
-        transformedData.sort((a, b) => {
+          data.sort((a, b) => {
           if (a.distance === null && b.distance === null) return 0;
           if (a.distance === null) return 1;
           if (b.distance === null) return -1;
           return a.distance - b.distance;
         });
+        }
+        setCachedAll(data);
+      } else if (userLocation && userLocation.latitude && userLocation.longitude) {
+        // Use cache if available and not forcing
+        if (cachedNearby && !force) {
+          setRestaurants(cachedNearby);
+          setLoading(false);
+          if (showRefreshAnimation) setTimeout(() => setIsRefreshing(false), 500);
+          return;
+        }
+        data = await getClosestRestaurants(userLocation.latitude, userLocation.longitude, 5000);
+        data = data.map(restaurant => ({
+          ...restaurant,
+          distance: typeof restaurant.distance === 'number' ? restaurant.distance / 1000 : null
+        }));
+        setCachedNearby(data);
+      } else {
+        data = await getActiveRestaurants();
       }
 
-      setRestaurants(transformedData || []);
+      setRestaurants(data || []);
     } catch (err) {
       setError('Failed to load restaurants');
     } finally {
@@ -337,10 +427,33 @@ const RestaurantSelectionPage = () => {
   // When location changes, refresh without loading screen or clearing data
   useEffect(() => {
     if (userLocation) {
-      fetchRestaurants(true); // show only refresh spinner, not loading screen
+      fetchRestaurants(true, true); // force refresh
     }
     // eslint-disable-next-line
   }, [userLocation]);
+
+  // When toggling, call fetchRestaurants only if not cached
+  useEffect(() => {
+    fetchRestaurants(false);
+    // eslint-disable-next-line
+  }, [showAllRestaurants]);
+
+  // Invalidate cache if userLocation changes
+  useEffect(() => {
+    setCachedNearby(null);
+    setCachedAll(null);
+    if (userLocation) {
+      fetchRestaurants(true, true); // force refresh
+    }
+    // eslint-disable-next-line
+  }, [userLocation]);
+
+  // Add useEffect to track when userLocation becomes available
+  useEffect(() => {
+    if (userLocation && !hasShownNearbyToggle) {
+      setHasShownNearbyToggle(true);
+    }
+  }, [userLocation, hasShownNearbyToggle]);
 
   // Helper function to get default restaurant images based on cuisine type
   const getDefaultRestaurantImage = (cuisineType) => {
@@ -445,7 +558,7 @@ const RestaurantSelectionPage = () => {
   };
 
   const formatDistance = (distance) => {
-    if (distance === null) return null;
+    if (typeof distance !== 'number' || isNaN(distance)) return null;
     if (distance < 1) {
       return `${Math.round(distance * 1000)}m`;
     }
@@ -626,20 +739,63 @@ const RestaurantSelectionPage = () => {
 
             {/* Location Bar */}
             <div className="mb-6 bg-white rounded-xl py-3 px-4 shadow-sm">
-              <div className="flex items-start gap-3">
-                {/* Location Icon */}
-                <MapPin size={20} className="text-gray-600 mt-0.5 flex-shrink-0" />
-                
-                {/* Location Content */}
+              {showSearch ? (
+                <motion.div
+                  initial={{ x: 40, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: 40, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: 'easeOut' }}
+                  className="flex items-center gap-2 bg-white/80 backdrop-blur-md rounded-full shadow-lg border border-gray-100 px-3 py-2"
+                  style={{ boxShadow: '0 4px 24px 0 rgba(0,0,0,0.08)' }}
+                >
+                  <div className="flex-1 relative overflow-hidden">
+                    <Search size={20} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <motion.input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search for restaurants, cuisines, or locations..."
+                      initial={{ width: 0, opacity: 0, scale: 0.95 }}
+                      animate={{ width: '100%', opacity: 1, scale: 1 }}
+                      exit={{ width: 0, opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.6, ease: 'easeOut' }}
+                      className="w-full pl-12 pr-4 py-3 rounded-full border-none focus:outline-none text-base bg-white/80 text-gray-800 placeholder-gray-400 shadow-inner transition-colors"
+                      autoFocus
+                      onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit()}
+                      style={{ minWidth: 0 }}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSearchSubmit}
+                    className="w-11 h-11 flex items-center justify-center rounded-full bg-gray-600 hover:bg-gray-700 text-white shadow transition-all duration-200 hover:scale-105 focus:outline-none"
+                    style={{ boxShadow: '0 2px 8px 0 rgba(0,0,0,0.10)' }}
+                  >
+                    <Search size={20} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSearchToggle}
+                    className="w-11 h-11 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-400 hover:text-gray-600 shadow transition-all duration-200 hover:scale-105 focus:outline-none"
+                    style={{ boxShadow: '0 2px 8px 0 rgba(0,0,0,0.06)' }}
+                  >
+                    <X size={20} />
+                  </button>
+                </motion.div>
+              ) : (
+                <div className="flex flex-row items-center gap-x-3 flex-wrap animate-in fade-in-0 slide-in-from-left-2 duration-300">
+                  {/* Location Icon and Content */}
+                  <div className="flex flex-row items-center gap-x-3 flex-1 min-w-0">
+                    <div className="relative flex-shrink-0">
+                      <MapPin size={20} className="text-gray-600 mt-0.5" />
+                      <span className={`absolute left-1/2 top-[38%] -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full border-2 border-white ${userLocation ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                    </div>
                 <div className="flex-1 min-w-0">
                   {userLocation ? (
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-gray-700 truncate">
                           {userLocation.address || 'Current Location'}
-                        </span>
-                        <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0">
-                          ✓ Active
                         </span>
                       </div>
                       <span className="text-xs text-gray-500 block">
@@ -664,12 +820,14 @@ const RestaurantSelectionPage = () => {
                     </div>
                   )}
                 </div>
-                
+                  </div>
+                  {/* Controls - Location Button, Toggle, and Search */}
+                  <div className="flex gap-2 items-center">
                 {/* Location Button */}
                 <button 
                   onClick={handleLocationRequest}
                   disabled={locationLoading}
-                  className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors touch-manipulation flex-shrink-0 ${
+                      className={`flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full transition-colors touch-manipulation flex-shrink-0 ${
                     userLocation 
                       ? 'bg-orange-100 hover:bg-orange-200' 
                       : 'bg-orange-500 hover:bg-orange-600'
@@ -681,8 +839,47 @@ const RestaurantSelectionPage = () => {
                   ) : (
                     <Crosshair size={18} className={userLocation ? 'text-orange-600' : 'text-white'} />
                   )}
+                    </button>
+                    {/* Pill Toggle */}
+                    {userLocation && (
+                      <div className="pill-toggle flex gap-2">
+                        <button
+                          onClick={() => setShowAllRestaurants(false)}
+                          className={`pill-option px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                            !showAllRestaurants 
+                              ? 'bg-gray-600 text-white border-gray-600' 
+                              : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'
+                          } border`}
+                        >
+                          Nearby
+                        </button>
+                        <button
+                          onClick={() => setShowAllRestaurants(true)}
+                          className={`pill-option px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                            showAllRestaurants 
+                              ? 'bg-gray-600 text-white border-gray-600' 
+                              : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'
+                          } border`}
+                        >
+                          All
                 </button>
               </div>
+                    )}
+                    {/* Search Button */}
+                    <button
+                      onClick={handleSearchToggle}
+                      className={`flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full transition-all duration-300 touch-manipulation flex-shrink-0 transform hover:scale-105 ${
+                        showSearch 
+                          ? 'bg-orange-500 text-white hover:bg-orange-600' 
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                      aria-label="Search"
+                    >
+                      <Search size={18} className={`transition-transform duration-300 ${showSearch ? 'rotate-90' : 'rotate-0'}`} />
+                    </button>
+            </div>
+                </div>
+              )}
             </div>
 
             {/* Restaurants List - Optimized for Touch Scrolling */}
@@ -695,11 +892,12 @@ const RestaurantSelectionPage = () => {
             >
               <div 
                 ref={scrollRef}
-                className="h-full overflow-y-auto overscroll-contain p-2 md:p-4 space-y-4"
+                className="h-full overflow-y-auto overscroll-contain p-2 md:p-4"
                 style={{
                   scrollBehavior: 'smooth',
                   WebkitOverflowScrolling: 'touch',
-                  touchAction: 'pan-y'
+                  touchAction: 'pan-y',
+                  height: '100%'
                 }}
               >
                 {restaurants.length === 0 ? (
@@ -721,139 +919,130 @@ const RestaurantSelectionPage = () => {
                     </button>
                   </motion.div>
                 ) : (
-                  <motion.div variants={staggerItems}>
-                    {isRefreshing && (
-                      <div className="flex items-center justify-center py-2 mb-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-orange-500 border-t-transparent mr-2"></div>
-                        <span className="text-orange-500 text-sm">Refreshing...</span>
-                      </div>
-                    )}
-                    
-                    {restaurants.map((restaurant, index) => (
-                      <motion.div
-                        key={restaurant.id}
-                        variants={slideUp}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ 
-                          opacity: 1, 
-                          y: 0,
-                          scale: getRestaurantScale(restaurant.id, index)
-                        }}
-                        transition={{ 
-                          duration: 0.3, 
-                          ease: "easeOut",
-                          scale: { duration: 0.25, ease: "easeInOut" }
-                        }}
-                        whileTap={{ scale: 0.97 }}
-                        whileHover={{ scale: 1.03 }}
-                        onMouseEnter={() => setHoveredRestaurant(restaurant.id)}
-                        onMouseLeave={() => setHoveredRestaurant(null)}
-                        onClick={() => handleRestaurantClick(restaurant)}
-                        className={`bg-white rounded-2xl border-2 cursor-pointer transition-all shadow-sm hover:shadow-md touch-manipulation relative mb-4 flex items-center px-2 py-3 md:px-4 md:py-4 ${
-                          selectedRestaurant?.id === restaurant.id
-                            ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-200'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                        style={{
-                          minHeight: 88,
-                          minWidth: 0,
-                          touchAction: 'manipulation',
-                          WebkitUserSelect: 'none',
-                          userSelect: 'none',
-                          transformOrigin: 'center',
-                          zIndex: selectedRestaurant?.id === restaurant.id ? 20 : 
-                                  hoveredRestaurant === restaurant.id ? 15 : 
-                                  index === 0 ? 10 : 1
-                        }}
-                        tabIndex={0}
-                        aria-label={`Select ${restaurant.name}`}
-                        role="button"
-                      >
-                        {/* Restaurant Image */}
-                        <div className="relative mr-3 flex-shrink-0">
-                          {restaurant.restaurant_photo_url && restaurant.restaurant_photo_url.trim() !== '' ? (
-                            <img
-                              src={restaurant.restaurant_photo_url}
-                              alt={restaurant.name}
-                              className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg"
-                              loading={index > 2 ? 'lazy' : 'eager'}
-                              style={{
-                                WebkitUserDrag: 'none',
-                                userDrag: 'none',
-                                minWidth: 64, minHeight: 64
-                              }}
-                              onError={e => { e.target.onerror = null; e.target.src = ''; }}
-                            />
-                          ) : restaurant.logo_url && restaurant.logo_url.trim() !== '' ? (
-                            <img
-                              src={restaurant.logo_url}
-                              alt={restaurant.name + ' logo'}
-                              className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg"
-                              loading={index > 2 ? 'lazy' : 'eager'}
-                              style={{
-                                WebkitUserDrag: 'none',
-                                userDrag: 'none',
-                                minWidth: 64, minHeight: 64
-                              }}
-                              onError={e => { e.target.onerror = null; e.target.src = ''; }}
-                            />
-                          ) : getDefaultRestaurantImage(restaurant.cuisine_type) ? (
-                            <img
-                              src={getDefaultRestaurantImage(restaurant.cuisine_type)}
-                              alt={restaurant.cuisine_type ? `${restaurant.cuisine_type} cuisine` : 'Restaurant'}
-                              className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg"
-                              loading={index > 2 ? 'lazy' : 'eager'}
-                              style={{
-                                WebkitUserDrag: 'none',
-                                userDrag: 'none',
-                                minWidth: 64, minHeight: 64
-                              }}
-                              onError={e => { e.target.onerror = null; e.target.src = ''; }}
-                            />
-                          ) : (
-                            <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center text-3xl select-none" role="img" aria-label="Restaurant">
-                              🍽️
-                            </div>
-                          )}
-                          {/* Selection Badge */}
-                          {selectedRestaurant?.id === restaurant.id && (
-                            <motion.div 
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              className="absolute -top-1 -right-1 bg-orange-500 text-white px-2 py-0.5 rounded-full text-xs font-medium shadow-lg"
-                            >
-                              ✓
-                            </motion.div>
-                          )}
-                          {/* Cuisine Type Badge */}
-                          {restaurant.cuisine_type && (
-                            <div className="absolute -top-1 -left-1 bg-black bg-opacity-70 text-white px-2 py-0.5 rounded-full text-xs font-medium">
-                              {restaurant.cuisine_type}
-                            </div>
-                          )}
-                        </div>
-                        {/* Restaurant Info */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-base text-gray-900 truncate">{restaurant.name}</span>
-                            {restaurant.distance !== null && (
-                              <span className="ml-2 text-xs bg-orange-100 text-orange-600 rounded-full px-2 py-0.5 font-medium">
-                                {formatDistance(restaurant.distance)}
-                              </span>
+                  <List
+                    height={selectedRestaurant ? 320 : 520}
+                    itemCount={(showSearch && searchResults) ? searchResults.length : restaurants.length}
+                    itemSize={108} // Height of each card (px)
+                    width={"100%"}
+                    style={{overflowX: 'hidden'}}
+                  >
+                    {({ index, style }) => {
+                      const dataList = (showSearch && searchResults) ? searchResults : restaurants;
+                      const restaurant = dataList[index];
+                      if (!restaurant) return null;
+                      return (
+                        <motion.div
+                          key={restaurant.id}
+                          style={{
+                            ...style,
+                            minHeight: 88,
+                            minWidth: 0,
+                            touchAction: 'manipulation',
+                            WebkitUserSelect: 'none',
+                            userSelect: 'none',
+                            transformOrigin: 'center',
+                            zIndex: selectedRestaurant?.id === restaurant.id ? 20 : 
+                                    hoveredRestaurant === restaurant.id ? 15 : 
+                                    index === 0 ? 10 : 1
+                          }}
+                          whileTap={{ scale: 0.97 }}
+                          whileHover={{ scale: 1.03 }}
+                          transition={{ type: 'spring', stiffness: 300, damping: 20, duration: 0.25 }}
+                          onMouseEnter={() => setHoveredRestaurant(restaurant.id)}
+                          onMouseLeave={() => setHoveredRestaurant(null)}
+                          onClick={() => handleRestaurantClick(restaurant)}
+                          className={`bg-white rounded-2xl border-2 cursor-pointer transition-all shadow-sm hover:shadow-md touch-manipulation relative mb-4 flex items-center px-2 py-3 md:px-4 md:py-4 ${
+                            selectedRestaurant?.id === restaurant.id
+                              ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-200'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                          tabIndex={0}
+                          aria-label={`Select ${restaurant.name}`}
+                          role="button"
+                        >
+                          {/* Restaurant Image */}
+                          <div className="relative mr-3 flex-shrink-0">
+                            {restaurant.restaurant_photo_url && restaurant.restaurant_photo_url.trim() !== '' ? (
+                              <img
+                                src={restaurant.restaurant_photo_url}
+                                alt={restaurant.name}
+                                className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg"
+                                loading={index > 2 ? 'lazy' : 'eager'}
+                                style={{
+                                  WebkitUserDrag: 'none',
+                                  userDrag: 'none',
+                                  minWidth: 64, minHeight: 64
+                                }}
+                                onError={e => { e.target.onerror = null; e.target.src = ''; }}
+                              />
+                            ) : restaurant.logo_url && restaurant.logo_url.trim() !== '' ? (
+                              <img
+                                src={restaurant.logo_url}
+                                alt={restaurant.name + ' logo'}
+                                className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg"
+                                loading={index > 2 ? 'lazy' : 'eager'}
+                                style={{
+                                  WebkitUserDrag: 'none',
+                                  userDrag: 'none',
+                                  minWidth: 64, minHeight: 64
+                                }}
+                                onError={e => { e.target.onerror = null; e.target.src = ''; }}
+                              />
+                            ) : getDefaultRestaurantImage(restaurant.cuisine_type) ? (
+                              <img
+                                src={getDefaultRestaurantImage(restaurant.cuisine_type)}
+                                alt={restaurant.cuisine_type ? `${restaurant.cuisine_type} cuisine` : 'Restaurant'}
+                                className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg"
+                                loading={index > 2 ? 'lazy' : 'eager'}
+                                style={{
+                                  WebkitUserDrag: 'none',
+                                  userDrag: 'none',
+                                  minWidth: 64, minHeight: 64
+                                }}
+                                onError={e => { e.target.onerror = null; e.target.src = ''; }}
+                              />
+                            ) : (
+                              <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center text-3xl select-none" role="img" aria-label="Restaurant">
+                                🍽️
+                              </div>
+                            )}
+                            {/* Selection Badge */}
+                            {selectedRestaurant?.id === restaurant.id && (
+                              <motion.div 
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                className="absolute -top-1 -right-1 bg-orange-500 text-white px-2 py-0.5 rounded-full text-xs font-medium shadow-lg"
+                              >
+                                ✓
+                              </motion.div>
+                            )}
+                            {/* Cuisine Type Badge */}
+                            {restaurant.cuisine_type && (
+                              <div className="absolute -top-1 -left-1 bg-black bg-opacity-70 text-white px-2 py-0.5 rounded-full text-xs font-medium">
+                                {restaurant.cuisine_type}
+                              </div>
                             )}
                           </div>
-                          <div className="text-xs text-gray-600 truncate mb-1">{restaurant.description}</div>
-                          <div className="flex items-center gap-2 text-xs text-gray-500">
-                            <MapPin size={14} className="inline-block mr-1" />
-                            <span className="truncate">{restaurant.address}</span>
+                          {/* Restaurant Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-semibold text-base text-gray-900 truncate">{restaurant.name}</span>
+                                  <span className="ml-2 text-xs bg-orange-100 text-orange-600 rounded-full px-2 py-0.5 font-medium min-w-[36px] text-center">
+                                    {userLocation
+                                      ? (formatDistance(restaurant.distance) || '—')
+                                      : null}
+                                </span>
+                            </div>
+                            <div className="text-xs text-gray-600 truncate mb-1">{restaurant.description}</div>
+                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                              <MapPin size={14} className="inline-block mr-1" />
+                              <span className="truncate">{restaurant.address}</span>
+                            </div>
                           </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                    
-                    {/* Add bottom padding for better scrolling experience */}
-                    <div className="h-4"></div>
-                  </motion.div>
+                        </motion.div>
+                      );
+                    }}
+                  </List>
                 )}
               </div>
             </div>
@@ -1218,6 +1407,47 @@ const RestaurantSelectionPage = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Nearest Restaurant Popup */}
+        {showNearestRestaurantPopup && nearestRestaurant && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+            style={{ backdropFilter: 'blur(2px)' }}
+          >
+            <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-sm w-full border border-orange-200 relative">
+              <h2 className="text-2xl font-bold mb-2 text-center text-gray-900">Are you at <span className="text-orange-500">{nearestRestaurant.name}</span>?</h2>
+              <p className="mb-4 text-sm text-gray-600 text-center">{nearestRestaurant.address}</p>
+              <div className="flex gap-3 justify-center mt-6">
+                <button
+                  className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-full font-semibold shadow-md transition-colors"
+                  onClick={() => {
+                    setSelectedRestaurant(nearestRestaurant);
+                    setShowNearestRestaurantPopup(false);
+                  }}
+                >
+                  Continue
+                </button>
+                <button
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-full font-semibold shadow-md transition-colors"
+                  onClick={() => setShowNearestRestaurantPopup(false)}
+                >
+                  Select Other
+                </button>
+              </div>
+              <button
+                className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+                onClick={() => setShowNearestRestaurantPopup(false)}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+          </motion.div>
+        )}
       </div>
     </div>
   );

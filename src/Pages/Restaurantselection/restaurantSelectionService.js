@@ -248,121 +248,11 @@ export const getRestaurantStats = async (restaurantId) => {
 };
 
 /**
- * Get restaurants near a specific location
- */
-export const getRestaurantsNearLocation = async (latitude, longitude, radiusKm = 50) => {
-  try {
-    
-    // Note: This is a simplified approach. For production, you might want to use
-    // PostGIS functions for more accurate distance calculations
-    const { data, error } = await supabase
-      .from('restaurants')
-      .select(`
-        id,
-        name,
-        description,
-        address,
-        contact_phone,
-        opening_hours,
-        logo_url,
-        is_active,
-        cuisine_type,
-        location
-      `)
-      .eq('is_active', true)
-      .order('name');
-
-    if (error) {
-      throw error;
-    }
-
-    // Filter restaurants by distance (client-side filtering)
-    // In a production environment, you'd want to do this server-side with PostGIS
-    const restaurantsWithDistance = data
-      .map(restaurant => {
-        let distance = null;
-        
-        if (restaurant.location) {
-          try {
-            const match = restaurant.location.match(/POINT\(([^)]+)\)/);
-            if (match) {
-              const [lng, lat] = match[1].split(' ');
-              distance = calculateDistance(
-                latitude, 
-                longitude, 
-                parseFloat(lat), 
-                parseFloat(lng)
-              );
-            }
-          } catch (error) {
-          }
-        }
-        
-        return {
-          ...restaurant,
-          distance
-        };
-      })
-      .filter(restaurant => restaurant.distance === null || restaurant.distance <= radiusKm)
-      .sort((a, b) => {
-        if (a.distance === null && b.distance === null) return 0;
-        if (a.distance === null) return 1;
-        if (b.distance === null) return -1;
-        return a.distance - b.distance;
-      });
-
-    return restaurantsWithDistance;
-  } catch (error) {
-    throw error;
-  }
-};
-
-/**
- * Get closest restaurants within a radius (in meters) from a point
- * @param {number} latitude
- * @param {number} longitude
- * @param {number} radiusMeters
- * @returns {Promise<Array>} List of restaurants with distance (meters)
- */
-export const getClosestRestaurants = async (latitude, longitude, radiusMeters = 5000) => {
-  try {
-    const { data, error } = await supabase
-      .from('restaurants')
-      .select(`
-        id,
-        name,
-        description,
-        address,
-        contact_phone,
-        opening_hours,
-        logo_url,
-        restaurant_photo_url,
-        is_active,
-        cuisine_type,
-        location,
-        tables,
-        distance:ST_Distance(location, ST_MakePoint(${longitude}, ${latitude})::geography)
-      `)
-      .eq('is_active', true)
-      .filter('location', 'is not', null)
-      .lte('distance', radiusMeters)
-      .order('distance', { ascending: true });
-
-    if (error) {
-      throw error;
-    }
-
-    return data || [];
-  } catch (error) {
-    throw error;
-  }
-};
-
-/**
  * Calculate distance between two points using Haversine formula
+ * Returns distance in meters
  */
-const calculateDistance = (lat1, lon1, lat2, lon2) => {
-  const R = 6371; // Radius of the Earth in kilometers
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371000; // Earth's radius in meters
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
   const a = 
@@ -370,6 +260,167 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
     Math.sin(dLon/2) * Math.sin(dLon/2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  const distance = R * c; // Distance in kilometers
-  return distance;
-};
+  return R * c;
+}
+
+/**
+ * Parse PostGIS POINT string to coordinates
+ * Example: "POINT(77.5946 12.9716)" -> { lat: 12.9716, lng: 77.5946 }
+ */
+function parsePostGISPoint(pointString) {
+  if (!pointString) return null;
+  const match = pointString.match(/POINT\(([^)]+)\)/);
+  if (!match) return null;
+  const [lng, lat] = match[1].split(' ').map(Number);
+  return { lat, lng };
+}
+
+/**
+ * Check if PostGIS is available and properly configured
+ */
+async function checkPostGISAvailability() {
+  try {
+    const { data, error } = await supabase.rpc('check_postgis_available');
+    if (error) {
+      console.warn('PostGIS check failed:', error);
+      return false;
+    }
+    return data === true;
+  } catch (err) {
+    console.warn('PostGIS not available, falling back to JavaScript calculation');
+    return false;
+  }
+}
+
+/**
+ * Get closest restaurants using PostGIS (preferred method)
+ */
+async function getClosestRestaurantsPostGIS(latitude, longitude, radiusMeters = 5000) {
+  try {
+    const { data, error } = await supabase.rpc('get_restaurants_within_radius', {
+      user_lat: latitude,
+      user_lng: longitude,
+      radius_meters: radiusMeters
+    });
+    if (error) {
+      console.error('PostGIS query failed:', error);
+      throw error;
+    }
+    return data || [];
+  } catch (err) {
+    console.error('PostGIS method failed:', err);
+    throw err;
+  }
+}
+
+/**
+ * Get closest restaurants using JavaScript calculation (fallback method)
+ */
+async function getClosestRestaurantsJavaScript(latitude, longitude, radiusMeters = 5000) {
+  try {
+    // Fetch all active restaurants
+    const { data: restaurants, error } = await supabase
+      .from('restaurants')
+      .select('*')
+      .eq('is_active', true);
+    if (error) {
+      console.error('Failed to fetch restaurants:', error);
+      throw error;
+    }
+    if (!restaurants || restaurants.length === 0) {
+      return [];
+    }
+    // Calculate distances and filter by radius
+    const restaurantsWithDistance = restaurants
+      .map(restaurant => {
+        const location = parsePostGISPoint(restaurant.location);
+        if (!location) return null;
+        const distance = calculateDistance(
+          latitude, 
+          longitude, 
+          location.lat, 
+          location.lng
+        );
+        return {
+          ...restaurant,
+          distance,
+          latitude: location.lat,
+          longitude: location.lng
+        };
+      })
+      .filter(restaurant => restaurant && restaurant.distance <= radiusMeters)
+      .sort((a, b) => a.distance - b.distance);
+    return restaurantsWithDistance;
+  } catch (err) {
+    console.error('JavaScript fallback method failed:', err);
+    throw err;
+  }
+}
+
+/**
+ * Main function to get closest restaurants
+ * Automatically chooses between PostGIS and JavaScript methods
+ */
+export async function getClosestRestaurants(latitude, longitude, radiusMeters = 5000) {
+  // Validate inputs
+  if (!latitude || !longitude) {
+    throw new Error('Latitude and longitude are required');
+  }
+  if (latitude < -90 || latitude > 90) {
+    throw new Error('Invalid latitude. Must be between -90 and 90');
+  }
+  if (longitude < -180 || longitude > 180) {
+    throw new Error('Invalid longitude. Must be between -180 and 180');
+  }
+  try {
+    // First, try PostGIS method
+    const isPostGISAvailable = await checkPostGISAvailability();
+    if (isPostGISAvailable) {
+      console.log('Using PostGIS for restaurant search');
+      return await getClosestRestaurantsPostGIS(latitude, longitude, radiusMeters);
+    } else {
+      console.log('Using JavaScript fallback for restaurant search');
+      return await getClosestRestaurantsJavaScript(latitude, longitude, radiusMeters);
+    }
+  } catch (err) {
+    console.error('Primary method failed, trying fallback');
+    try {
+      return await getClosestRestaurantsJavaScript(latitude, longitude, radiusMeters);
+    } catch (fallbackErr) {
+      console.error('Both methods failed:', fallbackErr);
+      throw new Error('Unable to fetch restaurants. Please try again later.');
+    }
+  }
+}
+
+/**
+ * Get all restaurants (no location filtering)
+ */
+export async function getAllRestaurants() {
+  try {
+    const { data, error } = await supabase
+      .from('restaurants')
+      .select('*')
+      .eq('is_active', true)
+      .order('name');
+    if (error) {
+      console.error('Failed to fetch all restaurants:', error);
+      throw error;
+    }
+    return data || [];
+  } catch (err) {
+    console.error('Failed to get all restaurants:', err);
+    throw err;
+  }
+}
+
+/**
+ * Utility function to format distance for display
+ */
+export function formatDistance(distanceMeters) {
+  if (distanceMeters < 1000) {
+    return `${Math.round(distanceMeters)}m`;
+  } else {
+    return `${(distanceMeters / 1000).toFixed(1)}km`;
+  }
+}
