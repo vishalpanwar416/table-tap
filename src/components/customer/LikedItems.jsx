@@ -7,11 +7,24 @@ import { useNavigate } from 'react-router-dom';
 import PriceDisplay from './PriceDisplay';
 import OrderCard from './itemCard';
 
+// Simple image fallback handler
+const ImageWithFallback = ({ src, alt, ...props }) => {
+  const [error, setError] = useState(false);
+  return (
+    <img
+      src={error ? "/public/images/Food/default.jpg" : src}
+      alt={alt}
+      onError={() => setError(true)}
+      {...props}
+    />
+  );
+};
+
 const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
   const { cartItems, addToCart, updateQuantity, removeItem } = useCart();
   const { toggleLike, likedItems } = useLikes();
   const [isLikedAnimating, setIsLikedAnimating] = useState(false);
-  
+
   const cartItem = useMemo(() => cartItems.find(i => i.id === item.id), [cartItems, item.id]);
   const quantity = cartItem?.quantity || 0;
   const isLiked = useMemo(() => likedItems.some(likedItem => likedItem.id === item.id), [likedItems, item.id]);
@@ -84,7 +97,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
           whileHover={{ scale: 1.1 }}
           transition={{ duration: 0.3 }}
         >
-          <img
+          <ImageWithFallback
             src={item.image}
             alt={item.name}
             className="w-full h-full object-cover cursor-pointer"
@@ -99,6 +112,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={handleLikeClick}
+          aria-label={isLiked ? "Unlike item" : "Like item"}
         >
           <motion.div
             animate={isLikedAnimating ? { 
@@ -163,7 +177,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
               {quantity > 0 ? (
                 <motion.div 
                   key="quantity-controls"
-                  className="flex items-center bg-gradient-to-r from-black to-gray-800 text-white rounded-full px-2 py-2 items-center shadow-lg"
+                  className="flex items-center bg-gradient-to-r from-black to-gray-800 text-white rounded-full px-2 py-2 shadow-lg"
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.8, opacity: 0 }}
@@ -174,6 +188,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
                     className="text-white px-1 text-xs hover:text-orange-300 transition-colors"
                     whileHover={{ scale: 1.2 }}
                     whileTap={{ scale: 0.8 }}
+                    aria-label="Decrease quantity"
                   >
                     −
                   </motion.button>
@@ -191,6 +206,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
                     className="text-white px-1 text-xs hover:text-green-300 transition-colors"
                     whileHover={{ scale: 1.2 }}
                     whileTap={{ scale: 0.8 }}
+                    aria-label="Increase quantity"
                   >
                     +
                   </motion.button>
@@ -199,7 +215,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
                 <motion.button
                   key="add-button"
                   onClick={handleAddClick}
-                  className="bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white rounded-full px-2 py-2 flex items-center space-x-1 text-xs shadow-lg transition-all duration-200 items-center"
+                  className="bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white rounded-full px-2 py-2 flex items-center space-x-1 text-xs shadow-lg transition-all duration-200"
                   whileHover={{ 
                     scale: 1.05,
                     boxShadow: "0 10px 25px rgba(0,0,0,0.2)"
@@ -208,6 +224,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.8, opacity: 0 }}
+                  aria-label="Add to cart"
                 >
                   <ShoppingBag className="h-3 w-3" />
                   <span>Add</span>
@@ -240,17 +257,27 @@ const LikedItems = ({ foodItems, onItemClick }) => {
   };
 
   if (!foodItems || !Array.isArray(foodItems)) return null;
-  
-  const likedFoodItems = foodItems.filter(item => 
-    likedItems.some(likedItem => likedItem.id === item.id)
+
+  // Performance: Use Set for O(1) lookup
+  const likedIds = useMemo(() => new Set(likedItems.map(i => i.id)), [likedItems]);
+  const likedFoodItems = useMemo(
+    () => foodItems.filter(item => likedIds.has(item.id)),
+    [foodItems, likedIds]
   );
 
-  if (likedFoodItems.length === 0) return null;
+  if (likedFoodItems.length === 0) {
+    return (
+      <div className="mt-6 text-black px-4">
+        <h2 className="text-xl font-bold font-spartan-bold md:text-3xl mb-2">Liked Items</h2>
+        <div className="text-gray-500">You haven't liked any items yet.</div>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-6 text-black">
       <div className="flex justify-between items-center mb-3 px-4">
-        <h2 className="text-xl font-thick font-spartan-bold md:text-3xl">Liked Items</h2>
+        <h2 className="text-xl font-bold font-spartan-bold md:text-3xl">Liked Items</h2>
         <button onClick={() => navigate('/liked-items')} className="text-orange-500 md:text-xl text-sm flex items-center hover:underline">
           View All <span className="ml-1 md:text-xl">›</span>
         </button>
