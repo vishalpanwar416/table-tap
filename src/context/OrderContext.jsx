@@ -10,6 +10,7 @@ import {
   updatePaymentStatus
 } from '../api/paymentService';
 import { subscribeToOrderUpdates } from '../api/orderService'; // Add this import
+import { supabase } from '../supabase';
 
 // Create a dummy notification service function if you don't have it yet
 const createNotification = async (data) => {
@@ -21,7 +22,8 @@ const OrderContext = createContext();
 export const OrderProvider = ({ children }) => {
   const [userOrders, setUserOrders] = useState([]);
   const [currentOrder, setCurrentOrder] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [ordersTotal, setOrdersTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { user } = useAuth();
   
@@ -44,8 +46,8 @@ export const OrderProvider = ({ children }) => {
   
   const navigate = useNavigate();
 
-  // Fetch user orders from Supabase
-  const fetchUserOrders = useCallback(async () => {
+  // Fetch user orders from Supabase with pagination support
+  const fetchUserOrders = useCallback(async (page = 1, pageSize = 10) => {
     if (!user?.id) {
       setUserOrders([]);
       setLoading(false);
@@ -54,8 +56,21 @@ export const OrderProvider = ({ children }) => {
     
     try {
       setLoading(true);
-      const orders = await getUserOrders(user.id);
-      setUserOrders(orders);
+      
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+
+      const { data, count, error } = await supabase
+        .from('orders')
+        .select('*', { count: 'exact' })
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+      if (error) throw error;
+      
+      setUserOrders(data || []);
+      setOrdersTotal(count || 0);
       setError(null);
     } catch (err) {
       setError('Failed to load orders');
@@ -181,6 +196,7 @@ export const OrderProvider = ({ children }) => {
   const value = {
     userOrders,
     currentOrder,
+    ordersTotal,
     loading: loading || restaurantLoading, // Include restaurant loading state
     error: error || restaurantError, // Include restaurant error state
     placeOrder,

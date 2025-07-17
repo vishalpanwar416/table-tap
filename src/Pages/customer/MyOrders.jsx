@@ -5,6 +5,7 @@ import { useOrders } from '../../context/OrderContext';
 import OrderCard from '../../components/customer/OrderCard';
 import { getActiveRestaurants } from '../Restaurantselection/restaurantSelectionService';
 import { motion, AnimatePresence } from "framer-motion";
+import { FixedSizeList as List } from 'react-window';
 
 const tabs = [
   { key: "pending", label: "Waiting Acceptance" },
@@ -209,8 +210,33 @@ export default function MyOrders() {
     });
   };
   
-  // Get orders for current tab
+  // Pagination state
+  const [ordersPage, setOrdersPage] = useState(1);
+  const [ordersPageSize] = useState(10); // Show 10 orders per page
+
+  // Paginated and sorted orders
   const filteredOrders = getFilteredAndSortedOrders();
+  const paginatedOrders = filteredOrders.slice(
+    (ordersPage - 1) * ordersPageSize,
+    ordersPage * ordersPageSize
+  );
+
+  // Virtualized row renderer for orders
+  const OrderRow = ({ index, style, data }) => {
+    const order = data[index];
+    const restaurantName = restaurantMap[order.restaurant_id] || 'Unknown Restaurant';
+    return (
+      <div style={style}>
+        <OrderCard
+          key={order.id}
+          order={order}
+          restaurantName={restaurantName}
+          isExpanded={expandedOrderId === order.id}
+          onClick={() => handleOrderClick(order.id)}
+        />
+      </div>
+    );
+  };
 
   // Empty state component
   const EmptyState = ({ tab }) => {
@@ -243,7 +269,7 @@ export default function MyOrders() {
     );
   }
 
-  // Error display component
+
   if (error) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-black">
@@ -330,26 +356,44 @@ export default function MyOrders() {
                  activeTab === 'preparing' ? 'Orders in Preparation' : 'Order History'}
               </h2>
               
-              {filteredOrders.length > 0 ? (
-                <div className="space-y-4">
-                  {filteredOrders.map(order => {
-                    const restaurantName = restaurantMap[order.restaurant_id] || 'Unknown Restaurant';
-                    return (
-                      <OrderCard 
-                        key={order.id}
-                        order={order}
-                        restaurantName={restaurantName}
-                        isExpanded={expandedOrderId === order.id}
-                        onClick={() => handleOrderClick(order.id)}
-                      />
-                    );
-                  })}
+              {paginatedOrders.length > 0 ? (
+                <div style={{ height: 400 }}>
+                  <List
+                    height={400}
+                    itemCount={paginatedOrders.length}
+                    itemSize={120} // Adjust based on your OrderCard height
+                    width="100%"
+                    itemData={paginatedOrders}
+                  >
+                    {OrderRow}
+                  </List>
                 </div>
               ) : (
                 <EmptyState tab={activeTab} />
               )}
             </div>
 
+            {/* Pagination controls (below the list) */}
+            <div className="flex justify-between items-center mt-4">
+              <button
+                onClick={() => setOrdersPage((p) => Math.max(1, p - 1))}
+                disabled={ordersPage === 1}
+                className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <span>
+                Page {ordersPage} of {Math.max(1, Math.ceil(filteredOrders.length / ordersPageSize))}
+              </span>
+              <button
+                onClick={() => setOrdersPage((p) => p + 1)}
+                disabled={ordersPage * ordersPageSize >= filteredOrders.length}
+                className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+            
             {/* Order Summary */}
             <div className="mt-4 bg-white p-4 rounded-xl shadow-sm">
               <div className="flex items-center mb-3">
