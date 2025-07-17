@@ -25,7 +25,6 @@ import {
 import ProfilePhotoModal from './components/ProfilePhotoModal';
 import { ManagerNotificationProvider } from '../../context/ManagerNotificationContext';
 import SubscriptionManagement from './components/SubscriptionManagement';
-import { FixedSizeList as List } from 'react-window';
 
 const menuItems = [
   { id: 'restaurants', icon: 'Building2', label: 'Restaurants' },
@@ -96,10 +95,6 @@ const AdminPanel = () => {
 
   const navigate = useNavigate();
 
-  const [staffPage, setStaffPage] = useState(1);
-  const [staffPageSize] = useState(20);
-  const [staffTotal, setStaffTotal] = useState(0);
-
   // Load user profile data
   useEffect(() => {
     const loadUserProfile = async () => {
@@ -127,8 +122,7 @@ const AdminPanel = () => {
   // Load data on component mount and tab change
   useEffect(() => {
     fetchData();
-    // eslint-disable-next-line
-  }, [staffPage]);
+  }, []);
 
   const fetchData = async () => {
     try {
@@ -136,7 +130,7 @@ const AdminPanel = () => {
       
       const [restaurantsResponse, staffResponse] = await Promise.all([
         getAllRestaurants(),
-        getPaginatedStaff(staffPage, staffPageSize) // <-- use paginated fetch
+        getAllStaff()
       ]);
 
 
@@ -150,7 +144,6 @@ const AdminPanel = () => {
       
       setRestaurants(restaurantsResponse.data);
       setStaff(staffResponse.data);
-      setStaffTotal(staffResponse.total); // <-- set total for pagination
     } catch (error) {
       handleError('Failed to load data: ' + error.message);
     } finally {

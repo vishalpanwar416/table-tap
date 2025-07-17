@@ -645,17 +645,6 @@ export const deleteStaff = async (staffId) => {
   }
 };
 
-export async function getPaginatedStaff(page = 1, pageSize = 20) {
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
-  const { data, count, error } = await supabase
-    .from('restaurant_staff')
-    .select('*', { count: 'exact' })
-    .order('created_at', { ascending: false })
-    .range(from, to);
-  return { data, total: count, error };
-}
-
 const handleToggleRestaurantAI = async (id) => {
   try {
     const restaurant = restaurants.find(r => r.id === id);
