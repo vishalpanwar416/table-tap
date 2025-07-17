@@ -1,17 +1,48 @@
-import React, { useState, useMemo, useCallback, memo, lazy } from "react";
+import React, { useState, useMemo, useCallback, memo } from "react";
 import { ShoppingBag, Heart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../../config/CartContent";
 import { useLikes } from "../../config/LikesContent";
 import OrderCard from './itemCard';
-import { useRef } from "react";
 import { LazyImage } from "../../utils/imageOptimization";
 
-// Move FoodItem component outside to prevent recreation on every render
-const FoodItem = memo(({ item, onItemClick, index = 0, cartQuantity = 0, isLiked = false, onAddToCart, onUpdateQuantity, onRemoveItem, onToggleLike }) => {
+// DiscountTag moved outside for clarity and reusability
+const DiscountTag = memo(({ discounttype, discountvalue }) => {
+  if (!discounttype || !discountvalue) return null;
+  return (
+    <motion.span 
+      className="text-[10px] bg-gradient-to-r from-green-400 to-green-600 text-white font-semibold px-2 py-0.5 rounded-full whitespace-nowrap shadow-sm"
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ delay: 0.2, duration: 0.3 }}
+    >
+      {discounttype === 'Percentage'
+        ? `${discountvalue}% OFF`
+        : `₹${discountvalue} OFF`}
+    </motion.span>
+  );
+});
+DiscountTag.displayName = 'DiscountTag';
+
+// FoodItem component
+const FoodItem = memo(({
+  item,
+  onItemClick,
+  index = 0,
+  cartQuantity = 0,
+  isLiked = false,
+  onAddToCart,
+  onUpdateQuantity,
+  onRemoveItem,
+  onToggleLike
+}) => {
   const [isLikedAnimating, setIsLikedAnimating] = useState(false);
-  
+
+  // Defensive checks for price/discount
+  const price = typeof item.price === 'number' ? item.price : Number(item.price) || 0;
+  const discountValue = typeof item.discountvalue === 'number' ? item.discountvalue : Number(item.discountvalue) || 0;
+
   const handleAddClick = useCallback(() => onAddToCart(item), [onAddToCart, item]);
   const handleIncrement = useCallback(() => onAddToCart(item), [onAddToCart, item]);
   const handleDecrement = useCallback(() => {
@@ -29,28 +60,13 @@ const FoodItem = memo(({ item, onItemClick, index = 0, cartQuantity = 0, isLiked
     setTimeout(() => setIsLikedAnimating(false), 600);
   }, [onToggleLike, item]);
 
-  // Helper for the discount tag
-  const DiscountTag = () =>
-    item.discounttype && item.discountvalue ? (
-      <motion.span 
-        className="text-[10px] bg-gradient-to-r from-green-400 to-green-600 text-white font-semibold px-2 py-0.5 rounded-full whitespace-nowrap shadow-sm"
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.3 }}
-      >
-        {item.discounttype === 'Percentage'
-          ? `${item.discountvalue}% OFF`
-          : `₹${item.discountvalue} OFF`}
-      </motion.span>
-    ) : null;
-
-  // Helper for the price display
+  // Price calculation
   const discountedPrice = useMemo(() => {
-    if (!item.discounttype || !item.discountvalue) return item.price;
+    if (!item.discounttype || !discountValue) return price;
     return item.discounttype === 'Percentage'
-      ? (item.price - (item.price * (item.discountvalue / 100)))
-      : Math.max(0, item.price - item.discountvalue);
-  }, [item.price, item.discounttype, item.discountvalue]);
+      ? (price - (price * (discountValue / 100)))
+      : Math.max(0, price - discountValue);
+  }, [price, item.discounttype, discountValue]);
 
   return (
     <motion.div
@@ -66,7 +82,7 @@ const FoodItem = memo(({ item, onItemClick, index = 0, cartQuantity = 0, isLiked
       }}
     >
       <div className="relative h-28 overflow-hidden bg-gray-100">
-        {/* Discount badge in top right with animation */}
+        {/* Discount badge */}
         <motion.div
           className="absolute top-1 right-2 z-10"
           initial={{ scale: 0.5, opacity: 0, rotate: -15 }}
@@ -74,7 +90,7 @@ const FoodItem = memo(({ item, onItemClick, index = 0, cartQuantity = 0, isLiked
           transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
           whileHover={{ scale: 1.15, rotate: 5 }}
         >
-          <DiscountTag />
+          <DiscountTag discounttype={item.discounttype} discountvalue={discountValue} />
         </motion.div>
         <motion.div
           whileHover={{ scale: 1.1 }}
@@ -88,13 +104,13 @@ const FoodItem = memo(({ item, onItemClick, index = 0, cartQuantity = 0, isLiked
             onClick={() => onItemClick && onItemClick(item)}
           />
         </motion.div>
-        
-        {/* Enhanced like button */}
+        {/* Like button with aria-label for accessibility */}
         <motion.button 
           className="absolute top-2 left-2 bg-white/80 backdrop-blur-sm rounded-full p-1 z-10 shadow-sm"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={handleLikeClick}
+          aria-label={isLiked ? "Unlike" : "Like"}
         >
           <motion.div
             animate={isLikedAnimating ? { 
@@ -111,7 +127,6 @@ const FoodItem = memo(({ item, onItemClick, index = 0, cartQuantity = 0, isLiked
           </motion.div>
         </motion.button>
       </div>
-      
       <div className="flex flex-col flex-1 justify-between py-1 px-2">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
@@ -123,7 +138,7 @@ const FoodItem = memo(({ item, onItemClick, index = 0, cartQuantity = 0, isLiked
               {item.name}
             </motion.h4>
             <div className="flex items-center space-x-1">
-              {item.discounttype && item.discountvalue ? (
+              {item.discounttype && discountValue ? (
                 <>
                   <motion.span 
                     className="text-[10px] text-gray-400 line-through"
@@ -131,7 +146,7 @@ const FoodItem = memo(({ item, onItemClick, index = 0, cartQuantity = 0, isLiked
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.3 }}
                   >
-                    ₹{Number(item.price).toFixed(0)}
+                    ₹{price.toFixed(0)}
                   </motion.span>
                   <motion.span 
                     className="text-sm font-bold text-orange-600"
@@ -149,7 +164,7 @@ const FoodItem = memo(({ item, onItemClick, index = 0, cartQuantity = 0, isLiked
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.3 }}
                 >
-                  ₹{Number(item.price).toFixed(0)}
+                  ₹{price.toFixed(0)}
                 </motion.span>
               )}
             </div>
@@ -212,15 +227,13 @@ const FoodItem = memo(({ item, onItemClick, index = 0, cartQuantity = 0, isLiked
             </AnimatePresence>
           </div>
         </div>
-        {/* Removed the old DiscountTag from here */}
-        {/* <div className="flex justify-end mt-1"><DiscountTag /></div> */}
       </div>
     </motion.div>
   );
 });
-
 FoodItem.displayName = 'FoodItem';
 
+// Main BestSellers component
 const BestSellers = ({ foodItems }) => {
   const navigate = useNavigate();
   const [selectedItem, setSelectedItem] = useState(null);
@@ -298,7 +311,13 @@ const BestSellers = ({ foodItems }) => {
           />
         ))}
       </div>
-      <OrderCard isOpen={isOrderCardOpen} onClose={handleCloseItemCard} item={selectedItem} />
+      {/* 
+        If you have an ErrorBoundary component, wrap OrderCard like this:
+        <ErrorBoundary>
+          <OrderCard ... />
+        </ErrorBoundary>
+      */}
+      <OrderCard isOpen={isOrderCardOpen} onClose={handleCloseItemCard} item={selectedItem || {}} />
     </div>
   );
 };

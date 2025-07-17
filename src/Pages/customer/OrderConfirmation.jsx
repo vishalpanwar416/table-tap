@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { ChevronLeft, Trash2, Minus, Plus, ChevronDown, CheckCircle, Clock, MapPin, User, Mail, Phone, AlertCircle, Info, LogIn, X } from 'lucide-react';
+import { ChevronLeft, Trash2, Minus, Plus, ChevronDown, CheckCircle, Clock, MapPin, User, Mail, Phone, AlertCircle, Info, LogIn } from 'lucide-react';
 import { useCart } from '../../config/CartContent';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabase';
@@ -87,11 +87,11 @@ const EmailExistsPopup = ({ show, onClose, onAccept, onReject, email }) => {
 const OrderConfirmation = () => {
   const navigate = useNavigate();
   const { cartItems, removeItem, updateQuantity, calculateEffectivePrice } = useCart();
-  const { restaurant } = useRestaurant();
+  const { restaurant, setRestaurantSelection } = useRestaurant();
   const [tableNumber, setTableNumber] = useState('');
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [showTableDropdown, setShowTableDropdown] = useState(false);
-  
+
   // State for user and guest details
   const [user, setUser] = useState(null);
   const [guestName, setGuestName] = useState('');
@@ -105,10 +105,11 @@ const OrderConfirmation = () => {
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [showLoginToast, setShowLoginToast] = useState(false);
   const [emailExists, setEmailExists] = useState(false);
+  const [emailCheckError, setEmailCheckError] = useState('');
 
   // Parse tables from restaurant data
   const [availableTables, setAvailableTables] = useState([]);
-  
+
   // Ref for dropdown click outside handling
   const dropdownRef = useRef(null);
 
@@ -117,44 +118,27 @@ const OrderConfirmation = () => {
     const fetchUser = async () => {
       try {
         setIsLoading(true);
-        
-        // First check if there's an active session
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-        
         if (sessionError) {
-          console.warn('Session check failed:', sessionError);
-          // Continue as guest user
           setUser(null);
           return;
         }
-        
-        // If no session, user is guest
         if (!sessionData.session) {
-          console.log('No active session found - proceeding as guest');
           setUser(null);
           return;
         }
-        
-        // Get user data from session
         const { data: userData, error: userError } = await supabase.auth.getUser();
-        
         if (userError) {
-          console.warn('Error fetching user:', userError);
-          // Continue as guest user
           setUser(null);
           return;
         }
-        
         setUser(userData?.user || null);
       } catch (error) {
-        console.error('Error in fetchUser:', error);
-        // Continue as guest user on any error
         setUser(null);
       } finally {
         setIsLoading(false);
       }
     };
-    
     fetchUser();
   }, []);
 
@@ -162,12 +146,11 @@ const OrderConfirmation = () => {
   useEffect(() => {
     if (restaurant?.tables) {
       try {
-        const parsedTables = typeof restaurant.tables === 'string' 
-          ? JSON.parse(restaurant.tables) 
+        const parsedTables = typeof restaurant.tables === 'string'
+          ? JSON.parse(restaurant.tables)
           : restaurant.tables;
         setAvailableTables(Array.isArray(parsedTables) ? parsedTables : []);
       } catch (error) {
-        console.error('Error parsing tables:', error);
         setAvailableTables([]);
       }
     } else {
@@ -179,10 +162,9 @@ const OrderConfirmation = () => {
   useEffect(() => {
     const storedSelection = getStoredRestaurantSelection();
     if (storedSelection?.tableNumber && availableTables.length > 0) {
-      const matchingTable = availableTables.find(table => 
+      const matchingTable = availableTables.find(table =>
         table.tableNumber === storedSelection.tableNumber
       );
-      
       if (matchingTable) {
         setTableNumber(storedSelection.tableNumber);
       }
@@ -196,7 +178,6 @@ const OrderConfirmation = () => {
         setShowTableDropdown(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -215,21 +196,21 @@ const OrderConfirmation = () => {
   const checkEmailExists = async (email) => {
     if (!email || !email.trim()) {
       setEmailExists(false);
+      setEmailCheckError('');
       return;
     }
     try {
       setIsCheckingEmail(true);
-      console.log('Starting email check for:', email);
+      setEmailCheckError('');
       const result = await authService.checkEmailExistsRPC(email);
-      console.log('Email check result:', result);
       setEmailExists(result.exists);
       if (result.exists) {
         setShowLoginToast(true);
         setFormError('');
       }
     } catch (error) {
-      console.error('Error checking email:', error);
       setEmailExists(false);
+      setEmailCheckError('Could not verify email. Please try again.');
     } finally {
       setIsCheckingEmail(false);
     }
@@ -243,9 +224,11 @@ const OrderConfirmation = () => {
       } else {
         setEmailExists(false);
         setIsCheckingEmail(false);
+        setEmailCheckError('');
       }
     }, 1000);
     return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line
   }, [guestEmail, user]);
 
   // Close keyboard when popup appears
@@ -265,6 +248,7 @@ const OrderConfirmation = () => {
     setEmailExists(false);
     setShowLoginToast(false);
     setFormError('');
+    setEmailCheckError('');
     if (!newEmail.trim()) {
       setIsCheckingEmail(false);
     }
@@ -274,6 +258,7 @@ const OrderConfirmation = () => {
   const handleTableSelect = (table) => {
     setTableNumber(table.tableNumber);
     setShowTableDropdown(false);
+    setRestaurantSelection(restaurant, table.tableNumber);
   };
 
   // Get selected table details with null check
@@ -286,34 +271,35 @@ const OrderConfirmation = () => {
     let originalTotal = 0;
     let discountAmount = 0;
     let taxableAmount = 0;
-    
+
     cartItems.forEach(item => {
       const originalItemTotal = item.price * item.quantity;
       originalTotal += originalItemTotal;
-      
-      const effectivePrice = item.effectivePrice !== undefined ? 
-        item.effectivePrice : 
+
+      const effectivePrice = item.effectivePrice !== undefined ?
+        item.effectivePrice :
         calculateEffectivePrice(item);
-      
+
+      // Consistent discount calculation
       const itemDiscount = (item.price - effectivePrice) * item.quantity;
       discountAmount += itemDiscount;
-      
+
       const itemSubtotal = effectivePrice * item.quantity;
-      
-      const isWater = item.name && 
-        (item.name.toLowerCase().includes('water') || 
-         item.category?.toLowerCase() === 'water');
-         
+
+      const isWater = item.name &&
+        (item.name.toLowerCase().includes('water') ||
+          item.category?.toLowerCase() === 'water');
+
       if (!isWater) {
         taxableAmount += itemSubtotal;
       }
     });
-    
+
     const cgst = taxableAmount * 0.025;
     const sgst = taxableAmount * 0.025;
     const subtotalAfterDiscount = originalTotal - discountAmount;
     const finalTotal = subtotalAfterDiscount + cgst + sgst;
-    
+
     return {
       originalTotal,
       discountAmount,
@@ -324,13 +310,13 @@ const OrderConfirmation = () => {
     };
   }, [cartItems, calculateEffectivePrice]);
 
-  const { 
-    originalTotal, 
-    discountAmount, 
-    subtotalAfterDiscount, 
-    cgst, 
-    sgst, 
-    finalTotal 
+  const {
+    originalTotal,
+    discountAmount,
+    subtotalAfterDiscount,
+    cgst,
+    sgst,
+    finalTotal
   } = calculatePriceDetails();
 
   const formatDate = (timestamp) => {
@@ -347,15 +333,15 @@ const OrderConfirmation = () => {
     navigate(-1);
   };
 
-  // handlePlaceOrder with better validation
+  // handlePlaceOrder with better validation and input trimming
   const handlePlaceOrder = () => {
     setFormError('');
-    
+
     if (cartItems.length === 0) {
       setFormError('Your cart is empty. Please add items before proceeding.');
       return;
     }
-    
+
     if (!tableNumber) {
       setFormError('Please select your table number.');
       return;
@@ -373,33 +359,37 @@ const OrderConfirmation = () => {
 
     // If user is a guest, validate guest fields
     if (!user) {
-      if (!guestName.trim() || !guestEmail.trim() || !guestPhone.trim()) {
+      const trimmedName = guestName.trim();
+      const trimmedEmail = guestEmail.trim();
+      const trimmedPhone = guestPhone.trim();
+
+      if (!trimmedName || !trimmedEmail || !trimmedPhone) {
         setFormError('Please fill in your name, email, and phone number to continue.');
         return;
       }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(guestEmail)) {
+      if (!emailRegex.test(trimmedEmail)) {
         setFormError('Please enter a valid email address.');
         return;
       }
       const phoneRegex = /^[6-9]\d{9}$/;
-      if (!phoneRegex.test(guestPhone)) {
+      if (!phoneRegex.test(trimmedPhone)) {
         setFormError('Please enter a valid 10-digit phone number.');
         return;
       }
     }
 
     // Navigate with all required state
-    navigate('/payment', { 
-      state: { 
-        tableNumber, 
+    navigate('/payment', {
+      state: {
+        tableNumber,
         specialInstructions,
         guestDetails: !user ? {
-          name: guestName,
-          email: guestEmail,
-          phone: guestPhone,
+          name: guestName.trim(),
+          email: guestEmail.trim(),
+          phone: guestPhone.trim(),
         } : null
-      } 
+      }
     });
   };
 
@@ -429,11 +419,20 @@ const OrderConfirmation = () => {
             </svg>
           </div>
           <h2 className="text-xl font-semibold mb-2">Restaurant Not Found</h2>
-          <p className="text-gray-400">Please scan a valid QR code to continue.</p>
+          <p className="text-gray-400 mb-6">Please scan a valid QR code to continue.</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-2 px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-full shadow transition-all duration-200"
+          >
+            Refresh
+          </button>
         </div>
       </div>
     );
   }
+
+  // --- RENDER ---
+  const selectedTable = getSelectedTableDetails();
 
   return (
     <div className="flex justify-center items-start min-h-screen bg-black">
@@ -443,6 +442,7 @@ const OrderConfirmation = () => {
           <button
             onClick={handleGoBack}
             className="absolute left-4 top-8 text-orange-500 hover:text-orange-400 transition-colors duration-200 p-2 rounded-full hover:bg-orange-500/10"
+            aria-label="Go back"
           >
             <ChevronLeft size={30} />
           </button>
@@ -458,7 +458,7 @@ const OrderConfirmation = () => {
         {/* Enhanced Main Content */}
         <div className="bg-gradient-to-br from-gray-50 to-white w-full flex-1 rounded-t-3xl px-6 pt-10 pb-6 flex flex-col font-spartan overflow-y-auto shadow-2xl">
           <div className={`transition-all duration-700 ${animateItems ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-            
+
             {/* Enhanced Header with Progress Indicator */}
             <div className="mb-8">
               <div className="flex items-center justify-center gap-2 mb-4">
@@ -482,9 +482,8 @@ const OrderConfirmation = () => {
               <p className="text-center text-gray-600 text-sm">Review your order before proceeding to payment</p>
             </div>
 
-            {/* Enhanced Table Selection */}
-            <div className="mb-8">
-              {/* Table Information Display - Only once, above the dropdown */}
+            {/* Dynamic Table Information Display */}
+            {selectedTable && (
               <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -492,8 +491,13 @@ const OrderConfirmation = () => {
                       <MapPin size={16} className="text-white" />
                     </div>
                     <div>
-                      <div className="font-semibold text-blue-800 text-sm">Table A2</div>
-                      <div className="text-blue-700 text-xs">First floor • 2 people</div>
+                      <div className="font-semibold text-blue-800 text-sm">
+                        Table {selectedTable.tableNumber}
+                      </div>
+                      <div className="text-blue-700 text-xs">
+                        {selectedTable.location ? `${selectedTable.location}` : ''}
+                        {selectedTable.capacity ? ` • ${selectedTable.capacity} people` : ''}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -507,7 +511,10 @@ const OrderConfirmation = () => {
                   </div>
                 </div>
               </div>
+            )}
 
+            {/* Enhanced Table Selection */}
+            <div className="mb-8">
               <label className="block text-gray-800 mb-3 text-lg font-semibold flex items-center gap-2">
                 <MapPin size={20} className="text-orange-500" />
                 Table Number
@@ -517,27 +524,30 @@ const OrderConfirmation = () => {
                   type="button"
                   onClick={() => setShowTableDropdown(!showTableDropdown)}
                   className="w-full px-4 py-4 border-2 border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white text-left flex justify-between items-center transition-all duration-200 hover:border-orange-300"
+                  aria-haspopup="listbox"
+                  aria-expanded={showTableDropdown}
                 >
                   <span className={tableNumber ? 'text-gray-800 font-medium' : 'text-gray-500'}>
                     {tableNumber ? `Table ${tableNumber}` : 'Select your table number'}
                   </span>
-                  <ChevronDown 
-                    size={20} 
+                  <ChevronDown
+                    size={20}
                     className={`text-gray-400 transition-transform duration-200 ${showTableDropdown ? 'rotate-180' : ''}`}
                   />
                 </button>
-                
+
                 {showTableDropdown && (
                   <div className="absolute z-10 w-full mt-2 bg-white border-2 border-gray-200 rounded-2xl shadow-xl max-h-60 overflow-y-auto animate-in slide-in-from-top-2 duration-200">
                     {availableTables.length > 0 ? (
                       availableTables.map((table) => (
                         <button
-                          key={table.id}
+                          key={`${table.tableNumber}-${table.location || ''}`}
                           type="button"
                           onClick={() => handleTableSelect(table)}
                           className={`w-full px-4 py-4 text-left hover:bg-orange-50 border-b border-gray-100 last:border-b-0 transition-colors duration-200 ${
                             table.tableNumber === tableNumber ? 'bg-orange-50 border-orange-200' : ''
                           }`}
+                          aria-selected={table.tableNumber === tableNumber}
                         >
                           <div className="flex justify-between items-center">
                             <div>
@@ -585,13 +595,14 @@ const OrderConfirmation = () => {
                       <User size={16} />
                       Full Name *
                     </label>
-                    <input 
-                      id="guestName" 
-                      type="text" 
-                      value={guestName} 
-                      onChange={(e) => setGuestName(e.target.value)} 
-                      className="w-full mt-2 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" 
-                      required 
+                    <input
+                      id="guestName"
+                      type="text"
+                      value={guestName}
+                      onChange={(e) => setGuestName(e.target.value)}
+                      className="w-full mt-2 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      required
+                      aria-required="true"
                     />
                   </div>
                   <div>
@@ -602,16 +613,17 @@ const OrderConfirmation = () => {
                         <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                       )}
                     </label>
-                    <input 
-                      id="guestEmail" 
-                      type="email" 
-                      value={guestEmail} 
+                    <input
+                      id="guestEmail"
+                      type="email"
+                      value={guestEmail}
                       onChange={handleEmailChange}
                       className={`w-full mt-2 px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
                         emailExists ? 'border-orange-300 bg-orange-50' : 'border-gray-200'
                       }`}
-                      required 
+                      required
                       autoComplete="email"
+                      aria-required="true"
                     />
                     {emailExists && (
                       <div className="mt-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
@@ -624,20 +636,27 @@ const OrderConfirmation = () => {
                         </p>
                       </div>
                     )}
+                    {emailCheckError && (
+                      <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs flex items-center gap-2">
+                        <AlertCircle size={14} />
+                        {emailCheckError}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="text-sm font-semibold text-gray-700 flex items-center gap-2" htmlFor="guestPhone">
                       <Phone size={16} />
                       Phone Number *
                     </label>
-                    <input 
-                      id="guestPhone" 
-                      type="tel" 
-                      value={guestPhone} 
-                      onChange={(e) => setGuestPhone(e.target.value)} 
-                      maxLength={10} 
-                      className="w-full mt-2 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" 
-                      required 
+                    <input
+                      id="guestPhone"
+                      type="tel"
+                      value={guestPhone}
+                      onChange={(e) => setGuestPhone(e.target.value)}
+                      maxLength={10}
+                      className="w-full mt-2 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      required
+                      aria-required="true"
                     />
                   </div>
                 </div>
@@ -658,7 +677,7 @@ const OrderConfirmation = () => {
                 rows={3}
               />
             </div>
-            
+
             {/* Improved error message with icon */}
             {formError && (
               <div className="my-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl flex items-center gap-2">
@@ -685,59 +704,60 @@ const OrderConfirmation = () => {
             {/* Enhanced Cart Items */}
             <div className="border-t-2 border-gray-200 pt-6">
               {cartItems.map((item, index) => {
-                const isWater = item.name && 
-                  (item.name.toLowerCase().includes('water') || 
-                   item.category?.toLowerCase() === 'water');
-                
+                const isWater = item.name &&
+                  (item.name.toLowerCase().includes('water') ||
+                    item.category?.toLowerCase() === 'water');
+
                 const hasDiscount = item.discounttype && item.discountvalue;
                 const originalPrice = Number(item.price).toFixed(2);
-                
+
                 const discountedPrice = item.effectivePrice !== undefined ? Number(item.effectivePrice).toFixed(2) : Number(calculateEffectivePrice(item)).toFixed(2);
-                
+
                 const originalTotal = (item.price * item.quantity).toFixed(2);
                 const discountedTotal = (Number(discountedPrice) * item.quantity).toFixed(2);
-                
+
                 return (
-                  <div 
-                    key={`${item.id}-${item.category}`} 
+                  <div
+                    key={`${item.id || item.name}-${item.category || ''}-${index}`}
                     className={`mb-6 p-4 bg-white rounded-2xl border-2 border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 ${animateItems ? 'animate-in slide-in-from-left-2' : ''}`}
                     style={{ animationDelay: `${index * 100}ms` }}
                   >
                     <div className="flex items-start">
                       <div className="w-24 h-24 overflow-hidden rounded-2xl mr-4 shadow-md">
-                        <img 
-                          src={item.image || `/api/placeholder/80/80`} 
-                          alt={item.name} 
-                          className="w-full h-full object-cover transition-transform duration-300 hover:scale-110" 
+                        <img
+                          src={item.image || `/api/placeholder/80/80`}
+                          alt={item.name}
+                          className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
+                          loading="lazy"
                           onError={(e) => {
                             e.target.src = '/api/placeholder/80/80';
                           }}
                         />
                       </div>
-                      
+
                       <div className="flex-1">
                         <h3 className="font-bold text-xl text-gray-800 mb-1">{item.name}</h3>
                         <p className="text-sm text-gray-500 mb-2 flex items-center gap-1">
                           <Clock size={14} />
                           {item.addedAt ? formatDate(item.addedAt) : 'Now'}
                         </p>
-                        
+
                         {hasDiscount && (
                           <div className="text-green-600 text-sm font-medium bg-green-100 px-2 py-1 rounded-full inline-block mb-2">
                             {item.discounttype === 'Percentage' && `${item.discountvalue}% off`}
-                            {item.discounttype === 'Fixed' && `₹${item.discountvalue*item.quantity} off`}
+                            {item.discounttype === 'Fixed' && `₹${item.discountvalue * item.quantity} off`}
                           </div>
                         )}
-                        
+
                         {isWater && (
                           <p className="text-green-600 text-sm font-medium bg-green-100 px-2 py-1 rounded-full inline-block mb-2">
                             GST exempt
                           </p>
                         )}
-                        
+
                         <div className="flex justify-between items-center mt-3">
                           <div className="flex items-center bg-gray-100 rounded-full p-1">
-                            <button 
+                            <button
                               onClick={() => {
                                 if (item.quantity > 1) {
                                   updateQuantity(item.id, item.category, item.quantity - 1);
@@ -747,6 +767,7 @@ const OrderConfirmation = () => {
                                 item.quantity <= 1 ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'
                               }`}
                               disabled={item.quantity <= 1}
+                              aria-label="Decrease quantity"
                             >
                               <Minus size={16} className={`transition-colors duration-200 ${
                                 item.quantity <= 1 ? 'text-gray-400' : 'text-gray-600'
@@ -755,16 +776,17 @@ const OrderConfirmation = () => {
                             <span className="mx-4 font-semibold text-gray-800 transition-all duration-200 transform scale-100 hover:scale-110">
                               {item.quantity}
                             </span>
-                            <button 
+                            <button
                               onClick={() => updateQuantity(item.id, item.category, item.quantity + 1)}
                               className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center transition-all duration-200 hover:bg-gray-50 hover:shadow-md active:scale-95"
+                              aria-label="Increase quantity"
                             >
                               <Plus size={16} className="text-gray-600 transition-colors duration-200" />
                             </button>
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="text-right">
                         {hasDiscount ? (
                           <>
@@ -774,9 +796,10 @@ const OrderConfirmation = () => {
                         ) : (
                           <p className="font-bold text-xl text-gray-800 transition-all duration-200 transform scale-100 hover:scale-105">₹{originalTotal}</p>
                         )}
-                        <button 
+                        <button
                           onClick={() => removeItem(item.id, item.category)}
                           className="mt-3 p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
+                          aria-label="Remove item"
                         >
                           <Trash2 size={20} />
                         </button>
@@ -793,45 +816,45 @@ const OrderConfirmation = () => {
                 <span className="text-gray-600 font-medium">Original Total</span>
                 <span className="font-semibold text-gray-800">₹{originalTotal.toFixed(2)}</span>
               </div>
-              
+
               {discountAmount > 0 && (
                 <div className="flex justify-between items-center">
                   <span className="text-green-600 font-medium">Discount</span>
                   <span className="text-green-600 font-semibold">- ₹{discountAmount.toFixed(2)}</span>
                 </div>
               )}
-              
+
               <div className="flex justify-between items-center">
                 <span className="text-gray-600 font-medium">Subtotal</span>
                 <span className="font-semibold text-gray-800">₹{subtotalAfterDiscount.toFixed(2)}</span>
               </div>
-              
+
               <div className="flex justify-between items-center">
                 <span className="text-gray-600 font-medium">CGST (2.5%)</span>
                 <span className="font-semibold text-gray-800">₹{cgst.toFixed(2)}</span>
               </div>
-              
+
               <div className="flex justify-between items-center">
                 <span className="text-gray-600 font-medium">SGST (2.5%)</span>
                 <span className="font-semibold text-gray-800">₹{sgst.toFixed(2)}</span>
               </div>
-              
+
               <div className="border-t-2 border-gray-200 my-4"></div>
-              
+
               <div className="flex justify-between items-center">
                 <span className="text-2xl font-bold text-gray-800">Total</span>
                 <span className="text-2xl font-bold text-orange-600">₹{finalTotal.toFixed(2)}</span>
               </div>
             </div>
           </div>
-          
+
           <div className="pb-32"></div>
         </div>
 
         {/* Floating Payment Button */}
         <div className="fixed bottom-0 left-0 right-0 px-6 py-4 z-50">
           <div className="max-w-[390px] md:max-w-4xl lg:max-w-6xl mx-auto">
-            <button 
+            <button
               onClick={handlePlaceOrder}
               disabled={
                 cartItems.length === 0 ||
@@ -840,9 +863,10 @@ const OrderConfirmation = () => {
               }
               className={`w-full py-4 rounded-full font-bold text-lg transition-all duration-300 transform hover:scale-105 ${
                 cartItems.length === 0 || isCheckingEmail || (!user && emailExists)
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   : 'bg-gray-600 text-white hover:bg-gray-700 shadow-lg hover:shadow-xl'
               }`}
+              aria-disabled={cartItems.length === 0 || isCheckingEmail || (!user && emailExists)}
             >
               {cartItems.length === 0 ? (
                 <span className="flex items-center justify-center gap-2">
