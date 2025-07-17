@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../../config/CartContent";
 import { useLikes } from "../../config/LikesContent";
-import OrderCard from './itemCard';
+import OrderCard from './itemCard'; // Note: Ensure the import matches the actual file name (case-sensitive on some systems)
 import { LazyImage } from "../../utils/imageOptimization";
 
 // DiscountTag moved outside for clarity and reusability
@@ -234,7 +234,7 @@ const FoodItem = memo(({
 FoodItem.displayName = 'FoodItem';
 
 // Main BestSellers component
-const BestSellers = ({ foodItems }) => {
+const BestSellers = ({ foodItems = [] }) => { // Default to empty array
   const navigate = useNavigate();
   const [selectedItem, setSelectedItem] = useState(null);
   const [isOrderCardOpen, setIsOrderCardOpen] = useState(false);
@@ -316,6 +316,7 @@ const BestSellers = ({ foodItems }) => {
         <ErrorBoundary>
           <OrderCard ... />
         </ErrorBoundary>
+        Note: Ensure the import for OrderCard matches the actual file name (case-sensitive on some systems)
       */}
       <OrderCard isOpen={isOrderCardOpen} onClose={handleCloseItemCard} item={selectedItem || {}} />
     </div>
