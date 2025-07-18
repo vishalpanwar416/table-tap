@@ -21,7 +21,6 @@ import { getAllFoodItems, getRestaurantFoodItems } from '../../api/foodService';
 import { supabase } from '../../supabase';
 import { updateOrderStatus as updateOrderStatusService } from '../../api/orderService';
 import { useAdminRestaurant } from '../../context/AdminRestaurantContext';
-import { FixedSizeList as List } from 'react-window';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -106,38 +105,6 @@ const AdminDashboard = () => {
   // New state for authentication loading
   const [authLoading, setAuthLoading] = useState(true);
 
-  // State for pagination
-  const [ordersPage, setOrdersPage] = useState(1);
-  const [ordersPageSize] = useState(20);
-  const [ordersTotal, setOrdersTotal] = useState(0);
-
-  const [foodPage, setFoodPage] = useState(1);
-  const [foodPageSize] = useState(20);
-  const [foodTotal, setFoodTotal] = useState(0);
-
-  // Fetch paginated orders from Supabase
-  const fetchOrders = async (page = ordersPage, pageSize = ordersPageSize) => {
-    setLoading(true);
-    try {
-      const from = (page - 1) * pageSize;
-      const to = from + pageSize - 1;
-      let query = supabase
-        .from('orders')
-        .select('*', { count: 'exact' });
-      if (userRestaurantId) query = query.eq('restaurant_id', userRestaurantId);
-      const { data, count, error } = await query
-        .order('created_at', { ascending: false })
-        .range(from, to);
-      if (error) throw error;
-      setOrders(data || []);
-      setOrdersTotal(count || 0);
-    } catch (error) {
-      setErrorMsg('Failed to load orders: ' + (error.message || error));
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Fetch all restaurants for admin selector
   const fetchAllRestaurants = async () => {
     if (!contextIsAdmin()) return;
@@ -207,15 +174,13 @@ const AdminDashboard = () => {
         setAuthLoading(true); // Start loading
         const { data: { session } } = await supabase.auth.getSession();
         const user = session?.user;
-        if (!user && !authLoading) { // Only redirect if not loading
+        if (!user) {
           navigate('/login');
           return;
         }
         setCurrentUser(user);
       } catch (error) {
-        if (!authLoading) {
-          navigate('/login');
-        }
+        navigate('/login');
       } finally {
         setAuthLoading(false); // End loading
       }
@@ -237,7 +202,7 @@ const AdminDashboard = () => {
         authListener.subscription.unsubscribe();
       }
     };
-  }, [navigate, authLoading]);
+  }, [navigate]);
 
   // Request notification permission on component mount
   useEffect(() => {
@@ -279,7 +244,7 @@ const AdminDashboard = () => {
   }, [currentUser, navigate]);
 
   // Fetch food items with restaurant filter
-  const fetchFoodItems = async (page = foodPage, pageSize = foodPageSize) => {
+  const fetchFoodItems = async () => {
     let loadingTimeout;
     try {
       setLoading(true);
@@ -316,11 +281,6 @@ const AdminDashboard = () => {
       fetchFoodItems();
     }
   }, [currentUser, userRestaurantId]); // Add userRestaurantId to dependencies
-
-  useEffect(() => {
-    if (currentUser) fetchOrders(ordersPage, ordersPageSize);
-    // eslint-disable-next-line
-  }, [currentUser, userRestaurantId, ordersPage]);
 
   // Enhanced fetch orders with restaurant filter
   useEffect(() => {
@@ -636,31 +596,6 @@ const AdminDashboard = () => {
         i === index ? { ...item, [field]: value } : item
       )
     }));
-  };
-
-  // Virtualized Order List Row
-  const OrderRow = ({ index, style, data }) => {
-    const order = data[index];
-    return (
-      <div style={style} className="border-b px-4 py-2">
-        <div>Order #{order.order_number || order.id.slice(0, 8)}</div>
-        <div>Status: {order.status}</div>
-        <div>Total: ₹{order.total}</div>
-        {/* Add more order details as needed */}
-      </div>
-    );
-  };
-
-  // Example: Virtualized Food Item Row
-  const FoodRow = ({ index, style, data }) => {
-    const item = data[index];
-    return (
-      <div style={style} className="border-b px-4 py-2">
-        <div>{item.name}</div>
-        <div>Price: ₹{item.price}</div>
-        {/* Add more food details as needed */}
-      </div>
-    );
   };
 
   if (authLoading) {
@@ -1016,36 +951,11 @@ const AdminDashboard = () => {
 
               {activeTab === 'orders' && (
                 <div className="px-4 py-6 md:p-6">
-                  <div style={{ height: 400 }}>
-                    <List
-                      height={400}
-                      itemCount={orders.length}
-                      itemSize={60}
-                      width="100%"
-                      itemData={orders}
-                    >
-                      {OrderRow}
-                    </List>
-                  </div>
-                  <div className="flex justify-between items-center mt-4">
-                    <button
-                      onClick={() => setOrdersPage((p) => Math.max(1, p - 1))}
-                      disabled={ordersPage === 1}
-                      className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
-                    >
-                      Previous
-                    </button>
-                    <span>
-                      Page {ordersPage} of {Math.ceil(ordersTotal / ordersPageSize)}
-                    </span>
-                    <button
-                      onClick={() => setOrdersPage((p) => p + 1)}
-                      disabled={ordersPage * ordersPageSize >= ordersTotal}
-                      className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
-                    >
-                      Next
-                    </button>
-                  </div>
+                  <OrderManagement 
+                    orders={orders}
+                    updateOrderStatus={updateOrderStatus}
+                    searchTerm={searchTerm}
+                  />
                 </div>
               )}
 
