@@ -1,51 +1,93 @@
 import { supabase } from '../supabase';
 
-// ========= SUBSCRIPTION MANAGEMENT =========
+// ========= SIMPLIFIED SUBSCRIPTION MANAGEMENT =========
+// Using existing restaurants table with ai_enabled field
+
+// Define the two subscription plans
+const SUBSCRIPTION_PLANS = [
+  {
+    id: 'basic',
+    name: 'Basic Plan',
+    description: 'Standard restaurant management without AI features',
+    price: 1999,
+    duration_months: 1,
+    features: ['Order Management', 'Staff Management', 'Menu Management', 'Basic Analytics'],
+    max_orders_per_month: 1000,
+    max_staff_members: 10,
+    ai_features_enabled: false,
+    is_active: true
+  },
+  {
+    id: 'premium',
+    name: 'Premium Plan',
+    description: 'Advanced restaurant management with AI analytics',
+    price: 2599,
+    duration_months: 1,
+    features: ['Order Management', 'Staff Management', 'Menu Management', 'AI Analytics', 'Smart Recommendations', 'Predictive Insights'],
+    max_orders_per_month: 5000,
+    max_staff_members: 25,
+    ai_features_enabled: true,
+    is_active: true
+  }
+];
 
 /**
- * Get all subscription plans
+ * Get all subscription plans (hardcoded)
  */
 export const getSubscriptionPlans = async () => {
   try {
-    const { data, error } = await supabase
-      .from('subscription_plans')
-      .select('*')
-      .order('price', { ascending: true });
-
-    if (error) throw error;
-    return { data, error: null };
+    return { data: SUBSCRIPTION_PLANS, error: null };
   } catch (error) {
     return { data: null, error: error.message };
   }
 };
 
 /**
- * Get restaurant subscriptions
+ * Get restaurant subscriptions (using restaurants table)
  */
 export const getRestaurantSubscriptions = async () => {
   try {
-    const { data, error } = await supabase
-      .from('restaurant_subscriptions')
+    const { data: restaurants, error } = await supabase
+      .from('restaurants')
       .select(`
-        *,
-        restaurant:restaurants(
-          id,
-          name,
-          contact_email,
-          contact_phone
-        ),
-        plan:subscription_plans(
-          id,
-          name,
-          price,
-          duration_months,
-          features
-        )
+        id,
+        name,
+        contact_email,
+        contact_phone,
+        is_active,
+        ai_enabled,
+        created_at,
+        updated_at
       `)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return { data, error: null };
+
+    // Transform restaurants into subscription format
+    const subscriptions = restaurants.map(restaurant => {
+      const plan = restaurant.ai_enabled ? SUBSCRIPTION_PLANS[1] : SUBSCRIPTION_PLANS[0];
+      return {
+        id: restaurant.id,
+        restaurant_id: restaurant.id,
+        plan_id: plan.id,
+        status: restaurant.is_active ? 'active' : 'inactive',
+        payment_status: 'paid', // Assuming all restaurants are paid
+        amount_paid: plan.price,
+        start_date: restaurant.created_at,
+        end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+        payment_method: 'manual',
+        notes: '',
+        restaurant: {
+          id: restaurant.id,
+          name: restaurant.name,
+          contact_email: restaurant.contact_email,
+          contact_phone: restaurant.contact_phone
+        },
+        plan: plan
+      };
+    });
+
+    return { data: subscriptions, error: null };
   } catch (error) {
     return { data: null, error: error.message };
   }
@@ -56,135 +98,119 @@ export const getRestaurantSubscriptions = async () => {
  */
 export const getRestaurantSubscription = async (restaurantId) => {
   try {
-    const { data, error } = await supabase
-      .from('restaurant_subscriptions')
+    const { data: restaurant, error } = await supabase
+      .from('restaurants')
       .select(`
-        *,
-        plan:subscription_plans(
-          id,
-          name,
-          price,
-          duration_months,
-          features,
-          max_orders_per_month,
-          max_staff_members,
-          ai_features_enabled
-        )
+        id,
+        name,
+        contact_email,
+        contact_phone,
+        is_active,
+        ai_enabled,
+        created_at,
+        updated_at
       `)
-      .eq('restaurant_id', restaurantId)
+      .eq('id', restaurantId)
       .single();
 
     if (error) throw error;
-    return { data, error: null };
+
+    const plan = restaurant.ai_enabled ? SUBSCRIPTION_PLANS[1] : SUBSCRIPTION_PLANS[0];
+    
+    const subscription = {
+      id: restaurant.id,
+      restaurant_id: restaurant.id,
+      plan_id: plan.id,
+      status: restaurant.is_active ? 'active' : 'inactive',
+      payment_status: 'paid',
+      amount_paid: plan.price,
+      start_date: restaurant.created_at,
+      end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      payment_method: 'manual',
+      notes: '',
+      plan: plan
+    };
+
+    return { data: subscription, error: null };
   } catch (error) {
     return { data: null, error: error.message };
   }
 };
 
 /**
- * Create a new subscription plan
+ * Create a new subscription plan (not used in simplified version)
  */
 export const createSubscriptionPlan = async (planData) => {
-  try {
-    const { data, error } = await supabase
-      .from('subscription_plans')
-      .insert({
-        name: planData.name,
-        description: planData.description,
-        price: planData.price,
-        duration_months: planData.duration_months,
-        features: planData.features,
-        max_orders_per_month: planData.max_orders_per_month,
-        max_staff_members: planData.max_staff_members,
-        ai_features_enabled: planData.ai_features_enabled,
-        is_active: planData.is_active ?? true
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-    return { data, error: null };
-  } catch (error) {
-    return { data: null, error: error.message };
-  }
+  return { data: null, error: 'Subscription plans are predefined and cannot be created' };
 };
 
 /**
- * Update subscription plan
+ * Update subscription plan (not used in simplified version)
  */
 export const updateSubscriptionPlan = async (planId, updates) => {
-  try {
-    const { data, error } = await supabase
-      .from('subscription_plans')
-      .update(updates)
-      .eq('id', planId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return { data, error: null };
-  } catch (error) {
-    return { data: null, error: error.message };
-  }
+  return { data: null, error: 'Subscription plans are predefined and cannot be modified' };
 };
 
 /**
- * Delete subscription plan
+ * Delete subscription plan (not used in simplified version)
  */
 export const deleteSubscriptionPlan = async (planId) => {
-  try {
-    // Check if plan is being used by any restaurant
-    const { data: activeSubscriptions, error: checkError } = await supabase
-      .from('restaurant_subscriptions')
-      .select('id')
-      .eq('plan_id', planId)
-      .eq('status', 'active');
-
-    if (checkError) throw checkError;
-
-    if (activeSubscriptions && activeSubscriptions.length > 0) {
-      throw new Error('Cannot delete plan: It is currently active for some restaurants');
-    }
-
-    const { error } = await supabase
-      .from('subscription_plans')
-      .delete()
-      .eq('id', planId);
-
-    if (error) throw error;
-    return { error: null };
-  } catch (error) {
-    return { error: error.message };
-  }
+  return { error: 'Subscription plans are predefined and cannot be deleted' };
 };
 
 /**
- * Assign subscription to restaurant
+ * Assign subscription to restaurant (update restaurant's ai_enabled status)
  */
 export const assignSubscriptionToRestaurant = async (subscriptionData) => {
   try {
+    const plan = SUBSCRIPTION_PLANS.find(p => p.id === subscriptionData.plan_id);
+    if (!plan) {
+      throw new Error('Invalid plan selected');
+    }
+
     const { data, error } = await supabase
-      .from('restaurant_subscriptions')
-      .insert({
-        restaurant_id: subscriptionData.restaurant_id,
-        plan_id: subscriptionData.plan_id,
-        start_date: subscriptionData.start_date,
-        end_date: subscriptionData.end_date,
-        status: subscriptionData.status || 'active',
-        payment_status: subscriptionData.payment_status || 'pending',
-        amount_paid: subscriptionData.amount_paid,
-        payment_method: subscriptionData.payment_method,
-        notes: subscriptionData.notes
+      .from('restaurants')
+      .update({
+        ai_enabled: plan.ai_features_enabled,
+        is_active: true,
+        updated_at: new Date().toISOString()
       })
+      .eq('id', subscriptionData.restaurant_id)
       .select(`
-        *,
-        restaurant:restaurants(name),
-        plan:subscription_plans(name, price)
+        id,
+        name,
+        contact_email,
+        contact_phone,
+        is_active,
+        ai_enabled,
+        created_at,
+        updated_at
       `)
       .single();
 
     if (error) throw error;
-    return { data, error: null };
+
+    const subscription = {
+      id: data.id,
+      restaurant_id: data.id,
+      plan_id: plan.id,
+      status: 'active',
+      payment_status: 'paid',
+      amount_paid: plan.price,
+      start_date: data.created_at,
+      end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      payment_method: subscriptionData.payment_method || 'manual',
+      notes: subscriptionData.notes || '',
+      restaurant: {
+        id: data.id,
+        name: data.name,
+        contact_email: data.contact_email,
+        contact_phone: data.contact_phone
+      },
+      plan: plan
+    };
+
+    return { data: subscription, error: null };
   } catch (error) {
     return { data: null, error: error.message };
   }
@@ -195,41 +221,108 @@ export const assignSubscriptionToRestaurant = async (subscriptionData) => {
  */
 export const updateRestaurantSubscription = async (subscriptionId, updates) => {
   try {
+    const plan = SUBSCRIPTION_PLANS.find(p => p.id === updates.plan_id);
+    if (!plan) {
+      throw new Error('Invalid plan selected');
+    }
+
     const { data, error } = await supabase
-      .from('restaurant_subscriptions')
-      .update(updates)
+      .from('restaurants')
+      .update({
+        ai_enabled: plan.ai_features_enabled,
+        is_active: updates.status === 'active',
+        updated_at: new Date().toISOString()
+      })
       .eq('id', subscriptionId)
       .select(`
-        *,
-        restaurant:restaurants(name),
-        plan:subscription_plans(name, price)
+        id,
+        name,
+        contact_email,
+        contact_phone,
+        is_active,
+        ai_enabled,
+        created_at,
+        updated_at
       `)
       .single();
 
     if (error) throw error;
-    return { data, error: null };
+
+    const subscription = {
+      id: data.id,
+      restaurant_id: data.id,
+      plan_id: plan.id,
+      status: data.is_active ? 'active' : 'inactive',
+      payment_status: 'paid',
+      amount_paid: plan.price,
+      start_date: data.created_at,
+      end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      payment_method: updates.payment_method || 'manual',
+      notes: updates.notes || '',
+      restaurant: {
+        id: data.id,
+        name: data.name,
+        contact_email: data.contact_email,
+        contact_phone: data.contact_phone
+      },
+      plan: plan
+    };
+
+    return { data: subscription, error: null };
   } catch (error) {
     return { data: null, error: error.message };
   }
 };
 
 /**
- * Cancel restaurant subscription
+ * Cancel restaurant subscription (deactivate restaurant)
  */
 export const cancelRestaurantSubscription = async (subscriptionId) => {
   try {
     const { data, error } = await supabase
-      .from('restaurant_subscriptions')
+      .from('restaurants')
       .update({
-        status: 'cancelled',
-        cancelled_at: new Date().toISOString()
+        is_active: false,
+        updated_at: new Date().toISOString()
       })
       .eq('id', subscriptionId)
-      .select()
+      .select(`
+        id,
+        name,
+        contact_email,
+        contact_phone,
+        is_active,
+        ai_enabled,
+        created_at,
+        updated_at
+      `)
       .single();
 
     if (error) throw error;
-    return { data, error: null };
+
+    const plan = data.ai_enabled ? SUBSCRIPTION_PLANS[1] : SUBSCRIPTION_PLANS[0];
+    
+    const subscription = {
+      id: data.id,
+      restaurant_id: data.id,
+      plan_id: plan.id,
+      status: 'cancelled',
+      payment_status: 'paid',
+      amount_paid: plan.price,
+      start_date: data.created_at,
+      end_date: new Date().toISOString(),
+      payment_method: 'manual',
+      notes: 'Subscription cancelled',
+      restaurant: {
+        id: data.id,
+        name: data.name,
+        contact_email: data.contact_email,
+        contact_phone: data.contact_phone
+      },
+      plan: plan
+    };
+
+    return { data: subscription, error: null };
   } catch (error) {
     return { data: null, error: error.message };
   }
@@ -240,46 +333,28 @@ export const cancelRestaurantSubscription = async (subscriptionId) => {
  */
 export const getSubscriptionStats = async () => {
   try {
-    // Get total subscriptions
-    const { count: totalSubscriptions, error: totalError } = await supabase
-      .from('restaurant_subscriptions')
-      .select('*', { count: 'exact', head: true });
+    const { data: restaurants, error } = await supabase
+      .from('restaurants')
+      .select('is_active, ai_enabled');
 
-    if (totalError) throw totalError;
+    if (error) throw error;
 
-    // Get active subscriptions
-    const { count: activeSubscriptions, error: activeError } = await supabase
-      .from('restaurant_subscriptions')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'active');
-
-    if (activeError) throw activeError;
-
-    // Get expired subscriptions
-    const { count: expiredSubscriptions, error: expiredError } = await supabase
-      .from('restaurant_subscriptions')
-      .select('*', { count: 'exact', head: true })
-      .lt('end_date', new Date().toISOString())
-      .eq('status', 'active');
-
-    if (expiredError) throw expiredError;
-
-    // Get total revenue
-    const { data: revenueData, error: revenueError } = await supabase
-      .from('restaurant_subscriptions')
-      .select('amount_paid')
-      .eq('payment_status', 'paid');
-
-    if (revenueError) throw revenueError;
-
-    const totalRevenue = revenueData.reduce((sum, sub) => sum + (sub.amount_paid || 0), 0);
+    const totalSubscriptions = restaurants.length;
+    const activeSubscriptions = restaurants.filter(r => r.is_active).length;
+    const basicSubscriptions = restaurants.filter(r => r.is_active && !r.ai_enabled).length;
+    const premiumSubscriptions = restaurants.filter(r => r.is_active && r.ai_enabled).length;
+    
+    const totalRevenue = (basicSubscriptions * SUBSCRIPTION_PLANS[0].price) + 
+                        (premiumSubscriptions * SUBSCRIPTION_PLANS[1].price);
 
     return {
       data: {
         totalSubscriptions,
         activeSubscriptions,
-        expiredSubscriptions,
+        expiredSubscriptions: totalSubscriptions - activeSubscriptions,
         totalRevenue,
+        basicSubscriptions,
+        premiumSubscriptions,
         cancellationRate: totalSubscriptions > 0 ? 
           ((totalSubscriptions - activeSubscriptions) / totalSubscriptions * 100).toFixed(2) : 0
       },
@@ -291,27 +366,42 @@ export const getSubscriptionStats = async () => {
 };
 
 /**
- * Get upcoming renewals
+ * Get upcoming renewals (simplified - shows all active restaurants)
  */
 export const getUpcomingRenewals = async (days = 30) => {
   try {
-    const futureDate = new Date();
-    futureDate.setDate(futureDate.getDate() + days);
-
-    const { data, error } = await supabase
-      .from('restaurant_subscriptions')
+    const { data: restaurants, error } = await supabase
+      .from('restaurants')
       .select(`
-        *,
-        restaurant:restaurants(name, contact_email),
-        plan:subscription_plans(name, price)
+        id,
+        name,
+        contact_email,
+        contact_phone,
+        is_active,
+        ai_enabled,
+        created_at
       `)
-      .eq('status', 'active')
-      .lte('end_date', futureDate.toISOString())
-      .gte('end_date', new Date().toISOString())
-      .order('end_date', { ascending: true });
+      .eq('is_active', true)
+      .order('created_at', { ascending: true });
 
     if (error) throw error;
-    return { data, error: null };
+
+    const renewals = restaurants.map(restaurant => {
+      const plan = restaurant.ai_enabled ? SUBSCRIPTION_PLANS[1] : SUBSCRIPTION_PLANS[0];
+      return {
+        id: restaurant.id,
+        restaurant_id: restaurant.id,
+        end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        restaurant: {
+          id: restaurant.id,
+          name: restaurant.name,
+          contact_email: restaurant.contact_email
+        },
+        plan: plan
+      };
+    });
+
+    return { data: renewals, error: null };
   } catch (error) {
     return { data: null, error: error.message };
   }
