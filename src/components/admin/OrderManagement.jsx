@@ -15,6 +15,7 @@ import { supabase } from '../../supabase'; // adjust path if needed
 import {
   fetchAllOrders,
   subscribeToAllOrderChanges,
+  unsubscribeFromOrderChanges, // <-- add this import
   updateOrderStatus as updateOrderStatusService,
   getOrdersByPeriod,
   formatOrdersForExcel,
@@ -102,7 +103,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
   }, [restaurantId]);
 
   useEffect(() => {
-    const channel = subscribeToAllOrderChanges((payload) => {
+    const channel = subscribeToAllOrderChanges(restaurantId, (payload) => {
       const { eventType, new: newRecord, old: oldRecord } = payload;
       setOrders((prevOrders) => {
         if (eventType === 'INSERT') return [newRecord, ...prevOrders];
@@ -115,7 +116,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
     });
 
     return () => {
-      if (channel) supabase.removeChannel(channel);
+      unsubscribeFromOrderChanges(channel);
     };
   }, [restaurantId]);
   

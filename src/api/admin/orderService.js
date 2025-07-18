@@ -338,22 +338,24 @@ export const fetchAllOrders = async (restaurantId = null) => {
 };
 
 // Subscribe to all order changes
-export const subscribeToAllOrderChanges = (callback) => {
-  return supabase
-    .channel('orders-channel')
+export const subscribeToAllOrderChanges = (restaurantId, callback) => {
+  const channel = supabase
+    .channel('orders')
     .on(
       'postgres_changes',
-      {
-        event: '*',
-        schema: 'public',
-        table: 'orders',
-      },
-      (payload) => {
-        callback(payload);
-      }
+      { event: '*', schema: 'public', table: 'orders', filter: `restaurant_id=eq.${restaurantId}` },
+      payload => callback(payload)
     )
     .subscribe();
-};
+  return channel;
+}
+
+// Unsubscribe from a channel
+export function unsubscribeFromOrderChanges(channel) {
+  if (channel) {
+    supabase.removeChannel(channel);
+  }
+}
 
 // Handle order download with all options
 export const handleOrderDownload = (orders, period, status = null) => {
