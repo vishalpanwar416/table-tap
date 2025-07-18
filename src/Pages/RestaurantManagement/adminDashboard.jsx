@@ -5,7 +5,7 @@ import MobileNav from '../../components/admin/MobileNav';
 import DashboardOverview from '../../components/admin/DashboardOverviewComponents/DashboardOverview';
 import MenuManagement from '../../components/admin/MenuManagementComponent/MenuManagement';
 import OrderManagement from '../../components/admin/OrderManagement';
-import UserManagement from '../../components/admin/UserManagement';
+import StaffManagement from '../../components/admin/StaffManagement';
 import OffersManagement from '../../components/admin/OffersManagement';
 import SettingsManagement from '../../components/admin/Settings';
 import InventoryManagement from '../../components/admin/InventoryManagement';
@@ -81,7 +81,7 @@ const AdminDashboard = () => {
       { id: 'menu', icon: 'Utensils', label: 'Menu Management' },
       { id: 'orders', icon: 'ShoppingCart', label: 'Order Management' },
       { id: 'inventory', icon: 'Package', label: 'Inventory Management' },
-      { id: 'users', icon: 'Users', label: 'User Management' },
+      { id: 'users', icon: 'Users', label: 'Staff Management' },
       { id: 'offers', icon: 'Tag', label: 'Offers & Promotions' },
       { id: 'qr', icon: 'QrCode', label: 'QR Management' },
       { id: 'settings', icon: 'Settings', label: 'Restaurant Information' },
@@ -971,7 +971,10 @@ const AdminDashboard = () => {
 
               {activeTab === 'users' && (
                 <div className="px-4 py-6 md:p-6">
-                  <UserManagement />
+                  <StaffManagement 
+                    searchTerm={searchTerm}
+                    setSearchTerm={setSearchTerm}
+                  />
                 </div>
               )}
               
