@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { 
   Building2, 
   MapPin, 
@@ -11,8 +11,11 @@ import {
   ToggleLeft,
   ToggleRight,
   ExternalLink,
-  Brain
+  Brain,
+  Loader2,
+  ChevronUp
 } from 'lucide-react';
+import { FixedSizeList as List } from 'react-window';
 
 const RestaurantListView = ({ 
   restaurants, 
@@ -20,8 +23,90 @@ const RestaurantListView = ({
   onToggleAI,
   onEdit, 
   onDelete, 
-  onClick 
+  onClick,
+  onLoadMore 
 }) => {
+  // Infinite scroll state
+  const [displayedRestaurants, setDisplayedRestaurants] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(20);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  
+  const listRef = useRef(null);
+  const observerRef = useRef(null);
+
+  // Initialize displayed restaurants
+  useEffect(() => {
+    const initialRestaurants = restaurants.slice(0, itemsPerPage);
+    setDisplayedRestaurants(initialRestaurants);
+    setHasMore(restaurants.length > itemsPerPage);
+    setCurrentPage(1);
+  }, [restaurants, itemsPerPage]);
+
+  // Load more restaurants
+  const loadMore = useCallback(async () => {
+    if (isLoading || !hasMore) return;
+
+    setIsLoading(true);
+    
+    try {
+      const nextPage = currentPage + 1;
+      const startIndex = (nextPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      
+      // If we have local data, use it
+      if (restaurants.length >= endIndex) {
+        const newRestaurants = restaurants.slice(startIndex, endIndex);
+        setDisplayedRestaurants(prev => [...prev, ...newRestaurants]);
+        setCurrentPage(nextPage);
+        setHasMore(endIndex < restaurants.length);
+      } else {
+        // If we need to fetch more data from server
+        if (onLoadMore) {
+          const newRestaurants = await onLoadMore(nextPage, itemsPerPage);
+          if (newRestaurants && newRestaurants.length > 0) {
+            setDisplayedRestaurants(prev => [...prev, ...newRestaurants]);
+            setCurrentPage(nextPage);
+            setHasMore(newRestaurants.length === itemsPerPage);
+          } else {
+            setHasMore(false);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading more restaurants:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isLoading, hasMore, currentPage, itemsPerPage, restaurants, onLoadMore]);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && hasMore && !isLoading) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observerRef.current = observer;
+    return () => observer.disconnect();
+  }, [loadMore, hasMore, isLoading]);
+
+  // Observe the last item for infinite scroll
+  const observeLastItem = useCallback((index) => {
+    if (index === displayedRestaurants.length - 1 && hasMore && !isLoading) {
+      const lastItem = document.querySelector(`[data-restaurant-index="${index}"]`);
+      if (lastItem && observerRef.current) {
+        observerRef.current.observe(lastItem);
+      }
+    }
+  }, [displayedRestaurants.length, hasMore, isLoading]);
+
   // Function to format time ago
   const getTimeAgo = (timestamp) => {
     if (!timestamp) return 'Recently';
@@ -40,29 +125,6 @@ const RestaurantListView = ({
     if (diffInDays < 30) return `${Math.floor(diffInDays / 7)}w ago`;
     if (diffInDays < 365) return `${Math.floor(diffInDays / 30)}mo ago`;
     return `${Math.floor(diffInDays / 365)}y ago`;
-  };
-
-  // Get restaurant age
-  const getRestaurantAge = () => {
-    if (!restaurants.created_at) return 'Recently added';
-    
-    const now = new Date();
-    const createdAt = new Date(restaurants.created_at);
-    const diffInDays = Math.floor((now - createdAt) / (1000 * 60 * 60 * 24));
-    
-    if (diffInDays === 0) return 'Added today';
-    if (diffInDays === 1) return 'Added yesterday';
-    if (diffInDays < 7) return `Added ${diffInDays} days ago`;
-    if (diffInDays < 30) {
-      const weeks = Math.floor(diffInDays / 7);
-      return `Added ${weeks} week${weeks > 1 ? 's' : ''} ago`;
-    }
-    if (diffInDays < 365) {
-      const months = Math.floor(diffInDays / 30);
-      return `Added ${months} month${months > 1 ? 's' : ''} ago`;
-    }
-    const years = Math.floor(diffInDays / 365);
-    return `Added ${years} year${years > 1 ? 's' : ''} ago`;
   };
 
   const handleToggleStatus = (e, restaurant) => {
@@ -87,8 +149,246 @@ const RestaurantListView = ({
     }
   };
 
+  // Virtualized row component
+  const VirtualizedRow = useCallback(({ index, style }) => {
+    const restaurant = displayedRestaurants[index];
+    if (!restaurant) return null;
+
+    // Observe the last item for infinite scroll
+    useEffect(() => {
+      observeLastItem(index);
+    }, [index, observeLastItem]);
+
+    return (
+      <div 
+        style={style} 
+        className="border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer group"
+        data-restaurant-index={index}
+        onClick={() => onClick(restaurant)}
+      >
+        <div className="grid grid-cols-12 gap-4 px-6 py-4 items-center">
+          {/* Restaurant Info */}
+          <div className="col-span-3">
+            <div className="flex items-center space-x-3">
+              {restaurant.logo_url ? (
+                <img 
+                  src={restaurant.logo_url} 
+                  alt={`${restaurant.name} logo`}
+                  className="w-10 h-10 rounded-lg object-cover border border-gray-200"
+                />
+              ) : (
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                  restaurant.is_active 
+                    ? 'bg-blue-500' 
+                    : 'bg-gray-400'
+                }`}>
+                  <Building2 className="w-5 h-5 text-white" />
+                </div>
+              )}
+              <div>
+                <h4 className="font-medium text-gray-900 font-spartan">
+                  {restaurant.name}
+                </h4>
+                <p className="text-sm text-gray-500 font-spartan">
+                  {restaurant.cuisine_type || 'Cuisine'}
+                </p>
+                <p className="text-xs text-gray-400 font-spartan">
+                  {getTimeAgo(restaurant.created_at)}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Location */}
+          <div className="col-span-2">
+            <div className="flex items-center space-x-2">
+              <MapPin className="w-4 h-4 text-gray-400" />
+              <span className="text-sm text-gray-600 font-spartan truncate">
+                {restaurant.address || 'No address'}
+              </span>
+            </div>
+          </div>
+
+          {/* Contact */}
+          <div className="col-span-2">
+            <div className="space-y-1">
+              <div className="flex items-center space-x-2">
+                <Phone className="w-4 h-4 text-gray-400" />
+                <span className="text-sm text-gray-600 font-spartan">
+                  {restaurant.contact_phone || 'No phone'}
+                </span>
+              </div>
+              {restaurant.contact_email && (
+                <p className="text-xs text-gray-500 font-spartan truncate">
+                  {restaurant.contact_email}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Staff Count */}
+          <div className="col-span-1">
+            <div className="flex items-center space-x-2">
+              <Users className="w-4 h-4 text-gray-400" />
+              <span className="text-sm text-gray-600 font-spartan">
+                {restaurant.staff_count || 0}
+              </span>
+            </div>
+          </div>
+
+          {/* Status */}
+          <div className="col-span-1">
+            <div className="flex items-center justify-center">
+              {/* Status Toggle */}
+              <button
+                onClick={(e) => handleToggleStatus(e, restaurant)}
+                className={`relative w-16 h-8 rounded-full focus:outline-none transition-all duration-300 shadow-lg group/btn overflow-hidden ${
+                  restaurant.is_active
+                    ? 'bg-gradient-to-r from-green-500 to-emerald-500 shadow-green-200'
+                    : 'bg-gradient-to-r from-gray-300 to-gray-400 shadow-gray-200'
+                }`}
+                aria-label={restaurant.is_active ? 'Deactivate restaurant' : 'Activate restaurant'}
+              >
+                <div
+                  className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ease-out ${
+                    restaurant.is_active
+                      ? 'translate-x-8 shadow-green-100'
+                      : 'translate-x-1 shadow-gray-100'
+                  }`}
+                >
+                  {restaurant.is_active ? (
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  ) : (
+                    <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
+                  )}
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* AI Status */}
+          <div className="col-span-1">
+            <div className="flex items-center justify-center">
+              {/* AI Toggle */}
+              <button
+                onClick={(e) => handleToggleAI(e, restaurant)}
+                className={`relative w-16 h-8 rounded-full focus:outline-none transition-all duration-300 shadow-lg group/btn overflow-hidden ${
+                  restaurant.ai_enabled
+                    ? 'bg-gradient-to-r from-purple-500 to-indigo-500 shadow-purple-200'
+                    : 'bg-gradient-to-r from-gray-300 to-gray-400 shadow-gray-200'
+                }`}
+                aria-label={restaurant.ai_enabled ? 'Disable AI analytics' : 'Enable AI analytics'}
+              >
+                <div
+                  className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ease-out ${
+                    restaurant.ai_enabled
+                      ? 'translate-x-8 shadow-purple-100'
+                      : 'translate-x-1 shadow-gray-100'
+                  }`}
+                >
+                  {restaurant.ai_enabled ? (
+                    <Brain className="w-3 h-3 text-purple-500" />
+                  ) : (
+                    <Brain className="w-3 h-3 text-gray-400" />
+                  )}
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="col-span-2">
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={(e) => handleEdit(e, restaurant)}
+                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                title="Edit restaurant"
+              >
+                <Edit className="w-4 h-4" />
+              </button>
+              <button
+                onClick={(e) => handleDelete(e, restaurant)}
+                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                title="Delete restaurant"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+              {restaurant.google_maps_link && (
+                <a
+                  href={restaurant.google_maps_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                  title="View on Google Maps"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }, [displayedRestaurants, getTimeAgo, handleToggleStatus, handleToggleAI, handleEdit, handleDelete, onClick, observeLastItem]);
+
+  // Loading indicator component
+  const LoadingIndicator = useCallback(() => (
+    <div className="flex items-center justify-center py-8">
+      <div className="flex items-center space-x-2 text-gray-600">
+        <Loader2 className="w-5 h-5 animate-spin" />
+        <span className="text-sm font-spartan">Loading more restaurants...</span>
+      </div>
+    </div>
+  ), []);
+
+  // End of list indicator
+  const EndOfListIndicator = useCallback(() => (
+    <div className="flex items-center justify-center py-8">
+      <div className="text-center">
+        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+          <Building2 className="w-6 h-6 text-gray-400" />
+        </div>
+        <p className="text-sm text-gray-600 font-spartan">All restaurants loaded</p>
+        <p className="text-xs text-gray-500 font-spartan mt-1">
+          Showing {displayedRestaurants.length} of {restaurants.length} total restaurants
+        </p>
+      </div>
+    </div>
+  ), [displayedRestaurants.length, restaurants.length]);
+
+  if (restaurants.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2 font-spartan">
+          No restaurants found
+        </h3>
+        <p className="text-gray-500 font-spartan">
+          Get started by adding your first restaurant
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="overflow-hidden">
+    <div className="space-y-4">
+      {/* Header with stats */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h4 className="text-md font-medium text-gray-700 font-spartan">All Restaurants</h4>
+          <p className="text-sm text-gray-500 font-spartan">
+            Showing {displayedRestaurants.length} of {restaurants.length} restaurants
+            {hasMore && (
+              <span className="ml-2 text-blue-600">
+                • Scroll to load more
+              </span>
+            )}
+          </p>
+        </div>
+      </div>
+
+      {/* Virtualized Table */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         {/* Table Header */}
         <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
@@ -97,207 +397,45 @@ const RestaurantListView = ({
             <div className="col-span-2">Location</div>
             <div className="col-span-2">Contact</div>
             <div className="col-span-1">Staff</div>
-            <div className="col-span-2">Status</div>
+            <div className="col-span-1">Status</div>
             <div className="col-span-1">AI</div>
-            <div className="col-span-1">Actions</div>
+            <div className="col-span-2">Actions</div>
           </div>
         </div>
 
-        {/* Table Body */}
-        <div className="divide-y divide-gray-200">
-          {restaurants.map((restaurant, index) => (
-            <div
-              key={restaurant.id}
-              onClick={() => onClick(restaurant)}
-              className="px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer group"
-            >
-              <div className="grid grid-cols-12 gap-4 items-center">
-                {/* Restaurant Info */}
-                <div className="col-span-3">
-                  <div className="flex items-center space-x-3">
-                    {restaurant.logo_url ? (
-                      <img 
-                        src={restaurant.logo_url} 
-                        alt={`${restaurant.name} logo`}
-                        className="w-10 h-10 rounded-lg object-cover border border-gray-200"
-                      />
-                    ) : (
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        restaurant.is_active 
-                          ? 'bg-blue-500' 
-                          : 'bg-gray-400'
-                      }`}>
-                        <Building2 className="w-5 h-5 text-white" />
-                      </div>
-                    )}
-                    <div>
-                      <h4 className="font-medium text-gray-900 font-spartan">
-                        {restaurant.name}
-                      </h4>
-                      <p className="text-sm text-gray-500 font-spartan">
-                        {restaurant.cuisine_type || 'Cuisine'}
-                      </p>
-                      <p className="text-xs text-gray-400 font-spartan">
-                        {getTimeAgo(restaurant.created_at)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Location */}
-                <div className="col-span-2">
-                  <div className="flex items-center space-x-2">
-                    <MapPin className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-600 font-spartan truncate">
-                      {restaurant.address || 'No address'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Contact */}
-                <div className="col-span-2">
-                  <div className="space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <Phone className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-600 font-spartan">
-                        {restaurant.contact_phone || 'No phone'}
-                      </span>
-                    </div>
-                    {restaurant.contact_email && (
-                      <p className="text-xs text-gray-500 font-spartan truncate">
-                        {restaurant.contact_email}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Staff Count */}
-                <div className="col-span-1">
-                  <div className="flex items-center space-x-2">
-                    <Users className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-600 font-spartan">
-                      {restaurant.staff_count || 0}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Status */}
-                <div className="col-span-2">
-                  <div className="flex items-center space-x-3">
-                    <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-medium ${
-                      restaurant.is_active
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      <div className={`w-2 h-2 rounded-full ${
-                        restaurant.is_active ? 'bg-green-500' : 'bg-red-500'
-                      }`} />
-                      <span className="font-spartan">
-                        {restaurant.is_active ? 'Active' : 'Inactive'}
-                      </span>
-                    </div>
-                    
-                    {/* Status Toggle */}
-                    <button
-                      onClick={(e) => handleToggleStatus(e, restaurant)}
-                      className={`relative w-12 h-6 rounded-full focus:outline-none transition-all duration-300 ${
-                        restaurant.is_active
-                          ? 'bg-green-500'
-                          : 'bg-gray-300'
-                      }`}
-                    >
-                      <div
-                        className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all duration-300 ${
-                          restaurant.is_active ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    </button>
-                  </div>
-                </div>
-
-                {/* AI Status */}
-                <div className="col-span-1">
-                  <div className="flex items-center space-x-3">
-                    <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-medium ${
-                      restaurant.ai_enabled
-                        ? 'bg-purple-100 text-purple-800'
-                        : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      <Brain className={`w-3 h-3 ${
-                        restaurant.ai_enabled ? 'text-purple-500' : 'text-gray-400'
-                      }`} />
-                      <span className="font-spartan">
-                        {restaurant.ai_enabled ? 'AI On' : 'AI Off'}
-                      </span>
-                    </div>
-                    
-                    {/* AI Toggle */}
-                    <button
-                      onClick={(e) => handleToggleAI(e, restaurant)}
-                      className={`relative w-12 h-6 rounded-full focus:outline-none transition-all duration-300 ${
-                        restaurant.ai_enabled
-                          ? 'bg-purple-500'
-                          : 'bg-gray-300'
-                      }`}
-                    >
-                      <div
-                        className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all duration-300 ${
-                          restaurant.ai_enabled ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="col-span-1">
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={(e) => handleEdit(e, restaurant)}
-                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Edit restaurant"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={(e) => handleDelete(e, restaurant)}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Delete restaurant"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                    {restaurant.google_maps_link && (
-                      <a
-                        href={restaurant.google_maps_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                        title="View on Google Maps"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
+        {/* Virtualized List */}
+        <div className="bg-white">
+          <List
+            ref={listRef}
+            height={Math.min(600, displayedRestaurants.length * 80)}
+            itemCount={displayedRestaurants.length}
+            itemSize={80}
+            width="100%"
+            itemData={displayedRestaurants}
+          >
+            {VirtualizedRow}
+          </List>
         </div>
 
-        {/* Empty State */}
-        {restaurants.length === 0 && (
-          <div className="text-center py-12">
-            <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2 font-spartan">
-              No restaurants found
-            </h3>
-            <p className="text-gray-500 font-spartan">
-              Get started by adding your first restaurant
-            </p>
-          </div>
-        )}
+        {/* Loading and End Indicators */}
+        {isLoading && <LoadingIndicator />}
+        {!hasMore && displayedRestaurants.length > 0 && <EndOfListIndicator />}
       </div>
+
+      {/* Scroll to top button */}
+      {displayedRestaurants.length > 20 && (
+        <button
+          onClick={() => {
+            if (listRef.current) {
+              listRef.current.scrollToItem(0, 'start');
+            }
+          }}
+          className="fixed bottom-6 right-6 p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-colors z-50"
+          title="Scroll to top"
+        >
+          <ChevronUp className="w-5 h-5" />
+        </button>
+      )}
     </div>
   );
 };

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Building2, Plus, TrendingUp, Clock, Users, List, Grid, Brain } from 'lucide-react';
 import RestaurantCard from './RestaurantCard';
 import RestaurantListView from './RestaurantListView';
+import RestaurantGrid from './RestaurantGrid';
 
 const RestaurantManagement = ({ 
   restaurants, 
@@ -11,7 +12,8 @@ const RestaurantManagement = ({
   onToggleAI,
   onEdit, 
   onDelete, 
-  onClick 
+  onClick,
+  onLoadMore 
 }) => {
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
 
@@ -43,153 +45,173 @@ const RestaurantManagement = ({
 
   if (loading) {
     return (
-      <div className="space-y-8 font-spartan">
-        {/* Loading Overview */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 animate-pulse">
-          <div className="flex items-center justify-between mb-4">
-            <div className="h-6 bg-gray-200 rounded w-24"></div>
-            <div className="h-10 bg-gray-200 rounded w-32"></div>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 font-spartan">
+              Restaurant Management
+            </h3>
+            <p className="text-sm text-gray-600 font-spartan">
+              Manage all restaurants in your network
+            </p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {[...Array(6)].map((_, index) => (
-              <div key={index} className="text-center">
-                <div className="h-8 bg-gray-200 rounded mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-16 mx-auto"></div>
-              </div>
-            ))}
-          </div>
+          <button
+            onClick={onAddRestaurant}
+            className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-spartan"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="font-medium font-spartan">Add Restaurant</span>
+          </button>
+        </div>
+        
+        {/* Loading Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {[...Array(6)].map((_, index) => (
+            <div key={index} className="text-center p-4 bg-gray-50 rounded-xl border border-gray-200 animate-pulse">
+              <div className="w-10 h-10 bg-gray-200 rounded-full mx-auto mb-3"></div>
+              <div className="h-6 bg-gray-200 rounded mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded"></div>
+            </div>
+          ))}
         </div>
 
         {/* Loading Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, index) => (
-            <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-pulse">
-              <div className="h-4 bg-gray-200 rounded mb-4"></div>
-              <div className="h-3 bg-gray-200 rounded mb-2"></div>
-              <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-            </div>
-          ))}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, index) => (
+              <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-pulse">
+                <div className="h-4 bg-gray-200 rounded mb-4"></div>
+                <div className="h-3 bg-gray-200 rounded mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 font-spartan">
-      {/* Enhanced Stats with Add Button */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 font-spartan">Overview</h3>
-          <button
-            onClick={onAddRestaurant}
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md font-spartan"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            <span className="font-medium font-spartan">Add Restaurant</span>
-          </button>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 font-spartan">
+            Restaurant Management
+          </h3>
+          <p className="text-sm text-gray-600 font-spartan">
+            Manage all restaurants in your network
+          </p>
+        </div>
+        <button
+          onClick={onAddRestaurant}
+          className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-spartan"
+        >
+          <Plus className="w-4 h-4" />
+          <span className="font-medium font-spartan">Add Restaurant</span>
+        </button>
+      </div>
+      
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-200">
+          <div className="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center mx-auto mb-3">
+            <Building2 className="w-5 h-5 text-white" />
+          </div>
+          <div className="text-xl font-bold text-gray-900 font-spartan">{stats.total}</div>
+          <div className="text-sm text-gray-600 font-spartan">Total</div>
         </div>
         
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-200">
-            <div className="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Building2 className="w-5 h-5 text-white" />
-            </div>
-            <div className="text-xl font-bold text-gray-900 font-spartan">{stats.total}</div>
-            <div className="text-sm text-gray-600 font-spartan">Total</div>
+        <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-200">
+          <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-3">
+            <Building2 className="w-5 h-5 text-white" />
           </div>
-          
-          <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-200">
-            <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Building2 className="w-5 h-5 text-white" />
-            </div>
-            <div className="text-xl font-bold text-gray-900 font-spartan">{stats.active}</div>
-            <div className="text-sm text-gray-600 font-spartan">Active</div>
+          <div className="text-xl font-bold text-gray-900 font-spartan">{stats.active}</div>
+          <div className="text-sm text-gray-600 font-spartan">Active</div>
+        </div>
+        
+        <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-200">
+          <div className="w-10 h-10 bg-gray-400 rounded-full flex items-center justify-center mx-auto mb-3">
+            <Building2 className="w-5 h-5 text-white" />
           </div>
-          
-          <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-200">
-            <div className="w-10 h-10 bg-gray-400 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Building2 className="w-5 h-5 text-white" />
-            </div>
-            <div className="text-xl font-bold text-gray-900 font-spartan">{stats.inactive}</div>
-            <div className="text-sm text-gray-600 font-spartan">Inactive</div>
+          <div className="text-xl font-bold text-gray-900 font-spartan">{stats.inactive}</div>
+          <div className="text-sm text-gray-600 font-spartan">Inactive</div>
+        </div>
+        
+        <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-200">
+          <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
+            <Users className="w-5 h-5 text-white" />
           </div>
-          
-          <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-200">
-            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Users className="w-5 h-5 text-white" />
-            </div>
-            <div className="text-xl font-bold text-gray-900 font-spartan">{stats.totalStaff}</div>
-            <div className="text-sm text-gray-600 font-spartan">Staff</div>
-          </div>
+          <div className="text-xl font-bold text-gray-900 font-spartan">{stats.totalStaff}</div>
+          <div className="text-sm text-gray-600 font-spartan">Staff</div>
+        </div>
 
-          <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-200">
-            <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Brain className="w-5 h-5 text-white" />
-            </div>
-            <div className="text-xl font-bold text-gray-900 font-spartan">{stats.aiEnabled}</div>
-            <div className="text-sm text-gray-600 font-spartan">AI Enabled</div>
+        <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-200">
+          <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-3">
+            <Brain className="w-5 h-5 text-white" />
           </div>
+          <div className="text-xl font-bold text-gray-900 font-spartan">{stats.aiEnabled}</div>
+          <div className="text-sm text-gray-600 font-spartan">AI Enabled</div>
+        </div>
 
-          <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-200">
-            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Clock className="w-5 h-5 text-white" />
+        <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-200">
+          <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
+            <Clock className="w-5 h-5 text-white" />
+          </div>
+          <div className="text-xl font-bold text-gray-900 font-spartan">{stats.recentlyUpdated}</div>
+          <div className="text-sm text-gray-600 font-spartan">Recently Updated</div>
+        </div>
+      </div>
+
+      {/* Additional Growth Information */}
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-blue-600 font-medium font-spartan">Growth This Month</p>
+              <p className="text-2xl font-bold text-blue-900 font-spartan">{stats.newThisMonth}</p>
+              <p className="text-xs text-blue-600 font-spartan">new restaurants</p>
             </div>
-            <div className="text-xl font-bold text-gray-900 font-spartan">{stats.recentlyUpdated}</div>
-            <div className="text-sm text-gray-600 font-spartan">Recently Updated</div>
+            <TrendingUp className="w-8 h-8 text-blue-500" />
           </div>
         </div>
 
-        {/* Additional Growth Information */}
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-blue-600 font-medium font-spartan">Growth This Month</p>
-                <p className="text-2xl font-bold text-blue-900 font-spartan">{stats.newThisMonth}</p>
-                <p className="text-xs text-blue-600 font-spartan">new restaurants</p>
-              </div>
-              <TrendingUp className="w-8 h-8 text-blue-500" />
+        <div className="p-4 bg-green-50 rounded-xl border border-green-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-green-600 font-medium font-spartan">Active Rate</p>
+              <p className="text-2xl font-bold text-green-900 font-spartan">
+                {stats.total > 0 ? Math.round((stats.active / stats.total) * 100) : 0}%
+              </p>
+              <p className="text-xs text-green-600 font-spartan">of restaurants active</p>
             </div>
+            <Building2 className="w-8 h-8 text-green-500" />
           </div>
+        </div>
 
-          <div className="p-4 bg-green-50 rounded-xl border border-green-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-green-600 font-medium font-spartan">Active Rate</p>
-                <p className="text-2xl font-bold text-green-900 font-spartan">
-                  {stats.total > 0 ? Math.round((stats.active / stats.total) * 100) : 0}%
-                </p>
-                <p className="text-xs text-green-600 font-spartan">of restaurants active</p>
-              </div>
-              <Building2 className="w-8 h-8 text-green-500" />
+        <div className="p-4 bg-purple-50 rounded-xl border border-purple-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-purple-600 font-medium font-spartan">AI Adoption</p>
+              <p className="text-2xl font-bold text-purple-900 font-spartan">
+                {stats.total > 0 ? Math.round((stats.aiEnabled / stats.total) * 100) : 0}%
+              </p>
+              <p className="text-xs text-purple-600 font-spartan">using AI analytics</p>
             </div>
+            <Brain className="w-8 h-8 text-purple-500" />
           </div>
+        </div>
 
-          <div className="p-4 bg-purple-50 rounded-xl border border-purple-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-purple-600 font-medium font-spartan">AI Adoption</p>
-                <p className="text-2xl font-bold text-purple-900 font-spartan">
-                  {stats.total > 0 ? Math.round((stats.aiEnabled / stats.total) * 100) : 0}%
-                </p>
-                <p className="text-xs text-purple-600 font-spartan">using AI analytics</p>
-              </div>
-              <Brain className="w-8 h-8 text-purple-500" />
+        <div className="p-4 bg-orange-50 rounded-xl border border-orange-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-orange-600 font-medium font-spartan">Avg Staff per Restaurant</p>
+              <p className="text-2xl font-bold text-orange-900 font-spartan">
+                {stats.total > 0 ? Math.round(stats.totalStaff / stats.total) : 0}
+              </p>
+              <p className="text-xs text-orange-600 font-spartan">staff members</p>
             </div>
-          </div>
-
-          <div className="p-4 bg-orange-50 rounded-xl border border-orange-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-orange-600 font-medium font-spartan">Avg Staff per Restaurant</p>
-                <p className="text-2xl font-bold text-orange-900 font-spartan">
-                  {stats.total > 0 ? Math.round(stats.totalStaff / stats.total) : 0}
-                </p>
-                <p className="text-xs text-orange-600 font-spartan">staff members</p>
-              </div>
-              <Users className="w-8 h-8 text-orange-500" />
-            </div>
+            <Users className="w-8 h-8 text-orange-500" />
           </div>
         </div>
       </div>
@@ -249,24 +271,15 @@ const RestaurantManagement = ({
         ) : (
           <>
             {viewMode === 'grid' ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {restaurants.map((restaurant, index) => (
-                  <div
-                    key={restaurant.id}
-                    className="transform transition-all duration-300 hover:scale-[1.02]"
-                    style={{ animationDelay: `${index * 100}ms` }}
-                  >
-                    <RestaurantCard
-                      restaurant={restaurant}
-                      onToggleStatus={onToggleStatus}
-                      onToggleAI={onToggleAI}
-                      onEdit={onEdit}
-                      onDelete={onDelete}
-                      onClick={onClick}
-                    />
-                  </div>
-                ))}
-              </div>
+              <RestaurantGrid
+                restaurants={restaurants}
+                onToggleStatus={onToggleStatus}
+                onToggleAI={onToggleAI}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onClick={onClick}
+                onLoadMore={onLoadMore}
+              />
             ) : (
               <RestaurantListView
                 restaurants={restaurants}
@@ -275,6 +288,7 @@ const RestaurantManagement = ({
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onClick={onClick}
+                onLoadMore={onLoadMore}
               />
             )}
           </>

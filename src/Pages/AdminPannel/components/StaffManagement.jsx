@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { Building2, Users, Plus, List, Grid } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Users, Plus, List, Grid, Building2 } from 'lucide-react';
 import StaffStats from './StaffStats';
 import RestaurantStaffSection from './RestaurantStaffSection';
+import RestaurantStaffGrid from './RestaurantStaffGrid';
 import StaffListView from './StaffListView';
+import StaffGrid from './StaffGrid';
 
 const StaffManagement = ({ 
   staff, 
@@ -11,21 +13,41 @@ const StaffManagement = ({
   setSelectedRestaurantId, 
   onAddStaff, 
   onEdit, 
-  onDelete 
+  onDelete,
+  onLoadMore 
 }) => {
-  const [viewMode, setViewMode] = useState('restaurant'); // 'restaurant' or 'list'
+  const [viewMode, setViewMode] = useState('restaurant'); // 'restaurant', 'list', 'grid'
+  const [restaurantViewMode, setRestaurantViewMode] = useState('table'); // 'table', 'grid'
+
+  // Filter staff based on selected restaurant
+  const filteredStaff = useMemo(() => {
+    return staff.filter(member =>
+      (!selectedRestaurantId || member.restaurant_id === selectedRestaurantId)
+    );
+  }, [staff, selectedRestaurantId]);
 
   // Group staff by restaurant
   const getRestaurantStaff = (restaurantId) => {
     return staff.filter(s => s.restaurant_id === restaurantId);
   };
 
-  // Check if restaurant should be shown - removed filtering logic
+  // Check if restaurant should be shown
   const shouldShowRestaurant = (restaurant) => {
-    // Only filter by selectedRestaurantId if it's set, but don't hide other restaurants when one is expanded
     if (selectedRestaurantId && restaurant.id !== selectedRestaurantId) return false;
-    
     return true;
+  };
+
+  // Calculate stats
+  const stats = {
+    total: staff.length,
+    managers: staff.filter(s => s.role === 'manager').length,
+    captains: staff.filter(s => s.role === 'captain').length,
+    connected: staff.filter(s => s.connected).length,
+    disconnected: staff.filter(s => !s.connected).length,
+    byRestaurant: restaurants.reduce((acc, restaurant) => {
+      acc[restaurant.id] = getRestaurantStaff(restaurant.id).length;
+      return acc;
+    }, {})
   };
 
   return (
@@ -49,41 +71,85 @@ const StaffManagement = ({
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900 font-spartan">Staff Members</h3>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setViewMode('restaurant')}
-              className={`p-2 rounded-lg transition-all duration-200 ${
-                viewMode === 'restaurant'
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-              title="Restaurant View"
-            >
-              <Grid className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`p-2 rounded-lg transition-all duration-200 ${
-                viewMode === 'list'
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-              title="List View"
-            >
-              <List className="w-4 h-4" />
-            </button>
+          <div className="flex items-center space-x-4">
+            <div className="text-sm text-gray-500 font-spartan">
+              {filteredStaff.length} staff member{filteredStaff.length !== 1 ? 's' : ''}
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setViewMode('restaurant')}
+                className={`p-2 rounded-lg transition-all duration-200 ${
+                  viewMode === 'restaurant'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                title="Restaurant View"
+              >
+                <Building2 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2 rounded-lg transition-all duration-200 ${
+                  viewMode === 'list'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                title="List View"
+              >
+                <List className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded-lg transition-all duration-200 ${
+                  viewMode === 'grid'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                title="Grid View"
+              >
+                <Grid className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Restaurant Staff Sections */}
+        {/* Restaurant View Mode Toggle */}
+        {viewMode === 'restaurant' && (
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-md font-medium text-gray-700 font-spartan">Restaurant Staff</h4>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setRestaurantViewMode('table')}
+                className={`p-2 rounded-lg transition-all duration-200 ${
+                  restaurantViewMode === 'table'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                title="Table View"
+              >
+                <List className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setRestaurantViewMode('grid')}
+                className={`p-2 rounded-lg transition-all duration-200 ${
+                  restaurantViewMode === 'grid'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                title="Grid View"
+              >
+                <Grid className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Staff Views */}
         {viewMode === 'restaurant' ? (
           restaurants.length > 0 ? (
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h4 className="text-md font-medium text-gray-700 font-spartan">Restaurant Staff</h4>
-                <div className="text-sm text-gray-500 font-spartan">
-                  {restaurants.length} restaurants
-                </div>
+              <div className="text-sm text-gray-500 font-spartan">
+                {restaurants.length} restaurants
               </div>
               
               {restaurants.map((restaurant, index) => {
@@ -95,16 +161,31 @@ const StaffManagement = ({
                     className="transform transition-all duration-300 hover:scale-[1.02]"
                     style={{ animationDelay: `${index * 100}ms` }}
                   >
-                    <RestaurantStaffSection
-                      restaurant={restaurant}
-                      restaurantStaff={restaurantStaff}
-                      filteredRestaurantStaff={restaurantStaff}
-                      selectedRestaurantId={selectedRestaurantId}
-                      setSelectedRestaurantId={setSelectedRestaurantId}
-                      onEdit={onEdit}
-                      onDelete={onDelete}
-                      onAddStaff={() => onAddStaff(restaurant.id)}
-                    />
+                    {restaurantViewMode === 'table' ? (
+                      <RestaurantStaffSection
+                        restaurant={restaurant}
+                        restaurantStaff={restaurantStaff}
+                        filteredRestaurantStaff={restaurantStaff}
+                        selectedRestaurantId={selectedRestaurantId}
+                        setSelectedRestaurantId={setSelectedRestaurantId}
+                        onEdit={onEdit}
+                        onDelete={onDelete}
+                        onAddStaff={() => onAddStaff(restaurant.id)}
+                        onLoadMore={onLoadMore}
+                      />
+                    ) : (
+                      <RestaurantStaffGrid
+                        restaurant={restaurant}
+                        restaurantStaff={restaurantStaff}
+                        filteredRestaurantStaff={restaurantStaff}
+                        selectedRestaurantId={selectedRestaurantId}
+                        setSelectedRestaurantId={setSelectedRestaurantId}
+                        onEdit={onEdit}
+                        onDelete={onDelete}
+                        onAddStaff={() => onAddStaff(restaurant.id)}
+                        onLoadMore={onLoadMore}
+                      />
+                    )}
                   </div>
                 );
               })}
@@ -123,13 +204,22 @@ const StaffManagement = ({
               </button>
             </div>
           )
-        ) : (
+        ) : viewMode === 'list' ? (
           <StaffListView
-            staff={staff}
+            staff={filteredStaff}
             restaurants={restaurants}
             onEdit={onEdit}
             onDelete={onDelete}
             onAddStaff={onAddStaff}
+            onLoadMore={onLoadMore}
+          />
+        ) : (
+          <StaffGrid
+            staff={filteredStaff}
+            restaurants={restaurants}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onLoadMore={onLoadMore}
           />
         )}
       </div>

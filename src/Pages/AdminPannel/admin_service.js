@@ -4,9 +4,8 @@ import { validateImageFile, optimizeImageForUpload } from '../../utils/imageOpti
 // Use the regular supabase client since you have admin permissions via RLS
 const supabaseClient = supabase;
 
-// Debug function to check client configuration
-const debugClientConfig = () => {
-};
+// DRY: Define email regex once
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Test function to check database connection
 export const testDatabaseConnection = async () => {
@@ -289,7 +288,6 @@ const validateRestaurantData = (data) => {
     errors.push('Manager email is required');
   }
   
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (data.manager_email && !emailRegex.test(data.manager_email)) {
     errors.push('Invalid manager email format');
   }
@@ -325,7 +323,6 @@ const validateStaffData = (data) => {
     errors.push('Staff email is required');
   }
   
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (data.email && !emailRegex.test(data.email)) {
     errors.push('Invalid email format');
   }
@@ -393,9 +390,9 @@ export const createRestaurant = async (restaurantData) => {
 
     // Create manager staff record
     if (restaurantData.manager_email) {
-      const { error: staffError } = await supabase
-      .from('restaurant_staff')
-      .insert({
+      await supabase
+        .from('restaurant_staff')
+        .insert({
           restaurant_id: restaurant.id,
           staff_role: 'manager',
           staff_name: restaurantData.manager_name || 'Manager',
@@ -403,9 +400,6 @@ export const createRestaurant = async (restaurantData) => {
           staff_phone_number: restaurantData.manager_phone,
           connected: false
         });
-
-      if (staffError) {
-      }
     }
 
     return { data: restaurant, error: null };
@@ -442,9 +436,9 @@ export const updateRestaurant = async (restaurantId, updateData) => {
       throw new Error(validationErrors.join(', '));
     }
 
-    // Prepare location data
+    // FIX: Correct longitude/latitude order
     const locationData = updateData.latitude && updateData.longitude 
-      ? `POINT(${updateData.longitude} ${updateData.longitude})`
+      ? `POINT(${updateData.longitude} ${updateData.latitude})`
       : null;
 
     // Prepare social media data
@@ -497,6 +491,8 @@ export const deleteRestaurant = async (restaurantId) => {
       .eq('restaurant_id', restaurantId);
 
     if (staffError) {
+      // LOG error for debugging
+      console.error(staffError);
     }
 
     // Then delete the restaurant
@@ -599,32 +595,40 @@ export const createStaff = async (staffData) => {
 /**
  * Update staff member
  */
-export const updateStaff = async (staffId, updates) => {
+export const updateStaff = async (id, updates) => {
+  console.log('🔍 updateStaff called with:', { id, updates });
+  
   try {
-    // Validate data
-    const validationErrors = validateStaffData(updates);
-    if (validationErrors.length > 0) {
-      throw new Error(validationErrors.join(', '));
-    }
-
-    const { data, error } = await supabase
-      .from('restaurant_staff')
-      .update({
-        staff_role: updates.role,
+    // Map frontend fields to database fields (remove updated_at)
+    const dbUpdates = {
+      staff_role: updates.role,
       staff_name: updates.name,
       staff_email: updates.email,
       staff_phone_number: updates.phone_number,
-        restaurant_id: updates.restaurant_id,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', staffId)
-      .select()
+      restaurant_id: updates.restaurant_id
+      // Removed updated_at since it doesn't exist in the table
+    };
+    
+    console.log('🔍 Mapped to database fields:', dbUpdates);
+    
+    const result = await supabase
+      .from('restaurant_staff')
+      .update(dbUpdates)
+      .eq('id', id)
       .single();
-
-    if (error) throw error;
-    return { data, error: null };
+    
+    console.log('🔍 Supabase response:', result);
+    
+    if (result.error) {
+      console.error('❌ Supabase error:', result.error);
+      throw new Error(result.error.message);
+    }
+    
+    console.log('✅ Staff updated successfully in database');
+    return result;
   } catch (error) {
-    return { data: null, error: error.message };
+    console.error('❌ Error in updateStaff:', error);
+    throw error;
   }
 };
 
@@ -645,36 +649,374 @@ export const deleteStaff = async (staffId) => {
   }
 };
 
-const handleToggleRestaurantAI = async (id) => {
-  try {
-    const restaurant = restaurants.find(r => r.id === id);
-    const newAIStatus = !restaurant.ai_enabled;
+// ========= RESTAURANT MANAGER FUNCTIONS =========
 
-    const { error } = await supabase
-      .from('restaurants')
-      .update({ ai_enabled: newAIStatus })
-      .eq('id', id);
+/**
+ * Get managers for a specific restaurant
+ */
+export const getRestaurantManagers = async (restaurantId) => {
+  try {
+    const { data, error } = await supabase
+      .from('restaurant_staff')
+      .select('*')
+      .eq('restaurant_id', restaurantId)
+      .eq('staff_role', 'manager');
 
     if (error) {
-      handleError('Failed to update AI status: ' + error.message);
-      return;
+      throw error;
     }
 
-    // Update local state
-    setRestaurants(prev =>
-      prev.map(r =>
-        r.id === id
-          ? { ...r, ai_enabled: newAIStatus }
-          : r
-      )
-    );
-    // If you have a selectedRestaurant state, update it too:
-    if (selectedRestaurant?.id === id) {
-      setSelectedRestaurant(prev => ({ ...prev, ai_enabled: newAIStatus }));
+    return { data: data || [], error: null };
+  } catch (error) {
+    return { data: [], error: error.message };
+  }
+};
+
+/**
+ * Update manager details
+ */
+export const updateManagerDetails = async (managerId, managerData) => {
+  try {
+    const { data, error } = await supabase
+      .from('restaurant_staff')
+      .update({
+        staff_name: managerData.manager_name,
+        staff_email: managerData.manager_email,
+        staff_phone_number: managerData.manager_phone
+      })
+      .eq('id', managerId)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
     }
 
-    handleSuccess(`AI analytics ${newAIStatus ? 'enabled' : 'disabled'} successfully`);
-  } catch (err) {
-    handleError('Failed to toggle AI status: ' + err.message);
+    return { data, error: null };
+  } catch (error) {
+    return { data: null, error: error.message };
+  }
+};
+
+// ========= SUBSCRIPTION MANAGEMENT =========
+
+/**
+ * Get subscription plans (hardcoded)
+ */
+export const getSubscriptionPlans = async () => {
+  const plans = [
+    {
+      id: 'basic',
+      name: 'Basic Plan',
+      description: 'Standard restaurant management without AI features',
+      price: 1999,
+      duration_months: 1,
+      features: ['Order Management', 'Staff Management', 'Menu Management', 'Basic Analytics'],
+      max_orders_per_month: 1000,
+      max_staff_members: 10,
+      ai_features_enabled: false,
+      is_active: true
+    },
+    {
+      id: 'premium',
+      name: 'Premium Plan',
+      description: 'Advanced restaurant management with AI analytics',
+      price: 2599,
+      duration_months: 1,
+      features: ['Order Management', 'Staff Management', 'Menu Management', 'AI Analytics', 'Smart Recommendations', 'Predictive Insights'],
+      max_orders_per_month: 5000,
+      max_staff_members: 25,
+      ai_features_enabled: true,
+      is_active: true
+    }
+  ];
+  
+  return { data: plans, error: null };
+};
+
+/**
+ * Get restaurant subscriptions
+ */
+export const getRestaurantSubscriptions = async () => {
+  try {
+    const { data: restaurants, error } = await supabase
+      .from('restaurants')
+      .select(`
+        id,
+        name,
+        contact_email,
+        contact_phone,
+        ai_enabled,
+        subscription_plan,
+        subscription_start_date,
+        subscription_end_date,
+        subscription_status,
+        subscription_amount_paid,
+        subscription_payment_method,
+        subscription_notes,
+        created_at,
+        updated_at
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    const plans = await getSubscriptionPlans();
+    const plansMap = {};
+    plans.data.forEach(plan => {
+      plansMap[plan.id] = plan;
+    });
+
+    const subscriptions = restaurants.map(restaurant => {
+      const plan = plansMap[restaurant.subscription_plan] || plansMap['basic'];
+      
+      return {
+        id: restaurant.id,
+        restaurant_id: restaurant.id,
+        plan_id: restaurant.subscription_plan || 'basic',
+        restaurant: {
+          id: restaurant.id,
+          name: restaurant.name,
+          contact_email: restaurant.contact_email,
+          contact_phone: restaurant.contact_phone
+        },
+        plan: plan,
+        start_date: restaurant.subscription_start_date,
+        end_date: restaurant.subscription_end_date,
+        status: restaurant.subscription_status || 'inactive',
+        payment_status: restaurant.subscription_amount_paid ? 'paid' : 'pending',
+        amount_paid: restaurant.subscription_amount_paid || 0,
+        payment_method: restaurant.subscription_payment_method || 'online',
+        notes: restaurant.subscription_notes,
+        created_at: restaurant.created_at,
+        updated_at: restaurant.updated_at
+      };
+    });
+
+    return { data: subscriptions, error: null };
+  } catch (error) {
+    return { data: [], error: error.message };
+  }
+};
+
+/**
+ * Assign subscription to restaurant
+ */
+export const assignSubscriptionToRestaurant = async (subscriptionData) => {
+  try {
+    const plans = await getSubscriptionPlans();
+    const plan = plans.data.find(p => p.id === subscriptionData.plan_id) || plans.data[0];
+    
+    const { data, error } = await supabase
+      .from('restaurants')
+      .update({
+        subscription_plan: subscriptionData.plan_id,
+        subscription_start_date: subscriptionData.start_date,
+        subscription_end_date: subscriptionData.end_date,
+        subscription_status: subscriptionData.status || 'active',
+        subscription_amount_paid: subscriptionData.amount_paid,
+        subscription_payment_method: subscriptionData.payment_method,
+        subscription_notes: subscriptionData.notes,
+        ai_enabled: plan.ai_features_enabled,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', subscriptionData.restaurant_id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    const subscription = {
+      id: data.id,
+      restaurant_id: data.id,
+      plan_id: data.subscription_plan,
+      restaurant: {
+        id: data.id,
+        name: data.name,
+        contact_email: data.contact_email,
+        contact_phone: data.contact_phone
+      },
+      plan: plan,
+      start_date: data.subscription_start_date,
+      end_date: data.subscription_end_date,
+      status: data.subscription_status,
+      payment_status: data.subscription_amount_paid ? 'paid' : 'pending',
+      amount_paid: data.subscription_amount_paid,
+      payment_method: data.subscription_payment_method,
+      notes: data.subscription_notes
+    };
+
+    return { data: subscription, error: null };
+  } catch (error) {
+    return { data: null, error: error.message };
+  }
+};
+
+/**
+ * Update restaurant subscription
+ */
+export const updateRestaurantSubscription = async (subscriptionId, updates) => {
+  try {
+    const plans = await getSubscriptionPlans();
+    const plan = plans.data.find(p => p.id === updates.plan_id) || plans.data[0];
+    
+    const { data, error } = await supabase
+      .from('restaurants')
+      .update({
+        subscription_plan: updates.plan_id,
+        subscription_start_date: updates.start_date,
+        subscription_end_date: updates.end_date,
+        subscription_status: updates.status,
+        subscription_amount_paid: updates.amount_paid,
+        subscription_payment_method: updates.payment_method,
+        subscription_notes: updates.notes,
+        ai_enabled: plan.ai_features_enabled,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', subscriptionId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    const subscription = {
+      id: data.id,
+      restaurant_id: data.id,
+      plan_id: data.subscription_plan,
+      restaurant: {
+        id: data.id,
+        name: data.name,
+        contact_email: data.contact_email,
+        contact_phone: data.contact_phone
+      },
+      plan: plan,
+      start_date: data.subscription_start_date,
+      end_date: data.subscription_end_date,
+      status: data.subscription_status,
+      payment_status: data.subscription_amount_paid ? 'paid' : 'pending',
+      amount_paid: data.subscription_amount_paid,
+      payment_method: data.subscription_payment_method,
+      notes: data.subscription_notes
+    };
+
+    return { data: subscription, error: null };
+  } catch (error) {
+    return { data: null, error: error.message };
+  }
+};
+
+/**
+ * Cancel restaurant subscription
+ */
+export const cancelRestaurantSubscription = async (subscriptionId) => {
+  try {
+    const { data, error } = await supabase
+      .from('restaurants')
+      .update({
+        subscription_status: 'cancelled',
+        ai_enabled: false,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', subscriptionId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    return { data: null, error: error.message };
+  }
+};
+
+/**
+ * Get subscription statistics
+ */
+export const getSubscriptionStats = async () => {
+  try {
+    const { data: restaurants, error } = await supabase
+      .from('restaurants')
+      .select('subscription_plan, subscription_status, subscription_amount_paid, subscription_end_date');
+
+    if (error) throw error;
+
+    const totalSubscriptions = restaurants.filter(r => r.subscription_plan).length;
+    const activeSubscriptions = restaurants.filter(r => r.subscription_status === 'active').length;
+    const expiredSubscriptions = restaurants.filter(r => 
+      r.subscription_end_date && new Date(r.subscription_end_date) < new Date() && r.subscription_status === 'active'
+    ).length;
+
+    const totalRevenue = restaurants
+      .filter(r => r.subscription_amount_paid)
+      .reduce((sum, r) => sum + (r.subscription_amount_paid || 0), 0);
+
+    const basicSubscriptions = restaurants.filter(r => r.subscription_plan === 'basic').length;
+    const premiumSubscriptions = restaurants.filter(r => r.subscription_plan === 'premium').length;
+
+    return {
+      data: {
+        totalSubscriptions,
+        activeSubscriptions,
+        expiredSubscriptions,
+        totalRevenue,
+        basicSubscriptions,
+        premiumSubscriptions,
+        cancellationRate: totalSubscriptions > 0 ? 
+          ((totalSubscriptions - activeSubscriptions) / totalSubscriptions * 100).toFixed(2) : 0
+      },
+      error: null
+    };
+  } catch (error) {
+    return { data: null, error: error.message };
+  }
+};
+
+/**
+ * Get upcoming renewals
+ */
+export const getUpcomingRenewals = async (days = 30) => {
+  try {
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + days);
+
+    const { data: restaurants, error } = await supabase
+      .from('restaurants')
+      .select(`
+        id,
+        name,
+        contact_email,
+        subscription_plan,
+        subscription_end_date
+      `)
+      .eq('subscription_status', 'active')
+      .lte('subscription_end_date', futureDate.toISOString())
+      .gte('subscription_end_date', new Date().toISOString())
+      .order('subscription_end_date', { ascending: true });
+
+    if (error) throw error;
+
+    const plans = await getSubscriptionPlans();
+    const plansMap = {};
+    plans.data.forEach(plan => {
+      plansMap[plan.id] = plan;
+    });
+
+    const renewals = restaurants.map(restaurant => {
+      const plan = plansMap[restaurant.subscription_plan] || plansMap['basic'];
+      
+      return {
+        id: restaurant.id,
+        restaurant: {
+          id: restaurant.id,
+          name: restaurant.name,
+          contact_email: restaurant.contact_email
+        },
+        plan: plan,
+        end_date: restaurant.subscription_end_date
+      };
+    });
+
+    return { data: renewals, error: null };
+  } catch (error) {
+    return { data: [], error: error.message };
   }
 };

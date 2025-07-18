@@ -1,81 +1,196 @@
-import React from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { Building2, Loader2, ChevronUp } from 'lucide-react';
 import RestaurantCard from './RestaurantCard';
-import { Plus } from 'lucide-react';
 
 const RestaurantGrid = ({ 
   restaurants, 
-  loading, 
-  onAddRestaurant, 
   onToggleStatus, 
+  onToggleAI,
   onEdit, 
   onDelete, 
-  onClick 
+  onClick,
+  onLoadMore 
 }) => {
-  if (loading) {
+  // Infinite scroll state
+  const [displayedRestaurants, setDisplayedRestaurants] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(12); // Show 12 restaurants per page (4 rows of 3)
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  
+  const gridRef = useRef(null);
+  const observerRef = useRef(null);
+
+  // Initialize displayed restaurants
+  useEffect(() => {
+    const initialRestaurants = restaurants.slice(0, itemsPerPage);
+    setDisplayedRestaurants(initialRestaurants);
+    setHasMore(restaurants.length > itemsPerPage);
+    setCurrentPage(1);
+  }, [restaurants, itemsPerPage]);
+
+  // Load more restaurants
+  const loadMore = useCallback(async () => {
+    if (isLoading || !hasMore) return;
+
+    setIsLoading(true);
+    
+    try {
+      const nextPage = currentPage + 1;
+      const startIndex = (nextPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      
+      // If we have local data, use it
+      if (restaurants.length >= endIndex) {
+        const newRestaurants = restaurants.slice(startIndex, endIndex);
+        setDisplayedRestaurants(prev => [...prev, ...newRestaurants]);
+        setCurrentPage(nextPage);
+        setHasMore(endIndex < restaurants.length);
+      } else {
+        // If we need to fetch more data from server
+        if (onLoadMore) {
+          const newRestaurants = await onLoadMore(nextPage, itemsPerPage);
+          if (newRestaurants && newRestaurants.length > 0) {
+            setDisplayedRestaurants(prev => [...prev, ...newRestaurants]);
+            setCurrentPage(nextPage);
+            setHasMore(newRestaurants.length === itemsPerPage);
+          } else {
+            setHasMore(false);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading more restaurants:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isLoading, hasMore, currentPage, itemsPerPage, restaurants, onLoadMore]);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && hasMore && !isLoading) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1, rootMargin: '100px' }
+    );
+
+    observerRef.current = observer;
+    return () => observer.disconnect();
+  }, [loadMore, hasMore, isLoading]);
+
+  // Observe the last item for infinite scroll
+  const observeLastItem = useCallback((index) => {
+    if (index === displayedRestaurants.length - 1 && hasMore && !isLoading) {
+      const lastItem = document.querySelector(`[data-restaurant-index="${index}"]`);
+      if (lastItem && observerRef.current) {
+        observerRef.current.observe(lastItem);
+      }
+    }
+  }, [displayedRestaurants.length, hasMore, isLoading]);
+
+  // Loading indicator component
+  const LoadingIndicator = useCallback(() => (
+    <div className="col-span-full flex items-center justify-center py-12">
+      <div className="flex items-center space-x-3 text-gray-600">
+        <Loader2 className="w-6 h-6 animate-spin" />
+        <span className="text-sm font-spartan">Loading more restaurants...</span>
+      </div>
+    </div>
+  ), []);
+
+  // End of list indicator
+  const EndOfListIndicator = useCallback(() => (
+    <div className="col-span-full flex items-center justify-center py-12">
+      <div className="text-center">
+        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Building2 className="w-8 h-8 text-gray-400" />
+        </div>
+        <p className="text-sm text-gray-600 font-spartan">All restaurants loaded</p>
+        <p className="text-xs text-gray-500 font-spartan mt-1">
+          Showing {displayedRestaurants.length} of {restaurants.length} total restaurants
+        </p>
+      </div>
+    </div>
+  ), [displayedRestaurants.length, restaurants.length]);
+
+  if (restaurants.length === 0) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[...Array(6)].map((_, index) => (
-          <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-pulse">
-            <div className="h-4 bg-gray-200 rounded mb-4"></div>
-            <div className="h-3 bg-gray-200 rounded mb-2"></div>
-            <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-          </div>
-        ))}
+      <div className="text-center py-20 bg-gray-50 rounded-2xl border border-gray-200">
+        <div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-8 shadow-lg">
+          <Building2 className="h-16 w-16 text-gray-400" />
+        </div>
+        <h3 className="text-2xl font-bold text-gray-900 mb-3 font-spartan">No restaurants yet</h3>
+        <p className="text-gray-600 mb-8 max-w-md mx-auto text-lg font-spartan">
+          Get started by adding your first restaurant to your network
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 font-spartan">
-      {/* Header */}
-      <div className="flex justify-between items-center">
+    <div className="space-y-4">
+      {/* Header with stats */}
+      <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 font-spartan">
-            Restaurant Management
-          </h3>
-          <p className="text-sm text-gray-600 font-spartan">
-            Manage all restaurants in your network
+          <h4 className="text-md font-medium text-gray-700 font-spartan">Restaurant Grid</h4>
+          <p className="text-sm text-gray-500 font-spartan">
+            Showing {displayedRestaurants.length} of {restaurants.length} restaurants
+            {hasMore && (
+              <span className="ml-2 text-blue-600">
+                • Scroll to load more
+              </span>
+            )}
           </p>
         </div>
-        <button
-          onClick={onAddRestaurant}
-          className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-spartan"
-        >
-          <Plus className="w-4 h-4" />
-          <span className="font-medium font-spartan">Add Restaurant</span>
-        </button>
       </div>
 
-      {/* Grid */}
-      {restaurants.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Plus className="w-8 h-8 text-gray-400" />
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2 font-spartan">No restaurants yet</h3>
-          <p className="text-gray-600 mb-4 font-spartan">
-            Get started by adding your first restaurant
-          </p>
-          <button
-            onClick={onAddRestaurant}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-spartan"
+      {/* Virtualized Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" ref={gridRef}>
+        {displayedRestaurants.map((restaurant, index) => (
+          <div
+            key={restaurant.id}
+            className="transform transition-all duration-300 hover:scale-[1.02]"
+            style={{ animationDelay: `${index * 100}ms` }}
+            data-restaurant-index={index}
+            ref={(el) => {
+              if (el && index === displayedRestaurants.length - 1) {
+                observeLastItem(index);
+              }
+            }}
           >
-            Add Restaurant
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {restaurants.map((restaurant) => (
             <RestaurantCard
-              key={restaurant.id}
               restaurant={restaurant}
               onToggleStatus={onToggleStatus}
+              onToggleAI={onToggleAI}
               onEdit={onEdit}
               onDelete={onDelete}
               onClick={onClick}
             />
-          ))}
-        </div>
+          </div>
+        ))}
+
+        {/* Loading and End Indicators */}
+        {isLoading && <LoadingIndicator />}
+        {!hasMore && displayedRestaurants.length > 0 && <EndOfListIndicator />}
+      </div>
+
+      {/* Scroll to top button */}
+      {displayedRestaurants.length > 12 && (
+        <button
+          onClick={() => {
+            if (gridRef.current) {
+              gridRef.current.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+          className="fixed bottom-6 right-6 p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-colors z-50"
+          title="Scroll to top"
+        >
+          <ChevronUp className="w-5 h-5" />
+        </button>
       )}
     </div>
   );

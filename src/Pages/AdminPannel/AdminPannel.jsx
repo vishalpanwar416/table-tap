@@ -1,4 +1,4 @@
-import {React, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader, X, ArrowLeft, Bell } from 'lucide-react';
 import AdminSidebar from './components/AdminSidebar'; 
@@ -109,10 +109,13 @@ const AdminPanel = () => {
           if (!error && profile) {
             setCurrentUserProfile(profile);
           } else {
+            console.error('Error loading profile:', error);
           }
         } catch (error) {
+          console.error('Error loading profile:', error);
         }
       } else {
+        console.log('No user found');
       }
     };
 
@@ -133,7 +136,6 @@ const AdminPanel = () => {
         getAllStaff()
       ]);
 
-
       if (restaurantsResponse.error) {
         throw new Error(restaurantsResponse.error);
       }
@@ -141,7 +143,6 @@ const AdminPanel = () => {
         throw new Error(staffResponse.error);
       }
 
-      
       setRestaurants(restaurantsResponse.data);
       setStaff(staffResponse.data);
     } catch (error) {
@@ -206,54 +207,25 @@ const AdminPanel = () => {
   const handleAddRestaurant = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
     try {
-      if (!newRestaurant.name || !newRestaurant.manager_email) {
-        handleError('Please fill in all required fields');
-        setLoading(false);
-        return;
-      }
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(newRestaurant.manager_email)) {
-        handleError('Please enter a valid email address');
-        setLoading(false);
-        return;
-      }
-
-      const restaurantData = {
-        ...newRestaurant,
-        location: newRestaurant.latitude && newRestaurant.longitude 
-          ? `POINT(${newRestaurant.longitude} ${newRestaurant.latitude})`
-          : null,
-        social_media: Object.keys(newRestaurant.social_media).some(key => 
-          newRestaurant.social_media[key].trim() !== ''
-        ) ? newRestaurant.social_media : null
-      };
-
-      delete restaurantData.latitude;
-      delete restaurantData.longitude;
-
-      const { data, error } = await createRestaurant(restaurantData);
-      
+      const { data, error } = await createRestaurant(newRestaurant);
       if (error) {
-        handleError(error);
-        setLoading(false);
+        handleError('Failed to create restaurant: ' + error);
         return;
       }
 
-      await fetchData();
+      setRestaurants(prev => [...prev, data]);
       handleSuccess('Restaurant created successfully');
       setShowAddRestaurant(false);
       setNewRestaurant({
-        name: '', 
-        address: '', 
-        contact_phone: '', 
+        name: '',
+        address: '',
+        contact_phone: '',
         contact_email: '',
-        cuisine_type: '', 
-        description: '', 
+        cuisine_type: '',
+        description: '',
         opening_hours: '',
-        latitude: '', 
+        latitude: '',
         longitude: '',
         logo_url: '',
         razorpay_key_id: '',
@@ -266,8 +238,8 @@ const AdminPanel = () => {
           twitter: '',
           website: ''
         },
-        manager_name: '', 
-        manager_email: '', 
+        manager_name: '',
+        manager_email: '',
         manager_phone: ''
       });
     } catch (err) {
@@ -278,65 +250,27 @@ const AdminPanel = () => {
   };
 
   const handleEditRestaurant = (restaurant) => {
-    // Ensure social_media has the proper structure and extract coordinates
-    const restaurantWithDefaultSocialMedia = {
-      ...restaurant,
-      social_media: restaurant.social_media || {
-        facebook: '',
-        instagram: '',
-        twitter: '',
-        website: ''
-      },
-      // Ensure latitude and longitude are properly set
-      latitude: restaurant.latitude || '',
-      longitude: restaurant.longitude || '',
-      // Ensure google_maps_link is preserved
-      google_maps_link: restaurant.google_maps_link || ''
-    };
-    setSelectedRestaurant(restaurantWithDefaultSocialMedia);
+    setSelectedRestaurant(restaurant);
     setShowEditRestaurant(true);
   };
 
   const handleUpdateRestaurant = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
     try {
-      if (!selectedRestaurant.name || !selectedRestaurant.manager_email) {
-        handleError('Please fill in all required fields');
-        setLoading(false);
-        return;
-      }
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(selectedRestaurant.manager_email)) {
-        handleError('Please enter a valid email address');
-        setLoading(false);
-        return;
-      }
-
-      const restaurantData = {
-        ...selectedRestaurant,
-        location: selectedRestaurant.latitude && selectedRestaurant.longitude 
-          ? `POINT(${selectedRestaurant.longitude} ${selectedRestaurant.latitude})`
-          : null,
-        social_media: Object.keys(selectedRestaurant.social_media).some(key => 
-          selectedRestaurant.social_media[key].trim() !== ''
-        ) ? selectedRestaurant.social_media : null
-      };
-
-      delete restaurantData.latitude;
-      delete restaurantData.longitude;
-
-      const { data, error } = await updateRestaurant(selectedRestaurant.id, restaurantData);
-      
+      const { data, error } = await updateRestaurant(selectedRestaurant.id, selectedRestaurant);
       if (error) {
-        handleError(error);
-        setLoading(false);
+        handleError('Failed to update restaurant: ' + error);
         return;
       }
 
-      await fetchData();
+      setRestaurants(prev => 
+        prev.map(r => 
+          r.id === selectedRestaurant.id 
+            ? { ...r, ...data }
+            : r
+        )
+      );
       handleSuccess('Restaurant updated successfully');
       setShowEditRestaurant(false);
       setSelectedRestaurant(null);
@@ -348,33 +282,17 @@ const AdminPanel = () => {
   };
 
   const handleAddStaff = async (e) => {
-    if (e && e.preventDefault) e.preventDefault();
+    e.preventDefault();
     setLoading(true);
-    
     try {
-      if (!newStaff.name || !newStaff.email || !newStaff.restaurant_id) {
-        handleError('Please fill in all required fields');
-        setLoading(false);
-        return;
-      }
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(newStaff.email)) {
-        handleError('Please enter a valid email address');
-        setLoading(false);
-        return;
-      }
-
       const { data, error } = await createStaff(newStaff);
-      
       if (error) {
-        handleError(error);
-        setLoading(false);
+        handleError('Failed to create staff member: ' + error);
         return;
       }
 
-      await fetchData();
-      handleSuccess('Staff member added successfully');
+      setStaff(prev => [...prev, data]);
+      handleSuccess('Staff member created successfully');
       setShowAddStaff(false);
       setNewStaff({
         name: '',
@@ -384,17 +302,13 @@ const AdminPanel = () => {
         restaurant_id: ''
       });
     } catch (err) {
-      handleError('Failed to add staff member: ' + err.message);
+      handleError('Failed to create staff member: ' + err.message);
     } finally {
       setLoading(false);
     }
   };
-  
+
   const handleDeleteRestaurant = async (restaurantId) => {
-    if (!window.confirm('Are you sure you want to delete this restaurant? This action cannot be undone.')) {
-      return;
-    }
-    
     try {
       const { error } = await deleteRestaurant(restaurantId);
       if (error) {
@@ -402,18 +316,14 @@ const AdminPanel = () => {
         return;
       }
 
-      await fetchData();
+      setRestaurants(prev => prev.filter(r => r.id !== restaurantId));
       handleSuccess('Restaurant deleted successfully');
     } catch (err) {
       handleError('Failed to delete restaurant: ' + err.message);
     }
   };
-  
-  const handleDeleteStaff = async (staffId) => {
-    if (!window.confirm('Are you sure you want to delete this staff member? This action cannot be undone.')) {
-      return;
-    }
 
+  const handleDeleteStaff = async (staffId) => {
     try {
       const { error } = await deleteStaff(staffId);
       if (error) {
@@ -421,7 +331,7 @@ const AdminPanel = () => {
         return;
       }
 
-      await fetchData();
+      setStaff(prev => prev.filter(s => s.id !== staffId));
       handleSuccess('Staff member deleted successfully');
     } catch (err) {
       handleError('Failed to delete staff member: ' + err.message);
@@ -431,34 +341,25 @@ const AdminPanel = () => {
   const handleUpdateStaff = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
     try {
-      if (!editingStaff.name || !editingStaff.email || !editingStaff.restaurant_id) {
-        handleError('Please fill in all required fields');
-        setLoading(false);
-        return;
-      }
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(editingStaff.email)) {
-        handleError('Please enter a valid email address');
-        setLoading(false);
-        return;
-      }
-
       const { data, error } = await updateStaff(editingStaff.id, editingStaff);
-      
       if (error) {
-        handleError(error);
-        setLoading(false);
+        handleError('Failed to update staff member: ' + error);
         return;
       }
 
-      await fetchData();
+      setStaff(prev => 
+        prev.map(s => 
+          s.id === editingStaff.id 
+            ? { ...s, ...data }
+            : s
+        )
+      );
       handleSuccess('Staff member updated successfully');
       setShowEditStaff(false);
       setEditingStaff(null);
     } catch (err) {
+      console.error('Error in handleUpdateStaff:', err);
       handleError('Failed to update staff member: ' + err.message);
     } finally {
       setLoading(false);
@@ -491,11 +392,9 @@ const AdminPanel = () => {
     const restaurantMatch = !selectedRestaurantId || 
       staffMember.restaurant_id === selectedRestaurantId;
 
-    // Add role filter
     const roleMatch = !selectedStaffRole || 
       staffMember.role === selectedStaffRole;
 
-    // Add connection status filter
     const connectionMatch = !selectedConnectionStatus || 
       (selectedConnectionStatus === 'connected' && staffMember.connected) ||
       (selectedConnectionStatus === 'disconnected' && !staffMember.connected);
@@ -520,7 +419,6 @@ const AdminPanel = () => {
   };
 
   const handleRestaurantClick = (restaurant) => {
-    // Navigate to the restaurant management dashboard
     navigate(`/managerdashboard?restaurant=${restaurant.id}`);
   };
 
@@ -537,11 +435,23 @@ const AdminPanel = () => {
   };
 
   const handleProfilePhotoUpdate = (newAvatarUrl) => {
-    // Update the current user profile state
     setCurrentUserProfile(prev => ({
       ...prev,
       avatar_url: newAvatarUrl
     }));
+  };
+
+  // Add onLoadMore function for infinite scroll
+  const handleLoadMore = async (type, page, pageSize, restaurantId = null) => {
+    try {
+      // For now, we'll return empty array since we're loading all data at once
+      // In a real implementation, you would fetch more data from the server
+      console.log(`Loading more ${type} data: page ${page}, size ${pageSize}${restaurantId ? `, restaurant ${restaurantId}` : ''}`);
+      return [];
+    } catch (error) {
+      console.error('Error loading more data:', error);
+      return [];
+    }
   };
 
   const renderActiveTab = () => {
@@ -557,6 +467,7 @@ const AdminPanel = () => {
             onEdit={handleEditRestaurant}
             onDelete={handleDeleteRestaurant}
             onClick={handleRestaurantClick}
+            onLoadMore={(page, pageSize) => handleLoadMore('restaurants', page, pageSize)}
           />
         );
       case 'staff':
@@ -570,6 +481,7 @@ const AdminPanel = () => {
               onAddStaff={() => setShowAddStaff(true)}
               onEdit={handleEditStaffClick}
               onDelete={handleDeleteStaff}
+              onLoadMore={(restaurantId, page, pageSize) => handleLoadMore('staff', page, pageSize, restaurantId)}
             />
           </div>
         );
@@ -650,6 +562,16 @@ const AdminPanel = () => {
             )}
           </div>
         </div>
+
+        {/* Toast Notifications */}
+        <ToastNotifications
+          showError={showError}
+          showSuccess={showSuccess}
+          error={error}
+          success={success}
+          onCloseError={() => setShowError(false)}
+          onCloseSuccess={() => setShowSuccess(false)}
+        />
 
         {/* Modals */}
         <RestaurantModal
