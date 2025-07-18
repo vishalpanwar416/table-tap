@@ -9,7 +9,7 @@ import {
   getOrderById,
   updatePaymentStatus
 } from '../api/paymentService';
-import { subscribeToOrderUpdates } from '../api/orderService'; // Add this import
+import { subscribeToOrderUpdates } from '../api/admin/orderService'; // Add this import
 import { supabase } from '../supabase';
 
 // Create a dummy notification service function if you don't have it yet

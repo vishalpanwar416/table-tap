@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Check, X, Truck, CheckCircle, ChevronDown, ChevronRight, User, 
   Clock, Calendar, MapPin, Phone, Filter, Search, AlertCircle,
-  Printer, Download, RefreshCw, AlertTriangle, ShoppingBag, Info
+  Printer, Download, RefreshCw, AlertTriangle, ShoppingBag, Info, Grid, List, Package
 } from 'lucide-react';
 import { useManagerNotifications } from '../../context/ManagerNotificationContext';
 import { format, isToday, isYesterday } from 'date-fns';
@@ -11,6 +11,22 @@ import ReactDOMServer from "react-dom/server";
 import PrintBill from "./PrintBill";
 import PrintKOT from "./PrintKOT";
 import * as XLSX from 'xlsx';
+import { supabase } from '../../supabase'; // adjust path if needed
+import {
+  fetchAllOrders,
+  subscribeToAllOrderChanges,
+  updateOrderStatus as updateOrderStatusService,
+  getOrdersByPeriod,
+  formatOrdersForExcel,
+  addTotalRow,
+  getOrderSubtotal,
+  getStatusCounts,
+  STATUS_ORDER,
+  handleOrderDownload,
+  getNextStatusOptions,
+  filterOrders,
+  sortOrders,
+} from '../../api/admin/orderService';
 
 const STATUS_META = {
   pending: {
@@ -45,7 +61,7 @@ const STATUS_META = {
   },
 };
 
-const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm }) => {
+const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSearchTerm }) => {
   const { notifications, markAllAsRead } = useManagerNotifications();
   const { restaurant } = useRestaurant();
   const [viewType, setViewType] = useState('tiles');
@@ -58,16 +74,57 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
   const [dropdownOpenOrderId, setDropdownOpenOrderId] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState('');
+  const [periodFilter, setPeriodFilter] = useState('all');
   
   // Use the prop if provided, otherwise fallback to local state (for safety)
   const searchTerm = propSearchTerm !== undefined ? propSearchTerm : '';
+  
+  // Move fetchOrders outside useEffect so it can be reused
+  const fetchOrders = async () => {
+    try {
+      setOrdersLoading(true);
+      const data = await fetchAllOrders(restaurantId);
+      setOrders(data);
+      setOrdersError('');
+    } catch (error) {
+      setOrdersError('Failed to load orders: ' + (error.message || error));
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, [restaurantId]);
+
+  useEffect(() => {
+    const channel = subscribeToAllOrderChanges((payload) => {
+      const { eventType, new: newRecord, old: oldRecord } = payload;
+      setOrders((prevOrders) => {
+        if (eventType === 'INSERT') return [newRecord, ...prevOrders];
+        if (eventType === 'UPDATE') return prevOrders.map(order => 
+          order.id === newRecord.id ? newRecord : order
+        );
+        if (eventType === 'DELETE') return prevOrders.filter(order => order.id !== oldRecord.id);
+        return prevOrders;
+      });
+    });
+
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, [restaurantId]);
   
   // Handle order status updates with confirmation
   const handleStatusUpdate = async (orderId, userId, newStatus, cancelReason) => {
     setIsLoading(true);
     setConfirmModal({ show: false, type: null, order: null });
     try {
-      await updateOrderStatus(orderId, newStatus, cancelReason);
+      const updatedOrder = await updateOrderStatusService(orderId, newStatus, cancelReason);
       
       // Create appropriate notification
       const notificationMessages = {
@@ -83,7 +140,9 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
         userId,
         message: `Order #${orderId.slice(0,8)} ${notificationMessages[newStatus] || `status updated to ${newStatus}`}`
       });
+      return updatedOrder;
     } catch (error) {
+      console.error('Error updating order status:', error);
     } finally {
       setIsLoading(false);
       setRejectionReason('');
@@ -106,8 +165,21 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
           <p className="text-xs text-gray-500 uppercase font-medium">{STATUS_META[status].label}</p>
           <p className="text-2xl font-bold text-gray-800">{statusCounts[status]}</p>
         </div>
-        <div className={`p-2 rounded-full bg-${STATUS_META[status].color}-100`}>
-          {STATUS_META[status].icon}
+        <div className={`flex flex-col items-end`}>
+          <div className={`p-2 rounded-full bg-${STATUS_META[status].color}-100`}>
+            {STATUS_META[status].icon}
+          </div>
+          {/* Download button for this status */}
+          <button
+            onClick={e => {
+              e.stopPropagation();
+              handleDownloadByStatus(status);
+            }}
+            className="mt-2 p-1 rounded bg-orange-100 hover:bg-orange-200"
+            title={`Download ${STATUS_META[status].label} Orders`}
+          >
+            <Download className="w-4 h-4 text-orange-500" />
+          </button>
         </div>
       </div>
     </div>
@@ -174,84 +246,17 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
   };
   
   // Filter orders
-  const filteredOrders = orders.filter(order => {
-    // Status filter
-    if (statusFilter !== 'all' && order.status !== statusFilter) {
-      return false;
-    }
-    
-    // Search filter
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      return (
-        (order.id && order.id.toLowerCase().includes(searchLower)) ||
-        (order.customerName && order.customerName.toLowerCase().includes(searchLower)) ||
-        (order.customer_phone && order.customer_phone.toLowerCase().includes(searchLower)) ||
-        (order.customer_email && order.customer_email.toLowerCase().includes(searchLower)) ||
-        (order.table_number && order.table_number.toString().includes(searchLower)) ||
-        (order.items && order.items.some(item => item.name && item.name.toLowerCase().includes(searchLower)))
-      );
-    }
-    
-    return true;
-  });
+  let periodFilteredOrders = orders;
+  if (periodFilter !== 'all') {
+    periodFilteredOrders = getOrdersByPeriod(orders, periodFilter);
+  }
+  const filteredOrders = filterOrders(periodFilteredOrders, { statusFilter, searchQuery: searchQuery || searchTerm });
   
   // Sort orders
-  const sortedOrders = [...filteredOrders].sort((a, b) => {
-    if (sortBy === 'created_at') {
-      const dateA = new Date(a.created_at || 0);
-      const dateB = new Date(b.created_at || 0);
-      return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
-    }
-    
-    if (sortBy === 'total') {
-      const totalA = a.total || 0;
-      const totalB = b.total || 0;
-      return sortDirection === 'asc' ? totalA - totalB : totalB - totalA;
-    }
-    
-    return 0;
-  });
-  
-  // Get next status options based on current status
-  const getNextStatusOptions = (currentStatus) => {
-    const statusFlow = {
-      pending: ['preparing', 'rejected'],
-      preparing: ['ready', 'rejected'],
-      ready: ['completed'],
-      // No further actions for rejected or completed
-    };
-    
-    return statusFlow[currentStatus] || [];
-  };
+  const sortedOrders = sortOrders(filteredOrders, sortBy, sortDirection);
   
   // Get counts by status for dashboard
-  const getStatusCounts = () => {
-    const counts = {
-      pending: 0,
-      preparing: 0,
-      ready: 0,
-      completed: 0,
-      rejected: 0
-    };
-    
-    orders.forEach(order => {
-      if (counts[order.status] !== undefined) {
-        counts[order.status]++;
-      }
-    });
-    
-    return counts;
-  };
-  
-  const statusCounts = getStatusCounts();
-  
-  const getOrderSubtotal = (order) => {
-    return (order.items || []).reduce(
-      (sum, item) => sum + (item.price || 0) * (item.quantity || 1),
-      0
-    );
-  };
+  const statusCounts = getStatusCounts(orders);
   
   useEffect(() => {
     const handleClick = (e) => {
@@ -324,134 +329,97 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
     // Fallback: If onload doesn't fire (rare), let the user close the window manually
   };
   
-  // Helper to filter orders by period
-  const getOrdersByPeriod = (period) => {
-    const now = new Date();
-    if (period === 'daily') {
-      return orders.filter(order => {
-        const date = new Date(order.created_at);
-        return date.toDateString() === now.toDateString();
-      });
-    }
-    if (period === 'weekly') {
-      const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      return orders.filter(order => {
-        const date = new Date(order.created_at);
-        return date >= weekStart;
-      });
-    }
-    if (period === 'monthly') {
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-      return orders.filter(order => {
-        const date = new Date(order.created_at);
-        return date >= monthStart;
-      });
-    }
-    return [];
-  };
-
-  // Helper to format order data for Excel
-  const formatOrdersForExcel = (orders) => {
-    return orders.map(order => ({
-      ID: order.id,
-      OrderNumber: order.order_number || '',
-      UserID: order.user_id || '',
-      CustomerName: order.customer_name || '',
-      CustomerEmail: order.customer_email || '',
-      CustomerPhone: order.customer_phone || '',
-      TableNumber: order.table_number || '',
-      Status: order.status || '',
-      PaymentMethod: order.payment_method || '',
-      PaymentStatus: order.payment_status || '',
-      PaymentNotes: order.payment_notes || '',
-      PaymentTimestamp: order.payment_timestamp ? new Date(order.payment_timestamp).toLocaleString() : '',
-      Subtotal: order.subtotal || 0,
-      GST: order.gst || 0,
-      Discount: order.discount || 0,
-      Total: parseFloat(order.total) || 0,
-      RazorpayOrderID: order.razorpay_order_id || '',
-      RazorpayPaymentID: order.razorpay_payment_id || '',
-      RazorpaySignature: order.razorpay_signature || '',
-      SpecialInstructions: order.special_instructions || '',
-      CancelReason: order.cancel_reason || '',
-      CreatedAt: order.created_at ? new Date(order.created_at).toLocaleString() : '',
-      UpdatedAt: order.updated_at ? new Date(order.updated_at).toLocaleString() : '',
-      CompletedAt: order.completed_at ? new Date(order.completed_at).toLocaleString() : '',
-      Items: (order.items || []).map(i => `${i.name || i.title} x${i.quantity || 1}`).join(', ')
-    }));
-  };
-
-  // Helper to add a total row
-  const addTotalRow = (data) => {
-    if (data.length === 0) return data;
-    const total = data.reduce((sum, row) => sum + (parseFloat(row.Total) || 0), 0);
-    // Create an empty row for spacing
-    const emptyRow = {};
-    Object.keys(data[0]).forEach(key => emptyRow[key] = '');
-    // Create the total row
-    const totalRow = { ...emptyRow, Status: 'TOTAL', Total: total };
-    return [...data, emptyRow, totalRow];
-  };
-
   // Download handler
   const handleDownload = (period) => {
-    let data = [];
-    let sheetName = '';
-    if (period === 'daily') {
-      data = formatOrdersForExcel(getOrdersByPeriod('daily'));
-      data = addTotalRow(data);
-      sheetName = 'Daily Orders';
-    } else if (period === 'weekly') {
-      data = formatOrdersForExcel(getOrdersByPeriod('weekly'));
-      data = addTotalRow(data);
-      sheetName = 'Weekly Orders';
-    } else if (period === 'monthly') {
-      data = formatOrdersForExcel(getOrdersByPeriod('monthly'));
-      data = addTotalRow(data);
-      sheetName = 'Monthly Orders';
-    } else if (period === 'filtered') {
-      data = formatOrdersForExcel(filteredOrders);
-      data = addTotalRow(data);
-      sheetName = 'Filtered Orders';
-    } else {
-      // All
-      const daily = addTotalRow(formatOrdersForExcel(getOrdersByPeriod('daily')));
-      const weekly = addTotalRow(formatOrdersForExcel(getOrdersByPeriod('weekly')));
-      const monthly = addTotalRow(formatOrdersForExcel(getOrdersByPeriod('monthly')));
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(daily), 'Daily Orders');
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(weekly), 'Weekly Orders');
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(monthly), 'Monthly Orders');
-      XLSX.writeFile(wb, 'OrderDetails.xlsx');
-      setShowDownloadMenu(false);
-      return;
-    }
-
+    const { data, sheetName } = handleOrderDownload(orders, period);
+    if (!data || data.length === 0) return; // Prevent empty downloads
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
-    XLSX.writeFile(wb, `OrderDetails-${sheetName.replace(' ', '')}.xlsx`);
+    XLSX.writeFile(wb, `OrderDetails-${sheetName.replace(/\s+/g, '')}.xlsx`);
     setShowDownloadMenu(false);
   };
   
+  // 1. Add a new helper to download by status
+  const handleDownloadByStatus = (status) => {
+    const { data, sheetName } = handleOrderDownload(orders, null, status);
+    if (!data || data.length === 0) return; // Prevent empty downloads
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    XLSX.writeFile(wb, `OrderDetails-${sheetName.replace(/\s+/g, '')}.xlsx`);
+  };
+  
+  const OrderItemsList = ({ items }) => (
+    <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+      <h4 className="text-xs font-semibold uppercase text-gray-500 mb-2">Order Items</h4>
+      <div className="divide-y divide-gray-200">
+        {items.map((item, idx) => (
+          <div key={idx} className="flex items-center py-2">
+            <div className="w-10 h-10 rounded overflow-hidden mr-3 border border-gray-200 bg-white flex-shrink-0">
+              <img 
+                src={item.image || `/api/placeholder/40/40`} 
+                alt={item.name || `Item ${idx+1}`}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{item.name || `Item ${idx+1}`}</p>
+              <div className="flex text-xs text-gray-500 space-x-2">
+                <span>Qty: {item.quantity || 1}</span>
+                <span>Price: ₹{item.price?.toFixed(2) || '0.00'}</span>
+              </div>
+            </div>
+            <div className="text-sm font-semibold text-gray-700 ml-2">
+              ₹{((item.quantity || 1) * (item.price || 0)).toFixed(2)}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="flex justify-end mt-2 pt-2 border-t border-gray-200 text-sm font-semibold">
+        Total: ₹{items.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 1), 0).toFixed(2)}
+      </div>
+    </div>
+  );
+
+  const handleRefresh = () => {
+    fetchOrders();
+  };
+  
   return (
-    <div className="space-y-6">
-      {/* Header with Download Button */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">Order Management</h2>
+    <div className="space-y-5">
+
+<div className="bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 p-6">
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+            <Package className="h-5 w-5 mr-2 text-orange-500" />
+            Order Status Overview
+          </h3>
+          <p className="text-sm text-gray-600 mt-1">Real-time tracking of all orders</p>
+        </div>
         
-        {/* Download Button with Dropdown */}
-        <div className="relative">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+          {['pending', 'preparing', 'ready', 'completed', 'rejected'].map(status => (
+            <StatusCard key={status} status={status} />
+          ))}
+          {/* Download Button as a Card */}
+          <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-white shadow-sm border-l-4 border-orange-400">
+            <div className="flex items-center justify-between w-full">
+              <p className="text-xs text-gray-500 uppercase font-medium">Download</p>
+              <div className="p-2 rounded-full bg-orange-100">
+                <Download className="h-5 w-5 text-orange-500" />
+              </div>
+            </div>
+            <div className="relative w-full mt-2">
           <button
             onClick={() => setShowDownloadMenu((prev) => !prev)}
-            className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                className="w-full flex items-center justify-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
             title="Download Orders as Excel"
           >
-            <Download className="w-4 h-4 mr-2" />
             Download Orders
           </button>
           {showDownloadMenu && (
-            <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-48">
+                <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-48">
               <div
                 className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100"
                 onClick={() => handleDownload('daily')}
@@ -486,56 +454,77 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
           )}
         </div>
       </div>
-
-      <div className="bg-white rounded-xl shadow">
-        {/* Status Dashboard */}
-        <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-4">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            {['pending', 'preparing', 'ready', 'completed', 'rejected'].map(status => (
-              <StatusCard key={status} status={status} />
-            ))}
           </div>
         </div>
         
-        <div className="p-6 border-b border-gray-100">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+      {/* Enhanced Header Section */}
+      <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="flex items-center">
+            <h2 className="text-2xl font-bold text-gray-800 flex items-center">
               Order Management 
               {isLoading && (
-                <RefreshCw size={18} className="ml-2 text-orange-500 animate-spin" />
+                <RefreshCw size={20} className="ml-3 text-orange-500 animate-spin" />
               )}
             </h2>
+          </div>
             
-            <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto justify-center items-center">
-              {/* View Switcher */}
-              <div className="flex items-center space-x-2">
+          <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+            {/* Enhanced Search Bar */}
+            <div className="relative flex-1 lg:w-64">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search size={16} className="text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search orders..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
+              />
+            </div>
+            
+            {/* Enhanced View Switcher */}
+            <div className="flex items-center bg-gray-100 rounded-xl p-1">
                 <button
                   onClick={() => setViewType('tiles')}
-                  className={`px-3 py-1 rounded-lg border ${viewType === 'tiles' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-700 border-gray-200'} transition`}
+                className={`flex items-center px-4 py-2 rounded-lg transition-all duration-200 ${
+                  viewType === 'tiles' 
+                    ? 'bg-white text-orange-600 shadow-sm' 
+                    : 'text-gray-600 hover:text-orange-600'
+                }`}
                 >
+                <Grid size={16} className="mr-2" />
                   Tiles
                 </button>
                 <button
                   onClick={() => setViewType('table')}
-                  className={`px-3 py-1 rounded-lg border ${viewType === 'table' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-700 border-gray-200'} transition`}
+                className={`flex items-center px-4 py-2 rounded-lg transition-all duration-200 ${
+                  viewType === 'table' 
+                    ? 'bg-white text-orange-600 shadow-sm' 
+                    : 'text-gray-600 hover:text-orange-600'
+                }`}
                 >
+                <List size={16} className="mr-2" />
                   Table
                 </button>
               </div>
-              {/* Refresh Button (replaces Search) */}
+            
+            {/* Enhanced Refresh Button */}
               <button
-                onClick={() => {
-                  // Call your refresh logic here, e.g., refetch orders
-                  if (typeof window !== "undefined") window.location.reload(); // or use a prop/callback
-                }}
-                className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
-                title="Refresh Orders"
+              onClick={handleRefresh}
+              disabled={ordersLoading}
+              className="flex items-center px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl hover:from-orange-600 hover:to-amber-600 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50"
               >
-                <RefreshCw size={18} className="mr-2" />
+              <RefreshCw size={16} className={`mr-2 ${ordersLoading ? 'animate-spin' : ''}`} />
                 Refresh
               </button>
-              {/* Filters */}
-              <div className="flex gap-2 justify-center items-center w-full">
+          </div>
+        </div>
+        
+        {/* Enhanced Filters Row */}
+        <div className="flex flex-wrap gap-4 mt-6">
+          {/* Status Filter */}
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Filter size={16} className="text-gray-400" />
@@ -543,22 +532,22 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="pl-10 pr-8 py-2 border border-gray-200 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              className="pl-10 pr-8 py-2 border border-gray-200 rounded-xl appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white min-w-40"
                   >
                     <option value="all">All Status</option>
                     <option value="pending">Pending</option>
                     <option value="preparing">Preparing</option>
                     <option value="ready">Ready</option>
                     <option value="completed">Completed</option>
-                    <option value="rejected">rejected</option>
+              <option value="rejected">Rejected</option>
                   </select>
                   <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                     <ChevronDown size={16} className="text-gray-400" />
                   </div>
                 </div>
                 
-                {/* Sort options */}
-                <div className="relative flex justify-center w-full">
+          {/* Sort Options */}
+          <div className="relative">
                   <select
                     value={`${sortBy}-${sortDirection}`}
                     onChange={(e) => {
@@ -566,25 +555,66 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
                       setSortBy(newSortBy);
                       setSortDirection(newSortDirection);
                     }}
-                    className="pr-8 py-2 border border-gray-200 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent mx-auto"
-                    style={{ minWidth: 160, textAlign: 'center' }}
+              className="pr-8 py-2 border border-gray-200 rounded-xl appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white min-w-48"
                   >
                     <option value="created_at-desc">Newest First</option>
                     <option value="created_at-asc">Oldest First</option>
                     <option value="total-desc">Highest Amount</option>
                     <option value="total-asc">Lowest Amount</option>
+                    <option value="status-asc">Status: Pending → Completed</option>
+                    <option value="status-desc">Status: Completed → Pending</option>
                   </select>
                   <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                     <ChevronDown size={16} className="text-gray-400" />
                   </div>
                 </div>
-              </div>
+          
+          {/* Quick Filter Buttons */}
+          <div className="flex gap-2 ml-auto">
+            <button
+              className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+                periodFilter === 'daily' ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+              }`}
+              onClick={() => setPeriodFilter('daily')}
+            >
+              Today
+            </button>
+            <button
+              className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+                periodFilter === 'weekly' ? 'bg-green-500 text-white' : 'bg-green-100 text-green-700 hover:bg-green-200'
+              }`}
+              onClick={() => setPeriodFilter('weekly')}
+            >
+              This Week
+            </button>
+            <button
+              className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+                periodFilter === 'monthly' ? 'bg-purple-500 text-white' : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+              }`}
+              onClick={() => setPeriodFilter('monthly')}
+            >
+              This Month
+            </button>
+            <button
+              className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+                periodFilter === 'all' ? 'bg-gray-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+              onClick={() => setPeriodFilter('all')}
+            >
+              All
+            </button>
             </div>
           </div>
         </div>
         
         {/* Content area */}
         <div className="p-6">
+          {ordersLoading && (
+            <div className="text-center py-8 text-gray-500">Loading orders...</div>
+          )}
+          {ordersError && (
+            <div className="text-center py-8 text-red-500">{ordersError}</div>
+          )}
           {sortedOrders.length === 0 ? (
             <div className="text-center py-16">
               <div className="inline-flex items-center justify-center p-4 bg-gray-50 rounded-full mb-4">
@@ -604,7 +634,9 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
             </div>
           ) : viewType === 'tiles' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {sortedOrders.map((order) => (
+              {sortedOrders.map((order) => {
+                const nextStatusOptions = getNextStatusOptions(order.status);
+                return (
                 <div key={order.id} className={`border rounded-lg hover:shadow-md transition-shadow ${order.status === 'pending' ? 'bg-green-50' : order.status === 'ready' ? 'bg-blue-50' : order.status === 'rejected' ? 'bg-red-50' : order.status === 'preparing' ? 'bg-yellow-50' : 'bg-white'}`}>
                   {/* Order header */}
                   <div className="bg-gray-50 p-3 flex justify-between items-center border-b">
@@ -666,6 +698,22 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
                           <span className="line-clamp-2">{order.address}</span>
                         </div>
                       )}
+                      
+                      {/* Payment method just below table number */}
+                      <div className="mb-1 flex items-center text-xs text-gray-600">
+                        <span className="font-semibold mr-1">Payment:</span>
+                        {order.payment_method === 'razorpay' && order.payment_status === 'completed' ? (
+                          <span className="text-green-600 font-medium">Paid Online</span>
+                        ) : order.payment_method === 'cod' ? (
+                          <span className="text-yellow-600 font-medium">Cash on Delivery</span>
+                        ) : order.payment_status === 'pending' ? (
+                          <span className="text-orange-600 font-medium">Pending Payment</span>
+                        ) : order.payment_status === 'failed' ? (
+                          <span className="text-red-600 font-medium">Payment Failed</span>
+                        ) : (
+                          <span className="capitalize">{order.payment_method || 'Unknown'}</span>
+                        )}
+                      </div>
                     </div>
                     
                     {/* Order items preview */}
@@ -706,84 +754,7 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
                       
                       {/* Expanded order items details */}
                       {expandedOrderId === order.id && (
-                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
-                          <h4 className="text-xs font-semibold uppercase text-gray-500 mb-3">Order items</h4>
-                          <div className="space-y-3">
-                            {(order.items || []).map((item, idx) => (
-                              <div key={idx} className="flex items-center">
-                                <div className="w-10 h-10 rounded overflow-hidden mr-3 border border-gray-200 bg-white">
-                                  <img 
-                                    src={item.image || `/api/placeholder/40/40`} 
-                                    alt={item.name || `Item ${idx+1}`}
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium truncate">{item.name || `Item ${idx+1}`}</p>
-                                  <div className="flex justify-between text-xs text-gray-500">
-                                    <span>{item.quantity || 1} × ₹{item.price?.toFixed(2) || '0.00'}</span>
-                                    <span>₹{((item.quantity || 1) * (item.price || 0)).toFixed(2)}</span>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                          
-                          {/* Price summary */}
-                          <div className="mt-4 pt-3 border-t border-gray-200">
-                            <div className="flex justify-between text-xs text-gray-500 mb-1">
-                              <span>Subtotal</span>
-                              <span>₹{getOrderSubtotal(order).toFixed(2)}</span>
-                            </div>
-                            {order.discount > 0 && (
-                              <div className="flex justify-between text-xs text-gray-500 mb-1">
-                                <span>Discount</span>
-                                <span>-₹{order.discount?.toFixed(2) || '0.00'}</span>
-                              </div>
-                            )}
-                            {order.gst > 0 && (
-                              <>
-                                <div className="flex justify-between text-xs text-gray-500 mb-1">
-                                  <span>CGST (2.5%)</span>
-                                  <span>₹{(order.gst / 2).toFixed(2)}</span>
-                                </div>
-                                <div className="flex justify-between text-xs text-gray-500 mb-1">
-                                  <span>SGST (2.5%)</span>
-                                  <span>₹{(order.gst / 2).toFixed(2)}</span>
-                                </div>
-                              </>
-                            )}
-                            {order.deliveryFee > 0 && (
-                              <div className="flex justify-between text-xs text-gray-500 mb-1">
-                                <span>Delivery</span>
-                                <span>₹{order.deliveryFee?.toFixed(2) || '0.00'}</span>
-                              </div>
-                            )}
-                            <div className="flex justify-between font-medium text-sm mt-2">
-                              <span>Total</span>
-                              <span>
-                                ₹{(
-                                  getOrderSubtotal(order)
-                                  - (order.discount || 0)
-                                  + (order.gst || 0)
-                                  + (order.deliveryFee || 0)
-                                ).toFixed(2)}
-                              </span>
-                            </div>
-                          </div>
-                          
-                          {order.special_instructions && (
-                            <div className="mt-3 p-2 bg-yellow-50 border border-yellow-100 rounded text-sm text-gray-700">
-                              <div className="flex items-start">
-                                <Info size={14} className="text-yellow-500 mr-1 mt-0.5" />
-                                <div>
-                                  <span className="font-medium block text-xs mb-0.5">Special Instructions:</span>
-                                  <p className="text-xs">{order.special_instructions}</p>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                        <OrderItemsList items={order.items || []} />
                       )}
                     </div>
                     
@@ -800,7 +771,8 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
                     </div>
                   </div>
                 </div>
-              ))}
+              );
+            })}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -817,7 +789,9 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {sortedOrders.map((order) => (
+                  {sortedOrders.map((order) => {
+                    const nextStatusOptions = getNextStatusOptions(order.status);
+                    return (
                     <React.Fragment key={order.id}>
                       <tr className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -938,14 +912,13 @@ const OrderManagement = ({ orders, updateOrderStatus, searchTerm: propSearchTerm
                         </tr>
                       )}
                     </React.Fragment>
-                  ))}
+                  );
+                })}
                 </tbody>
               </table>
             </div>
           )}
         </div>
-      </div>
-
       {/* Confirmation Modal */}
       {confirmModal.show && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">

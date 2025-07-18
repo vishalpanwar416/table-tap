@@ -5,8 +5,12 @@ import ActiveOrders from './ActiveOrders';
 import PopularItems from './PopularItems';
 import { generateChartData, formatDate, getStatusIcon, getStatusBadge } from './helpers';
 import * as XLSX from 'xlsx';
+import { supabase } from '../../../supabase'; // adjust path as needed
 
-const DashboardOverview = ({ orders, foodItems, updateOrderStatus, setActiveTab }) => {
+const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab }) => {
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState('');
   const [revenueData, setRevenueData] = useState({ daily: 0, weekly: 0, monthly: 0 });
   const [orderStats, setOrderStats] = useState({ total: 0, pending: 0, ready: 0, completed: 0, preparing: 0 });
   const [activeUsers, setActiveUsers] = useState(0);
@@ -16,6 +20,35 @@ const DashboardOverview = ({ orders, foodItems, updateOrderStatus, setActiveTab 
   const [chartData, setChartData] = useState([]);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+
+  useEffect(() => {
+    let loadingTimeout;
+    const fetchOrders = async () => {
+      try {
+        setOrdersLoading(true);
+        loadingTimeout = setTimeout(() => {
+          setOrdersLoading(false);
+          setOrdersError('Orders request took too long. Please try again.');
+        }, 15000);
+
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setOrders(data || []);
+        setOrdersError('');
+      } catch (error) {
+        setOrdersError('Failed to load orders: ' + (error.message || error));
+      } finally {
+        clearTimeout(loadingTimeout);
+        setOrdersLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, []);
 
   useEffect(() => {
     const now = new Date();
@@ -207,6 +240,12 @@ const DashboardOverview = ({ orders, foodItems, updateOrderStatus, setActiveTab 
 
   return (
     <div className="space-y-6">
+      {ordersLoading && (
+        <div className="text-center py-8 text-gray-500">Loading orders...</div>
+      )}
+      {ordersError && (
+        <div className="text-center py-8 text-red-500">{ordersError}</div>
+      )}
       <StatsCards
         revenueData={revenueData}
         orderStats={orderStats}

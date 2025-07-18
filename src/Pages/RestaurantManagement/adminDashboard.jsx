@@ -19,7 +19,7 @@ import InventoryActivityLogs from '../../components/admin/InventoryActivityLogs'
 import { X, ArrowLeft, Package, BarChart3, Sparkles, Plus, Building2, ChevronDown, Clock } from 'lucide-react';
 import { getAllFoodItems, getRestaurantFoodItems } from '../../api/foodService';
 import { supabase } from '../../supabase';
-import { updateOrderStatus as updateOrderStatusService } from '../../api/orderService';
+import { updateOrderStatus as updateOrderStatusService } from '../../api/admin/orderService';
 import { useAdminRestaurant } from '../../context/AdminRestaurantContext';
 
 const AdminDashboard = () => {
@@ -27,7 +27,6 @@ const AdminDashboard = () => {
   const { restaurantId } = useParams();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [foodItems, setFoodItems] = useState([]);
-  const [orders, setOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showMobileNav, setShowMobileNav] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -308,7 +307,7 @@ const AdminDashboard = () => {
         const { data, error } = await query.order('created_at', { ascending: false });
 
         if (error) throw error;
-        setOrders(data || []);
+        // setOrders(data || []); // This line is removed
       } catch (error) {
         setErrorMsg('Failed to load orders: ' + (error.message || error));
       } finally {
@@ -343,64 +342,63 @@ const AdminDashboard = () => {
             return; // Skip if not for this restaurant
           }
 
-          setOrders((prevOrders) => {
-            
-            if (eventType === 'INSERT') {
-              // Play sound for new order only
-              let orderTotal = Number(newRecord.total);
-              if (isNaN(orderTotal)) orderTotal = 0;
-              const customerName = newRecord.customer_name || 'Unknown Customer';
-              const orderId = newRecord.order_number || newRecord.id.slice(0,8);
+          // setOrders((prevOrders) => { // This line is removed
+          //   if (eventType === 'INSERT') {
+          //     // Play sound for new order only
+          //     let orderTotal = Number(newRecord.total);
+          //     if (isNaN(orderTotal)) orderTotal = 0;
+          //     const customerName = newRecord.customer_name || 'Unknown Customer';
+          //     const orderId = newRecord.order_number || newRecord.id.slice(0,8);
 
-              const soundType = orderTotal > 50 ? 'urgent' : 'order';
-              setOrderSoundType(soundType);
-              setPlayOrderSound(true);
+          //     const soundType = orderTotal > 50 ? 'urgent' : 'order';
+          //     setOrderSoundType(soundType);
+          //     setPlayOrderSound(true);
 
-              setOrderToastTitle('🔔 New Order Received!');
-              setOrderToastMessage(
-                `Order #${orderId} from ${customerName} - ₹${orderTotal.toFixed(2)}`
-              );
-              setShowOrderToast(true);
+          //     setOrderToastTitle('🔔 New Order Received!');
+          //     setOrderToastMessage(
+          //       `Order #${orderId} from ${customerName} - ₹${orderTotal.toFixed(2)}`
+          //     );
+          //     setShowOrderToast(true);
 
-              if ('Notification' in window && Notification.permission === 'granted') {
-                new Notification('New Order Received!', {
-                  body: `Order #${orderId} from ${customerName} - Total: ₹${orderTotal.toFixed(2)}`,
-                  icon: '/favicon.ico',
-                  tag: 'new-order',
-                  badge: '/favicon.ico',
-                  requireInteraction: true,
-                });
-              }
+          //     if ('Notification' in window && Notification.permission === 'granted') {
+          //       new Notification('New Order Received!', {
+          //         body: `Order #${orderId} from ${customerName} - Total: ₹${orderTotal.toFixed(2)}`,
+          //         icon: '/favicon.ico',
+          //         tag: 'new-order',
+          //         badge: '/favicon.ico',
+          //         requireInteraction: true,
+          //       });
+          //     }
 
-              return [newRecord, ...prevOrders];
-            } else if (eventType === 'UPDATE') {
+          //     return [newRecord, ...prevOrders];
+          //   } else if (eventType === 'UPDATE') {
+          //     
+          //     // Handle order updates - match by id field
+          //     const updatedOrder = newRecord;
+          //     const existingOrder = prevOrders.find(o => o.id === updatedOrder.id);
               
-              // Handle order updates - match by id field
-              const updatedOrder = newRecord;
-              const existingOrder = prevOrders.find(o => o.id === updatedOrder.id);
               
-              
-              if (existingOrder) {
-                const statusChanged = existingOrder.status !== updatedOrder.status;
+          //     if (existingOrder) {
+          //       const statusChanged = existingOrder.status !== updatedOrder.status;
                 
-                if (statusChanged) {
-                  setOrderToastTitle('📋 Order Updated');
-                  setOrderToastMessage(`Order #${updatedOrder.order_number || updatedOrder.id.slice(0,8)} status changed to ${updatedOrder.status}`);
-                  setShowOrderToast(true);
-                }
-              }
+          //       if (statusChanged) {
+          //         setOrderToastTitle('📋 Order Updated');
+          //         setOrderToastMessage(`Order #${updatedOrder.order_number || updatedOrder.id.slice(0,8)} status changed to ${updatedOrder.status}`);
+          //         setShowOrderToast(true);
+          //       }
+          //     }
 
-              const updatedOrders = prevOrders.map((order) =>
-                order.id === updatedOrder.id ? updatedOrder : order
-              );
+          //     const updatedOrders = prevOrders.map((order) =>
+          //       order.id === updatedOrder.id ? updatedOrder : order
+          //     );
               
-              return updatedOrders;
-            } else if (eventType === 'DELETE') {
-              // Handle order deletions - match by id field
-              return prevOrders.filter((order) => order.id !== oldRecord.id);
-            }
-            return prevOrders;
-          });
+          //     return updatedOrders;
+          //   } else if (eventType === 'DELETE') {
+          //     // Handle order deletions - match by id field
+          //     return prevOrders.filter((order) => order.id !== oldRecord.id);
+          //   }
+          //   return prevOrders;
+          // });
         }
       )
       .subscribe((status) => {
@@ -440,83 +438,28 @@ const AdminDashboard = () => {
   }, [errorMsg, successMsg]);
 
   // MODIFIED FUNCTION: Enhanced update order status with manual state update
-  const updateOrderStatus = async (orderId, status) => {
-    let loadingTimeout;
+  const updateOrderStatus = async (orderId, newStatus, cancelReason) => {
     try {
-      setLoading(true);
-      
-      loadingTimeout = setTimeout(() => {
-        setLoading(false);
-        setErrorMsg('Update request took too long. Please try again.');
-      }, 10000);
-      
-      // Update order status and get updated order data
-      const updatedOrder = await updateOrderStatusService(orderId, status);
-      
-      // *** FIX: Manually update the orders state ***
-      // This ensures the UI updates immediately for the current user.
-      // The real-time subscription will still handle updates from other users.
-      setOrders(prevOrders =>
-        prevOrders.map(order =>
-          order.id === updatedOrder.id ? updatedOrder : order
-        )
-      );
-      
-      // Use updatedOrder for toast and notification
+      setIsLoading(true);
+      const updatedOrder = await updateOrderStatusService(orderId, newStatus, cancelReason);
+
+      // Show success notification
       setOrderToastTitle('✅ Status Updated');
       setOrderToastMessage(
-        `Order #${updatedOrder.order_number || updatedOrder.id.slice(0,8)} marked as ${status}`
+        `Order #${updatedOrder.order_number || updatedOrder.id.slice(0,8)} marked as ${newStatus}`
       );
       setShowOrderToast(true);
       setOrderSoundType('success');
       setPlayOrderSound(true);
-      
-      // Create notification for customer (handle separately)
-      try {
-        if (updatedOrder?.user_id) {
-          let notificationType;
-          switch (status) {
-            case 'confirmed':
-              notificationType = 'order_accepted';
-              break;
-            case 'preparing':
-              notificationType = 'order_preparing';
-              break;
-            case 'ready':
-              notificationType = 'order_ready';
-              break;
-            case 'rejected':
-              notificationType = 'order_rejected';
-              break;
-            case 'completed':
-              notificationType = 'order_ready';
-              break;
-            default:
-              notificationType = 'order_received';
-          }
 
-          await supabase
-            .from('notifications')
-            .insert({
-              order_id: updatedOrder.order_number || updatedOrder.id,
-              title: `Order ${status}`,
-              message: `Your order #${updatedOrder.order_number} has been ${status}`,
-              user_id: updatedOrder.user_id,
-              type: notificationType,
-              read: false,
-              metadata: { order_status: status }
-            });
-        }
-      } catch (notifError) {
-      }
-
+      return updatedOrder;
     } catch (error) {
       setErrorMsg('Failed to update order status: ' + (error.message || error));
       setOrderSoundType('error');
       setPlayOrderSound(true);
+      throw error;
     } finally {
-      clearTimeout(loadingTimeout);
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -928,7 +871,6 @@ const AdminDashboard = () => {
               {activeTab === 'dashboard' && (
                 <div className="px-4 py-6 md:p-6">
                   <DashboardOverview 
-                    orders={orders}
                     foodItems={foodItems}
                     updateOrderStatus={updateOrderStatus}
                     setActiveTab={setActiveTab}
@@ -952,7 +894,7 @@ const AdminDashboard = () => {
               {activeTab === 'orders' && (
                 <div className="px-4 py-6 md:p-6">
                   <OrderManagement 
-                    orders={orders}
+                    restaurantId={userRestaurantId}
                     updateOrderStatus={updateOrderStatus}
                     searchTerm={searchTerm}
                   />
