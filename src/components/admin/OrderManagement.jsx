@@ -350,15 +350,16 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
     XLSX.writeFile(wb, `OrderDetails-${sheetName.replace(/\s+/g, '')}.xlsx`);
   };
   
+  // Modernized OrderItemsList
   const OrderItemsList = ({ items }) => (
-    <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+    <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 mt-2">
       <h4 className="text-xs font-semibold uppercase text-gray-500 mb-2">Order Items</h4>
       <div className="divide-y divide-gray-200">
         {items.map((item, idx) => (
           <div key={idx} className="flex items-center py-2">
             <div className="w-10 h-10 rounded overflow-hidden mr-3 border border-gray-200 bg-white flex-shrink-0">
-              <img 
-                src={item.image || `/api/placeholder/40/40`} 
+              <img
+                src={item.image || `/api/placeholder/40/40`}
                 alt={item.name || `Item ${idx+1}`}
                 className="w-full h-full object-cover"
               />
@@ -633,146 +634,158 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
               )}
             </div>
           ) : viewType === 'tiles' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {sortedOrders.map((order) => {
-                const nextStatusOptions = getNextStatusOptions(order.status);
-                return (
-                <div key={order.id} className={`border rounded-lg hover:shadow-md transition-shadow ${order.status === 'pending' ? 'bg-green-50' : order.status === 'ready' ? 'bg-blue-50' : order.status === 'rejected' ? 'bg-red-50' : order.status === 'preparing' ? 'bg-yellow-50' : 'bg-white'}`}>
-                  {/* Order header */}
-                  <div className="bg-gray-50 p-3 flex justify-between items-center border-b">
-                    <div className="flex items-center">
-                      <div className="mr-2">{STATUS_META[order.status]?.icon}</div>
-                      <div>
-                        <p className="font-medium">{order.order_number || order.id.slice(0, 8)}</p>
-                        <p className="text-xs text-gray-500">{formatDate(order.created_at)}</p>
-                      </div>
-                    </div>
-                    <div>{getStatusBadge(order.status || 'pending')}</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {sortedOrders.map((order) => (
+                <div
+                  key={order.id}
+                  className={`
+                    group relative rounded-2xl border border-gray-100 shadow-lg hover:shadow-2xl transition-shadow duration-300 overflow-hidden
+                    ${
+                      order.status === 'pending'
+                        ? 'bg-yellow-50'
+                        : order.status === 'preparing'
+                        ? 'bg-purple-50'
+                        : order.status === 'ready'
+                        ? 'bg-green-50'
+                        : order.status === 'completed'
+                        ? 'bg-teal-50'
+                        : order.status === 'rejected'
+                        ? 'bg-red-50'
+                        : 'bg-gray-50'
+                    }
+                    ${order.status === 'pending' ? 'ring-2 ring-yellow-100' : ''}
+                  `}
+                  style={{ minHeight: 340 }}
+                >
+                  {/* Status Ribbon */}
+                  <div
+                    className={`
+                      absolute top-0 right-0 px-4 py-1 text-xs font-bold tracking-wide rounded-bl-2xl shadow-md z-10
+                      ${
+                        order.status === 'pending'
+                          ? 'bg-yellow-200 text-yellow-900'
+                          : order.status === 'preparing'
+                          ? 'bg-purple-200 text-purple-900'
+                          : order.status === 'ready'
+                          ? 'bg-green-200 text-green-900'
+                          : order.status === 'completed'
+                          ? 'bg-teal-200 text-teal-900'
+                          : order.status === 'rejected'
+                          ? 'bg-red-200 text-red-900'
+                          : 'bg-gray-200 text-gray-900'
+                      }
+                    `}
+                  >
+                    {STATUS_META[order.status]?.label}
                   </div>
-                  
-                  {/* Order content */}
-                  <div className="p-4">
-                    {/* Customer info */}
-                    <div className="mb-4">
-                      <div className="flex justify-between mb-2">
-                        <div className="flex items-center">
-                          <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center mr-2">
-                            <img
-                              src={
-                                order.profile?.avatar_url ||
-                                "data:image/svg+xml;utf8,<svg width='40' height='40' viewBox='0 0 40 40' fill='none' xmlns='http://www.w3.org/2000/svg'><rect width='40' height='40' rx='20' fill='%23f3f4f6'/><circle cx='20' cy='16' r='7' fill='%23f59e42'/><ellipse cx='20' cy='29' rx='11' ry='6' fill='%23f59e42' fill-opacity='0.5'/><circle cx='20' cy='16' r='4' fill='white'/></svg>"
-                              }
-                              alt="Profile"
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <span className="font-medium">{order.customer_name || 'Guest'}</span>
+
+                  {/* Card Header */}
+                  <div className="p-5 border-b border-gray-100 bg-gradient-to-r from-white to-gray-50">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-xl font-extrabold text-gray-900 flex items-center gap-2">
+                          #{order.order_number || order.id.slice(0, 8)}
+                          <span className="ml-2 text-xs font-semibold text-gray-400">{formatDate(order.created_at)}</span>
                         </div>
-                        
-                        {(order.table_number || order.tableNumber) && (
-                          <div className="px-3 py-1 bg-blue-50 text-blue-700 rounded-lg text-sm">
-                            Table {order.table_number || order.tableNumber}
-                          </div>
+                        {order.table_number && (
+                          <span className="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                            Table {order.table_number}
+                          </span>
                         )}
                       </div>
-                      
-                      {order.customer_phone && (
-                        <div className="flex items-center text-sm text-gray-500 mb-1">
-                          <Phone size={14} className="mr-1" />
-                          <span>{order.customer_phone}</span>
-                        </div>
-                      )}
-                      
-                      {order.customer_email && (
-                        <div className="flex items-center text-sm text-gray-500 mb-1">
-                          <svg className="mr-1" width="16" height="16" fill="none" viewBox="0 0 24 24">
-                            <path d="M4 4h16v16H4V4zm0 0l8 8 8-8" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                          <span>{order.customer_email}</span>
-                        </div>
-                      )}
-                      
-                      {order.address && (
-                        <div className="flex items-start text-sm text-gray-500">
-                          <MapPin size={14} className="mr-1 mt-1 flex-shrink-0" />
-                          <span className="line-clamp-2">{order.address}</span>
-                        </div>
-                      )}
-                      
-                      {/* Payment method just below table number */}
-                      <div className="mb-1 flex items-center text-xs text-gray-600">
-                        <span className="font-semibold mr-1">Payment:</span>
-                        {order.payment_method === 'razorpay' && order.payment_status === 'completed' ? (
-                          <span className="text-green-600 font-medium">Paid Online</span>
-                        ) : order.payment_method === 'cod' ? (
-                          <span className="text-yellow-600 font-medium">Cash on Delivery</span>
-                        ) : order.payment_status === 'pending' ? (
-                          <span className="text-orange-600 font-medium">Pending Payment</span>
-                        ) : order.payment_status === 'failed' ? (
-                          <span className="text-red-600 font-medium">Payment Failed</span>
-                        ) : (
-                          <span className="capitalize">{order.payment_method || 'Unknown'}</span>
-                        )}
-                      </div>
+                      <button
+                        onClick={() => toggleOrderExpansion(order.id)}
+                        className="rounded-full p-2 bg-gray-100 hover:bg-orange-100 transition"
+                        title={expandedOrderId === order.id ? "Hide details" : "View details"}
+                      >
+                        {expandedOrderId === order.id ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                      </button>
                     </div>
-                    
-                    {/* Order items preview */}
-                    <div className="mb-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <p className="text-xs text-gray-500 font-medium">
-                          {(order.items || []).length} {(order.items || []).length === 1 ? 'ITEM' : 'ITEMS'}
-                        </p>
-                        <button 
-                          onClick={() => toggleOrderExpansion(order.id)}
-                          className="text-xs text-orange-500 hover:text-orange-600 flex items-center"
-                        >
-                          {expandedOrderId === order.id ? (
-                            <>Hide details <ChevronDown size={14} className="ml-1" /></>
-                          ) : (
-                            <>View details <ChevronRight size={14} className="ml-1" /></>
-                          )}
-                        </button>
-                      </div>
-                      
-                      {/* Order items images */}
-                      <div className="flex mb-3 space-x-2 overflow-x-auto pb-1 scrollbar-hide">
+                  </div>
+
+                  {/* Customer Info */}
+                  <div className="flex items-center gap-4 px-5 pt-4 pb-2">
+                    <div className="h-12 w-12 rounded-full ring-2 ring-orange-200 bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center overflow-hidden">
+                      <img
+                        src={order.profile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(order.customer_name || 'Guest')}&background=f59e42&color=fff`}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                        onError={e => { e.target.onerror = null; e.target.src = '/api/placeholder/40/40'; }}
+                      />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-gray-800">{order.customer_name || 'Guest'}</div>
+                      {order.customer_phone && (
+                        <div className="text-xs text-gray-500 flex items-center gap-1">
+                          <Phone size={12} /> {order.customer_phone}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Items Preview */}
+                  <div className="px-5 pb-2">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
                         {(order.items || []).slice(0, 4).map((item, idx) => (
-                          <div key={idx} className="flex-shrink-0 w-16 h-16 rounded-md overflow-hidden border border-gray-200 bg-gray-50">
-                            <img 
-                              src={item.image || `/api/placeholder/64/64`} 
-                              alt={item.name || `Item ${idx+1}`}
-                              className="w-full h-full object-cover"
-                            />
+                          <div key={idx} className="flex-shrink-0 relative group">
+                            <div className="w-14 h-14 rounded-lg overflow-hidden border border-gray-200 bg-gray-50 transition-transform duration-200 group-hover:scale-105">
+                              <img
+                                src={item.image || `/api/placeholder/56/56`}
+                                alt={item.name || `Item ${idx+1}`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div className="absolute -bottom-1 -right-1 bg-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-medium shadow-xs border border-gray-200">
+                              {item.quantity || 1}
+                            </div>
                           </div>
                         ))}
                         {(order.items || []).length > 4 && (
-                          <div className="flex-shrink-0 w-16 h-16 flex items-center justify-center rounded-md bg-gray-100 text-gray-600 text-sm font-medium">
+                          <div className="w-14 h-14 flex items-center justify-center rounded-lg bg-gray-100 text-xs font-medium text-gray-600 border border-gray-200">
                             +{(order.items || []).length - 4}
                           </div>
                         )}
+                        <span className="ml-auto text-xs text-gray-400">{(order.items || []).length} items</span>
                       </div>
-                      
-                      {/* Expanded order items details */}
-                      {expandedOrderId === order.id && (
-                        <OrderItemsList items={order.items || []} />
-                      )}
                     </div>
-                    
-                    {/* Actions */}
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <div className="text-xs text-gray-500 mb-0.5">Total Amount</div>
-                        <div className="font-semibold">₹{order.total?.toFixed(2) || '0.00'}</div>
+                    {expandedOrderId === order.id && (
+                      <OrderItemsList items={order.items || []} />
+                    )}
+                  </div>
+
+                  {/* Payment and Total */}
+                  <div className="flex justify-between items-center pt-4 pb-3 px-5 border-t border-gray-100 bg-gradient-to-r from-gray-50 to-white shadow-inner rounded-b-xl">
+                    <div>
+                      <div className="text-xs text-gray-500">Total</div>
+                      <div className="font-bold text-lg text-gray-800">₹{order.total?.toFixed(2) || '0.00'}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500">Payment</div>
+                      <div className="font-medium text-xs">
+                        {order.payment_method === 'razorpay' && order.payment_status === 'completed' ? (
+                          <span className="inline-block px-2 py-1 rounded-full bg-green-100 text-green-700 font-semibold">Paid Online</span>
+                        ) : order.payment_method?.toLowerCase() === 'upi' ? (
+                          <span className="inline-block px-2 py-1 rounded-full bg-blue-100 text-blue-700 font-semibold">UPI</span>
+                        ) : order.payment_method === 'cod' ? (
+                          <span className="inline-block px-2 py-1 rounded-full bg-yellow-100 text-yellow-700 font-semibold">Cash</span>
+                        ) : order.payment_status === 'pending' ? (
+                          <span className="inline-block px-2 py-1 rounded-full bg-orange-100 text-orange-700 font-semibold">Pending</span>
+                        ) : order.payment_status === 'failed' ? (
+                          <span className="inline-block px-2 py-1 rounded-full bg-red-100 text-red-700 font-semibold">Failed</span>
+                        ) : (
+                          <span className="inline-block px-2 py-1 rounded-full bg-gray-100 text-gray-700 font-semibold">
+                            {order.payment_method ? order.payment_method.toUpperCase() : 'Unknown'}
+                          </span>
+                        )}
                       </div>
-                      
-                      <div className="flex space-x-2">
-                        <ActionButtons order={order} />
-                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <ActionButtons order={order} />
                     </div>
                   </div>
                 </div>
-              );
-            })}
+              ))}
             </div>
           ) : (
             <div className="overflow-x-auto">
