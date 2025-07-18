@@ -15,7 +15,11 @@ import {
   BarChart3,
   Eye,
   Search,
-  Package
+  Package,
+  AlertTriangle,
+  CheckCircle,
+  ChevronDown,
+  RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../../config/AuthContext';
 import { useAdminRestaurant } from '../../context/AdminRestaurantContext';
@@ -26,42 +30,77 @@ import {
   getRoleDisplayName
 } from '../../api/inventoryService';
 
-const InventoryActivityLogs = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
-  const { userRestaurantId } = useAdminRestaurant();
+const InventoryActivityLogs = ({ setLoading, setErrorMsg, setSuccessMsg, searchTerm }) => {
+  const { userRestaurantId, userRole } = useAdminRestaurant();
+  const { user } = useAuth();
   
   const [activityLogs, setActivityLogs] = useState([]);
+  const [filteredLogs, setFilteredLogs] = useState([]);
   const [filters, setFilters] = useState({
     action: '',
     user_id: '',
     date_from: '',
     date_to: '',
-    search: ''
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const [inventoryItems, setInventoryItems] = useState([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const PAGE_SIZE = 50; // or whatever you prefer
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     if (userRestaurantId) {
-      loadActivityLogs();
+      loadActivityLogs(true); // reset logs
     }
   }, [userRestaurantId]);
 
-  const loadActivityLogs = async () => {
+  const loadActivityLogs = async (reset = false) => {
     if (!userRestaurantId) {
-      setErrorMsg('No restaurant ID available');
+      setError('No restaurant ID available');
       return;
     }
 
     try {
-      setLoading(true);
-      const { data, error } = await inventoryService.getActivityLogs(userRestaurantId);
+      if (reset) {
+        setLoading(true); // global loading for initial load
+      } else {
+        setLoadingMore(true); // local loading for paging
+      }
+      setError(null);
+      // Add pagination support to your service (see below)
+      const { data, error } = await inventoryService.getActivityLogs(userRestaurantId, page, PAGE_SIZE);
       if (error) throw new Error(error);
-      setActivityLogs(data);
+
+      if (reset) {
+        setActivityLogs(data);
+      } else {
+        setActivityLogs(prev => [...prev, ...data]);
+      }
+      setHasMore(data.length === PAGE_SIZE);
+      setSuccess('Activity logs loaded successfully');
+      setTimeout(() => setSuccess(null), 3000);
     } catch (error) {
-      setErrorMsg('Failed to load activity logs: ' + error.message);
+      setError('Failed to load activity logs: ' + error.message);
     } finally {
-      setLoading(false);
+      if (reset) {
+        setLoading(false);
+      } else {
+        setLoadingMore(false);
+      }
     }
   };
+
+  // Fetch inventory items on mount or when restaurant changes
+  useEffect(() => {
+    if (userRestaurantId) {
+      inventoryService.getAllItems(userRestaurantId).then(({ data }) => {
+        setInventoryItems(data || []);
+      });
+    }
+  }, [userRestaurantId]);
 
   const getActionIcon = (action) => {
     switch (action) {
@@ -83,17 +122,17 @@ const InventoryActivityLogs = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
   const getActionColor = (action) => {
     switch (action) {
       case ACTIVITY_TYPES.ITEM_ADDED:
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 border-green-200';
       case ACTIVITY_TYPES.ITEM_UPDATED:
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 text-blue-800 border-blue-200';
       case ACTIVITY_TYPES.STOCK_UPDATE:
-        return 'bg-orange-100 text-orange-800';
+        return 'bg-orange-100 text-orange-800 border-orange-200';
       case ACTIVITY_TYPES.STOCK_TAKE_OUT:
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-800 border-red-200';
       case ACTIVITY_TYPES.ITEM_DELETED:
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-800 border-red-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
@@ -142,19 +181,69 @@ const InventoryActivityLogs = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
     return date.toLocaleString();
   };
 
-  const filteredLogs = activityLogs.filter(log => {
-    if (filters.search) {
-      const searchTerm = filters.search.toLowerCase();
-      return (
-        log.item_name.toLowerCase().includes(searchTerm) ||
-        log.user_name.toLowerCase().includes(searchTerm) ||
-        log.notes.toLowerCase().includes(searchTerm)
+  const applyFilters = () => {
+    let filtered = [...activityLogs];
+
+    // Use searchTerm from props
+    if (searchTerm) {
+      const searchTermLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(log => 
+        (getItemName(log.item_id).toLowerCase().includes(searchTermLower)) ||
+        (log.user_name && log.user_name.toLowerCase().includes(searchTermLower)) ||
+        (log.notes && log.notes.toLowerCase().includes(searchTermLower))
       );
     }
-    return true;
-  });
 
-  // Get role display name
+    // Action filter
+    if (filters.action) {
+      filtered = filtered.filter(log => log.action === filters.action);
+    }
+
+    // User filter
+    if (filters.user_id) {
+      filtered = filtered.filter(log => 
+        log.user_id.toString().includes(filters.user_id) ||
+        (log.user_name && log.user_name.toLowerCase().includes(filters.user_id.toLowerCase()))
+      );
+    }
+
+    // Date range filter
+    if (filters.date_from) {
+      const fromDate = new Date(filters.date_from);
+      filtered = filtered.filter(log => new Date(log.timestamp) >= fromDate);
+    }
+
+    if (filters.date_to) {
+      const toDate = new Date(filters.date_to);
+      toDate.setHours(23, 59, 59, 999); // Include entire end day
+      filtered = filtered.filter(log => new Date(log.timestamp) <= toDate);
+    }
+
+    setFilteredLogs(filtered);
+  };
+
+  useEffect(() => {
+    applyFilters();
+  }, [filters, activityLogs, searchTerm]);
+
+  useEffect(() => {
+    if (page === 1) {
+      loadActivityLogs(true); // reset logs
+    } else {
+      loadActivityLogs();
+    }
+    // eslint-disable-next-line
+  }, [page, userRestaurantId]);
+
+  const clearFilters = () => {
+    setFilters({
+      action: '',
+      user_id: '',
+      date_from: '',
+      date_to: '',
+    });
+  };
+
   const getRoleDisplayName = (role) => {
     switch (role) {
       case 'admin':
@@ -170,7 +259,12 @@ const InventoryActivityLogs = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
     }
   };
 
-  // Check if user has permission to view logs
+  // Helper to get item name by id
+  const getItemName = (itemId) => {
+    const item = inventoryItems.find(i => i.id === itemId);
+    return item ? item.name : 'Unknown Item';
+  };
+
   if (!userRestaurantId) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -188,7 +282,7 @@ const InventoryActivityLogs = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Clock className="w-8 h-8 text-blue-500" />
+            <Activity className="w-8 h-8 text-blue-500" />
             Inventory Activity Logs
           </h1>
           <p className="text-gray-600 mt-1">Track all inventory activities and changes</p>
@@ -197,20 +291,50 @@ const InventoryActivityLogs = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
         <div className="flex gap-2">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+              showFilters 
+                ? 'bg-blue-500 text-white border-blue-500' 
+                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+            }`}
           >
             <Filter className="w-4 h-4" />
             Filters
+            <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
           </button>
           <button
             onClick={loadActivityLogs}
-            className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
           >
-            <Eye className="w-4 h-4" />
+            <RefreshCw className="w-4 h-4" />
             Refresh
           </button>
         </div>
       </div>
+
+      {/* Error/Success Messages */}
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-sm font-medium text-red-800">Error</h3>
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {success && (
+        <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg">
+          <div className="flex items-start gap-3">
+            <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-sm font-medium text-green-800">Success</h3>
+              <p className="text-sm text-green-700">{success}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       {showFilters && (
@@ -221,7 +345,7 @@ const InventoryActivityLogs = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
               <select
                 value={filters.action}
                 onChange={(e) => setFilters(prev => ({ ...prev, action: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">All Actions</option>
                 <option value={ACTIVITY_TYPES.ITEM_ADDED}>Item Added</option>
@@ -238,8 +362,8 @@ const InventoryActivityLogs = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                 type="text"
                 value={filters.user_id}
                 onChange={(e) => setFilters(prev => ({ ...prev, user_id: e.target.value }))}
-                placeholder="Filter by user"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                placeholder="Filter by user ID or name"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
             
@@ -249,7 +373,7 @@ const InventoryActivityLogs = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                 type="date"
                 value={filters.date_from}
                 onChange={(e) => setFilters(prev => ({ ...prev, date_from: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
             
@@ -259,24 +383,52 @@ const InventoryActivityLogs = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                 type="date"
                 value={filters.date_to}
                 onChange={(e) => setFilters(prev => ({ ...prev, date_to: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
+          </div>
+          <div className="flex justify-end mt-4">
+            <button
+              onClick={clearFilters}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              <X className="w-4 h-4" />
+              Clear Filters
+            </button>
           </div>
         </div>
       )}
 
-      {/* Search */}
-      <div className="bg-white p-4 rounded-lg shadow border">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <input
-            type="text"
-            placeholder="Search by item name, user, or notes..."
-            value={filters.search}
-            onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-          />
+      {/* Stats Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white p-4 rounded-lg shadow border">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Total Activities</p>
+              <p className="text-2xl font-bold text-gray-900">{activityLogs.length}</p>
+            </div>
+            <Activity className="w-8 h-8 text-blue-500" />
+          </div>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow border">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Filtered Activities</p>
+              <p className="text-2xl font-bold text-gray-900">{filteredLogs.length}</p>
+            </div>
+            <Filter className="w-8 h-8 text-blue-500" />
+          </div>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow border">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Your Activities</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {activityLogs.filter(log => log.user_id === user?.id).length}
+              </p>
+            </div>
+            <User className="w-8 h-8 text-blue-500" />
+          </div>
         </div>
       </div>
 
@@ -313,7 +465,7 @@ const InventoryActivityLogs = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {activityLogs.length === 0 ? (
+              {filteredLogs.length === 0 ? (
                 <tr>
                   <td colSpan="8" className="px-6 py-12 text-center text-gray-500">
                     <Clock className="w-12 h-12 mx-auto text-gray-300 mb-4" />
@@ -322,18 +474,21 @@ const InventoryActivityLogs = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   </td>
                 </tr>
               ) : (
-                activityLogs.map((log) => (
-                  <tr key={log.id} className="hover:bg-gray-50">
+                filteredLogs.map((log) => (
+                  <tr key={log.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {new Date(log.timestamp).toLocaleString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {log.item_name}
+                      {getItemName(log.item_id)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getActionColor(log.action)}`}>
-                        {getActionDisplayName(log.action)}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {getActionIcon(log.action)}
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getActionColor(log.action)}`}>
+                          {getActionDisplayName(log.action)}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       <span className={`flex items-center gap-1 ${log.quantity_changed > 0 ? 'text-green-600' : log.quantity_changed < 0 ? 'text-red-600' : 'text-gray-600'}`}>
@@ -342,16 +497,25 @@ const InventoryActivityLogs = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {log.user_name}
+                      <div className="flex items-center gap-2">
+                        {log.user_name}
+                        {log.user_id === user?.id && (
+                          <span className="px-1.5 py-0.5 text-xs bg-blue-100 text-blue-800 rounded-full">You</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {getRoleDisplayName(log.user_role)}
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleColor(log.user_role)}`}>
+                        {getRoleDisplayName(log.user_role)}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {getReasonDisplayName(log.reason)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
-                      {log.notes || '-'}
+                    <td className="px-6 py-4 text-sm text-gray-900 max-w-xs">
+                      <div className="line-clamp-2">
+                        {log.notes || '-'}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -360,8 +524,21 @@ const InventoryActivityLogs = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
           </table>
         </div>
       </div>
+      {hasMore && (
+        <div className="flex justify-center my-4">
+          <button
+            onClick={() => {
+              setPage(prev => prev + 1);
+            }}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            disabled={loadingMore}
+          >
+            {loadingMore ? 'Loading...' : 'Load More'}
+          </button>
+        </div>
+      )}
     </div>
   );
 };
 
-export default InventoryActivityLogs; 
+export default InventoryActivityLogs;

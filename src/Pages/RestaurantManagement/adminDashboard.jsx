@@ -1026,6 +1026,8 @@ const AdminDashboard = () => {
                     setLoading={setLoading} 
                     setErrorMsg={setErrorMsg} 
                     setSuccessMsg={setSuccessMsg} 
+                    searchTerm={searchTerm}
+                    setSearchTerm={setSearchTerm}
                   />
                 </div>
               )}

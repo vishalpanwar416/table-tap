@@ -51,7 +51,9 @@ export const inventoryService = {
   },
 
   // Get activity logs for a specific restaurant
-  async getActivityLogs(restaurantId) {
+  async getActivityLogs(restaurantId, page = 1, pageSize = 50) {
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
     try {
       const { data, error } = await supabase
         .from('inventory_activity_logs')
@@ -65,7 +67,7 @@ export const inventoryService = {
         `)
         .eq('restaurant_id', restaurantId)
         .order('timestamp', { ascending: false })
-        .limit(100);
+        .range(from, to);
 
       if (error) throw error;
       return { data: data || [], error: null };
