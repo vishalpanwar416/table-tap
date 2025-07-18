@@ -1,7 +1,7 @@
 // Inventory Management Service
 // Handles all inventory-related operations and data management
 
-import { supabase } from '../supabase';
+import { supabase } from '../../supabase';
 
 // Activity types constants
 export const ACTIVITY_TYPES = {

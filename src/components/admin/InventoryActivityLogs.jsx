@@ -28,7 +28,7 @@ import {
   ACTIVITY_TYPES,
   getRoleColor,
   getRoleDisplayName
-} from '../../api/inventoryService';
+} from '../../api/admin/inventoryService';
 
 const InventoryActivityLogs = ({ setLoading, setErrorMsg, setSuccessMsg, searchTerm }) => {
   const { userRestaurantId, userRole } = useAdminRestaurant();

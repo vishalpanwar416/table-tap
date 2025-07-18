@@ -48,7 +48,7 @@ import {
   getInventoryStats,
   getRoleColor,
   getRoleDisplayName
-} from '../../api/inventoryService';
+} from '../../api/admin/inventoryService';
 
 const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
   const { user } = useAuth();
