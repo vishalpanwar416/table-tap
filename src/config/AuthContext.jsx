@@ -1,12 +1,14 @@
 // src/contexts/AuthContext.jsx
 import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../supabase';
+import SessionExpiryModal from '../components/SessionExpiryModal';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showSessionModal, setShowSessionModal] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -34,6 +36,9 @@ export const AuthProvider = ({ children }) => {
           setUser(session?.user ?? null);
           setLoading(false);
         }
+        if (event === 'SIGNED_OUT' && !session) {
+          setShowSessionModal(true);
+        }
       }
     );
 
@@ -43,9 +48,12 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
+  const handleLoginSuccess = () => setShowSessionModal(false);
+
   return (
     <AuthContext.Provider value={{ user, loading }}>
       {children}
+      <SessionExpiryModal open={showSessionModal} onLoginSuccess={handleLoginSuccess} />
     </AuthContext.Provider>
   );
 };

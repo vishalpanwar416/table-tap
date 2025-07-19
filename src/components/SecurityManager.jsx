@@ -20,9 +20,10 @@ const SecurityManager = () => {
 
   // Check session validity
   const checkSession = () => {
-    if (user && !sessionManager.isSessionValid()) {
-      setShowSessionModal(true); // Show modal instead of redirecting
-    }
+    // if (user && !sessionManager.isSessionValid()) {
+    //   // navigate('/login?message=session_expired');
+    //   // setShowSessionModal(true);
+    // }
   };
 
   // Set up activity listeners and session check
