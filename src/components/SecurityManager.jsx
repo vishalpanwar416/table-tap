@@ -1,11 +1,13 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../config/AuthContext';
-import { useNavigate } from 'react-router-dom';
 import { sessionManager, rateLimiter } from '../utils/security';
+import { authService } from '../api/authService'; // Assuming you have a way to re-authenticate
+import AuthForm from '../components/auth/AuthForm'; // Or your login form component
+import GoogleButton from '../components/auth/GoogleButton'; // If you want Google login in modal
 
 const SecurityManager = () => {
-  const { user, loading } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [showSessionModal, setShowSessionModal] = useState(false);
   const sessionTimeoutRef = useRef(null);
   const activityTimeoutRef = useRef(null);
 
@@ -19,30 +21,21 @@ const SecurityManager = () => {
   // Check session validity
   const checkSession = () => {
     if (user && !sessionManager.isSessionValid()) {
-      // Add a debounce or grace period here if needed
-      setTimeout(() => {
-        // Double-check session before navigating
-        if (!sessionManager.isSessionValid()) {
-          navigate('/login?message=session_expired');
-        }
-      }, 2000); // 2-second grace period
+      setShowSessionModal(true); // Show modal instead of redirecting
     }
   };
 
-  // Set up activity listeners
+  // Set up activity listeners and session check
   useEffect(() => {
     if (!user) return;
 
     const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
-    
     events.forEach(event => {
       document.addEventListener(event, handleUserActivity, true);
     });
 
-    // Check session every minute
     sessionTimeoutRef.current = setInterval(checkSession, 60000);
 
-    // Update activity every 5 minutes
     activityTimeoutRef.current = setInterval(() => {
       if (user) {
         sessionManager.updateActivity();
@@ -53,42 +46,34 @@ const SecurityManager = () => {
       events.forEach(event => {
         document.removeEventListener(event, handleUserActivity, true);
       });
-      
-      if (sessionTimeoutRef.current) {
-        clearInterval(sessionTimeoutRef.current);
-      }
-      
-      if (activityTimeoutRef.current) {
-        clearInterval(activityTimeoutRef.current);
-      }
+      if (sessionTimeoutRef.current) clearInterval(sessionTimeoutRef.current);
+      if (activityTimeoutRef.current) clearInterval(activityTimeoutRef.current);
     };
-  }, [user, navigate]);
+  }, [user]);
 
-  // Clear intervals when user logs out
-  useEffect(() => {
-    if (!user && !loading) {
-      if (sessionTimeoutRef.current) {
-        clearInterval(sessionTimeoutRef.current);
-      }
-      if (activityTimeoutRef.current) {
-        clearInterval(activityTimeoutRef.current);
-      }
-    }
-  }, [user, loading]);
+  // Handler for successful login in modal
+  const handleLoginSuccess = () => {
+    sessionManager.updateActivity();
+    setShowSessionModal(false);
+  };
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (sessionTimeoutRef.current) {
-        clearInterval(sessionTimeoutRef.current);
-      }
-      if (activityTimeoutRef.current) {
-        clearInterval(activityTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  return null; // This component doesn't render anything
+  return (
+    <>
+      {showSessionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+          <div className="bg-white rounded-lg p-6 shadow-lg w-full max-w-sm">
+            <h2 className="text-lg font-semibold mb-4">Session Expired</h2>
+            <p className="mb-4">Please log in again to continue.</p>
+            {/* Render your login form here, pass a prop/callback for success */}
+            <AuthForm onLoginSuccess={handleLoginSuccess} />
+            <div className="mt-4">
+              <GoogleButton onLoginSuccess={handleLoginSuccess} />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
 };
 
 export default SecurityManager; 
