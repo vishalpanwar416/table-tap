@@ -1,6 +1,6 @@
-// src/api/orderService.js
 import { supabase } from '../../supabase';
 import { createNotification } from '../notificationService';
+import axios from 'axios';
 
 // Note: Order creation has been moved to paymentService.js
 // This file now focuses on order management and status updates
@@ -430,4 +430,35 @@ export const getNextStatusOptions = (currentStatus) => {
     // No further actions for rejected or completed
   };
   return statusFlow[currentStatus] || [];
+};
+
+export const fetchTopOrderedItemsLastMonth = async () => {
+  // Adjust endpoint as per your backend
+  const now = new Date();
+  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+  const response = await axios.get('/api/orders', {
+    params: {
+      startDate: lastMonth.toISOString(),
+      endDate: now.toISOString(),
+    }
+  });
+
+  const orders = response.data; // Array of orders
+
+  // Aggregate item counts
+  const itemMap = {};
+  orders.forEach(order => {
+    order.items.forEach(item => {
+      if (!itemMap[item.id]) {
+        itemMap[item.id] = { ...item, orderCount: 0 };
+      }
+      itemMap[item.id].orderCount += item.quantity || 1;
+    });
+  });
+
+  // Convert to array and sort
+  const sortedItems = Object.values(itemMap).sort((a, b) => b.orderCount - a.orderCount);
+
+  // Return top 10 (or any number you want)
+  return sortedItems.slice(0, 10);
 };

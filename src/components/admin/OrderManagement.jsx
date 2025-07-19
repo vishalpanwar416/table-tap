@@ -11,7 +11,6 @@ import ReactDOMServer from "react-dom/server";
 import PrintBill from "./PrintBill";
 import PrintKOT from "./PrintKOT";
 import * as XLSX from 'xlsx';
-import { supabase } from '../../supabase'; // adjust path if needed
 import {
   fetchAllOrders,
   subscribeToAllOrderChanges,
