@@ -789,7 +789,7 @@ const AdminDashboard = () => {
 
           {/* Main Content Body */}
           <div className="flex-1 overflow-y-auto pt-4 md:pt-0">
-            <div className="px-4 py-6 md:p-6 max-w-7xl mx-auto">
+            <div className="px-2 py-6 md:px-4 md:py-6 max-w-7xl mx-auto">
               {/* Mobile Search */}
               <div className="md:hidden mb-4">
                 {/* Mobile Restaurant Selector for Admin Users */}
@@ -797,7 +797,7 @@ const AdminDashboard = () => {
                   <div className="mb-4 restaurant-selector">
                     <button
                       onClick={() => setShowRestaurantSelector(!showRestaurantSelector)}
-                      className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full flex items-center justify-between gap-2 px-3 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
                     >
                       <div className="flex items-center gap-2">
                         <Building2 size={18} className="text-gray-600" />
@@ -812,7 +812,7 @@ const AdminDashboard = () => {
                     {showRestaurantSelector && (
                       <div className="mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                         <div className="p-2">
-                          <div className="text-xs font-medium text-gray-500 px-3 py-1 border-b border-gray-100">
+                          <div className="text-xs font-medium text-gray-500 px-2 py-1 border-b border-gray-100">
                             Select Restaurant
                           </div>
                           {loadingRestaurants ? (
@@ -829,7 +829,7 @@ const AdminDashboard = () => {
                               <button
                                 key={rest.id}
                                 onClick={() => handleRestaurantSelect(rest.id)}
-                                className={`w-full text-left px-3 py-3 rounded-md text-sm transition-colors ${
+                                className={`w-full text-left px-2 py-3 rounded-md text-sm transition-colors ${
                                   rest.id === userRestaurantId
                                     ? 'bg-orange-100 text-orange-700 font-medium'
                                     : 'hover:bg-gray-50 text-gray-700'
@@ -855,11 +855,11 @@ const AdminDashboard = () => {
                     type="search" 
                     name="search" 
                     placeholder="Search..." 
-                    className="bg-gray-100 w-full h-10 px-5 pr-10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
+                    className="bg-gray-100 w-full h-10 px-4 pr-10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
-                  <span className="absolute right-0 top-0 mt-3 mr-4">
+                  <span className="absolute right-0 top-0 mt-3 mr-3">
                     <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                       <path d="M12.9 14.32a8 8 0 1 1 1.41-1.41l5.35 5.33-1.42 1.42-5.33-5.34zM8 14A6 6 0 1 0 8 2a6 6 0 0 0 0 12z"></path>
                     </svg>
@@ -867,15 +867,13 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              {/* Content Components */}
+              {/* Content Components - Removed redundant padding */}
               {activeTab === 'dashboard' && (
-                <div className="px-4 py-6 md:p-6">
-                  <DashboardOverview 
-                    foodItems={foodItems}
-                    updateOrderStatus={updateOrderStatus}
-                    setActiveTab={setActiveTab}
-                  />
-                </div>
+                <DashboardOverview 
+                  foodItems={foodItems}
+                  updateOrderStatus={updateOrderStatus}
+                  setActiveTab={setActiveTab}
+                />
               )}
 
               {activeTab === 'menu' && (
@@ -892,56 +890,46 @@ const AdminDashboard = () => {
               )}
 
               {activeTab === 'orders' && (
-                <div className="px-4 py-6 md:p-6">
-                  <OrderManagement 
-                    restaurantId={userRestaurantId}
-                    updateOrderStatus={updateOrderStatus}
-                    searchTerm={searchTerm}
-                  />
-                </div>
+                <OrderManagement 
+                  restaurantId={userRestaurantId}
+                  updateOrderStatus={updateOrderStatus}
+                  searchTerm={searchTerm}
+                />
               )}
 
               {activeTab === 'inventory' && (
-                <div className="px-4 py-6 md:p-6">
-                  <InventoryManagement 
-                    setLoading={setLoading}
-                    setErrorMsg={setErrorMsg}
-                    setSuccessMsg={setSuccessMsg}
-                  />
-                </div>
+                <InventoryManagement 
+                  setLoading={setLoading}
+                  setErrorMsg={setErrorMsg}
+                  setSuccessMsg={setSuccessMsg}
+                />
               )}
 
               {activeTab === 'users' && (
-                <div className="px-4 py-6 md:p-6">
-                  <StaffManagement 
-                    searchTerm={searchTerm}
-                    setSearchTerm={setSearchTerm}
-                  />
-                </div>
+                <StaffManagement 
+                  searchTerm={searchTerm}
+                  setSearchTerm={setSearchTerm}
+                />
               )}
               
               {activeTab === 'offers' && (
-                <div className="px-4 py-6 md:p-6">
-                  <OffersManagement 
-                    setLoading={setLoading}
-                    setErrorMsg={setErrorMsg}
-                    setSuccessMsg={setSuccessMsg}
-                  />
-                </div>
+                <OffersManagement 
+                  setLoading={setLoading}
+                  setErrorMsg={setErrorMsg}
+                  setSuccessMsg={setSuccessMsg}
+                />
               )}
               
               {activeTab === 'qr' && (
-                <div className="px-4 py-6 md:p-6">
-                  <QRManagement 
-                    setLoading={setLoading}
-                    setErrorMsg={setErrorMsg}
-                    setSuccessMsg={setSuccessMsg}
-                  />
-                </div>
+                <QRManagement 
+                  setLoading={setLoading}
+                  setErrorMsg={setErrorMsg}
+                  setSuccessMsg={setSuccessMsg}
+                />
               )}
               
               {activeTab === 'analytics' && (contextUserRole === 'manager' || contextUserRole === 'admin' || restaurant.ai_enabled==true || contextIsAdmin()) && (
-                <div className="px-4 py-6 md:p-6">
+                <div>
                   {restaurant.ai_enabled ? (
                     <AIAnalyticsChat restaurantId={restaurant.id} />
                   ) : (
@@ -955,23 +943,19 @@ const AdminDashboard = () => {
               )}
               
               {activeTab === 'settings' && (
-                <div className="px-4 py-6 md:p-6">
-                  <SettingsManagement 
-                    currentUser={currentUser}
-                  />
-                </div>
+                <SettingsManagement 
+                  currentUser={currentUser}
+                />
               )}
               
               {activeTab === 'activity-logs' && (
-                <div className="px-4 py-6 md:p-6">
-                  <InventoryActivityLogs 
-                    setLoading={setLoading} 
-                    setErrorMsg={setErrorMsg} 
-                    setSuccessMsg={setSuccessMsg} 
-                    searchTerm={searchTerm}
-                    setSearchTerm={setSearchTerm}
-                  />
-                </div>
+                <InventoryActivityLogs 
+                  setLoading={setLoading} 
+                  setErrorMsg={setErrorMsg} 
+                  setSuccessMsg={setSuccessMsg} 
+                  searchTerm={searchTerm}
+                  setSearchTerm={setSearchTerm}
+                />
               )}
             </div>
           </div>

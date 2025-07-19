@@ -314,14 +314,14 @@ export default function MyOrders() {
 
         {/* Main Content - Gray block with rounded top corners */}
         <div className="flex-1 flex flex-col">
-          <div className="flex-1 flex flex-col bg-gray-200 rounded-t-3xl overflow-hidden min-h-[500px] px-6 pt-10 pb-6">
+          <div className="flex-1 flex flex-col bg-gray-200 rounded-t-3xl overflow-hidden min-h-[500px] px-4 pt-10 pb-6">
             {/* Tabs */}
             <div className="flex justify-center mb-6">
               <SegmentedTabs activeTab={activeTab} setActiveTab={setActiveTab} />
             </div>
 
             {/* Filter and Refresh Bar */}
-            <div className="flex items-center justify-between mb-4 bg-white rounded-xl py-3 px-4 shadow-sm">
+            <div className="flex items-center justify-between mb-4 bg-white rounded-xl py-3 px-3 shadow-sm">
               <div className="flex items-center">
                 <button 
                   onClick={toggleSortOrder}

@@ -163,6 +163,17 @@ export const componentStyles = {
     warning: 'bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full text-xs font-medium',
     error: 'bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-medium',
   },
+
+  // Add consistent padding utilities
+  padding: {
+    content: 'px-2 py-6 md:px-4 md:py-6',
+    compact: 'px-2 py-3',
+    card: 'p-3',
+    modal: 'p-4',
+    section: 'py-4',
+    mobile: 'px-2',
+    desktop: 'px-4',
+  },
 };
 
 // Animation variants for consistent motion

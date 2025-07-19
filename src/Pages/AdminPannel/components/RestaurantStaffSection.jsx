@@ -119,7 +119,7 @@ const RestaurantStaffSection = ({
         className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200"
         data-staff-index={`${restaurant.id}-${index}`}
       >
-        <div className="grid grid-cols-5 gap-4 px-6 py-4 items-center">
+        <div className="grid grid-cols-5 gap-4 px-4 py-4 items-center">
           {/* Staff Member */}
           <div className="flex items-center">
             <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center shadow-sm">
@@ -258,7 +258,7 @@ const RestaurantStaffSection = ({
           {filteredRestaurantStaff.length > 0 ? (
             <div className="overflow-hidden">
               {/* Table Header */}
-              <div className="bg-gray-50 px-6 py-3 border-b border-gray-100">
+              <div className="bg-gray-50 px-4 py-3 border-b border-gray-100">
                 <div className="grid grid-cols-5 gap-4 text-xs font-medium text-gray-500 uppercase tracking-wider font-spartan">
                   <div>Staff Member</div>
                   <div>Role</div>

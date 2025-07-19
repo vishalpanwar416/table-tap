@@ -95,7 +95,8 @@ const OptimizedPageWrapper = memo(({
   className = "",
   loading = false,
   error = null,
-  onRetry
+  onRetry,
+  showPadding = true // Add new prop for conditional padding
 }) => {
   const navigate = useNavigate();
   const { cartItems, updateQuantity, removeItem } = useCart();
@@ -158,7 +159,7 @@ const OptimizedPageWrapper = memo(({
   });
 
   return (
-    <div className="flex justify-center items-start min-h-screen bg-black p-4">
+    <div className={`flex justify-center items-start min-h-screen bg-black ${showPadding ? 'p-4' : ''}`}>
       <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
         <motion.div
           initial="initial"

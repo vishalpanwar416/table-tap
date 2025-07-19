@@ -253,7 +253,7 @@ export default function CompleteProfile() {
         </motion.div>
         {/* Card/Form Container */}
         <motion.div
-          className="bg-gray-200 flex-1 min-h-[calc(100vh-180px)] rounded-t-3xl px-6 pt-8 pb-6 flex flex-col"
+          className="bg-gray-200 flex-1 min-h-[calc(100vh-180px)] rounded-t-3xl px-4 pt-8 pb-6 flex flex-col"
           variants={cardVariants}
           initial="initial"
           animate="animate"

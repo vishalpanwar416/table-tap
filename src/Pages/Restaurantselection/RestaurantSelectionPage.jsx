@@ -687,7 +687,7 @@ const RestaurantSelectionPage = () => {
     <div className="flex justify-center items-start min-h-screen bg-black">
       <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
         {/* Header */}
-        <div className="w-full px-6 py-8 relative flex justify-center bg-black z-20 sticky top-0 md:static md:bg-transparent" style={{minHeight: 72}}>
+        <div className="w-full px-4 py-8 relative flex justify-center bg-black z-20 sticky top-0 md:static md:bg-transparent" style={{minHeight: 72}}>
           <button 
             className="absolute left-4 top-8 text-orange-500 touch-manipulation"
             onClick={() => navigate(-1)}
@@ -714,7 +714,7 @@ const RestaurantSelectionPage = () => {
           variants={pageVariants}
           className="flex-1 flex flex-col"
         >
-          <div className="flex-1 flex flex-col bg-gray-200 rounded-t-3xl overflow-hidden min-h-[500px] px-6 pt-10 pb-6">
+          <div className="flex-1 flex flex-col bg-gray-200 rounded-t-3xl overflow-hidden min-h-[500px] px-4 pt-10 pb-6">
             
             {/* Prominent Location Prompt - Show when no location and no error */}
             {!userLocation && !locationError && !locationLoading && (
@@ -748,7 +748,7 @@ const RestaurantSelectionPage = () => {
             )}
 
             {/* Location Bar */}
-            <div className="mb-6 bg-white rounded-xl py-3 px-4 shadow-sm">
+            <div className="mb-6 bg-white rounded-xl py-3 px-3 shadow-sm">
               {showSearch ? (
                 <motion.div
                   initial={{ x: 40, opacity: 0 }}
@@ -911,7 +911,7 @@ const RestaurantSelectionPage = () => {
                 }}
               >
                 {restaurants.length === 0 ? (
-                  <motion.div {...slideUp} className="flex flex-col items-center justify-center py-12 px-4">
+                  <motion.div {...slideUp} className="flex flex-col items-center justify-center py-12 px-3">
                     <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-50 flex items-center justify-center shadow-sm mb-4">
                       <Store size={32} className="text-gray-400" />
                     </div>

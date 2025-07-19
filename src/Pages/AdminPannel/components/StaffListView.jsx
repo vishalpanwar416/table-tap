@@ -130,7 +130,7 @@ const StaffListView = ({ staff, restaurants, onEdit, onDelete, onAddStaff, onLoa
         className="border-b border-gray-100 hover:bg-blue-50/60 transition-colors group"
         data-staff-index={index}
       >
-        <div className="grid grid-cols-6 gap-4 px-6 py-4 min-w-[900px]">
+        <div className="grid grid-cols-6 gap-4 px-4 py-4 min-w-[900px]">
           {/* Staff Member */}
           <div className="flex items-center min-w-[180px]">
             <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-400 to-purple-400 flex items-center justify-center shadow-sm">
@@ -275,7 +275,7 @@ const StaffListView = ({ staff, restaurants, onEdit, onDelete, onAddStaff, onLoa
       <div className="bg-gradient-to-br from-white via-gray-50 to-blue-50 rounded-2xl border border-gray-100 shadow-lg overflow-hidden">
         {/* Table Header */}
         <div className="bg-white/80 sticky top-0 z-10 backdrop-blur border-b border-gray-200">
-          <div className="grid grid-cols-6 gap-4 px-6 py-4 min-w-[900px]">
+          <div className="grid grid-cols-6 gap-4 px-4 py-4 min-w-[900px]">
             <div className="text-xs font-bold text-gray-600 uppercase tracking-wider font-spartan min-w-[180px]">Staff Member</div>
             <div className="text-xs font-bold text-gray-600 uppercase tracking-wider font-spartan min-w-[140px]">Restaurant</div>
             <div className="text-xs font-bold text-gray-600 uppercase tracking-wider font-spartan min-w-[100px]">Role</div>

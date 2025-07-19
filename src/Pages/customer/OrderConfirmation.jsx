@@ -656,7 +656,7 @@ const OrderConfirmation = () => {
     <div className="flex justify-center items-start min-h-screen bg-black">
       <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
         {/* Enhanced Header */}
-        <div className="w-full px-6 py-8 relative flex justify-center">
+        <div className="w-full px-4 py-8 relative flex justify-center">
           <button
             onClick={handleGoBack}
             className="absolute left-4 top-8 text-orange-500 hover:text-orange-400 transition-colors duration-200 p-2 rounded-full hover:bg-orange-500/10"
@@ -674,7 +674,7 @@ const OrderConfirmation = () => {
         </div>
 
         {/* Enhanced Main Content */}
-        <div className="bg-gradient-to-br from-gray-50 to-white w-full flex-1 rounded-t-3xl px-6 pt-10 pb-6 flex flex-col font-spartan overflow-y-auto shadow-2xl">
+        <div className="bg-gradient-to-br from-gray-50 to-white w-full flex-1 rounded-t-3xl px-4 pt-10 pb-6 flex flex-col font-spartan overflow-y-auto shadow-2xl">
           <div className={`transition-all duration-700 ${animateItems ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
             {/* Enhanced Header with Progress Indicator */}
             <div className="mb-8">
@@ -896,7 +896,7 @@ const OrderConfirmation = () => {
         </div>
 
         {/* Floating Payment Button */}
-        <div className="fixed bottom-0 left-0 right-0 px-6 py-4 z-50">
+        <div className="fixed bottom-0 left-0 right-0 px-4 py-4 z-50">
           <div className="max-w-[390px] md:max-w-4xl lg:max-w-6xl mx-auto">
             <button 
               onClick={handlePlaceOrder}

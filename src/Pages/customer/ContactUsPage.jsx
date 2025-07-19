@@ -237,7 +237,7 @@ const ContactUsPage = () => {
             href="#contact-form"
             className="hover:underline transition-colors"
           >
-            We’d love to hear from you!
+            We'd love to hear from you!
           </a>
         </span>
       </div>
@@ -247,7 +247,7 @@ const ContactUsPage = () => {
           {/* Main Card */}
           <div className="bg-white rounded-t-[30px] shadow-xl overflow-hidden w-full">
             {/* Restaurant Header */}
-            <div className="relative p-8 text-black border-b border-gray-200">
+            <div className="relative p-6 text-black border-b border-gray-200">
                 <div className="flex items-center mb-4">
                 <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mr-4">
                     {restaurant.logo_url ? (
@@ -290,9 +290,9 @@ const ContactUsPage = () => {
 )}
             </div>
 
-            <div className="p-8">
+            <div className="p-6">
               {/* Contact Info - Responsive 2-column grid */}
-              <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4 font-spartan">
+              <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-4 font-spartan">
                 {contactInfo.map((info, idx) => (
                   <div key={info.title} className="flex flex-col h-full bg-gray-50 rounded-2xl border border-gray-200 p-4">
                     <div className="flex items-center gap-3 mb-2 w-full">

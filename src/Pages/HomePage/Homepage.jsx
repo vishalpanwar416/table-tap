@@ -466,7 +466,7 @@ const HomePage = memo(() => {
             </motion.div>
 
             {/* Main Content Area with conditional rendering */}
-            <motion.div {...slideUp} className="bg-white rounded-t-[30px] rounded-b-none py-6 pb-2 flex-1 justify-center item-center">
+            <motion.div {...slideUp} className="bg-white rounded-t-[30px] rounded-b-none py-4 flex-1 justify-center item-center">
               <CategoryButtons
                 activeCategory={activeCategory}
                 handleCategoryClick={handleCategoryClick}
