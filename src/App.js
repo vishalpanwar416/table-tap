@@ -42,7 +42,6 @@ import HelpFAQPage from '../src/Pages/customer/HelpFAQPage';
 import DevelopmentTools from './components/DevelopmentTools';
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
-import SessionExpiryHandler from './components/SessionExpiryHandler';
 
 // Register service worker
 register();
@@ -51,166 +50,164 @@ const App = () => {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <SessionExpiryHandler>
-          <NotificationProvider>
-            <ManagerNotificationProvider>
-              <RestaurantProvider>
-                <OrderProvider>
-                  <AdminRestaurantProvider>
-                    <CartProvider>
-                      <LikesProvider>
-                        <FoodDataProvider>
-                          <div className="min-h-screen bg-black font-spartan">
-                            <Routes>
-                              <Route path="/" element={<Opening />} />
-                              <Route path="/skip1" element={<OnboardingScreen />} />
-                              <Route path="/login" element={<LoginPage />} />
-                              <Route path="/forgot-password" element={<AuthWrapper publicOnly><ForgotPassword/></AuthWrapper>} />
-                              <Route path="/reset-password" element={<AuthWrapper publicOnly><ResetPassword /></AuthWrapper>} />
-                              <Route path="/signup" element={<SignupPage />} />
-                              <Route path="/complete-profile" element={<CompleteProfile />} />
-                              <Route path="/auth-callback" element={<AuthCallback />} />
-                              <Route path="/restaurant-selection" element={<RestaurantSelectionPage />} />
-                              
-                              {/* Protected routes that need restaurant selection */}
-                              <Route 
-                                path="/home" 
-                                element={
-                                  <RestaurantSelectionWrapper>
-                                    <Homepage />
-                                  </RestaurantSelectionWrapper>
-                                } 
-                              />
-                              <Route 
-                                path="/best-sellers" 
-                                element={
-                                  <RestaurantSelectionWrapper>
-                                    <BestSellerPage />
-                                  </RestaurantSelectionWrapper>
-                                } 
-                              />
-                              <Route 
-                                path="/liked-items" 
-                                element={
-                                  <RestaurantSelectionWrapper>
-                                    <LikedItemsPage />
-                                  </RestaurantSelectionWrapper>
-                                } 
-                              />
-                              <Route 
-                                path="/my-orders" 
-                                element={
-                                  <RestaurantSelectionWrapper>
-                                    <MyOrders />
-                                  </RestaurantSelectionWrapper>
-                                } 
-                              />
-                              <Route 
-                                path="/order-confirmation" 
-                                element={
-                                  <RestaurantSelectionWrapper>
-                                    <OrderConfirmation />
-                                  </RestaurantSelectionWrapper>
-                                } 
-                              />
-                              <Route 
-                                path="/payment" 
-                                element={
-                                  <RestaurantSelectionWrapper>
-                                    <PaymentPage />
-                                  </RestaurantSelectionWrapper>
-                                } 
-                              />
-                              <Route 
-                                path="/profile" 
-                                element={
-                                  <RestaurantSelectionWrapper>
-                                    <ProfilePage />
-                                  </RestaurantSelectionWrapper>
-                                } 
-                              />
-                              <Route 
-                                path="/order-tracking" 
-                                element={
-                                  <RestaurantSelectionWrapper>
-                                    <OrderTracking />
-                                  </RestaurantSelectionWrapper>
-                                } 
-                              />
-                              <Route 
-                                path="/order-confirmation-page" 
-                                element={
-                                  <RestaurantSelectionWrapper>
-                                    <OrderConfirmationPage />
-                                  </RestaurantSelectionWrapper>
-                                } 
-                              />
-                              <Route 
-                                path="/contact" 
-                                element={
-                                  <RestaurantSelectionWrapper>
-                                    <ContactUsPage />
-                                  </RestaurantSelectionWrapper>
-                                } 
-                              />
-                              <Route 
-                                path="/help" 
-                                element={
-                                  <RestaurantSelectionWrapper>
-                                    <HelpFAQPage />
-                                  </RestaurantSelectionWrapper>
-                                } 
-                              />
-                              
-                              {/* Admin routes */}
-                              <Route 
-                                path="/managerdashboard" 
-                                element={
-                                  <AuthWrapper>
-                                    <AdminRestaurantProvider>
-                                      <ManagerNotificationProvider>
-                                        <AdminDashboard />
-                                      </ManagerNotificationProvider>
-                                    </AdminRestaurantProvider>
-                                  </AuthWrapper>
-                                }
-                              />
-                              <Route 
-                                path="/Admin-Pannel" 
-                                element={
-                                  <AuthWrapper>
-                                    <AdminRestaurantProvider>
-                                      <ManagerNotificationProvider>
-                                        <AdminPanel />
-                                      </ManagerNotificationProvider>
-                                    </AdminRestaurantProvider>
-                                  </AuthWrapper>
-                                }
-                              />
-                              
-                              <Route path="/test" element={<div className="text-white">Test route working!</div>} />
-                            </Routes>
+        <NotificationProvider>
+          <ManagerNotificationProvider>
+            <RestaurantProvider>
+              <OrderProvider>
+                <AdminRestaurantProvider>
+                  <CartProvider>
+                    <LikesProvider>
+                      <FoodDataProvider>
+                        <div className="min-h-screen bg-black font-spartan">
+                          <Routes>
+                            <Route path="/" element={<Opening />} />
+                            <Route path="/skip1" element={<OnboardingScreen />} />
+                            <Route path="/login" element={<LoginPage />} />
+                            <Route path="/forgot-password" element={<AuthWrapper publicOnly><ForgotPassword/></AuthWrapper>} />
+                            <Route path="/reset-password" element={<AuthWrapper publicOnly><ResetPassword /></AuthWrapper>} />
+                            <Route path="/signup" element={<SignupPage />} />
+                            <Route path="/complete-profile" element={<CompleteProfile />} />
+                            <Route path="/auth-callback" element={<AuthCallback />} />
+                            <Route path="/restaurant-selection" element={<RestaurantSelectionPage />} />
                             
-                            {/* Install Prompt */}
-                            <InstallPrompt />
+                            {/* Protected routes that need restaurant selection */}
+                            <Route 
+                              path="/home" 
+                              element={
+                                <RestaurantSelectionWrapper>
+                                  <Homepage />
+                                </RestaurantSelectionWrapper>
+                              } 
+                            />
+                            <Route 
+                              path="/best-sellers" 
+                              element={
+                                <RestaurantSelectionWrapper>
+                                  <BestSellerPage />
+                                </RestaurantSelectionWrapper>
+                              } 
+                            />
+                            <Route 
+                              path="/liked-items" 
+                              element={
+                                <RestaurantSelectionWrapper>
+                                  <LikedItemsPage />
+                                </RestaurantSelectionWrapper>
+                              } 
+                            />
+                            <Route 
+                              path="/my-orders" 
+                              element={
+                                <RestaurantSelectionWrapper>
+                                  <MyOrders />
+                                </RestaurantSelectionWrapper>
+                              } 
+                            />
+                            <Route 
+                              path="/order-confirmation" 
+                              element={
+                                <RestaurantSelectionWrapper>
+                                  <OrderConfirmation />
+                                </RestaurantSelectionWrapper>
+                              } 
+                            />
+                            <Route 
+                              path="/payment" 
+                              element={
+                                <RestaurantSelectionWrapper>
+                                  <PaymentPage />
+                                </RestaurantSelectionWrapper>
+                              } 
+                            />
+                            <Route 
+                              path="/profile" 
+                              element={
+                                <RestaurantSelectionWrapper>
+                                  <ProfilePage />
+                                </RestaurantSelectionWrapper>
+                              } 
+                            />
+                            <Route 
+                              path="/order-tracking" 
+                              element={
+                                <RestaurantSelectionWrapper>
+                                  <OrderTracking />
+                                </RestaurantSelectionWrapper>
+                              } 
+                            />
+                            <Route 
+                              path="/order-confirmation-page" 
+                              element={
+                                <RestaurantSelectionWrapper>
+                                  <OrderConfirmationPage />
+                                </RestaurantSelectionWrapper>
+                              } 
+                            />
+                            <Route 
+                              path="/contact" 
+                              element={
+                                <RestaurantSelectionWrapper>
+                                  <ContactUsPage />
+                                </RestaurantSelectionWrapper>
+                              } 
+                            />
+                            <Route 
+                              path="/help" 
+                              element={
+                                <RestaurantSelectionWrapper>
+                                  <HelpFAQPage />
+                                </RestaurantSelectionWrapper>
+                              } 
+                            />
                             
-                            {/* Development Tools - only visible in development */}
-                            <DevelopmentTools />
+                            {/* Admin routes */}
+                            <Route 
+                              path="/managerdashboard" 
+                              element={
+                                <AuthWrapper>
+                                  <AdminRestaurantProvider>
+                                    <ManagerNotificationProvider>
+                                      <AdminDashboard />
+                                    </ManagerNotificationProvider>
+                                  </AdminRestaurantProvider>
+                                </AuthWrapper>
+                              }
+                            />
+                            <Route 
+                              path="/Admin-Pannel" 
+                              element={
+                                <AuthWrapper>
+                                  <AdminRestaurantProvider>
+                                    <ManagerNotificationProvider>
+                                      <AdminPanel />
+                                    </ManagerNotificationProvider>
+                                  </AdminRestaurantProvider>
+                                </AuthWrapper>
+                              }
+                            />
                             
-                            {/* Vercel Analytics and Speed Insights */}
-                            <Analytics />
-                            <SpeedInsights />
-                            
-                          </div>
-                        </FoodDataProvider>
-                      </LikesProvider>
-                    </CartProvider>
-                  </AdminRestaurantProvider>
-                </OrderProvider>
-              </RestaurantProvider>
-            </ManagerNotificationProvider>
-          </NotificationProvider>
-        </SessionExpiryHandler>
+                            <Route path="/test" element={<div className="text-white">Test route working!</div>} />
+                          </Routes>
+                          
+                          {/* Install Prompt */}
+                          <InstallPrompt />
+                          
+                          {/* Development Tools - only visible in development */}
+                          <DevelopmentTools />
+                          
+                          {/* Vercel Analytics and Speed Insights */}
+                          <Analytics />
+                          <SpeedInsights />
+                          
+                        </div>
+                      </FoodDataProvider>
+                    </LikesProvider>
+                  </CartProvider>
+                </AdminRestaurantProvider>
+              </OrderProvider>
+            </RestaurantProvider>
+          </ManagerNotificationProvider>
+        </NotificationProvider>
       </AuthProvider>
     </ErrorBoundary>
   );
