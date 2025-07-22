@@ -9,7 +9,6 @@ class ErrorBoundary extends React.Component {
   static getDerivedStateFromError(error) {
     // Check if error is extension-related
     if (error.message && error.message.includes('Extension context invalidated')) {
-      console.warn('Extension error caught by boundary');
       return { hasError: false }; // Don't show error UI for extension errors
     }
     
@@ -17,7 +16,6 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('Error caught by boundary:', error, errorInfo);
   }
 
   render() {

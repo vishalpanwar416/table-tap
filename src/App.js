@@ -39,11 +39,9 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { FoodDataProvider } from './context/FoodDataContext';
 import ContactUsPage from '../src/Pages/customer/ContactUsPage';
 import HelpFAQPage from '../src/Pages/customer/HelpFAQPage';
-import DevelopmentTools from './components/DevelopmentTools';
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
 
-// Register service worker
 register();
 
 const App = () => {
@@ -191,9 +189,6 @@ const App = () => {
                           
                           {/* Install Prompt */}
                           <InstallPrompt />
-                          
-                          {/* Development Tools - only visible in development */}
-                          <DevelopmentTools />
                           
                           {/* Vercel Analytics and Speed Insights */}
                           <Analytics />

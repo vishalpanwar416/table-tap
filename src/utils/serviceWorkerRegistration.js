@@ -33,18 +33,8 @@ export function register() {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       const swUrl = `${process.env.PUBLIC_URL}/sw.js?v=${CACHE_VERSION}`;
-
-      // In development mode, clear caches and unregister old service workers
-      if (process.env.NODE_ENV === 'development') {
-        Promise.all([
-          clearAllCaches(),
-          unregisterServiceWorker()
-        ]).then(() => {
-          registerServiceWorker(swUrl);
-        });
-      } else {
-        registerServiceWorker(swUrl);
-      }
+      // Always register the service worker, no dev-only logic
+      registerServiceWorker(swUrl);
     });
   }
 }
@@ -71,10 +61,6 @@ function registerServiceWorker(swUrl) {
                   'tabs for this page are closed.'
               );
               
-              // In development, force reload to get latest content
-              if (process.env.NODE_ENV === 'development') {
-                window.location.reload();
-              }
             } else {
               // At this point, everything has been precached.
             }
@@ -95,39 +81,4 @@ export function unregister() {
       .catch((error) => {
       });
   }
-}
-
-// Development helper functions
-export const devHelpers = {
-  // Force clear all caches and reload
-  forceRefresh: () => {
-    if (process.env.NODE_ENV === 'development') {
-      clearAllCaches().then(() => {
-        unregisterServiceWorker().then(() => {
-          window.location.reload();
-        });
-      });
-    }
-  },
-  
-  // Clear caches without reload
-  clearCaches: () => {
-    if (process.env.NODE_ENV === 'development') {
-      clearAllCaches().then(() => {
-      });
-    }
-  },
-  
-  // Unregister service worker
-  unregisterSW: () => {
-    if (process.env.NODE_ENV === 'development') {
-      unregisterServiceWorker().then(() => {
-      });
-    }
-  }
-};
-
-// Make dev helpers available globally in development
-if (process.env.NODE_ENV === 'development') {
-  window.devHelpers = devHelpers;
 } 

@@ -19,20 +19,9 @@ const API_ENDPOINTS = [
   '/api/recommendations'
 ];
 
-// Development mode detection
-const isDevelopment = self.location.hostname === 'localhost' || 
-                     self.location.hostname === '127.0.0.1' ||
-                     self.location.hostname.includes('192.168.');
-
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
   console.log('Service Worker installing...');
-  
-  if (isDevelopment) {
-    console.log('Development mode: Skipping cache installation');
-    self.skipWaiting();
-    return;
-  }
   
   event.waitUntil(
     Promise.all([
@@ -58,7 +47,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           // In development, clear all old caches
-          if (isDevelopment || ![STATIC_CACHE, DYNAMIC_CACHE, API_CACHE].includes(cacheName)) {
+          if (![STATIC_CACHE, DYNAMIC_CACHE, API_CACHE].includes(cacheName)) {
             console.log('Deleting cache:', cacheName);
             return caches.delete(cacheName);
           }
@@ -76,22 +65,6 @@ self.addEventListener('fetch', (event) => {
 
   // Skip caching for unsupported schemes
   if (url.protocol === 'chrome-extension:' || url.protocol === 'chrome:' || url.protocol === 'moz-extension:') {
-    return;
-  }
-
-  // In development mode, always fetch from network first
-  if (isDevelopment) {
-    event.respondWith(
-      fetch(request)
-        .then(response => {
-          // Don't cache in development
-          return response;
-        })
-        .catch(() => {
-          // Fallback to cache only if network fails
-          return caches.match(request);
-        })
-    );
     return;
   }
 
@@ -187,22 +160,4 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification('Table Tap', options)
   );
-});
-
-// Message handling for development helpers
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-  
-  if (event.data && event.data.type === 'CLEAR_CACHES') {
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          console.log('Clearing cache:', cacheName);
-          return caches.delete(cacheName);
-        })
-      );
-    });
-  }
 }); 

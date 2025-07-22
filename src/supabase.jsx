@@ -32,16 +32,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
         }
       }
     }
-  }
-});
-
-// Add global error handler for auth errors
-supabase.auth.onAuthStateChange((event, session) => {
-  if (event === 'SIGNED_OUT') {
-    console.log('User signed out');
-  } else if (event === 'TOKEN_REFRESHED') {
-    console.log('Token refreshed');
-  } else if (event === 'SIGNED_IN') {
-    console.log('User signed in');
+  },
+  // Add this realtime configuration
+  realtime: {
+    params: {
+      eventsPerSecond: 10
+    }
   }
 });

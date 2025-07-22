@@ -2,18 +2,16 @@
 export const handleExtensionError = (error) => {
   // Check if error is related to browser extension
   if (error.message && error.message.includes('Extension context invalidated')) {
-    console.warn('Browser extension error detected - this is likely harmless');
     return true; // Error was handled
   }
   
   // Check if error is related to localStorage/sessionStorage access
   if (error.message && error.message.includes('QuotaExceededError')) {
-    console.warn('Storage quota exceeded - clearing old data');
     try {
       localStorage.clear();
       sessionStorage.clear();
     } catch (clearError) {
-      console.error('Failed to clear storage:', clearError);
+      // console.error('Failed to clear storage:', clearError); // Removed dev-only logging
     }
     return true; // Error was handled
   }
@@ -31,7 +29,7 @@ export const safeAsyncOperation = async (operation) => {
       try {
         return await operation();
       } catch (retryError) {
-        console.error('Operation failed on retry:', retryError);
+        // console.error('Operation failed on retry:', retryError); // Removed dev-only logging
         throw retryError;
       }
     }

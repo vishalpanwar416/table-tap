@@ -38,11 +38,6 @@ class SecurityMonitor {
       this.events = this.events.slice(-this.maxEvents);
     }
 
-    // Log to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[Security] ${type}:`, details);
-    }
-
     // Send to server in production
     if (process.env.NODE_ENV === 'production') {
       this.sendToServer(event);

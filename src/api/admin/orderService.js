@@ -337,23 +337,54 @@ export const fetchAllOrders = async (restaurantId = null) => {
   }
 };
 
-// Subscribe to all order changes
+// Subscribe to all order changes with better error handling
 export const subscribeToAllOrderChanges = (restaurantId, callback) => {
-  const channel = supabase
-    .channel('orders')
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'orders', filter: `restaurant_id=eq.${restaurantId}` },
-      payload => callback(payload)
-    )
-    .subscribe();
-  return channel;
+  if (!restaurantId) {
+    console.warn('No restaurantId provided for real-time subscription');
+    return null;
+  }
+
+  try {
+    const channel = supabase
+      .channel(`orders-${restaurantId}`)
+      .on(
+        'postgres_changes',
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'orders', 
+          filter: `restaurant_id=eq.${restaurantId}` 
+        },
+        (payload) => {
+          console.log('Real-time order update:', payload);
+          callback(payload);
+        }
+      )
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('Successfully subscribed to order changes');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('Channel error in real-time subscription');
+        }
+      });
+
+    return channel;
+  } catch (error) {
+    console.error('Error setting up real-time subscription:', error);
+    return null;
+  }
 }
 
-// Unsubscribe from a channel
+// Unsubscribe from a channel with better error handling
 export function unsubscribeFromOrderChanges(channel) {
   if (channel) {
-    supabase.removeChannel(channel);
+    try {
+      supabase.removeChannel(channel);
+      console.log('Successfully unsubscribed from order changes');
+    } catch (error) {
+      console.error('Error unsubscribing from order changes:', error);
+    }
   }
 }
 

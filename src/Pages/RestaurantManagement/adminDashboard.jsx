@@ -341,64 +341,6 @@ const AdminDashboard = () => {
           if (userRestaurantId && newRecord.restaurant_id !== userRestaurantId) {
             return; // Skip if not for this restaurant
           }
-
-          // setOrders((prevOrders) => { // This line is removed
-          //   if (eventType === 'INSERT') {
-          //     // Play sound for new order only
-          //     let orderTotal = Number(newRecord.total);
-          //     if (isNaN(orderTotal)) orderTotal = 0;
-          //     const customerName = newRecord.customer_name || 'Unknown Customer';
-          //     const orderId = newRecord.order_number || newRecord.id.slice(0,8);
-
-          //     const soundType = orderTotal > 50 ? 'urgent' : 'order';
-          //     setOrderSoundType(soundType);
-          //     setPlayOrderSound(true);
-
-          //     setOrderToastTitle('🔔 New Order Received!');
-          //     setOrderToastMessage(
-          //       `Order #${orderId} from ${customerName} - ₹${orderTotal.toFixed(2)}`
-          //     );
-          //     setShowOrderToast(true);
-
-          //     if ('Notification' in window && Notification.permission === 'granted') {
-          //       new Notification('New Order Received!', {
-          //         body: `Order #${orderId} from ${customerName} - Total: ₹${orderTotal.toFixed(2)}`,
-          //         icon: '/favicon.ico',
-          //         tag: 'new-order',
-          //         badge: '/favicon.ico',
-          //         requireInteraction: true,
-          //       });
-          //     }
-
-          //     return [newRecord, ...prevOrders];
-          //   } else if (eventType === 'UPDATE') {
-          //     
-          //     // Handle order updates - match by id field
-          //     const updatedOrder = newRecord;
-          //     const existingOrder = prevOrders.find(o => o.id === updatedOrder.id);
-              
-              
-          //     if (existingOrder) {
-          //       const statusChanged = existingOrder.status !== updatedOrder.status;
-                
-          //       if (statusChanged) {
-          //         setOrderToastTitle('📋 Order Updated');
-          //         setOrderToastMessage(`Order #${updatedOrder.order_number || updatedOrder.id.slice(0,8)} status changed to ${updatedOrder.status}`);
-          //         setShowOrderToast(true);
-          //       }
-          //     }
-
-          //     const updatedOrders = prevOrders.map((order) =>
-          //       order.id === updatedOrder.id ? updatedOrder : order
-          //     );
-              
-          //     return updatedOrders;
-          //   } else if (eventType === 'DELETE') {
-          //     // Handle order deletions - match by id field
-          //     return prevOrders.filter((order) => order.id !== oldRecord.id);
-          //   }
-          //   return prevOrders;
-          // });
         }
       )
       .subscribe((status) => {

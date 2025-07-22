@@ -446,7 +446,6 @@ const AdminPanel = () => {
     try {
       // For now, we'll return empty array since we're loading all data at once
       // In a real implementation, you would fetch more data from the server
-      console.log(`Loading more ${type} data: page ${page}, size ${pageSize}${restaurantId ? `, restaurant ${restaurantId}` : ''}`);
       return [];
     } catch (error) {
       console.error('Error loading more data:', error);

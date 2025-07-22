@@ -14,7 +14,7 @@ import * as XLSX from 'xlsx';
 import {
   fetchAllOrders,
   subscribeToAllOrderChanges,
-  unsubscribeFromOrderChanges, // <-- add this import
+  unsubscribeFromOrderChanges,
   updateOrderStatus as updateOrderStatusService,
   getOrdersByPeriod,
   formatOrdersForExcel,
@@ -79,6 +79,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState('');
   const [periodFilter, setPeriodFilter] = useState('all');
+  const [subscriptionStatus, setSubscriptionStatus] = useState('disconnected');
   
   // Use the prop if provided, otherwise fallback to local state (for safety)
   const searchTerm = propSearchTerm !== undefined ? propSearchTerm : '';
@@ -101,21 +102,50 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
     fetchOrders();
   }, [restaurantId]);
 
+  // Enhanced real-time subscription
   useEffect(() => {
+    if (!restaurantId) {
+      console.warn('No restaurantId available for real-time subscription');
+      return;
+    }
+
+    console.log('Setting up real-time subscription for restaurant:', restaurantId);
+    
     const channel = subscribeToAllOrderChanges(restaurantId, (payload) => {
+      console.log('Received real-time update:', payload);
+      
       const { eventType, new: newRecord, old: oldRecord } = payload;
+      
       setOrders((prevOrders) => {
-        if (eventType === 'INSERT') return [newRecord, ...prevOrders];
-        if (eventType === 'UPDATE') return prevOrders.map(order => 
-          order.id === newRecord.id ? newRecord : order
-        );
-        if (eventType === 'DELETE') return prevOrders.filter(order => order.id !== oldRecord.id);
-        return prevOrders;
+        let updatedOrders = [...prevOrders];
+        
+        if (eventType === 'INSERT') {
+          console.log('New order received:', newRecord);
+          updatedOrders = [newRecord, ...updatedOrders];
+        } else if (eventType === 'UPDATE') {
+          console.log('Order updated:', newRecord);
+          updatedOrders = updatedOrders.map(order => 
+            order.id === newRecord.id ? { ...order, ...newRecord } : order
+          );
+        } else if (eventType === 'DELETE') {
+          console.log('Order deleted:', oldRecord);
+          updatedOrders = updatedOrders.filter(order => order.id !== oldRecord.id);
+        }
+        
+        return updatedOrders;
       });
     });
 
+    // Set subscription status
+    if (channel) {
+      setSubscriptionStatus('connected');
+    }
+
     return () => {
-      unsubscribeFromOrderChanges(channel);
+      if (channel) {
+        unsubscribeFromOrderChanges(channel);
+        setSubscriptionStatus('disconnected');
+      }
     };
   }, [restaurantId]);
   

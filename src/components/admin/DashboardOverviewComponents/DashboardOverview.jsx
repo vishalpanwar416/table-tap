@@ -5,7 +5,7 @@ import ActiveOrders from './ActiveOrders';
 import PopularItems from './PopularItems';
 import { generateChartData, formatDate, getStatusIcon, getStatusBadge } from './helpers';
 import * as XLSX from 'xlsx';
-import { supabase } from '../../../supabase'; // adjust path as needed
+import { supabase } from '../../../supabase';
 
 const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab }) => {
   const [orders, setOrders] = useState([]);
