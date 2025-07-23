@@ -33,7 +33,12 @@ const Maincarosel = () => {
   }, [restaurantId]);
 
   const handleItemClick = (item) => {
-    setSelectedItem(item);
+    // If carouselData items are missing restaurant_id, you need to add it here
+    setSelectedItem({
+      ...item,
+      image: item.imade || item.image,
+      restaurant_id: item.restaurant_id || restaurantId, // Ensure this is set!
+    });
     setIsOrderCardOpen(true);
   };
 
@@ -114,11 +119,7 @@ const Maincarosel = () => {
       <OrderCard
         isOpen={isOrderCardOpen}
         onClose={handleCloseOrderCard}
-        item={
-          selectedItem
-            ? { ...selectedItem, image: selectedItem.imade || selectedItem.image }
-            : null
-        }
+        item={selectedItem}
       />
     </>
   );

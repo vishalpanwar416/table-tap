@@ -159,6 +159,7 @@ export const fetchMaincaroselData = async (restaurantId = null) => {
     // Transform the data to match the expected format
     return data.map(item => ({
       id: item.id,
+      restaurant_id: item.restaurant_id, // <-- add this!
       imade: item.image, // Note: keeping 'imade' to match existing component
       discount: formatDiscount(item),
       message: formatMessage(item),
@@ -166,7 +167,8 @@ export const fetchMaincaroselData = async (restaurantId = null) => {
       price: item.price,
       discountedPrice: item.discounted_price,
       category: item.category,
-      tags: item.tags || []
+      tags: item.tags || [],
+      // restaurant_id is missing here!
     }));
   } catch (error) {
     return [];
