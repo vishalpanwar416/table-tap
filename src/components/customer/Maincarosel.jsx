@@ -51,10 +51,7 @@ const Maincarosel = () => {
   const items = carouselData.map((item, index) => (
     <div
       key={item.id || index}
-      className={`
-        flex flex-row w-full h-[220px] md:h-[280px] rounded-[3rem] overflow-hidden shadow-2xl cursor-pointer group border border-gray-200 bg-white/60 backdrop-blur-md transition-transform duration-500
-        ${activeIndex === index ? 'scale-105 z-10' : 'scale-95 opacity-80'}
-      `}
+      className="flex flex-row w-full h-[220px] md:h-[280px] rounded-[3rem] overflow-hidden shadow-2xl cursor-pointer group border border-gray-200 bg-white/60 backdrop-blur-md"
       style={{ minHeight: 180 }}
       onClick={() => handleItemClick(item)}
     >

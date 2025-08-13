@@ -649,47 +649,15 @@ const RestaurantSelectionPage = () => {
     }
   }, [availableTables]);
 
-  // Loading state: only show if no restaurants at all
-  if (loading && restaurants.length === 0) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-black">
-        <div className="flex flex-col items-center">
-          <div className="relative w-16 h-16">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-orange-500 border-opacity-20"></div>
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-transparent border-t-orange-500 absolute top-0 left-0"></div>
-          </div>
-          <p className="text-white mt-4 text-lg font-medium">Loading restaurants...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-black">
-        <div className="bg-red-50 border border-red-200 rounded-xl p-6 max-w-md shadow-lg">
-          <div className="text-red-500 text-6xl mb-4 text-center">⚠️</div>
-          <h3 className="text-red-600 text-xl font-semibold mb-2 text-center">Error Loading Restaurants</h3>
-          <p className="text-red-500 text-center mb-4">{error}</p>
-          <button
-            onClick={handleRefresh}
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg transition-colors font-medium"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    );
-  }
-
+  // 1. Compact Header on Mobile
+  // Replace the header div with a more compact version for mobile
   return (
     <div className="flex justify-center items-start min-h-screen bg-black">
       <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
         {/* Header */}
-        <div className="w-full px-4 py-8 relative flex justify-center bg-black z-20 sticky top-0 md:static md:bg-transparent" style={{minHeight: 72}}>
+        <div className="w-full px-4 py-4 md:py-8 relative flex justify-center bg-black z-20 sticky top-0 md:static md:bg-transparent" style={{minHeight: 56}}>
           <button 
-            className="absolute left-4 top-8 text-orange-500 touch-manipulation"
+            className="absolute left-4 top-4 md:top-8 text-orange-500 touch-manipulation"
             onClick={() => navigate(-1)}
             aria-label="Go back"
             style={{minWidth: 44, minHeight: 44}}
@@ -697,10 +665,10 @@ const RestaurantSelectionPage = () => {
             <ChevronLeft size={30} />
           </button>
           <div className="flex flex-col items-center">
-            <h1 className="text-gray-100 text-3xl font-medium">
+            <h1 className="text-gray-100 text-2xl md:text-3xl font-medium">
               {userLocation ? 'Restaurants Near You' : 'Select Restaurant'}
             </h1>
-            <p className="text-gray-400 text-sm mt-1">
+            <p className="text-gray-400 text-xs md:text-sm mt-1">
               {userLocation ? 'Showing restaurants sorted by distance' : 'Choose a restaurant to view the menu'}
             </p>
           </div>
@@ -910,24 +878,19 @@ const RestaurantSelectionPage = () => {
                   height: '100%'
                 }}
               >
-                {restaurants.length === 0 ? (
-                  <motion.div {...slideUp} className="flex flex-col items-center justify-center py-12 px-3">
-                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-50 flex items-center justify-center shadow-sm mb-4">
-                      <Store size={32} className="text-gray-400" />
-                    </div>
-                    <h2 className="text-lg md:text-xl font-semibold text-center text-gray-800 mb-2">
-                      No Restaurants Available
-                    </h2>
-                    <p className="text-gray-500 text-center text-sm max-w-xs mb-4">
-                      There are currently no active restaurants in the system.
-                    </p>
-                    <button
-                      onClick={handleRefresh}
-                      className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg transition-colors font-medium touch-manipulation"
-                    >
-                      Refresh
-                    </button>
-                  </motion.div>
+                {loading && restaurants.length === 0 ? (
+                  <div className="flex flex-col items-center w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="animate-pulse bg-white/10 rounded-2xl border-2 border-gray-800 shadow-sm mb-4 flex items-center px-2 py-3 md:px-4 md:py-4 w-full max-w-xl">
+                        <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-300 rounded-lg mr-3" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 bg-gray-300 rounded w-1/2" />
+                          <div className="h-3 bg-gray-300 rounded w-1/3" />
+                          <div className="h-3 bg-gray-200 rounded w-1/4" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 ) : (
                   <List
                     height={selectedRestaurant ? 320 : 520}
@@ -955,20 +918,23 @@ const RestaurantSelectionPage = () => {
                                     hoveredRestaurant === restaurant.id ? 15 : 
                                     index === 0 ? 10 : 1
                           }}
-                          whileTap={{ scale: 0.97 }}
-                          whileHover={{ scale: 1.03 }}
+                          whileTap={{ scale: 0.97, backgroundColor: "#fff7ed" }}
+                          whileHover={{ scale: 1.03, boxShadow: "0 0 0 4px #ffedd5" }}
                           transition={{ type: 'spring', stiffness: 300, damping: 20, duration: 0.25 }}
                           onMouseEnter={() => setHoveredRestaurant(restaurant.id)}
                           onMouseLeave={() => setHoveredRestaurant(null)}
                           onClick={() => handleRestaurantClick(restaurant)}
+                          tabIndex={0}
+                          aria-label={`Select ${restaurant.name}`}
+                          role="button"
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' || e.key === ' ') handleRestaurantClick(restaurant);
+                          }}
                           className={`bg-white rounded-2xl border-2 cursor-pointer transition-all shadow-sm hover:shadow-md touch-manipulation relative mb-4 flex items-center px-2 py-3 md:px-4 md:py-4 ${
                             selectedRestaurant?.id === restaurant.id
                               ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-200'
                               : 'border-gray-200 hover:border-gray-300'
                           }`}
-                          tabIndex={0}
-                          aria-label={`Select ${restaurant.name}`}
-                          role="button"
                         >
                           {/* Restaurant Image */}
                           <div className="relative mr-3 flex-shrink-0">
@@ -1104,7 +1070,7 @@ const RestaurantSelectionPage = () => {
                   >
                     <div className="flex items-center mb-6">
                       <Store size={24} className="text-orange-500 mr-3" />
-                      <h3 className="text-xl font-semibold text-gray-900">
+                      <h3 className="text-2xl font-bold text-orange-600">
                         {selectedRestaurant.name}
                       </h3>
                     </div>
@@ -1182,13 +1148,13 @@ const RestaurantSelectionPage = () => {
                           {/* Show selected table details */}
                           {tableNumber && getSelectedTableDetails() && (
                             <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                              <div className="text-sm text-blue-800">
-                                <div className="font-medium">Table {tableNumber}</div>
-                                {getSelectedTableDetails().location && (
-                                  <div>Location: {getSelectedTableDetails().location}</div>
-                                )}
-                                <div>Capacity: {getSelectedTableDetails().capacity} people</div>
+                              <div className="text-lg font-bold text-blue-800">
+                                Table {tableNumber}
                               </div>
+                              {getSelectedTableDetails().location && (
+                                <div>Location: {getSelectedTableDetails().location}</div>
+                              )}
+                              <div>Capacity: {getSelectedTableDetails().capacity} people</div>
                             </div>
                           )}
                         </motion.div>
@@ -1289,7 +1255,10 @@ const RestaurantSelectionPage = () => {
                     Location Access Required
                   </h3>
                   <p className="text-gray-600 text-sm mb-6">
-                    To show you nearby restaurants, we need access to your location. Please enable location services in your browser settings.
+                    To show you nearby restaurants, we need access to your location. Please enable location services in your browser settings.<br />
+                    <span className="text-xs text-gray-500 block mt-2">
+                      <b>Tip:</b> In Chrome, click the lock icon in the address bar &gt; Site settings &gt; Location: Allow.
+                    </span>
                   </p>
                   <div className="space-y-3">
                     <button
@@ -1389,7 +1358,8 @@ const RestaurantSelectionPage = () => {
                   ) : (
                     <div className="text-center py-8 text-gray-500">
                       <Store size={48} className="mx-auto mb-4 text-gray-300" />
-                      <p>No tables available</p>
+                      <p className="font-semibold text-lg">No tables available</p>
+                      <p className="text-sm mt-2">Please ask the staff for assistance.</p>
                     </div>
                   )}
                 </div>
@@ -1402,16 +1372,15 @@ const RestaurantSelectionPage = () => {
                   >
                     Cancel
                   </button>
-                  {tableNumber && (
-                    <button
-                      onClick={() => setShowTablePopup(false)}
-                      className="flex-1 px-4 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
-                      style={{ minHeight: 44 }}
-                      aria-label="Confirm table selection"
-                    >
-                      Confirm
-                    </button>
-                  )}
+                  <button
+                    onClick={() => setShowTablePopup(false)}
+                    className={`flex-1 px-4 py-3 rounded-lg transition-colors ${tableNumber ? 'bg-orange-500 text-white hover:bg-orange-600' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
+                    style={{ minHeight: 44 }}
+                    aria-label="Confirm table selection"
+                    disabled={!tableNumber}
+                  >
+                    Confirm
+                  </button>
                 </div>
               </motion.div>
             </motion.div>

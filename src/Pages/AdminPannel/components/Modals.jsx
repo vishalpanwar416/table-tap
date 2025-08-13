@@ -331,6 +331,36 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
               </div>
             </div>
 
+            {/* Compliance */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-indigo-500" />
+                  GST Number
+                </label>
+                <input
+                  type="text"
+                  value={data.gst_number || ''}
+                  onChange={(e) => setData({ ...data, gst_number: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
+                  placeholder="Enter GST number"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-orange-500" />
+                  FSSAI License
+                </label>
+                <input
+                  type="text"
+                  value={data.fssai_license || ''}
+                  onChange={(e) => setData({ ...data, fssai_license: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
+                  placeholder="Enter FSSAI License Number"
+                />
+              </div>
+            </div>
+
             {/* Manager Information */}
             <div className="space-y-4">
               <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
@@ -486,7 +516,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
                   placeholder="Enter GST number"
                 />
-              </div>
+              </div> {/* moved GST to Compliance section above */}
             </div>
 
             {/* Description */}
@@ -613,20 +643,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
               </div>
             </div>
 
-            {/* FSSAI License */}
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <Globe className="w-4 h-4 text-orange-500" />
-                FSSAI License
-              </label>
-              <input
-                type="text"
-                value={data.fssai_license || ''}
-                onChange={(e) => setData({ ...data, fssai_license: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
-                placeholder="Enter FSSAI License Number"
-              />
-            </div>
+            {/* moved FSSAI to Compliance section above */}
 
             {/* UPI ID */}
             <div className="space-y-2">
