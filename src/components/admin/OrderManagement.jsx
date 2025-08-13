@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Check, X, Truck, CheckCircle, ChevronDown, ChevronRight, User, 
-  Clock, Calendar, MapPin, Phone, Filter, Search, AlertCircle,
-  Printer, Download, RefreshCw, AlertTriangle, ShoppingBag, Info, Grid, List, Package
+  Clock, Calendar, MapPin, Phone, Filter, AlertCircle,
+  Printer, Download, AlertTriangle, ShoppingBag, Info, Grid, List, Package, Plus
 } from 'lucide-react';
 import { useManagerNotifications } from '../../context/ManagerNotificationContext';
 import { format, isToday, isYesterday } from 'date-fns';
@@ -32,31 +32,31 @@ const STATUS_META = {
   pending: {
     label: "Pending",
     color: "yellow",
-    icon: <Clock className="h-5 w-5 text-yellow-600" />,
+    icon: <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />,
     badge: "bg-yellow-100 text-yellow-800 border border-yellow-200",
   },
   preparing: {
     label: "Preparing",
     color: "purple",
-    icon: <Truck className="h-5 w-5 text-purple-600" />,
+    icon: <Truck className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />,
     badge: "bg-purple-100 text-purple-800 border border-purple-200",
   },
   ready: {
     label: "Ready",
     color: "green",
-    icon: <CheckCircle className="h-5 w-5 text-green-600" />,
+    icon: <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />,
     badge: "bg-green-100 text-green-800 border border-green-200",
   },
   completed: {
     label: "Completed",
     color: "teal",
-    icon: <Check className="h-5 w-5 text-teal-600" />,
+    icon: <Check className="h-4 w-4 sm:h-5 sm:w-5 text-teal-600" />,
     badge: "bg-teal-100 text-teal-800 border border-teal-200",
   },
   rejected: {
     label: "Rejected",
     color: "red",
-    icon: <X className="h-5 w-5 text-red-600" />,
+    icon: <X className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />,
     badge: "bg-red-100 text-red-800 border border-red-200",
   },
 };
@@ -74,12 +74,12 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
   const [dropdownOpenOrderId, setDropdownOpenOrderId] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState('');
   const [periodFilter, setPeriodFilter] = useState('all');
   const [subscriptionStatus, setSubscriptionStatus] = useState('disconnected');
+  const [overviewOpen, setOverviewOpen] = useState(true);
   
   // Use the prop if provided, otherwise fallback to local state (for safety)
   const searchTerm = propSearchTerm !== undefined ? propSearchTerm : '';
@@ -187,16 +187,16 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
   // Helper: Render status dashboard card
   const StatusCard = ({ status }) => (
     <div
-      className={`p-3 rounded-lg bg-white shadow-sm border-l-4 border-${STATUS_META[status].color}-400 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === status ? `ring-2 ring-${STATUS_META[status].color}-400` : ''}`}
+      className={`p-2 sm:p-3 rounded-lg bg-white shadow-sm border-l-4 border-${STATUS_META[status].color}-400 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === status ? `ring-2 ring-${STATUS_META[status].color}-400` : ''}`}
       onClick={() => setStatusFilter(statusFilter === status ? 'all' : status)}
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs text-gray-500 uppercase font-medium">{STATUS_META[status].label}</p>
-          <p className="text-2xl font-bold text-gray-800">{statusCounts[status]}</p>
+          <p className="text-[10px] sm:text-xs text-gray-500 uppercase font-medium">{STATUS_META[status].label}</p>
+          <p className="text-xl sm:text-2xl font-bold text-gray-800">{statusCounts[status]}</p>
         </div>
         <div className={`flex flex-col items-end`}>
-          <div className={`p-2 rounded-full bg-${STATUS_META[status].color}-100`}>
+          <div className={`p-1.5 sm:p-2 rounded-full bg-${STATUS_META[status].color}-100`}>
             {STATUS_META[status].icon}
           </div>
           {/* Download button for this status */}
@@ -205,7 +205,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
               e.stopPropagation();
               handleDownloadByStatus(status);
             }}
-            className="mt-2 p-1 rounded bg-orange-100 hover:bg-orange-200"
+            className="hidden sm:inline-flex mt-1 p-1 rounded bg-orange-100 hover:bg-orange-200"
             title={`Download ${STATUS_META[status].label} Orders`}
           >
             <Download className="w-4 h-4 text-orange-500" />
@@ -217,7 +217,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
 
   // Helper: Render status badge
   const getStatusBadge = (status) => (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_META[status]?.badge || 'bg-gray-100 text-gray-800 border border-gray-200'}`}>
+    <span className={`px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium ${STATUS_META[status]?.badge || 'bg-gray-100 text-gray-800 border border-gray-200'}`}>
       {STATUS_META[status]?.label || 'Unknown'}
     </span>
   );
@@ -236,13 +236,19 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
       return (
         <>
           <button onClick={() => handlePrintKOT(order)} className="p-1.5 rounded-full bg-orange-100 text-orange-600 hover:bg-orange-200" title="Print KOT"><Printer size={16} /></button>
-          <button onClick={() => openConfirmModal(order, 'ready')} className="px-4 py-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 flex items-center transition-colors" disabled={isLoading} title="Mark as Ready"><CheckCircle size={16} className="mr-1" /> Ready</button>
+          <button onClick={() => openConfirmModal(order, 'ready')} className="px-2 py-1 sm:px-4 sm:py-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 flex items-center transition-colors" disabled={isLoading} title="Mark as Ready">
+            <CheckCircle size={16} className="mr-0 sm:mr-1" />
+            <span className="hidden sm:inline">Ready</span>
+          </button>
         </>
       );
     }
     if (order.status === 'ready') {
       return (
-        <button onClick={() => openConfirmModal(order, 'complete')} className="px-4 py-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 flex items-center transition-colors" disabled={isLoading} title="Complete"><Check size={16} className="mr-1" /> Complete</button>
+        <button onClick={() => openConfirmModal(order, 'complete')} className="px-2 py-1 sm:px-4 sm:py-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 flex items-center transition-colors" disabled={isLoading} title="Complete">
+          <Check size={16} className="mr-0 sm:mr-1" />
+          <span className="hidden sm:inline">Complete</span>
+        </button>
       );
     }
     if (order.status === 'completed') {
@@ -280,7 +286,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
   if (periodFilter !== 'all') {
     periodFilteredOrders = getOrdersByPeriod(orders, periodFilter);
   }
-  const filteredOrders = filterOrders(periodFilteredOrders, { statusFilter, searchQuery: searchQuery || searchTerm });
+  const filteredOrders = filterOrders(periodFilteredOrders, { statusFilter, searchQuery: searchTerm });
   
   // Sort orders
   const sortedOrders = sortOrders(filteredOrders, sortBy, sortDirection);
@@ -413,83 +419,94 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
     </div>
   );
 
-  const handleRefresh = () => {
-    fetchOrders();
-  };
-  
   return (
     <div className="space-y-5">
 
-<div className="bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 p-6">
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-            <Package className="h-5 w-5 mr-2 text-orange-500" />
-            Order Status Overview
-          </h3>
-          <p className="text-sm text-gray-600 mt-1">Real-time tracking of all orders</p>
-        </div>
-        
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-          {['pending', 'preparing', 'ready', 'completed', 'rejected'].map(status => (
-            <StatusCard key={status} status={status} />
-          ))}
-          {/* Download Button as a Card */}
-          <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-white shadow-sm border-l-4 border-orange-400">
-            <div className="flex items-center justify-between w-full">
-              <p className="text-xs text-gray-500 uppercase font-medium">Download</p>
-              <div className="p-2 rounded-full bg-orange-100">
-                <Download className="h-5 w-5 text-orange-500" />
-              </div>
-            </div>
-            <div className="relative w-full mt-2">
-          <button
-            onClick={() => setShowDownloadMenu((prev) => !prev)}
-                className="w-full flex items-center justify-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
-            title="Download Orders as Excel"
-          >
-            Download Orders
-          </button>
-          {showDownloadMenu && (
-                <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-48">
-              <div
-                className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100"
-                onClick={() => handleDownload('daily')}
-              >
-                Download Daily Orders
-              </div>
-              <div
-                className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100"
-                onClick={() => handleDownload('weekly')}
-              >
-                Download Weekly Orders
-              </div>
-              <div
-                className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100"
-                onClick={() => handleDownload('monthly')}
-              >
-                Download Monthly Orders
-              </div>
-              <div
-                className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100"
-                onClick={() => handleDownload('filtered')}
-              >
-                Download Filtered Orders
-              </div>
-              <div
-                className="px-4 py-2 hover:bg-gray-50 cursor-pointer"
-                onClick={() => handleDownload('all')}
-              >
-                Download All (3 Sheets)
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+<div className={`bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 ${overviewOpen ? 'px-3 sm:px-6 py-4' : 'px-3 sm:px-6 py-1 -my-2 sm:py-2 sm:-my-1'}`}>
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+              <Package className="h-5 w-5 mr-2 text-orange-500" />
+              Order Status Overview
+            </h3>
+            {overviewOpen && (
+              <p className="text-sm text-gray-600 mt-1">Real-time tracking of all orders</p>
+            )}
           </div>
+          <button
+            type="button"
+            onClick={() => setOverviewOpen((prev) => !prev)}
+            className="p-1.5 sm:p-2 rounded-md hover:bg-orange-100 text-orange-600"
+            aria-expanded={overviewOpen}
+            aria-controls="order-status-overview"
+            title={overviewOpen ? 'Collapse overview' : 'Expand overview'}
+          >
+            <ChevronDown className={`h-5 w-5 transform transition-transform duration-200 ${overviewOpen ? 'rotate-180' : 'rotate-0'}`} />
+          </button>
         </div>
+        {overviewOpen && (
+          <div id="order-status-overview" className="grid grid-cols-2 md:grid-cols-6 gap-4">
+            {['pending', 'preparing', 'ready', 'completed', 'rejected'].map(status => (
+              <StatusCard key={status} status={status} />
+            ))}
+            {/* Download Button as a Card */}
+            <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-white shadow-sm border-l-4 border-orange-400">
+              <div className="flex items-center justify-between w-full">
+                <p className="text-xs text-gray-500 uppercase font-medium">Download</p>
+                <div className="p-2 rounded-full bg-orange-100">
+                  <Download className="h-5 w-5 text-orange-500" />
+                </div>
+              </div>
+              <div className="relative w-full mt-2">
+                <button
+                  onClick={() => setShowDownloadMenu((prev) => !prev)}
+                  className="w-full flex items-center justify-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                  title="Download Orders as Excel"
+                >
+                  Download Orders
+                </button>
+                {showDownloadMenu && (
+                  <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-48">
+                    <div
+                      className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100"
+                      onClick={() => handleDownload('daily')}
+                    >
+                      Download Daily Orders
+                    </div>
+                    <div
+                      className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100"
+                      onClick={() => handleDownload('weekly')}
+                    >
+                      Download Weekly Orders
+                    </div>
+                    <div
+                      className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100"
+                      onClick={() => handleDownload('monthly')}
+                    >
+                      Download Monthly Orders
+                    </div>
+                    <div
+                      className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100"
+                      onClick={() => handleDownload('filtered')}
+                    >
+                      Download Filtered Orders
+                    </div>
+                    <div
+                      className="px-4 py-2 hover:bg-gray-50 cursor-pointer"
+                      onClick={() => handleDownload('all')}
+                    >
+                      Download All (3 Sheets)
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
         
       {/* Enhanced Header Section */}
-      <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+      <div className="px-3 sm:px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-center">
             <h2 className="text-2xl font-bold text-gray-800 flex items-center">
@@ -500,20 +517,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
             </h2>
           </div>
             
-          <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
-            {/* Enhanced Search Bar */}
-            <div className="relative flex-1 lg:w-64">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search size={16} className="text-gray-400" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search orders..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
-              />
-            </div>
+          <div className="flex flex-row items-center gap-2 w-full lg:w-auto justify-between sm:justify-start">
             
             {/* Enhanced View Switcher */}
             <div className="flex items-center bg-gray-100 rounded-xl p-1">
@@ -541,29 +545,32 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                 </button>
               </div>
             
-            {/* Enhanced Refresh Button */}
+            {/* Create Order Button */}
               <button
-              onClick={handleRefresh}
-              disabled={ordersLoading}
-              className="flex items-center px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl hover:from-orange-600 hover:to-amber-600 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50"
+                onClick={() => {
+                  // TODO: Wire up actual create order flow (open modal or navigate)
+                  console.log('Create Order clicked');
+                }}
+                className="flex items-center px-3 py-1.5 text-sm sm:px-4 sm:py-2 sm:text-base bg-gradient-to-r from-green-600 to-emerald-500 text-white rounded-lg hover:from-green-700 hover:to-emerald-600 transition-all duration-200 shadow-md hover:shadow-lg"
+                title="Create Order"
               >
-              <RefreshCw size={16} className={`mr-2 ${ordersLoading ? 'animate-spin' : ''}`} />
-                Refresh
+                <Plus size={14} className="mr-2" />
+                Create Order
               </button>
           </div>
         </div>
         
         {/* Enhanced Filters Row */}
-        <div className="flex flex-wrap gap-4 mt-6">
+        <div className="grid grid-cols-2 gap-2 px-0 sm:px-0 sm:flex sm:flex-wrap sm:gap-4 mt-6 w-full">
           {/* Status Filter */}
-                <div className="relative">
+                <div className="relative w-full sm:w-44">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Filter size={16} className="text-gray-400" />
                   </div>
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-              className="pl-10 pr-8 py-2 border border-gray-200 rounded-xl appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white min-w-40"
+              className="w-full pl-10 pr-8 py-2 border border-gray-200 rounded-xl appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white"
                   >
                     <option value="all">All Status</option>
                     <option value="pending">Pending</option>
@@ -578,7 +585,10 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                 </div>
                 
           {/* Sort Options */}
-          <div className="relative">
+          <div className="relative w-full sm:w-44">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Filter size={16} className="text-gray-400" />
+                  </div>
                   <select
                     value={`${sortBy}-${sortDirection}`}
                     onChange={(e) => {
@@ -586,7 +596,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                       setSortBy(newSortBy);
                       setSortDirection(newSortDirection);
                     }}
-              className="pr-8 py-2 border border-gray-200 rounded-xl appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white min-w-48"
+              className="w-full pl-10 pr-8 py-2 border border-gray-200 rounded-xl appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white"
                   >
                     <option value="created_at-desc">Newest First</option>
                     <option value="created_at-asc">Oldest First</option>
@@ -601,9 +611,9 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                 </div>
           
           {/* Quick Filter Buttons */}
-          <div className="flex gap-2 ml-auto">
+          <div className="flex gap-1 sm:gap-1 sm:ml-auto col-span-2 justify-end w-full -mr-3 sm:mr-0">
             <button
-              className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+              className={`px-2 sm:px-3 py-1 text-sm rounded-lg transition-colors ${
                 periodFilter === 'daily' ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
               }`}
               onClick={() => setPeriodFilter('daily')}
@@ -611,7 +621,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
               Today
             </button>
             <button
-              className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+              className={`px-2 sm:px-3 py-1 text-sm rounded-lg transition-colors ${
                 periodFilter === 'weekly' ? 'bg-green-500 text-white' : 'bg-green-100 text-green-700 hover:bg-green-200'
               }`}
               onClick={() => setPeriodFilter('weekly')}
@@ -619,7 +629,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
               This Week
             </button>
             <button
-              className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+              className={`px-2 sm:px-3 py-1 text-sm rounded-lg transition-colors ${
                 periodFilter === 'monthly' ? 'bg-purple-500 text-white' : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
               }`}
               onClick={() => setPeriodFilter('monthly')}
@@ -639,7 +649,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
         </div>
         
         {/* Content area */}
-        <div className="p-6">
+        <div className="px-2 sm:px-6 py-4">
           {ordersLoading && (
             <div className="text-center py-8 text-gray-500">Loading orders...</div>
           )}
@@ -818,17 +828,20 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
               ))}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+            <div className="overflow-x-hidden">
+              <table className="w-full table-fixed divide-y divide-gray-200 text-xs sm:text-sm">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th className="px-2 py-2 sm:px-6 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider sm:whitespace-nowrap hidden sm:table-cell">Order ID</th>
+                    <th className="px-2 py-2 sm:px-6 sm:py-3 w-3/12 sm:w-auto text-left font-medium text-gray-500 uppercase tracking-wider sm:whitespace-nowrap">
+                      <span className="sm:hidden">Table</span>
+                      <span className="hidden sm:inline">Customer</span>
+                    </th>
+                    <th className="px-2 py-2 sm:px-6 sm:py-3 w-3/12 sm:w-auto text-left font-medium text-gray-500 uppercase tracking-wider sm:whitespace-nowrap hidden sm:table-cell">Items</th>
+                    <th className="px-2 py-2 sm:px-6 sm:py-3 w-2/12 sm:w-auto text-left font-medium text-gray-500 uppercase tracking-wider sm:whitespace-nowrap">Total</th>
+                    <th className="px-2 py-2 sm:px-6 sm:py-3 w-3/12 sm:w-auto text-left font-medium text-gray-500 uppercase tracking-wider sm:whitespace-nowrap">Status</th>
+                    <th className="px-2 py-2 sm:px-6 sm:py-3 w-2/12 sm:w-auto text-left font-medium text-gray-500 uppercase tracking-wider sm:whitespace-nowrap hidden sm:table-cell">Date</th>
+                    <th className="px-2 py-2 sm:px-6 sm:py-3 w-4/12 sm:w-auto text-left font-medium text-gray-500 uppercase tracking-wider sm:whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -837,22 +850,28 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                     return (
                     <React.Fragment key={order.id}>
                       <tr className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-3 py-2 sm:px-6 sm:py-4 sm:whitespace-nowrap font-medium text-gray-900 hidden sm:table-cell">
                           {order.order_number || order.id.slice(0, 8)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {order.customer_name || 'Guest'}
-                          {(order.table_number || order.tableNumber) && (
-                            <span className="ml-2 px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full text-xs font-medium">
-                              Table {order.table_number || order.tableNumber}
-                            </span>
-                          )}
+                        <td className="px-2 py-2 sm:px-6 sm:py-4 sm:whitespace-nowrap text-gray-500 w-3/12 sm:w-auto">
+                          {/* Mobile: show Table number; Desktop: show Customer (+table badge) */}
+                          <span className="sm:hidden text-gray-700 font-medium">
+                            {(order.table_number || order.tableNumber) ? `Table ${order.table_number || order.tableNumber}` : '-'}
+                          </span>
+                          <span className="hidden sm:inline">
+                            {order.customer_name || 'Guest'}
+                            {(order.table_number || order.tableNumber) && (
+                              <span className="ml-2 px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full text-xs font-medium">
+                                Table {order.table_number || order.tableNumber}
+                              </span>
+                            )}
+                          </span>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-2 py-2 sm:px-6 sm:py-4 hidden sm:table-cell sm:whitespace-nowrap w-3/12 sm:w-auto">
                           <div className="flex items-center">
                             <div className="flex space-x-1">
                               {(order.items || []).slice(0, 3).map((item, idx) => (
-                                <div key={idx} className="w-8 h-8 rounded-full overflow-hidden border border-gray-200">
+                                <div key={idx} className="w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden border border-gray-200">
                                   <img 
                                     src={item.image || `/api/placeholder/32/32`}
                                     alt={item.name || `Item ${idx+1}`}
@@ -861,14 +880,41 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                                 </div>
                               ))}
                               {(order.items || []).length > 3 && (
-                                <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-600">
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center rounded-full bg-gray-100 text-[10px] sm:text-xs font-medium text-gray-600">
                                   +{(order.items || []).length - 3}
                                 </div>
                               )}
                             </div>
                             <button
                               onClick={() => toggleOrderExpansion(order.id)}
-                              className="ml-2 text-xs text-orange-500 hover:text-orange-600"
+                              className="ml-2 text-[11px] sm:text-xs text-orange-500 hover:text-orange-600 hidden sm:inline-flex"
+                            >
+                              {expandedOrderId === order.id ? (
+                                <ChevronDown size={12} className="sm:w-[14px] sm:h-[14px]" />
+                              ) : (
+                                <ChevronRight size={12} className="sm:w-[14px] sm:h-[14px]" />
+                              )}
+                            </button>
+                          </div>
+                        </td>
+                        <td className="px-2 py-2 sm:px-6 sm:py-4 sm:whitespace-nowrap text-gray-500 w-2/12 sm:w-auto">
+                          ₹{order.total?.toFixed(2) || '0.00'}
+                        </td>
+                        <td className="px-2 py-2 sm:px-6 sm:py-4 sm:whitespace-nowrap w-3/12 sm:w-auto">
+                          <div className="text-[10px] sm:text-xs leading-tight">
+                            {getStatusBadge(order.status || 'pending')}
+                          </div>
+                        </td>
+                        <td className="px-3 py-2 sm:px-6 sm:py-4 sm:whitespace-nowrap text-gray-500 hidden sm:table-cell w-2/12 sm:w-auto">
+                          {formatDate(order.created_at)}
+                        </td>
+                        <td className="px-2 py-2 sm:px-6 sm:py-4 sm:whitespace-nowrap font-medium w-4/12 sm:w-auto">
+                          <div className="flex flex-wrap items-center gap-1 sm:space-x-2 [&>*]:px-2 [&>*]:py-1 [&>*]:text-[10px]">
+                            {/* Mobile expand button */}
+                            <button
+                              onClick={() => toggleOrderExpansion(order.id)}
+                              className="inline-flex sm:hidden p-1.5 rounded-md text-orange-600 bg-orange-50 hover:bg-orange-100"
+                              title={expandedOrderId === order.id ? 'Collapse' : 'Expand'}
                             >
                               {expandedOrderId === order.id ? (
                                 <ChevronDown size={14} />
@@ -876,19 +922,6 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                                 <ChevronRight size={14} />
                               )}
                             </button>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          ₹{order.total?.toFixed(2) || '0.00'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {getStatusBadge(order.status || 'pending')}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatDate(order.created_at)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex space-x-2">
                             <ActionButtons order={order} />
                           </div>
                         </td>
@@ -896,7 +929,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                       {/* Expanded row */}
                       {expandedOrderId === order.id && (
                         <tr>
-                          <td colSpan="7" className="px-6 py-3 bg-gray-50">
+                          <td colSpan="7" className="px-3 sm:px-6 py-3 bg-gray-50">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               {/* Order details */}
                               <div>
