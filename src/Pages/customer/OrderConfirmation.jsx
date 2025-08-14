@@ -766,11 +766,13 @@ const OrderConfirmation = () => {
                 const isWater = item.name && 
                   (item.name.toLowerCase().includes('water') || 
                    item.category?.toLowerCase() === 'water');
-                const hasDiscount = item.discounttype && item.discountvalue;
-                const originalPrice = Number(item.price).toFixed(2);
-                const discountedPrice = item.effectivePrice !== undefined ? Number(item.effectivePrice).toFixed(2) : Number(calculateEffectivePrice(item)).toFixed(2);
-                const originalTotal = (item.price * item.quantity).toFixed(2);
-                const discountedTotal = (Number(discountedPrice) * item.quantity).toFixed(2);
+                const effectivePrice = item.effectivePrice !== undefined 
+                  ? Number(item.effectivePrice) 
+                  : Number(calculateEffectivePrice(item));
+                const originalPriceNum = Number(item.price);
+                const hasDeal = effectivePrice > 0 && originalPriceNum > 0 && effectivePrice < originalPriceNum;
+                const originalTotal = (originalPriceNum * item.quantity).toFixed(2);
+                const discountedTotal = (effectivePrice * item.quantity).toFixed(2);
                 return (
                   <div 
                     key={`${item.id}-${item.category}-${index}`}
@@ -796,7 +798,7 @@ const OrderConfirmation = () => {
                           <Clock size={14} />
                           {item.addedAt ? formatDate(item.addedAt) : 'Now'}
                         </p>
-                        {hasDiscount && (
+                        {(item.discounttype && item.discountvalue) && (
                           <div className="text-green-600 text-sm font-medium bg-green-100 px-2 py-1 rounded-full inline-block mb-2">
                             {item.discounttype === 'Percentage' && `${item.discountvalue}% off`}
                             {item.discounttype === 'Fixed' && `₹${item.discountvalue*item.quantity} off`}
@@ -839,10 +841,10 @@ const OrderConfirmation = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        {hasDiscount ? (
+                        {hasDeal ? (
                           <>
                             <p className="text-gray-400 text-sm line-through">₹{originalTotal}</p>
-                            <p className="font-bold text-xl text-gray-800 transition-all duration-200 transform scale-100 hover:scale-105">₹{discountedTotal}</p>
+                            <p className="font-bold text-xl text-green-700 transition-all duration-200 transform scale-100 hover:scale-105">₹{discountedTotal}</p>
                           </>
                         ) : (
                           <p className="font-bold text-xl text-gray-800 transition-all duration-200 transform scale-100 hover:scale-105">₹{originalTotal}</p>
@@ -904,10 +906,12 @@ const OrderConfirmation = () => {
                 cartItems.length === 0 ||
                 isCheckingEmail ||
                 (!user && emailExists) ||
-                isPlacingOrder
+                isPlacingOrder ||
+                !tableNumber ||
+                (!user && (!/^([^\s@]+)@([^\s@]+)\.[^\s@]+$/.test(guestEmail) || !/^[6-9]\d{9}$/.test(guestPhone)))
               }
               className={`w-full py-4 rounded-full font-bold text-lg transition-all duration-300 transform hover:scale-105 ${
-                cartItems.length === 0 || isCheckingEmail || (!user && emailExists) || isPlacingOrder
+                cartItems.length === 0 || isCheckingEmail || (!user && emailExists) || isPlacingOrder || !tableNumber || (!user && (!/^([^\s@]+)@([^\s@]+)\.[^\s@]+$/.test(guestEmail) || !/^[6-9]\d{9}$/.test(guestPhone)))
                   ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
                   : 'bg-gray-600 text-white hover:bg-gray-700 shadow-lg hover:shadow-xl'
               }`}

@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Check, X, Truck, CheckCircle, ChevronDown, ChevronRight, User, 
   Clock, Calendar, MapPin, Phone, Filter, AlertCircle,
-  Printer, Download, AlertTriangle, ShoppingBag, Info, Grid, List, Package, Plus
+  Printer, Download, AlertTriangle, ShoppingBag, Info, Grid, List, Package, Plus, RefreshCw
 } from 'lucide-react';
 import { useManagerNotifications } from '../../context/ManagerNotificationContext';
 import { format, isToday, isYesterday } from 'date-fns';
@@ -27,6 +27,8 @@ import {
   filterOrders,
   sortOrders,
 } from '../../api/admin/orderService';
+import { createOrder, calculateOrderTotals } from '../../api/paymentService';
+import { getRestaurantFoodItems } from '../../api/foodService';
 
 const STATUS_META = {
   pending: {
@@ -80,6 +82,26 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
   const [periodFilter, setPeriodFilter] = useState('all');
   const [subscriptionStatus, setSubscriptionStatus] = useState('disconnected');
   const [overviewOpen, setOverviewOpen] = useState(true);
+  const [showCreateOrderModal, setShowCreateOrderModal] = useState(false);
+  const [menuItems, setMenuItems] = useState([]);
+  const [menuLoading, setMenuLoading] = useState(false);
+  const [menuError, setMenuError] = useState('');
+  const [itemSearch, setItemSearch] = useState('');
+  const [itemCategoryFilter, setItemCategoryFilter] = useState('all');
+  const [selectedItems, setSelectedItems] = useState({}); // key: id, value: {id, name, price, image, category, quantity}
+  const [coTableNumber, setCoTableNumber] = useState('');
+  const [coCustomerName, setCoCustomerName] = useState('');
+  const [coCustomerEmail, setCoCustomerEmail] = useState('');
+  const [coCustomerPhone, setCoCustomerPhone] = useState('');
+  const [coSpecialInstructions, setCoSpecialInstructions] = useState('');
+  const [coDiscountPercentage, setCoDiscountPercentage] = useState(0);
+  const [coDiscountType, setCoDiscountType] = useState('percentage'); // 'percentage' or 'flat'
+  const [coDiscountFlat, setCoDiscountFlat] = useState(0);
+  const [creatingOrder, setCreatingOrder] = useState(false);
+  const [showTableDropdown, setShowTableDropdown] = useState(false);
+  const [availableTables, setAvailableTables] = useState([]);
+  const [tableSearch, setTableSearch] = useState('');
+  const [coStep, setCoStep] = useState(1); // 1: Select Items, 2: Customer Info
   
   // Use the prop if provided, otherwise fallback to local state (for safety)
   const searchTerm = propSearchTerm !== undefined ? propSearchTerm : '';
@@ -101,6 +123,206 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
   useEffect(() => {
     fetchOrders();
   }, [restaurantId]);
+
+  // Load menu items when opening create order modal
+  useEffect(() => {
+    const fetchMenu = async () => {
+      if (!showCreateOrderModal || !restaurantId) return;
+      try {
+        setMenuLoading(true);
+        setMenuError('');
+        const items = await getRestaurantFoodItems(restaurantId);
+        setMenuItems(items || []);
+      } catch (err) {
+        setMenuError('Failed to load menu items');
+        console.error('Failed to load menu items:', err);
+      } finally {
+        setMenuLoading(false);
+      }
+    };
+    fetchMenu();
+  }, [showCreateOrderModal, restaurantId]);
+
+  // Reset step to 1 whenever modal is opened
+  useEffect(() => {
+    if (showCreateOrderModal) setCoStep(1);
+  }, [showCreateOrderModal]);
+
+  // Parse tables from restaurant data
+  useEffect(() => {
+    if (restaurant?.tables) {
+      try {
+        const parsedTables = typeof restaurant.tables === 'string' 
+          ? JSON.parse(restaurant.tables) 
+          : restaurant.tables;
+        setAvailableTables(Array.isArray(parsedTables) ? parsedTables : []);
+      } catch (error) {
+        console.error('Error parsing restaurant tables:', error);
+        setAvailableTables([]);
+      }
+    } else {
+      setAvailableTables([]);
+    }
+  }, [restaurant?.tables]);
+
+  // Derived filtered menu
+  const filteredMenuItems = useMemo(() => {
+    let list = menuItems;
+    if (itemCategoryFilter !== 'all') {
+      list = list.filter(m => (m.category || '') === itemCategoryFilter);
+    }
+    if (!itemSearch.trim()) return list;
+    const q = itemSearch.toLowerCase();
+    return list.filter(m =>
+      (m.name || '').toLowerCase().includes(q) ||
+      (m.category || '').toLowerCase().includes(q)
+    );
+  }, [menuItems, itemSearch, itemCategoryFilter]);
+
+  // Unique categories for quick filtering
+  const menuCategories = useMemo(() => {
+    const set = new Set();
+    menuItems.forEach(m => { if (m.category) set.add(m.category); });
+    return Array.from(set).sort();
+  }, [menuItems]);
+
+  // Filtered tables list for dropdown search
+  const filteredTables = useMemo(() => {
+    const q = tableSearch.trim().toLowerCase();
+    if (!q) return availableTables;
+    return availableTables.filter(t =>
+      String(t.tableNumber).toLowerCase().includes(q) ||
+      (t.location || '').toLowerCase().includes(q) ||
+      String(t.capacity || '').toLowerCase().includes(q)
+    );
+  }, [availableTables, tableSearch]);
+
+  // Selected items array and totals
+  const selectedItemsArray = useMemo(() => Object.values(selectedItems), [selectedItems]);
+  const selectedOrderTotals = useMemo(() => {
+    if (!selectedItemsArray.length) return { subtotal: 0, discountAmount: 0, subtotalAfterDiscount: 0, cgst: 0, sgst: 0, finalTotal: 0 };
+    const items = selectedItemsArray.map(si => ({ 
+      price: si.price, 
+      quantity: si.quantity, 
+      name: si.name, 
+      category: si.category 
+    }));
+    
+    // Calculate discount based on type
+    const discountValue = coDiscountType === 'percentage' 
+      ? Number(coDiscountPercentage) || 0 
+      : Number(coDiscountFlat) || 0;
+    
+    return calculateOrderTotals(items, discountValue, coDiscountType);
+  }, [selectedItemsArray, coDiscountPercentage, coDiscountFlat, coDiscountType]);
+
+  const addItem = (item) => {
+    setSelectedItems(prev => {
+      const existing = prev[item.id];
+      const qty = existing ? existing.quantity + 1 : 1;
+      const discounted = item.discounted_price ?? item.discountedPrice;
+      const hasOffer = discounted && Number(discounted) > 0 && Number(discounted) < Number(item.price);
+      return {
+        ...prev,
+        [item.id]: {
+          id: item.id,
+          name: item.name,
+          price: hasOffer ? Number(discounted) : Number(item.price),
+          image: item.image_url || item.image,
+          category: item.category,
+          quantity: qty,
+          ...(hasOffer ? { originalPrice: Number(item.price) } : {})
+          
+        }
+      };
+    });
+  };
+
+  const decrementItem = (id) => {
+    setSelectedItems(prev => {
+      const existing = prev[id];
+      if (!existing) return prev;
+      const qty = existing.quantity - 1;
+      const copy = { ...prev };
+      if (qty <= 0) {
+        delete copy[id];
+      } else {
+        copy[id] = { ...existing, quantity: qty };
+      }
+      return copy;
+    });
+  };
+
+  const removeItem = (id) => {
+    setSelectedItems(prev => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
+  };
+
+  // Removed item note support
+
+  const resetCreateOrder = () => {
+    setSelectedItems({});
+    setCoTableNumber('');
+    setCoCustomerName('');
+    setCoCustomerEmail('');
+    setCoCustomerPhone('');
+    setCoSpecialInstructions('');
+    setCoDiscountPercentage(0);
+    setCoDiscountType('percentage');
+    setCoDiscountFlat(0);
+    setItemSearch('');
+  };
+
+  const handleCreateOrderSubmit = async () => {
+    try {
+      if (!restaurantId) return alert('No restaurant selected');
+      if (!selectedItemsArray.length) return alert('Please add at least one item');
+      if (!coTableNumber) return alert('Please enter table number');
+      if (!coCustomerPhone) return alert('Please enter customer phone');
+
+      setCreatingOrder(true);
+      const itemsPayload = selectedItemsArray.map(si => ({
+        id: si.id,
+        quantity: si.quantity,
+        price: si.price,
+        name: si.name,
+        category: si.category,
+        image: si.image
+      }));
+
+      const payload = {
+        restaurantId,
+        userId: null,
+        customerName: coCustomerName || 'Walk-in Customer',
+        customerEmail: coCustomerEmail || 'guest@example.com',
+        customerPhone: coCustomerPhone,
+        tableNumber: coTableNumber,
+        items: itemsPayload,
+        paymentMethod: 'direct',
+        paymentStatus: 'pending',
+        specialInstructions: coSpecialInstructions,
+        discountPercentage: coDiscountType === 'percentage' ? Number(coDiscountPercentage) || 0 : 0,
+        discountFlat: coDiscountType === 'flat' ? Number(coDiscountFlat) || 0 : 0,
+        discountType: coDiscountType,
+      };
+
+      const created = await createOrder(payload);
+      // Optimistically prepend; real-time subscription will also handle it
+      if (created) {
+        setOrders(prev => [created, ...prev]);
+        setShowCreateOrderModal(false);
+        resetCreateOrder();
+      }
+    } catch (err) {
+      console.error('Create order (admin) failed:', err);
+      alert(`Failed to create order: ${err.message || err}`);
+    } finally {
+      setCreatingOrder(false);
+    }
+  };
 
   // Enhanced real-time subscription
   useEffect(() => {
@@ -154,7 +376,13 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
     setIsLoading(true);
     setConfirmModal({ show: false, type: null, order: null });
     try {
-      const updatedOrder = await updateOrderStatusService(orderId, newStatus, cancelReason);
+      // Prefer the parent-provided updater (same flow as DashboardOverview)
+      let updatedOrder;
+      if (typeof updateOrderStatus === 'function') {
+        updatedOrder = await updateOrderStatus(orderId, newStatus, cancelReason);
+      } else {
+        updatedOrder = await updateOrderStatusService(orderId, newStatus, cancelReason);
+      }
       
       // Create appropriate notification
       const notificationMessages = {
@@ -393,11 +621,12 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
       <div className="divide-y divide-gray-200">
         {items.map((item, idx) => (
           <div key={idx} className="flex items-center py-2">
-            <div className="w-10 h-10 rounded overflow-hidden mr-3 border border-gray-200 bg-white flex-shrink-0">
+            <div className="w-10 h-10 rounded-full ring-2 ring-orange-200 bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center overflow-hidden">
               <img
                 src={item.image || `/api/placeholder/40/40`}
                 alt={item.name || `Item ${idx+1}`}
                 className="w-full h-full object-cover"
+                onError={e => { e.target.onerror = null; e.target.src = '/api/placeholder/40/40'; }}
               />
             </div>
             <div className="flex-1 min-w-0">
@@ -547,10 +776,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
             
             {/* Create Order Button */}
               <button
-                onClick={() => {
-                  // TODO: Wire up actual create order flow (open modal or navigate)
-                  console.log('Create Order clicked');
-                }}
+                onClick={() => setShowCreateOrderModal(true)}
                 className="flex items-center px-3 py-1.5 text-sm sm:px-4 sm:py-2 sm:text-base bg-gradient-to-r from-green-600 to-emerald-500 text-white rounded-lg hover:from-green-700 hover:to-emerald-600 transition-all duration-200 shadow-md hover:shadow-lg"
                 title="Create Order"
               >
@@ -949,6 +1175,8 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                                   <span className="font-medium">Payment: </span>
                                   {order.payment_method === 'razorpay' && order.payment_status === 'completed' ? (
                                     <span className="text-green-600">Paid Online</span>
+                                  ) : order.payment_method?.toLowerCase() === 'upi' ? (
+                                    <span className="text-blue-600">UPI</span>
                                   ) : order.payment_method === 'cod' ? (
                                     <span className="text-yellow-600">Cash on Delivery</span>
                                   ) : order.payment_status === 'pending' ? (
@@ -995,6 +1223,428 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
             </div>
           )}
         </div>
+
+        {/* Create Order Modal */}
+        {showCreateOrderModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
+            <div 
+              className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity duration-300" 
+              onClick={() => { setShowCreateOrderModal(false); resetCreateOrder(); }} 
+            />
+            <div className="relative bg-white w-full max-w-7xl h-full max-h-[95vh] rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-300 scale-100">
+              {/* Enhanced Header */}
+              <div className="flex items-center justify-between px-4 sm:px-6 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white bg-opacity-20 rounded-lg">
+                    <ShoppingBag size={20} className="text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-bold">Create New Order</h3>
+                    <p className="text-orange-100 text-sm">Walk-in customer order</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="hidden sm:flex items-center gap-2 bg-white bg-opacity-20 rounded-full px-3 py-1">
+                    <div className={`w-2 h-2 rounded-full ${coStep === 1 ? 'bg-white' : 'bg-white bg-opacity-50'}`} />
+                    <div className={`w-2 h-2 rounded-full ${coStep === 2 ? 'bg-white' : 'bg-white bg-opacity-50'}`} />
+                    <span className="text-xs font-medium ml-1">Step {coStep}/2</span>
+                  </div>
+                  <button 
+                    className="p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-colors duration-200" 
+                    onClick={() => { setShowCreateOrderModal(false); resetCreateOrder(); }}
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              </div>
+              
+              {/* Progress Bar */}
+              <div className="h-1 bg-gray-200">
+                <div 
+                  className="h-full bg-gradient-to-r from-orange-400 to-orange-500 transition-all duration-500 ease-out"
+                  style={{ width: `${(coStep / 2) * 100}%` }}
+                />
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-0 lg:gap-4 p-3 pb-32 sm:p-4 sm:pb-4 overflow-auto lg:overflow-hidden h-[calc(100vh-56px)] sm:h-auto">
+                {/* Left: Menu (Step 1) */}
+                <div className={`lg:col-span-2 flex flex-col min-h-0 sm:h-[70vh] ${coStep === 2 ? 'hidden' : ''}`}>
+                  <div className="flex flex-col gap-2 mb-3 sticky top-0 z-10 bg-white pb-3">
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <input
+                          value={itemSearch}
+                          onChange={(e) => setItemSearch(e.target.value)}
+                          placeholder="Search items or categories"
+                          className="w-full border rounded-xl px-3 py-2 pl-9"
+                        />
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                          <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.9 14.32a8 8 0 1 1 1.41-1.41l3.85 3.84-1.41 1.42-3.85-3.85zM8 14A6 6 0 1 0 8 2a6 6 0 0 0 0 12z" clipRule="evenodd"/></svg>
+                        </div>
+                      </div>
+                      <select
+                        value={itemCategoryFilter}
+                        onChange={(e)=>setItemCategoryFilter(e.target.value)}
+                        className="border rounded-xl px-3 py-2 min-w-[9rem]"
+                        title="Filter by category"
+                      >
+                        <option value="all">All Categories</option>
+                        {menuCategories.map(cat => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+                      {menuCategories.slice(0, 12).map(cat => (
+                        <button
+                          key={`chip-${cat}`}
+                          onClick={()=>setItemCategoryFilter(cat)}
+                          className={`px-3 py-1.5 rounded-full text-sm border whitespace-nowrap ${itemCategoryFilter===cat ? 'bg-orange-100 border-orange-200 text-orange-700' : 'bg-white hover:bg-gray-50'}`}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {menuLoading ? (
+                    <div className="text-gray-500 p-4">Loading menu...</div>
+                  ) : menuError ? (
+                    <div className="text-red-500 p-4">{menuError}</div>
+                  ) : (
+                    <>
+                      {/* Mobile: Card list */}
+                      <div className="sm:hidden flex-1 min-h-0 overflow-auto space-y-2">
+                        {filteredMenuItems.length === 0 && (
+                          <div className="p-4 text-center text-gray-500">No items</div>
+                        )}
+                        {filteredMenuItems.map((mi) => (
+                          <div key={mi.id} className="border rounded-xl p-3 flex items-start gap-3">
+                            {mi.image_url && (
+                              <img src={mi.image_url} alt={mi.name} className="h-12 w-12 rounded object-cover flex-shrink-0" onError={(e)=>{e.currentTarget.style.display='none';}} />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between">
+                                <div className="truncate">
+                                  <div className="font-medium truncate">{mi.name}</div>
+                                  <div className="text-xs text-gray-500 truncate">{mi.category}</div>
+                                </div>
+                                <div className="ml-2 text-right">
+                                  {((mi.discounted_price ?? mi.discountedPrice) && Number(mi.discounted_price ?? mi.discountedPrice) > 0 && Number(mi.discounted_price ?? mi.discountedPrice) < Number(mi.price)) ? (
+                                    <>
+                                      <div className="text-[11px] line-through text-gray-400">₹{Number(mi.price).toFixed(2)}</div>
+                                      <div className="font-semibold text-green-700">₹{Number(mi.discounted_price ?? mi.discountedPrice).toFixed(2)}</div>
+                                    </>
+                                  ) : (
+                                    <div className="font-semibold">₹{Number(mi.price).toFixed(2)}</div>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="mt-2 flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-2">
+                                  <button className="px-3 py-1.5 rounded-lg bg-gray-100 active:scale-95" onClick={() => decrementItem(mi.id)}>-</button>
+                                  <span className="w-6 text-center">{selectedItems[mi.id]?.quantity || 0}</span>
+                                  <button className="px-3 py-1.5 rounded-lg bg-orange-600 text-white active:scale-95" onClick={() => addItem(mi)}>+</button>
+                                </div>
+                              </div>
+                              {/* Item note removed */}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Desktop/Tablet: Table */}
+                      <div className="hidden sm:block flex-1 min-h-0 overflow-auto rounded-xl border">
+                        <table className="min-w-full text-sm">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="text-left p-3">Item</th>
+                              <th className="text-right p-3">Price</th>
+                              <th className="text-center p-3">Qty</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filteredMenuItems.map((mi) => (
+                              <tr key={mi.id} className="border-t">
+                                <td className="p-3">
+                                  <div className="flex items-center gap-3">
+                                    {mi.image_url && (
+                                      <img src={mi.image_url} alt={mi.name} className="h-10 w-10 rounded object-cover" onError={(e)=>{e.currentTarget.style.display='none';}} />
+                                    )}
+                                    <div>
+                                      <div className="font-medium">{mi.name}</div>
+                                      <div className="text-xs text-gray-500">{mi.category}</div>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="p-3 text-right">
+                                  {((mi.discounted_price ?? mi.discountedPrice) && Number(mi.discounted_price ?? mi.discountedPrice) > 0 && Number(mi.discounted_price ?? mi.discountedPrice) < Number(mi.price)) ? (
+                                    <div className="inline-flex flex-col items-end">
+                                      <span className="text-[11px] line-through text-gray-400">₹{Number(mi.price).toFixed(2)}</span>
+                                      <span className="font-semibold text-green-700">₹{Number(mi.discounted_price ?? mi.discountedPrice).toFixed(2)}</span>
+                                    </div>
+                                  ) : (
+                                    <span>₹{Number(mi.price).toFixed(2)}</span>
+                                  )}
+                                </td>
+                                <td className="p-3">
+                                  <div className="flex items-center justify-center gap-2">
+                                    <button className="px-2 py-1 rounded bg-gray-100" onClick={() => decrementItem(mi.id)}>-</button>
+                                    <span className="w-6 text-center">{selectedItems[mi.id]?.quantity || 0}</span>
+                                    <button className="px-2 py-1 rounded bg-orange-600 text-white" onClick={() => addItem(mi)}>+
+                                    </button>
+                                  </div>
+                                  {/* Item note removed */}
+                                </td>
+                              </tr>
+                            ))}
+                            {filteredMenuItems.length === 0 && (
+                              <tr><td className="p-4 text-center text-gray-500" colSpan={3}>No items</td></tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Right: Summary & Details (Step 1 & 2) */}
+                <div className={`${coStep === 2 ? 'lg:col-span-3' : 'lg:col-span-1'} flex flex-col min-h-0 sm:h-[70vh]`}>
+                  <div className="flex-1 min-h-0 overflow-auto border rounded-xl p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold">Selected Items</h4>
+                      {selectedItemsArray.length > 0 && (
+                        <button className="text-xs text-red-600 hover:text-red-700" onClick={()=>setSelectedItems({})}>
+                          Clear all
+                        </button>
+                      )}
+                    </div>
+                    {selectedItemsArray.length === 0 ? (
+                      <div className="text-gray-500 text-sm">No items added.</div>
+                    ) : (
+                      <ul className="space-y-2">
+                        {selectedItemsArray.map(si => (
+                          <li key={si.id} className="flex justify-between items-start">
+                            <div>
+                              <div className="font-medium">{si.name} × {si.quantity}</div>
+                              <div className="text-xs text-gray-500">{si.category}</div>
+                            </div>
+                            <div className="text-right">
+                              {si.originalPrice && si.originalPrice > si.price ? (
+                                <>
+                                  <div className="text-xs line-through text-gray-400">₹{(Number(si.originalPrice) * si.quantity).toFixed(2)}</div>
+                                  <div className="font-medium text-green-700">₹{(Number(si.price) * si.quantity).toFixed(2)}</div>
+                                </>
+                              ) : (
+                                Number(coDiscountPercentage) > 0 ? (
+                                  <>
+                                    <div className="text-xs line-through text-gray-400">₹{(Number(si.price) * si.quantity).toFixed(2)}</div>
+                                    <div className="font-medium text-green-700">₹{(Number(si.price) * si.quantity * (1 - Number(coDiscountPercentage)/100)).toFixed(2)}</div>
+                                  </>
+                                ) : (
+                                  <div>₹{(Number(si.price) * si.quantity).toFixed(2)}</div>
+                                )
+                              )}
+                              <div className="mt-1 flex items-center gap-2 justify-end">
+                                <button className="px-2 py-1 text-xs rounded bg-gray-100" onClick={() => decrementItem(si.id)}>-</button>
+                                <span className="w-6 text-center text-xs">{si.quantity}</span>
+                                <button className="px-2 py-1 text-xs rounded bg-orange-600 text-white" onClick={() => addItem(si)}>+</button>
+                                <button className="px-2 py-1 text-xs rounded bg-red-50 text-red-600 border border-red-200" onClick={()=>removeItem(si.id)}>Remove</button>
+                              </div>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <div className="mt-3 border-t pt-2 pb-4 sm:pb-2 text-sm space-y-1">
+                      <div className="flex justify-between"><span>Subtotal</span><span>₹{selectedOrderTotals.subtotal.toFixed(2)}</span></div>
+                      <div className="flex justify-between"><span>Discount</span><span>-₹{selectedOrderTotals.discountAmount.toFixed(2)}</span></div>
+                      <div className="flex justify-between"><span>CGST + SGST</span><span>₹{(selectedOrderTotals.cgst + selectedOrderTotals.sgst).toFixed(2)}</span></div>
+                      <div className="flex justify-between font-semibold text-gray-900"><span>Total</span><span>₹{selectedOrderTotals.finalTotal.toFixed(2)}</span></div>
+                    </div>
+                  </div>
+
+                  {/* Step 2: Customer details form */}
+                  {coStep === 2 && (
+                    <div className="mt-3 space-y-3 pb-32 sm:pb-0">
+                      <div className="relative">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Table Number
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setShowTableDropdown(!showTableDropdown)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-xl bg-white text-left flex justify-between items-center hover:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        >
+                          <span className={coTableNumber ? 'text-gray-800' : 'text-gray-500'}>
+                            {coTableNumber ? `Table ${coTableNumber}` : 'Select table number'}
+                          </span>
+                          <ChevronDown 
+                            size={16} 
+                            className={`text-gray-400 transition-transform duration-200 ${showTableDropdown ? 'rotate-180' : ''}`}
+                          />
+                        </button>
+                        {showTableDropdown && (
+                          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                            <div className="sticky top-0 bg-white p-2 border-b">
+                              <input
+                                value={tableSearch}
+                                onChange={(e)=>setTableSearch(e.target.value)}
+                                placeholder="Search table, location or seats"
+                                className="w-full border rounded-lg px-3 py-2 text-sm"
+                              />
+                            </div>
+                            {filteredTables.length > 0 ? (
+                              filteredTables.map((table) => (
+                                <button
+                                  key={`${table.tableNumber}-${table.location || ''}`}
+                                  type="button"
+                                  onClick={() => {
+                                    setCoTableNumber(table.tableNumber);
+                                    setShowTableDropdown(false);
+                                  }}
+                                  className={`w-full px-3 py-2 text-left hover:bg-orange-50 border-b border-gray-100 last:border-b-0 transition-colors duration-200 ${
+                                    table.tableNumber === coTableNumber ? 'bg-orange-50 border-orange-200' : ''
+                                  }`}
+                                >
+                                  <div className="flex justify-between items-center">
+                                    <div>
+                                      <span className="font-medium text-gray-800">Table {table.tableNumber}</span>
+                                      {table.location && (
+                                        <span className="text-sm text-gray-500 ml-2">({table.location})</span>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                                        {table.capacity} seats
+                                      </span>
+                                      {table.tableNumber === coTableNumber && (
+                                        <span className="text-orange-600 text-xs font-medium bg-orange-100 px-2 py-1 rounded-full">
+                                          ✓
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </button>
+                              ))
+                            ) : (
+                              <div className="px-3 py-4 text-gray-500 text-center text-sm">
+                                No tables available
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <input value={coCustomerName} onChange={(e)=>setCoCustomerName(e.target.value)} placeholder="Customer Name (optional)" className="w-full border rounded-xl px-3 py-2" />
+                        <input value={coCustomerPhone} onChange={(e)=>setCoCustomerPhone(e.target.value)} placeholder="Customer Phone" className="w-full border rounded-xl px-3 py-2" />
+                        <input value={coCustomerEmail} onChange={(e)=>setCoCustomerEmail(e.target.value)} placeholder="Customer Email (optional)" className="w-full border rounded-xl px-3 py-2 sm:col-span-2" />
+                      </div>
+                      <textarea value={coSpecialInstructions} onChange={(e)=>setCoSpecialInstructions(e.target.value)} placeholder="Special Instructions" className="w-full border rounded-xl px-3 py-2" rows={3} />
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">Discount</label>
+                        <div className="flex items-center gap-2">
+                          <select 
+                            value={coDiscountType} 
+                            onChange={(e) => setCoDiscountType(e.target.value)}
+                            className="border border-gray-300 rounded-xl px-3 py-2 text-sm"
+                          >
+                            <option value="percentage">%</option>
+                            <option value="flat">₹</option>
+                          </select>
+                          {coDiscountType === 'percentage' ? (
+                            <input 
+                              type="number" 
+                              min="0" 
+                              max="100" 
+                              value={coDiscountPercentage} 
+                              onChange={(e) => setCoDiscountPercentage(e.target.value)} 
+                              placeholder="0" 
+                              className="flex-1 border border-gray-300 rounded-xl px-3 py-2" 
+                            />
+                          ) : (
+                            <input 
+                              type="number" 
+                              min="0" 
+                              value={coDiscountFlat} 
+                              onChange={(e) => setCoDiscountFlat(e.target.value)} 
+                              placeholder="0" 
+                              className="flex-1 border border-gray-300 rounded-xl px-3 py-2" 
+                            />
+                          )}
+                          <span className="text-sm text-gray-500 min-w-0">
+                            {coDiscountType === 'percentage' ? 'percent off' : 'rupees off'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Desktop/Tablet actions */}
+                  <div className="mt-4 hidden sm:flex gap-2 justify-end">
+                    {coStep === 1 ? (
+                      <>
+                        <button className="px-4 py-2 rounded-xl border" onClick={() => { setShowCreateOrderModal(false); resetCreateOrder(); }}>
+                          Cancel
+                        </button>
+                        <button
+                          disabled={selectedItemsArray.length === 0}
+                          onClick={() => setCoStep(2)}
+                          className="px-4 py-2 rounded-xl text-white bg-orange-600 hover:bg-orange-700"
+                        >
+                          Next
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button className="px-4 py-2 rounded-xl border" onClick={() => setCoStep(1)}>
+                          Back
+                        </button>
+                        <button className="px-4 py-2 rounded-xl border" onClick={() => { setShowCreateOrderModal(false); resetCreateOrder(); }}>
+                          Cancel
+                        </button>
+                        <button
+                          disabled={creatingOrder || selectedItemsArray.length === 0 || !coTableNumber || !coCustomerPhone}
+                          onClick={handleCreateOrderSubmit}
+                          className={`px-4 py-2 rounded-xl text-white ${creatingOrder ? 'bg-gray-400' : 'bg-orange-600 hover:bg-orange-700'}`}
+                        >
+                          {creatingOrder ? 'Creating...' : 'Create Order'}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+              {/* Mobile bottom action bar */}
+              <div className="sm:hidden sticky bottom-0 left-0 right-0 border-t bg-white p-3 flex items-center gap-2 z-50">
+                {coStep === 1 ? (
+                  <>
+                    <button className="flex-1 px-4 py-3 rounded-xl border" onClick={() => { setShowCreateOrderModal(false); resetCreateOrder(); }}>
+                      Cancel
+                    </button>
+                    <button
+                      disabled={selectedItemsArray.length === 0}
+                      onClick={() => setCoStep(2)}
+                      className="flex-1 px-4 py-3 rounded-xl text-white bg-orange-600 hover:bg-orange-700"
+                    >
+                      Next
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button className="flex-1 px-4 py-3 rounded-xl border" onClick={() => setCoStep(1)}>
+                      Back
+                    </button>
+                    <button
+                      disabled={creatingOrder || selectedItemsArray.length === 0 || !coTableNumber || !coCustomerPhone}
+                      onClick={handleCreateOrderSubmit}
+                      className={`flex-1 px-4 py-3 rounded-xl text-white ${creatingOrder ? 'bg-gray-400' : 'bg-orange-600 hover:bg-orange-700'}`}
+                    >
+                      {creatingOrder ? 'Creating...' : 'Create Order'}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       {/* Confirmation Modal */}
       {confirmModal.show && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">

@@ -124,16 +124,59 @@ export const generateOrderNumber = (restaurantName) => {
 /**
  * Calculate order totals with GST and discounts
  */
-export const calculateOrderTotals = (items, discountPercentage = 0) => {
-  const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const discountAmount = (subtotal * discountPercentage) / 100;
-  const subtotalAfterDiscount = subtotal - discountAmount;
-  const cgst = subtotalAfterDiscount * 0.025; // 2.5% CGST
-  const sgst = subtotalAfterDiscount * 0.025; // 2.5% SGST
+export const calculateOrderTotals = (items, discountValue = 0, discountType = 'percentage') => {
+  let originalTotal = 0;
+  let discountAmount = 0;
+  let taxableAmount = 0;
+  
+  items.forEach(item => {
+    const originalItemTotal = item.price * item.quantity;
+    originalTotal += originalItemTotal;
+    
+    // Calculate effective price after item-level discounts
+    const effectivePrice = item.effectivePrice !== undefined ? 
+      item.effectivePrice : 
+      item.price; // Use original price if no item-level discount
+    
+    const itemDiscount = (item.price - effectivePrice) * item.quantity;
+    discountAmount += itemDiscount;
+    
+    const itemSubtotal = effectivePrice * item.quantity;
+    
+    // Check if the item is water (exempt from GST)
+    const isWater = item.name && 
+      (item.name.toLowerCase().includes('water') || 
+       item.category?.toLowerCase() === 'water');
+       
+    if (!isWater) {
+      taxableAmount += itemSubtotal;
+    }
+  });
+  
+  // Apply global discount if specified
+  if (discountValue > 0) {
+    let globalDiscountAmount = 0;
+    if (discountType === 'percentage') {
+      globalDiscountAmount = (originalTotal * discountValue) / 100;
+      // Adjust taxable amount proportionally
+      const discountRatio = discountValue / 100;
+      taxableAmount = taxableAmount * (1 - discountRatio);
+    } else if (discountType === 'flat') {
+      globalDiscountAmount = Math.min(discountValue, originalTotal); // Don't exceed total
+      // Adjust taxable amount proportionally
+      const discountRatio = globalDiscountAmount / originalTotal;
+      taxableAmount = taxableAmount * (1 - discountRatio);
+    }
+    discountAmount += globalDiscountAmount;
+  }
+  
+  const cgst = taxableAmount * 0.025; // 2.5% CGST
+  const sgst = taxableAmount * 0.025; // 2.5% SGST
+  const subtotalAfterDiscount = originalTotal - discountAmount;
   const finalTotal = subtotalAfterDiscount + cgst + sgst;
 
   return {
-    subtotal,
+    subtotal: originalTotal,
     discountAmount,
     subtotalAfterDiscount,
     cgst,
@@ -188,7 +231,8 @@ export const createOrder = async (orderData) => {
         price: item.price,
         name: item.name,
         category: item.category,
-        image: item.image
+        image: item.image,
+        note: item.note || null
       })),
       subtotal: totals.subtotalAfterDiscount,
       gst: totals.cgst + totals.sgst,
