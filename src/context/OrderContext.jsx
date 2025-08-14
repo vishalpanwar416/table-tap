@@ -106,10 +106,23 @@ export const OrderProvider = ({ children }) => {
         throw new Error('Restaurant ID is missing. Please try again.');
       }
 
+      // Map to paymentService.createOrder expected fields
       const orderWithRestaurant = {
-        ...orderData,
-        restaurant_id: restaurant.id,
-        user_id: user?.id || null,
+        restaurantId: restaurant.id,
+        restaurantName: restaurant?.name,
+        userId: user?.id || null,
+        customerName: orderData.customerName || orderData.name || '',
+        customerEmail: orderData.customerEmail || orderData.email || '',
+        customerPhone: orderData.customerPhone || orderData.phone || '',
+        tableNumber: orderData.tableNumber || orderData.table_number,
+        items: orderData.items || [],
+        discountPercentage: orderData.discountPercentage || 0,
+        // Payment fields (optional, when available)
+        razorpayOrderId: orderData.razorpayOrderId,
+        razorpayPaymentId: orderData.razorpayPaymentId,
+        razorpaySignature: orderData.razorpaySignature,
+        paymentMethod: orderData.paymentMethod,
+        specialInstructions: orderData.specialInstructions,
       };
 
       const result = await createOrder(orderWithRestaurant);
