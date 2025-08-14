@@ -314,6 +314,8 @@ const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab, restaur
         menuStats={menuStats}
         isCollapsed={isCollapsed.stats}
         toggleCollapse={() => toggleCollapse('stats')}
+        period={chartPeriod}
+        onChangePeriod={setChartPeriod}
       />
       <RevenueChart
         chartData={chartData}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { TrendingUp, ShoppingCart, User, Utensils, PieChart, ChevronUp, ChevronDown, Truck, CheckCircle, RefreshCw } from 'lucide-react';
 
-const StatsCards = ({ revenueData, orderStats, activeUsers, menuStats, isCollapsed, toggleCollapse }) => {
+const StatsCards = ({ revenueData, orderStats, activeUsers, menuStats, isCollapsed, toggleCollapse, period, onChangePeriod }) => {
   // Assume activeUsers is an object with total and returning properties
   // If it's still a number, create a default object with meaningful data
   const userStats = typeof activeUsers === 'object' ? activeUsers : {
@@ -20,9 +20,16 @@ const StatsCards = ({ revenueData, orderStats, activeUsers, menuStats, isCollaps
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
       <div className="flex justify-between items-center p-4 border-b border-gray-100">
         <h3 className="text-lg font-semibold text-gray-800">Overview</h3>
-        <button onClick={toggleCollapse} className="p-1 rounded hover:bg-gray-100">
-          {isCollapsed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="hidden sm:flex bg-gray-100 rounded-lg p-1">
+            <button onClick={()=>onChangePeriod('daily')} className={`px-2 py-1 text-xs rounded-md ${period==='daily' ? 'bg-white shadow' : ''}`}>Today</button>
+            <button onClick={()=>onChangePeriod('weekly')} className={`px-2 py-1 text-xs rounded-md ${period==='weekly' ? 'bg-white shadow' : ''}`}>7d</button>
+            <button onClick={()=>onChangePeriod('monthly')} className={`px-2 py-1 text-xs rounded-md ${period==='monthly' ? 'bg-white shadow' : ''}`}>30d</button>
+          </div>
+          <button onClick={toggleCollapse} className="p-1 rounded hover:bg-gray-100">
+            {isCollapsed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+          </button>
+        </div>
       </div>
 
       {!isCollapsed && (
@@ -63,6 +70,13 @@ const StatsCards = ({ revenueData, orderStats, activeUsers, menuStats, isCollaps
               <span className="text-blue-600 flex items-center">
                 <CheckCircle size={12} className="mr-1" /> {orderStats.completed} completed
               </span>
+            </div>
+            <div className="mt-2 text-xs text-gray-600">
+              <span className="font-medium">AOV:</span> ₹{((revenueData.daily + revenueData.weekly + revenueData.monthly) && orderStats.total
+                ? (period==='daily' && orderStats.total ? (revenueData.daily/(orderStats.completed||1))
+                : period==='weekly' && orderStats.total ? (revenueData.weekly/((orderStats.completed)||1))
+                : period==='monthly' && orderStats.total ? (revenueData.monthly/((orderStats.completed)||1))
+                : 0) : 0).toFixed(2)}
             </div>
           </div>
 
