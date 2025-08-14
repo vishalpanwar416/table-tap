@@ -519,9 +519,14 @@ const RestaurantSelectionPage = () => {
     }
 
     // Check if we have a table number (either from input or stored)
-    const finalTableNumber = tableNumber.trim() || getStoredRestaurantSelection()?.tableNumber;
-    
-    if (!finalTableNumber) {
+    const stored = getStoredRestaurantSelection();
+    const inputTable = tableNumber.trim();
+    const finalTableNumber =
+      inputTable ||
+      stored?.tableNumber ||
+      (availableTables.length === 0 ? 'N/A' : '');
+
+    if (availableTables.length > 0 && !finalTableNumber) {
       alert('Please enter a table number');
       return;
     }
@@ -1194,7 +1199,7 @@ const RestaurantSelectionPage = () => {
                         </motion.div>
                       )}
 
-                      <motion.button
+<motion.button
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ 
@@ -1204,7 +1209,7 @@ const RestaurantSelectionPage = () => {
                         }}
                         transition={{ duration: 0.3, delay: 0.3 }}
                         onClick={handleContinue}
-                        disabled={isSelecting || (!tableNumber.trim())}
+                        disabled={isSelecting || (availableTables.length > 0 && !tableNumber.trim())}
                         className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-5 px-6 rounded-xl transition-colors shadow-sm touch-manipulation"
                         style={{
                           minHeight: '56px'
