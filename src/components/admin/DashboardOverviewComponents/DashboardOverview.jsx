@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import StatsCards from './StatsCards';
 import RevenueChart from './RevenueChart';
 import ActiveOrders from './ActiveOrders';
@@ -7,7 +7,7 @@ import { generateChartData, formatDate, getStatusIcon, getStatusBadge } from './
 import * as XLSX from 'xlsx';
 import { supabase } from '../../../supabase';
 
-const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab }) => {
+const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab, restaurantId }) => {
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState('');
@@ -21,6 +21,8 @@ const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab }) => {
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
 
+  const ordersChannelRef = useRef(null);
+
   useEffect(() => {
     let loadingTimeout;
     const fetchOrders = async () => {
@@ -31,10 +33,15 @@ const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab }) => {
           setOrdersError('Orders request took too long. Please try again.');
         }, 15000);
 
-        const { data, error } = await supabase
+        let query = supabase
           .from('orders')
-          .select('*')
-          .order('created_at', { ascending: false });
+          .select('*');
+
+        if (restaurantId) {
+          query = query.eq('restaurant_id', restaurantId);
+        }
+
+        const { data, error } = await query.order('created_at', { ascending: false });
 
         if (error) throw error;
         setOrders(data || []);
@@ -48,6 +55,45 @@ const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab }) => {
     };
 
     fetchOrders();
+
+    // Clean up any previous channel
+    if (ordersChannelRef.current) {
+      supabase.removeChannel(ordersChannelRef.current);
+      ordersChannelRef.current = null;
+    }
+
+    // Subscribe to real-time order changes
+    const channel = supabase
+      .channel('dashboard-orders')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders' },
+        (payload) => {
+          const { eventType, new: newRecord, old: oldRecord } = payload;
+          setOrders((prev) => {
+            let next = [...prev];
+            if (eventType === 'INSERT') {
+              next = [newRecord, ...next];
+            } else if (eventType === 'UPDATE') {
+              next = next.map((o) => (o.id === newRecord.id ? { ...o, ...newRecord } : o));
+            } else if (eventType === 'DELETE') {
+              next = next.filter((o) => o.id !== oldRecord.id);
+            }
+            return next;
+          });
+        }
+      )
+      .subscribe();
+
+    ordersChannelRef.current = channel;
+
+    return () => {
+      if (loadingTimeout) clearTimeout(loadingTimeout);
+      if (ordersChannelRef.current) {
+        supabase.removeChannel(ordersChannelRef.current);
+        ordersChannelRef.current = null;
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -86,16 +132,17 @@ const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab }) => {
       monthly: monthlyOrders.reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0)
     });
 
-    setActiveUsers(new Set(orders.map(o => o.userId || o.customerEmail || o.id)).size);
+    setActiveUsers(new Set(orders.map(o => o.user_id || o.customer_email || o.customer_phone || o.id)).size);
 
     // Calculate most ordered items - only from completed orders
     const itemCountMap = {};
     
-    // Count occurrences of each item in completed orders only
-    orders.filter(order => order.status === 'completed').forEach(order => {
+    // Count occurrences from non-rejected orders (preparing/ready/completed)
+    const countStatuses = new Set(['preparing', 'ready', 'completed']);
+    orders.filter(order => countStatuses.has(order.status)).forEach(order => {
       if (order.items && Array.isArray(order.items)) {
         order.items.forEach(item => {
-          const itemId = item.id || item.itemId;
+          const itemId = item.id || item.itemId || item.item_id || item.food_item_id;
           if (itemId) {
             itemCountMap[itemId] = (itemCountMap[itemId] || 0) + (item.quantity || 1);
           }
@@ -126,6 +173,20 @@ const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab }) => {
 
   const toggleOrderExpansion = orderId => {
     setExpandedOrderId(prev => (prev === orderId ? null : orderId));
+  };
+
+  // Optimistically update local orders when a status is changed from ActiveOrders
+  const handleUpdateOrderStatus = async (orderId, status) => {
+    try {
+      // Optimistic UI update
+      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
+      // Call upstream handler (will also trigger realtime update)
+      await updateOrderStatus(orderId, status);
+    } catch (e) {
+      // If failed, refetch to sync
+      const { data } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+      setOrders(data || []);
+    }
   };
 
   const activeOrders = orders.filter(order =>
@@ -265,7 +326,7 @@ const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab }) => {
         orders={activeOrders}
         expandedOrderId={expandedOrderId}
         toggleOrderExpansion={toggleOrderExpansion}
-        updateOrderStatus={updateOrderStatus}
+        updateOrderStatus={handleUpdateOrderStatus}
         getStatusIcon={getStatusIcon}
         getStatusBadge={getStatusBadge}
         formatDate={formatDate}
