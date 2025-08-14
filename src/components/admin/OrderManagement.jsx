@@ -682,18 +682,15 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
             <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-white shadow-sm border-l-4 border-orange-400">
               <div className="flex items-center justify-between w-full">
                 <p className="text-xs text-gray-500 uppercase font-medium">Download</p>
-                <div className="p-2 rounded-full bg-orange-100">
-                  <Download className="h-5 w-5 text-orange-500" />
-                </div>
-              </div>
-              <div className="relative w-full mt-2">
                 <button
                   onClick={() => setShowDownloadMenu((prev) => !prev)}
-                  className="w-full flex items-center justify-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                  className="p-2 rounded-full bg-orange-100 hover:bg-orange-200 transition-colors cursor-pointer"
                   title="Download Orders as Excel"
                 >
-                  Download Orders
+                  <Download className="h-5 w-5 text-orange-500" />
                 </button>
+              </div>
+              <div className="relative w-full mt-2">
                 {showDownloadMenu && (
                   <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-48">
                     <div
@@ -1613,29 +1610,29 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                 </div>
               </div>
               {/* Mobile bottom action bar */}
-              <div className="sm:hidden sticky bottom-0 left-0 right-0 border-t bg-white p-3 flex items-center gap-2 z-50">
+              <div className="sm:hidden sticky bottom-0 left-0 right-0 border-t bg-white p-4 flex items-center gap-3 z-50">
                 {coStep === 1 ? (
                   <>
-                    <button className="flex-1 px-4 py-3 rounded-xl border" onClick={() => { setShowCreateOrderModal(false); resetCreateOrder(); }}>
+                    <button className="flex-1 px-5 py-4 rounded-2xl border text-base" onClick={() => { setShowCreateOrderModal(false); resetCreateOrder(); }}>
                       Cancel
                     </button>
                     <button
                       disabled={selectedItemsArray.length === 0}
                       onClick={() => setCoStep(2)}
-                      className="flex-1 px-4 py-3 rounded-xl text-white bg-orange-600 hover:bg-orange-700"
+                      className="flex-1 px-5 py-4 rounded-2xl text-base text-white bg-orange-600 hover:bg-orange-700"
                     >
                       Next
                     </button>
                   </>
                 ) : (
                   <>
-                    <button className="flex-1 px-4 py-3 rounded-xl border" onClick={() => setCoStep(1)}>
+                    <button className="flex-1 px-5 py-4 rounded-2xl border text-base" onClick={() => setCoStep(1)}>
                       Back
                     </button>
                     <button
                       disabled={creatingOrder || selectedItemsArray.length === 0 || !coTableNumber || !coCustomerPhone}
                       onClick={handleCreateOrderSubmit}
-                      className={`flex-1 px-4 py-3 rounded-xl text-white ${creatingOrder ? 'bg-gray-400' : 'bg-orange-600 hover:bg-orange-700'}`}
+                      className={`flex-1 px-5 py-4 rounded-2xl text-base text-white ${creatingOrder ? 'bg-gray-400' : 'bg-orange-600 hover:bg-orange-700'}`}
                     >
                       {creatingOrder ? 'Creating...' : 'Create Order'}
                     </button>
