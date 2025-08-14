@@ -164,8 +164,8 @@ const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab, restaur
       popular: popularItems 
     });
 
-    setChartData(generateChartData(orders));
-  }, [orders, foodItems]);
+    setChartData(generateChartData(orders, chartPeriod));
+  }, [orders, foodItems, chartPeriod]);
 
   const toggleCollapse = section => {
     setIsCollapsed(prev => ({ ...prev, [section]: !prev[section] }));
