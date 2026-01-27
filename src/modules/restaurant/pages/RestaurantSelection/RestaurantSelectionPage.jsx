@@ -925,7 +925,6 @@ const RestaurantSelectionPage = () => {
                           onMouseEnter={() => setHoveredRestaurant(restaurant.id)}
                           onMouseLeave={() => setHoveredRestaurant(null)}
                           onClick={() => handleRestaurantClick(restaurant)}
-<<<<<<< HEAD:src/Pages/Restaurantselection/RestaurantSelectionPage.jsx
                           tabIndex={0}
                           aria-label={`Select ${restaurant.name}`}
                           role="button"
@@ -933,18 +932,9 @@ const RestaurantSelectionPage = () => {
                             if (e.key === 'Enter' || e.key === ' ') handleRestaurantClick(restaurant);
                           }}
                           className={`bg-white rounded-2xl border-2 cursor-pointer transition-all shadow-sm hover:shadow-md touch-manipulation relative mb-4 flex items-center px-2 py-3 md:px-4 md:py-4 ${selectedRestaurant?.id === restaurant.id
-                              ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-200'
-                              : 'border-gray-200 hover:border-gray-300'
-                            }`}
-=======
-                          className={`bg-white rounded-2xl border-2 cursor-pointer transition-all shadow-sm hover:shadow-md touch-manipulation relative mb-4 flex items-center px-2 py-3 md:px-4 md:py-4 ${selectedRestaurant?.id === restaurant.id
                             ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-200'
                             : 'border-gray-200 hover:border-gray-300'
                             }`}
-                          tabIndex={0}
-                          aria-label={`Select ${restaurant.name}`}
-                          role="button"
->>>>>>> 2db2262 (Refactor: Enhance landing page UI with expanded spacing and clean editorial design):src/modules/restaurant/pages/RestaurantSelection/RestaurantSelectionPage.jsx
                         >
                           {/* Restaurant Image */}
                           <div className="relative mr-3 flex-shrink-0">
