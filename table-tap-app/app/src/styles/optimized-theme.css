@@ -1,0 +1,226 @@
+/* Enhanced theme styles for optimized customer pages */
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #f97316;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #ea580c;
+}
+
+/* Enhanced animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Enhanced button styles */
+.btn-primary {
+  @apply bg-orange-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-orange-600 transition-all duration-200 focus:ring-2 focus:ring-orange-500 focus:outline-none transform hover:scale-105 active:scale-95;
+}
+
+.btn-secondary {
+  @apply bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-all duration-200 focus:ring-2 focus:ring-gray-500 focus:outline-none;
+}
+
+.btn-danger {
+  @apply bg-red-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-600 transition-all duration-200 focus:ring-2 focus:ring-red-500 focus:outline-none;
+}
+
+/* Enhanced card styles */
+.card {
+  @apply bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200;
+}
+
+.card-elevated {
+  @apply bg-white rounded-xl shadow-lg border border-gray-200;
+}
+
+/* Enhanced input styles */
+.input-enhanced {
+  @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200;
+}
+
+.input-enhanced:focus {
+  @apply transform scale-[1.02];
+}
+
+/* Enhanced loading states */
+.loading-skeleton {
+  @apply animate-pulse bg-gray-200 rounded;
+}
+
+.loading-spinner {
+  @apply animate-spin rounded-full border-2 border-orange-500 border-t-transparent;
+}
+
+/* Enhanced status badges */
+.status-badge {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
+}
+
+.status-pending {
+  @apply bg-yellow-100 text-yellow-700;
+}
+
+.status-preparing {
+  @apply bg-purple-100 text-purple-700;
+}
+
+.status-ready {
+  @apply bg-blue-100 text-blue-700;
+}
+
+.status-completed {
+  @apply bg-green-100 text-green-700;
+}
+
+.status-rejected {
+  @apply bg-red-100 text-red-700;
+}
+
+/* Enhanced grid layouts */
+.grid-responsive {
+  @apply grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4;
+}
+
+.grid-compact {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-4;
+}
+
+/* Enhanced typography */
+.text-gradient {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Enhanced shadows */
+.shadow-soft {
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+}
+
+.shadow-medium {
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Enhanced transitions */
+.transition-smooth {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-bounce {
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Enhanced focus states */
+.focus-ring {
+  @apply focus:ring-2 focus:ring-orange-500 focus:outline-none;
+}
+
+/* Enhanced hover effects */
+.hover-lift {
+  @apply hover:transform hover:scale-105 hover:shadow-lg transition-all duration-200;
+}
+
+.hover-glow {
+  @apply hover:shadow-lg hover:shadow-orange-500/25 transition-shadow duration-200;
+}
+
+/* Enhanced responsive utilities */
+@media (max-width: 640px) {
+  .mobile-padding {
+    @apply px-4 py-3;
+  }
+  
+  .mobile-text {
+    @apply text-sm;
+  }
+}
+
+@media (min-width: 768px) {
+  .desktop-padding {
+    @apply px-6 py-4;
+  }
+  
+  .desktop-text {
+    @apply text-base;
+  }
+}
+
+/* Enhanced accessibility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Enhanced reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Enhanced dark mode support (if needed) */
+@media (prefers-color-scheme: dark) {
+  .dark-mode {
+    @apply bg-gray-900 text-white;
+  }
+  
+  .dark-mode .card {
+    @apply bg-gray-800 border-gray-700;
+  }
+  
+  .dark-mode .input-enhanced {
+    @apply bg-gray-800 border-gray-600 text-white;
+  }
+} 
