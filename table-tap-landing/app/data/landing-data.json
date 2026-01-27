@@ -1,0 +1,312 @@
+{
+    "header": {
+        "navLinks": [
+            {
+                "name": "The Story",
+                "href": "#home"
+            },
+            {
+                "name": "Experience",
+                "href": "#services"
+            },
+            {
+                "name": "Craft",
+                "href": "#features"
+            },
+            {
+                "name": "Plans",
+                "href": "#pricing"
+            },
+            {
+                "name": "Connect",
+                "href": "#contact"
+            }
+        ],
+        "cta": {
+            "text": "Join the Journey",
+            "href": "https://app.tabletap.in/signup"
+        }
+    },
+    "hero": {
+        "titlePrefix": "Dining is about",
+        "titleMain": "the Memory.",
+        "subtitle": "Eating is a necessity, but dining is an art of connection. We've built Table Tap to remove the friction of ordering, so you can focus on the people across the table. Beautiful UI. Seamless moments. Unforgettable stories.",
+        "ctaPrimary": {
+            "text": "Begin Your Story",
+            "href": "https://app.tabletap.in/signup"
+        },
+        "ctaSecondary": {
+            "text": "See the Magic",
+            "href": "#services"
+        },
+        "stats": [
+            {
+                "label": "Guest Joy",
+                "value": "4.9/5"
+            },
+            {
+                "label": "Memories Made",
+                "value": "1M+"
+            }
+        ]
+    },
+    "services": {
+        "badge": "The Experience",
+        "title": "Invisible Tech.",
+        "titleHighlight": "Deep Connection.",
+        "description": "True technology doesn't demand attention—it creates space for it. Table Tap enhances every touchpoint, from the first scan to the last goodbye.",
+        "items": [
+            {
+                "id": "qr-ordering",
+                "title": "Natural Flow",
+                "description": "An interface so intuitive, it feels like an extension of the conversation. No downloads, just delight.",
+                "features": [
+                    "Zero Distraction",
+                    "Elegant Visuals",
+                    "Instant Access"
+                ]
+            },
+            {
+                "id": "digital-menu",
+                "title": "Visual Story",
+                "description": "Your dishes aren't just items; they are creations. Our digital menu tells their story through stunning imagery.",
+                "features": [
+                    "Artisan Display",
+                    "Live Updates",
+                    "Flavor Profiles"
+                ]
+            },
+            {
+                "id": "secure-pay",
+                "title": "Unified Calm",
+                "description": "One dashboard for QR, Swiggy, and Zomato. We handle the chaos so your staff can remain the perfect hosts.",
+                "features": [
+                    "Staff Zen",
+                    "Total Control",
+                    "Swiggy/Zomato Sync"
+                ]
+            },
+            {
+                "id": "smart-analytics",
+                "title": "Pure Hospitality",
+                "description": "Designed by restaurateurs who believe that every meal is an opportunity to leave a lasting impression.",
+                "features": [
+                    "Host Empowerment",
+                    "Guest Loyalty",
+                    "Direct Feedback"
+                ]
+            }
+        ]
+    },
+    "features": {
+        "badge": "The Craft",
+        "title": "Engineered for People.",
+        "description": "We've obsessively refined our platform to ensure that while the backend is a powerhouse, the frontend remains a gentle whisper of convenience.",
+        "mainFeatures": [
+            {
+                "title": "Central Soul",
+                "description": "A single heart for your kitchen. Unified orders from every platform, handled with grace.",
+                "type": "zap"
+            },
+            {
+                "title": "Dynamic Spirit",
+                "description": "Change prices or availability in a heartbeat, without ever breaking the guest's immersion.",
+                "type": "palette"
+            },
+            {
+                "title": "Guest-Centric UI",
+                "description": "The most sophisticated mobile interface ever designed for a restaurant table.",
+                "type": "smartphone"
+            },
+            {
+                "title": "Bridging Cultures",
+                "description": "Multilingual menus that make every visitor feel like a regular, no matter where they're from.",
+                "type": "globe"
+            },
+            {
+                "title": "Fortress of Trust",
+                "description": "Bespoke security for payments and data, so you and your guests can dine in peace.",
+                "type": "lock"
+            },
+            {
+                "title": "Wisdom & Growth",
+                "description": "Insights that don't just show numbers, but reveal the preferences and patterns of your community.",
+                "type": "headphones"
+            }
+        ],
+        "banner": {
+            "title": "Enrich Your Space?",
+            "description": "Join the collective of forward-thinking restaurants that prioritize human experience through digital excellence.",
+            "ctaText": "Start Your Chapter",
+            "ctaHref": "#contact",
+            "statValue": "100%",
+            "statLabel": "Guest Engagement"
+        }
+    },
+    "howItWorks": {
+        "badge": "The Journey",
+        "titlePrefix": "A Seamless",
+        "titleItalic": "Experience.",
+        "steps": [
+            {
+                "number": "01",
+                "title": "Invite & Welcome",
+                "description": "Place your premium QR codes. A quiet invitation for guests to explore your world.",
+                "color": "bg-orange-50"
+            },
+            {
+                "number": "02",
+                "title": "Discover & Dream",
+                "description": "Guests browse your visual storytelling menu, selecting flavors that will define their evening.",
+                "color": "bg-emerald-50"
+            },
+            {
+                "number": "03",
+                "title": "Create & Relish",
+                "description": "Your staff serves with speed and precision, while the moments flow uninterrupted.",
+                "color": "bg-blue-50"
+            }
+        ],
+        "experience": {
+            "badge": "The Philosophy",
+            "title": "Beyond the Plate.",
+            "subtitle": "Creating Timeless Memories.",
+            "benefits": [
+                "The Focus is Forever - We stay out of the way of the conversation.",
+                "A Touch of Magic - Instant, fluid, and visually breathtaking.",
+                "Hospitality First - Empowering your team to be truly present."
+            ]
+        }
+    },
+    "pricing": {
+        "badge": "Investment",
+        "title": "Fair &",
+        "titleHighlight": "Transparent.",
+        "plans": [
+            {
+                "id": "standard",
+                "name": "Bistro",
+                "description": "Ideal for cozy spaces where intimacy meets digital speed.",
+                "price": 999,
+                "features": [
+                    "20 Tables",
+                    "Artisan QR Menu",
+                    "Unified Payments",
+                    "Performance Insights"
+                ],
+                "popular": false
+            },
+            {
+                "id": "ai-pro",
+                "name": "Establishment",
+                "description": "Advanced tools for high-volume locales that never sleep.",
+                "price": 1499,
+                "features": [
+                    "Unlimited Tables",
+                    "AI Guest Insights",
+                    "Smart Inventory",
+                    "Priority Care"
+                ],
+                "popular": true
+            },
+            {
+                "id": "enterprise",
+                "name": "Legacy",
+                "description": "Tailored ecosystems for multi-city franchises and legends.",
+                "price": null,
+                "features": [
+                    "Franchise Network",
+                    "Predictive AI",
+                    "Concierge Success",
+                    "API Integration"
+                ],
+                "popular": false
+            }
+        ]
+    },
+    "contact": {
+        "badge": "Conversation",
+        "titlePrefix": "Let's Build Your",
+        "titleHighlight": "Next Memory.",
+        "description": "Ready to transform your dining room into a gallery of seamless experiences? Our hospitality experts are a message away.",
+        "info": [
+            {
+                "label": "Personal Support",
+                "value": "hello@tabletap.in",
+                "type": "mail"
+            },
+            {
+                "label": "Hospitality Line",
+                "value": "+91 98765 43210",
+                "type": "phone"
+            },
+            {
+                "label": "Design Hub",
+                "value": "Bangalore, India",
+                "type": "map-pin"
+            }
+        ],
+        "form": {
+            "title": "Start a Project",
+            "successTitle": "Story Received.",
+            "successText": "We'll be in touch within 24 hours to help craft your restaurant's future."
+        }
+    },
+    "footer": {
+        "description": "Table Tap is more than software. It's a commitment to the art of dining and the beauty of human connection.",
+        "socialLinks": [
+            {
+                "platform": "Instagram",
+                "icon": "instagram",
+                "href": "#"
+            },
+            {
+                "platform": "Twitter",
+                "icon": "twitter",
+                "href": "#"
+            },
+            {
+                "platform": "LinkedIn",
+                "icon": "linkedin",
+                "href": "#"
+            }
+        ],
+        "links": [
+            {
+                "title": "Explore",
+                "items": [
+                    {
+                        "label": "The Craft",
+                        "href": "#features"
+                    },
+                    {
+                        "label": "The Story",
+                        "href": "#home"
+                    },
+                    {
+                        "label": "The Experience",
+                        "href": "#services"
+                    }
+                ]
+            },
+            {
+                "title": "Support",
+                "items": [
+                    {
+                        "label": "Connect",
+                        "href": "#contact"
+                    },
+                    {
+                        "label": "Privacy",
+                        "href": "#"
+                    },
+                    {
+                        "label": "Terms",
+                        "href": "#"
+                    }
+                ]
+            }
+        ],
+        "copyright": "© 2026 Table Tap. Dedicated to the craft of connection."
+    }
+}

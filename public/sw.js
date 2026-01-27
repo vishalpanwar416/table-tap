@@ -1,5 +1,4 @@
-// Cache version with timestamp for development
-const CACHE_VERSION = Date.now();
+const CACHE_VERSION = '1.0.0';
 const CACHE_NAME = `table-tap-v${CACHE_VERSION}`;
 const STATIC_CACHE = `static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-v${CACHE_VERSION}`;
@@ -22,7 +21,7 @@ const API_ENDPOINTS = [
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
   console.log('Service Worker installing...');
-  
+
   event.waitUntil(
     Promise.all([
       caches.open(STATIC_CACHE).then((cache) => {
@@ -41,7 +40,7 @@ self.addEventListener('install', (event) => {
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
   console.log('Service Worker activating...');
-  
+
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -85,7 +84,7 @@ self.addEventListener('fetch', (event) => {
             });
             return response;
           }
-          
+
           // Fetch from network and cache
           return fetch(request).then((response) => {
             if (response.status === 200 && url.protocol.startsWith('http')) {
