@@ -65,28 +65,28 @@ const prefersReducedMotion = () => typeof window !== 'undefined' && window.match
 
 const pageVariants = {
   initial: { opacity: 0 },
-  animate: { 
-    opacity: 1, 
-    transition: { 
-      duration: prefersReducedMotion() ? 0.1 : 0.3 
-    } 
+  animate: {
+    opacity: 1,
+    transition: {
+      duration: prefersReducedMotion() ? 0.1 : 0.3
+    }
   },
-  exit: { 
-    opacity: 0, 
-    transition: { 
-      duration: prefersReducedMotion() ? 0.05 : 0.2 
-    } 
+  exit: {
+    opacity: 0,
+    transition: {
+      duration: prefersReducedMotion() ? 0.05 : 0.2
+    }
   }
 };
 
 const slideUp = {
   initial: { y: 20, opacity: 0 },
-  animate: { 
-    y: 0, 
+  animate: {
+    y: 0,
     opacity: 1,
-    transition: { 
-      duration: prefersReducedMotion() ? 0.1 : 0.4, 
-      ease: "easeOut" 
+    transition: {
+      duration: prefersReducedMotion() ? 0.1 : 0.4,
+      ease: "easeOut"
     }
   }
 };
@@ -103,7 +103,7 @@ const staggerItems = {
 const useScrollToCategory = (categoryButtonsRef) => {
   return useCallback((delay = 300) => {
     if (!categoryButtonsRef.current) return;
-    
+
     const element = categoryButtonsRef.current;
     const rect = element.getBoundingClientRect();
     const headerHeight = 80;
@@ -112,7 +112,7 @@ const useScrollToCategory = (categoryButtonsRef) => {
     // Only scroll if element is not visible
     if (rect.top < headerHeight || rect.bottom > viewportHeight) {
       const scrollTop = window.pageYOffset + rect.top - headerHeight - 10;
-      
+
       // Use smooth scroll with fallback
       if ('scrollBehavior' in document.documentElement.style) {
         window.scrollTo({
@@ -132,19 +132,19 @@ const HomePage = memo(() => {
   const navigate = useNavigate();
   const { restaurantId } = useRestaurant();
   const { addToCart, cartItems, removeItem, updateQuantity } = useCart();
-  
+
   // Use the global food data context (move this to the top)
-  const { 
-    bestSellerItems, 
-    recommendedItems, 
-    allFoodItems, 
-    loading, 
-    error, 
+  const {
+    bestSellerItems,
+    recommendedItems,
+    allFoodItems,
+    loading,
+    error,
     retryLoadData,
     initializeData,
     currentRestaurantId
   } = useFoodData();
-  
+
   // State management with useReducer for complex state
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -161,7 +161,7 @@ const HomePage = memo(() => {
   const handleSearch = useCallback((query) => {
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
     searchTimeout.current = setTimeout(() => {
-      setSearchTerm(query);
+      setSearchTerm(query.replace(/[<>]/g, '')); // Basic sanitization
     }, 250);
   }, []);
   const handleSearchClose = useCallback(() => {
@@ -169,7 +169,7 @@ const HomePage = memo(() => {
     setIsSearchActive(false);
   }, []);
   const [pendingOrderItem, setPendingOrderItem] = useState(null);
-  
+
   // Filter all food items by search term
   const searchedItems = useMemo(() => {
     if (!searchTerm.trim()) return [];
@@ -181,16 +181,16 @@ const HomePage = memo(() => {
       (Array.isArray(item.tags) && item.tags.some(tag => tag.toLowerCase().includes(q)))
     );
   }, [allFoodItems, searchTerm]);
-  
+
   // Refs
   const categoryButtonsRef = useRef(null);
   const menuDropdownRef = useRef(null);
   const scrollRef = useRef(null);
   const searchBarContainerRef = useRef(null);
   const pendingItemRef = useRef(null);
-  
+
   const scrollToCategory = useScrollToCategory(categoryButtonsRef);
-  
+
   // Initialize data when restaurantId changes
   useEffect(() => {
     if (restaurantId && restaurantId !== currentRestaurantId) {
@@ -225,7 +225,7 @@ const HomePage = memo(() => {
       scrollToCategory();
     }
   }, [activeCategory, menuOpen, scrollToCategory]);
-  
+
   const handleItemClick = useCallback((item) => {
     setPendingOrderItem(item);
     setIsSearchActive(false);
@@ -255,7 +255,7 @@ const HomePage = memo(() => {
     setIsOrderCardOpen(false);
     setSelectedItem(null);
   }, []);
-  
+
   const handleCategoryChange = useCallback((category) => {
     setActiveCategory(category);
   }, []);
@@ -309,8 +309,8 @@ const HomePage = memo(() => {
         <div className="text-center text-white">
           <h2 className="text-xl font-bold mb-2">Something went wrong</h2>
           <p className="text-gray-400 mb-4">Unable to load menu data</p>
-          <button 
-            onClick={() => window.location.reload()} 
+          <button
+            onClick={() => window.location.reload()}
             className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
           >
             Try Again
@@ -360,12 +360,12 @@ const HomePage = memo(() => {
           className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl mx-auto relative overflow-visible flex-col"
         >
           {/* Modals and Sidebars with enhanced loading */}
-          <LogoutPopup 
+          <LogoutPopup
             isOpen={isLogoutOpen}
             onClose={() => setIsLogoutOpen(false)}
             onConfirm={handleLogout}
           />
-          
+
           <AnimatePresence mode="wait">
             {isSidebarOpen && (
               <Suspense fallback={<SidebarSkeleton />}>
@@ -381,14 +381,14 @@ const HomePage = memo(() => {
           <AnimatePresence mode="wait">
             {isNotificationOpen && (
               <Suspense fallback={<div className="fixed inset-0 z-50 bg-black/50" />}>
-                <NotificationSidebar 
+                <NotificationSidebar
                   isOpen={isNotificationOpen}
                   onClose={toggles.notifications}
                 />
               </Suspense>
             )}
           </AnimatePresence>
-          
+
           <AnimatePresence mode="wait">
             {isCartOpen && (
               <Suspense fallback={<div className="fixed inset-0 z-50 bg-black/50" />}>
@@ -402,10 +402,10 @@ const HomePage = memo(() => {
               </Suspense>
             )}
           </AnimatePresence>
-          
+
           {/* Order Card with error boundary */}
           <Suspense fallback={<div className="fixed inset-0 z-50 bg-black/50" />}>
-            <OrderCard 
+            <OrderCard
               isOpen={isOrderCardOpen}
               onClose={handleCloseOrderCard}
               item={selectedItem}
@@ -414,7 +414,7 @@ const HomePage = memo(() => {
 
           {/* Header */}
           <div ref={searchBarContainerRef}>
-            <Header 
+            <Header
               isSearchActive={isSearchActive}
               toggleSearch={toggles.search}
               toggleSidebar={toggles.sidebar}
@@ -444,7 +444,7 @@ const HomePage = memo(() => {
           </AnimatePresence>
 
           {/* Main Content with progressive loading */}
-          <motion.div 
+          <motion.div
             initial="initial"
             animate="animate"
             exit="exit"
@@ -495,17 +495,17 @@ const HomePage = memo(() => {
               {!menuOpen && (
                 <>
                   <motion.div variants={staggerItems}>
-                    <BestSellers 
-                      foodItems={bestSellerItems} 
-                      onAddToCart={addToCart} 
+                    <BestSellers
+                      foodItems={bestSellerItems}
+                      onAddToCart={addToCart}
                       onItemClick={handleItemClick}
                     />
                   </motion.div>
-                  
+
                   <Divider />
 
-                  <LikedItems 
-                    foodItems={allFoodItems} 
+                  <LikedItems
+                    foodItems={allFoodItems}
                     onItemClick={handleItemClick}
                   />
 
@@ -519,12 +519,12 @@ const HomePage = memo(() => {
                       />
                     </motion.div>
                   </Suspense>
-                  
+
                   {allFoodItems.length > 0 && (
                     <motion.div variants={staggerItems}>
                       <Divider />
-                      <Tags 
-                        foodItems={allFoodItems} 
+                      <Tags
+                        foodItems={allFoodItems}
                         onItemClick={handleItemClick}
                       />
                     </motion.div>
@@ -534,8 +534,8 @@ const HomePage = memo(() => {
             </motion.div>
           </motion.div>
         </motion.div>
-        
-        <FloatingCartButton 
+
+        <FloatingCartButton
           toggleCart={toggles.cart}
           isCartOpen={isCartOpen}
           isSidebarOpen={isSidebarOpen}
