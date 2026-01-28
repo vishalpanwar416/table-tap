@@ -1,6 +1,6 @@
 {
   "name": "table-tap",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "[![GitHub License](https://img.shields.io/github/license/vishalpanwar416/Table-Tap-Project)](https://github.com/vishalpanwar416/Table-Tap-Project/blob/main/LICENSE) [![React Version](https://img.shields.io/badge/react-18.2.0-blue)](https://reactjs.org/) [![Firebase](https://img.shields.io/badge/Firebase-9.23.0-orange)](https://firebase.google.com/)",
   "main": "create-admin.js",
