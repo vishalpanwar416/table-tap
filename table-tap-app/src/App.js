@@ -21,6 +21,7 @@ const AdminApp = lazy(() => import('./modules/admin/AdminApp'));
 import "@fontsource/league-spartan";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
+import EnvGuard from './modules/shared/config/EnvGuard';
 
 // Register service worker
 // register();
@@ -142,24 +143,26 @@ const App = () => {
   };
 
   return (
-    <ErrorBoundary>
-      <AuthProvider>
-        <NotificationProvider>
-          <OrderProvider>
-            <div className="min-h-screen bg-black font-spartan">
-              {renderApp()}
+    <EnvGuard>
+      <ErrorBoundary>
+        <AuthProvider>
+          <NotificationProvider>
+            <OrderProvider>
+              <div className="min-h-screen bg-black font-spartan">
+                {renderApp()}
 
-              {/* Install Prompt - only show for customer app */}
-              {(subdomain === 'app' || isDevMode) && <InstallPrompt />}
+                {/* Install Prompt - only show for customer app */}
+                {(subdomain === 'app' || isDevMode) && <InstallPrompt />}
 
-              {/* Vercel Analytics and Speed Insights */}
-              <Analytics />
-              <SpeedInsights />
-            </div>
-          </OrderProvider>
-        </NotificationProvider>
-      </AuthProvider>
-    </ErrorBoundary>
+                {/* Vercel Analytics and Speed Insights */}
+                <Analytics />
+                <SpeedInsights />
+              </div>
+            </OrderProvider>
+          </NotificationProvider>
+        </AuthProvider>
+      </ErrorBoundary>
+    </EnvGuard>
   );
 };
 
