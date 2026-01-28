@@ -172,9 +172,11 @@ const ProfilePage = () => {
         [name]: formattedValue
       }));
     } else {
+      // Basic sanitization: remove potential script tags
+      const sanitizedValue = value.replace(/[<>]/g, '');
       setFormData(prev => ({
         ...prev,
-        [name]: value
+        [name]: sanitizedValue
       }));
     }
   }, [formatDateInput]);
