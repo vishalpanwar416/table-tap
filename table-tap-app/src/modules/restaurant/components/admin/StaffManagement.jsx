@@ -255,7 +255,7 @@ const StaffManagement = ({
               <Users className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Staff Management</h1>
+              {/* Removed redundant title */}
               <p className="text-orange-100">Manage your restaurant team</p>
             </div>
           </div>

@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Loader, 
-  TrendingUp, 
-  BarChart3, 
-  Star, 
-  User, 
-  Bot, 
-  Send, 
-  MessageSquare, 
+import {
+  Loader,
+  TrendingUp,
+  BarChart3,
+  Star,
+  User,
+  Bot,
+  Send,
+  MessageSquare,
   Brain,
   Wand,
   Lightbulb,
@@ -34,9 +34,13 @@ import {
   Award
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
-import { getRestaurantAnalytics, callAIService } from '../../api/aiAnalyticsService';
+import { getRestaurantAnalytics, callAIService, saveChatMessage, getChatHistory } from '../../api/aiAnalyticsService';
+import { useAdminRestaurant } from '../../../shared/context/AdminRestaurantContext';
+import { supabase } from '../../../shared/supabase';
 
-const AIAnalyticsChat = () => {
+const AIAnalyticsChat = ({ restaurantId: propRestaurantId }) => {
+  const { userRestaurantId } = useAdminRestaurant();
+  const activeRestaurantId = propRestaurantId || userRestaurantId;
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -45,12 +49,15 @@ const AIAnalyticsChat = () => {
   const [activeInsight, setActiveInsight] = useState(null);
   const [showQuickActions, setShowQuickActions] = useState(true);
   const messagesEndRef = useRef(null);
+  const textareaRef = useRef(null);
   const [dateRange, setDateRange] = useState('last7days');
   const [proactiveInsights, setProactiveInsights] = useState([]);
   const [connectionStatus, setConnectionStatus] = useState({
     internet: true,
     lastChecked: new Date()
   });
+  const [userId, setUserId] = useState(null);
+  const [isInputFocused, setIsInputFocused] = useState(false);
 
   // Enhanced suggested questions with categories
   const insightCategories = {
@@ -146,7 +153,7 @@ const AIAnalyticsChat = () => {
   // Update connection status
   const updateConnectionStatus = () => {
     const internetStatus = checkInternetConnection();
-    
+
     setConnectionStatus({
       internet: internetStatus,
       lastChecked: new Date()
@@ -188,15 +195,46 @@ const AIAnalyticsChat = () => {
 
   useEffect(() => {
     loadAnalyticsData();
-    // Add enhanced welcome message
-    setMessages([{
-      id: 'welcome',
-      type: 'ai',
-      content: "👋 Welcome to your enhanced AI-powered restaurant analytics assistant! I can now show you visual charts, provide proactive insights, and help you make data-driven decisions with interactive visualizations. What would you like to explore today?",
-      timestamp: new Date(),
-      isWelcome: true
-    }]);
-  }, [dateRange]);
+
+    // Get current user ID
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) setUserId(user.id);
+    };
+    getUser();
+
+    // Fetch chat history
+    const fetchHistory = async () => {
+      if (activeRestaurantId) {
+        try {
+          const history = await getChatHistory(activeRestaurantId);
+          if (history && history.length > 0) {
+            const formattedHistory = history.map(msg => ({
+              id: msg.id,
+              type: msg.role === 'ai' ? 'ai' : 'user',
+              content: msg.content,
+              visualization: msg.visualization,
+              timestamp: new Date(msg.created_at)
+            }));
+            setMessages(formattedHistory);
+            setShowQuickActions(false);
+          } else {
+            // Add enhanced welcome message only if no history
+            setMessages([{
+              id: 'welcome',
+              type: 'ai',
+              content: "👋 Welcome to your enhanced AI-powered restaurant analytics assistant! I can now show you visual charts, provide proactive insights, and help you make data-driven decisions with interactive visualizations. What would you like to explore today?",
+              timestamp: new Date(),
+              isWelcome: true
+            }]);
+          }
+        } catch (error) {
+          console.error('Error loading chat history:', error);
+        }
+      }
+    };
+    fetchHistory();
+  }, [dateRange, userRestaurantId]);
 
   useEffect(() => {
     scrollToBottom();
@@ -241,9 +279,19 @@ const AIAnalyticsChat = () => {
     setIsLoading(true);
     setShowQuickActions(false);
 
+    // Save user message to database
+    if (activeRestaurantId) {
+      saveChatMessage({
+        restaurantId: activeRestaurantId,
+        userId: userId,
+        role: 'user',
+        content: messageText
+      }).catch(err => console.error('Failed to save user message:', err));
+    }
+
     try {
-      // Call your real AI service
-      const aiResponse = await callAIService(messageText, analyticsData);
+      // Call your real AI service - now passing the full messages history for context
+      const aiResponse = await callAIService(messageText, analyticsData, messages);
       // aiResponse should be { textResponse, visualization }
       const aiMessage = {
         id: Date.now() + 1,
@@ -253,11 +301,22 @@ const AIAnalyticsChat = () => {
         timestamp: new Date()
       };
       setMessages(prev => [...prev, aiMessage]);
+
+      // Save AI message to database
+      if (activeRestaurantId) {
+        saveChatMessage({
+          restaurantId: activeRestaurantId,
+          userId: userId,
+          role: 'ai',
+          content: aiResponse.textResponse,
+          visualization: aiResponse.visualization
+        }).catch(err => console.error('Failed to save AI message:', err));
+      }
     } catch (error) {
-      
+
       // Create specific error messages based on error type
       let errorContent = "I apologize, but I'm having difficulty processing your request right now. Please try again later.";
-      
+
       if (error.message.includes('quota exceeded')) {
         errorContent = "⚠️ OpenAI quota exceeded. Please check your billing and upgrade your plan at https://platform.openai.com/account/billing";
       } else if (error.message.includes('Rate limit exceeded')) {
@@ -269,7 +328,7 @@ const AIAnalyticsChat = () => {
       } else if (error.message.includes('API key not found')) {
         errorContent = "🔧 OpenAI API key not found. Please add REACT_APP_OPENAI_API_KEY to your .env file.";
       }
-      
+
       const errorMessage = {
         id: Date.now() + 1,
         type: 'ai',
@@ -291,9 +350,9 @@ const AIAnalyticsChat = () => {
   };
 
   const formatTimestamp = (timestamp) => {
-    return new Date(timestamp).toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return new Date(timestamp).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
@@ -358,7 +417,7 @@ const AIAnalyticsChat = () => {
                   outerRadius={60}
                   fill="#8884d8"
                   dataKey="value"
-                  label={({name, value}) => `${name}: ${value}`}
+                  label={({ name, value }) => `${name}: ${value}`}
                 >
                   {viz.data.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color || colors[index % colors.length]} />
@@ -375,7 +434,7 @@ const AIAnalyticsChat = () => {
   };
 
   const exportChatHistory = () => {
-    const chatContent = messages.map(msg => 
+    const chatContent = messages.map(msg =>
       `[${formatTimestamp(msg.timestamp)}] ${msg.type.toUpperCase()}: ${msg.content}`
     ).join('\n\n');
     const blob = new Blob([chatContent], { type: 'text/plain' });
@@ -407,364 +466,211 @@ const AIAnalyticsChat = () => {
   }
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-white min-h-screen">
-      {/* Header with Date Range */}
-      <div className="bg-gradient-to-r from-orange-500 via-orange-600 to-amber-600 text-white p-3 rounded-b-xl shadow-lg">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center space-x-2">
-            <div className="p-1.5 bg-white/20 rounded-md backdrop-blur-sm">
-              <Brain className="h-5 w-5" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold">AI Analytics</h1>
-              <p className="text-orange-100 text-xs">Interactive insights with visualizations</p>
+    <div className="flex flex-col h-full bg-transparent overflow-hidden gap-0">
+      {/* Floating Top Utility Bar */}
+      <div className="bg-white/80 backdrop-blur-md border border-slate-200/50 px-6 py-3 flex items-center justify-between z-20 rounded-2xl mx-1 mt-1">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-700 flex items-center justify-center text-white border border-white/20">
+            <Brain className="h-6 w-6" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-slate-900 leading-tight">Table-Tap Advisor</h2>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className={`w-1.5 h-1.5 rounded-full ${connectionInfo.dot}`}></span>
+              <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">{connectionInfo.text}</span>
             </div>
           </div>
-          <div className="flex items-center space-x-1.5">
-            <select 
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200">
+            <Calendar className="h-3.5 w-3.5 ml-2 text-slate-500" />
+            <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
-              className="bg-white/20 border border-white/30 rounded-md px-1.5 py-0.5 text-white placeholder-white/70 backdrop-blur-sm text-xs"
+              className="bg-transparent border-none text-xs font-bold text-slate-700 focus:ring-0 cursor-pointer py-1 pl-1 pr-7"
             >
               {dateRangeOptions.map(option => (
-                <option key={option.value} value={option.value} className="text-gray-800">
-                  {option.label}
-                </option>
+                <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>
-            <button 
-              onClick={loadAnalyticsData}
-              className="p-1 bg-white/20 rounded-md hover:bg-white/30 transition-colors"
-              title="Refresh Data"
-            >
-              <RefreshCw className="h-3 w-3" />
-            </button>
-            <button 
-              onClick={exportChatHistory}
-              className="p-1 bg-white/20 rounded-md hover:bg-white/30 transition-colors" 
-              title="Export Chat"
-            >
-              <Download className="h-3 w-3" />
-            </button>
-            <button className="p-1 bg-white/20 rounded-md hover:bg-white/30 transition-colors" title="Share">
-              <Share2 className="h-3 w-3" />
-            </button>
-          </div>
-        </div>
-        {/* Stats Cards */}
-        {analyticsData && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {getInsightCard(
-              "Total Revenue",
-              `₹${analyticsData.summary.totalRevenue.toLocaleString()}`,
-              <IndianRupee className="h-3 w-3 text-green-600" />,
-              "green",
-              analyticsData.summary.growthRate ? `+${analyticsData.summary.growthRate}% growth` : ''
-            )}
-            {getInsightCard(
-              "Total Orders",
-              analyticsData.summary.totalOrders.toLocaleString(),
-              <ShoppingCart className="h-3 w-3 text-blue-600" />,
-              "blue"
-            )}
-            {getInsightCard(
-              "Avg Order Value",
-              `₹${analyticsData.summary.avgOrderValue.toFixed(0)}`,
-              <Target className="h-3 w-3 text-purple-600" />,
-              "purple"
-            )}
-            {getInsightCard(
-              "Customer Retention",
-              analyticsData.summary.customerRetentionRate ? `${analyticsData.summary.customerRetentionRate}%` : 'N/A',
-              <Users className="h-3 w-3 text-orange-600" />,
-              "orange"
-            )}
-          </div>
-        )}
-
-        {/* Proactive Insights Carousel */}
-        {proactiveInsights.length > 0 && (
-          <div className="mt-2">
-            <div className="flex items-center space-x-1.5 mb-1.5">
-              <Eye className="h-3 w-3 text-white" />
-              <h3 className="text-xs font-semibold text-white">Proactive Insights</h3>
-            </div>
-            <div className="overflow-x-auto scrollbar-hide">
-              <div className="flex space-x-2 pb-1">
-                {proactiveInsights.map((insight, index) => (
-                  <div key={index} className={`flex-shrink-0 bg-white/20 backdrop-blur-sm p-1.5 rounded-md border border-white/30 shadow-sm hover:shadow-md transition-all duration-300 min-w-[240px]`}>
-                    <div className="flex items-start space-x-1.5">
-                      <div className={`p-0.5 rounded bg-white/30 text-white`}>
-                        {insight.icon}
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-white text-xs">{insight.title}</h4>
-                        <p className="text-white/90 text-xs mt-0.5 leading-tight">{insight.message}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="max-w-7xl mx-auto px-3">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-          {/* Main Chat Area - Increased size */}
-          <div className="lg:col-span-3">
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 h-[580px] flex flex-col">
-              {/* Chat Header */}
-              <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-3 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <div className="p-1 bg-orange-100 rounded-md">
-                      <MessageSquare className="h-3 w-3 text-orange-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-800 text-xs">AI Assistant</h3>
-                      <p className="text-xs text-gray-600">Interactive visualizations</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-1 text-xs text-gray-500">
-                    <div className={`w-1.5 h-1.5 rounded-full ${connectionInfo.dot} ${connectionInfo.color === 'green' ? 'animate-pulse' : ''}`}></div>
-                    <span>{connectionInfo.text}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-3 space-y-3">
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div className={`flex max-w-xs lg:max-w-md xl:max-w-lg ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                      <div className={`flex-shrink-0 h-6 w-6 rounded-full flex items-center justify-center ${
-                        message.type === 'user' 
-                          ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white ml-1.5' 
-                          : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-600 mr-1.5'
-                      }`}>
-                        {message.type === 'user' ? <User size={12} /> : <Bot size={12} />}
-                      </div>
-                      <div className={`rounded-lg px-2 py-1.5 shadow-sm ${
-                        message.type === 'user'
-                          ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white'
-                          : message.isError 
-                            ? 'bg-red-50 border border-red-200 text-red-800'
-                            : message.isWelcome
-                              ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 text-blue-900'
-                              : 'bg-gray-50 text-gray-800'
-                      }`}>
-                        <p className="text-xs whitespace-pre-wrap leading-relaxed">{message.content}</p>
-                        {message.visualization && renderVisualization(message.visualization)}
-                        <p className={`text-xs mt-0.5 ${
-                          message.type === 'user' ? 'text-orange-100' : 'text-gray-500'
-                        }`}>
-                          {formatTimestamp(message.timestamp)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {isLoading && (
-                  <div className="flex justify-start">
-                    <div className="flex-row">
-                      <div className="flex-shrink-0 h-6 w-6 rounded-full bg-gradient-to-r from-gray-100 to-gray-200 text-gray-600 mr-1.5 flex items-center justify-center">
-                        <Bot size={12} />
-                      </div>
-                      <div className="bg-gray-50 rounded-lg px-2 py-1.5 shadow-sm">
-                        <div className="flex items-center space-x-2">
-                          <div className="flex space-x-1">
-                            <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-bounce"></div>
-                            <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                            <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                          </div>
-                          <p className="text-xs text-gray-600">Generating insights...</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-
-              {/* Input */}
-              <div className="p-3 border-t border-gray-200 bg-gray-50">
-                <div className="flex space-x-2">
-                  <div className="flex-1 relative">
-                    <textarea
-                      value={inputMessage}
-                      onChange={(e) => setInputMessage(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      placeholder="Ask about trends, get visual charts, or request insights..."
-                      className="w-full border border-gray-300 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-transparent resize-none bg-white shadow-sm text-xs"
-                      rows="1"
-                      disabled={isLoading}
-                    />
-                    <div className="absolute right-1.5 top-1.5 text-gray-400">
-                      <Wand className="h-3 w-3" />
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleSendMessage()}
-                    disabled={!inputMessage.trim() || isLoading}
-                    className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-1.5 rounded-lg hover:from-orange-600 hover:to-orange-700 focus:outline-none focus:ring-1 focus:ring-orange-500 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow-md"
-                  >
-                    <Send size={14} />
-                  </button>
-                </div>
-                <p className="text-xs text-gray-500 mt-1 flex items-center">
-                  <Lightbulb className="h-3 w-3 mr-1" />
-                  💡 Ask about sales trends, popular items, peak hours
-                </p>
-              </div>
-            </div>
           </div>
 
-          {/* Sidebar - Reduced size */}
-          <div className="space-y-3">
-            {/* Analytics Overview */}
-            {analyticsData && (
-              <div className="bg-white rounded-lg shadow-md border border-gray-100 overflow-hidden">
-                <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-2 text-white">
-                  <div className="flex items-center space-x-1.5">
-                    <Activity className="h-3 w-3" />
-                    <h3 className="font-semibold text-xs">Analytics Overview</h3>
-                  </div>
-                </div>
-                <div className="p-2 space-y-2">
-                  {/* Peak Hours */}
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-1.5 rounded-md border border-green-200">
-                    <div className="flex items-center space-x-1.5 mb-1">
-                      <Clock className="h-3 w-3 text-green-600" />
-                      <span className="text-xs font-medium text-green-800">Peak Hours</span>
-                    </div>
-                    <p className="text-xs font-bold text-green-900">{analyticsData.summary.peakHour}</p>
-                    <p className="text-xs text-green-700">Busiest time</p>
-                  </div>
-                  {/* Popular Items */}
-                  <div className="bg-gradient-to-r from-purple-50 to-violet-50 p-1.5 rounded-md border border-purple-200">
-                    <div className="flex items-center space-x-1.5 mb-1">
-                      <PieChart className="h-3 w-3 text-purple-600" />
-                      <span className="text-xs font-medium text-purple-800">Top Items</span>
-                    </div>
-                    <div className="space-y-0.5">
-                      {analyticsData.popularItems.slice(0, 3).map((item, index) => (
-                        <div key={index} className="flex justify-between text-xs">
-                          <span className="text-purple-700 truncate">{item.name}</span>
-                          <span className="text-purple-900 font-medium">{item.count}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  {/* Order Status */}
-                  <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-1.5 rounded-md border border-orange-200">
-                    <div className="flex items-center space-x-1.5 mb-1">
-                      <BarChart3 className="h-3 w-3 text-orange-600" />
-                      <span className="text-xs font-medium text-orange-800">Order Status</span>
-                    </div>
-                    <div className="space-y-0.5">
-                      {Object.entries(analyticsData.ordersByStatus).slice(0, 3).map(([status, count]) => (
-                        <div key={status} className="flex justify-between text-xs">
-                          <span className="text-orange-700 capitalize">{status}</span>
-                          <span className="text-orange-900 font-medium">{count}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+          <div className="h-4 w-px bg-slate-200 mx-1"></div>
 
-            {/* AI Capabilities */}
-            <div className="bg-white rounded-lg shadow-md border border-gray-100 overflow-hidden">
-              <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 p-2 text-white">
-                <div className="flex items-center space-x-1.5">
-                  <Brain className="h-3 w-3" />
-                  <h3 className="font-semibold text-xs">AI Capabilities</h3>
-                </div>
-
-              </div>
-              <div className="p-2 space-y-1.5">
-                <div className="flex items-center space-x-1.5 text-xs">
-                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                  <span className="text-gray-700">Performance Analysis</span>
-                </div>
-                <div className="flex items-center space-x-1.5 text-xs">
-                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                  <span className="text-gray-700">Menu Optimization</span>
-                </div>
-                <div className="flex items-center space-x-1.5 text-xs">
-                  <div className="w-1.5 h-1.5 bg-purple-500 rounded-full"></div>
-                  <span className="text-gray-700">Customer Insights</span>
-                </div>
-                <div className="flex items-center space-x-1.5 text-xs">
-                  <div className="w-1.5 h-1.5 bg-orange-500 rounded-full"></div>
-                  <span className="text-gray-700">Predictive Analytics</span>
-                </div>
-                <div className="flex items-center space-x-1.5 text-xs">
-                  <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
-                  <span className="text-gray-700">Operational Recommendations</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick Insights Footer */}
-      {showQuickActions && (
-        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border-t border-purple-200 shadow-lg mt-4">
-          <div className="max-w-7xl mx-auto px-3 py-3">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center space-x-2">
-                <div className="p-1.5 bg-purple-100 rounded-lg">
-                  <Zap className="h-4 w-4 text-purple-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-sm text-gray-800">Quick Insights</h3>
-                  <p className="text-xs text-gray-600">Tap any question to get instant insights</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setShowQuickActions(false)}
-                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Hide Quick Insights"
+          <div className="flex gap-1">
+            {[
+              { icon: <RefreshCw size={14} />, onClick: loadAnalyticsData, title: "Refresh" },
+              { icon: <Download size={14} />, onClick: exportChatHistory, title: "Export" }
+            ].map((btn, i) => (
+              <button
+                key={i}
+                onClick={btn.onClick}
+                className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                title={btn.title}
               >
-                <XCircle className="h-4 w-4" />
+                {btn.icon}
               </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Professional Content Area */}
+      <div className="flex-1 flex overflow-hidden gap-4">
+        {/* Left: Chat Intelligence */}
+        <div className="flex-1 flex flex-col bg-transparent relative">
+          {/* Quick Stats Strip */}
+          {analyticsData && (
+            <div className="grid grid-cols-4 bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-2xl overflow-hidden mb-4 mx-1">
+              {[
+                { label: 'Revenue', val: `₹${analyticsData.summary.totalRevenue.toLocaleString()}`, color: 'emerald' },
+                { label: 'Orders', val: analyticsData.summary.totalOrders, color: 'blue' },
+                { label: 'Avg Order', val: `₹${analyticsData.summary.avgOrderValue.toFixed(0)}`, color: 'indigo' },
+                { label: 'Peak Hour', val: analyticsData.summary.peakHour || 'N/A', color: 'orange' }
+              ].map((s, i) => (
+                <div key={i} className="px-6 py-3 border-r border-slate-100 last:border-r-0">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">{s.label}</p>
+                  <p className={`text-sm font-bold text-${s.color}-600`}>{s.val}</p>
+                </div>
+              ))}
             </div>
-            
-            <div className="overflow-x-auto scrollbar-hide">
-              <div className="flex space-x-3 pb-2">
-                {Object.entries(insightCategories).map(([key, category]) => (
-                  <div key={key} className="flex-shrink-0 min-w-0">
-                    <div className="flex items-center space-x-2 text-xs font-semibold text-purple-700 mb-2 px-2 py-1 bg-purple-100 rounded-full w-fit">
-                      {category.icon}
-                      <span>{category.title}</span>
+          )}
+
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto px-4 py-2 space-y-6 scroll-smooth scrollbar-hide">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div className={`flex max-w-[85%] lg:max-w-[80%] ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'} items-start gap-3`}>
+                  <div className={`flex-shrink-0 h-9 w-9 rounded-xl flex items-center justify-center mt-1 ${message.type === 'user' ? 'bg-slate-900 text-white' : 'bg-indigo-600 text-white'
+                    }`}>
+                    {message.type === 'user' ? <User size={18} /> : <Brain size={18} />}
+                  </div>
+
+                  <div className={`flex flex-col gap-2 ${message.type === 'user' ? 'items-end' : 'items-start'}`}>
+                    <div className={`rounded-2xl px-5 py-3.5 border ${message.type === 'user'
+                      ? 'bg-slate-900 border-slate-800 text-slate-50 rounded-tr-none'
+                      : message.isError
+                        ? 'bg-red-50 border-red-100 text-red-900'
+                        : 'bg-white/90 backdrop-blur-md border-slate-200/50 text-slate-800 rounded-tl-none'
+                      }`}>
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                      {message.visualization && (
+                        <div className="mt-4 p-4 bg-white/50 rounded-xl border border-slate-100/50 backdrop-blur-sm">
+                          {renderVisualization(message.visualization)}
+                        </div>
+                      )}
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      {category.questions.map((question, index) => (
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter px-1">
+                      {formatTimestamp(message.timestamp)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className="flex items-start gap-4">
+                  <div className="h-9 w-9 rounded-xl bg-indigo-100/50 backdrop-blur-sm flex items-center justify-center shadow-inner">
+                    <Loader className="animate-spin text-indigo-600" size={18} />
+                  </div>
+                  <div className="bg-white/80 backdrop-blur-md border border-slate-100/50 rounded-2xl rounded-tl-none px-5 py-3.5">
+                    <div className="flex gap-2 h-4 items-center">
+                      <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                      <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Floating Ultra-Modern Input Area Wrapper */}
+          <div className="w-full mt-auto relative z-30 px-4 pb-2">
+            {/* Wider Container for Growth Tools */}
+            <div className="max-w-6xl mx-auto relative">
+              {/* Floating Dynamic Quick Queries */}
+              <div className={`relative transition-all duration-300 transform ${(inputMessage.trim() || isInputFocused) ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95 pointer-events-none'}`}>
+                <div className="absolute bottom-full left-0 right-0 mb-6 flex overflow-x-auto pb-4 scrollbar-hide px-2">
+                  <div className="flex bg-slate-900/90 backdrop-blur-xl border border-white/10 p-2 rounded-[2rem] items-center gap-3 w-max mx-auto min-w-min px-4">
+                    <div className="flex items-center gap-2 px-3 border-r border-white/10 mr-2 flex-shrink-0">
+                      <Brain size={14} className="text-indigo-400 animate-pulse" />
+                      <span className="text-[10px] font-bold text-white uppercase tracking-widest leading-none">Growth Tools</span>
+                    </div>
+                    <div className="flex items-center gap-2 flex-nowrap">
+                      {[
+                        "Maximize my Revenue",
+                        "Menu Growth Strategy",
+                        "Promotion Timing",
+                        "Retention Tactics",
+                        "Customer Spending",
+                        "Peak Staffing",
+                        "Low Performers",
+                        "Inventory Reorder"
+                      ].map((s, i) => (
                         <button
-                          key={index}
-                          onClick={() => handleSendMessage(question)}
-                          className="flex-shrink-0 px-3 py-1.5 text-xs bg-white border border-purple-200 rounded-full hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700 transition-all duration-200 shadow-sm hover:shadow-md font-medium"
-                          disabled={isLoading}
+                          key={i}
+                          onClick={() => handleSendMessage(s)}
+                          className="px-4 py-1.5 bg-white/10 text-white hover:bg-indigo-600 rounded-full text-[11px] font-bold transition-all shadow-lg whitespace-nowrap active:scale-95 border border-white/5"
                         >
-                          {question}
+                          {s}
                         </button>
                       ))}
                     </div>
                   </div>
-                ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Standard Container for Input Bar */}
+            <div className="max-w-4xl mx-auto">
+
+              <div className={`flex items-center gap-2 p-1 bg-white/80 backdrop-blur-2xl border border-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] rounded-[2.5rem] transition-all duration-300 ${isInputFocused ? 'shadow-[0_25px_60px_-15px_rgba(79,70,229,0.2)] ring-4 ring-indigo-500/5 -translate-y-0.5' : ''}`}>
+                <div className="flex-1 relative ml-2">
+                  <textarea
+                    ref={textareaRef}
+                    value={inputMessage}
+                    onChange={(e) => {
+                      setInputMessage(e.target.value);
+                      e.target.style.height = 'auto';
+                      e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
+                    }}
+                    onFocus={() => setIsInputFocused(true)}
+                    onBlur={() => setTimeout(() => setIsInputFocused(false), 200)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Ask Table-Tap Advisor anything..."
+                    className="w-full bg-transparent pl-4 pr-12 py-2.5 focus:outline-none transition-all text-sm placeholder:text-slate-400 resize-none min-h-[42px] leading-tight"
+                    rows="1"
+                    disabled={isLoading}
+                  />
+
+                  {/* Shortcut Hint */}
+                  <div className={`absolute right-4 bottom-1.5 transition-opacity duration-300 ${isInputFocused && !inputMessage.trim() ? 'opacity-40' : 'opacity-0'}`}>
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Enter</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    handleSendMessage();
+                    if (textareaRef.current) textareaRef.current.style.height = 'auto';
+                  }}
+                  disabled={!inputMessage.trim() || isLoading}
+                  className={`flex-shrink-0 p-2.5 rounded-full transition-all shadow-xl active:scale-90 disabled:opacity-0 disabled:scale-75 ${inputMessage.trim() ? 'bg-indigo-600 hover:bg-slate-900 text-white scale-100' : 'bg-slate-100 text-slate-400'
+                    }`}
+                >
+                  <Send size={16} className={inputMessage.trim() ? 'animate-in fade-in zoom-in duration-300' : ''} />
+                </button>
               </div>
             </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

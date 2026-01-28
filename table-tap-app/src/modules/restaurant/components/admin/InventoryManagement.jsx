@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { 
-  Package, Plus, Search, Edit3, Trash2, AlertTriangle, 
+import {
+  Package, Plus, Search, Edit3, Trash2, AlertTriangle,
   TrendingDown, TrendingUp, Calendar, Filter, Download,
   Upload, Eye, X, Save, RefreshCw, BarChart3, Clock,
   MapPin, Phone, Mail, Barcode, Settings, AlertCircle,
@@ -9,13 +9,13 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../../shared/config/AuthContext';
 import { useAdminRestaurant } from '../../../shared/context/AdminRestaurantContext';
-import { 
+import {
   inventoryService,
-  INVENTORY_CATEGORIES, 
-  INVENTORY_UNITS, 
-  STOCK_STATUS, 
-  getStockStatus, 
-  getStatusColor, 
+  INVENTORY_CATEGORIES,
+  INVENTORY_UNITS,
+  STOCK_STATUS,
+  getStockStatus,
+  getStatusColor,
   getInventoryStats,
   getRoleColor,
   getRoleDisplayName
@@ -161,10 +161,10 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
         const searchLower = searchTerm.toLowerCase().trim();
         return (
           (item.name?.toLowerCase().includes(searchLower) ||
-          item.supplier?.toLowerCase().includes(searchLower) ||
-          item.description?.toLowerCase().includes(searchLower) ||
-          item.barcode?.toLowerCase().includes(searchLower)) &&
-          matchesCategory && 
+            item.supplier?.toLowerCase().includes(searchLower) ||
+            item.description?.toLowerCase().includes(searchLower) ||
+            item.barcode?.toLowerCase().includes(searchLower)) &&
+          matchesCategory &&
           matchesStatus
         );
       })
@@ -179,8 +179,8 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
           aValue = aValue.toLowerCase();
           bValue = bValue.toLowerCase();
         }
-        return sortOrder === 'asc' 
-          ? aValue > bValue ? 1 : -1 
+        return sortOrder === 'asc'
+          ? aValue > bValue ? 1 : -1
           : aValue < bValue ? 1 : -1;
       });
   }, [inventoryItems, searchTerm, filterCategory, filterStatus, sortBy, sortOrder]);
@@ -188,37 +188,37 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       setLoading(true);
-      
+
       if (activeModal === 'edit' && selectedItem) {
         // Update existing item
         const { data, error } = await inventoryService.updateItem(
-          selectedItem.id, 
-          formData, 
+          selectedItem.id,
+          formData,
           userRestaurantId,
           currentUser
         );
         if (error) throw new Error(error);
-        
-        setInventoryItems(prev => 
+
+        setInventoryItems(prev =>
           prev.map(item => item.id === selectedItem.id ? data : item)
         );
         setSuccessMsg('Inventory item updated successfully!');
       } else {
         // Add new item
         const { data, error } = await inventoryService.addItem(
-          formData, 
+          formData,
           userRestaurantId,
           currentUser
         );
         if (error) throw new Error(error);
-        
+
         setInventoryItems(prev => [...prev, data]);
         setSuccessMsg('New inventory item added successfully!');
       }
-      
+
       closeModal();
     } catch (error) {
       setErrorMsg('Failed to save inventory item: ' + error.message);
@@ -252,16 +252,16 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
         lead_time_days: item.lead_time_days?.toString() || ''
       });
     } else if (modalType === 'stockUpdate' && item) {
-      setStockUpdateData({ 
-        newStockLevel: item.current_stock.toString(), 
-        reason: '', 
-        notes: '' 
+      setStockUpdateData({
+        newStockLevel: item.current_stock.toString(),
+        reason: '',
+        notes: ''
       });
     } else if (modalType === 'reorder' && item) {
-      setReorderData({ 
-        quantity: Math.max(1, item.max_stock_level - item.current_stock).toString(), 
-        expectedDelivery: '', 
-        notes: '' 
+      setReorderData({
+        quantity: Math.max(1, item.max_stock_level - item.current_stock).toString(),
+        expectedDelivery: '',
+        notes: ''
       });
     } else if (modalType === 'takeOut') {
       setTakeOutData({ quantity: '', reason: '', notes: '' });
@@ -297,9 +297,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
     try {
       setLoading(true);
       const { data, error } = await inventoryService.getItemByBarcode(barcode, userRestaurantId);
-      
+
       if (error) throw new Error(error);
-      
+
       if (data) {
         openModal('view', data);
       } else {
@@ -317,21 +317,21 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
   // Handle stock update
   const handleStockUpdate = async (e) => {
     e.preventDefault();
-    
+
     try {
       setLoading(true);
       const { data, error } = await inventoryService.updateStock(
-        selectedItem.id, 
+        selectedItem.id,
         parseFloat(stockUpdateData.newStockLevel),
         stockUpdateData.reason,
         stockUpdateData.notes,
         userRestaurantId,
         currentUser
       );
-      
+
       if (error) throw new Error(error);
-      
-      setInventoryItems(prev => 
+
+      setInventoryItems(prev =>
         prev.map(item => item.id === selectedItem.id ? data : item)
       );
       setSuccessMsg('Stock level updated successfully!');
@@ -347,12 +347,12 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
   // Handle delete
   const handleDelete = async (itemId) => {
     if (!window.confirm('Are you sure you want to delete this inventory item?')) return;
-    
+
     try {
       setLoading(true);
       const { error } = await inventoryService.deleteItem(itemId, userRestaurantId, currentUser);
       if (error) throw new Error(error);
-      
+
       setInventoryItems(prev => prev.filter(item => item.id !== itemId));
       setSuccessMsg('Inventory item deleted successfully!');
     } catch (error) {
@@ -365,15 +365,15 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
   // Handle bulk operations
   const handleBulkDelete = async () => {
     if (!window.confirm(`Are you sure you want to delete ${selectedItems.length} items?`)) return;
-    
+
     try {
       setLoading(true);
       await Promise.all(
-        selectedItems.map(itemId => 
+        selectedItems.map(itemId =>
           inventoryService.deleteItem(itemId, userRestaurantId, currentUser)
         )
       );
-      
+
       setInventoryItems(prev => prev.filter(item => !selectedItems.includes(item.id)));
       setSelectedItems([]);
       setSuccessMsg(`${selectedItems.length} items deleted successfully!`);
@@ -386,8 +386,8 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
 
   // Handle item selection
   const handleItemSelect = (itemId) => {
-    setSelectedItems(prev => 
-      prev.includes(itemId) 
+    setSelectedItems(prev =>
+      prev.includes(itemId)
         ? prev.filter(id => id !== itemId)
         : [...prev, itemId]
     );
@@ -395,9 +395,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
 
   // Handle select all
   const handleSelectAll = () => {
-    setSelectedItems(prev => 
-      prev.length === filteredItems.length 
-        ? [] 
+    setSelectedItems(prev =>
+      prev.length === filteredItems.length
+        ? []
         : filteredItems.map(item => item.id)
     );
   };
@@ -408,7 +408,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
       setLoading(true);
       const { data, error } = await inventoryService.exportInventory(userRestaurantId);
       if (error) throw new Error(error);
-      
+
       // Simulate download
       const link = document.createElement('a');
       link.href = data.url;
@@ -416,7 +416,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       setSuccessMsg('Inventory exported successfully!');
     } catch (error) {
       setErrorMsg('Failed to export inventory: ' + error.message);
@@ -429,12 +429,12 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
   const handleImport = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
-    
+
     try {
       setLoading(true);
       const { data, error } = await inventoryService.importInventory(file, userRestaurantId);
       if (error) throw new Error(error);
-      
+
       setSuccessMsg(`Successfully imported ${data.imported} items!`);
       loadInventoryData(); // Reload data
     } catch (error) {
@@ -457,17 +457,17 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
     try {
       setLoading(true);
       const { data, error } = await inventoryService.takeOutStock(
-        selectedItem.id, 
+        selectedItem.id,
         parseFloat(takeOutData.quantity),
         takeOutData.reason,
         takeOutData.notes,
         userRestaurantId,
         currentUser
       );
-      
+
       if (error) throw new Error(error);
-      
-      setInventoryItems(prev => 
+
+      setInventoryItems(prev =>
         prev.map(item => item.id === selectedItem.id ? data : item)
       );
       setSuccessMsg('Stock taken out successfully!');
@@ -482,7 +482,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
   // Handle reorder
   const handleReorder = async (e) => {
     e.preventDefault();
-    
+
     try {
       setLoading(true);
       const { error } = await inventoryService.placeReorder(
@@ -493,9 +493,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
         userRestaurantId,
         currentUser
       );
-      
+
       if (error) throw new Error(error);
-      
+
       setSuccessMsg(`Reorder request sent for ${reorderData.quantity} units of ${selectedItem.name}`);
       closeModal();
       setReorderData({ quantity: '', expectedDelivery: '', notes: '' });
@@ -522,15 +522,11 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Package className="w-8 h-8 text-orange-500" />
-            Inventory Management
-          </h1>
           <p className="text-gray-600 mt-1">
             Track and manage your restaurant inventory
           </p>
         </div>
-        
+
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => openModal('add')}
@@ -539,7 +535,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
             <Plus className="w-4 h-4" />
             Add Item
           </button>
-          
+
           <button
             onClick={() => openModal('takeOut')}
             className="flex items-center gap-2 bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors"
@@ -547,7 +543,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
             <Minus className="w-4 h-4" />
             Take Out
           </button>
-          
+
           <button
             onClick={() => document.getElementById('import-file').click()}
             className="flex items-center gap-2 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
@@ -555,7 +551,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
             <Upload className="w-4 h-4" />
             Import
           </button>
-          
+
           <input
             id="import-file"
             type="file"
@@ -563,16 +559,16 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
             onChange={handleImport}
             className="hidden"
           />
-          
-          <button 
+
+          <button
             onClick={handleExport}
             className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
           >
             <Download className="w-4 h-4" />
             Export
           </button>
-          
-          <button 
+
+          <button
             onClick={loadInventoryData}
             disabled={isLoadingData}
             className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors disabled:opacity-70"
@@ -580,9 +576,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
             <RefreshCw className={`w-4 h-4 ${isLoadingData ? 'animate-spin' : ''}`} />
             Refresh
           </button>
-          
+
           {selectedItems.length > 0 && (
-            <button 
+            <button
               onClick={handleBulkDelete}
               className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
             >
@@ -622,7 +618,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
               <Scan className="w-4 h-4" />
             </button>
           </div>
-          
+
           <select
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
@@ -633,7 +629,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
               <option key={category} value={category}>{category}</option>
             ))}
           </select>
-          
+
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
@@ -644,7 +640,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
             <option value={STOCK_STATUS.LOW_STOCK}>Low Stock</option>
             <option value={STOCK_STATUS.OUT_OF_STOCK}>Out of Stock</option>
           </select>
-          
+
           <select
             value={`${sortBy}-${sortOrder}`}
             onChange={(e) => {
@@ -666,21 +662,19 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
           <div className="flex gap-2">
             <button
               onClick={() => setViewMode('table')}
-              className={`px-3 py-2 rounded-lg border transition-colors ${
-                viewMode === 'table' 
-                  ? 'bg-orange-500 text-white border-orange-500' 
+              className={`px-3 py-2 rounded-lg border transition-colors ${viewMode === 'table'
+                  ? 'bg-orange-500 text-white border-orange-500'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-              }`}
+                }`}
             >
               <FileText className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={`px-3 py-2 rounded-lg border transition-colors ${
-                viewMode === 'grid' 
-                  ? 'bg-orange-500 text-white border-orange-500' 
+              className={`px-3 py-2 rounded-lg border transition-colors ${viewMode === 'grid'
+                  ? 'bg-orange-500 text-white border-orange-500'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-              }`}
+                }`}
             >
               <BarChart3 className="w-4 h-4" />
             </button>
@@ -747,7 +741,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                     const status = getStockStatus(item);
                     const daysUntilExpiry = Math.ceil((new Date(item.expiry_date) - new Date()) / (1000 * 60 * 60 * 24));
                     const isExpiringSoon = daysUntilExpiry <= 15 && daysUntilExpiry > 0;
-                    
+
                     return (
                       <tr key={item.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
@@ -876,10 +870,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
               return (
                 <div
                   key={item.id}
-                  className={`bg-white rounded-lg shadow border hover:shadow-md transition-shadow ${
-                    status === STOCK_STATUS.LOW_STOCK ? 'border-yellow-200' :
-                    status === STOCK_STATUS.OUT_OF_STOCK ? 'border-red-200' : ''
-                  }`}
+                  className={`bg-white rounded-lg shadow border hover:shadow-md transition-shadow ${status === STOCK_STATUS.LOW_STOCK ? 'border-yellow-200' :
+                      status === STOCK_STATUS.OUT_OF_STOCK ? 'border-red-200' : ''
+                    }`}
                 >
                   <div className="p-4">
                     <div className="flex items-start justify-between mb-3">
@@ -896,27 +889,27 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                         className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-gray-500">Category</span>
                         <span className="text-xs font-medium text-gray-900">{item.category}</span>
                       </div>
-                      
+
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-gray-500">Stock</span>
                         <span className="text-xs font-medium text-gray-900">
                           {item.current_stock} {item.unit}
                         </span>
                       </div>
-                      
+
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-gray-500">Cost</span>
                         <span className="text-xs font-medium text-gray-900">
                           ₹{item.cost_per_unit.toFixed(2)}
                         </span>
                       </div>
-                      
+
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-gray-500">Expiry</span>
                         <span className="text-xs font-medium text-gray-900">
@@ -924,7 +917,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                         </span>
                       </div>
                     </div>
-                    
+
                     <div className="mt-3 pt-3 border-t border-gray-100">
                       <div className="flex items-center justify-between mb-2">
                         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
@@ -937,7 +930,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                           </span>
                         )}
                       </div>
-                      
+
                       <div className="flex items-center justify-between gap-1">
                         <button
                           onClick={() => openModal('view', item)}
@@ -989,7 +982,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                 </button>
               </div>
             </div>
-            
+
             <div className="p-6 space-y-6">
               {/* Basic Information */}
               <div>
@@ -1002,17 +995,17 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
                     <p className="text-sm text-gray-900">{selectedItem.name}</p>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                     <p className="text-sm text-gray-900">{selectedItem.category}</p>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Barcode</label>
                     <p className="text-sm text-gray-900">{selectedItem.barcode || 'Not specified'}</p>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
                     <p className="text-sm text-gray-900">{selectedItem.location || 'Not specified'}</p>
@@ -1033,35 +1026,35 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                       {selectedItem.current_stock} {selectedItem.unit}
                     </p>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Stock Range</label>
                     <p className="text-sm text-gray-900">
                       Min: {selectedItem.min_stock_level} | Max: {selectedItem.max_stock_level}
                     </p>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Reorder Point</label>
                     <p className="text-sm text-gray-900">
                       {selectedItem.reorder_point || 'Not set'}
                     </p>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Lead Time</label>
                     <p className="text-sm text-gray-900">
                       {selectedItem.lead_time_days ? `${selectedItem.lead_time_days} days` : 'Not specified'}
                     </p>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(getStockStatus(selectedItem))}`}>
                       {getStockStatus(selectedItem).replace('-', ' ')}
                     </span>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Last Updated</label>
                     <p className="text-sm text-gray-900">{selectedItem.last_updated}</p>
@@ -1082,7 +1075,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                       ₹{selectedItem.cost_per_unit.toFixed(2)}
                     </p>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Expiry Date
@@ -1101,7 +1094,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   </div>
                 </div>
               </div>
-                  
+
               {/* Supplier Information */}
               <div>
                 <h4 className="text-md font-medium text-gray-900 mb-4 flex items-center gap-2">
@@ -1113,12 +1106,12 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Supplier Name</label>
                     <p className="text-sm text-gray-900">{selectedItem.supplier}</p>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Contact</label>
                     <p className="text-sm text-gray-900">{selectedItem.supplier_contact || 'Not specified'}</p>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                     <p className="text-sm text-gray-900">{selectedItem.supplier_email || 'Not specified'}</p>
@@ -1158,7 +1151,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                 <X className="w-6 h-6" />
               </button>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               {/* Basic Information */}
               <div>
@@ -1166,37 +1159,37 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   <Info className="w-4 h-4" />
                   Basic Information
                 </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Item Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Category *
-                  </label>
-                  <select
-                    required
-                    value={formData.category}
-                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  >
-                    <option value="">Select Category</option>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Item Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Category *
+                    </label>
+                    <select
+                      required
+                      value={formData.category}
+                      onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    >
+                      <option value="">Select Category</option>
                       {INVENTORY_CATEGORIES.map(category => (
-                      <option key={category} value={category}>{category}</option>
-                    ))}
-                  </select>
-                </div>
-                
+                        <option key={category} value={category}>{category}</option>
+                      ))}
+                    </select>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Barcode
@@ -1209,7 +1202,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                       placeholder="Optional barcode"
                     />
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Location
@@ -1232,68 +1225,68 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   Stock Information
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Current Stock *
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    min="0"
-                    value={formData.current_stock}
-                    onChange={(e) => setFormData(prev => ({ ...prev, current_stock: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Unit *
-                  </label>
-                  <select
-                    required
-                    value={formData.unit}
-                    onChange={(e) => setFormData(prev => ({ ...prev, unit: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  >
-                    <option value="">Select Unit</option>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Current Stock *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      required
+                      min="0"
+                      value={formData.current_stock}
+                      onChange={(e) => setFormData(prev => ({ ...prev, current_stock: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Unit *
+                    </label>
+                    <select
+                      required
+                      value={formData.unit}
+                      onChange={(e) => setFormData(prev => ({ ...prev, unit: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    >
+                      <option value="">Select Unit</option>
                       {INVENTORY_UNITS.map(unit => (
-                      <option key={unit} value={unit}>{unit}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Minimum Stock Level *
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    min="0"
-                    value={formData.min_stock_level}
-                    onChange={(e) => setFormData(prev => ({ ...prev, min_stock_level: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Maximum Stock Level *
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    min="0"
-                    value={formData.max_stock_level}
-                    onChange={(e) => setFormData(prev => ({ ...prev, max_stock_level: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  />
-                </div>
-                
+                        <option key={unit} value={unit}>{unit}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Minimum Stock Level *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      required
+                      min="0"
+                      value={formData.min_stock_level}
+                      onChange={(e) => setFormData(prev => ({ ...prev, min_stock_level: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Maximum Stock Level *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      required
+                      min="0"
+                      value={formData.max_stock_level}
+                      onChange={(e) => setFormData(prev => ({ ...prev, max_stock_level: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Reorder Point
@@ -1308,7 +1301,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                       placeholder="Auto-reorder threshold"
                     />
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Lead Time (Days)
@@ -1332,23 +1325,23 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   Financial Information
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Cost per Unit *
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    min="0"
-                    value={formData.cost_per_unit}
-                    onChange={(e) => setFormData(prev => ({ ...prev, cost_per_unit: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Cost per Unit *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      required
+                      min="0"
+                      value={formData.cost_per_unit}
+                      onChange={(e) => setFormData(prev => ({ ...prev, cost_per_unit: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Expiry Date
                     </label>
                     <input
@@ -1371,29 +1364,29 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Supplier Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.supplier}
-                    onChange={(e) => setFormData(prev => ({ ...prev, supplier: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  />
-                </div>
-                
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.supplier}
+                      onChange={(e) => setFormData(prev => ({ ...prev, supplier: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                  </div>
+
                   <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Supplier Contact
-                  </label>
-                  <input
+                    </label>
+                    <input
                       type="text"
                       value={formData.supplier_contact}
                       onChange={(e) => setFormData(prev => ({ ...prev, supplier_contact: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                       placeholder="Phone number"
-                  />
-                </div>
-                
+                    />
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Supplier Email
@@ -1428,7 +1421,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   />
                 </div>
               </div>
-              
+
               <div className="flex justify-end space-x-3 pt-4 border-t">
                 <button
                   type="button"
@@ -1463,7 +1456,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                 <X className="w-6 h-6" />
               </button>
             </div>
-            
+
             <form onSubmit={handleStockUpdate} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1471,7 +1464,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                 </label>
                 <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">{selectedItem.name}</p>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Current Stock
@@ -1480,7 +1473,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   {selectedItem.current_stock} {selectedItem.unit}
                 </p>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   New Stock Level *
@@ -1495,7 +1488,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Reason for Update
@@ -1513,7 +1506,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   <option value="other">Other</option>
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Notes
@@ -1526,7 +1519,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   placeholder="Optional notes about this stock update..."
                 />
               </div>
-              
+
               <div className="flex justify-end space-x-3 pt-4 border-t">
                 <button
                   type="button"
@@ -1561,7 +1554,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                 <X className="w-6 h-6" />
               </button>
             </div>
-            
+
             <form onSubmit={handleReorder} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1569,7 +1562,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                 </label>
                 <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">{selectedItem.name}</p>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Current Stock
@@ -1578,14 +1571,14 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   {selectedItem.current_stock} {selectedItem.unit}
                 </p>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Supplier
                 </label>
                 <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">{selectedItem.supplier}</p>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Quantity to Order *
@@ -1600,7 +1593,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Expected Delivery Date
@@ -1612,7 +1605,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Notes
@@ -1625,7 +1618,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   placeholder="Any special instructions or notes..."
                 />
               </div>
-              
+
               <div className="flex justify-end space-x-3 pt-4 border-t">
                 <button
                   type="button"
@@ -1660,7 +1653,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                 <X className="w-6 h-6" />
               </button>
             </div>
-            
+
             <form onSubmit={handleTakeOut} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1687,7 +1680,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   }
                 </select>
               </div>
-              
+
               {selectedItem && (
                 <>
                   <div>
@@ -1698,7 +1691,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                       {selectedItem.current_stock} {selectedItem.unit}
                     </p>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Quantity to Remove *
@@ -1715,7 +1708,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                       placeholder={`Max: ${selectedItem.current_stock} ${selectedItem.unit}`}
                     />
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Reason for Take Out *
@@ -1732,7 +1725,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                       <option value="other">Other</option>
                     </select>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Notes
@@ -1747,7 +1740,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   </div>
                 </>
               )}
-              
+
               <div className="flex justify-end space-x-3 pt-4 border-t">
                 <button
                   type="button"

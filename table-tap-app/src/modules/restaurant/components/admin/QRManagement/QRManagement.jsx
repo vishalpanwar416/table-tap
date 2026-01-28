@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAdminRestaurant } from '../../../../shared/context/AdminRestaurantContext';
 import { supabase } from '../../../../shared/supabase';
-import { 
-  Plus, 
-  Trash2, 
-  Download, 
-  Copy, 
-  Search, 
-  QrCode, 
-  Table, 
+import {
+  Plus,
+  Trash2,
+  Download,
+  Copy,
+  Search,
+  QrCode,
+  Table,
   Edit3,
   X,
   Settings,
@@ -87,8 +87,8 @@ const QRManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
   useEffect(() => {
     if (restaurant?.tables) {
       try {
-        const parsedTables = typeof restaurant.tables === 'string' 
-          ? JSON.parse(restaurant.tables) 
+        const parsedTables = typeof restaurant.tables === 'string'
+          ? JSON.parse(restaurant.tables)
           : restaurant.tables;
         setTables(Array.isArray(parsedTables) ? parsedTables : []);
       } catch (error) {
@@ -110,7 +110,7 @@ const QRManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
   const fetchTableOrders = async () => {
     try {
       const tableNumbers = tables.map(table => table.tableNumber);
-      
+
       const { data: orders, error } = await supabase
         .from('orders')
         .select('*')
@@ -143,7 +143,7 @@ const QRManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
   // Get table status based on active orders
   const getTableStatus = (tableNumber) => {
     const tableOrdersList = tableOrders[tableNumber] || [];
-    
+
     if (tableOrdersList.length === 0) {
       return {
         status: 'empty',
@@ -160,7 +160,7 @@ const QRManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
     // Get the most recent order status
     const latestOrder = tableOrdersList[0];
     const statusMeta = STATUS_META[latestOrder.status] || STATUS_META.pending;
-    
+
     return {
       ...statusMeta,
       orderCount: tableOrdersList.length,
@@ -214,7 +214,7 @@ const QRManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
 
       const { data, error } = await supabase
         .from('restaurants')
-        .update({ 
+        .update({
           tables: JSON.stringify(updatedTables),
           updated_at: new Date().toISOString()
         })
@@ -266,7 +266,7 @@ const QRManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
     let updatedTables;
     if (editingTable) {
       // Update existing table
-      updatedTables = tables.map(table => 
+      updatedTables = tables.map(table =>
         table.id === editingTable.id ? tableData : table
       );
     } else {
@@ -302,7 +302,7 @@ const QRManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
     }
 
     const updatedTables = tables.filter(table => table.id !== tableId);
-    
+
     // Save to database
     const success = await saveTablesData(updatedTables);
     if (success) {
@@ -330,25 +330,25 @@ const QRManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const img = new Image();
-    
+
     canvas.width = 300;
     canvas.height = 300;
-    
-    img.onload = function() {
+
+    img.onload = function () {
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      
+
       const link = document.createElement('a');
       link.download = `QR-Table-${table.tableNumber}.png`;
       link.href = canvas.toDataURL();
       link.click();
     };
-    
+
     img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
   };
 
-  const filteredTables = tables.filter(table => 
+  const filteredTables = tables.filter(table =>
     table.tableNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (table.location && table.location.toLowerCase().includes(searchTerm.toLowerCase()))
   );
@@ -368,7 +368,7 @@ const QRManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">QR Code Management</h2>
+          {/* Removed redundant title */}
           <p className="text-gray-600">Generate QR codes for restaurant tables</p>
           <p className="text-sm text-gray-500">Restaurant: {restaurant.name}</p>
         </div>
@@ -406,13 +406,12 @@ const QRManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
           const tableStatus = getTableStatus(table.tableNumber);
           const bgColor = getTableBackgroundColor(table.tableNumber);
           const borderColor = getTableBorderColor(table.tableNumber);
-          
+
           return (
             <div
               key={table.id}
-              className={`bg-white rounded-lg shadow-md border-2 transition-all duration-200 hover:shadow-lg ${
-                selectedTable?.id === table.id ? 'ring-2 ring-blue-500 shadow-lg' : ''
-              } ${bgColor} ${borderColor}`}
+              className={`bg-white rounded-lg shadow-md border-2 transition-all duration-200 hover:shadow-lg ${selectedTable?.id === table.id ? 'ring-2 ring-blue-500 shadow-lg' : ''
+                } ${bgColor} ${borderColor}`}
             >
               <div className="p-4">
                 {/* Table Header */}
@@ -544,8 +543,8 @@ const QRManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
             {searchTerm ? 'No tables found' : 'No tables added yet'}
           </h3>
           <p className="text-gray-500 mb-4">
-            {searchTerm 
-              ? 'Try adjusting your search terms' 
+            {searchTerm
+              ? 'Try adjusting your search terms'
               : 'Add your first table to generate QR codes'
             }
           </p>
@@ -573,7 +572,7 @@ const QRManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 {editingTable ? 'Edit Table' : 'Add New Table'}
               </h3>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -707,7 +706,7 @@ const QRManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   <p className="text-sm font-medium text-gray-700 mb-1">QR Code URL:</p>
                   <p className="text-xs text-gray-600 break-all">{generateQRUrl(selectedTable)}</p>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="font-medium text-gray-700">Capacity:</span>

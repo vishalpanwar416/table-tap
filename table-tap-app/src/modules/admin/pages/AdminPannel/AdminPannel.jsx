@@ -26,9 +26,11 @@ import {
 import ProfilePhotoModal from './components/ProfilePhotoModal';
 import { ManagerNotificationProvider } from '../../../shared/context/ManagerNotificationContext';
 import SubscriptionManagement from './components/SubscriptionManagement';
+import RegistrationRequests from '../../../restaurant/components/admin/RegistrationRequests';
 
 const menuItems = [
   { id: 'restaurants', icon: 'Building2', label: 'Restaurants' },
+  { id: 'registrations', icon: 'ClipboardList', label: 'Registrations' },
   { id: 'staff', icon: 'Users', label: 'Staff Management' },
   { id: 'inquiries', icon: 'MessageSquare', label: 'Lead Inquiries' },
   { id: 'subscriptions', icon: 'CreditCard', label: 'Subscriptions' },
@@ -488,6 +490,8 @@ const AdminPanel = () => {
         );
       case 'subscriptions':
         return <SubscriptionManagement />;
+      case 'registrations':
+        return <RegistrationRequests />;
       case 'inquiries':
         return <InquiryManagement />;
       default:

@@ -1,6 +1,48 @@
-// src/api/aiAnalyticsService.js
 import { supabase } from '../../shared/supabase';
 import { formatCurrency } from '../../shared/utils/formatters';
+
+// Save a chat message to the database
+export const saveChatMessage = async ({ restaurantId, userId, role, content, visualization = null, metadata = null }) => {
+  try {
+    const { data, error } = await supabase
+      .from('ai_chat_messages')
+      .insert([
+        {
+          restaurant_id: restaurantId,
+          user_id: userId,
+          role: role,
+          content: content,
+          visualization: visualization,
+          metadata: metadata
+        }
+      ])
+      .select();
+
+    if (error) throw error;
+    return data[0];
+  } catch (error) {
+    console.error('Error saving chat message:', error);
+    throw error;
+  }
+};
+
+// Get chat history for a restaurant
+export const getChatHistory = async (restaurantId, limit = 50) => {
+  try {
+    const { data, error } = await supabase
+      .from('ai_chat_messages')
+      .select('*')
+      .eq('restaurant_id', restaurantId)
+      .order('created_at', { ascending: true })
+      .limit(limit);
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error fetching chat history:', error);
+    throw error;
+  }
+};
 
 // Get restaurant analytics data
 export const getRestaurantAnalytics = async (dateRange = 'last7days', restaurantId = null) => {
@@ -125,11 +167,40 @@ export const getRestaurantAnalytics = async (dateRange = 'last7days', restaurant
       if (order.items && Array.isArray(order.items)) {
         order.items.forEach(item => {
           const category = item.category || 'Unknown';
-          const itemTotal = (item.price || 0) * (item.quantity || 1);
+          const itemTotal = (parseFloat(item.price) || 0) * (item.quantity || 1);
           categoryRevenue[category] = (categoryRevenue[category] || 0) + itemTotal;
         });
       }
     });
+
+    // Growth Velocity Analysis (Current vs Previous Week)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const fourteenDaysAgo = new Date();
+    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+
+    const currentWeekOrders = ordersData?.filter(o => new Date(o.created_at) >= sevenDaysAgo) || [];
+    const prevWeekOrders = ordersData?.filter(o => {
+      const date = new Date(o.created_at);
+      return date >= fourteenDaysAgo && date < sevenDaysAgo;
+    }) || [];
+
+    const currentWeekRev = currentWeekOrders.reduce((s, o) => s + (parseFloat(o.total) || 0), 0);
+    const prevWeekRev = prevWeekOrders.reduce((s, o) => s + (parseFloat(o.total) || 0), 0);
+
+    const revenueGrowth = prevWeekRev > 0 ? ((currentWeekRev - prevWeekRev) / prevWeekRev) * 100 : 0;
+    const orderGrowth = prevWeekOrders.length > 0 ? ((currentWeekOrders.length - prevWeekOrders.length) / prevWeekOrders.length) * 100 : 0;
+
+    // Customer Retention Analysis
+    const customerOrders = {};
+    ordersData?.forEach(order => {
+      if (order.user_id) {
+        customerOrders[order.user_id] = (customerOrders[order.user_id] || 0) + 1;
+      }
+    });
+
+    const totalRepeatCustomers = Object.values(customerOrders).filter(count => count > 1).length;
+    const totalUniqueCustomers = Object.keys(customerOrders).length;
 
     return {
       summary: {
@@ -138,7 +209,14 @@ export const getRestaurantAnalytics = async (dateRange = 'last7days', restaurant
         totalMenuItems,
         totalCustomers,
         avgOrderValue,
-        peakHour: peakHour ? `${peakHour[0]}:00` : 'N/A'
+        peakHour: peakHour ? `${peakHour[0]}:00` : 'N/A',
+        retentionRate: totalUniqueCustomers > 0 ? (totalRepeatCustomers / totalUniqueCustomers) * 100 : 0,
+        growthMetrics: {
+          revenueGrowth: revenueGrowth.toFixed(1),
+          orderGrowth: orderGrowth.toFixed(1),
+          currentWeekRev,
+          prevWeekRev
+        }
       },
       ordersByStatus,
       dailyRevenue,
@@ -156,57 +234,60 @@ export const getRestaurantAnalytics = async (dateRange = 'last7days', restaurant
   }
 };
 
-// Generate AI prompt with restaurant data
-export const generateAIPrompt = (userQuestion, analyticsData) => {
+// Generate AI System Context with restaurant data
+export const generateAISystemContext = (analyticsData) => {
+  if (!analyticsData) return 'You are the Table-Tap Advisor, a friendly and empathetic human-like business companion for restaurant owners.';
+
   const { summary, ordersByStatus, popularItems, categoryRevenue } = analyticsData;
 
-  const systemPrompt = `You are an AI business analyst for a restaurant. You have access to the following restaurant data:
+  return `You are the "Table-Tap Advisor," a high-intelligence strategic business partner for restaurant owners. Your tone is warm, empathetic, and professional, like a trusted mentor.
 
-RESTAURANT SUMMARY:
-- Total Orders: ${summary.totalOrders}
-- Total Revenue: ${formatCurrency(summary.totalRevenue)}
-- Total Menu Items: ${summary.totalMenuItems}
-- Total Customers: ${summary.totalCustomers}
-- Average Order Value: ${formatCurrency(summary.avgOrderValue)}
-- Peak Hour: ${summary.peakHour}
+CORE MISSION:
+Analyze the restaurant's data to uncover "hidden growth levers" and provide actionable, empathetic advice that helps the owner increase revenue, improve efficiency, and build a loyal customer base.
 
-ORDERS BY STATUS:
-${Object.entries(ordersByStatus).map(([status, count]) => `- ${status}: ${count}`).join('\n')}
+CURRENT PERFORMANCE DATA (CRITICAL):
+- Sales Velocity: ${summary.totalOrders} orders current period
+- Financial Health: ${formatCurrency(summary.totalRevenue)} total revenue
+- Ticket size: ${formatCurrency(summary.avgOrderValue)} average order value
+- Growth Velocity: ${summary.growthMetrics.revenueGrowth}% revenue change vs previous week
+- Sales momentum: ${summary.growthMetrics.orderGrowth}% order volume change
+- Peak Traffic: ${summary.peakHour} (Critical for staffing/prep)
+- Loyalty Metric: ${summary.retentionRate.toFixed(1)}% customer retention
+- Star Performers (Top Items): ${popularItems.slice(0, 5).map(item => `${item.name}`).join(', ')}
+- High-Value Category: ${Object.entries(categoryRevenue).sort(([, a], [, b]) => b - a)[0]?.[0] || 'N/A'}
 
-TOP 5 POPULAR ITEMS:
-${popularItems.slice(0, 5).map((item, i) => `${i + 1}. ${item.name} (${item.count} orders)`).join('\n')}
+ADVISORY PATTERNS TO FOLLOW:
+1. REVENUE GROWTH: If Growth Velocity is negative, focus on "Rescue Strategies" (new combos, happy hours). If Growth is positive (>10%), suggest "Scaling Tactics" (hiring, loyalty apps).
+2. TICKET BOOSTR: If 'Ticket size' is low, suggest specific upselling combos for ${popularItems[0]?.name || 'top items'}.
+2. STAFFING OPTIMIZATION: Use 'Peak Traffic' data to recommend better shift scheduling or 'Pre-order' promotions to spread the load.
+3. MENU STRATEGY: Analyze the 'Top Category' vs others. If one category dominates, suggest seasonal specials to test new areas.
+4. CUSTOMER RETENTION: If 'Loyalty Metric' is below 30%, suggest personalized "Come back" vouchers or a point-based loyalty program.
+5. LOSS PREVENTION: Identify patterns of low sales or high cancellations (if visible in context) and suggest quality checks.
 
-CATEGORY REVENUE:
-${Object.entries(categoryRevenue).map(([category, revenue]) => `- ${category}: ${formatCurrency(revenue)}`).join('\n')}
-
-Please provide insights, recommendations, and answer questions about this restaurant's performance. Be specific and actionable in your responses. Use the data to support your recommendations.
-
-User Question: ${userQuestion}`;
-
-  return systemPrompt;
+RESPONSE STYLE:
+- Be personal: Use "We" and "Your restaurant."
+- Be actionable: Instead of "Improve menu," say "Consider adding a combo deal featuring your best-selling ${popularItems[0]?.name || 'items'}."
+- Use data: Refer specifically to the numbers provided above.
+- Tone: Encouraging, data-driven, and supportive.
+- Currency: Always use Indian Rupee (₹).
+- Visuals: You are paired with a visualization engine. If the user asks for charts, mention you are preparing them.`;
 };
 
-// Call AI service (you can replace this with your preferred AI service)
-export const callAIService = async (userQuestion, analyticsData) => {
-  // Generate the AI prompt with restaurant data
-  const prompt = generateAIPrompt(userQuestion, analyticsData);
-
-  // Check if API key is available
+// Call AI service with conversation context
+export const callAIService = async (userQuestion, analyticsData, chatHistory = []) => {
+  const systemContext = generateAISystemContext(analyticsData);
   const apiKey = process.env.REACT_APP_OPENAI_API_KEY;
 
-  // Debug logging (remove in production)
-  console.log({
-    hasApiKey: !!apiKey,
-    apiKeyLength: apiKey ? apiKey.length : 0,
-    apiKeyPrefix: apiKey ? apiKey.substring(0, 7) + '...' : 'none',
-    nodeEnv: process.env.NODE_ENV
-  });
-
   if (!apiKey) {
-    throw new Error('OpenAI API key not found. Please check your .env file and ensure REACT_APP_OPENAI_API_KEY is set.');
+    throw new Error('OpenAI API key not found. Please check your .env file.');
   }
 
-  // Call OpenAI API
+  // Format chat history for OpenAI (last 10 messages for context)
+  const historyMessages = chatHistory.slice(-10).map(msg => ({
+    role: msg.type === 'user' ? 'user' : 'assistant',
+    content: msg.content
+  }));
+
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -214,18 +295,13 @@ export const callAIService = async (userQuestion, analyticsData) => {
       'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: 'gpt-3.5-turbo',
+      model: 'gpt-4o-mini',
       messages: [
-        {
-          role: 'system',
-          content: 'You are a helpful restaurant business analyst AI assistant. Provide specific, actionable insights based on the restaurant data provided. Use the Indian Rupee symbol (₹) for currency values.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
+        { role: 'system', content: systemContext },
+        ...historyMessages,
+        { role: 'user', content: userQuestion }
       ],
-      max_tokens: 1000,
+      max_tokens: 1200,
       temperature: 0.7
     })
   });

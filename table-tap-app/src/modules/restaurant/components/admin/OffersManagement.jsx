@@ -15,7 +15,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
   const [carouselOffers, setCarouselOffers] = useState([]);
   const [viewingOffer, setViewingOffer] = useState(null);
   const [isUpdating, setIsUpdating] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -33,10 +33,10 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       // Use restaurant-specific functions if restaurant ID is available
       let items, offerData;
-      
+
       if (userRestaurantId) {
         [items, offerData] = await Promise.all([
           getRestaurantFoodItems(userRestaurantId),
@@ -48,14 +48,14 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
           getAllOffers()
         ]);
       }
-      
+
       // Filter valid items
       const validItems = items.filter(item => item.id && item.name);
       const validOffers = offerData.filter(offer => offer.id);
-      
+
       setFoodItems(validItems);
       setOffers(validOffers);
-      
+
       // Identify carousel offers
       const carouselItems = validOffers.filter(offer => offer.is_carousel);
       setCarouselOffers(carouselItems);
@@ -87,16 +87,16 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
         setErrorMsg('Please select a valid image file');
         return;
       }
-      
+
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         setErrorMsg('Image file size should be less than 5MB');
         return;
       }
-      
+
       // Create blob URL for preview
       const blobUrl = URL.createObjectURL(file);
-      
+
       setFormData(prev => ({
         ...prev,
         imageFile: file,
@@ -118,7 +118,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
   // Clean up blob URL when form data changes
   useEffect(() => {
     const currentImage = formData.image;
-    
+
     return () => {
       if (currentImage && currentImage.startsWith('blob:')) {
         URL.revokeObjectURL(currentImage);
@@ -133,7 +133,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
         const price = parseFloat(item.price) || 0;
         return sum + price;
       }, 0);
-      
+
       setFormData(prev => ({
         ...prev,
         price: totalPrice,
@@ -151,7 +151,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
   const toggleItemSelection = (item) => {
     setSelectedItems(prev => {
       const isSelected = prev.some(selected => selected.id === item.id);
-      
+
       if (isSelected) {
         return prev.filter(selected => selected.id !== item.id);
       } else {
@@ -166,38 +166,38 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       setIsUpdating(true);
-      
+
       // Validation
       if (!formData.name.trim()) {
         throw new Error('Offer name is required');
       }
-      
+
       if (!formData.description.trim()) {
         throw new Error('Offer description is required');
       }
-      
+
       if (selectedItems.length === 0) {
         throw new Error('Please select at least one item for this offer');
       }
-      
+
       if (parseFloat(formData.discounted_price) <= 0) {
         throw new Error('Discounted price must be greater than 0');
       }
-      
+
       if (parseFloat(formData.discounted_price) >= parseFloat(formData.price)) {
         throw new Error('Discounted price must be less than original price');
       }
-      
+
       // Check carousel limit
       if (formData.is_carousel && !editingOffer) {
         if (carouselOffers.length >= 3) {
           throw new Error('Maximum 3 offers can be added to carousel. Please remove one first.');
         }
       }
-      
+
       // Prepare data for submission
       const offerData = {
         name: formData.name.trim(),
@@ -209,7 +209,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
         is_carousel: formData.is_carousel,
         restaurant_id: userRestaurantId // Add restaurant_id
       };
-      
+
       if (editingOffer) {
         await updateOffer(editingOffer.id, offerData);
         setSuccessMsg('Offer updated successfully!');
@@ -217,10 +217,10 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
         await createOffer(offerData);
         setSuccessMsg('Offer created successfully!');
       }
-      
+
       // Refresh data
       await loadData();
-      
+
       // Reset form
       resetForm();
       setShowForm(false);
@@ -253,7 +253,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
       const offerItems = (offer.items || [])
         .map(itemId => foodItems.find(food => food.id === itemId))
         .filter(Boolean);
-      
+
       setEditingOffer(offer);
       setSelectedItems(offerItems);
       setFormData({
@@ -291,15 +291,15 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
   const toggleCarouselStatus = async (offer) => {
     try {
       setLoading(true);
-      
+
       // Check carousel limit when adding
       if (!offer.is_carousel && carouselOffers.length >= 3) {
         throw new Error('Maximum 3 offers can be added to carousel. Please remove one first.');
       }
-      
+
       await setCarouselOffer(offer.id, !offer.is_carousel);
       await loadData();
-      
+
       setSuccessMsg(`Offer ${!offer.is_carousel ? 'added to' : 'removed from'} carousel successfully!`);
     } catch (error) {
       setErrorMsg(error.message || 'Failed to update carousel status');
@@ -328,7 +328,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
     try {
       setLoading(true);
       setErrorMsg('');
-      
+
       // Use restaurant-specific function if restaurant ID is available
       let data;
       if (userRestaurantId) {
@@ -336,7 +336,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
       } else {
         data = await getAllOffers();
       }
-      
+
       setOffers(data || []);
     } catch (error) {
       setErrorMsg('Failed to load offers: ' + (error.message || error));
@@ -350,13 +350,13 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
       <div className="bg-white p-6 rounded-xl shadow-sm">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-xl font-semibold text-gray-800">Offers & Promotions</h2>
+            {/* Removed redundant title */}
             <p className="text-sm text-gray-600 mt-1">
               Manage special offers and promotional deals for your customers
             </p>
           </div>
           {!showForm && (
-            <button 
+            <button
               onClick={() => setShowForm(true)}
               className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors flex items-center gap-2"
             >
@@ -377,7 +377,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
               <Package className="text-blue-500" size={24} />
             </div>
           </div>
-          
+
           <div className="bg-green-50 p-4 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
@@ -387,24 +387,24 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
               <ShoppingBag className="text-green-500" size={24} />
             </div>
           </div>
-          
+
           <div className="bg-purple-50 p-4 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-purple-600">Avg. Discount</p>
                 <p className="text-2xl font-bold text-purple-800">
-                  {offers.length > 0 
+                  {offers.length > 0
                     ? Math.round(offers.reduce((sum, offer) => {
-                        const savings = calculateSavings(offer.price, offer.discounted_price);
-                        return sum + savings.percentage;
-                      }, 0) / offers.length)
+                      const savings = calculateSavings(offer.price, offer.discounted_price);
+                      return sum + savings.percentage;
+                    }, 0) / offers.length)
                     : 0}%
                 </p>
               </div>
               <Percent className="text-purple-500" size={24} />
             </div>
           </div>
-          
+
           <div className="bg-orange-50 p-4 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
@@ -428,7 +428,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
               <h3 className="text-lg font-medium text-gray-800">
                 {editingOffer ? 'Edit Offer' : 'Create New Offer'}
               </h3>
-              <button 
+              <button
                 onClick={() => {
                   setShowForm(false);
                   resetForm();
@@ -438,7 +438,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                 <X size={20} />
               </button>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -456,7 +456,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                     required
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Description <span className="text-red-500">*</span>
@@ -472,7 +472,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   />
                 </div>
               </div>
-              
+
               {/* Pricing */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
@@ -492,7 +492,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                     <span className="absolute right-3 top-3 text-sm text-gray-500">Auto-calculated</span>
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Discounted Price (₹) <span className="text-red-500">*</span>
@@ -509,7 +509,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                     required
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Your Savings
@@ -530,7 +530,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   </div>
                 </div>
               </div>
-              
+
               {/* Image Upload */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -549,9 +549,9 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   />
                   {formData.image && (
                     <div className="relative">
-                      <img 
-                        src={formData.image} 
-                        alt="Preview" 
+                      <img
+                        src={formData.image}
+                        alt="Preview"
                         className="h-16 w-16 object-cover rounded-md border"
                       />
                       <button
@@ -568,7 +568,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   Supported formats: JPG, PNG, GIF. Max size: 5MB
                 </p>
               </div>
-              
+
               {/* Items Selection */}
               <div>
                 <div className="flex justify-between items-center mb-3">
@@ -583,7 +583,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                     {showItemSelector ? 'Done Selecting' : 'Add/Remove Items'}
                   </button>
                 </div>
-                
+
                 {selectedItems.length === 0 ? (
                   <div className="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                     <Package className="mx-auto text-gray-400 mb-2" size={24} />
@@ -618,7 +618,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   </div>
                 )}
               </div>
-              
+
               {/* Item Selector */}
               {showItemSelector && (
                 <div className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
@@ -631,7 +631,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                       className="w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                     />
                   </div>
-                  
+
                   <div className="max-h-60 overflow-y-auto">
                     {filteredFoodItems.length === 0 ? (
                       <div className="text-center py-8 text-gray-500">
@@ -643,14 +643,13 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                         {filteredFoodItems.map(item => {
                           const isSelected = selectedItems.some(selected => selected.id === item.id);
                           return (
-                            <div 
-                              key={item.id} 
+                            <div
+                              key={item.id}
                               onClick={() => toggleItemSelection(item)}
-                              className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                                isSelected 
-                                  ? 'bg-orange-100 border-2 border-orange-300' 
+                              className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${isSelected
+                                  ? 'bg-orange-100 border-2 border-orange-300'
                                   : 'hover:bg-gray-50 border border-gray-200'
-                              }`}
+                                }`}
                             >
                               {item.image && (
                                 <img src={item.image} alt={item.name} className="w-10 h-10 object-cover rounded" />
@@ -672,7 +671,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   </div>
                 </div>
               )}
-              
+
               {/* Carousel Option */}
               <div className="flex items-center space-x-3 p-4 bg-blue-50 rounded-lg">
                 <input
@@ -693,7 +692,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   <AlertCircle size={16} className="text-amber-500" />
                 )}
               </div>
-              
+
               {/* Form Actions */}
               <div className="flex justify-end space-x-3 pt-4 border-t">
                 <button
@@ -717,7 +716,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
             </form>
           </div>
         )}
-        
+
         {/* Carousel Offers Section */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">
@@ -726,7 +725,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
               {carouselOffers.length}/3 slots used
             </span>
           </div>
-          
+
           {carouselOffers.length === 0 ? (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
               <ShoppingBag size={24} className="mx-auto text-blue-400 mb-2" />
@@ -743,9 +742,9 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   <div key={offer.id} className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                     {offer.image ? (
                       <div className="aspect-[2/1] bg-gray-100">
-                        <img 
-                          src={offer.image} 
-                          alt={offer.name} 
+                        <img
+                          src={offer.image}
+                          alt={offer.name}
                           className="w-full h-full object-cover"
                         />
                       </div>
@@ -757,11 +756,11 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                         </p>
                       </div>
                     )}
-                    
+
                     <div className="p-4">
                       <h4 className="font-medium text-gray-800 mb-1">{offer.name}</h4>
                       <p className="text-sm text-gray-600 mb-3 line-clamp-2">{offer.description}</p>
-                      
+
                       <div className="flex justify-between items-center">
                         <div>
                           <span className="line-through text-gray-400 text-sm mr-2">
@@ -771,7 +770,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                             ₹{parseFloat(offer.discounted_price).toFixed(2)}
                           </span>
                         </div>
-                        
+
                         <div className="flex gap-1">
                           <button
                             onClick={() => setViewingOffer(offer)}
@@ -813,9 +812,9 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                     <div className="flex">
                       <div className="w-24 h-24 bg-gray-100 flex items-center justify-center">
                         {offer.image ? (
-                          <img 
-                            src={offer.image} 
-                            alt={offer.name} 
+                          <img
+                            src={offer.image}
+                            alt={offer.name}
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -858,7 +857,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                               <Eye size={16} />
                             </button>
                             {!offer.is_carousel && carouselOffers.length < 3 && (
-                              <button 
+                              <button
                                 onClick={() => toggleCarouselStatus(offer)}
                                 className="p-1 text-blue-600 hover:bg-blue-50 rounded"
                                 title="Add to carousel"
@@ -866,14 +865,14 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                                 <ShoppingBag size={16} />
                               </button>
                             )}
-                            <button 
+                            <button
                               onClick={() => handleEditOffer(offer)}
                               className="p-1 text-blue-600 hover:bg-blue-50 rounded"
                               title="Edit"
                             >
                               <Edit size={16} />
                             </button>
-                            <button 
+                            <button
                               onClick={() => handleDeleteOffer(offer.id)}
                               className="p-1 text-red-600 hover:bg-red-50 rounded"
                               title="Delete"

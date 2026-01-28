@@ -2,6 +2,7 @@
 // Handles all inventory-related operations and data management
 
 import { supabase } from '../../../shared/supabase';
+import { logActivity } from '../../../shared/api/activityLogService';
 
 // Activity types constants
 export const ACTIVITY_TYPES = {
@@ -90,19 +91,23 @@ export const inventoryService = {
 
       if (error) throw error;
 
-      // Add activity log manually
-      await this.addActivityLog({
+      // Log activity using unified service
+      await logActivity({
         restaurant_id: restaurantId,
-        item_id: data.id,
-        action: ACTIVITY_TYPES.ITEM_ADDED,
-        old_value: 0,
-        new_value: itemData.current_stock,
-        quantity_changed: itemData.current_stock,
-        reason: ACTIVITY_REASONS.INITIAL_STOCK,
-        notes: 'New item added to inventory',
         user_id: userInfo.id,
         user_name: userInfo.name,
-        user_role: userInfo.role
+        user_role: userInfo.role,
+        action_type: 'inventory',
+        action_name: ACTIVITY_TYPES.ITEM_ADDED,
+        target_id: data.id,
+        target_name: data.name,
+        details: {
+          old_value: 0,
+          new_value: itemData.current_stock,
+          quantity_changed: itemData.current_stock,
+          reason: ACTIVITY_REASONS.INITIAL_STOCK
+        },
+        description: `Added new inventory item: ${data.name}`
       });
 
       return { data, error: null };
@@ -135,19 +140,23 @@ export const inventoryService = {
 
       if (error) throw error;
 
-      // Add activity log manually
-      await this.addActivityLog({
+      // Log activity
+      await logActivity({
         restaurant_id: restaurantId,
-        item_id: itemId,
-        action: ACTIVITY_TYPES.ITEM_UPDATED,
-        old_value: currentItem.current_stock,
-        new_value: data.current_stock,
-        quantity_changed: data.current_stock - currentItem.current_stock,
-        reason: ACTIVITY_REASONS.STOCK_ADJUSTMENT,
-        notes: 'Item details updated',
         user_id: userInfo.id,
         user_name: userInfo.name,
-        user_role: userInfo.role
+        user_role: userInfo.role,
+        action_type: 'inventory',
+        action_name: ACTIVITY_TYPES.ITEM_UPDATED,
+        target_id: itemId,
+        target_name: data.name,
+        details: {
+          old_value: currentItem.current_stock,
+          new_value: data.current_stock,
+          quantity_changed: data.current_stock - currentItem.current_stock,
+          reason: ACTIVITY_REASONS.STOCK_ADJUSTMENT
+        },
+        description: `Updated inventory item: ${data.name}`
       });
 
       return { data, error: null };
@@ -175,19 +184,17 @@ export const inventoryService = {
 
       if (error) throw error;
 
-      // Add activity log manually
-      await this.addActivityLog({
+      // Log activity
+      await logActivity({
         restaurant_id: restaurantId,
-        item_id: itemId,
-        action: ACTIVITY_TYPES.ITEM_DELETED,
-        old_value: currentItem.current_stock,
-        new_value: 0,
-        quantity_changed: -currentItem.current_stock,
-        reason: ACTIVITY_REASONS.STOCK_ADJUSTMENT,
-        notes: 'Item removed from inventory',
         user_id: userInfo.id,
         user_name: userInfo.name,
-        user_role: userInfo.role
+        user_role: userInfo.role,
+        action_type: 'inventory',
+        action_name: ACTIVITY_TYPES.ITEM_DELETED,
+        target_id: itemId,
+        target_name: currentItem.name,
+        description: `Removed inventory item: ${currentItem.name}`
       });
 
       return { data: currentItem, error: null };
@@ -222,19 +229,23 @@ export const inventoryService = {
 
       if (error) throw error;
 
-      // Add activity log manually
-      await this.addActivityLog({
+      // Log activity
+      await logActivity({
         restaurant_id: restaurantId,
-        item_id: itemId,
-        action: ACTIVITY_TYPES.STOCK_UPDATE,
-        old_value: currentItem.current_stock,
-        new_value: newStockLevel,
-        quantity_changed: quantityChanged,
-        reason: reason,
-        notes: notes,
         user_id: userInfo.id,
         user_name: userInfo.name,
-        user_role: userInfo.role
+        user_role: userInfo.role,
+        action_type: 'inventory',
+        action_name: ACTIVITY_TYPES.STOCK_UPDATE,
+        target_id: itemId,
+        target_name: data.name,
+        details: {
+          old_value: currentItem.current_stock,
+          new_value: newStockLevel,
+          quantity_changed: quantityChanged,
+          reason: reason
+        },
+        description: `Adjusted stock for ${data.name}: ${quantityChanged > 0 ? '+' : ''}${quantityChanged} ${data.unit}`
       });
 
       return { data, error: null };
@@ -273,19 +284,23 @@ export const inventoryService = {
 
       if (error) throw error;
 
-      // Add activity log manually
-      await this.addActivityLog({
+      // Log activity
+      await logActivity({
         restaurant_id: restaurantId,
-        item_id: itemId,
-        action: ACTIVITY_TYPES.STOCK_TAKE_OUT,
-        old_value: currentItem.current_stock,
-        new_value: newStockLevel,
-        quantity_changed: -quantity,
-        reason: reason,
-        notes: notes,
         user_id: userInfo.id,
         user_name: userInfo.name,
-        user_role: userInfo.role
+        user_role: userInfo.role,
+        action_type: 'inventory',
+        action_name: ACTIVITY_TYPES.STOCK_TAKE_OUT,
+        target_id: itemId,
+        target_name: data.name,
+        details: {
+          old_value: currentItem.current_stock,
+          new_value: newStockLevel,
+          quantity_changed: -quantity,
+          reason: reason
+        },
+        description: `Stock take-out for ${data.name}: -${quantity} ${data.unit} (${reason})`
       });
 
       return { data, error: null };
@@ -296,16 +311,8 @@ export const inventoryService = {
 
   // Helper function to add activity logs
   async addActivityLog(logData) {
-    try {
-      const { error } = await supabase
-        .from('inventory_activity_logs')
-        .insert(logData);
-
-      if (error) {
-      } else {
-      }
-    } catch (error) {
-    }
+    // This method is now legacy, using unified logActivity instead
+    return await logActivity(logData);
   }
 };
 

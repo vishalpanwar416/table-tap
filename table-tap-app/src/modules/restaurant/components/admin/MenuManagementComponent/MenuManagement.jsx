@@ -55,13 +55,13 @@ const MenuManagement = ({ foodItems, fetchFoodItems, setLoading, setErrorMsg, se
   // Filter food items based on search and category
   const filteredFoodItems = useMemo(() => {
     return foodItems.filter(item => {
-      const matchesSearch = searchTerm ? 
+      const matchesSearch = searchTerm ?
         (item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (item.tags && item.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))) : true;
-      
+          item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (item.tags && item.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))) : true;
+
       const matchesCategory = filterCategory === 'All' || item.category === filterCategory;
-      
+
       return matchesSearch && matchesCategory;
     });
   }, [foodItems, searchTerm, filterCategory]);
@@ -71,7 +71,7 @@ const MenuManagement = ({ foodItems, fetchFoodItems, setLoading, setErrorMsg, se
       <div className="flex flex-col md:flex-row gap-4 h-full">
         {/* Form Section - Fixed height and scrollable */}
         <div className={`bg-white rounded-xl shadow-sm md:w-1/3 md:sticky md:top-0 md:h-[calc(100vh-200px)] md:overflow-y-auto ${showForm ? 'block' : 'hidden md:block'}`}>
-          <FoodItemForm 
+          <FoodItemForm
             formData={formData}
             setFormData={setFormData}
             editItem={editItem}
@@ -89,14 +89,14 @@ const MenuManagement = ({ foodItems, fetchFoodItems, setLoading, setErrorMsg, se
         <div className="md:flex-1 md:overflow-y-auto">
           <div className="bg-white p-6 rounded-xl shadow-sm">
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-800 mb-2 md:mb-0">Food Items</h2>
+              {/* Removed redundant title */}
               <div className="flex items-center space-x-2">
-                <CategoryFilter 
-                  filterCategory={filterCategory} 
+                <CategoryFilter
+                  filterCategory={filterCategory}
                   setFilterCategory={setFilterCategory}
                   categories={categories}
                 />
-                <button 
+                <button
                   className="md:hidden bg-orange-500 text-white p-2 rounded-md hover:bg-orange-600 transition-colors"
                   onClick={() => setShowForm(true)}
                 >
@@ -105,9 +105,9 @@ const MenuManagement = ({ foodItems, fetchFoodItems, setLoading, setErrorMsg, se
               </div>
             </div>
 
-            <FoodItemList 
-              filteredFoodItems={filteredFoodItems} 
-              handleEdit={handleEdit} 
+            <FoodItemList
+              filteredFoodItems={filteredFoodItems}
+              handleEdit={handleEdit}
               setLoading={setLoading}
               setErrorMsg={setErrorMsg}
               setSuccessMsg={setSuccessMsg}

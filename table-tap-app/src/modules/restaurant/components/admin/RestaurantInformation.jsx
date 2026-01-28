@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, Save, RefreshCw, AlertCircle, Lock, Edit3, MapPin, Globe, Phone, Mail, Clock, CreditCard, Shield, Instagram, Facebook, Building, FileText, Award } from 'lucide-react';
 import { useAdminRestaurant } from '../../../shared/context/AdminRestaurantContext';
-
-const SettingsManagement = () => {
-  const { 
-    restaurant, 
-    updateRestaurant, 
-    loading, 
-    error, 
-    userRole, 
-    canEdit, 
-    canView 
+import SubscriptionSection from './SubscriptionSection';
+const RestaurantInformation = () => {
+  const {
+    restaurant,
+    updateRestaurant,
+    loading,
+    error,
+    userRole,
+    canEdit,
+    canView
   } = useAdminRestaurant();
-  
+
   const [formData, setFormData] = useState(restaurant || {});
   const [isEditing, setIsEditing] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -46,7 +46,7 @@ const SettingsManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaveError(null);
-    
+
     try {
       const success = await updateRestaurant(formData);
       if (success) {
@@ -115,17 +115,8 @@ const SettingsManagement = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
       <div className="max-w-6xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4 shadow-lg">
-            <Settings className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-2">
-            Restaurant Settings
-          </h1>
-          <p className="text-gray-600 text-lg">Manage your restaurant's profile and legal information.</p>
-        </div>
-        
+        {/* Removed redundant header */}
+
         {/* Role Badge */}
         <div className="flex justify-center">
           <div className="inline-flex items-center px-6 py-3 bg-white/80 backdrop-blur-sm rounded-full shadow-lg border">
@@ -181,7 +172,7 @@ const SettingsManagement = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Contact Information */}
                 <div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
@@ -192,7 +183,7 @@ const SettingsManagement = () => {
                       <label className="block text-sm font-semibold text-gray-700">Contact Phone</label>
                       <input type="text" name="contact_phone" value={formData.contact_phone || ''} onChange={handleChange} className="w-full px-4 py-3 bg-white/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all" />
                     </div>
-                     <div className="space-y-2">
+                    <div className="space-y-2">
                       <label className="block text-sm font-semibold text-gray-700">Contact Email</label>
                       <input type="email" name="contact_email" value={formData.contact_email || ''} onChange={handleChange} className="w-full px-4 py-3 bg-white/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all" />
                     </div>
@@ -342,9 +333,9 @@ const SettingsManagement = () => {
                   </div>
                 </div>
 
-                 {/* Contact & Socials */}
+                {/* Contact & Socials */}
                 <div>
-                   <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center"><Globe className="w-5 h-5 mr-2 text-blue-600" /> Contact & Social Media</h3>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center"><Globe className="w-5 h-5 mr-2 text-blue-600" /> Contact & Social Media</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border"><h4 className="text-sm font-semibold text-gray-600 mb-2 flex items-center"><Phone className="w-4 h-4 mr-2 text-green-600" /> Phone</h4><p className="text-lg font-medium text-gray-900">{restaurant?.contact_phone || 'N/A'}</p></div>
                     <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-6 border"><h4 className="text-sm font-semibold text-gray-600 mb-2 flex items-center"><Mail className="w-4 h-4 mr-2 text-orange-600" /> Email</h4><p className="text-lg font-medium text-gray-900">{restaurant?.contact_email || 'N/A'}</p></div>
@@ -376,16 +367,15 @@ const SettingsManagement = () => {
             </div>
           )}
         </div>
-        
-        {/* Footer */}
-        <div className="text-center py-8">
-          <div className="inline-flex items-center justify-center space-x-2 text-gray-400">
-            <span className="text-sm font-medium">Restaurant Management System</span>
-          </div>
+
+        {/* Subscription Section */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border overflow-hidden p-8">
+          <SubscriptionSection restaurantId={restaurant?.id} />
         </div>
+
       </div>
     </div>
   );
 };
 
-export default SettingsManagement;
+export default RestaurantInformation;

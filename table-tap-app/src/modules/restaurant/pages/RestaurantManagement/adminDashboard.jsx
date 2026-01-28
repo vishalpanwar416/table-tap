@@ -7,7 +7,7 @@ import MenuManagement from '../../components/admin/MenuManagementComponent/MenuM
 import OrderManagement from '../../components/admin/OrderManagement';
 import StaffManagement from '../../components/admin/StaffManagement';
 import OffersManagement from '../../components/admin/OffersManagement';
-import SettingsManagement from '../../components/admin/Settings';
+import SettingsManagement from '../../components/admin/RestaurantInformation';
 import InventoryManagement from '../../components/admin/InventoryManagement';
 import LogoutPopup from '../../../shared/components/auth/auth/LogoutPopup';
 import NotificationSound from '../../components/admin/NotificationSound';
@@ -15,7 +15,8 @@ import NotificationToast from '../../components/admin/NotificationToast';
 import AIAnalyticsChat from '../../components/admin/AIAnalyticsChat';
 import ManagerNotificationsToast from '../../components/admin/ManagerNotificationsToast';
 import QRManagement from '../../components/admin/QRManagement/QRManagement';
-import InventoryActivityLogs from '../../components/admin/InventoryActivityLogs';
+import ActivityLogs from '../../components/admin/ActivityLogs';
+import AggregatorIntegration from '../../components/admin/AggregatorIntegration';
 import { X, ArrowLeft, Package, BarChart3, Sparkles, Plus, Building2, ChevronDown, Clock } from 'lucide-react';
 import { getAllFoodItems, getRestaurantFoodItems } from '../../../customer/api/foodService';
 import { supabase } from '../../../shared/supabase';
@@ -56,12 +57,12 @@ const AdminDashboard = () => {
     total: 0
   });
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Fix: Properly destructure all values from the context
-  const { 
-    restaurant, 
-    userRestaurantId, 
-    loading: restaurantLoading, 
+  const {
+    restaurant,
+    userRestaurantId,
+    loading: restaurantLoading,
     error: restaurantError,
     userRole: contextUserRole,
     setAdminRestaurant,
@@ -87,9 +88,10 @@ const AdminDashboard = () => {
       { id: 'activity-logs', label: 'Activity Logs', icon: Clock },
     ];
 
-    // Add AI Analytics only for managers and admins
+    // Add AI Analytics and Aggregators only for managers and admins
     if (contextUserRole === 'manager' || contextUserRole === 'admin' || contextIsAdmin()) {
       baseItems.splice(7, 0, { id: 'analytics', icon: 'BarChart3', label: 'AI Analytics' });
+      baseItems.splice(8, 0, { id: 'aggregators', icon: 'ShoppingBag', label: 'Aggregators' });
     }
 
     return baseItems;
@@ -107,7 +109,7 @@ const AdminDashboard = () => {
   // Fetch all restaurants for admin selector
   const fetchAllRestaurants = async () => {
     if (!contextIsAdmin()) return;
-    
+
     try {
       setLoadingRestaurants(true);
       const { data, error } = await supabase
@@ -184,9 +186,9 @@ const AdminDashboard = () => {
         setAuthLoading(false); // End loading
       }
     };
-    
+
     checkAuth();
-    
+
     // Set up auth state listener
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') {
@@ -195,7 +197,7 @@ const AdminDashboard = () => {
         setCurrentUser(session.user);
       }
     });
-    
+
     return () => {
       if (authListener && authListener.subscription) {
         authListener.subscription.unsubscribe();
@@ -224,11 +226,11 @@ const AdminDashboard = () => {
         if (!error && profileData) {
           const role = profileData.profile_role;
           setUserRole(role);
-          
+
           // Allow manager, admin, and captain roles to access the dashboard
           setIsManager(role === 'manager');
           setIsAdmin(role === 'admin');
-          
+
           // If user is neither manager, admin, nor captain, redirect them
           if (role !== 'manager' && role !== 'admin' && role !== 'captain') {
             navigate('/home');
@@ -247,13 +249,13 @@ const AdminDashboard = () => {
     let loadingTimeout;
     try {
       setLoading(true);
-      
+
       // Set a timeout to force loading to false after 15 seconds, preventing stuck loading states
       loadingTimeout = setTimeout(() => {
         setLoading(false);
         setErrorMsg('Request took too long. Please try again.');
       }, 15000);
-      
+
       // Use restaurant-specific function if restaurant ID is available
       let data;
       if (userRestaurantId) {
@@ -261,7 +263,7 @@ const AdminDashboard = () => {
       } else {
         data = await getAllFoodItems();
       }
-      
+
       setFoodItems(data || []);
       clearTimeout(loadingTimeout);
       return data;
@@ -273,7 +275,7 @@ const AdminDashboard = () => {
       setLoading(false);
     }
   };
-  
+
   // Use in useEffect to fetch food items on component mount
   useEffect(() => {
     if (currentUser) {
@@ -298,12 +300,12 @@ const AdminDashboard = () => {
         let query = supabase
           .from('orders')
           .select('*');
-        
+
         // Filter by restaurant if available
         if (userRestaurantId) {
           query = query.eq('restaurant_id', userRestaurantId);
         }
-        
+
         const { data, error } = await query.order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -334,7 +336,7 @@ const AdminDashboard = () => {
           table: 'orders',
         },
         (payload) => {
-          
+
           const { eventType, new: newRecord, old: oldRecord } = payload;
 
           // Filter by restaurant if available
@@ -383,12 +385,20 @@ const AdminDashboard = () => {
   const updateOrderStatus = async (orderId, newStatus, cancelReason) => {
     try {
       setIsLoading(true);
-      const updatedOrder = await updateOrderStatusService(orderId, newStatus, cancelReason);
+      // Pass user info for logging
+      const userData = {
+        id: currentUser.id,
+        user_name: restaurant?.staff?.find(s => s.user_id === currentUser.id)?.full_name ||
+          currentUser.user_metadata?.full_name ||
+          currentUser.email,
+        role: contextUserRole
+      };
+      const updatedOrder = await updateOrderStatusService(orderId, newStatus, cancelReason, userData);
 
       // Show success notification
       setOrderToastTitle('✅ Status Updated');
       setOrderToastMessage(
-        `Order #${updatedOrder.order_number || updatedOrder.id.slice(0,8)} marked as ${newStatus}`
+        `Order #${updatedOrder.order_number || updatedOrder.id.slice(0, 8)} marked as ${newStatus}`
       );
       setShowOrderToast(true);
       setOrderSoundType('success');
@@ -518,7 +528,7 @@ const AdminDashboard = () => {
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">Access Error</h3>
           <p className="text-gray-600 mb-4">{restaurantError}</p>
-          <button 
+          <button
             onClick={() => navigate('/home')}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
           >
@@ -544,7 +554,7 @@ const AdminDashboard = () => {
           </button>
         </div>
       )}
-      
+
       {/* Keep basic success messages for non-order related actions */}
       {successMsg && !showOrderToast && (
         <div className="fixed top-4 right-4 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded shadow-md flex items-center max-w-md">
@@ -570,7 +580,7 @@ const AdminDashboard = () => {
       />
 
       <ManagerNotificationsToast />
-  
+
       <NotificationSound play={playOrderSound} soundType={orderSoundType} />
 
       {showLoadingOverlay && (
@@ -579,7 +589,7 @@ const AdminDashboard = () => {
             <div className="animate-spin rounded-full h-6 w-6 border-2 border-orange-500 border-t-transparent"></div>
             <span>Processing...</span>
             {/* Emergency escape button */}
-            <button 
+            <button
               onClick={() => setLoading(false)}
               className="ml-4 text-xs text-gray-500 underline hover:text-gray-700"
             >
@@ -607,7 +617,7 @@ const AdminDashboard = () => {
 
       <div className="flex h-screen">
         {/* Sidebar Component */}
-        <Sidebar 
+        <Sidebar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           menuItems={menuItems}
@@ -618,7 +628,7 @@ const AdminDashboard = () => {
         />
 
         {/* Mobile Navigation */}
-        <MobileNav 
+        <MobileNav
           showMobileNav={showMobileNav}
           setShowMobileNav={setShowMobileNav}
           activeTab={activeTab}
@@ -629,7 +639,7 @@ const AdminDashboard = () => {
           restaurantName={restaurant?.name}
           userRole={contextUserRole}
         />
-        <LogoutPopup 
+        <LogoutPopup
           isOpen={showLogoutPopup}
           onClose={() => setShowLogoutPopup(false)}
         />
@@ -638,7 +648,7 @@ const AdminDashboard = () => {
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Main Content Header */}
           <div className="bg-white shadow-sm z-10 p-4 md:p-6">
-            <div className="max-w-7xl mx-auto flex justify-between items-center">
+            <div className="w-full px-4 md:px-8 flex justify-between items-center">
               {/* Back Button - Top Left */}
               <div className="flex items-center">
                 <button
@@ -688,11 +698,10 @@ const AdminDashboard = () => {
                             <button
                               key={rest.id}
                               onClick={() => handleRestaurantSelect(rest.id)}
-                              className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                                rest.id === userRestaurantId
-                                  ? 'bg-orange-100 text-orange-700 font-medium'
-                                  : 'hover:bg-gray-50 text-gray-700'
-                              }`}
+                              className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${rest.id === userRestaurantId
+                                ? 'bg-orange-100 text-orange-700 font-medium'
+                                : 'hover:bg-gray-50 text-gray-700'
+                                }`}
                             >
                               <div className="flex items-center justify-between">
                                 <span className="truncate">{rest.name}</span>
@@ -711,10 +720,10 @@ const AdminDashboard = () => {
 
               <div className="hidden md:block">
                 <div className="relative text-gray-600">
-                  <input 
-                    type="search" 
-                    name="search" 
-                    placeholder="Search..." 
+                  <input
+                    type="search"
+                    name="search"
+                    placeholder="Search..."
                     className="bg-gray-100 h-10 px-5 pr-10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -731,7 +740,7 @@ const AdminDashboard = () => {
 
           {/* Main Content Body */}
           <div className="flex-1 overflow-y-auto pt-4 md:pt-0">
-            <div className="px-2 py-6 md:px-4 md:py-6 max-w-7xl mx-auto">
+            <div className={`px-2 ${activeTab === 'analytics' ? 'py-0 h-full' : 'py-6 md:py-8'} md:px-8 w-full mx-auto`}>
               {/* Mobile Search */}
               <div className="md:hidden mb-4">
                 {/* Mobile Restaurant Selector for Admin Users */}
@@ -771,11 +780,10 @@ const AdminDashboard = () => {
                               <button
                                 key={rest.id}
                                 onClick={() => handleRestaurantSelect(rest.id)}
-                                className={`w-full text-left px-2 py-3 rounded-md text-sm transition-colors ${
-                                  rest.id === userRestaurantId
-                                    ? 'bg-orange-100 text-orange-700 font-medium'
-                                    : 'hover:bg-gray-50 text-gray-700'
-                                }`}
+                                className={`w-full text-left px-2 py-3 rounded-md text-sm transition-colors ${rest.id === userRestaurantId
+                                  ? 'bg-orange-100 text-orange-700 font-medium'
+                                  : 'hover:bg-gray-50 text-gray-700'
+                                  }`}
                               >
                                 <div className="flex items-center justify-between">
                                   <span className="truncate">{rest.name}</span>
@@ -793,10 +801,10 @@ const AdminDashboard = () => {
                 )}
 
                 <div className="relative text-gray-600">
-                  <input 
-                    type="search" 
-                    name="search" 
-                    placeholder="Search..." 
+                  <input
+                    type="search"
+                    name="search"
+                    placeholder="Search..."
                     className="bg-gray-100 w-full h-10 px-4 pr-10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -811,7 +819,7 @@ const AdminDashboard = () => {
 
               {/* Content Components - Removed redundant padding */}
               {activeTab === 'dashboard' && (
-                <DashboardOverview 
+                <DashboardOverview
                   foodItems={foodItems}
                   updateOrderStatus={updateOrderStatus}
                   setActiveTab={setActiveTab}
@@ -820,7 +828,7 @@ const AdminDashboard = () => {
 
               {activeTab === 'menu' && (
                 <div className="h-full">
-                  <MenuManagement 
+                  <MenuManagement
                     foodItems={foodItems}
                     fetchFoodItems={fetchFoodItems}
                     setLoading={setLoading}
@@ -832,7 +840,7 @@ const AdminDashboard = () => {
               )}
 
               {activeTab === 'orders' && (
-                <OrderManagement 
+                <OrderManagement
                   restaurantId={userRestaurantId}
                   updateOrderStatus={updateOrderStatus}
                   searchTerm={searchTerm}
@@ -840,7 +848,7 @@ const AdminDashboard = () => {
               )}
 
               {activeTab === 'inventory' && (
-                <InventoryManagement 
+                <InventoryManagement
                   setLoading={setLoading}
                   setErrorMsg={setErrorMsg}
                   setSuccessMsg={setSuccessMsg}
@@ -848,30 +856,30 @@ const AdminDashboard = () => {
               )}
 
               {activeTab === 'users' && (
-                <StaffManagement 
+                <StaffManagement
                   searchTerm={searchTerm}
                   setSearchTerm={setSearchTerm}
                 />
               )}
-              
+
               {activeTab === 'offers' && (
-                <OffersManagement 
+                <OffersManagement
                   setLoading={setLoading}
                   setErrorMsg={setErrorMsg}
                   setSuccessMsg={setSuccessMsg}
                 />
               )}
-              
+
               {activeTab === 'qr' && (
-                <QRManagement 
+                <QRManagement
                   setLoading={setLoading}
                   setErrorMsg={setErrorMsg}
                   setSuccessMsg={setSuccessMsg}
                 />
               )}
-              
-              {activeTab === 'analytics' && (contextUserRole === 'manager' || contextUserRole === 'admin' || restaurant.ai_enabled==true || contextIsAdmin()) && (
-                <div>
+
+              {activeTab === 'analytics' && (contextUserRole === 'manager' || contextUserRole === 'admin' || restaurant.ai_enabled == true || contextIsAdmin()) && (
+                <div className="h-full flex flex-col">
                   {restaurant.ai_enabled ? (
                     <AIAnalyticsChat restaurantId={restaurant.id} />
                   ) : (
@@ -883,18 +891,24 @@ const AdminDashboard = () => {
                   )}
                 </div>
               )}
-              
+
+              {activeTab === 'aggregators' && (
+                <AggregatorIntegration
+                  restaurantId={restaurant.id}
+                />
+              )}
+
               {activeTab === 'settings' && (
-                <SettingsManagement 
+                <SettingsManagement
                   currentUser={currentUser}
                 />
               )}
-              
+
               {activeTab === 'activity-logs' && (
-                <InventoryActivityLogs 
-                  setLoading={setLoading} 
-                  setErrorMsg={setErrorMsg} 
-                  setSuccessMsg={setSuccessMsg} 
+                <ActivityLogs
+                  setLoading={setLoading}
+                  setErrorMsg={setErrorMsg}
+                  setSuccessMsg={setSuccessMsg}
                   searchTerm={searchTerm}
                   setSearchTerm={setSearchTerm}
                 />

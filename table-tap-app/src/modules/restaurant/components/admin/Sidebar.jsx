@@ -1,8 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Building2, 
-  Users, 
+import {
+  Building2,
+  Users,
   LogOut,
   Menu,
   X,
@@ -16,7 +16,8 @@ import {
   Package,
   Star,
   Camera,
-  Clock
+  Clock,
+  ShoppingBag
 } from 'lucide-react';
 import { supabase } from '../../../shared/supabase';
 import tableTapLogo from '../../../../assets/icons/logott.png'; // Adjust path if needed
@@ -63,6 +64,8 @@ const Sidebar = ({ activeTab, setActiveTab, menuItems, currentUser, restaurantNa
         return <Building2 className="w-5 h-5" />;
       case 'Clock':
         return <Clock className="w-5 h-5" />;
+      case 'ShoppingBag':
+        return <ShoppingBag className="w-5 h-5" />;
       default:
         return null;
     }
@@ -112,7 +115,7 @@ const Sidebar = ({ activeTab, setActiveTab, menuItems, currentUser, restaurantNa
               {currentUser?.restaurant_logo_url || restaurantName ? (
                 currentUser?.restaurant_logo_url ? (
                   <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center overflow-hidden shadow">
-                    <img 
+                    <img
                       src={currentUser.restaurant_logo_url}
                       alt={restaurantName || "Restaurant Logo"}
                       className="w-10 h-10 object-contain"
@@ -144,11 +147,10 @@ const Sidebar = ({ activeTab, setActiveTab, menuItems, currentUser, restaurantNa
                 <li key={item.id}>
                   <button
                     onClick={() => handleTabChange(item.id)}
-                    className={`flex items-center w-full p-3 rounded-lg transition-colors ${
-                      activeTab === item.id 
-                        ? 'bg-orange-500 text-white' 
+                    className={`flex items-center w-full p-3 rounded-lg transition-colors ${activeTab === item.id
+                        ? 'bg-orange-500 text-white'
                         : 'hover:bg-gray-800 text-gray-300'
-                    }`}
+                      }`}
                   >
                     {getIcon(item.icon)}
                     <span className="ml-3">{item.label}</span>
@@ -163,21 +165,21 @@ const Sidebar = ({ activeTab, setActiveTab, menuItems, currentUser, restaurantNa
             <div className="admin-profile flex items-center gap-4 p-2">
               <div className="relative group">
                 {currentUser?.avatar_url ? (
-                  <img 
-                    src={currentUser.avatar_url} 
-                    alt="User avatar" 
+                  <img
+                    src={currentUser.avatar_url}
+                    alt="User avatar"
                     className="w-12 h-12 rounded-full object-cover border-2 border-gray-500 cursor-pointer transition-transform group-hover:scale-105"
                     onClick={onProfilePhotoClick}
                   />
                 ) : (
-                  <div 
+                  <div
                     className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-medium cursor-pointer transition-transform group-hover:scale-105"
                     onClick={onProfilePhotoClick}
                   >
                     {currentUser?.email?.charAt(0).toUpperCase()}
                   </div>
                 )}
-                
+
                 {/* Camera icon overlay */}
                 <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <Camera className="w-3 h-3 text-white" />
@@ -208,7 +210,7 @@ const Sidebar = ({ activeTab, setActiveTab, menuItems, currentUser, restaurantNa
 
       {/* Mobile overlay */}
       {showMobileNav && (
-        <div 
+        <div
           className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-0"
           onClick={() => setShowMobileNav(false)}
         />

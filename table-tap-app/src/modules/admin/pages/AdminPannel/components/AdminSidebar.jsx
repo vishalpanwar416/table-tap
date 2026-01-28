@@ -14,7 +14,8 @@ import {
   Camera,
   Building2,
   CreditCard,
-  MessageSquare
+  MessageSquare,
+  ClipboardList
 } from 'lucide-react';
 import { supabase } from '../../../../shared/supabase';
 // Import the existing TableTap logo
@@ -59,6 +60,8 @@ const AdminSidebar = ({ activeTab, setActiveTab, menuItems, currentUser, restaur
         return <CreditCard className="w-5 h-5" />;
       case 'MessageSquare':
         return <MessageSquare className="w-5 h-5" />;
+      case 'ClipboardList':
+        return <ClipboardList className="w-5 h-5" />;
       default:
         return null;
     }
@@ -129,13 +132,13 @@ const AdminSidebar = ({ activeTab, setActiveTab, menuItems, currentUser, restaur
                   <button
                     onClick={() => handleTabChange(item.id)}
                     className={`flex items-center w-full p-4 rounded-xl transition-all duration-200 group font-spartan ${activeTab === item.id
-                        ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
-                        : 'hover:bg-slate-700/50 text-slate-300 hover:text-white'
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
+                      : 'hover:bg-slate-700/50 text-slate-300 hover:text-white'
                       }`}
                   >
                     <div className={`p-2 rounded-lg transition-all duration-200 ${activeTab === item.id
-                        ? 'bg-white/20'
-                        : 'group-hover:bg-slate-600/50'
+                      ? 'bg-white/20'
+                      : 'group-hover:bg-slate-600/50'
                       }`}>
                       {getIcon(item.icon)}
                     </div>

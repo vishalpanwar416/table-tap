@@ -1,5 +1,6 @@
 import { supabase } from '../../../shared/supabase';
 import { createNotification } from '../../../shared/api/notificationService';
+import { logActivity } from '../../../shared/api/activityLogService';
 import axios from 'axios';
 
 // Note: Order creation has been moved to paymentService.js
@@ -57,7 +58,7 @@ export const getRestaurantOrders = async (restaurantId) => {
 };
 
 // Update order status
-export const updateOrderStatus = async (orderId, status, cancelReason = null) => {
+export const updateOrderStatus = async (orderId, status, cancelReason = null, userData = null) => {
   const updates = { status };
   if (cancelReason) {
     updates.cancel_reason = cancelReason;
@@ -70,7 +71,25 @@ export const updateOrderStatus = async (orderId, status, cancelReason = null) =>
     .select();
 
   if (error) throw error;
-  return data[0];
+  const updatedOrder = data[0];
+
+  // Log activity if userData is provided
+  if (userData && updatedOrder) {
+    await logActivity({
+      restaurant_id: updatedOrder.restaurant_id,
+      user_id: userData.id,
+      user_name: userData.user_name || userData.full_name || 'Staff',
+      user_role: userData.role || userData.profile_role || 'staff',
+      action_type: 'order',
+      action_name: 'status_change',
+      target_id: updatedOrder.id,
+      target_name: `Order #${updatedOrder.order_number || updatedOrder.id.slice(0, 8)}`,
+      details: { old_status: null, new_status: status, cancel_reason: cancelReason },
+      description: `Order status changed to ${status}${cancelReason ? ' (Reason: ' + cancelReason + ')' : ''}`
+    });
+  }
+
+  return updatedOrder;
 };
 
 // Helper function to create user notification for order status updates
@@ -193,7 +212,7 @@ export const getOrdersByStatus = async (status, restaurantId = null) => {
 };
 
 // Cancel order
-export const cancelOrder = async (orderId, reason) => {
+export const cancelOrder = async (orderId, reason, userData = null) => {
   try {
     const { data, error } = await supabase
       .from('orders')
@@ -207,6 +226,22 @@ export const cancelOrder = async (orderId, reason) => {
       .single();
 
     if (error) throw error;
+
+    if (userData && data) {
+      await logActivity({
+        restaurant_id: data.restaurant_id,
+        user_id: userData.id,
+        user_name: userData.user_name || userData.full_name || 'Staff',
+        user_role: userData.role || userData.profile_role || 'staff',
+        action_type: 'order',
+        action_name: 'cancelled',
+        target_id: data.id,
+        target_name: `Order #${data.order_number || data.id.slice(0, 8)}`,
+        details: { reason },
+        description: `Order cancelled. Reason: ${reason}`
+      });
+    }
+
     return data;
   } catch (error) {
     throw error;

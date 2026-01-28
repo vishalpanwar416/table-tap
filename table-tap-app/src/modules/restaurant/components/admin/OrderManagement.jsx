@@ -733,12 +733,9 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
       <div className="px-3 sm:px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-center">
-            <h2 className="text-2xl font-bold text-gray-800 flex items-center">
-              Order Management
-              {isLoading && (
-                <RefreshCw size={20} className="ml-3 text-orange-500 animate-spin" />
-              )}
-            </h2>
+            {isLoading && (
+              <RefreshCw size={20} className="text-orange-500 animate-spin" />
+            )}
           </div>
 
           <div className="flex flex-row items-center gap-2 w-full lg:w-auto justify-between sm:justify-start">
@@ -1218,7 +1215,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
             className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity duration-300"
             onClick={() => { setShowCreateOrderModal(false); resetCreateOrder(); }}
           />
-          <div className="relative bg-white w-full max-w-7xl h-full max-h-[95vh] rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-300 scale-100">
+          <div className="relative bg-white w-full max-w-[1600px] h-full max-h-[95vh] rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-300 scale-100 mx-auto">
             {/* Enhanced Header */}
             <div className="flex items-center justify-between px-4 sm:px-6 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white">
               <div className="flex items-center gap-3">

@@ -10,7 +10,8 @@ import {
   QrCode,
   BarChart3,
   Package,
-  Clock
+  Clock,
+  ShoppingBag
 } from 'lucide-react';
 
 const MobileNav = ({ showMobileNav, setShowMobileNav, activeTab, setActiveTab, menuItems, handleLogout, currentUser, restaurantName, userRole }) => {
@@ -26,7 +27,8 @@ const MobileNav = ({ showMobileNav, setShowMobileNav, activeTab, setActiveTab, m
       'BarChart3': BarChart3,
       'Package': Package,
       'Clock': Clock,
-      'Settings': Settings
+      'Settings': Settings,
+      'ShoppingBag': ShoppingBag
     };
 
     const IconComponent = icons[iconName];
@@ -90,8 +92,8 @@ const MobileNav = ({ showMobileNav, setShowMobileNav, activeTab, setActiveTab, m
                       setShowMobileNav(false);
                     }}
                     className={`flex items-center w-full p-3 rounded-lg transition-colors ${activeTab === item.id
-                        ? 'bg-orange-500 text-white'
-                        : 'hover:bg-gray-700 text-gray-300'
+                      ? 'bg-orange-500 text-white'
+                      : 'hover:bg-gray-700 text-gray-300'
                       }`}
                   >
                     {getIcon(item.icon)}
