@@ -1,27 +1,30 @@
 {
-    "rewrites": [
+  "buildCommand": "npm run build:app",
+  "outputDirectory": "table-tap-app/build",
+  "framework": "create-react-app",
+  "rewrites": [
+    {
+      "source": "/((?!static|favicon.ico|manifest.json|.*\\..*).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
         {
-            "source": "/((?!api|_next|static|favicon.ico).*)",
-            "destination": "/"
-        }
-    ],
-    "headers": [
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
         {
-            "source": "/(.*)",
-            "headers": [
-                {
-                    "key": "X-Content-Type-Options",
-                    "value": "nosniff"
-                },
-                {
-                    "key": "X-Frame-Options",
-                    "value": "DENY"
-                },
-                {
-                    "key": "X-XSS-Protection",
-                    "value": "1; mode=block"
-                }
-            ]
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
         }
-    ]
+      ]
+    }
+  ]
 }
