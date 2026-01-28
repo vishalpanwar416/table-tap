@@ -9,7 +9,19 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.log('Key present:', !!supabaseAnonKey);
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+// Use fallback values if env vars are missing to prevent app crash
+// This allows the app to load and show proper error messages instead of a blank screen
+const defaultUrl = 'https://placeholder.supabase.co'; 
+const defaultKey = 'placeholder';
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Supabase credentials missing! Check your .env file or Vercel project settings.');
+}
+
+export const supabase = createClient(
+  supabaseUrl || defaultUrl, 
+  supabaseAnonKey || defaultKey, 
+  {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
