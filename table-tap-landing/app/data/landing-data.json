@@ -2,7 +2,7 @@
     "header": {
         "navLinks": [
             {
-                "name": "The Story",
+                "name": "Our Story",
                 "href": "#home"
             },
             {
@@ -10,250 +10,256 @@
                 "href": "#services"
             },
             {
-                "name": "Craft",
+                "name": "Features",
                 "href": "#features"
             },
             {
-                "name": "Plans",
+                "name": "Pricing",
                 "href": "#pricing"
             },
             {
-                "name": "Connect",
+                "name": "Contact",
                 "href": "#contact"
             }
         ],
         "cta": {
-            "text": "Join the Journey",
-            "href": "https://app.tabletap.in/signup"
+            "text": "Start Free Trial",
+            "href": "#"
         }
     },
     "hero": {
         "titlePrefix": "Dining is about",
         "titleMain": "the Memory.",
-        "subtitle": "Eating is a necessity, but dining is an art of connection. We've built Table Tap to remove the friction of ordering, so you can focus on the people across the table. Beautiful UI. Seamless moments. Unforgettable stories.",
+        "subtitle": "Every great meal tells a story. We built Table Tap to fade into the background—so nothing stands between your guests and the moments they'll remember forever. Seamless ordering. Effortless service. Pure hospitality.",
         "ctaPrimary": {
-            "text": "Begin Your Story",
-            "href": "https://app.tabletap.in/signup"
+            "text": "Start Your Free Trial",
+            "href": "#"
         },
         "ctaSecondary": {
-            "text": "See the Magic",
+            "text": "Watch Demo",
             "href": "#services"
         },
         "stats": [
             {
-                "label": "Guest Joy",
-                "value": "4.9/5"
+                "label": "Guest Satisfaction",
+                "value": "98%"
             },
             {
-                "label": "Memories Made",
-                "value": "1M+"
+                "label": "Orders Processed",
+                "value": "2M+"
             }
         ]
     },
     "services": {
-        "badge": "The Experience",
-        "title": "Invisible Tech.",
-        "titleHighlight": "Deep Connection.",
-        "description": "True technology doesn't demand attention—it creates space for it. Table Tap enhances every touchpoint, from the first scan to the last goodbye.",
+        "badge": "Why Table Tap",
+        "title": "Your Restaurant,",
+        "titleHighlight": "Your Rules.",
+        "description": "Complete freedom to customize every aspect of your digital presence. Edit menus, launch offers, manage orders from every platform—all in real-time, all from your phone. No developers needed.",
         "items": [
             {
                 "id": "qr-ordering",
-                "title": "Natural Flow",
-                "description": "An interface so intuitive, it feels like an extension of the conversation. No downloads, just delight.",
+                "title": "Scan. Order. Enjoy.",
+                "description": "Guests scan a beautiful QR code at their table, browse your visual menu, and order instantly. No downloads required—works on any phone, any browser.",
                 "features": [
-                    "Zero Distraction",
-                    "Elegant Visuals",
-                    "Instant Access"
+                    "Table-wise QR Codes",
+                    "Instant Menu Access",
+                    "Works Everywhere"
                 ]
             },
             {
                 "id": "digital-menu",
-                "title": "Visual Story",
-                "description": "Your dishes aren't just items; they are creations. Our digital menu tells their story through stunning imagery.",
+                "title": "Menus That Come Alive",
+                "description": "Showcase your dishes with stunning photos, detailed descriptions, and real-time pricing. Update items, mark sold-out, or add specials—changes reflect instantly.",
                 "features": [
-                    "Artisan Display",
-                    "Live Updates",
-                    "Flavor Profiles"
+                    "Visual Food Gallery",
+                    "Real-Time Updates",
+                    "Category Management"
                 ]
             },
             {
-                "id": "secure-pay",
-                "title": "Unified Calm",
-                "description": "One dashboard for QR, Swiggy, and Zomato. We handle the chaos so your staff can remain the perfect hosts.",
+                "id": "unified-orders",
+                "title": "One Dashboard. All Orders.",
+                "description": "QR orders, Swiggy, Zomato—everything flows into one unified screen. Your kitchen sees all orders in real-time with notification sounds. No more tablet juggling.",
                 "features": [
-                    "Staff Zen",
-                    "Total Control",
-                    "Swiggy/Zomato Sync"
+                    "Multi-Platform Sync",
+                    "Kitchen Notifications",
+                    "Order Status Tracking"
                 ]
             },
             {
-                "id": "smart-analytics",
-                "title": "Pure Hospitality",
-                "description": "Designed by restaurateurs who believe that every meal is an opportunity to leave a lasting impression.",
+                "id": "offers-promotions",
+                "title": "Offers That Drive Sales",
+                "description": "Create happy hour deals, festive discounts, BOGO offers, or combo meals in minutes. Schedule them to go live automatically and watch your revenue grow.",
                 "features": [
-                    "Host Empowerment",
-                    "Guest Loyalty",
-                    "Direct Feedback"
+                    "Discount Codes",
+                    "Scheduled Promotions",
+                    "Combo Builder"
                 ]
             }
         ]
     },
     "features": {
-        "badge": "The Craft",
-        "title": "Engineered for People.",
-        "description": "We've obsessively refined our platform to ensure that while the backend is a powerhouse, the frontend remains a gentle whisper of convenience.",
+        "badge": "Owner Superpowers",
+        "title": "Total Control.",
+        "description": "You know your restaurant best. Table Tap gives you powerful tools to manage everything—from your menu to your team to your inventory. No tech skills required.",
         "mainFeatures": [
             {
-                "title": "Central Soul",
-                "description": "A single heart for your kitchen. Unified orders from every platform, handled with grace.",
+                "title": "Menu Editor",
+                "description": "Add dishes with photos, descriptions, and prices. Organize by categories. Mark items as sold out instantly. Your menu, your way.",
                 "type": "zap"
             },
             {
-                "title": "Dynamic Spirit",
-                "description": "Change prices or availability in a heartbeat, without ever breaking the guest's immersion.",
+                "title": "Smart Inventory",
+                "description": "Track stock levels in real-time. Get alerts when supplies run low. View activity logs for complete transparency.",
                 "type": "palette"
             },
             {
-                "title": "Guest-Centric UI",
-                "description": "The most sophisticated mobile interface ever designed for a restaurant table.",
+                "title": "Staff Management",
+                "description": "Add your team with role-based access—Manager, Captain, Chef, Waiter, Cashier. Everyone sees only what they need.",
                 "type": "smartphone"
             },
             {
-                "title": "Bridging Cultures",
-                "description": "Multilingual menus that make every visitor feel like a regular, no matter where they're from.",
+                "title": "AI Analytics",
+                "description": "Understand your business with AI-powered insights. Ask questions in plain English and get instant answers about sales, trends, and more.",
                 "type": "globe"
             },
             {
-                "title": "Fortress of Trust",
-                "description": "Bespoke security for payments and data, so you and your guests can dine in peace.",
+                "title": "QR Code Generator",
+                "description": "Generate unique QR codes for each table. Print-ready designs that match your restaurant's style. Easy to replace anytime.",
                 "type": "lock"
             },
             {
-                "title": "Wisdom & Growth",
-                "description": "Insights that don't just show numbers, but reveal the preferences and patterns of your community.",
+                "title": "Real-Time Notifications",
+                "description": "Instant order alerts with sounds. Browser notifications even when you're away. Never miss an order again.",
                 "type": "headphones"
             }
         ],
         "banner": {
-            "title": "Enrich Your Space?",
-            "description": "Join the collective of forward-thinking restaurants that prioritize human experience through digital excellence.",
-            "ctaText": "Start Your Chapter",
+            "title": "Ready to Transform?",
+            "description": "Join 500+ restaurants that have already elevated their guest experience with Table Tap.",
+            "ctaText": "Get Started Free",
             "ctaHref": "#contact",
-            "statValue": "100%",
-            "statLabel": "Guest Engagement"
+            "statValue": "40%",
+            "statLabel": "Faster Service"
         }
     },
     "howItWorks": {
-        "badge": "The Journey",
-        "titlePrefix": "A Seamless",
-        "titleItalic": "Experience.",
+        "badge": "Simple Setup",
+        "titlePrefix": "Live in",
+        "titleItalic": "15 Minutes.",
         "steps": [
             {
                 "number": "01",
-                "title": "Invite & Welcome",
-                "description": "Place your premium QR codes. A quiet invitation for guests to explore your world.",
+                "title": "Create Your Menu",
+                "description": "Upload your dishes with photos and descriptions. Organize by categories. Set prices and availability.",
                 "color": "bg-orange-50"
             },
             {
                 "number": "02",
-                "title": "Discover & Dream",
-                "description": "Guests browse your visual storytelling menu, selecting flavors that will define their evening.",
+                "title": "Generate Table QR Codes",
+                "description": "We generate beautiful QR codes for each table. Just print and place—guests can start ordering immediately.",
                 "color": "bg-emerald-50"
             },
             {
                 "number": "03",
-                "title": "Create & Relish",
-                "description": "Your staff serves with speed and precision, while the moments flow uninterrupted.",
+                "title": "Receive Orders Instantly",
+                "description": "Orders appear on your dashboard in real-time with notification sounds. Your kitchen gets notified instantly.",
                 "color": "bg-blue-50"
             }
         ],
         "experience": {
-            "badge": "The Philosophy",
-            "title": "Beyond the Plate.",
-            "subtitle": "Creating Timeless Memories.",
+            "badge": "The Result",
+            "title": "Happy Guests.",
+            "subtitle": "Thriving Business.",
             "benefits": [
-                "The Focus is Forever - We stay out of the way of the conversation.",
-                "A Touch of Magic - Instant, fluid, and visually breathtaking.",
-                "Hospitality First - Empowering your team to be truly present."
+                "Guests order without waiting for a waiter to bring the menu",
+                "Kitchen sees orders instantly—no lost tickets, no confusion",
+                "Your staff focuses on hospitality, not order-taking"
             ]
         }
     },
     "pricing": {
-        "badge": "Investment",
-        "title": "Fair &",
-        "titleHighlight": "Transparent.",
+        "badge": "Simple Pricing",
+        "title": "No Hidden",
+        "titleHighlight": "Surprises.",
         "plans": [
             {
-                "id": "standard",
-                "name": "Bistro",
-                "description": "Ideal for cozy spaces where intimacy meets digital speed.",
+                "id": "starter",
+                "name": "Starter",
+                "description": "Perfect for cafes and small restaurants just getting started.",
                 "price": 999,
                 "features": [
-                    "20 Tables",
-                    "Artisan QR Menu",
-                    "Unified Payments",
-                    "Performance Insights"
+                    "Up to 15 Tables",
+                    "QR Menu & Ordering",
+                    "Order Management",
+                    "Basic Analytics",
+                    "Email Support"
                 ],
                 "popular": false
             },
             {
-                "id": "ai-pro",
-                "name": "Establishment",
-                "description": "Advanced tools for high-volume locales that never sleep.",
-                "price": 1499,
+                "id": "professional",
+                "name": "Professional",
+                "description": "For growing restaurants that want the complete experience.",
+                "price": 1999,
                 "features": [
                     "Unlimited Tables",
-                    "AI Guest Insights",
-                    "Smart Inventory",
-                    "Priority Care"
+                    "Swiggy & Zomato Sync",
+                    "Staff Management",
+                    "Inventory Tracking",
+                    "AI Analytics",
+                    "Offers & Promotions",
+                    "Priority Support"
                 ],
                 "popular": true
             },
             {
                 "id": "enterprise",
-                "name": "Legacy",
-                "description": "Tailored ecosystems for multi-city franchises and legends.",
+                "name": "Enterprise",
+                "description": "Custom solutions for restaurant chains and franchises.",
                 "price": null,
                 "features": [
-                    "Franchise Network",
-                    "Predictive AI",
-                    "Concierge Success",
-                    "API Integration"
+                    "Multi-Location Support",
+                    "Custom Integrations",
+                    "Dedicated Account Manager",
+                    "SLA Guarantee",
+                    "On-Site Training",
+                    "White-Label Options"
                 ],
                 "popular": false
             }
         ]
     },
     "contact": {
-        "badge": "Conversation",
-        "titlePrefix": "Let's Build Your",
-        "titleHighlight": "Next Memory.",
-        "description": "Ready to transform your dining room into a gallery of seamless experiences? Our hospitality experts are a message away.",
+        "badge": "Get in Touch",
+        "titlePrefix": "Let's Build Something",
+        "titleHighlight": "Amazing.",
+        "description": "Ready to transform your restaurant? Our team is here to help you get started. Reach out for a personalized demo or any questions.",
         "info": [
             {
-                "label": "Personal Support",
-                "value": "hello@tabletap.in",
+                "label": "Email Us",
+                "value": "vishalpanwar416@gmail.com",
                 "type": "mail"
             },
             {
-                "label": "Hospitality Line",
-                "value": "+91 98765 43210",
+                "label": "Call Us",
+                "value": "+91 75009 88212",
                 "type": "phone"
             },
             {
-                "label": "Design Hub",
-                "value": "Bangalore, India",
+                "label": "Visit Us",
+                "value": "Hyderabad, India",
                 "type": "map-pin"
             }
         ],
         "form": {
-            "title": "Start a Project",
-            "successTitle": "Story Received.",
-            "successText": "We'll be in touch within 24 hours to help craft your restaurant's future."
+            "title": "Request a Demo",
+            "successTitle": "Message Received!",
+            "successText": "We'll get back to you within 24 hours with your personalized demo link."
         }
     },
     "footer": {
-        "description": "Table Tap is more than software. It's a commitment to the art of dining and the beauty of human connection.",
+        "description": "Table Tap helps restaurants deliver exceptional guest experiences through seamless digital ordering. Built by restaurateurs, for restaurateurs.",
         "socialLinks": [
             {
                 "platform": "Instagram",
@@ -273,40 +279,57 @@
         ],
         "links": [
             {
-                "title": "Explore",
+                "title": "Product",
                 "items": [
                     {
-                        "label": "The Craft",
+                        "label": "Features",
                         "href": "#features"
                     },
                     {
-                        "label": "The Story",
-                        "href": "#home"
+                        "label": "Pricing",
+                        "href": "#pricing"
                     },
                     {
-                        "label": "The Experience",
+                        "label": "Integrations",
                         "href": "#services"
                     }
                 ]
             },
             {
-                "title": "Support",
+                "title": "Company",
                 "items": [
                     {
-                        "label": "Connect",
+                        "label": "About Us",
+                        "href": "#home"
+                    },
+                    {
+                        "label": "Contact",
                         "href": "#contact"
                     },
                     {
-                        "label": "Privacy",
+                        "label": "Careers",
+                        "href": "#"
+                    }
+                ]
+            },
+            {
+                "title": "Legal",
+                "items": [
+                    {
+                        "label": "Privacy Policy",
                         "href": "#"
                     },
                     {
-                        "label": "Terms",
+                        "label": "Terms of Service",
+                        "href": "#"
+                    },
+                    {
+                        "label": "Refund Policy",
                         "href": "#"
                     }
                 ]
             }
         ],
-        "copyright": "© 2026 Table Tap. Dedicated to the craft of connection."
+        "copyright": "© 2024 Table Tap. All rights reserved. Made with ❤️ in India."
     }
 }

@@ -5,12 +5,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
+import { useModal } from '../context/ModalContext';
 import data from '../data/landing-data.json';
 
 const Header = () => {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const { header } = data;
+    const { openModal } = useModal();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -56,14 +58,14 @@ const Header = () => {
 
                 {/* CTA */}
                 <div className="hidden lg:flex items-center">
-                    <motion.a
-                        href={header.cta.href}
+                    <motion.button
+                        onClick={() => openModal('starter')}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         className="btn-premium text-[14px]"
                     >
                         {header.cta.text}
-                    </motion.a>
+                    </motion.button>
                 </div>
 
                 {/* Mobile Menu Button */}
@@ -93,12 +95,12 @@ const Header = () => {
                                 {link.name}
                             </a>
                         ))}
-                        <a
-                            href={header.cta.href}
+                        <button
+                            onClick={() => { openModal('starter'); setIsMobileMenuOpen(false); }}
                             className="btn-premium text-center"
                         >
                             {header.cta.text}
-                        </a>
+                        </button>
                     </div>
                 </motion.div>
             )}

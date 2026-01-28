@@ -4,8 +4,8 @@ import { motion } from 'framer-motion';
 import {
     QrCode,
     UtensilsCrossed,
-    CreditCard,
-    BarChart3,
+    LayoutDashboard,
+    Tag,
     Check
 } from 'lucide-react';
 import data from '../data/landing-data.json';
@@ -13,15 +13,15 @@ import data from '../data/landing-data.json';
 const IconMap = {
     'qr-ordering': QrCode,
     'digital-menu': UtensilsCrossed,
-    'secure-pay': CreditCard,
-    'smart-analytics': BarChart3
+    'unified-orders': LayoutDashboard,
+    'offers-promotions': Tag
 };
 
 const Services = () => {
     const { services } = data;
 
     return (
-        <section id="services" className="py-64 relative bg-white overflow-hidden">
+        <section id="services" className="py-24 relative bg-white overflow-hidden">
             {/* Background Decorative Gradient */}
             <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-[#2A9D8F]/5 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2" />
 

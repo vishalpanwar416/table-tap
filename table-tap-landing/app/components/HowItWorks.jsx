@@ -14,7 +14,7 @@ const HowItWorks = () => {
     const { howItWorks } = data;
 
     return (
-        <section id="how-it-works" className="py-64 relative bg-white overflow-hidden">
+        <section id="how-it-works" className="py-24 relative bg-white overflow-hidden">
             {/* Background Aesthetic Section */}
             <div className="absolute top-1/2 left-0 w-[500px] h-[500px] bg-[#F4A261]/5 rounded-full blur-[120px] -translate-x-1/2" />
 

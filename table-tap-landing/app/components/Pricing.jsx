@@ -6,8 +6,8 @@ import { Check, Zap, Sparkles, Building2 } from 'lucide-react';
 import data from '../data/landing-data.json';
 
 const IconMap = {
-    standard: Zap,
-    'ai-pro': Sparkles,
+    starter: Zap,
+    professional: Sparkles,
     enterprise: Building2
 };
 
@@ -16,7 +16,7 @@ const Pricing = () => {
     const { pricing } = data;
 
     return (
-        <section id="pricing" className="py-64 bg-[#F8FAFC]/50 relative overflow-hidden">
+        <section id="pricing" className="py-24 bg-[#F8FAFC]/50 relative overflow-hidden">
             {/* Background Aesthetic Section */}
             <div className="absolute top-0 left-1/2 w-[1000px] h-[1000px] bg-[#2A9D8F]/5 rounded-full blur-[150px] -translate-x-1/2 -translate-y-1/2" />
 
@@ -96,19 +96,22 @@ const Pricing = () => {
 
                                 <div className="mb-14">
                                     {plan.price ? (
-                                        <div className="flex items-baseline gap-2">
-                                            <span className="text-3xl font-black text-gray-300">₹</span>
-                                            <motion.span
-                                                key={billingCycle}
-                                                initial={{ y: 20, opacity: 0 }}
-                                                animate={{ y: 0, opacity: 1 }}
-                                                className="text-8xl font-black text-gray-900 tracking-tighter leading-none"
-                                            >
-                                                {billingCycle === 'yearly' ? Math.floor(plan.price * 12 * 0.75) : plan.price}
-                                            </motion.span>
-                                            <span className="text-gray-400 font-black text-xs uppercase tracking-widest pb-2">
-                                                /{billingCycle === 'monthly' ? 'mo' : 'yr'}
-                                            </span>
+                                        <div className="flex flex-col">
+                                            <div className="flex items-baseline gap-2">
+                                                <span className="text-3xl font-black text-gray-300">₹</span>
+                                                <motion.span
+                                                    key={billingCycle}
+                                                    initial={{ y: 20, opacity: 0 }}
+                                                    animate={{ y: 0, opacity: 1 }}
+                                                    className="text-8xl font-black text-gray-900 tracking-tighter leading-none"
+                                                >
+                                                    {billingCycle === 'yearly' ? Math.floor(plan.price * 12 * 0.75) : plan.price}
+                                                </motion.span>
+                                                <span className="text-gray-400 font-black text-xs uppercase tracking-widest pb-2">
+                                                    /{billingCycle === 'monthly' ? 'mo' : 'yr'}
+                                                </span>
+                                            </div>
+                                            <span className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mt-2">+ 18% GST</span>
                                         </div>
                                     ) : (
                                         <div className="text-6xl font-black text-gray-900 tracking-tighter">Custom</div>
@@ -129,13 +132,13 @@ const Pricing = () => {
                                 <motion.a
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
-                                    href="https://app.tabletap.in/signup"
+                                    href={`/register?plan=${plan.id}&billing=${billingCycle}`}
                                     className={`w-full py-6 rounded-[28px] font-black text-center text-lg transition-all tracking-widest uppercase ${plan.popular
                                         ? 'bg-[#2A9D8F] text-white shadow-2xl shadow-[#2A9D8F]/30 hover:brightness-110'
                                         : 'bg-gray-100 text-gray-900 hover:bg-gray-900 hover:text-white shadow-sm'
                                         }`}
                                 >
-                                    Choose Plan
+                                    {plan.price ? 'Choose Plan' : 'Contact Sales'}
                                 </motion.a>
                             </motion.div>
                         );

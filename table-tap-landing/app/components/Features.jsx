@@ -19,7 +19,7 @@ const Features = () => {
     const { features } = data;
 
     return (
-        <section id="features" className="py-64 bg-[#F8FAFC]/30 relative overflow-hidden">
+        <section id="features" className="py-24 bg-[#F8FAFC]/30 relative overflow-hidden">
             {/* Background Aesthetic Particles */}
             <motion.div
                 animate={{ x: [0, 100, 0], y: [0, -50, 0] }}
@@ -91,7 +91,7 @@ const Features = () => {
                     initial={{ opacity: 0, scale: 0.95 }}
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
-                    className="mt-48 relative group"
+                    className="mt-24 relative group"
                 >
                     {/* Background Organic Glows */}
                     <div className="absolute -top-32 -left-32 w-96 h-96 bg-[#2A9D8F]/10 rounded-full blur-[120px] group-hover:bg-[#2A9D8F]/20 transition-colors duration-1000" />
@@ -100,23 +100,23 @@ const Features = () => {
                     <div className="glass rounded-[72px] p-2 overflow-hidden relative border-white">
                         <div className="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-[#2A9D8F]/10" />
 
-                        <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between p-16 md:p-32 gap-20">
+                        <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between p-12 md:p-20 gap-16">
                             {/* Text Content */}
                             <div className="text-left max-w-2xl">
                                 <motion.div
                                     initial={{ opacity: 0, x: -20 }}
                                     whileInView={{ opacity: 1, x: 0 }}
-                                    className="inline-flex items-center gap-3 bg-[#0F172A] text-white px-6 py-2 rounded-2xl text-[11px] font-black uppercase tracking-[0.3em] mb-10"
+                                    className="inline-flex items-center gap-3 bg-[#0F172A] text-white px-6 py-2 rounded-2xl text-[11px] font-black uppercase tracking-[0.3em] mb-6"
                                 >
                                     <div className="w-1.5 h-1.5 bg-[#2A9D8F] rounded-full animate-ping" />
-                                    Performance Analytics
+                                    Partnership
                                 </motion.div>
-                                <h3 className="text-5xl md:text-7xl font-black text-gray-900 mb-10 leading-[0.85] tracking-tighter">
-                                    Ready to <br />
-                                    <span className="gradient-text italic">Optimize?</span>
+                                <h3 className="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-[0.85] tracking-tighter">
+                                    Your Control. <br />
+                                    <span className="gradient-text italic">Our Support.</span>
                                 </h3>
-                                <p className="text-gray-500 text-xl font-bold mb-14 leading-relaxed max-w-lg">
-                                    {features.banner.description}
+                                <p className="text-gray-500 text-lg font-bold mb-8 leading-relaxed max-w-lg">
+                                    You run your restaurant, we power your technology. Full control over menus, offers, and orders—with 24/7 support whenever you need us.
                                 </p>
                                 <motion.a
                                     whileHover={{ x: 10 }}

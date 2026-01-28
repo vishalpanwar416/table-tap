@@ -44,8 +44,6 @@ const LeadModal = () => {
 
             setFormStatus('success');
             setFormData({ name: '', email: '', phone: '', restaurant: '', message: '', plan: 'professional' });
-
-            // Auto close after success? Maybe wait for user to close.
         } catch (err) {
             console.error('Submission error:', err);
             setError('Failed to send inquiry. Please try again.');
@@ -79,9 +77,9 @@ const LeadModal = () => {
                                 <div>
                                     <div className="inline-flex items-center gap-2 bg-[#2A9D8F]/10 px-3 py-1 rounded-full mb-3">
                                         <Sparkles size={12} className="text-[#2A9D8F]" />
-                                        <span className="text-[#2A9D8F] text-[10px] font-black uppercase tracking-widest">Join the Journey</span>
+                                        <span className="text-[#2A9D8F] text-[10px] font-black uppercase tracking-widest">Free Trial</span>
                                     </div>
-                                    <h3 className="text-3xl font-black text-gray-900 leading-none tracking-tight">Get Started</h3>
+                                    <h3 className="text-3xl font-black text-gray-900 leading-none tracking-tight">Start Your Story</h3>
                                 </div>
                                 <button
                                     onClick={closeModal}
@@ -98,9 +96,9 @@ const LeadModal = () => {
                                         <div className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center mb-6">
                                             <CheckCircle className="text-emerald-500" size={40} />
                                         </div>
-                                        <h3 className="text-2xl font-black text-gray-900 mb-4 tracking-tight">Request Received!</h3>
+                                        <h3 className="text-2xl font-black text-gray-900 mb-4 tracking-tight">You're All Set!</h3>
                                         <p className="text-gray-500 font-bold max-w-xs mb-8">
-                                            We'll be in touch shortly to help you transform your restaurant experience.
+                                            We'll reach out within 24 hours to help you create unforgettable dining experiences.
                                         </p>
                                         <button
                                             onClick={closeModal}
@@ -112,9 +110,9 @@ const LeadModal = () => {
                                 ) : (
                                     <form onSubmit={handleSubmit} className="space-y-5">
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-wider text-gray-400 ml-2">Full Name</label>
+                                            <label className="text-[10px] font-black uppercase tracking-wider text-gray-400 ml-2">Your Name</label>
                                             <input
-                                                type="text" placeholder="John Doe"
+                                                type="text" placeholder="Rajesh Kumar"
                                                 value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                                 className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] transition-all font-bold text-gray-900 text-sm" required />
                                         </div>
@@ -123,14 +121,14 @@ const LeadModal = () => {
                                             <div className="space-y-2">
                                                 <label className="text-[10px] font-black uppercase tracking-wider text-gray-400 ml-2">Email</label>
                                                 <input
-                                                    type="email" placeholder="john@example.com"
+                                                    type="email" placeholder="you@restaurant.com"
                                                     value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                                     className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] transition-all font-bold text-gray-900 text-sm" required />
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-[10px] font-black uppercase tracking-wider text-gray-400 ml-2">Phone</label>
                                                 <input
-                                                    type="tel" placeholder="+91 98..."
+                                                    type="tel" placeholder="+91 98765..."
                                                     value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                                     className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] transition-all font-bold text-gray-900 text-sm" required />
                                             </div>
@@ -139,19 +137,19 @@ const LeadModal = () => {
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black uppercase tracking-wider text-gray-400 ml-2">Restaurant Name</label>
                                             <input
-                                                type="text" placeholder="The Good Place"
+                                                type="text" placeholder="Your Restaurant"
                                                 value={formData.restaurant} onChange={(e) => setFormData({ ...formData, restaurant: e.target.value })}
                                                 className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] transition-all font-bold text-gray-900 text-sm" required
                                             />
                                         </div>
 
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-wider text-gray-400 ml-2">Message (Optional)</label>
+                                            <label className="text-[10px] font-black uppercase tracking-wider text-gray-400 ml-2">Tell Us More (Optional)</label>
                                             <textarea
                                                 rows={3}
                                                 value={formData.message} onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                                                 className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] transition-all font-bold text-gray-900 text-sm resize-none"
-                                                placeholder="Any specific requirements?"
+                                                placeholder="How many tables? Any special requirements?"
                                             />
                                         </div>
 
@@ -165,8 +163,8 @@ const LeadModal = () => {
                                             type="submit" disabled={formStatus === 'sending'}
                                             className="w-full py-5 bg-[#2A9D8F] text-white rounded-2xl font-black uppercase tracking-widest text-sm shadow-xl shadow-[#2A9D8F]/30 hover:bg-[#21867a] hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group"
                                         >
-                                            {formStatus === 'sending' ? 'Sending...' : 'Submit Request'}
-                                            {!formStatus.includes('sending') && <Send size={16} className="group-hover:translate-x-1 transition-transform" />}
+                                            {formStatus === 'sending' ? 'Sending...' : 'Begin Your Journey'}
+                                            {formStatus !== 'sending' && <Send size={16} className="group-hover:translate-x-1 transition-transform" />}
                                         </button>
 
                                         <p className="text-center text-[10px] text-gray-400 font-bold">

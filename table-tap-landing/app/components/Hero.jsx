@@ -2,13 +2,15 @@
 
 import { motion } from 'framer-motion';
 import { QrCode, ArrowRight, Zap, CreditCard, Smartphone } from 'lucide-react';
+import { useModal } from '../context/ModalContext';
 import data from '../data/landing-data.json';
 
 const Hero = () => {
     const { hero } = data;
+    const { openModal } = useModal();
 
     return (
-        <section id="home" className="relative min-h-[100vh] flex items-center pt-28 pb-20 overflow-hidden bg-white">
+        <section id="home" className="relative min-h-[100vh] flex items-center pt-40 pb-20 overflow-hidden bg-white">
             {/* Background Aesthetic Elements */}
             <div className="blob top-[-100px] left-[-100px] bg-[#2A9D8F]/20 opacity-60" />
             <div className="blob blob-secondary bottom-[-100px] right-[-100px] opacity-40" />
@@ -33,14 +35,14 @@ const Hero = () => {
             <div className="container mx-auto px-6 relative z-10">
                 <div className="flex flex-col items-center text-center">
                     {/* Main Title - Staggered Reveal */}
-                    <div className="overflow-hidden mb-8">
+                    <div className="overflow-hidden mb-8 pb-4">
                         <motion.h1
                             initial={{ y: "100%" }}
                             animate={{ y: 0 }}
                             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
                             className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[0.95]"
                         >
-                            <span className="text-gray-900 block mb-2">{hero.titlePrefix}</span>
+                            <span className="text-gray-900">{hero.titlePrefix} </span>
                             <span className="gradient-text drop-shadow-sm">{hero.titleMain}</span>
                         </motion.h1>
                     </div>
@@ -62,14 +64,14 @@ const Hero = () => {
                         transition={{ duration: 0.8, delay: 0.6 }}
                         className="flex flex-wrap justify-center gap-6 mb-24"
                     >
-                        <motion.a
+                        <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            href={hero.ctaPrimary.href}
+                            onClick={() => openModal('starter')}
                             className="btn-premium flex items-center gap-3 text-lg px-12 py-6 shadow-2xl shadow-[#2A9D8F]/20"
                         >
                             {hero.ctaPrimary.text} <ArrowRight size={22} />
-                        </motion.a>
+                        </motion.button>
                         <motion.a
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}

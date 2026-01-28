@@ -48,7 +48,7 @@ const Contact = () => {
     };
 
     return (
-        <section id="contact" className="py-64 relative bg-white overflow-hidden">
+        <section id="contact" className="py-24 relative bg-white overflow-hidden">
             {/* Background Aesthetic Section */}
             <div className="absolute bottom-0 right-0 w-[800px] h-[800px] bg-[#2A9D8F]/5 rounded-full blur-[120px] translate-x-1/3 translate-y-1/3" />
 
@@ -69,7 +69,7 @@ const Contact = () => {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.8 }}
-                            className="text-5xl md:text-7xl lg:text-8xl font-black text-gray-900 mb-12 leading-[0.85] tracking-tighter"
+                            className="text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 mb-12 leading-[0.85] tracking-tighter"
                         >
                             {contact.titlePrefix} <br />
                             <span className="gradient-text italic font-serif">{contact.titleHighlight}</span>
@@ -79,7 +79,7 @@ const Contact = () => {
                             whileInView={{ opacity: 1 }}
                             viewport={{ once: true }}
                             transition={{ delay: 0.2 }}
-                            className="text-gray-500 text-2xl font-bold max-w-xl mb-20 leading-relaxed border-l-4 border-gray-100 pl-10"
+                            className="text-gray-500 text-2xl font-bold max-w-xl mb-10 leading-relaxed border-l-4 border-gray-100 pl-10"
                         >
                             {contact.description}
                         </motion.p>

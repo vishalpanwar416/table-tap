@@ -1,5 +1,7 @@
 import { League_Spartan } from "next/font/google";
 import "./globals.css";
+import { ModalProvider } from "./context/ModalContext";
+import LeadModal from "./components/LeadModal";
 
 const leagueSpartan = League_Spartan({
   variable: "--font-league-spartan",
@@ -89,7 +91,10 @@ export default function RootLayout({ children }) {
       <body
         className={`${leagueSpartan.variable} font-sans antialiased bg-white text-gray-900`}
       >
-        {children}
+        <ModalProvider>
+          {children}
+          <LeadModal />
+        </ModalProvider>
       </body>
     </html>
   );
