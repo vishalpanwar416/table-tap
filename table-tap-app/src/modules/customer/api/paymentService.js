@@ -86,7 +86,7 @@ export const initializeRazorpayPayment = ({
         special_instructions: specialInstructions
       }
     });
-    
+
     rzp.on('payment.failed', (response) => {
       if (onFailure) {
         onFailure(response.error.description || 'Gateway error');
@@ -102,11 +102,26 @@ export const initializeRazorpayPayment = ({
 /**
  * Verify Razorpay payment signature
  */
-export const verifyRazorpaySignature = (paymentId, orderId, signature) => {
-  // Note: In a production environment, this should be done on the server side
-  // This is a client-side placeholder - implement proper signature verification on your backend
-  console.warn('Payment signature verification should be implemented on the server side');
-  return true;
+export const verifyRazorpaySignature = async (paymentId, orderId, signature) => {
+  try {
+    const { data, error } = await supabase.functions.invoke('verify-payment', {
+      body: {
+        payment_id: paymentId,
+        order_id: orderId,
+        signature: signature
+      }
+    });
+
+    if (error) {
+      console.error('Payment verification error:', error);
+      return false;
+    }
+
+    return data?.verified === true;
+  } catch (err) {
+    console.error('Payment verification exception:', err);
+    return false;
+  }
 };
 
 // ========= ORDER CREATION AND MANAGEMENT =========
@@ -128,31 +143,31 @@ export const calculateOrderTotals = (items, discountValue = 0, discountType = 'p
   let originalTotal = 0;
   let discountAmount = 0;
   let taxableAmount = 0;
-  
+
   items.forEach(item => {
     const originalItemTotal = item.price * item.quantity;
     originalTotal += originalItemTotal;
-    
+
     // Calculate effective price after item-level discounts
-    const effectivePrice = item.effectivePrice !== undefined ? 
-      item.effectivePrice : 
+    const effectivePrice = item.effectivePrice !== undefined ?
+      item.effectivePrice :
       item.price; // Use original price if no item-level discount
-    
+
     const itemDiscount = (item.price - effectivePrice) * item.quantity;
     discountAmount += itemDiscount;
-    
+
     const itemSubtotal = effectivePrice * item.quantity;
-    
+
     // Check if the item is water (exempt from GST)
-    const isWater = item.name && 
-      (item.name.toLowerCase().includes('water') || 
-       item.category?.toLowerCase() === 'water');
-       
+    const isWater = item.name &&
+      (item.name.toLowerCase().includes('water') ||
+        item.category?.toLowerCase() === 'water');
+
     if (!isWater) {
       taxableAmount += itemSubtotal;
     }
   });
-  
+
   // Apply global discount if specified
   if (discountValue > 0) {
     let globalDiscountAmount = 0;
@@ -169,7 +184,7 @@ export const calculateOrderTotals = (items, discountValue = 0, discountType = 'p
     }
     discountAmount += globalDiscountAmount;
   }
-  
+
   const cgst = taxableAmount * 0.025; // 2.5% CGST
   const sgst = taxableAmount * 0.025; // 2.5% SGST
   const subtotalAfterDiscount = originalTotal - discountAmount;
@@ -212,7 +227,7 @@ export const createOrder = async (orderData) => {
 
     // Calculate price details
     const totals = calculateOrderTotals(orderData.items, orderData.discountPercentage || 0);
-    
+
     // Generate order number
     const orderNumber = generateOrderNumber(orderData.restaurantName);
 
@@ -288,7 +303,7 @@ export const createOrder = async (orderData) => {
 
     // Create notification for new order
     await createManagerOrderNotification(data);
-    
+
     return data;
   } catch (error) {
     console.error('Error in createOrder function:', error.message);
@@ -477,7 +492,7 @@ export const processDirectPayment = async (orderData) => {
       payment_method: 'direct',
       payment_status: 'completed'
     });
-    
+
     return result;
   } catch (error) {
     throw error;
@@ -491,12 +506,12 @@ export const completePayment = async (paymentResponse, orderData) => {
   try {
     // Verify payment if using Razorpay
     if (paymentResponse.razorpay_payment_id && paymentResponse.razorpay_payment_id !== 'DIRECT-' + Date.now()) {
-      const isValid = verifyRazorpaySignature(
+      const isValid = await verifyRazorpaySignature(
         paymentResponse.razorpay_payment_id,
         paymentResponse.razorpay_order_id,
         paymentResponse.razorpay_signature
       );
-      
+
       if (!isValid) {
         throw new Error('Payment verification failed');
       }
@@ -596,7 +611,7 @@ export const getPaymentMethodDisplayName = (method) => {
     'upi': 'UPI',
     'netbanking': 'Net Banking'
   };
-  
+
   return methods[method] || method;
 };
 
@@ -618,7 +633,7 @@ export const getPaymentStatusColor = (status) => {
     'cancelled': 'text-gray-600',
     'refunded': 'text-blue-600'
   };
-  
+
   return colors[status?.toLowerCase()] || 'text-gray-600';
 };
 
@@ -998,7 +1013,7 @@ export default {
   initializeRazorpayPayment,
   verifyRazorpaySignature,
   processRazorpayPayment,
-  
+
   // Order functions
   generateOrderNumber,
   calculateOrderTotals,
@@ -1007,11 +1022,11 @@ export default {
   getOrderById,
   getUserOrders,
   getRestaurantOrders,
-  
+
   // Payment processing
   processDirectPayment,
   completePayment,
-  
+
   // Utility functions
   formatCurrency,
   validatePaymentData,

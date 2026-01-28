@@ -91,18 +91,24 @@ const RegistrationRequests = () => {
 
         try {
             // 1. Create auth user (optional - may fail if user exists)
+            // 1. Create auth user via Edge Function (Secure)
             try {
-                await supabase.auth.admin.createUser({
-                    email: registration.owner_email,
-                    password: 'TempPass@123', // They'll need to reset this
-                    email_confirm: true,
-                    user_metadata: {
-                        full_name: registration.owner_name,
-                        phone: registration.owner_phone
+                const { data: userData, error: userError } = await supabase.functions.invoke('create-user', {
+                    body: {
+                        email: registration.owner_email,
+                        password: 'TempPass@123',
+                        email_confirm: true,
+                        user_metadata: {
+                            full_name: registration.owner_name,
+                            phone: registration.owner_phone
+                        }
                     }
                 });
+
+                if (userError) throw userError;
             } catch (authError) {
-                console.log('Admin user creation failed, user may need to signup manually');
+                console.log('User creation warning:', authError);
+                // Continue flow even if user creation fails (e.g. user already exists)
             }
 
             // 2. Create restaurant (initially not active - subscription will activate it)

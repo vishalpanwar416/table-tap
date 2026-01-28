@@ -276,70 +276,35 @@ RESPONSE STYLE:
 // Call AI service with conversation context
 export const callAIService = async (userQuestion, analyticsData, chatHistory = []) => {
   const systemContext = generateAISystemContext(analyticsData);
-  const apiKey = process.env.REACT_APP_OPENAI_API_KEY;
-
-  if (!apiKey) {
-    throw new Error('OpenAI API key not found. Please check your .env file.');
-  }
-
   // Format chat history for OpenAI (last 10 messages for context)
   const historyMessages = chatHistory.slice(-10).map(msg => ({
     role: msg.type === 'user' ? 'user' : 'assistant',
     content: msg.content
   }));
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: systemContext },
-        ...historyMessages,
-        { role: 'user', content: userQuestion }
-      ],
-      max_tokens: 1200,
-      temperature: 0.7
-    })
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    console.log({
-      status: response.status,
-      statusText: response.statusText,
-      error: errorData
+  try {
+    const { data: aiData, error: aiError } = await supabase.functions.invoke('ai-advisor', {
+      body: {
+        messages: historyMessages,
+        systemContext: systemContext,
+        userQuestion: userQuestion
+      }
     });
 
-    // Handle specific error cases
-    if (response.status === 429) {
-      if (errorData.error?.message?.includes('quota')) {
-        throw new Error('OpenAI quota exceeded. Please check your billing and upgrade your plan at https://platform.openai.com/account/billing');
-      } else {
-        throw new Error('Rate limit exceeded. Please wait a moment and try again.');
-      }
-    } else if (response.status === 401) {
-      throw new Error('Invalid API key. Please check your OpenAI API key in the .env file.');
-    } else if (response.status === 403) {
-      throw new Error('Access denied. Please check your OpenAI account status and billing.');
-    } else {
-      throw new Error(`AI service error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
-    }
+    if (aiError) throw aiError;
+
+    // Generate visualization based on the question and data (Client side logic remains)
+    const visualization = generateVisualization(userQuestion, analyticsData);
+
+    return {
+      textResponse: aiData.textResponse,
+      visualization: visualization
+    };
+
+  } catch (error) {
+    console.error('AI Service Error:', error);
+    throw new Error('Failed to get AI response: ' + error.message);
   }
-
-  const data = await response.json();
-  const aiResponse = data.choices[0].message.content;
-
-  // Generate visualization based on the question and data
-  const visualization = generateVisualization(userQuestion, analyticsData);
-
-  return {
-    textResponse: aiResponse,
-    visualization: visualization
-  };
 };
 
 // Generate visualizations based on user questions
