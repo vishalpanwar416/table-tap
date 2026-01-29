@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../shared/config/AuthContext';
 import { hasValidRestaurantSelection } from '../../../shared/utils/restaurantCheck';
-import { authService } from '../../api/authService';
+import { authService, syncProfile } from '../../api/authService';
 
 const AuthCallback = () => {
   const navigate = useNavigate();
@@ -12,18 +12,21 @@ const AuthCallback = () => {
   useEffect(() => {
     if (!loading && !redirecting && user) {
       setRedirecting(true);
-      
+
       const checkProfileAndRedirect = async () => {
         try {
+          // Sync profile first (especially for Google)
+          await syncProfile(user);
+
           // First check if profile is complete
           const isProfileComplete = await authService.isProfileComplete(user.id);
-          
+
           if (!isProfileComplete) {
             // Profile is not complete, redirect to complete profile
             navigate('/complete-profile');
             return;
           }
-          
+
           // Profile is complete, check restaurant selection
           if (hasValidRestaurantSelection()) {
             navigate('/home');
@@ -35,7 +38,7 @@ const AuthCallback = () => {
           navigate('/complete-profile');
         }
       };
-      
+
       checkProfileAndRedirect();
     } else if (!loading && !user) {
       // No user, redirect to login

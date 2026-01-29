@@ -8,7 +8,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showSessionModal, setShowSessionModal] = useState(false);
+  const [wasAuthenticated, setWasAuthenticated] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -17,12 +17,12 @@ export const AuthProvider = ({ children }) => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (mounted) {
+          const hasUser = !!session?.user;
           setUser(session?.user ?? null);
+          setWasAuthenticated(hasUser);
           setLoading(false);
         }
       } catch (error) {
-        // Handle invalid/expired refresh token gracefully by clearing session.
-        // This typically happens when localStorage has a stale token.
         if (
           typeof error?.message === 'string' &&
           (error.message.includes('Invalid Refresh Token') || error.message.includes('Refresh Token Not Found'))
@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
           } catch {
             // ignore
           }
-          if (mounted) setShowSessionModal(true);
+          if (mounted && wasAuthenticated) setShowSessionModal(true);
         }
         if (mounted) {
           setUser(null);
@@ -45,20 +45,32 @@ export const AuthProvider = ({ children }) => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        const hasUser = !!session?.user;
         if (mounted) {
           setUser(session?.user ?? null);
           setLoading(false);
         }
+
         if (event === 'TOKEN_REFRESH_FAILED') {
           try {
             await supabase.auth.signOut();
           } catch {
             // ignore
           }
-          if (mounted) setShowSessionModal(true);
+          if (mounted && wasAuthenticated) setShowSessionModal(true);
         }
-        if (event === 'SIGNED_OUT' && !session) {
-          setShowSessionModal(true);
+
+        if (event === 'SIGNED_IN') {
+          setWasAuthenticated(true);
+        }
+
+        if (event === 'SIGNED_OUT') {
+          // Only show modal if we were previously authenticated and not already on an auth page
+          const isAuthPage = ['/login', '/signup', '/forgot-password'].some(path => window.location.pathname.includes(path));
+          if (mounted && wasAuthenticated && !isAuthPage) {
+            setShowSessionModal(true);
+          }
+          setWasAuthenticated(false);
         }
       }
     );

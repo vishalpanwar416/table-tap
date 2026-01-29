@@ -27,40 +27,43 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
     const fetchUserData = async () => {
       try {
         setIsLoading(true);
-        const { data: { user }, error } = await supabase.auth.getUser();
-        if (user && !error) {
-          if (!isMounted) return;
-          setIsAuthenticated(true);
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('full_name, email, profile_role, avatar_url')
-            .eq('id', user.id)
-            .single();
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+        if (authError || !user) {
+          if (isMounted) {
+            setIsAuthenticated(false);
+            setUserData({
+              profileImg: '',
+              userName: '',
+              userEmail: '',
+              profile_role: 'customer'
+            });
+          }
+          return;
+        }
+
+        if (isMounted) setIsAuthenticated(true);
+
+        // Attempt to fetch profile details
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('full_name, email, profile_role, avatar_url')
+          .eq('id', user.id)
+          .single();
+
+        if (isMounted) {
           setUserData({
-            profileImg: profile?.avatar_url || '',
-            userName: profile?.full_name || user.user_metadata?.name || user.email,
-            userEmail: user.email,
+            profileImg: profile?.avatar_url || user.user_metadata?.avatar_url || '',
+            userName: profile?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+            userEmail: user.email || '',
             profile_role: profile?.profile_role || 'customer'
-          });
-        } else {
-          if (!isMounted) return;
-          setIsAuthenticated(false);
-          setUserData({
-            profileImg: '',
-            userName: '',
-            userEmail: '',
-            profile_role: 'customer'
           });
         }
       } catch (error) {
-        if (!isMounted) return;
-        setIsAuthenticated(false);
-        setUserData({
-          profileImg: '',
-          userName: '',
-          userEmail: '',
-          profile_role: 'customer'
-        });
+        console.error('Error in fetchUserData:', error);
+        if (isMounted) {
+          setIsAuthenticated(false);
+        }
       } finally {
         if (isMounted) setIsLoading(false);
       }

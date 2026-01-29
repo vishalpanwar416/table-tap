@@ -2,14 +2,19 @@ import { supabase } from '../../shared/supabase';
 
 const DEFAULT_AVATAR_URL = 'https://vogixryubhpqziivspks.supabase.co/storage/v1/object/public/avatars//default.jpg';
 
-const upsertProfileIfNeeded = async (user, extraFields = {}) => {
-  await supabase.from('profiles').upsert([{
+export const syncProfile = async (user, extraFields = {}) => {
+  const metadata = user.user_metadata || {};
+  const googleAvatar = metadata.avatar_url || metadata.picture;
+
+  const { error } = await supabase.from('profiles').upsert([{
     id: user.id,
-    full_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email,
+    full_name: metadata.full_name || metadata.name || user.email,
     email: user.email,
-    avatar_url: DEFAULT_AVATAR_URL,
+    avatar_url: googleAvatar || DEFAULT_AVATAR_URL,
     ...extraFields
   }]);
+
+  if (error) console.error('Error syncing profile:', error);
 };
 
 export const authService = {
@@ -41,7 +46,7 @@ export const authService = {
         .select()
         .eq('id', userId)
         .single();
-      
+
       if (error) throw error;
       return data;
     } catch (error) {
@@ -76,7 +81,7 @@ export const authService = {
         email: email.trim(),
         password: password.trim()
       });
-      
+
       if (error) throw error;
       return data;
     } catch (error) {
@@ -95,7 +100,7 @@ export const authService = {
       const { data, error } = await supabase.auth.updateUser({
         password: newPassword
       });
-      
+
       if (error) throw error;
       return {
         success: true,
@@ -121,14 +126,12 @@ export const authService = {
           redirectTo: `${window.location.origin}${redirectTo}`
         }
       });
-      
+
       if (error) throw error;
 
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await upsertProfileIfNeeded(user, {
-          avatar_url: user.user_metadata?.avatar_url || DEFAULT_AVATAR_URL
-        });
+        await syncProfile(user);
       }
 
       return data;
@@ -150,7 +153,7 @@ export const authService = {
    */
   signUp: async (userData) => {
     try {
-      const { fullName, email, password, mobileNumber, dateOfBirth } = userData;
+      const { fullName, email, password, mobileNumber, dateOfBirth, avatar_url } = userData;
       const { data: { user }, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -162,10 +165,10 @@ export const authService = {
           },
         }
       });
-      
+
       if (authError) throw authError;
       if (!user) throw new Error('User creation failed');
-      
+
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert([{
@@ -174,9 +177,9 @@ export const authService = {
           email,
           mobile_number: mobileNumber,
           date_of_birth: dateOfBirth,
-          avatar_url: DEFAULT_AVATAR_URL
+          avatar_url: avatar_url || DEFAULT_AVATAR_URL
         }]);
-      
+
       if (profileError) throw profileError;
       return user;
     } catch (error) {
@@ -203,14 +206,12 @@ export const authService = {
           }
         }
       });
-      
+
       if (error) throw error;
 
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await upsertProfileIfNeeded(user, {
-          avatar_url: user.user_metadata?.avatar_url || DEFAULT_AVATAR_URL
-        });
+        await syncProfile(user);
       }
 
       return data;
@@ -229,7 +230,7 @@ export const authService = {
     try {
       const user = await authService.getCurrentUser();
       if (!user) throw new Error('No authenticated user');
-      
+
       const { error } = await supabase
         .from('profiles')
         .upsert({
@@ -238,7 +239,7 @@ export const authService = {
           email: user.email,
           ...profileData
         });
-      
+
       if (error) throw error;
       return { success: true };
     } catch (error) {
@@ -257,7 +258,7 @@ export const authService = {
       const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`
       });
-      
+
       if (error) throw error;
       return data;
     } catch (error) {
@@ -302,7 +303,7 @@ export const authService = {
       return { isValid: false };
     }
   },
-  
+
   /**
    * Update password with reset token
    * @param {string} newPassword - The new password
@@ -316,7 +317,7 @@ export const authService = {
         access_token: token,
         refresh_token: ''
       });
-      
+
       if (sessionError) {
         throw sessionError;
       }
@@ -324,7 +325,7 @@ export const authService = {
       const { data, error } = await supabase.auth.updateUser({
         password: newPassword
       });
-      
+
       if (error) throw error;
       return data;
     } catch (error) {
@@ -355,15 +356,15 @@ export const authService = {
   checkEmailExistsRPC: async (email) => {
     try {
       const trimmedEmail = email.trim().toLowerCase();
-      
+
       const { data, error } = await supabase
         .rpc('check_email_exists', { email_to_check: trimmedEmail });
-      
+
       if (error) {
         console.error('RPC error:', error);
         return { exists: false };
       }
-      
+
       return { exists: data || false };
     } catch (error) {
       console.error('Error in checkEmailExistsRPC:', error);

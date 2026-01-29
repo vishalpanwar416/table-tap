@@ -27,6 +27,13 @@ export default function LoginPage() {
       try {
         const user = await authService.getCurrentUser();
         if (user) {
+          // Check if profile is complete
+          const isComplete = await authService.isProfileComplete(user.id);
+          if (!isComplete) {
+            navigate('/complete-profile');
+            return;
+          }
+
           // Check if user has restaurant selection
           if (hasValidRestaurantSelection()) {
             navigate('/home');
@@ -50,17 +57,17 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
+
     // Sanitize inputs
     const sanitizedEmail = sanitizeInput(email.trim());
-    
+
     // Validate email
     if (!validateEmail(sanitizedEmail)) {
       setError('Please enter a valid email address');
       setLoading(false);
       return;
     }
-    
+
     // Check rate limiting
     const rateLimitKey = `login_${sanitizedEmail}`;
     if (!rateLimiter.isAllowed(rateLimitKey)) {
@@ -69,16 +76,23 @@ export default function LoginPage() {
       setLoading(false);
       return;
     }
-    
+
     try {
-      await authService.signInWithPassword(sanitizedEmail, password);
-      
+      const { user: authUser } = await authService.signInWithPassword(sanitizedEmail, password);
+
       // Clear rate limiting on successful login
       rateLimiter.clearAttempts(rateLimitKey);
-      
+
       // Update session activity
       sessionManager.updateActivity();
-      
+
+      // Check if profile is complete before deciding where to go
+      const isComplete = await authService.isProfileComplete(authUser.id);
+      if (!isComplete) {
+        navigate('/complete-profile');
+        return;
+      }
+
       // Check if user has restaurant selection after login
       if (hasValidRestaurantSelection()) {
         navigate('/home');
@@ -90,12 +104,12 @@ export default function LoginPage() {
     } catch (err) {
       // Record failed attempt
       rateLimiter.recordAttempt(rateLimitKey);
-      
+
       const remainingAttempts = rateLimiter.getRemainingAttempts(rateLimitKey);
       if (remainingAttempts <= 2) {
         setError(`Login failed. ${remainingAttempts} attempts remaining before temporary lockout.`);
       } else {
-      setError(err.message || 'Login failed');
+        setError(err.message || 'Login failed');
       }
     } finally {
       setLoading(false);
@@ -105,7 +119,7 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     setLoading(true);
     setError('');
-    
+
     try {
       // Preserve URL parameters for Google auth callback
       const params = urlRestaurant && urlTable ? `?restaurant=${urlRestaurant}&table=${urlTable}` : '';
@@ -274,7 +288,7 @@ export default function LoginPage() {
           <motion.div className="mt-4 text-center" variants={itemVariants}>
             <p className="text-gray-600 text-sm">or sign up with</p>
             <div className="flex justify-center mt-4">
-              <GoogleButton 
+              <GoogleButton
                 loading={loading}
               />
             </div>

@@ -68,12 +68,23 @@ export default function CompleteProfile() {
 
   // Helper: get initials from name only (not mobile)
   // Assume user's name is available as userName (if not, fallback to UserIcon)
-  const userName = '';
+  const [userName, setUserName] = useState('');
+
+  useEffect(() => {
+    const getUserName = async () => {
+      const user = await authService.getCurrentUser();
+      if (user) {
+        setUserName(user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || '');
+      }
+    };
+    getUserName();
+  }, []);
+
   const getInitials = () => {
     if (!userName) return '';
     const parts = userName.trim().split(' ');
     if (parts.length === 1) return parts[0][0].toUpperCase();
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
   };
 
   // Handle avatar file select
