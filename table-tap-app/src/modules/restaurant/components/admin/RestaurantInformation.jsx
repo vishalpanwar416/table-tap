@@ -1,5 +1,28 @@
+
 import React, { useState, useEffect } from 'react';
-import { Settings, Save, RefreshCw, AlertCircle, Lock, Edit3, MapPin, Globe, Phone, Mail, Clock, CreditCard, Shield, Instagram, Facebook, Building, FileText, Award } from 'lucide-react';
+import {
+  Settings,
+  Save,
+  RefreshCw,
+  AlertCircle,
+  Lock,
+  Edit3,
+  MapPin,
+  Globe,
+  Phone,
+  Mail,
+  Clock,
+  CreditCard,
+  Shield,
+  Instagram,
+  Facebook,
+  Building,
+  FileText,
+  Award,
+  ArrowLeft,
+  Zap,
+  Power
+} from 'lucide-react';
 import { useAdminRestaurant } from '../../../shared/context/AdminRestaurantContext';
 import SubscriptionSection from './SubscriptionSection';
 const RestaurantInformation = () => {
@@ -25,10 +48,10 @@ const RestaurantInformation = () => {
   }, [restaurant]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
   };
 
@@ -211,6 +234,48 @@ const RestaurantInformation = () => {
                   </div>
                 </div>
 
+                {/* Features & Settings */}
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                    <Zap className="w-5 h-5 mr-2 text-blue-600" /> Features & Settings
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-white/50 border border-gray-200 p-4 rounded-xl flex items-center justify-between">
+                      <div>
+                        <span className="block text-sm font-semibold text-gray-700">AI Analytics</span>
+                        <span className="text-xs text-gray-500">Enable AI-powered insights</span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          name="ai_enabled"
+                          checked={formData.ai_enabled || false}
+                          onChange={handleChange}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      </label>
+                    </div>
+
+                    <div className="bg-white/50 border border-gray-200 p-4 rounded-xl flex items-center justify-between">
+                      <div>
+                        <span className="block text-sm font-semibold text-gray-700">Restaurant Status</span>
+                        <span className="text-xs text-gray-500">Temporarily open/close restaurant</span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          name="is_active"
+                          checked={formData.is_active || false}
+                          onChange={handleChange}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Location & Online Presence */}
                 <div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
@@ -355,6 +420,39 @@ const RestaurantInformation = () => {
                 </div>
 
               </div>
+
+              {/* Features Status Display */}
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                  <Zap className="w-5 h-5 mr-2 text-blue-600" /> Features & Status
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl p-6 border flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-600 mb-1">AI Analytics</h4>
+                      <p className={`text-lg font-bold ${restaurant?.ai_enabled ? 'text-green-600' : 'text-gray-500'}`}>
+                        {restaurant?.ai_enabled ? 'Enabled' : 'Disabled'}
+                      </p>
+                    </div>
+                    <div className={`p-3 rounded-full ${restaurant?.ai_enabled ? 'bg-green-100' : 'bg-gray-100'}`}>
+                      <Zap className={`w-6 h-6 ${restaurant?.ai_enabled ? 'text-green-600' : 'text-gray-400'}`} />
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-6 border flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-600 mb-1">Restaurant Status</h4>
+                      <p className={`text-lg font-bold ${restaurant?.is_active ? 'text-green-600' : 'text-red-500'}`}>
+                        {restaurant?.is_active ? 'Active' : 'Inactive'}
+                      </p>
+                    </div>
+                    <div className={`p-3 rounded-full ${restaurant?.is_active ? 'bg-green-100' : 'bg-red-100'}`}>
+                      <Power className={`w-6 h-6 ${restaurant?.is_active ? 'text-green-600' : 'text-red-500'}`} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="flex justify-end mt-12 pt-8 border-t">
                 {canEdit() ? (
                   <button onClick={() => setIsEditing(true)} className="group px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center shadow-lg hover:shadow-xl transform hover:scale-105">

@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import AuthWrapper from '../shared/config/AuthWrapper';
+import RestaurantDashboardWrapper from '../shared/config/RestaurantDashboardWrapper';
 import { AdminRestaurantProvider } from '../shared/context/AdminRestaurantContext';
 import { ManagerNotificationProvider } from '../shared/context/ManagerNotificationContext';
 
@@ -41,14 +42,14 @@ const RestaurantApp = () => {
 
                         {/* Protected Restaurant Dashboard */}
                         <Route path="/" element={
-                            <AuthWrapper>
+                            <RestaurantDashboardWrapper>
                                 <AdminDashboard />
-                            </AuthWrapper>
+                            </RestaurantDashboardWrapper>
                         } />
                         <Route path="/dashboard" element={
-                            <AuthWrapper>
+                            <RestaurantDashboardWrapper>
                                 <AdminDashboard />
-                            </AuthWrapper>
+                            </RestaurantDashboardWrapper>
                         } />
 
                         {/* Fallback */}

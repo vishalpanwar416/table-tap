@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import AuthWrapper from '../shared/config/AuthWrapper';
+import AdminOnlyWrapper from '../shared/config/AdminOnlyWrapper';
 import { AdminRestaurantProvider } from '../shared/context/AdminRestaurantContext';
 import { ManagerNotificationProvider } from '../shared/context/ManagerNotificationContext';
 
@@ -41,14 +42,14 @@ const AdminApp = () => {
 
                         {/* Protected Admin Panel */}
                         <Route path="/" element={
-                            <AuthWrapper>
+                            <AdminOnlyWrapper>
                                 <AdminPanel />
-                            </AuthWrapper>
+                            </AdminOnlyWrapper>
                         } />
                         <Route path="/panel" element={
-                            <AuthWrapper>
+                            <AdminOnlyWrapper>
                                 <AdminPanel />
-                            </AuthWrapper>
+                            </AdminOnlyWrapper>
                         } />
 
                         {/* Fallback */}

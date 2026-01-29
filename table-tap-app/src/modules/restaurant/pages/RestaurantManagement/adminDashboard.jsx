@@ -17,7 +17,8 @@ import ManagerNotificationsToast from '../../components/admin/ManagerNotificatio
 import QRManagement from '../../components/admin/QRManagement/QRManagement';
 import ActivityLogs from '../../components/admin/ActivityLogs';
 import AggregatorIntegration from '../../components/admin/AggregatorIntegration';
-import { X, ArrowLeft, Package, BarChart3, Sparkles, Plus, Building2, ChevronDown, Clock } from 'lucide-react';
+import { X, ArrowLeft, Package, BarChart3, Sparkles, Plus, Building2, ChevronDown, Clock, Grid } from 'lucide-react';
+import FloorPlanView from '../../components/admin/FloorPlan/FloorPlanView';
 import { getAllFoodItems, getRestaurantFoodItems } from '../../../customer/api/foodService';
 import { supabase } from '../../../shared/supabase';
 import { updateOrderStatus as updateOrderStatusService } from '../../api/admin/orderService';
@@ -78,6 +79,7 @@ const AdminDashboard = () => {
   const getMenuItems = () => {
     const baseItems = [
       { id: 'dashboard', icon: 'LayoutDashboard', label: 'Dashboard' },
+      { id: 'floor-plan', icon: 'Map', label: 'Floor Planner' },
       { id: 'menu', icon: 'Utensils', label: 'Menu Management' },
       { id: 'orders', icon: 'ShoppingCart', label: 'Order Management' },
       { id: 'inventory', icon: 'Package', label: 'Inventory Management' },
@@ -85,7 +87,7 @@ const AdminDashboard = () => {
       { id: 'offers', icon: 'Tag', label: 'Offers & Promotions' },
       { id: 'qr', icon: 'QrCode', label: 'QR Management' },
       { id: 'settings', icon: 'Settings', label: 'Restaurant Information' },
-      { id: 'activity-logs', label: 'Activity Logs', icon: Clock },
+      { id: 'activity-logs', icon: 'Clock', label: 'Activity Logs' },
     ];
 
     // Add AI Analytics and Aggregators only for managers and admins
@@ -105,6 +107,15 @@ const AdminDashboard = () => {
 
   // New state for authentication loading
   const [authLoading, setAuthLoading] = useState(true);
+
+  // Sidebar collapse state (desktop). Persisted for better UX.
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem('restaurant_sidebar_collapsed') === '1';
+    } catch {
+      return false;
+    }
+  });
 
   // Fetch all restaurants for admin selector
   const fetchAllRestaurants = async () => {
@@ -219,13 +230,19 @@ const AdminDashboard = () => {
       try {
         const { data: profileData, error } = await supabase
           .from('profiles')
-          .select('profile_role')
+          .select('profile_role, avatar_url')
           .eq('id', currentUser.id)
           .single();
 
         if (!error && profileData) {
           const role = profileData.profile_role;
           setUserRole(role);
+
+          // Merge profile fields onto auth user for UI (e.g., sidebar avatar)
+          setCurrentUser(prev => ({
+            ...(prev || {}),
+            avatar_url: profileData.avatar_url ?? prev?.avatar_url ?? null,
+          }));
 
           // Allow manager, admin, and captain roles to access the dashboard
           setIsManager(role === 'manager');
@@ -625,6 +642,18 @@ const AdminDashboard = () => {
           currentUser={currentUser}
           restaurantName={restaurant?.name}
           userRole={contextUserRole}
+          collapsed={isSidebarCollapsed}
+          onToggleCollapsed={() => {
+            setIsSidebarCollapsed(prev => {
+              const next = !prev;
+              try {
+                localStorage.setItem('restaurant_sidebar_collapsed', next ? '1' : '0');
+              } catch {
+                // ignore
+              }
+              return next;
+            });
+          }}
         />
 
         {/* Mobile Navigation */}
@@ -826,6 +855,10 @@ const AdminDashboard = () => {
                 />
               )}
 
+              {activeTab === 'floor-plan' && (
+                <FloorPlanView searchTerm={searchTerm} />
+              )}
+
               {activeTab === 'menu' && (
                 <div className="h-full">
                   <MenuManagement
@@ -875,6 +908,7 @@ const AdminDashboard = () => {
                   setLoading={setLoading}
                   setErrorMsg={setErrorMsg}
                   setSuccessMsg={setSuccessMsg}
+                  searchTerm={searchTerm}
                 />
               )}
 

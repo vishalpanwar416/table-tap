@@ -6,7 +6,15 @@ export default function SessionExpiryHandler({ children }) {
   const [showSessionModal, setShowSessionModal] = useState(false);
 
   useEffect(() => {
-    const { data: subscription } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: subscription } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'TOKEN_REFRESH_FAILED') {
+        try {
+          await supabase.auth.signOut();
+        } catch {
+          // ignore
+        }
+        setShowSessionModal(true);
+      }
       if (event === 'SIGNED_OUT' && !session) {
         setShowSessionModal(true);
       }

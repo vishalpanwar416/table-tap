@@ -1,17 +1,50 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.0.0"
 
-const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// Tighten CORS and allow dev/prod via env
+const getAllowedOrigin = (requestOrigin: string | null): string => {
+  const allowedOrigins = Deno.env.get("ALLOWED_ORIGINS")?.split(",") || [
+    "https://table-tap-app.vercel.app",
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:3001",
+  ]
+
+  if (requestOrigin && allowedOrigins.includes(requestOrigin)) return requestOrigin
+  return allowedOrigins[0]
 }
 
+const getCorsHeaders = (requestOrigin: string | null) => ({
+  "Access-Control-Allow-Origin": getAllowedOrigin(requestOrigin),
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+})
+
 serve(async (req) => {
+    const requestOrigin = req.headers.get("Origin")
+    const corsHeaders = getCorsHeaders(requestOrigin)
+
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders })
     }
 
     try {
+        // Require authenticated caller so the function can't be abused publicly.
+        const supabaseClient = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+          { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+        )
+        const { data: { user } } = await supabaseClient.auth.getUser()
+        if (!user) {
+          return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 401,
+          })
+        }
+
         const { messages, systemContext, userQuestion } = await req.json()
         const apiKey = Deno.env.get('OPENAI_API_KEY')
 

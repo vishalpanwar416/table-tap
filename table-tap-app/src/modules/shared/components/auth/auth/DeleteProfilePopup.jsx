@@ -11,8 +11,8 @@ const DeleteProfilePopup = ({ isOpen, onClose }) => {
 
   const popupVariants = {
     hidden: { y: 100, opacity: 0 },
-    visible: { 
-      y: 0, 
+    visible: {
+      y: 0,
       opacity: 1,
       transition: { type: 'spring', stiffness: 300, damping: 30 }
     },
@@ -35,47 +35,26 @@ const DeleteProfilePopup = ({ isOpen, onClose }) => {
         toast.error('User not found');
         throw new Error('User not found');
       }
-      toast('User found');
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('avatar_url')
-        .eq('id', user.id)
-        .single();
+      // Call the secure Edge Function to delete the user
+      // This function handles storage cleanup, profile deletion, and auth user deletion securely
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { user_id: user.id }
+      });
 
-      if (profile?.avatar_url) {
-        // Extract file path from URL
-        const urlParts = profile.avatar_url.split('/');
-        const fileName = urlParts[urlParts.length - 1];
-        const filePath = `profile-photos/${user.id}/${fileName}`;
-        
-        toast('Avatar found, attempting to delete');
-        await supabase.storage
-          .from('avatars')
-          .remove([filePath])
-        toast('Avatar delete attempted');
+      if (error) {
+        console.error('Delete user error:', error);
+        throw new Error(error.message || 'Failed to delete account');
       }
-
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', user.id);
-
-      if (profileError) {
-        toast.error('Failed to delete profile');
-        throw new Error(`Failed to delete profile: ${profileError.message}`);
-      }
-      toast('Profile deleted');
-
-      const { error: signOutError } = await supabase.auth.signOut();
-      if (signOutError) {
-        toast.error('Sign out error');
-      }
-      toast('Signed out');
 
       toast.success('Your profile has been deleted successfully.');
+
+      // Sign out to clean up local session
+      await supabase.auth.signOut();
       navigate('/login');
+
     } catch (error) {
+      console.error('Delete error:', error);
       toast.error(error.message || 'Failed to delete account. Please try again.');
     } finally {
       setIsDeleting(false);

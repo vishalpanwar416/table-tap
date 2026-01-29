@@ -38,13 +38,20 @@ export const fetchStaff = async (restaurantId) => {
 
 // Add a new staff member
 export const addStaff = async (restaurantId, formData) => {
+  if (!restaurantId) {
+    throw new Error('Please select a restaurant first.');
+  }
+
   // Check for existing staff
-  const { data: existingStaff } = await supabase
+  const { data: existingStaff, error: existingStaffError } = await supabase
     .from('restaurant_staff')
     .select('*')
     .eq('restaurant_id', restaurantId)
     .eq('staff_email', formData.email)
     .single();
+  if (existingStaffError && existingStaffError.code !== 'PGRST116') {
+    throw new Error(existingStaffError.message || 'Failed to check existing staff member.');
+  }
   if (existingStaff) throw new Error('A staff member with this email already exists for this restaurant.');
 
   // Insert new staff
@@ -78,15 +85,22 @@ export const removeStaff = async (staffId) => {
 
 // Update a staff member
 export const updateStaff = async (restaurantId, editingStaff, formData) => {
+  if (!restaurantId) {
+    throw new Error('Please select a restaurant first.');
+  }
+
   // Check for email conflict
   if (formData.email !== editingStaff.staff_email) {
-    const { data: existingStaff } = await supabase
+    const { data: existingStaff, error: existingStaffError } = await supabase
       .from('restaurant_staff')
       .select('*')
       .eq('restaurant_id', restaurantId)
       .eq('staff_email', formData.email)
       .neq('id', editingStaff.id)
       .single();
+    if (existingStaffError && existingStaffError.code !== 'PGRST116') {
+      throw new Error(existingStaffError.message || 'Failed to check existing staff member.');
+    }
     if (existingStaff) throw new Error('A staff member with this email already exists for this restaurant.');
   }
 

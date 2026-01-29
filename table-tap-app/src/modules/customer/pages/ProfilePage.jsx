@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import DeleteProfilePopup from '../../shared/components/auth/auth/DeleteProfilePopup';
 import { optimizeProfileImage, validateImageFile, ProgressiveImage } from '../../shared/utils/imageOptimization';
 import authService from '../../shared/api/authService';
+import { supabase } from '../../shared/supabase';
 
 // DefaultAvatar component - moved outside the main component
 const DefaultAvatar = ({ className = 'w-full h-full', iconClassName = 'w-12 h-12 text-gray-400' }) => (
@@ -121,14 +122,14 @@ const ProfilePage = () => {
       if (!user) throw new Error('Authentication required');
       const fileName = `${user.id}-${Date.now()}.jpg`;
       const filePath = `profile-photos/${user.id}/${fileName}`;
-      const { data, error } = await window.supabase.storage
+      const { data, error } = await supabase.storage
         .from('avatars')
         .upload(filePath, optimizedFile, {
           cacheControl: '3600',
           upsert: true
         });
       if (error) throw error;
-      const { data: { publicUrl } } = window.supabase.storage
+      const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
       await authService.updateProfile({ avatar_url: publicUrl });
@@ -253,7 +254,7 @@ const ProfilePage = () => {
         const cleanEmail = formData.email.trim().toLowerCase();
 
         try {
-          const { data: { user: updatedUser }, error: authError } = await window.supabase.auth.updateUser({
+          const { data: { user: updatedUser }, error: authError } = await supabase.auth.updateUser({
             email: cleanEmail
           });
 

@@ -147,6 +147,9 @@ const StaffManagement = ({
     setError('');
     setSuccess('');
     try {
+      if (!userRestaurantId) {
+        throw new Error('Please select a restaurant first (top-left selector) before adding staff.');
+      }
       await addStaff(userRestaurantId, formData);
       setSuccess('Staff member added successfully');
       setFormData({ name: '', email: '', phone_number: '', role: 'captain' });

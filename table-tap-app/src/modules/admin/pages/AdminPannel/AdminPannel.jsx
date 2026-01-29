@@ -112,6 +112,11 @@ const AdminPanel = () => {
 
           if (!error && profile) {
             setCurrentUserProfile(profile);
+            // Defense-in-depth: hard block non-admins
+            if (profile.profile_role !== 'admin') {
+              navigate('/home', { replace: true });
+              return;
+            }
           } else {
             console.error('Error loading profile:', error);
           }

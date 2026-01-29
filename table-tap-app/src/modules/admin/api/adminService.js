@@ -68,8 +68,8 @@ export const addRestaurant = async (restaurantData) => {
       });
 
     if (profileError) {
-      // If profile creation fails, delete the auth user
-      await supabase.auth.admin.deleteUser(userData.user.id);
+      // If profile creation fails, delete the auth user securely
+      await supabase.functions.invoke('delete-user', { body: { user_id: userData.user.id } });
       throw profileError;
     }
 
@@ -148,7 +148,7 @@ export const deleteRestaurant = async (id) => {
 
     // Delete the manager's profile and auth account
     if (restaurant.manager_id) {
-      await supabase.auth.admin.deleteUser(restaurant.manager_id);
+      await supabase.functions.invoke('delete-user', { body: { user_id: restaurant.manager_id } });
       await supabase
         .from('profiles')
         .delete()
@@ -233,7 +233,7 @@ export const addStaff = async (staffData) => {
       });
 
     if (profileError) {
-      await supabase.auth.admin.deleteUser(userData.user.id);
+      await supabase.functions.invoke('delete-user', { body: { user_id: userData.user.id } });
       throw profileError;
     }
 
@@ -265,8 +265,8 @@ export const updateStaff = async (id, updates) => {
  */
 export const deleteStaff = async (id) => {
   try {
-    // Delete the user's auth account
-    await supabase.auth.admin.deleteUser(id);
+    // Delete the user's auth account securely
+    await supabase.functions.invoke('delete-user', { body: { user_id: id } });
 
     // Delete the profile
     const { error } = await supabase

@@ -21,6 +21,19 @@ export const AuthProvider = ({ children }) => {
           setLoading(false);
         }
       } catch (error) {
+        // Handle invalid/expired refresh token gracefully by clearing session.
+        // This typically happens when localStorage has a stale token.
+        if (
+          typeof error?.message === 'string' &&
+          (error.message.includes('Invalid Refresh Token') || error.message.includes('Refresh Token Not Found'))
+        ) {
+          try {
+            await supabase.auth.signOut();
+          } catch {
+            // ignore
+          }
+          if (mounted) setShowSessionModal(true);
+        }
         if (mounted) {
           setUser(null);
           setLoading(false);
@@ -35,6 +48,14 @@ export const AuthProvider = ({ children }) => {
         if (mounted) {
           setUser(session?.user ?? null);
           setLoading(false);
+        }
+        if (event === 'TOKEN_REFRESH_FAILED') {
+          try {
+            await supabase.auth.signOut();
+          } catch {
+            // ignore
+          }
+          if (mounted) setShowSessionModal(true);
         }
         if (event === 'SIGNED_OUT' && !session) {
           setShowSessionModal(true);
