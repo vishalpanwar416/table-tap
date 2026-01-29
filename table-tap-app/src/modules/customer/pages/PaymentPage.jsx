@@ -4,9 +4,10 @@ import { useCart } from '../../shared/config/CartContent';
 import { ChevronLeft, CreditCard, QrCode, CheckCircle, AlertCircle, Clock, MapPin, User, Mail, Phone, Shield, Lock, Smartphone } from 'lucide-react';
 import { useRestaurant } from '../../restaurant/pages/RestaurantSelection/RestaurantContext';
 import { useAuth } from '../../shared/config/AuthContext';
-import { 
+import {
   loadRazorpayScript,
   initializeRazorpayPayment,
+  verifyRazorpaySignature,
   createOrder,
   validatePaymentData,
   processOrderWithPayment,
@@ -81,34 +82,34 @@ const PaymentPage = () => {
     let originalTotal = 0;
     let discountAmount = 0;
     let taxableAmount = 0;
-    
+
     cartItems.forEach(item => {
       const originalItemTotal = item.price * item.quantity;
       originalTotal += originalItemTotal;
-      
-      const effectivePrice = item.effectivePrice !== undefined ? 
-        item.effectivePrice : 
+
+      const effectivePrice = item.effectivePrice !== undefined ?
+        item.effectivePrice :
         calculateEffectivePrice(item);
-      
+
       const itemDiscount = (item.price - effectivePrice) * item.quantity;
       discountAmount += itemDiscount;
-      
+
       const itemSubtotal = effectivePrice * item.quantity;
-      
-      const isWater = item.name && 
-        (item.name.toLowerCase().includes('water') || 
-         item.category?.toLowerCase() === 'water');
-         
+
+      const isWater = item.name &&
+        (item.name.toLowerCase().includes('water') ||
+          item.category?.toLowerCase() === 'water');
+
       if (!isWater) {
         taxableAmount += itemSubtotal;
       }
     });
-    
+
     const cgst = taxableAmount * 0.025;
     const sgst = taxableAmount * 0.025;
     const subtotalAfterDiscount = originalTotal - discountAmount;
     const finalTotal = subtotalAfterDiscount + cgst + sgst;
-    
+
     return {
       originalTotal,
       discountAmount,
@@ -119,13 +120,13 @@ const PaymentPage = () => {
     };
   }, [cartItems, calculateEffectivePrice]);
 
-  const { 
-    originalTotal, 
-    discountAmount, 
-    subtotalAfterDiscount, 
-    cgst, 
-    sgst, 
-    finalTotal 
+  const {
+    originalTotal,
+    discountAmount,
+    subtotalAfterDiscount,
+    cgst,
+    sgst,
+    finalTotal
   } = calculatePriceDetails();
 
   useEffect(() => {
@@ -242,11 +243,11 @@ const PaymentPage = () => {
       setIsProcessing(false);
     }
   };
-  
+
   // Enhanced processOrder function with proper error handling
   const processOrder = async (paymentResponse) => {
     let refundInitiated = false;
-    
+
     try {
       if (!paymentResponse || !paymentResponse.razorpay_payment_id) {
         throw new Error('Missing payment confirmation details');
@@ -257,7 +258,24 @@ const PaymentPage = () => {
         throw new Error('Restaurant data not available');
       }
 
-      // Enhanced validation for guest users
+      // CRITICAL SECURITY STEP: Verify Razorpay signature for online payments
+      if (!paymentResponse.razorpay_payment_id.startsWith('DIRECT-')) {
+        setIsProcessing(true);
+        // Inform user about verification progress
+        setScriptError(null);
+
+        const isVerified = await verifyRazorpaySignature(
+          paymentResponse.razorpay_payment_id,
+          paymentResponse.razorpay_order_id,
+          paymentResponse.razorpay_signature
+        );
+
+        if (!isVerified) {
+          throw new Error('Payment verification failed. If you have already paid, please contact support with your payment ID.');
+        }
+      }
+
+      // Guest validation (if applicable)
       if (!user) {
         // ... guest validation as before ...
         if (!finalCustomerName || finalCustomerName.trim() === '') {
@@ -303,10 +321,12 @@ const PaymentPage = () => {
         customerEmail: finalCustomerEmail.trim(),
         customerPhone: finalCustomerPhone.trim(),
         tableNumber,
+        restaurantName: restaurant.name,
         items: cartItems.map(item => ({
           id: item.id,
           quantity: item.quantity,
           price: item.price,
+          effectivePrice: item.effectivePrice,
           name: item.name,
           category: item.category,
           image: item.image
@@ -408,8 +428,12 @@ const PaymentPage = () => {
               customerName: failedOrderData.customerName,
               customerEmail: failedOrderData.customerEmail,
               customerPhone: failedOrderData.customerPhone,
+              restaurantName: restaurant.name,
               tableNumber: failedOrderData.tableNumber,
-              items: failedOrderData.items,
+              items: failedOrderData.items.map(item => ({
+                ...item,
+                effectivePrice: item.effectivePrice || item.price
+              })),
               razorpayOrderId: failedOrderData.orderId,
               razorpayPaymentId: failedOrderData.paymentId,
               razorpaySignature: failedOrderData.signature,
@@ -569,8 +593,12 @@ const PaymentPage = () => {
         customerName: failedOrderData.customerName,
         customerEmail: failedOrderData.customerEmail,
         customerPhone: failedOrderData.customerPhone,
+        restaurantName: restaurant.name,
         tableNumber: failedOrderData.tableNumber,
-        items: failedOrderData.items,
+        items: failedOrderData.items.map(item => ({
+          ...item,
+          effectivePrice: item.effectivePrice || item.price
+        })),
         razorpayOrderId: failedOrderData.orderId,
         razorpayPaymentId: failedOrderData.paymentId,
         razorpaySignature: failedOrderData.signature,
@@ -637,10 +665,10 @@ const PaymentPage = () => {
   const createUPIPaymentUrl = (upiId, amount, merchantName) => {
     // Remove any spaces and special characters from UPI ID
     const cleanUpiId = upiId.replace(/\s+/g, '').replace(/[^a-zA-Z0-9@.-]/g, '');
-    
+
     // Create general UPI payment URL
     const upiUrl = `upi://pay?pa=${encodeURIComponent(cleanUpiId)}&pn=${encodeURIComponent(merchantName)}&am=${amount}&cu=INR&tn=Food Order Payment`;
-    
+
     return upiUrl;
   };
 
@@ -652,7 +680,7 @@ const PaymentPage = () => {
 
     try {
       const upiUrl = createUPIPaymentUrl(restaurant.upi_id, finalTotal, restaurant.name);
-      
+
       // Try to open UPI app
       const link = document.createElement('a');
       link.href = upiUrl;
@@ -676,7 +704,7 @@ const PaymentPage = () => {
           upi_id: restaurant.upi_id,
           payment_method: 'upi'
         });
-        
+
         if (!result) {
           setIsProcessing(false);
         }
@@ -694,10 +722,10 @@ const PaymentPage = () => {
     <div className="flex justify-center items-start min-h-screen bg-black">
       <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
         {/* Enhanced Header */}
-        <div className="w-full px-6 py-8 relative flex justify-center">
-          <button 
-            onClick={handleGoBack} 
-            className="absolute left-4 top-8 text-orange-500 hover:text-orange-400 transition-colors duration-200 p-2 rounded-full hover:bg-orange-500/10"
+        <div className="w-full px-6 py-8 relative flex items-center justify-center">
+          <button
+            onClick={handleGoBack}
+            className="absolute left-4 text-orange-500 hover:text-orange-400 transition-colors duration-200 p-2 rounded-full hover:bg-orange-500/10"
           >
             <ChevronLeft size={30} />
           </button>
@@ -724,7 +752,7 @@ const PaymentPage = () => {
         {/* Enhanced Main content */}
         <div className="bg-gradient-to-br from-gray-50 to-white w-full flex-1 rounded-t-3xl px-6 pt-10 pb-6 flex flex-col font-spartan overflow-y-auto shadow-2xl">
           <div className={`transition-all duration-700 ${animateItems ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-            
+
             {/* Enhanced Header with Progress Indicator */}
             <div className="mb-8">
               <div className="flex items-center justify-center gap-2 mb-4">
@@ -753,8 +781,8 @@ const PaymentPage = () => {
               <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl flex items-center gap-2 animate-in slide-in-from-top-2 duration-300">
                 <AlertCircle size={18} className="text-red-400" />
                 <span className="flex-1">{scriptError}</span>
-                <button 
-                  onClick={() => setScriptError(null)} 
+                <button
+                  onClick={() => setScriptError(null)}
                   className="text-sm underline text-red-700 hover:text-red-900 transition-colors"
                 >
                   Dismiss
@@ -776,7 +804,7 @@ const PaymentPage = () => {
                 <CreditCard size={20} className="text-orange-500" />
                 Payment Method
               </h3>
-              
+
               {/* UPI Payment Details - Show when UPI is selected */}
               {paymentMethod === 'upi' && restaurant.upi_id && (
                 <div className="mb-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border-2 border-green-200">
@@ -791,7 +819,7 @@ const PaymentPage = () => {
                         <span className="font-bold text-green-800 bg-green-100 px-3 py-1 rounded-lg">
                           {restaurant.upi_id}
                         </span>
-                        <button 
+                        <button
                           onClick={() => {
                             navigator.clipboard.writeText(restaurant.upi_id);
                             setShowCopySuccess(true);
@@ -829,17 +857,15 @@ const PaymentPage = () => {
               <div className="grid grid-cols-1 gap-4">
                 {/* Online Payment - Only show if razorpay_key_id exists */}
                 {availablePaymentMethods.includes('razorpay') && (
-                  <button 
-                    onClick={() => setPaymentMethod('razorpay')} 
-                    className={`p-6 rounded-2xl border-2 flex items-center gap-4 transition-all duration-300 hover:shadow-lg ${
-                      paymentMethod === 'razorpay' 
-                        ? 'border-orange-500 bg-gradient-to-r from-orange-50 to-orange-100 shadow-md' 
-                        : 'border-gray-200 bg-white hover:border-orange-300'
-                    }`}
+                  <button
+                    onClick={() => setPaymentMethod('razorpay')}
+                    className={`p-6 rounded-2xl border-2 flex items-center gap-4 transition-all duration-300 hover:shadow-lg ${paymentMethod === 'razorpay'
+                      ? 'border-orange-500 bg-gradient-to-r from-orange-50 to-orange-100 shadow-md'
+                      : 'border-gray-200 bg-white hover:border-orange-300'
+                      }`}
                   >
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
-                      paymentMethod === 'razorpay' ? 'bg-orange-500' : 'bg-gray-100'
-                    }`}>
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${paymentMethod === 'razorpay' ? 'bg-orange-500' : 'bg-gray-100'
+                      }`}>
                       <CreditCard size={24} className={paymentMethod === 'razorpay' ? 'text-white' : 'text-gray-500'} />
                     </div>
                     <div className="text-left flex-1">
@@ -858,17 +884,15 @@ const PaymentPage = () => {
 
                 {/* UPI Payment - Only show if upi_id exists */}
                 {availablePaymentMethods.includes('upi') && (
-                  <button 
-                    onClick={() => setPaymentMethod('upi')} 
-                    className={`p-6 rounded-2xl border-2 flex items-center gap-4 transition-all duration-300 hover:shadow-lg ${
-                      paymentMethod === 'upi' 
-                        ? 'border-orange-500 bg-gradient-to-r from-orange-50 to-orange-100 shadow-md' 
-                        : 'border-gray-200 bg-white hover:border-orange-300'
-                    }`}
+                  <button
+                    onClick={() => setPaymentMethod('upi')}
+                    className={`p-6 rounded-2xl border-2 flex items-center gap-4 transition-all duration-300 hover:shadow-lg ${paymentMethod === 'upi'
+                      ? 'border-orange-500 bg-gradient-to-r from-orange-50 to-orange-100 shadow-md'
+                      : 'border-gray-200 bg-white hover:border-orange-300'
+                      }`}
                   >
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
-                      paymentMethod === 'upi' ? 'bg-orange-500' : 'bg-gray-100'
-                    }`}>
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${paymentMethod === 'upi' ? 'bg-orange-500' : 'bg-gray-100'
+                      }`}>
                       <Smartphone size={24} className={paymentMethod === 'upi' ? 'text-white' : 'text-gray-500'} />
                     </div>
                     <div className="text-left flex-1">
@@ -884,19 +908,17 @@ const PaymentPage = () => {
                     )}
                   </button>
                 )}
-                
+
                 {/* Pay At Restaurant - Always available */}
-                <button 
-                  onClick={() => setPaymentMethod('direct')} 
-                  className={`p-6 rounded-2xl border-2 flex items-center gap-4 transition-all duration-300 hover:shadow-lg ${
-                    paymentMethod === 'direct' 
-                      ? 'border-orange-500 bg-gradient-to-r from-orange-50 to-orange-100 shadow-md' 
-                      : 'border-gray-200 bg-white hover:border-orange-300'
-                  }`}
+                <button
+                  onClick={() => setPaymentMethod('direct')}
+                  className={`p-6 rounded-2xl border-2 flex items-center gap-4 transition-all duration-300 hover:shadow-lg ${paymentMethod === 'direct'
+                    ? 'border-orange-500 bg-gradient-to-r from-orange-50 to-orange-100 shadow-md'
+                    : 'border-gray-200 bg-white hover:border-orange-300'
+                    }`}
                 >
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
-                    paymentMethod === 'direct' ? 'bg-orange-500' : 'bg-gray-100'
-                  }`}>
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${paymentMethod === 'direct' ? 'bg-orange-500' : 'bg-gray-100'
+                    }`}>
                     <QrCode size={24} className={paymentMethod === 'direct' ? 'text-white' : 'text-gray-500'} />
                   </div>
                   <div className="text-left flex-1">
@@ -920,7 +942,7 @@ const PaymentPage = () => {
                 <CheckCircle size={20} className="text-green-500" />
                 Order Summary
               </h3>
-              
+
               {/* Table Info */}
               <div className="mb-4 p-3 bg-blue-50 rounded-xl border border-blue-200">
                 <div className="flex items-center gap-2">
@@ -928,19 +950,19 @@ const PaymentPage = () => {
                   <span className="text-blue-800 font-medium">Table {tableNumber}</span>
                 </div>
               </div>
-              
+
               {/* Cart Items */}
               <div className="space-y-3 mb-4">
                 {cartItems.map((item, index) => {
-                const isWater = item.name && (item.name.toLowerCase().includes('water') || item.category?.toLowerCase() === 'water');
-                const hasDiscount = item.discounttype && item.discountvalue;
-                const originalTotal = (item.price * item.quantity).toFixed(2);
-                const discountedPrice = item.effectivePrice !== undefined ? Number(item.effectivePrice).toFixed(2) : Number(calculateEffectivePrice(item)).toFixed(2);
-                const discountedTotal = (Number(discountedPrice) * item.quantity).toFixed(2);
-                   
-                return (
-                    <div 
-                      key={`${item.id}-${item.category}`} 
+                  const isWater = item.name && (item.name.toLowerCase().includes('water') || item.category?.toLowerCase() === 'water');
+                  const hasDiscount = item.discounttype && item.discountvalue;
+                  const originalTotal = (item.price * item.quantity).toFixed(2);
+                  const discountedPrice = item.effectivePrice !== undefined ? Number(item.effectivePrice).toFixed(2) : Number(calculateEffectivePrice(item)).toFixed(2);
+                  const discountedTotal = (Number(discountedPrice) * item.quantity).toFixed(2);
+
+                  return (
+                    <div
+                      key={`${item.id}-${item.category}`}
                       className={`flex justify-between items-center py-3 border-b border-gray-100 last:border-b-0 transition-all duration-300 ${animateItems ? 'animate-in slide-in-from-left-2' : ''}`}
                       style={{ animationDelay: `${index * 100}ms` }}
                     >
@@ -957,8 +979,8 @@ const PaymentPage = () => {
                             GST exempt
                           </span>
                         )}
-                    </div>
-                    <div className="text-right">
+                      </div>
+                      <div className="text-right">
                         {hasDiscount ? (
                           <>
                             <p className="text-gray-400 text-sm line-through">₹{originalTotal}</p>
@@ -967,43 +989,43 @@ const PaymentPage = () => {
                         ) : (
                           <span className="font-bold text-gray-800">₹{originalTotal}</span>
                         )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
               </div>
-              
+
               {/* Enhanced Price Breakdown */}
               <div className="space-y-3 pt-4 border-t-2 border-gray-200">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 font-medium">Original Total</span>
                   <span className="font-semibold text-gray-800">₹{originalTotal.toFixed(2)}</span>
                 </div>
-                
+
                 {discountAmount > 0 && (
                   <div className="flex justify-between items-center">
                     <span className="text-green-600 font-medium">Discount</span>
                     <span className="text-green-600 font-semibold">- ₹{discountAmount.toFixed(2)}</span>
                   </div>
                 )}
-                
+
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 font-medium">Subtotal</span>
                   <span className="font-semibold text-gray-800">₹{subtotalAfterDiscount.toFixed(2)}</span>
                 </div>
-                
+
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 font-medium">CGST (2.5%)</span>
                   <span className="font-semibold text-gray-800">₹{cgst.toFixed(2)}</span>
                 </div>
-                
+
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 font-medium">SGST (2.5%)</span>
                   <span className="font-semibold text-gray-800">₹{sgst.toFixed(2)}</span>
                 </div>
-                
+
                 <div className="border-t-2 border-gray-200 my-4"></div>
-                
+
                 <div className="flex justify-between items-center">
                   <span className="text-2xl font-bold text-gray-800">Total</span>
                   <span className="text-2xl font-bold text-orange-600">₹{finalTotal.toFixed(2)}</span>
@@ -1035,7 +1057,7 @@ const PaymentPage = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="pb-32"></div>
         </div>
 
@@ -1044,18 +1066,17 @@ const PaymentPage = () => {
         {/* Floating Payment Button */}
         <div className="fixed bottom-0 left-0 right-0 px-6 py-4 z-50">
           <div className="max-w-[390px] md:max-w-4xl lg:max-w-6xl mx-auto">
-            <button 
+            <button
               onClick={
-                paymentMethod === 'upi' 
-                  ? handleUPIPayment 
+                paymentMethod === 'upi'
+                  ? handleUPIPayment
                   : handlePayment
-              } 
-              disabled={isProcessing || cartItems.length === 0} 
-              className={`w-full py-4 rounded-full font-bold text-lg transition-all duration-300 transform hover:scale-105 ${
-                isProcessing || cartItems.length === 0 
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                  : 'bg-gray-600 text-white hover:bg-gray-700 shadow-lg hover:shadow-xl'
-              }`}
+              }
+              disabled={isProcessing || cartItems.length === 0}
+              className={`w-full py-4 rounded-full font-bold text-lg transition-all duration-300 transform hover:scale-105 ${isProcessing || cartItems.length === 0
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-gray-600 text-white hover:bg-gray-700 shadow-lg hover:shadow-xl'
+                }`}
             >
               {isProcessing ? (
                 <span className="flex items-center justify-center gap-2">

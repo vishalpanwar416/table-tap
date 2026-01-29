@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react';
+import { ChevronLeft, Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { authService } from '../../api/authService';
 import GoogleButton from './auth/GoogleButton';
@@ -102,7 +102,7 @@ export default function SignUpPage() {
       const formatted = newDigits.length > 5
         ? `+91 ${newDigits.slice(0, 5)} ${newDigits.slice(5)}`
         : `+91 ${newDigits}`;
-  
+
       setFormData(prev => ({ ...prev, [name]: formatted }));
       return;
     }
@@ -126,47 +126,47 @@ export default function SignUpPage() {
     // Sanitize inputs
     const sanitizedFullName = sanitizeInput(formData.fullName.trim());
     const sanitizedEmail = sanitizeInput(formData.email.trim());
-    
+
     if (!sanitizedFullName) {
       setError('Full name is required');
       return false;
     }
-    
+
     if (!sanitizedEmail) {
       setError('Email is required');
       return false;
     }
-    
+
     // Validate email
     if (!validateEmail(sanitizedEmail)) {
       setError('Please enter a valid email address');
       return false;
     }
-    
+
     if (!formData.password.trim()) {
       setError('Password is required');
       return false;
     }
-    
+
     // Validate password with enhanced security
     const passwordValidation = validatePassword(formData.password);
     if (!passwordValidation.isValid) {
       setError(passwordValidation.errors.join(', '));
       return false;
     }
-    
+
     // Validate phone number
     const cleanPhone = formData.mobileNumber.replace(/\D/g, '');
     if (!validatePhoneNumber(cleanPhone)) {
       setError('Please enter a valid mobile number');
       return false;
     }
-    
+
     if (!formData.dateOfBirth) {
       setError('Date of birth is required');
       return false;
     }
-    
+
     // Age check
     const today = new Date();
     const dob = new Date(formData.dateOfBirth);
@@ -198,19 +198,19 @@ export default function SignUpPage() {
       });
       return false;
     }
-    
+
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return false;
     }
-    
+
     return true;
   };
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-  
+
     try {
       setLoading(true);
       setError('');
@@ -261,7 +261,7 @@ export default function SignUpPage() {
       // navigate('/verify-email');
     } catch (err) {
       let errorMessage = 'Registration failed. Please check your details';
-      
+
       // Handle specific error messages
       if (err.message.includes('duplicate')) {
         if (err.message.includes('email')) {
@@ -271,7 +271,7 @@ export default function SignUpPage() {
           errorMessage = 'Mobile number is already registered';
         }
       }
-      
+
       toast(errorMessage, {
         type: 'error',
         position: 'top-center',
@@ -348,12 +348,12 @@ export default function SignUpPage() {
     >
       <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl flex flex-col z-10">
         {/* Header */}
-        <div className="w-full px-6 py-8 relative flex justify-center">
-          <button 
+        <div className="w-full px-6 py-8 relative flex items-center justify-center">
+          <button
             onClick={() => navigate(-1)}
-            className="absolute left-4 top-8 text-orange-500"
+            className="absolute left-4 text-orange-500"
           >
-            <ArrowLeft size={30} />
+            <ChevronLeft size={30} />
           </button>
           <motion.h1
             className="text-white text-2xl font-medium font-spartan"
@@ -466,7 +466,7 @@ export default function SignUpPage() {
                   minLength="6"
                   required
                 />
-                <button 
+                <button
                   type="button"
                   onClick={togglePasswordVisibility}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
@@ -489,7 +489,7 @@ export default function SignUpPage() {
                   minLength="6"
                   required
                 />
-                <button 
+                <button
                   type="button"
                   onClick={togglePasswordVisibility}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
@@ -542,15 +542,15 @@ export default function SignUpPage() {
             <motion.div className="text-center mt-4 text-sm" variants={itemVariants}>
               <p className="text-gray-600 font-spartan">
                 By continuing, you agree to our{' '}
-                <Link 
-                  to="/terms" 
+                <Link
+                  to="/terms"
                   className="text-red-500 font-medium hover:underline font-spartan"
                 >
                   Terms of Service
                 </Link>{' '}
                 and{' '}
-                <Link 
-                  to="/privacy" 
+                <Link
+                  to="/privacy"
                   className="text-red-500 font-medium hover:underline font-spartan"
                 >
                   Privacy Policy
@@ -559,7 +559,7 @@ export default function SignUpPage() {
             </motion.div>
             {/* Sign Up Button */}
             <motion.div variants={itemVariants}>
-              <motion.button 
+              <motion.button
                 type="submit"
                 disabled={loading}
                 className="w-full bg-gray-600 text-white py-3 rounded-full mt-6 font-medium text-lg hover:bg-gray-700 transition-colors disabled:bg-orange-300"
@@ -575,8 +575,8 @@ export default function SignUpPage() {
           {/* Google Sign-In */}
           <motion.div className="mt-6 text-center" variants={itemVariants}>
             <p className="text-gray-600 text-sm mb-4 font-spartan">or continue with</p>
-            <GoogleButton 
-              onClick={handleGoogleSignup} 
+            <GoogleButton
+              onClick={handleGoogleSignup}
               loading={loading}
               redirectTo="/complete-profile"
             />
@@ -585,8 +585,8 @@ export default function SignUpPage() {
           <motion.div className="mt-6 text-center" variants={itemVariants}>
             <p className="text-black text-sm font-spartan">
               Already have an account?{' '}
-              <Link 
-                to="/login" 
+              <Link
+                to="/login"
                 className="text-red-500 font-medium hover:underline font-spartan"
               >
                 Login here

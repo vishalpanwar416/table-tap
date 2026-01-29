@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Eye, EyeOff, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import GoogleButton from './auth/GoogleButton';
 import AuthForm from './auth/AuthForm';
@@ -171,12 +171,12 @@ export default function LoginPage() {
       {/* Remove animated background gradient and floating shapes */}
       <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col z-10">
         {/* Header */}
-        <div className="w-full px-6 py-8 relative flex justify-center">
+        <div className="w-full px-6 py-8 relative flex items-center justify-center">
           <button
-            className="absolute left-4 top-8 text-orange-500"
+            className="absolute left-4 text-orange-500"
             onClick={() => navigate(-1)}
           >
-            <ArrowLeft size={30} />
+            <ChevronLeft size={30} />
           </button>
           <motion.h1
             className="text-gray-100 text-3xl font-medium font-spartan"

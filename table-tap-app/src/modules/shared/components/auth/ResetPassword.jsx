@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../supabase';
-import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { ChevronLeft, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const ResetPassword = () => {
@@ -108,15 +108,15 @@ const ResetPassword = () => {
     >
       <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl flex-1 flex flex-col min-h-0 z-10 mx-auto">
         {/* Header */}
-        <div className="w-full px-6 py-8 relative flex justify-center">
+        <div className="w-full px-6 py-8 relative flex items-center justify-center">
           <motion.button
-            className="absolute left-4 top-8 text-orange-500 hover:text-orange-600"
+            className="absolute left-4 text-orange-500 hover:text-orange-600"
             onClick={() => navigate('/login')}
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <ArrowLeft size={30} />
+            <ChevronLeft size={30} />
           </motion.button>
           <motion.h1
             className="text-white text-2xl font-medium font-spartan"
@@ -141,11 +141,10 @@ const ResetPassword = () => {
           <AnimatePresence>
             {message.text && (
               <motion.div
-                className={`mb-6 p-4 rounded-xl text-center font-medium ${
-                  message.type === 'error'
-                    ? 'bg-red-100 text-red-700'
-                    : 'bg-green-100 text-green-700'
-                }`}
+                className={`mb-6 p-4 rounded-xl text-center font-medium ${message.type === 'error'
+                  ? 'bg-red-100 text-red-700'
+                  : 'bg-green-100 text-green-700'
+                  }`}
                 variants={messageVariants}
                 initial="initial"
                 animate="animate"
@@ -219,11 +218,10 @@ const ResetPassword = () => {
               <motion.button
                 type="submit"
                 disabled={loading}
-                className={`w-full py-3 rounded-full font-medium text-white text-lg mt-2 ${
-                  loading
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-gray-600 hover:bg-gray-700'
-                }`}
+                className={`w-full py-3 rounded-full font-medium text-white text-lg mt-2 ${loading
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-gray-600 hover:bg-gray-700'
+                  }`}
                 variants={buttonVariants}
                 whileHover={!loading ? 'hover' : undefined}
                 whileTap={!loading ? 'tap' : undefined}

@@ -217,7 +217,7 @@ const HelpFAQPage = () => {
   // Filter FAQs based on search and category
   const filteredFaqs = faqData.filter(faq => {
     const matchesSearch = faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         faq.answer.toLowerCase().includes(searchQuery.toLowerCase());
+      faq.answer.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || faq.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -260,31 +260,26 @@ const HelpFAQPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black font-spartan">
-      {/* Transparent sticky header with only the back button */}
-      <div className="sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-3 py-3 flex items-center relative">
-          <button
-            onClick={handleBack}
-            className="fixed left-0 top-10 md:top-12 z-20 text-orange-500 hover:text-orange-600 transition-colors duration-200 p-2 rounded-full hover:bg-orange-500/10"
-            aria-label="Go back"
-          >
-            <ChevronLeft size={30} />
-          </button>
+    <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl flex flex-col mx-auto">
+      {/* Header */}
+      <div className="w-full px-6 py-8 relative flex items-center justify-center">
+        <button
+          onClick={handleBack}
+          className="absolute left-4 text-orange-500 hover:text-orange-600 transition-colors duration-200 p-2 rounded-full hover:bg-orange-500/10 z-10"
+          aria-label="Go back"
+        >
+          <ChevronLeft size={30} />
+        </button>
+
+        <div className="flex flex-col items-center">
+          <h1 className="text-gray-100 text-3xl font-medium">
+            Help & FAQ's
+          </h1>
+          <p className="text-orange-200 text-sm mt-1">Everything you need to know, all in one place.</p>
         </div>
       </div>
-
-      {/* Title and subtitle, visually lower */}
-      <div className="max-w-4xl mx-auto flex flex-col items-center mt-8 mb-4 px-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-white font-spartan-medium mb-2">
-          Help and FAQ's
-        </h1>
-        <span className="text-orange-200 text-sm md:text-base font-medium">
-          Everything you need to know, all in one place.
-        </span>
-      </div>
       <div className="flex justify-center items-center pt-12 px-4 min-h-[85vh]">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 30, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
@@ -292,8 +287,8 @@ const HelpFAQPage = () => {
         >
           {/* Main Card */}
           <div className="bg-white rounded-3xl shadow-2xl overflow-hidden w-full">
-            
-            
+
+
 
             <div className="p-8">
               {/* Search Bar */}
@@ -327,11 +322,10 @@ const HelpFAQPage = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setSelectedCategory('all')}
-                    className={`p-3 rounded-xl border-2 transition-all ${
-                      selectedCategory === 'all'
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
+                    className={`p-3 rounded-xl border-2 transition-all ${selectedCategory === 'all'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300'
+                      }`}
                   >
                     <div className="flex items-center">
                       <div className="w-8 h-8 bg-gradient-to-r from-gray-400 to-gray-600 rounded-lg flex items-center justify-center mr-2">
@@ -340,18 +334,17 @@ const HelpFAQPage = () => {
                       <span className="text-sm font-medium">All</span>
                     </div>
                   </motion.button>
-                  
+
                   {faqCategories.map((category) => (
                     <motion.button
                       key={category.id}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setSelectedCategory(category.id)}
-                      className={`p-3 rounded-xl border-2 transition-all ${
-                        selectedCategory === category.id
-                          ? 'border-blue-500 bg-blue-50 text-blue-700'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
+                      className={`p-3 rounded-xl border-2 transition-all ${selectedCategory === category.id
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-200 hover:border-gray-300'
+                        }`}
                     >
                       <div className="flex items-center">
                         <div className={`w-8 h-8 bg-gradient-to-r ${category.color} rounded-lg flex items-center justify-center mr-2`}>
@@ -372,12 +365,12 @@ const HelpFAQPage = () => {
                 className="space-y-4 mb-8"
               >
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                  {filteredFaqs.length > 0 
+                  {filteredFaqs.length > 0
                     ? `Found ${filteredFaqs.length} question${filteredFaqs.length !== 1 ? 's' : ''}`
                     : 'No questions found'
                   }
                 </h3>
-                
+
                 <AnimatePresence>
                   {filteredFaqs.map((faq, index) => (
                     <motion.div
@@ -405,7 +398,7 @@ const HelpFAQPage = () => {
                           )}
                         </div>
                       </button>
-                      
+
                       <AnimatePresence>
                         {expandedFaq === faq.id && (
                           <motion.div

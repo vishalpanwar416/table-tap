@@ -1,5 +1,5 @@
 import React, { useState, useRef, memo } from 'react';
-import { ChevronDown, ChevronUp, ArrowRight, ArrowLeft, Star } from 'lucide-react';
+import { ChevronDown, ChevronUp, ChevronRight, ChevronLeft, Star } from 'lucide-react';
 import { Heart, ShoppingBag } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import { useCart } from '../../shared/config/CartContent';
@@ -44,7 +44,7 @@ const RecommendationItem = memo(({ item, onImageClick, index }) => {
   // Discount tag with animation
   const DiscountTag = () =>
     item.discounttype && item.discountvalue ? (
-      <motion.span 
+      <motion.span
         className="text-[10px] bg-gradient-to-r from-green-400 to-green-600 text-white font-semibold px-2 py-0.5 rounded-full whitespace-nowrap shadow-sm"
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -95,7 +95,7 @@ const RecommendationItem = memo(({ item, onImageClick, index }) => {
         >
           <DiscountTag />
         </motion.div>
-        
+
         <motion.div
           whileHover={{ scale: 1.1 }}
           transition={{ duration: 0.3 }}
@@ -108,25 +108,24 @@ const RecommendationItem = memo(({ item, onImageClick, index }) => {
             onClick={() => onImageClick && onImageClick(item)}
           />
         </motion.div>
-        
+
         {/* Enhanced like button */}
-        <motion.button 
+        <motion.button
           className="absolute top-2 left-2 bg-white/80 backdrop-blur-sm rounded-full p-1.5 z-10 shadow-sm"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={handleLikeClick}
         >
           <motion.div
-            animate={isLikedAnimating ? { 
+            animate={isLikedAnimating ? {
               scale: [1, 1.3, 1],
               rotate: [0, 10, -10, 0]
             } : {}}
             transition={{ duration: 0.6 }}
           >
-            <Heart 
-              className={`h-4 w-4 md:w-5 md:h-5 transition-colors duration-200 ${
-                isLiked ? 'text-red-500 fill-red-500' : 'text-gray-500 hover:text-red-400'
-              }`}
+            <Heart
+              className={`h-4 w-4 md:w-5 md:h-5 transition-colors duration-200 ${isLiked ? 'text-red-500 fill-red-500' : 'text-gray-500 hover:text-red-400'
+                }`}
             />
           </motion.div>
         </motion.button>
@@ -137,7 +136,7 @@ const RecommendationItem = memo(({ item, onImageClick, index }) => {
       <div className="flex flex-col flex-1 justify-between py-1 px-2 min-h-0">
         <div className="flex items-start justify-between min-h-0">
           <div className="flex-1 min-w-0">
-            <motion.h4 
+            <motion.h4
               className="text-xs font-bold text-gray-900 truncate leading-tight"
               whileHover={{ color: '#f97316' }}
               transition={{ duration: 0.2 }}
@@ -147,7 +146,7 @@ const RecommendationItem = memo(({ item, onImageClick, index }) => {
             <div className="flex items-center space-x-1 mt-0.5">
               {item.discounttype && item.discountvalue ? (
                 <>
-                  <motion.span 
+                  <motion.span
                     className="text-[10px] text-gray-400 line-through"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -155,7 +154,7 @@ const RecommendationItem = memo(({ item, onImageClick, index }) => {
                   >
                     ₹{Number(item.price).toFixed(0)}
                   </motion.span>
-                  <motion.span 
+                  <motion.span
                     className="text-sm font-bold text-orange-600"
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -165,7 +164,7 @@ const RecommendationItem = memo(({ item, onImageClick, index }) => {
                   </motion.span>
                 </>
               ) : (
-                <motion.span 
+                <motion.span
                   className="text-sm font-bold text-gray-900"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -179,7 +178,7 @@ const RecommendationItem = memo(({ item, onImageClick, index }) => {
           <div className="ml-1 flex-shrink-0">
             <AnimatePresence mode="wait">
               {quantity > 0 ? (
-                <motion.div 
+                <motion.div
                   key="quantity-controls"
                   className="flex items-center bg-gradient-to-r from-black to-gray-800 text-white rounded-full px-2 py-1 shadow-lg"
                   initial={{ scale: 0.8, opacity: 0 }}
@@ -195,7 +194,7 @@ const RecommendationItem = memo(({ item, onImageClick, index }) => {
                   >
                     −
                   </motion.button>
-                  <motion.span 
+                  <motion.span
                     className="px-1 text-xs font-semibold"
                     key={quantity}
                     initial={{ scale: 1.2 }}
@@ -218,7 +217,7 @@ const RecommendationItem = memo(({ item, onImageClick, index }) => {
                   key="add-button"
                   onClick={handleAddToCart}
                   className="bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white rounded-full px-3 py-1.5 flex items-center space-x-1 text-xs shadow-lg transition-all duration-200"
-                  whileHover={{ 
+                  whileHover={{
                     scale: 1.05,
                     boxShadow: "0 10px 25px rgba(0,0,0,0.2)"
                   }}
@@ -279,11 +278,11 @@ const ScrollButtons = ({ tagKey, scrollRefs, onScroll }) => {
             exit={{ opacity: 0, scale: 0.8 }}
             transition={{ duration: 0.2 }}
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ChevronLeft className="w-4 h-4" />
           </motion.button>
         )}
       </AnimatePresence>
-      
+
       <AnimatePresence>
         {canScrollRight && (
           <motion.button
@@ -296,7 +295,7 @@ const ScrollButtons = ({ tagKey, scrollRefs, onScroll }) => {
             exit={{ opacity: 0, scale: 0.8 }}
             transition={{ duration: 0.2 }}
           >
-            <ArrowRight className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4" />
           </motion.button>
         )}
       </AnimatePresence>
@@ -323,11 +322,11 @@ const Tags = ({ foodItems = [], onItemClick }) => {
   // Group food items by tags, excluding bestseller and recommended
   const groupedByTags = React.useMemo(() => {
     const tagGroups = {};
-    
+
     if (!foodItems || !Array.isArray(foodItems)) {
       return tagGroups;
     }
-    
+
     foodItems.forEach(item => {
       if (item.tags && Array.isArray(item.tags)) {
         item.tags.forEach(tag => {
@@ -335,7 +334,7 @@ const Tags = ({ foodItems = [], onItemClick }) => {
           if (normalizedTag === 'bestseller' || normalizedTag === 'recommended') {
             return;
           }
-          
+
           if (!tagGroups[normalizedTag]) {
             tagGroups[normalizedTag] = {
               name: tag,
@@ -374,7 +373,7 @@ const Tags = ({ foodItems = [], onItemClick }) => {
 
   if (Object.keys(groupedByTags).length === 0) {
     return (
-      <motion.div 
+      <motion.div
         className="mt-6 text-black"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -383,7 +382,7 @@ const Tags = ({ foodItems = [], onItemClick }) => {
         <h2 className="text-xl font-thick font-spartan-bold md:text-3xl mb-3 px-4">
           Browse by Categories
         </h2>
-        <motion.div 
+        <motion.div
           className="text-gray-500 text-center py-8"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -397,13 +396,13 @@ const Tags = ({ foodItems = [], onItemClick }) => {
   }
 
   return (
-    <motion.div 
+    <motion.div
       className="mt-6 text-black pb-[100px]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <motion.h2 
+      <motion.h2
         className="text-xl font-thick font-spartan-bold md:text-3xl mb-6 px-4"
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
@@ -411,43 +410,43 @@ const Tags = ({ foodItems = [], onItemClick }) => {
       >
         Browse by Categories
       </motion.h2>
-      
+
       <div className="space-y-8">
         {Object.entries(groupedByTags).map(([tagKey, tagData], tagIndex) => (
-          <motion.div 
-            key={tagKey} 
+          <motion.div
+            key={tagKey}
             className="space-y-4"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ 
-              duration: 0.5, 
+            transition={{
+              duration: 0.5,
               delay: tagIndex * 0.1,
               ease: [0.25, 0.46, 0.45, 0.94]
             }}
           >
-                        {/* Enhanced Tag Header */}
+            {/* Enhanced Tag Header */}
             <div className="grid grid-cols-3 items-center relative px-4">
               {/* Tag Name - Moves to center */}
               <motion.div
                 className="col-start-1 col-end-2 flex items-center"
-                animate={{ 
+                animate={{
                   x: expandedTags.has(tagKey) ? '50%' : 0,
                   xPercent: expandedTags.has(tagKey) ? -50 : 0
                 }}
-                transition={{ 
-                  duration: 0.4, 
-                  ease: [0.25, 0.46, 0.45, 0.94] 
+                transition={{
+                  duration: 0.4,
+                  ease: [0.25, 0.46, 0.45, 0.94]
                 }}
               >
                 <motion.span
                   className="relative text-lg font-semibold text-gray-800 capitalize hover:text-orange-500 transition-colors md:text-2xl cursor-pointer whitespace-nowrap"
                   whileHover={{ color: '#f97316' }}
-                  animate={{ 
+                  animate={{
                     scale: expandedTags.has(tagKey) ? 1.05 : 1
                   }}
-                  transition={{ 
-                    duration: 0.3, 
-                    ease: [0.25, 0.46, 0.45, 0.94] 
+                  transition={{
+                    duration: 0.3,
+                    ease: [0.25, 0.46, 0.45, 0.94]
                   }}
                   onClick={() => toggleTag(tagKey)}
                 >
@@ -456,8 +455,8 @@ const Tags = ({ foodItems = [], onItemClick }) => {
                     className="absolute -bottom-1 left-0 h-0.5 bg-orange-500"
                     initial={{ width: 0 }}
                     whileHover={{ width: '100%' }}
-                    animate={{ 
-                      width: expandedTags.has(tagKey) ? '100%' : 0 
+                    animate={{
+                      width: expandedTags.has(tagKey) ? '100%' : 0
                     }}
                     transition={{ duration: 0.3 }}
                   />
@@ -472,7 +471,7 @@ const Tags = ({ foodItems = [], onItemClick }) => {
                 whileTap={{ scale: 0.9 }}
               >
                 <motion.div
-                  animate={{ 
+                  animate={{
                     rotate: expandedTags.has(tagKey) ? 180 : 0
                   }}
                   transition={{ duration: 0.3, ease: "easeInOut" }}
@@ -489,8 +488,8 @@ const Tags = ({ foodItems = [], onItemClick }) => {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  transition={{ 
-                    duration: 0.4, 
+                  transition={{
+                    duration: 0.4,
                     ease: "easeOut"
                   }}
                   className="overflow-hidden"
@@ -500,9 +499,9 @@ const Tags = ({ foodItems = [], onItemClick }) => {
                     className="flex space-x-4 overflow-x-auto pb-4 scroll-smooth scrollbar-hide px-4"
                   >
                     {tagData.items.map((item, index) => (
-                      <RecommendationItem 
+                      <RecommendationItem
                         key={`${tagKey}-${item.id}-${index}`}
-                        item={item} 
+                        item={item}
                         onImageClick={handleOpenItemCard}
                         index={index}
                       />
@@ -514,13 +513,13 @@ const Tags = ({ foodItems = [], onItemClick }) => {
           </motion.div>
         ))}
       </div>
-      
-      <OrderCard 
-        isOpen={isOrderCardOpen} 
-        onClose={handleCloseItemCard} 
-        item={selectedItem} 
+
+      <OrderCard
+        isOpen={isOrderCardOpen}
+        onClose={handleCloseItemCard}
+        item={selectedItem}
       />
-      
+
       <style>{`
         .scrollbar-hide {
           -ms-overflow-style: none;

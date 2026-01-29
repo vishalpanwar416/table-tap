@@ -17,7 +17,7 @@ import ManagerNotificationsToast from '../../components/admin/ManagerNotificatio
 import QRManagement from '../../components/admin/QRManagement/QRManagement';
 import ActivityLogs from '../../components/admin/ActivityLogs';
 import AggregatorIntegration from '../../components/admin/AggregatorIntegration';
-import { X, ArrowLeft, Package, BarChart3, Sparkles, Plus, Building2, ChevronDown, Clock, Grid } from 'lucide-react';
+import { X, ChevronLeft, Package, BarChart3, Sparkles, Plus, Building2, ChevronDown, Clock, Grid } from 'lucide-react';
 import FloorPlanView from '../../components/admin/FloorPlan/FloorPlanView';
 import { getAllFoodItems, getRestaurantFoodItems } from '../../../customer/api/foodService';
 import { supabase } from '../../../shared/supabase';
@@ -685,7 +685,7 @@ const AdminDashboard = () => {
                   className="mr-4 p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
                   aria-label="Go back"
                 >
-                  <ArrowLeft size={22} />
+                  <ChevronLeft size={30} />
                 </button>
                 <h2 className="text-xl md:text-2xl font-semibold text-gray-800">
                   {menuItems.find(item => item.id === activeTab)?.label || 'Dashboard'}

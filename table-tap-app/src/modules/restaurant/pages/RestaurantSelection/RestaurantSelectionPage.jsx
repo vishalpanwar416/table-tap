@@ -660,9 +660,9 @@ const RestaurantSelectionPage = () => {
     <div className="flex justify-center items-start min-h-screen bg-black">
       <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
         {/* Header */}
-        <div className="w-full px-4 py-8 relative flex justify-center bg-black z-20 sticky top-0 md:static md:bg-transparent" style={{ minHeight: 72 }}>
+        <div className="w-full px-4 py-8 relative flex items-center justify-center bg-black z-20 sticky top-0 md:static md:bg-transparent" style={{ minHeight: 72 }}>
           <button
-            className="absolute left-4 top-8 text-orange-500 touch-manipulation"
+            className="absolute left-4 text-orange-500 touch-manipulation"
             onClick={() => navigate(-1)}
             aria-label="Go back"
             style={{ minWidth: 44, minHeight: 44 }}

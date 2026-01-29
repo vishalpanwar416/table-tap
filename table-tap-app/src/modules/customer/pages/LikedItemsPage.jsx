@@ -15,12 +15,12 @@ import { useMultiScrollLock } from '../../shared/hooks/useScrollLock';
 
 // Page transition variants
 const pageVariants = {
-  initial: { 
+  initial: {
     opacity: 0,
     x: 20,
     scale: 0.98
   },
-  animate: { 
+  animate: {
     opacity: 1,
     x: 0,
     scale: 1,
@@ -29,7 +29,7 @@ const pageVariants = {
       ease: "easeOut"
     }
   },
-  exit: { 
+  exit: {
     opacity: 0,
     x: -20,
     scale: 0.98,
@@ -50,13 +50,13 @@ const staggerContainer = {
 };
 
 const itemVariants = {
-  initial: { 
-    opacity: 0, 
+  initial: {
+    opacity: 0,
     y: 20,
     scale: 0.9
   },
-  animate: { 
-    opacity: 1, 
+  animate: {
+    opacity: 1,
     y: 0,
     scale: 1,
     transition: {
@@ -70,7 +70,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
   const { cartItems, addToCart, updateQuantity, removeItem } = useCart();
   const { toggleLike, likedItems } = useLikes();
   const [isLikedAnimating, setIsLikedAnimating] = useState(false);
-  
+
   const cartItem = useMemo(() => cartItems.find(i => i.id === item.id), [cartItems, item.id]);
   const quantity = cartItem?.quantity || 0;
   const isLiked = useMemo(() => likedItems.some(likedItem => likedItem.id === item.id), [likedItems, item.id]);
@@ -95,7 +95,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
   // Discount tag
   const DiscountTag = () =>
     item.discounttype && item.discountvalue ? (
-      <motion.span 
+      <motion.span
         className="text-[10px] bg-gradient-to-r from-green-400 to-green-600 text-white font-semibold px-2 py-0.5 rounded-full whitespace-nowrap shadow-sm"
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -143,7 +143,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
             loading="lazy"
           />
         </motion.div>
-        
+
         {/* Enhanced like button */}
         <motion.button
           className="absolute top-2 left-2 z-20 bg-white/80 backdrop-blur-sm rounded-full p-1 shadow-sm"
@@ -152,25 +152,24 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
           onClick={handleLikeClick}
         >
           <motion.div
-            animate={isLikedAnimating ? { 
+            animate={isLikedAnimating ? {
               scale: [1, 1.3, 1],
               rotate: [0, 10, -10, 0]
             } : {}}
             transition={{ duration: 0.6 }}
           >
-            <Heart 
-              className={`h-4 w-4 transition-colors duration-200 ${
-                isLiked ? "text-red-500 fill-red-500" : "text-gray-400 hover:text-red-400"
-              }`} 
+            <Heart
+              className={`h-4 w-4 transition-colors duration-200 ${isLiked ? "text-red-500 fill-red-500" : "text-gray-400 hover:text-red-400"
+                }`}
             />
           </motion.div>
         </motion.button>
       </div>
-      
+
       <div className="flex flex-col flex-1 justify-between py-1 px-2">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
-            <motion.h4 
+            <motion.h4
               className="text-xs font-bold text-gray-900 truncate"
               whileHover={{ color: '#f97316' }}
               transition={{ duration: 0.2 }}
@@ -180,7 +179,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
             <div className="flex items-center space-x-1">
               {item.discounttype && item.discountvalue ? (
                 <>
-                  <motion.span 
+                  <motion.span
                     className="text-[10px] text-gray-400 line-through"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -188,7 +187,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
                   >
                     ₹{Number(item.price).toFixed(0)}
                   </motion.span>
-                  <motion.span 
+                  <motion.span
                     className="text-sm font-bold text-orange-600"
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -198,7 +197,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
                   </motion.span>
                 </>
               ) : (
-                <motion.span 
+                <motion.span
                   className="text-sm font-bold text-gray-900"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -212,7 +211,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
           <div className="ml-1">
             <AnimatePresence mode="wait">
               {quantity > 0 ? (
-                <motion.div 
+                <motion.div
                   key="quantity-controls"
                   className="flex items-center bg-gradient-to-r from-black to-gray-800 text-white rounded-full px-2 py-0.5 shadow-lg"
                   initial={{ scale: 0.8, opacity: 0 }}
@@ -228,7 +227,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
                   >
                     −
                   </motion.button>
-                  <motion.span 
+                  <motion.span
                     className="px-1 text-xs font-semibold"
                     key={quantity}
                     initial={{ scale: 1.2 }}
@@ -251,7 +250,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
                   key="add-button"
                   onClick={handleAddClick}
                   className="bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white rounded-full px-2 py-0.5 flex items-center space-x-1 text-xs shadow-lg transition-all duration-200"
-                  whileHover={{ 
+                  whileHover={{
                     scale: 1.05,
                     boxShadow: "0 10px 25px rgba(0,0,0,0.2)"
                   }}
@@ -312,8 +311,8 @@ const LikedItemsPage = () => {
     if (!searchTerm.trim()) {
       return likedItems;
     }
-    
-    return likedItems.filter(item => 
+
+    return likedItems.filter(item =>
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.category?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -334,7 +333,7 @@ const LikedItemsPage = () => {
 
   if (loading) {
     return (
-      <motion.div 
+      <motion.div
         className="text-white text-center p-4 min-h-screen flex items-center justify-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -358,35 +357,37 @@ const LikedItemsPage = () => {
   }
 
   return (
-    <motion.div 
+    <motion.div
       className="flex justify-center items-start min-h-screen bg-black p-4"
       variants={pageVariants}
       initial="initial"
       animate="animate"
       exit="exit"
     >
-      <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
-        <Header 
-          isSearchActive={isSearchActive}
-          toggleSearch={toggle.search}
-          toggleSidebar={toggle.sidebar}
-          toggleNotifications={toggle.notification}
-          toggleCart={toggle.cart}
-          cartItems={cartItems}
-          onSearch={handleSearch}
-          onSearchClose={handleSearchClose}
-          showRestaurantInfo={false}
-          className="mb-2 md:mb-3"
-        />
+      <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col relative">
+        <div className="relative flex items-center mb-2 md:mb-3">
+          <motion.button
+            className="absolute left-2 text-orange-500 hover:text-orange-600 transition-colors z-20"
+            onClick={() => navigate(-1)}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <ChevronLeft size={30} className="md:w-8 md:h-8" />
+          </motion.button>
 
-        <motion.button 
-          className="absolute left-4 top-7 md:left-8 md:top-8 text-orange-500 hover:text-orange-600 transition-colors z-10"
-          onClick={() => navigate(-1)}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <ChevronLeft size={30} className="md:w-8 md:h-8" />
-        </motion.button>
+          <Header
+            isSearchActive={isSearchActive}
+            toggleSearch={toggle.search}
+            toggleSidebar={toggle.sidebar}
+            toggleNotifications={toggle.notification}
+            toggleCart={toggle.cart}
+            cartItems={cartItems}
+            onSearch={handleSearch}
+            onSearchClose={handleSearchClose}
+            showRestaurantInfo={false}
+            className="w-full"
+          />
+        </div>
 
         <Sidebar
           isSidebarOpen={isSidebarOpen}
@@ -397,7 +398,7 @@ const LikedItemsPage = () => {
         />
 
         {isNotificationOpen && (
-          <NotificationSidebar 
+          <NotificationSidebar
             isOpen={isNotificationOpen}
             onClose={toggle.notification}
           />
@@ -409,7 +410,7 @@ const LikedItemsPage = () => {
           cartItems={cartItems}
         />
 
-        <motion.div 
+        <motion.div
           className="pt-4 md:pt-6 pb-6 relative"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -420,14 +421,14 @@ const LikedItemsPage = () => {
           </h1>
         </motion.div>
 
-        <motion.div 
+        <motion.div
           ref={containerRef}
           className="bg-white rounded-3xl p-4 md:p-6 flex-1 flex flex-col min-h-[calc(100vh-200px)] overflow-y-auto shadow-xl"
           initial={{ opacity: 0, y: 20, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ delay: 0.2, duration: 0.5, ease: "easeOut" }}
         >
-          <motion.p 
+          <motion.p
             className="justify-center text-center text-black font-medium text-lg md:text-xl mb-4 md:mb-6 font-spartan-medium"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -438,7 +439,7 @@ const LikedItemsPage = () => {
 
           {/* Search Results Count */}
           {searchTerm && (
-            <motion.div 
+            <motion.div
               className="mb-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -449,10 +450,10 @@ const LikedItemsPage = () => {
               </p>
             </motion.div>
           )}
-          
+
           {/* Items Grid */}
           {filteredLikedItems.length > 0 ? (
-            <motion.div 
+            <motion.div
               className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"
               variants={staggerContainer}
               initial="initial"
@@ -469,7 +470,7 @@ const LikedItemsPage = () => {
               ))}
             </motion.div>
           ) : searchTerm ? (
-            <motion.div 
+            <motion.div
               className="flex flex-col items-center justify-center py-12"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

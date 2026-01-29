@@ -16,11 +16,11 @@ const OrderConfirmationPage = () => {
   useEffect(() => {
     const initializeOrder = async () => {
       console.log('OrderConfirmationPage: Initializing with state:', location.state);
-      
+
       try {
         const orderId = location.state?.orderId;
         console.log('OrderConfirmationPage: Order ID:', orderId);
-        
+
         if (!orderId) {
           setError('No order ID provided');
           setLoading(false);
@@ -29,7 +29,7 @@ const OrderConfirmationPage = () => {
 
         const order = await getOrderDetails(orderId);
         console.log('OrderConfirmationPage: Retrieved order:', order);
-        
+
         setOrderDetails(order);
         startStatusUpdates(orderId);
 
@@ -157,7 +157,7 @@ const OrderConfirmationPage = () => {
         >
           <h1 className="text-3xl font-bold mb-2 tracking-tight">Order Confirmed!</h1>
           <p className="text-gray-300 mb-4">Your order has been placed successfully</p>
-          
+
           {orderDetails.order_number && (
             <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 mb-4 shadow-lg border border-white/10">
               <p className="text-xs text-gray-400">Order Number</p>
@@ -187,7 +187,7 @@ const OrderConfirmationPage = () => {
           >
             Track My Order
           </motion.button>
-          
+
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={handleGoHome}

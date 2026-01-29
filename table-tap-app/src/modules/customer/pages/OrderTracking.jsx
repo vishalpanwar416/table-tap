@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle, Clock, XCircle, Truck } from 'lucide-react';
+import { ChevronLeft, CheckCircle, Clock, XCircle, Truck } from 'lucide-react';
 import { useOrders } from '../../shared/context/OrderContext';
 
 const OrderTracking = () => {
@@ -90,7 +90,7 @@ const OrderTracking = () => {
       <div className="min-h-screen bg-black text-white p-6 flex flex-col items-center justify-center">
         <h1 className="text-2xl font-bold mb-4">Something went wrong</h1>
         <p className="text-gray-300 mb-6">{error}</p>
-        <button 
+        <button
           onClick={() => navigate('/my-orders')}
           className="px-6 py-2 bg-orange-500 text-white rounded-full hover:bg-orange-600 transition-colors"
         >
@@ -105,7 +105,7 @@ const OrderTracking = () => {
       <div className="min-h-screen bg-black text-white p-6 flex flex-col items-center justify-center">
         <h1 className="text-2xl font-bold mb-4">Order not found</h1>
         <p className="text-gray-300 mb-6">We couldn't find the order you're looking for.</p>
-        <button 
+        <button
           onClick={() => navigate('/my-orders')}
           className="px-6 py-2 bg-orange-500 text-white rounded-full hover:bg-orange-600 transition-colors"
         >
@@ -119,11 +119,11 @@ const OrderTracking = () => {
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
       <div className="p-6 flex items-center justify-center relative">
-        <button 
+        <button
           onClick={() => navigate('/my-orders')}
-          className="absolute left-4 text-orange-500"
+          className="absolute left-6 text-orange-500"
         >
-          <ArrowLeft size={24} />
+          <ChevronLeft size={30} />
         </button>
         <h1 className="text-2xl font-bold">Order Tracking</h1>
       </div>
@@ -164,8 +164,8 @@ const OrderTracking = () => {
               </div>
             </div>
             <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-orange-200">
-              <div 
-                style={{ width: `${statusPercentage}%` }} 
+              <div
+                style={{ width: `${statusPercentage}%` }}
                 className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-orange-500 transition-all duration-500"
               ></div>
             </div>
@@ -178,7 +178,7 @@ const OrderTracking = () => {
         {/* Order details */}
         <div className="border rounded-lg p-4 mb-6">
           <h3 className="font-bold mb-4 text-lg">Order Details</h3>
-          
+
           {/* Items */}
           <div className="divide-y divide-gray-200">
             {currentOrder.items && currentOrder.items.map((item, index) => (
@@ -191,7 +191,7 @@ const OrderTracking = () => {
               </div>
             ))}
           </div>
-          
+
           {/* Pricing */}
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="flex justify-between mb-2">
@@ -219,7 +219,7 @@ const OrderTracking = () => {
 
         {/* Action buttons */}
         <div className="mt-8 flex justify-center">
-          <button 
+          <button
             onClick={() => navigate('/my-orders')}
             className="bg-gray-200 text-black font-bold py-3 px-8 rounded-full hover:bg-gray-300 transition-colors"
           >

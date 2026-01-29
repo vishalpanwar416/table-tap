@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback, useEffect, useState, lazy, Suspense, memo, useRef } from "react";
-import { ShoppingBag, Heart, ArrowLeft, Filter, Star, Clock, ChevronLeft } from "lucide-react";
+import { ShoppingBag, Heart, Filter, Star, Clock, ChevronLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from '../../shared/config/CartContent';
 import { useLikes } from '../../shared/config/LikesContent';
@@ -141,7 +141,7 @@ const ProgressiveImage = ({ src, alt, className, placeholderColor = '#f3f4f6', d
           loading="lazy"
           decoding="async"
           style={{
-    opacity: 1,
+            opacity: 1,
             transform: 'translateZ(0)',
             backfaceVisibility: 'hidden'
           }}
@@ -289,11 +289,10 @@ const BestSellerItem = memo(({ item, onItemClick, index = 0 }) => {
             transition={{ duration: 0.6 }}
           >
             <Heart
-              className={`h-5 w-5 transition-colors duration-200 ${
-                isLiked
-                  ? "text-red-500 fill-red-500"
-                  : "text-gray-600 hover:text-red-400"
-              }`}
+              className={`h-5 w-5 transition-colors duration-200 ${isLiked
+                ? "text-red-500 fill-red-500"
+                : "text-gray-600 hover:text-red-400"
+                }`}
             />
           </motion.div>
         </motion.button>
@@ -680,49 +679,49 @@ const BestSellerPage = memo(() => {
       animate="animate"
       exit="exit"
     >
-      <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
-
+      <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col relative">
         {/* Modals and Sidebars */}
         <Suspense fallback={null}>
-      <LogoutPopup
-          isOpen={isLogoutOpen}
-          onClose={() => setIsLogoutOpen(false)}
+          <LogoutPopup
+            isOpen={isLogoutOpen}
+            onClose={() => setIsLogoutOpen(false)}
             onConfirm={handleLogout}
           />
         </Suspense>
 
         {/* Header with real-time search */}
-        <Suspense fallback={<HeaderSkeleton />}>
-          <Header
-            isSearchActive={isSearchActive}
-            toggleSearch={isSearchActive ? closeSearch : openSearch}
-            onSearch={handleSearch}
-            onSearchClose={handleSearchClose}
-            cartItems={cartItems}
-            showRestaurantInfo={false} // Hide restaurant info on best seller page
-            className="mb-2 md:mb-3"
-          />
-        </Suspense>
+        <div className="relative flex items-center mb-2 md:mb-3">
+          <motion.button
+            className="absolute left-2 text-orange-500 hover:text-orange-600 transition-colors z-20"
+            onClick={() => navigate(-1)}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <ChevronLeft size={30} className="md:w-8 md:h-8" />
+          </motion.button>
 
-        {/* Back Button */}
-        <motion.button
-          className="absolute left-4 top-7 md:left-8 md:top-8 text-orange-500 hover:text-orange-600 transition-colors z-10"
-          onClick={() => navigate(-1)}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <ChevronLeft size={30} className="md:w-8 md:h-8" />
-        </motion.button>
+          <Suspense fallback={<HeaderSkeleton />}>
+            <Header
+              isSearchActive={isSearchActive}
+              toggleSearch={isSearchActive ? closeSearch : openSearch}
+              onSearch={handleSearch}
+              onSearchClose={handleSearchClose}
+              cartItems={cartItems}
+              showRestaurantInfo={false} // Hide restaurant info on best seller page
+              className="w-full"
+            />
+          </Suspense>
+        </div>
 
         {/* Sidebars */}
         <AnimatePresence mode="wait">
           {isSidebarOpen && (
             <Suspense fallback={<div className="fixed inset-0 z-50 bg-black/50" />}>
-        <Sidebar
-          isSidebarOpen={isSidebarOpen}
+              <Sidebar
+                isSidebarOpen={isSidebarOpen}
                 toggleSidebar={toggles.sidebar}
-          onLogout={() => setIsLogoutOpen(true)}
-        />
+                onLogout={() => setIsLogoutOpen(true)}
+              />
             </Suspense>
           )}
         </AnimatePresence>
@@ -730,11 +729,11 @@ const BestSellerPage = memo(() => {
         <AnimatePresence mode="wait">
           {isCartOpen && (
             <Suspense fallback={<div className="fixed inset-0 z-50 bg-black/50" />}>
-        <CartSidebar
-          isOpen={isCartOpen}
+              <CartSidebar
+                isOpen={isCartOpen}
                 onClose={toggles.cart}
-          cartItems={cartItems}
-        />
+                cartItems={cartItems}
+              />
             </Suspense>
           )}
         </AnimatePresence>
@@ -742,10 +741,10 @@ const BestSellerPage = memo(() => {
         <AnimatePresence mode="wait">
           {isNotificationOpen && (
             <Suspense fallback={<div className="fixed inset-0 z-50 bg-black/50" />}>
-           <NotificationSidebar
-             isOpen={isNotificationOpen}
+              <NotificationSidebar
+                isOpen={isNotificationOpen}
                 onClose={toggles.notification}
-            />
+              />
             </Suspense>
           )}
         </AnimatePresence>
@@ -819,29 +818,29 @@ const BestSellerPage = memo(() => {
 
           {/* Items Grid - Matching MenuDropdown style */}
           {filteredAndSortedItems.length > 0 ? (
-          <motion.div
+            <motion.div
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
-            variants={staggerContainer}
-            initial="initial"
-            animate="animate"
-          >
+              variants={staggerContainer}
+              initial="initial"
+              animate="animate"
+            >
               {filteredAndSortedItems.map((item, index) => (
-              <motion.div
-                key={item.id}
+                <motion.div
+                  key={item.id}
                   variants={{
                     hidden: { opacity: 0, y: 20 },
                     visible: { opacity: 1, y: 0 }
                   }}
                   transition={{ duration: 0.3, ease: "easeOut", delay: index * 0.05 }}
-              >
+                >
                   <BestSellerItem
                     item={item}
                     index={index}
                     onItemClick={handleOpenItemCard}
                   />
-              </motion.div>
-            ))}
-          </motion.div>
+                </motion.div>
+              ))}
+            </motion.div>
           ) : (
             <motion.div
               className="flex flex-col items-center justify-center py-12"

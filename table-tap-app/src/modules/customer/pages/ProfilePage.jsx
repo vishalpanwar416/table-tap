@@ -347,23 +347,24 @@ const ProfilePage = () => {
     <div className="flex justify-center items-start min-h-screen bg-black p-4">
       <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
 
-        {/* Back Button */}
-        <button
-          onClick={() => navigate(-1)}
-          className="text-orange-500 hover:text-orange-600 transition-colors duration-200 p-2 rounded-full hover:bg-orange-500/10"
-          aria-label="Go back"
-        >
-          <ChevronLeft size={30} />
-        </button>
+        {/* Header with Back Button and Title */}
+        <div className="relative flex items-center justify-center py-6 md:py-8">
+          <button
+            onClick={() => navigate(-1)}
+            className="absolute left-4 text-orange-500 hover:text-orange-600 transition-colors duration-200 p-2 rounded-full hover:bg-orange-500/10 z-10"
+            aria-label="Go back"
+          >
+            <ChevronLeft size={30} />
+          </button>
 
-        {/* Page Title */}
-        <div className="pt-4 md:pt-6 pb-4 relative">
-          <h1 className="text-2xl md:text-4xl text-center text-white font-spartan-medium">
-            My Profile
-          </h1>
-          <p className="text-center text-gray-400 mt-2 text-sm md:text-base">
-            Manage your account information
-          </p>
+          <div className="text-center">
+            <h1 className="text-2xl md:text-4xl text-white font-spartan-medium">
+              My Profile
+            </h1>
+            <p className="text-gray-400 mt-2 text-sm md:text-base">
+              Manage your account information
+            </p>
+          </div>
         </div>
 
         {/* Main Content */}

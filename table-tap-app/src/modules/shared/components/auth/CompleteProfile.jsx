@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { authService } from '../../api/authService';
 import { toast, ToastContainer, Slide } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -200,12 +200,12 @@ export default function CompleteProfile() {
     >
       <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl flex flex-col z-10">
         {/* Header */}
-        <div className="w-full px-6 py-8 relative flex justify-center">
+        <div className="w-full px-6 py-8 relative flex items-center justify-center">
           <button
             onClick={() => navigate(-1)}
-            className="absolute left-4 top-8 text-orange-500"
+            className="absolute left-4 text-orange-500"
           >
-            <ArrowLeft size={30} />
+            <ChevronLeft size={30} />
           </button>
           <motion.h1
             className="text-white text-2xl font-medium font-spartan"

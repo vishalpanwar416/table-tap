@@ -19,7 +19,7 @@ import {
   Building,
   FileText,
   Award,
-  ArrowLeft,
+  ChevronLeft,
   Zap,
   Power
 } from 'lucide-react';

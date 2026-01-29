@@ -63,8 +63,8 @@ const statusComponents = {
     icon: (
       <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-yellow-50 flex items-center justify-center shadow-sm">
         <svg className="w-8 h-8 md:w-10 md:h-10 text-yellow-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M12 6v6l4 2"/>
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 6v6l4 2" />
         </svg>
       </div>
     ),
@@ -75,7 +75,7 @@ const statusComponents = {
     icon: (
       <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-purple-50 flex items-center justify-center shadow-sm">
         <svg className="w-8 h-8 md:w-10 md:h-10 text-purple-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M12 2v4M12 22v-4M6.314 6.314L4.9 4.9M17.686 6.314L19.1 4.9M6.314 17.69L4.9 19.1M17.686 17.69L19.1 19.1M12 6a6 6 0 1 1 0 12 6 6 0 0 1 0-12z"/>
+          <path d="M12 2v4M12 22v-4M6.314 6.314L4.9 4.9M17.686 6.314L19.1 4.9M6.314 17.69L4.9 19.1M17.686 17.69L19.1 19.1M12 6a6 6 0 1 1 0 12 6 6 0 0 1 0-12z" />
         </svg>
       </div>
     ),
@@ -86,8 +86,8 @@ const statusComponents = {
     icon: (
       <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-green-50 flex items-center justify-center shadow-sm">
         <svg className="w-8 h-8 md:w-10 md:h-10 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
-          <polyline points="22 4 12 14.01 9 11.01"/>
+          <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+          <polyline points="22 4 12 14.01 9 11.01" />
         </svg>
       </div>
     ),
@@ -104,16 +104,16 @@ export default function MyOrders() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [sortBy, setSortBy] = useState('newest'); // 'newest' or 'oldest'
   const [restaurantMap, setRestaurantMap] = useState({});
-  
+
   const navigate = useNavigate();
   const { userOrders, fetchUserOrders, loading, error } = useOrders();
-  
+
   // Fetch orders with better error handling
   const handleFetchOrders = useCallback(async (showRefreshAnimation = false) => {
     if (showRefreshAnimation) {
       setIsRefreshing(true);
     }
-    
+
     try {
       await fetchUserOrders();
       setLastRefresh(new Date());
@@ -122,7 +122,7 @@ export default function MyOrders() {
       if (isInitialLoad) {
         setIsInitialLoad(false);
       }
-      
+
       if (showRefreshAnimation) {
         // Keep the refresh animation for at least 500ms to provide feedback
         setTimeout(() => setIsRefreshing(false), 500);
@@ -133,10 +133,10 @@ export default function MyOrders() {
   // Initial load and polling setup
   useEffect(() => {
     handleFetchOrders();
-    
+
     // Setting up polling for updates (WebSocket would be better in production)
     const interval = setInterval(() => handleFetchOrders(), 10000); // Poll every 10 seconds
-    
+
     return () => clearInterval(interval);
   }, [handleFetchOrders]);
 
@@ -145,12 +145,12 @@ export default function MyOrders() {
     async function fetchRestaurants() {
       try {
         const restaurants = await getActiveRestaurants();
-        
+
         if (!restaurants || restaurants.length === 0) {
           setRestaurantMap({});
           return;
         }
-        
+
         // Map restaurant_id to name
         const map = {};
         (restaurants || []).forEach(r => {
@@ -194,14 +194,14 @@ export default function MyOrders() {
   const getFilteredAndSortedOrders = () => {
     // First filter by status
     const filtered = userOrders.filter(order => {
-      switch(activeTab) {
+      switch (activeTab) {
         case 'pending': return order.status === 'pending';
         case 'preparing': return order.status === 'preparing';
         case 'completed': return ['completed', 'rejected', 'ready'].includes(order.status);
         default: return false;
       }
     });
-    
+
     // Then sort by date
     return filtered.sort((a, b) => {
       const dateA = new Date(a.created_at || 0);
@@ -209,7 +209,7 @@ export default function MyOrders() {
       return sortBy === 'newest' ? dateB - dateA : dateA - dateB;
     });
   };
-  
+
   // Pagination state
   const [ordersPage, setOrdersPage] = useState(1);
   const [ordersPageSize] = useState(10); // Show 10 orders per page
@@ -276,7 +276,7 @@ export default function MyOrders() {
         <div className="bg-red-50 border border-red-200 rounded-xl p-6 max-w-md shadow-lg">
           <h3 className="text-red-600 text-xl font-semibold mb-2">Error Loading Orders</h3>
           <p className="text-red-500">{error}</p>
-          <button 
+          <button
             onClick={() => handleFetchOrders(true)}
             className="mt-4 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors shadow-sm"
           >
@@ -296,9 +296,9 @@ export default function MyOrders() {
     <div className="flex justify-center items-start min-h-screen bg-black">
       <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
         {/* Header */}
-        <div className="w-full px-6 py-8 relative flex justify-center">
-          <button 
-            className="absolute left-4 top-8 text-orange-500"
+        <div className="w-full px-6 py-8 relative flex items-center justify-center">
+          <button
+            className="absolute left-4 text-orange-500"
             onClick={() => navigate('/home')}
             aria-label="Go back to home"
           >
@@ -323,7 +323,7 @@ export default function MyOrders() {
             {/* Filter and Refresh Bar */}
             <div className="flex items-center justify-between mb-4 bg-white rounded-xl py-3 px-3 shadow-sm">
               <div className="flex items-center">
-                <button 
+                <button
                   onClick={toggleSortOrder}
                   className="flex items-center text-xs font-medium text-gray-600 bg-gray-100 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-200 transition-colors"
                 >
@@ -335,15 +335,15 @@ export default function MyOrders() {
                 <span className="text-xs text-gray-500 mr-2">
                   Updated: {formatLastUpdated()}
                 </span>
-                <button 
+                <button
                   onClick={handleManualRefresh}
                   disabled={isRefreshing}
                   className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
                   aria-label="Refresh orders"
                 >
-                  <RefreshCw 
-                    size={16} 
-                    className={`text-gray-600 ${isRefreshing ? 'animate-spin' : ''}`} 
+                  <RefreshCw
+                    size={16}
+                    className={`text-gray-600 ${isRefreshing ? 'animate-spin' : ''}`}
                   />
                 </button>
               </div>
@@ -352,10 +352,10 @@ export default function MyOrders() {
             {/* Orders List - Scrollable area */}
             <div className="flex-1 bg-white rounded-xl p-4 overflow-y-auto shadow-sm" style={{ maxHeight: 'calc(100vh - 340px)' }}>
               <h2 className="text-black text-xl font-semibold mb-4">
-                {activeTab === 'pending' ? 'Pending Orders' : 
-                 activeTab === 'preparing' ? 'Orders in Preparation' : 'Order History'}
+                {activeTab === 'pending' ? 'Pending Orders' :
+                  activeTab === 'preparing' ? 'Orders in Preparation' : 'Order History'}
               </h2>
-              
+
               {paginatedOrders.length > 0 ? (
                 <div style={{ height: 400 }}>
                   <List
@@ -393,7 +393,7 @@ export default function MyOrders() {
                 Next
               </button>
             </div>
-            
+
             {/* Order Summary */}
             <div className="mt-4 bg-white p-4 rounded-xl shadow-sm">
               <div className="flex items-center mb-3">
@@ -421,7 +421,7 @@ export default function MyOrders() {
                 </div>
               </div>
             </div>
-            
+
             {/* Bottom Spacing */}
           </div>
         </div>

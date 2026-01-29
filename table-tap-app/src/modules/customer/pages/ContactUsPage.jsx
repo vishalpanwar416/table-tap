@@ -32,7 +32,7 @@ const ContactUsPage = () => {
             const profile = await authService.getProfile(user.id);
             if (profile?.full_name) name = profile.full_name;
             if (profile?.email) email = profile.email;
-          } catch {}
+          } catch { }
           setContactForm(prev => ({
             ...prev,
             name,
@@ -78,8 +78,8 @@ const ContactUsPage = () => {
 
   const handleSocialMediaClick = (platform) => {
     if (platform === 'instagram' && restaurant.social_media?.instagram) {
-      const instagramHandle = restaurant.social_media.instagram.startsWith('@') 
-        ? restaurant.social_media.instagram 
+      const instagramHandle = restaurant.social_media.instagram.startsWith('@')
+        ? restaurant.social_media.instagram
         : `@${restaurant.social_media.instagram}`;
       window.open(`https://instagram.com/${instagramHandle.substring(1)}`, '_blank');
     } else if (platform === 'facebook' && restaurant.social_media?.facebook) {
@@ -213,81 +213,71 @@ const ContactUsPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-black font-spartan">
-      {/* Sticky Header with only back button */}
-      <div className="bg-black/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-3 py-3 flex items-center relative">
-          <button
-            onClick={handleBack}
-            className="fixed left-0 top-10 md:top-12 z-20 text-orange-500 hover:text-orange-600 transition-colors duration-200 p-2 rounded-full hover:bg-orange-500/10"
-            aria-label="Go back"
-          >
-            <ChevronLeft size={30} />
-          </button>
+    <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl flex flex-col mx-auto">
+      {/* Header */}
+      <div className="w-full px-6 py-8 relative flex items-center justify-center">
+        <button
+          onClick={handleBack}
+          className="absolute left-4 text-orange-500 hover:text-orange-600 transition-colors duration-200 p-2 rounded-full hover:bg-orange-500/10 z-10"
+          aria-label="Go back"
+        >
+          <ChevronLeft size={30} />
+        </button>
+
+        <div className="flex flex-col items-center">
+          <h1 className="text-gray-100 text-3xl font-medium">
+            Contact Us
+          </h1>
+          <p className="text-orange-200 text-sm mt-1">We'd love to hear from you!</p>
         </div>
       </div>
 
-      {/* Title and subtitle, visually lower */}
-      <div className="max-w-4xl mx-auto flex flex-col items-center mt-6 mb-2 px-2">
-        <h1 className="text-2xl md:text-3xl font-bold text-white font-spartan-medium mb-1">
-          Contact Us
-        </h1>
-        <span className="text-orange-200 text-sm md:text-base font-medium">
-          <a
-            href="#contact-form"
-            className="hover:underline transition-colors"
-          >
-            We'd love to hear from you!
-          </a>
-        </span>
-      </div>
-
-      <div className="flex justify-center items-center py-12 px-1 min-h-[85vh]">
+      <div className="flex justify-center items-center py-4 px-1 min-h-[85vh]">
         <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl mx-auto">
           {/* Main Card */}
           <div className="bg-white rounded-t-[30px] shadow-xl overflow-hidden w-full">
             {/* Restaurant Header */}
             <div className="relative p-6 text-black border-b border-gray-200">
-                <div className="flex items-center mb-4">
+              <div className="flex items-center mb-4">
                 <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mr-4">
-                    {restaurant.logo_url ? (
-                      <img 
-                        src={restaurant.logo_url} 
-                        alt={restaurant.name}
-                        className="w-12 h-12 rounded-lg object-cover"
-                      />
-                    ) : (
+                  {restaurant.logo_url ? (
+                    <img
+                      src={restaurant.logo_url}
+                      alt={restaurant.name}
+                      className="w-12 h-12 rounded-lg object-cover"
+                    />
+                  ) : (
                     <Building className="w-8 h-8 text-gray-400" />
-                    )}
-                  </div>
-                  <div>
+                  )}
+                </div>
+                <div>
                   <h2 className="text-2xl md:text-3xl font-bold mb-1 text-gray-900">{restaurant.name}</h2>
                   <p className="text-gray-500">{restaurant.description || 'Get in touch with us'}</p>
                 </div>
               </div>
-                {tableNumber && (
-  <div className="flex flex-row items-center justify-center mt-2 gap-3 w-full overflow-x-auto">
-    <div className="inline-flex items-center bg-gray-100 rounded-full px-4 py-2 border border-gray-200 whitespace-nowrap">
-      <Users className="w-5 h-5 mr-2 text-gray-500" />
-      <span className="font-semibold text-base text-gray-700">Table {tableNumber}</span>
-    </div>
-    <motion.button
-      onClick={() => {
-        if (restaurant.google_maps_link) {
-          window.open(restaurant.google_maps_link, '_blank');
-        } else {
-          handleGoogleMapsFeedback();
-        }
-      }}
-      className="flex items-center px-4 py-2 bg-gradient-to-r from-orange-400 to-orange-600 text-white rounded-full font-spartan-medium shadow-lg border-2 border-orange-500 hover:scale-105 transition-transform duration-200 whitespace-nowrap"
-      animate={{ scale: [1, 1.08, 1] }}
-      transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }}
-    >
-      <Heart className="w-5 h-5 md:w-6 md:h-6 drop-shadow heart-beat-fill" fill="white" stroke="none" />
-      <span className="ml-2 font-spartan-medium">Rate Us</span>
-    </motion.button>
-  </div>
-)}
+              {tableNumber && (
+                <div className="flex flex-row items-center justify-center mt-2 gap-3 w-full overflow-x-auto">
+                  <div className="inline-flex items-center bg-gray-100 rounded-full px-4 py-2 border border-gray-200 whitespace-nowrap">
+                    <Users className="w-5 h-5 mr-2 text-gray-500" />
+                    <span className="font-semibold text-base text-gray-700">Table {tableNumber}</span>
+                  </div>
+                  <motion.button
+                    onClick={() => {
+                      if (restaurant.google_maps_link) {
+                        window.open(restaurant.google_maps_link, '_blank');
+                      } else {
+                        handleGoogleMapsFeedback();
+                      }
+                    }}
+                    className="flex items-center px-4 py-2 bg-gradient-to-r from-orange-400 to-orange-600 text-white rounded-full font-spartan-medium shadow-lg border-2 border-orange-500 hover:scale-105 transition-transform duration-200 whitespace-nowrap"
+                    animate={{ scale: [1, 1.08, 1] }}
+                    transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }}
+                  >
+                    <Heart className="w-5 h-5 md:w-6 md:h-6 drop-shadow heart-beat-fill" fill="white" stroke="none" />
+                    <span className="ml-2 font-spartan-medium">Rate Us</span>
+                  </motion.button>
+                </div>
+              )}
             </div>
 
             <div className="p-6">
@@ -397,19 +387,19 @@ const ContactUsPage = () => {
                 className="bg-gray-50 rounded-2xl p-8 border border-gray-100"
               >
                 <div className="flex items-center mb-8 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-4 border border-blue-100 shadow-sm">
-  <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-purple-500 rounded-2xl flex items-center justify-center shadow-md mr-5">
-    <MessageCircle className="w-7 h-7 text-white" />
-  </div>
-  <div className="min-w-0">
-    <h2 className="text-2xl md:text-3xl font-extrabold text-gray-800 leading-tight mb-1">
-      Send us a Message
-    </h2>
-    <p className="text-gray-500 text-base md:text-lg font-medium break-words">
-      We'd love to hear from you!
-    </p>
-  </div>
-</div>
-                
+                  <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-purple-500 rounded-2xl flex items-center justify-center shadow-md mr-5">
+                    <MessageCircle className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="text-2xl md:text-3xl font-extrabold text-gray-800 leading-tight mb-1">
+                      Send us a Message
+                    </h2>
+                    <p className="text-gray-500 text-base md:text-lg font-medium break-words">
+                      We'd love to hear from you!
+                    </p>
+                  </div>
+                </div>
+
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-6">
                     <div>
@@ -423,16 +413,15 @@ const ContactUsPage = () => {
                           onFocus={() => setActiveField('name')}
                           onBlur={() => setActiveField(null)}
                           required
-                          className={`w-full px-4 py-4 border-2 rounded-xl transition-all duration-300 ${
-                            activeField === 'name' 
-                              ? 'border-orange-500 bg-orange-50/50' 
-                              : 'border-gray-200 hover:border-gray-300'
-                          } focus:outline-none focus:ring-2 focus:ring-orange-500/20`}
+                          className={`w-full px-4 py-4 border-2 rounded-xl transition-all duration-300 ${activeField === 'name'
+                            ? 'border-orange-500 bg-orange-50/50'
+                            : 'border-gray-200 hover:border-gray-300'
+                            } focus:outline-none focus:ring-2 focus:ring-orange-500/20`}
                           placeholder="Enter your name"
                         />
                       </div>
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
                       <div className="relative">
@@ -444,17 +433,16 @@ const ContactUsPage = () => {
                           onFocus={() => setActiveField('email')}
                           onBlur={() => setActiveField(null)}
                           required
-                          className={`w-full px-4 py-4 border-2 rounded-xl transition-all duration-300 ${
-                            activeField === 'email' 
-                              ? 'border-orange-500 bg-orange-50/50' 
-                              : 'border-gray-200 hover:border-gray-300'
-                          } focus:outline-none focus:ring-2 focus:ring-orange-500/20`}
+                          className={`w-full px-4 py-4 border-2 rounded-xl transition-all duration-300 ${activeField === 'email'
+                            ? 'border-orange-500 bg-orange-50/50'
+                            : 'border-gray-200 hover:border-gray-300'
+                            } focus:outline-none focus:ring-2 focus:ring-orange-500/20`}
                           placeholder="Enter your email"
                         />
                       </div>
                     </div>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Subject</label>
                     <div className="relative">
@@ -466,16 +454,15 @@ const ContactUsPage = () => {
                         onFocus={() => setActiveField('subject')}
                         onBlur={() => setActiveField(null)}
                         required
-                        className={`w-full px-4 py-4 border-2 rounded-xl transition-all duration-300 ${
-                          activeField === 'subject' 
-                            ? 'border-orange-500 bg-orange-50/50' 
-                            : 'border-gray-200 hover:border-gray-300'
-                        } focus:outline-none focus:ring-2 focus:ring-orange-500/20`}
+                        className={`w-full px-4 py-4 border-2 rounded-xl transition-all duration-300 ${activeField === 'subject'
+                          ? 'border-orange-500 bg-orange-50/50'
+                          : 'border-gray-200 hover:border-gray-300'
+                          } focus:outline-none focus:ring-2 focus:ring-orange-500/20`}
                         placeholder="What's this about?"
                       />
                     </div>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Message</label>
                     <div className="relative">
@@ -487,27 +474,25 @@ const ContactUsPage = () => {
                         onBlur={() => setActiveField(null)}
                         required
                         rows={5}
-                        className={`w-full px-4 py-4 border-2 rounded-xl transition-all duration-300 resize-none ${
-                          activeField === 'message' 
-                            ? 'border-orange-500 bg-orange-50/50' 
-                            : 'border-gray-200 hover:border-gray-300'
-                        } focus:outline-none focus:ring-2 focus:ring-orange-500/20`}
+                        className={`w-full px-4 py-4 border-2 rounded-xl transition-all duration-300 resize-none ${activeField === 'message'
+                          ? 'border-orange-500 bg-orange-50/50'
+                          : 'border-gray-200 hover:border-gray-300'
+                          } focus:outline-none focus:ring-2 focus:ring-orange-500/20`}
                         placeholder="Tell us more about your inquiry..."
                       />
                     </div>
                   </div>
-                  
+
                   <AnimatePresence>
                     {submitStatus && (
                       <motion.div
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                        className={`p-4 rounded-xl flex items-center ${
-                          submitStatus === 'success'
-                            ? 'bg-green-50 text-green-800 border border-green-200'
-                            : 'bg-red-50 text-red-800 border border-red-200'
-                        }`}
+                        className={`p-4 rounded-xl flex items-center ${submitStatus === 'success'
+                          ? 'bg-green-50 text-green-800 border border-green-200'
+                          : 'bg-red-50 text-red-800 border border-red-200'
+                          }`}
                       >
                         {submitStatus === 'success' ? (
                           <CheckCircle className="w-5 h-5 mr-3 text-green-600" />
@@ -522,7 +507,7 @@ const ContactUsPage = () => {
                       </motion.div>
                     )}
                   </AnimatePresence>
-                  
+
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}

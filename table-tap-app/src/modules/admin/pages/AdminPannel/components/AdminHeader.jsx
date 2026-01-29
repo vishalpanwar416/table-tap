@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { Search, Bell, Building2, Users, X, Filter, ChevronDown, RefreshCw, ArrowLeft } from 'lucide-react';
+import { Search, Bell, Building2, Users, X, Filter, ChevronDown, RefreshCw, ChevronLeft } from 'lucide-react';
 import { useManagerNotifications } from '../../../../shared/context/ManagerNotificationContext';
 import { useNavigate } from 'react-router-dom';
 
-const AdminHeader = ({ 
-  activeTab, 
-  searchTerm, 
-  setSearchTerm, 
-  restaurants = [], 
+const AdminHeader = ({
+  activeTab,
+  searchTerm,
+  setSearchTerm,
+  restaurants = [],
   staff = [],
   currentUser,
   selectedRestaurantId,
@@ -68,14 +68,14 @@ const AdminHeader = ({
   const cuisineTypes = [...new Set(restaurants.map(r => r.cuisine_type).filter(Boolean))];
 
   const filteredRestaurants = restaurants.filter(restaurant => {
-    const searchMatch = !searchTerm || 
+    const searchMatch = !searchTerm ||
       restaurant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       restaurant.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       restaurant.contact_phone?.includes(searchTerm) ||
       restaurant.contact_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       restaurant.cuisine_type?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const statusMatch = !selectedRestaurantId || 
+    const statusMatch = !selectedRestaurantId ||
       (selectedRestaurantId === 'active' && restaurant.is_active) ||
       (selectedRestaurantId === 'inactive' && !restaurant.is_active);
 
@@ -83,13 +83,13 @@ const AdminHeader = ({
   });
 
   const filteredStaff = staff.filter(staffMember => {
-    const searchMatch = !searchTerm || 
+    const searchMatch = !searchTerm ||
       staffMember.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       staffMember.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (staffMember.phone_number && typeof staffMember.phone_number === 'string' && staffMember.phone_number.includes(searchTerm)) ||
       staffMember.role?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const restaurantMatch = !selectedRestaurantId || 
+    const restaurantMatch = !selectedRestaurantId ||
       staffMember.restaurant_id === selectedRestaurantId;
 
     return searchMatch && restaurantMatch;
@@ -104,7 +104,7 @@ const AdminHeader = ({
             className="flex items-center px-2 py-1 mr-2 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded transition"
             title="Go Back"
           >
-            <ArrowLeft className="mr-1" size={18} />
+            <ChevronLeft className="mr-1" size={30} />
             <span className="hidden sm:inline">Back</span>
           </button>
           <div>
@@ -112,14 +112,14 @@ const AdminHeader = ({
               {activeTab === 'restaurants' ? 'Restaurants' : 'Staff Management'}
             </h2>
             <p className="text-sm text-gray-600 mt-1 font-spartan">
-              {activeTab === 'restaurants' 
-                ? `${stats.totalRestaurants} restaurants • ${stats.activeRestaurants} active` 
+              {activeTab === 'restaurants'
+                ? `${stats.totalRestaurants} restaurants • ${stats.activeRestaurants} active`
                 : `${stats.totalStaff} staff members • ${stats.connectedStaff} connected`
               }
             </p>
           </div>
         </div>
-        
+
         <div className="flex items-center space-x-4">
           {/* Unified Search and Filter Section */}
           <div className="flex items-center space-x-3">
@@ -128,8 +128,8 @@ const AdminHeader = ({
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-5 w-5 text-gray-400" />
               </div>
-              <input 
-                type="search" 
+              <input
+                type="search"
                 placeholder={`Search ${activeTab === 'restaurants' ? 'restaurants' : 'staff'}...`}
                 className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50 backdrop-blur-sm transition-all duration-200 hover:bg-white/70 font-spartan"
                 value={searchTerm}
@@ -147,13 +147,12 @@ const AdminHeader = ({
 
             {/* Filter Button */}
             <div className="relative">
-              <button 
+              <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 font-spartan ${
-                  hasFilters 
-                    ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' 
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 font-spartan ${hasFilters
+                    ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
+                  }`}
               >
                 <Filter className="h-4 w-4" />
                 <span className="text-sm font-medium font-spartan">Filter</span>
@@ -166,7 +165,7 @@ const AdminHeader = ({
               {/* Filter Dropdown */}
               {showFilters && (
                 <>
-                  <div 
+                  <div
                     className="fixed inset-0 z-40"
                     onClick={() => setShowFilters(false)}
                   />
@@ -311,7 +310,7 @@ const AdminHeader = ({
               {/* Notifications Dropdown */}
               {showNotifications && (
                 <>
-                  <div 
+                  <div
                     className="fixed inset-0 z-40"
                     onClick={() => setShowNotifications(false)}
                   />
@@ -338,9 +337,8 @@ const AdminHeader = ({
                         notifications.map((notification, index) => (
                           <div key={index} className="p-4 border-b border-gray-100 hover:bg-gray-50">
                             <div className="flex items-start space-x-3">
-                              <div className={`w-2 h-2 rounded-full mt-2 ${
-                                notification.read ? 'bg-gray-300' : 'bg-blue-500'
-                              }`} />
+                              <div className={`w-2 h-2 rounded-full mt-2 ${notification.read ? 'bg-gray-300' : 'bg-blue-500'
+                                }`} />
                               <div className="flex-1">
                                 <p className="text-sm font-medium text-gray-900 font-spartan">
                                   {notification.title}
