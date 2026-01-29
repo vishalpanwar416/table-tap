@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd table-tap-app && npm install && npm run build",
+  "buildCommand": "npm run build:app",
   "outputDirectory": "table-tap-app/build",
   "framework": "create-react-app",
   "rewrites": [
