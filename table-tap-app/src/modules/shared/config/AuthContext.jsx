@@ -8,6 +8,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showSessionModal, setShowSessionModal] = useState(false);
   const [wasAuthenticated, setWasAuthenticated] = useState(false);
 
   useEffect(() => {
