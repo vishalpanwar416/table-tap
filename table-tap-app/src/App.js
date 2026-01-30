@@ -1,5 +1,6 @@
 import React, { Suspense, lazy, useMemo } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import './App.css';
 import './styles/admin-panel.css';
 
@@ -161,6 +162,23 @@ const App = () => {
             <OrderProvider>
               <div className="min-h-screen bg-black font-spartan">
                 {renderApp()}
+
+                <Toaster
+                  position="top-center"
+                  toastOptions={{
+                    style: {
+                      background: '#333',
+                      color: '#fff',
+                      border: '1px solid #2A9D8F',
+                    },
+                    success: {
+                      iconTheme: {
+                        primary: '#2A9D8F',
+                        secondary: '#fff',
+                      },
+                    },
+                  }}
+                />
 
                 {/* Install Prompt - only show for customer app */}
                 {(subdomain === 'app' || isDevMode) && <InstallPrompt />}

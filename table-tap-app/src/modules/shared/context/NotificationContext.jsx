@@ -1,10 +1,11 @@
 // src/context/NotificationContext.jsx
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../shared/config/AuthContext';
-import { 
+import {
   getUserNotifications,
-  getUnreadNotifications, 
+  getUnreadNotifications,
   markNotificationAsRead,
   markAllNotificationsAsRead,
   deleteNotification as deleteNotificationService,
@@ -26,29 +27,35 @@ export const NotificationProvider = ({ children }) => {
   useEffect(() => {
     if (user) {
       fetchNotifications();
-      
+
       // Subscribe to new notifications
       const subscription = subscribeToUserNotifications(user.id, (newNotification) => {
         console.log('[Realtime] New notification received:', newNotification);
         // Add notification to state
         setNotifications(prev => [newNotification, ...prev]);
-        
+
         // Increment unread count
         if (!newNotification.read) {
           setUnreadCount(prevCount => prevCount + 1);
-          
+
           // Show browser notification
           showBrowserNotification(newNotification);
+
+          // Show in-app toast
+          toast.success(newNotification.title || 'New Notification', {
+            duration: 4000,
+            icon: '🔔'
+          });
         }
       });
-      
+
       if (subscription && subscription.on) {
         subscription.on('status', (status) => {
           console.log('[Supabase Realtime] Channel status:', status);
         });
       }
       console.log('[Realtime] Subscribed to notifications for user:', user.id);
-      
+
       return () => {
         if (subscription) {
           subscription.unsubscribe();
@@ -61,18 +68,18 @@ export const NotificationProvider = ({ children }) => {
   // Fetch user notifications from Supabase
   const fetchNotifications = async () => {
     if (!user) return;
-    
+
     try {
       setLoading(true);
-      
+
       // Get all user notifications
       const userNotifications = await getUserNotifications(user.id);
       setNotifications(userNotifications);
-      
+
       // Get unread count
       const unreadNotifications = await getUnreadNotifications(user.id);
       setUnreadCount(unreadNotifications.length);
-      
+
       setError(null);
       console.log('[Debug] Notifications fetched:', userNotifications);
     } catch (err) {
@@ -87,14 +94,14 @@ export const NotificationProvider = ({ children }) => {
   const markAsRead = async (notificationId) => {
     try {
       await markNotificationAsRead(notificationId);
-      
+
       // Update local state
-      setNotifications(prev => 
-        prev.map(notification => 
+      setNotifications(prev =>
+        prev.map(notification =>
           notification.id === notificationId ? { ...notification, read: true } : notification
         )
       );
-      
+
       // Update unread count
       setUnreadCount(prevCount => Math.max(0, prevCount - 1));
       console.log('[Debug] Notification marked as read:', notificationId);
@@ -106,15 +113,15 @@ export const NotificationProvider = ({ children }) => {
   // Mark all notifications as read
   const markAllAsRead = async () => {
     if (!user) return;
-    
+
     try {
       await markAllNotificationsAsRead(user.id);
-      
+
       // Update local state
-      setNotifications(prev => 
+      setNotifications(prev =>
         prev.map(notification => ({ ...notification, read: true }))
       );
-      
+
       // Reset unread count
       setUnreadCount(0);
     } catch (err) {
@@ -125,11 +132,11 @@ export const NotificationProvider = ({ children }) => {
   const deleteNotification = async (notificationId) => {
     try {
       const result = await deleteNotificationService(notificationId);
-      
+
       if (result.success) {
         // Remove notification from local state
         setNotifications(prev => prev.filter(notification => notification.id !== notificationId));
-        
+
         // Update unread count if the deleted notification was unread
         const deletedNotification = notifications.find(n => n.id === notificationId);
         if (deletedNotification && !deletedNotification.read) {
@@ -147,11 +154,11 @@ export const NotificationProvider = ({ children }) => {
     if (!("Notification" in window)) {
       return;
     }
-    
+
     const showNotif = () => {
       const notificationTitle = notification.title || 'New Notification';
       const notificationBody = notification.message || 'You have a new notification';
-      
+
       const notif = new Notification(notificationTitle, {
         body: notificationBody,
         icon: '/logo.png', // Update with your app logo
@@ -166,7 +173,7 @@ export const NotificationProvider = ({ children }) => {
         }
       };
     };
-    
+
     // Check if permission is granted
     if (Notification.permission === "granted") {
       showNotif();
