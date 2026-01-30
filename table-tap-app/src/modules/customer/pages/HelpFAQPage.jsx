@@ -269,7 +269,7 @@ const HelpFAQPage = () => {
           <h1 className="text-gray-100 text-3xl font-medium">
             Help & FAQ's
           </h1>
-          <p className="text-orange-200 text-sm mt-1">Everything you need to know, all in one place.</p>
+          <p className="text-orange-100/60 text-sm mt-1">Everything you need to know, all in one place.</p>
         </div>
       </div>
       <div className="flex justify-center items-center pt-12 px-4 min-h-[85vh]">
