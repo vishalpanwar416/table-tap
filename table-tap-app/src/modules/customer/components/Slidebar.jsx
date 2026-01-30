@@ -155,6 +155,13 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
   };
 
   const handleNavigation = React.useCallback((path) => {
+    // Force hard navigation for cross-app routes (e.g. Admin or Restaurant dashboard)
+    // This allows App.js to re-evaluate the routing logic based on the new path
+    if (path.startsWith('/admin') || path.startsWith('/restaurant')) {
+      window.location.href = path;
+      return;
+    }
+
     if (isAuthenticated) {
       navigate(path);
     } else {
