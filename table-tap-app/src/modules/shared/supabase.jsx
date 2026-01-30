@@ -1,10 +1,11 @@
+/* eslint-disable no-console */
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Supabase credentials missing! Check your .env file.');
+  console.warn('Supabase credentials missing! Check your .env file or Vercel project settings.');
   console.log('URL present:', !!supabaseUrl);
   console.log('Key present:', !!supabaseAnonKey);
 }
@@ -13,10 +14,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // This allows the app to load and show proper error messages instead of a blank screen
 const defaultUrl = 'https://placeholder.supabase.co';
 const defaultKey = 'placeholder';
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Supabase credentials missing! Check your .env file or Vercel project settings.');
-}
 
 export const supabase = createClient(
   supabaseUrl || defaultUrl,
