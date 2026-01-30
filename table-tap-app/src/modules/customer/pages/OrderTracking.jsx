@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, CheckCircle, Clock, XCircle, Truck } from 'lucide-react';
 import { useOrders } from '../../shared/context/OrderContext';
+import LoadingScreen from '../../shared/components/LoadingScreen';
 
 const OrderTracking = () => {
   const { id } = useParams();
@@ -78,11 +79,7 @@ const OrderTracking = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
-      </div>
-    );
+    return <LoadingScreen message="Loading order..." variant="page" />;
   }
 
   if (error) {
@@ -121,7 +118,8 @@ const OrderTracking = () => {
       <div className="p-6 flex items-center justify-center relative">
         <button
           onClick={() => navigate('/my-orders')}
-          className="absolute left-6 text-orange-500"
+          className="absolute left-6 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-10"
+          aria-label="Go back to orders"
         >
           <ChevronLeft size={30} />
         </button>

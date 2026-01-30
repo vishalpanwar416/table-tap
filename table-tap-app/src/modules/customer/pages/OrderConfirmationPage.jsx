@@ -4,6 +4,7 @@ import { ChevronLeft, CheckCircle, MapPin } from 'lucide-react';
 import { useOrders } from '../../shared/context/OrderContext';
 import { supabase } from '../../shared/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
+import LoadingScreen from '../../shared/components/LoadingScreen';
 
 const OrderConfirmationPage = () => {
   const navigate = useNavigate();
@@ -75,14 +76,7 @@ const OrderConfirmationPage = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center text-white">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-          <p>Processing your order...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Processing your order..." variant="page" />;
   }
 
   if (error) {
@@ -118,7 +112,11 @@ const OrderConfirmationPage = () => {
     <div className="min-h-screen bg-black text-white flex flex-col">
       {/* Header */}
       <div className="px-6 py-8">
-        <button onClick={handleGoHome} className="text-orange-500 hover:text-orange-400 transition">
+        <button
+          onClick={handleGoHome}
+          className="text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+          aria-label="Go back to home"
+        >
           <ChevronLeft size={30} />
         </button>
       </div>

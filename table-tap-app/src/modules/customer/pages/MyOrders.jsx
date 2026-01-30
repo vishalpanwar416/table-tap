@@ -6,6 +6,7 @@ import OrderCard from '../components/OrderCard';
 import { getActiveRestaurants } from '../../restaurant/pages/RestaurantSelection/restaurantSelectionService';
 import { motion, AnimatePresence } from "framer-motion";
 import { FixedSizeList as List } from 'react-window';
+import LoadingScreen from '../../shared/components/LoadingScreen';
 
 const tabs = [
   { key: "pending", label: "Waiting Acceptance" },
@@ -256,17 +257,7 @@ export default function MyOrders() {
 
   // Loading spinner component
   if (showLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-black">
-        <div className="flex flex-col items-center">
-          <div className="relative w-16 h-16">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-orange-500 border-opacity-20"></div>
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-transparent border-t-orange-500 absolute top-0 left-0"></div>
-          </div>
-          <p className="text-white mt-4 text-lg font-medium">Loading your orders...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Loading your orders..." variant="page" />;
   }
 
 
@@ -298,7 +289,7 @@ export default function MyOrders() {
         {/* Header */}
         <div className="w-full px-6 py-8 relative flex items-center justify-center">
           <button
-            className="absolute left-4 text-orange-500"
+            className="absolute left-4 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-10"
             onClick={() => navigate('/home')}
             aria-label="Go back to home"
           >

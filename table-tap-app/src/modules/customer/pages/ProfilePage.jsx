@@ -5,6 +5,7 @@ import DeleteProfilePopup from '../../shared/components/auth/auth/DeleteProfileP
 import { optimizeProfileImage, validateImageFile, ProgressiveImage } from '../../shared/utils/imageOptimization';
 import authService from '../../shared/api/authService';
 import { supabase } from '../../shared/supabase';
+import LoadingScreen from '../../shared/components/LoadingScreen';
 
 // DefaultAvatar component - moved outside the main component
 const DefaultAvatar = ({ className = 'w-full h-full', iconClassName = 'w-12 h-12 text-gray-400' }) => (
@@ -312,15 +313,7 @@ const ProfilePage = () => {
   }, [navigate]);
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-black p-4">
-        <div className="text-center text-white">
-          <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold mb-2">Loading Profile</h2>
-          <p className="text-gray-400">Getting your information...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Loading Profile..." variant="page" />;
   }
 
   if (error) {
@@ -351,7 +344,7 @@ const ProfilePage = () => {
         <div className="relative flex items-center justify-center py-6 md:py-8">
           <button
             onClick={() => navigate(-1)}
-            className="absolute left-4 text-orange-500 hover:text-orange-600 transition-colors duration-200 p-2 rounded-full hover:bg-orange-500/10 z-10"
+            className="absolute left-4 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-10"
             aria-label="Go back"
           >
             <ChevronLeft size={30} />

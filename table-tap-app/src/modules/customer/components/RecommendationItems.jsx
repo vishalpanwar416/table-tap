@@ -10,7 +10,7 @@ const RecommendationItem = memo(({ item, onImageClick, index = 0 }) => {
   const { toggleLike, likedItems } = useLikes();
   const { cartItems, addToCart, updateQuantity, removeItem } = useCart();
   const [isLikedAnimating, setIsLikedAnimating] = useState(false);
-  
+
   const cartItem = useMemo(() => cartItems.find(i => i.id === item.id), [cartItems, item.id]);
   const quantity = cartItem?.quantity || 0;
   const isLiked = useMemo(() => likedItems.some(likedItem => likedItem.id === item.id), [likedItems, item.id]);
@@ -35,7 +35,7 @@ const RecommendationItem = memo(({ item, onImageClick, index = 0 }) => {
   // Helper for the discount tag
   const DiscountTag = () =>
     item.discounttype && item.discountvalue ? (
-      <motion.span 
+      <motion.span
         className="text-sm bg-gradient-to-r from-green-400 to-green-600 text-white font-semibold px-3 py-1.5 rounded-full whitespace-nowrap shadow-sm"
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -56,17 +56,8 @@ const RecommendationItem = memo(({ item, onImageClick, index = 0 }) => {
   }, [item.price, item.discounttype, item.discountvalue]);
 
   return (
-    <motion.div
-      className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 w-[280px] h-[280px] flex flex-col relative"
-      style={{ willChange: 'transform' }}
-      initial={{ transform: 'translateY(25px) scale(0.9)' }}
-      animate={{ transform: 'translateY(0px) scale(1)' }}
-      whileHover={{ transform: 'translateY(-6px) scale(1.03)' }}
-      transition={{
-        delay: index * 0.06,
-        duration: 0.7,
-        ease: [0.25, 0.46, 0.45, 0.94]
-      }}
+    <div
+      className="group bg-white rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1.5 hover:scale-[1.02] transition-all duration-300 overflow-hidden border border-gray-100 w-[280px] h-[280px] flex flex-col relative"
     >
       <div className="relative h-48 overflow-hidden bg-gray-100 flex-shrink-0">
         {/* Discount badge in top right with animation */}
@@ -79,7 +70,7 @@ const RecommendationItem = memo(({ item, onImageClick, index = 0 }) => {
         >
           <DiscountTag />
         </motion.div>
-        
+
         <motion.div
           whileHover={{ scale: 1.1 }}
           transition={{ duration: 0.3 }}
@@ -92,34 +83,33 @@ const RecommendationItem = memo(({ item, onImageClick, index = 0 }) => {
             onClick={() => onImageClick && onImageClick(item)}
           />
         </motion.div>
-        
+
         {/* Enhanced like button */}
-        <motion.button 
+        <motion.button
           className="absolute top-4 left-4 bg-white/80 backdrop-blur-sm rounded-full p-2 z-10 shadow-sm"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={handleLikeClick}
         >
           <motion.div
-            animate={isLikedAnimating ? { 
+            animate={isLikedAnimating ? {
               scale: [1, 1.3, 1],
               rotate: [0, 10, -10, 0]
             } : {}}
             transition={{ duration: 0.6 }}
           >
-            <Heart 
-              className={`h-6 w-6 md:w-7 md:h-7 transition-colors duration-200 ${
-                isLiked ? 'text-red-500 fill-red-500' : 'text-gray-500 hover:text-red-400'
-              }`}
+            <Heart
+              className={`h-6 w-6 md:w-7 md:h-7 transition-colors duration-200 ${isLiked ? 'text-red-500 fill-red-500' : 'text-gray-500 hover:text-red-400'
+                }`}
             />
           </motion.div>
         </motion.button>
       </div>
-      
+
       <div className="flex flex-col flex-1 justify-between py-2 px-4 min-h-0">
         <div className="flex items-start justify-between flex-1">
           <div className="flex-1 min-w-0 mr-3">
-            <motion.h4 
+            <motion.h4
               className="text-base font-bold text-gray-900 truncate mb-1 leading-tight"
               whileHover={{ color: '#f97316' }}
               transition={{ duration: 0.2 }}
@@ -129,7 +119,7 @@ const RecommendationItem = memo(({ item, onImageClick, index = 0 }) => {
             <div className="flex items-center space-x-2">
               {item.discounttype && item.discountvalue ? (
                 <>
-                  <motion.span 
+                  <motion.span
                     className="text-sm text-gray-400 line-through"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -137,7 +127,7 @@ const RecommendationItem = memo(({ item, onImageClick, index = 0 }) => {
                   >
                     ₹{Number(item.price).toFixed(0)}
                   </motion.span>
-                  <motion.span 
+                  <motion.span
                     className="text-lg font-bold text-orange-600"
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -147,7 +137,7 @@ const RecommendationItem = memo(({ item, onImageClick, index = 0 }) => {
                   </motion.span>
                 </>
               ) : (
-                <motion.span 
+                <motion.span
                   className="text-lg font-bold text-gray-900"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -161,7 +151,7 @@ const RecommendationItem = memo(({ item, onImageClick, index = 0 }) => {
           <div className="flex-shrink-0">
             <AnimatePresence mode="wait">
               {quantity > 0 ? (
-                <motion.div 
+                <motion.div
                   key="quantity-controls"
                   className="flex items-center bg-gradient-to-r from-black to-gray-800 text-white rounded-full px-4 py-2 shadow-lg"
                   initial={{ scale: 0.8, opacity: 0 }}
@@ -177,7 +167,7 @@ const RecommendationItem = memo(({ item, onImageClick, index = 0 }) => {
                   >
                     −
                   </motion.button>
-                  <motion.span 
+                  <motion.span
                     className="px-3 text-base font-semibold"
                     key={quantity}
                     initial={{ scale: 1.2 }}
@@ -200,7 +190,7 @@ const RecommendationItem = memo(({ item, onImageClick, index = 0 }) => {
                   key="add-button"
                   onClick={handleAddClick}
                   className="bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white rounded-full px-4 py-2 flex items-center space-x-2 text-base shadow-lg transition-all duration-200"
-                  whileHover={{ 
+                  whileHover={{
                     scale: 1.05,
                     boxShadow: "0 10px 25px rgba(0,0,0,0.2)"
                   }}
@@ -218,7 +208,7 @@ const RecommendationItem = memo(({ item, onImageClick, index = 0 }) => {
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 });
 
@@ -227,7 +217,7 @@ RecommendationItem.displayName = 'RecommendationItem';
 const RecommendationItems = ({ allFoodItems = [], onItemClick, scrollRef, scroll }) => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [isOrderCardOpen, setIsOrderCardOpen] = useState(false);
-  
+
   if (allFoodItems.length === 0) return null;
 
   const handleOpenItemCard = (item) => {
@@ -244,7 +234,7 @@ const RecommendationItems = ({ allFoodItems = [], onItemClick, scrollRef, scroll
     <div className="pb-2 text-black flex-1">
       <div className="flex justify-between items-center mb-4 px-4">
         <h2 className="text-xl font-thick font-spartan-bold md:text-3xl">Our Best Recommendations</h2>
-        <button 
+        <button
           onClick={() => scroll(scrollRef.current?.clientWidth || 300)}
           className="p-2 rounded-full bg-white text-gray-500 hover:bg-gray-100 transition-colors"
         >
@@ -253,18 +243,18 @@ const RecommendationItems = ({ allFoodItems = [], onItemClick, scrollRef, scroll
       </div>
       <div
         ref={scrollRef}
-        className="flex gap-5 overflow-x-auto scrollbar-hide pb-2 md:pb-0 px-4"
+        className="flex gap-5 overflow-x-auto overflow-y-hidden scrollbar-hide pb-4 pt-2 md:pb-2 px-4"
         style={{ minHeight: allFoodItems.length > 0 ? 'auto' : '0' }}
       >
         {allFoodItems.map((item, index) => (
-          <div 
+          <div
             key={item.id}
             className="flex-shrink-0"
             style={{ scrollSnapAlign: 'start' }}
           >
-            <RecommendationItem 
-              item={item} 
-              onImageClick={handleOpenItemCard} 
+            <RecommendationItem
+              item={item}
+              onImageClick={handleOpenItemCard}
               index={index}
             />
           </div>

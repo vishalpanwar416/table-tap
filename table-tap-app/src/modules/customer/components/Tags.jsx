@@ -65,17 +65,8 @@ const RecommendationItem = memo(({ item, onImageClick, index }) => {
   }, [item.price, item.discounttype, item.discountvalue]);
 
   return (
-    <motion.div
-      className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 min-w-[140px] max-w-[150px] h-[160px] flex flex-col relative"
-      style={{ willChange: 'transform' }}
-      initial={{ transform: 'translateY(25px) scale(0.9)' }}
-      animate={{ transform: 'translateY(0px) scale(1)' }}
-      whileHover={{ transform: 'translateY(-6px) scale(1.03)' }}
-      transition={{
-        delay: index * 0.06,
-        duration: 0.7,
-        ease: [0.25, 0.46, 0.45, 0.94]
-      }}
+    <div
+      className="group bg-white rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1.5 hover:scale-[1.03] transition-all duration-300 overflow-hidden border border-gray-100 min-w-[140px] max-w-[150px] h-[160px] flex flex-col relative"
     >
       {/* Hover overlay effect */}
       <motion.div
@@ -236,7 +227,7 @@ const RecommendationItem = memo(({ item, onImageClick, index }) => {
         </div>
         {/* Removed the bottom DiscountTag section */}
       </div>
-    </motion.div>
+    </div>
   );
 });
 
@@ -466,7 +457,7 @@ const Tags = ({ foodItems = [], onItemClick }) => {
               {/* Fixed Arrow Button */}
               <motion.button
                 onClick={() => toggleTag(tagKey)}
-                className="col-start-3 col-end-4 flex items-center justify-center p-2 hover:bg-gray-100 rounded-lg transition-colors justify-self-end"
+                className="col-start-3 col-end-4 flex items-center justify-center p-2 hover:bg-gray-100 rounded-full transition-colors justify-self-end"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
               >
@@ -496,7 +487,7 @@ const Tags = ({ foodItems = [], onItemClick }) => {
                 >
                   <div
                     ref={(el) => scrollRefs.current[tagKey] = el}
-                    className="flex space-x-4 overflow-x-auto pb-4 scroll-smooth scrollbar-hide px-4"
+                    className="flex space-x-4 overflow-x-auto overflow-y-hidden pb-4 pt-2 scroll-smooth scrollbar-hide px-4"
                   >
                     {tagData.items.map((item, index) => (
                       <RecommendationItem

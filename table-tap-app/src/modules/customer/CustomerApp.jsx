@@ -30,15 +30,10 @@ const OrderConfirmationPage = lazy(() => import('./pages/OrderConfirmationPage')
 const ContactUsPage = lazy(() => import('./pages/ContactUsPage'));
 const HelpFAQPage = lazy(() => import('./pages/HelpFAQPage'));
 
-// Loading component
-const LoadingSpinner = () => (
-    <div className="flex justify-center items-center min-h-screen bg-black">
-        <div className="text-center text-white">
-            <div className="w-12 h-12 border-4 border-gray-700 border-t-[#2A9D8F] rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-gray-400">Loading...</p>
-        </div>
-    </div>
-);
+// Use unified loading component
+import LoadingScreen from '../shared/components/LoadingScreen';
+const LoadingSpinner = () => <LoadingScreen message="Loading..." />;
+
 
 /**
  * Customer App Module

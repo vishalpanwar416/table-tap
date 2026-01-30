@@ -13,6 +13,7 @@ import {
   processOrderWithPayment,
   checkPendingFailedOrders
 } from '../api/paymentService';
+import LoadingScreen from '../../shared/components/LoadingScreen';
 
 const PaymentPage = () => {
   const navigate = useNavigate();
@@ -71,11 +72,7 @@ const PaymentPage = () => {
   }
 
   if (authLoading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white text-xl">Loading authentication...</div>
-      </div>
-    );
+    return <LoadingScreen message="Loading authentication..." variant="page" />;
   }
 
   const calculatePriceDetails = useCallback(() => {
@@ -416,7 +413,7 @@ const PaymentPage = () => {
         console.error('Failed to send email notification:', emailError);
       }
       // 4. Show recovery options to user
-      showPaymentRecoveryOptions(paymentResponse.razorpay_payment_id, {
+      showPaymentRecoveryOptions(paymentResponse.razorpay_payment_id, originalError.message, {
         retryOrderCreation: async () => {
           try {
             const storedData = localStorage.getItem(`failed_order_${paymentResponse.razorpay_payment_id}`);
@@ -472,7 +469,7 @@ const PaymentPage = () => {
         contactSupport: () => {
           const supportPhone = restaurant.phone || '1800-xxx-xxxx';
           const supportEmail = restaurant.email || 'support@restaurant.com';
-          const message = `Payment ID: ${paymentResponse.razorpay_payment_id}\nAmount: ₹${finalTotal}\nRestaurant: ${restaurant.name}\nTable: ${tableNumber}\nIssue: Payment successful but order creation failed`;
+          const message = `Payment ID: ${paymentResponse.razorpay_payment_id}\nAmount: ₹${finalTotal}\nRestaurant: ${restaurant.name}\nTable: ${tableNumber}\nIssue: Payment successful but order creation failed\nError: ${originalError.message}`;
           if (supportPhone) {
             window.open(`https://wa.me/${supportPhone}?text=${encodeURIComponent(message)}`, '_blank');
           } else {
@@ -544,7 +541,7 @@ const PaymentPage = () => {
   };
 
   // Function to show recovery options to user
-  const showPaymentRecoveryOptions = (paymentId, {
+  const showPaymentRecoveryOptions = (paymentId, errorMessage, {
     retryOrderCreation,
     contactSupport,
     closeRecoveryDialog
@@ -558,6 +555,9 @@ const PaymentPage = () => {
           Your payment was processed successfully, but there was an issue creating your order. 
           Don't worry - your money is safe!
         </p>
+        <div class="mb-4 bg-red-50 p-3 rounded text-xs text-red-700 font-mono break-all">
+          Error: ${errorMessage || 'Unknown error'}
+        </div>
         <div class="mb-4">
           <p class="text-sm text-gray-600">Payment ID: <span class="font-mono">${paymentId}</span></p>
         </div>
@@ -725,7 +725,8 @@ const PaymentPage = () => {
         <div className="w-full px-6 py-8 relative flex items-center justify-center">
           <button
             onClick={handleGoBack}
-            className="absolute left-4 text-orange-500 hover:text-orange-400 transition-colors duration-200 p-2 rounded-full hover:bg-orange-500/10"
+            className="absolute left-4 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-10"
+            aria-label="Go back"
           >
             <ChevronLeft size={30} />
           </button>

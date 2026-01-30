@@ -5,6 +5,7 @@ import { useRestaurant } from '../../restaurant/pages/RestaurantSelection/Restau
 import { motion, AnimatePresence } from 'framer-motion';
 import { authService } from '../../shared/api/authService';
 import { Link } from 'react-router-dom'; // If you want to use a link
+import LoadingScreen from '../../shared/components/LoadingScreen';
 
 const ContactUsPage = () => {
   const { restaurant, loading, error, tableNumber } = useRestaurant();
@@ -111,14 +112,7 @@ const ContactUsPage = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="relative">
-          <div className="w-20 h-20 border-4 border-orange-500/30 border-t-orange-500 rounded-full animate-spin"></div>
-          <div className="absolute inset-0 w-20 h-20 border-4 border-transparent border-r-red-500/30 border-b-red-500 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Loading contact info..." variant="page" />;
   }
 
   if (error || !restaurant) {
@@ -218,7 +212,7 @@ const ContactUsPage = () => {
       <div className="w-full px-6 py-8 relative flex items-center justify-center">
         <button
           onClick={handleBack}
-          className="absolute left-4 text-orange-500 hover:text-orange-600 transition-colors duration-200 p-2 rounded-full hover:bg-orange-500/10 z-10"
+          className="absolute left-4 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-10"
           aria-label="Go back"
         >
           <ChevronLeft size={30} />

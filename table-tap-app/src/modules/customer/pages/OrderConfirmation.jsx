@@ -7,6 +7,7 @@ import { useRestaurant } from '../../restaurant/pages/RestaurantSelection/Restau
 import { getStoredRestaurantSelection } from '../../shared/utils/restaurantCheck';
 import { authService } from '../../shared/api/authService';
 import { motion, AnimatePresence } from 'framer-motion';
+import LoadingScreen from '../../shared/components/LoadingScreen';
 
 // --- Constants ---
 const EVENTS = {
@@ -24,8 +25,8 @@ const PLACEHOLDER_IMG = '/api/placeholder/80/80';
 const EmailExistsPopup = ({ show, onClose, onAccept, onReject, email }) => {
   const popupVariants = {
     hidden: { y: 100, opacity: 0, scale: 0.98 },
-    visible: { 
-      y: 0, 
+    visible: {
+      y: 0,
       opacity: 1,
       scale: 1,
       transition: { type: 'spring', stiffness: 300, damping: 30 }
@@ -170,8 +171,8 @@ const TableSelector = ({
         <span className={tableNumber ? 'text-gray-800 font-medium' : 'text-gray-500'}>
           {tableNumber ? `Table ${tableNumber}` : 'Select your table number'}
         </span>
-        <ChevronDown 
-          size={20} 
+        <ChevronDown
+          size={20}
           className={`text-gray-400 transition-transform duration-200 ${showTableDropdown ? 'rotate-180' : ''}`}
         />
       </button>
@@ -193,9 +194,8 @@ const TableSelector = ({
                   setTableNumber(table.tableNumber);
                   setShowTableDropdown(false);
                 }}
-                className={`w-full px-4 py-4 text-left hover:bg-orange-50 border-b border-gray-100 last:border-b-0 transition-colors duration-200 ${
-                  table.tableNumber === tableNumber ? 'bg-orange-50 border-orange-200' : ''
-                }`}
+                className={`w-full px-4 py-4 text-left hover:bg-orange-50 border-b border-gray-100 last:border-b-0 transition-colors duration-200 ${table.tableNumber === tableNumber ? 'bg-orange-50 border-orange-200' : ''
+                  }`}
               >
                 <div className="flex justify-between items-center">
                   <div>
@@ -254,13 +254,13 @@ const GuestForm = ({
           <User size={16} />
           Full Name *
         </label>
-        <input 
-          id="guestName" 
-          type="text" 
-          value={guestName} 
-          onChange={(e) => setGuestName(e.target.value)} 
-          className="w-full mt-2 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" 
-          required 
+        <input
+          id="guestName"
+          type="text"
+          value={guestName}
+          onChange={(e) => setGuestName(e.target.value)}
+          className="w-full mt-2 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+          required
         />
       </div>
       <div>
@@ -271,15 +271,14 @@ const GuestForm = ({
             <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
           )}
         </label>
-        <input 
-          id="guestEmail" 
-          type="email" 
-          value={guestEmail} 
+        <input
+          id="guestEmail"
+          type="email"
+          value={guestEmail}
           onChange={handleEmailChange}
-          className={`w-full mt-2 px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
-            emailExists ? 'border-orange-300 bg-orange-50' : 'border-gray-200'
-          }`}
-          required 
+          className={`w-full mt-2 px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${emailExists ? 'border-orange-300 bg-orange-50' : 'border-gray-200'
+            }`}
+          required
           autoComplete="email"
           ref={guestEmailInputRef}
         />
@@ -300,14 +299,14 @@ const GuestForm = ({
           <Phone size={16} />
           Phone Number *
         </label>
-        <input 
-          id="guestPhone" 
-          type="tel" 
-          value={guestPhone} 
-          onChange={(e) => setGuestPhone(e.target.value)} 
-          maxLength={10} 
-          className="w-full mt-2 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" 
-          required 
+        <input
+          id="guestPhone"
+          type="tel"
+          value={guestPhone}
+          onChange={(e) => setGuestPhone(e.target.value)}
+          maxLength={10}
+          className="w-full mt-2 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+          required
         />
       </div>
     </div>
@@ -386,8 +385,8 @@ const OrderConfirmation = () => {
     setIsLoadingTables(true);
     if (restaurant?.tables) {
       try {
-        const parsedTables = typeof restaurant.tables === 'string' 
-          ? JSON.parse(restaurant.tables) 
+        const parsedTables = typeof restaurant.tables === 'string'
+          ? JSON.parse(restaurant.tables)
           : restaurant.tables;
         setAvailableTables(Array.isArray(parsedTables) ? parsedTables : []);
       } catch (error) {
@@ -404,7 +403,7 @@ const OrderConfirmation = () => {
     try {
       const storedSelection = getStoredRestaurantSelection();
       if (storedSelection?.tableNumber && availableTables.length > 0) {
-        const matchingTable = availableTables.find(table => 
+        const matchingTable = availableTables.find(table =>
           table.tableNumber === storedSelection.tableNumber
         );
         if (matchingTable) {
@@ -512,15 +511,15 @@ const OrderConfirmation = () => {
     cartItems.forEach(item => {
       const originalItemTotal = item.price * item.quantity;
       originalTotal += originalItemTotal;
-      const effectivePrice = item.effectivePrice !== undefined ? 
-        item.effectivePrice : 
+      const effectivePrice = item.effectivePrice !== undefined ?
+        item.effectivePrice :
         calculateEffectivePrice(item);
       const itemDiscount = (item.price - effectivePrice) * item.quantity;
       discountAmount += itemDiscount;
       const itemSubtotal = effectivePrice * item.quantity;
-      const isWater = item.name && 
-        (item.name.toLowerCase().includes('water') || 
-         item.category?.toLowerCase() === 'water');
+      const isWater = item.name &&
+        (item.name.toLowerCase().includes('water') ||
+          item.category?.toLowerCase() === 'water');
       if (!isWater) {
         taxableAmount += itemSubtotal;
       }
@@ -539,13 +538,13 @@ const OrderConfirmation = () => {
     };
   }, [cartItems, calculateEffectivePrice]);
 
-  const { 
-    originalTotal, 
-    discountAmount, 
-    subtotalAfterDiscount, 
-    cgst, 
-    sgst, 
-    finalTotal 
+  const {
+    originalTotal,
+    discountAmount,
+    subtotalAfterDiscount,
+    cgst,
+    sgst,
+    finalTotal
   } = calculatePriceDetails();
 
   const formatDate = (timestamp) => {
@@ -602,16 +601,16 @@ const OrderConfirmation = () => {
     }
     setIsPlacingOrder(true);
     try {
-      navigate(ROUTES.PAYMENT, { 
-        state: { 
-          tableNumber, 
+      navigate(ROUTES.PAYMENT, {
+        state: {
+          tableNumber,
           specialInstructions,
           guestDetails: !user ? {
             name: guestName,
             email: guestEmail,
             phone: guestPhone,
           } : null
-        } 
+        }
       });
     } finally {
       setIsPlacingOrder(false);
@@ -620,17 +619,7 @@ const OrderConfirmation = () => {
 
   // Show loading state
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative">
-            <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <div className="absolute inset-0 w-16 h-16 border-4 border-orange-300 border-t-transparent rounded-full animate-ping opacity-20"></div>
-          </div>
-          <p className="text-white text-lg font-medium">Loading your order...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Loading your order..." variant="page" />;
   }
 
   // Show error if no restaurant
@@ -659,7 +648,7 @@ const OrderConfirmation = () => {
         <div className="w-full px-4 py-8 relative flex justify-center">
           <button
             onClick={handleGoBack}
-            className="absolute left-4 top-8 text-orange-500 hover:text-orange-400 transition-colors duration-200 p-2 rounded-full hover:bg-orange-500/10"
+            className="absolute left-4 top-8 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-10"
             aria-label="Go back"
           >
             <ChevronLeft size={30} />
@@ -741,7 +730,7 @@ const OrderConfirmation = () => {
                 rows={3}
               />
             </div>
-            
+
             {/* Animated error message */}
             <AnimatedError error={formError} />
 
@@ -763,28 +752,28 @@ const OrderConfirmation = () => {
             {/* Enhanced Cart Items */}
             <div className="border-t-2 border-gray-200 pt-6">
               {cartItems.map((item, index) => {
-                const isWater = item.name && 
-                  (item.name.toLowerCase().includes('water') || 
-                   item.category?.toLowerCase() === 'water');
-                const effectivePrice = item.effectivePrice !== undefined 
-                  ? Number(item.effectivePrice) 
+                const isWater = item.name &&
+                  (item.name.toLowerCase().includes('water') ||
+                    item.category?.toLowerCase() === 'water');
+                const effectivePrice = item.effectivePrice !== undefined
+                  ? Number(item.effectivePrice)
                   : Number(calculateEffectivePrice(item));
                 const originalPriceNum = Number(item.price);
                 const hasDeal = effectivePrice > 0 && originalPriceNum > 0 && effectivePrice < originalPriceNum;
                 const originalTotal = (originalPriceNum * item.quantity).toFixed(2);
                 const discountedTotal = (effectivePrice * item.quantity).toFixed(2);
                 return (
-                  <div 
+                  <div
                     key={`${item.id}-${item.category}-${index}`}
                     className={`mb-6 p-4 bg-white rounded-2xl border-2 border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 ${animateItems ? 'animate-in slide-in-from-left-2' : ''}`}
                     style={{ animationDelay: `${index * 100}ms` }}
                   >
                     <div className="flex items-start">
                       <div className="w-24 h-24 overflow-hidden rounded-2xl mr-4 shadow-md">
-                        <img 
-                          src={item.image || PLACEHOLDER_IMG} 
+                        <img
+                          src={item.image || PLACEHOLDER_IMG}
                           alt={item.name}
-                          className="w-full h-full object-cover transition-transform duration-300 hover:scale-110" 
+                          className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
                           onError={(e) => {
                             if (e.target.src !== PLACEHOLDER_IMG) {
                               e.target.src = PLACEHOLDER_IMG;
@@ -801,7 +790,7 @@ const OrderConfirmation = () => {
                         {(item.discounttype && item.discountvalue) && (
                           <div className="text-green-600 text-sm font-medium bg-green-100 px-2 py-1 rounded-full inline-block mb-2">
                             {item.discounttype === 'Percentage' && `${item.discountvalue}% off`}
-                            {item.discounttype === 'Fixed' && `₹${item.discountvalue*item.quantity} off`}
+                            {item.discounttype === 'Fixed' && `₹${item.discountvalue * item.quantity} off`}
                           </div>
                         )}
                         {isWater && (
@@ -811,26 +800,24 @@ const OrderConfirmation = () => {
                         )}
                         <div className="flex justify-between items-center mt-3">
                           <div className="flex items-center bg-gray-100 rounded-full p-1">
-                            <button 
+                            <button
                               onClick={() => {
                                 if (item.quantity > 1) {
                                   updateQuantity(item.id, item.category, item.quantity - 1);
                                 }
                               }}
-                              className={`w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center transition-all duration-200 hover:bg-gray-50 active:scale-95 ${
-                                item.quantity <= 1 ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'
-                              }`}
+                              className={`w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center transition-all duration-200 hover:bg-gray-50 active:scale-95 ${item.quantity <= 1 ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'
+                                }`}
                               disabled={item.quantity <= 1}
                               aria-label="Decrease quantity"
                             >
-                              <Minus size={16} className={`transition-colors duration-200 ${
-                                item.quantity <= 1 ? 'text-gray-400' : 'text-gray-600'
-                              }`} />
+                              <Minus size={16} className={`transition-colors duration-200 ${item.quantity <= 1 ? 'text-gray-400' : 'text-gray-600'
+                                }`} />
                             </button>
                             <span className="mx-4 font-semibold text-gray-800 transition-all duration-200 transform scale-100 hover:scale-110">
                               {item.quantity}
                             </span>
-                            <button 
+                            <button
                               onClick={() => updateQuantity(item.id, item.category, item.quantity + 1)}
                               className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center transition-all duration-200 hover:bg-gray-50 hover:shadow-md active:scale-95"
                               aria-label="Increase quantity"
@@ -849,7 +836,7 @@ const OrderConfirmation = () => {
                         ) : (
                           <p className="font-bold text-xl text-gray-800 transition-all duration-200 transform scale-100 hover:scale-105">₹{originalTotal}</p>
                         )}
-                        <button 
+                        <button
                           onClick={() => removeItem(item.id, item.category)}
                           className="mt-3 p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
                           aria-label="Remove item"
@@ -900,7 +887,7 @@ const OrderConfirmation = () => {
         {/* Floating Payment Button */}
         <div className="fixed bottom-0 left-0 right-0 px-4 py-4 z-50">
           <div className="max-w-[390px] md:max-w-4xl lg:max-w-6xl mx-auto">
-            <button 
+            <button
               onClick={handlePlaceOrder}
               disabled={
                 cartItems.length === 0 ||
@@ -910,11 +897,10 @@ const OrderConfirmation = () => {
                 !tableNumber ||
                 (!user && (!/^([^\s@]+)@([^\s@]+)\.[^\s@]+$/.test(guestEmail) || !/^[6-9]\d{9}$/.test(guestPhone)))
               }
-              className={`w-full py-4 rounded-full font-bold text-lg transition-all duration-300 transform hover:scale-105 ${
-                cartItems.length === 0 || isCheckingEmail || (!user && emailExists) || isPlacingOrder || !tableNumber || (!user && (!/^([^\s@]+)@([^\s@]+)\.[^\s@]+$/.test(guestEmail) || !/^[6-9]\d{9}$/.test(guestPhone)))
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                  : 'bg-gray-600 text-white hover:bg-gray-700 shadow-lg hover:shadow-xl'
-              }`}
+              className={`w-full py-4 rounded-full font-bold text-lg transition-all duration-300 transform hover:scale-105 ${cartItems.length === 0 || isCheckingEmail || (!user && emailExists) || isPlacingOrder || !tableNumber || (!user && (!/^([^\s@]+)@([^\s@]+)\.[^\s@]+$/.test(guestEmail) || !/^[6-9]\d{9}$/.test(guestPhone)))
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-gray-600 text-white hover:bg-gray-700 shadow-lg hover:shadow-xl'
+                }`}
               aria-busy={isPlacingOrder}
             >
               {isPlacingOrder ? (

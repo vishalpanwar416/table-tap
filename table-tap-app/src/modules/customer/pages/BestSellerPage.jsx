@@ -8,6 +8,7 @@ import { fetchBestSellerItems } from '../api/foodData';
 import { useNavigate } from 'react-router-dom';
 import FoodImageWithFallback from '../components/FoodImageWithFallback';
 import { useScrollLock, useMultiScrollLock } from '../../shared/hooks/useScrollLock';
+import LoadingScreen from '../../shared/components/LoadingScreen';
 
 // Lazy load components for better performance
 const Header = lazy(() => import('../components/Header'));
@@ -239,17 +240,8 @@ const BestSellerItem = memo(({ item, onItemClick, index = 0 }) => {
   };
 
   return (
-    <motion.div
-      className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 relative"
-      style={{ willChange: 'transform' }}
-      initial={{ transform: 'translateY(25px) scale(0.9)' }}
-      animate={{ transform: 'translateY(0px) scale(1)' }}
-      whileHover={{ transform: 'translateY(-6px) scale(1.02)' }}
-      transition={{
-        delay: index * 0.06,
-        duration: 0.7,
-        ease: [0.25, 0.46, 0.45, 0.94]
-      }}
+    <div
+      className="group bg-white rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1.5 hover:scale-[1.02] transition-all duration-300 overflow-hidden border border-gray-100 relative"
     >
       <div className="relative h-48 overflow-hidden bg-gray-100">
         {/* Discount Tag moved to top-right */}
@@ -430,7 +422,7 @@ const BestSellerItem = memo(({ item, onItemClick, index = 0 }) => {
           </div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 });
 
@@ -623,26 +615,7 @@ const BestSellerPage = memo(() => {
 
   // Loading state with enhanced UX
   if (loading) {
-    return (
-      <motion.div
-        className="flex justify-center items-center min-h-screen bg-black p-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      >
-        <div className="text-center text-white">
-          <div className="relative">
-            <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <div className="absolute inset-0 w-16 h-16 border-4 border-orange-300 border-b-transparent rounded-full animate-spin mx-auto" style={{ animationDelay: '-0.5s' }}></div>
-          </div>
-          <h2 className="text-xl font-semibold mb-2">Loading Best Sellers</h2>
-          <p className="text-gray-400">Discovering our most popular dishes...</p>
-          <div className="mt-6 w-64 h-2 bg-gray-700 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-orange-500 to-orange-600 rounded-full animate-pulse"></div>
-          </div>
-        </div>
-      </motion.div>
-    );
+    return <LoadingScreen message="Loading Best Sellers..." variant="page" />;
   }
 
   // Error state
@@ -692,10 +665,11 @@ const BestSellerPage = memo(() => {
         {/* Header with real-time search */}
         <div className="relative flex items-center mb-2 md:mb-3">
           <motion.button
-            className="absolute left-2 text-orange-500 hover:text-orange-600 transition-colors z-20"
+            className="absolute left-2 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-20"
             onClick={() => navigate(-1)}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
+            aria-label="Go back"
           >
             <ChevronLeft size={30} className="md:w-8 md:h-8" />
           </motion.button>

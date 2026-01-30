@@ -101,11 +101,11 @@ const AdminHeader = ({
         <div className="flex items-center space-x-4">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center px-2 py-1 mr-2 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded transition"
+            className="text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30"
             title="Go Back"
+            aria-label="Go back"
           >
-            <ChevronLeft className="mr-1" size={30} />
-            <span className="hidden sm:inline">Back</span>
+            <ChevronLeft size={30} />
           </button>
           <div>
             <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-spartan">
@@ -150,8 +150,8 @@ const AdminHeader = ({
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 font-spartan ${hasFilters
-                    ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                   }`}
               >
                 <Filter className="h-4 w-4" />

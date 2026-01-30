@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback, memo, Suspense, lazy } from 'react';
 import { ArrowRight, Heart, ShoppingBag, Star, Clock, Flame, X } from 'lucide-react';
 import { useLikes } from '../../../shared/config/LikesContent';
+import LoadingScreen from '../../../shared/components/LoadingScreen';
 import { MenuDropdown, Divider } from '../../components/MenuDropdown';
 import CategoryButtons from '../../components/CategoryButtons';
 import BestSellers from '../../components/Bestseller';
@@ -322,17 +323,7 @@ const HomePage = memo(() => {
 
   // Enhanced loading state with progressive loading
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-black p-4">
-        <div className="text-center text-white">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-          <p className="text-lg">Loading delicious menu...</p>
-          <div className="mt-4 w-64 h-2 bg-gray-700 rounded-full overflow-hidden">
-            <div className="h-full bg-orange-500 rounded-full animate-pulse"></div>
-          </div>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Loading delicious menu..." variant="page" />;
   }
 
   const handleSearchResultClick = (item) => {

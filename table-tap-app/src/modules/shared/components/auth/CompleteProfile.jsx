@@ -203,7 +203,8 @@ export default function CompleteProfile() {
         <div className="w-full px-6 py-8 relative flex items-center justify-center">
           <button
             onClick={() => navigate(-1)}
-            className="absolute left-4 text-orange-500"
+            className="absolute left-4 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-10"
+            aria-label="Go back"
           >
             <ChevronLeft size={30} />
           </button>

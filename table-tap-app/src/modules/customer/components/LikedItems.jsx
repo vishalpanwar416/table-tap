@@ -49,7 +49,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
   // Discount tag
   const DiscountTag = () =>
     item.discounttype && item.discountvalue ? (
-      <motion.span 
+      <motion.span
         className="text-[10px] bg-gradient-to-r from-green-400 to-green-600 text-white font-semibold px-2 py-0.5 rounded-full whitespace-nowrap shadow-sm"
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -70,17 +70,8 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
   }, [item.price, item.discounttype, item.discountvalue]);
 
   return (
-    <motion.div
-      className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 min-w-[140px] max-w-[150px] flex flex-col relative"
-      style={{ willChange: 'transform' }}
-      initial={{ transform: 'translateY(25px) scale(0.9)' }}
-      animate={{ transform: 'translateY(0px) scale(1)' }}
-      whileHover={{ transform: 'translateY(-6px) scale(1.03)' }}
-      transition={{
-        delay: index * 0.06,
-        duration: 0.7,
-        ease: [0.25, 0.46, 0.45, 0.94]
-      }}
+    <div
+      className="group bg-white rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1.5 hover:scale-[1.03] transition-all duration-300 overflow-hidden border border-gray-100 min-w-[140px] max-w-[150px] flex flex-col relative"
     >
       <div className="relative h-28 overflow-hidden bg-gray-100">
         {/* Discount badge in top right with animation */}
@@ -105,7 +96,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
             loading="lazy"
           />
         </motion.div>
-        
+
         {/* Enhanced like button */}
         <motion.button
           className="absolute top-2 left-2 z-20 bg-white/80 backdrop-blur-sm rounded-full p-1 shadow-sm"
@@ -115,25 +106,24 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
           aria-label={isLiked ? "Unlike item" : "Like item"}
         >
           <motion.div
-            animate={isLikedAnimating ? { 
+            animate={isLikedAnimating ? {
               scale: [1, 1.3, 1],
               rotate: [0, 10, -10, 0]
             } : {}}
             transition={{ duration: 0.6 }}
           >
-            <Heart 
-              className={`h-4 w-4 transition-colors duration-200 ${
-                isLiked ? "text-red-500 fill-red-500" : "text-gray-400 hover:text-red-400"
-              }`} 
+            <Heart
+              className={`h-4 w-4 transition-colors duration-200 ${isLiked ? "text-red-500 fill-red-500" : "text-gray-400 hover:text-red-400"
+                }`}
             />
           </motion.div>
         </motion.button>
       </div>
-      
+
       <div className="flex flex-col flex-1 justify-between py-1 px-2">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
-            <motion.h4 
+            <motion.h4
               className="text-xs font-bold text-gray-900 truncate"
               whileHover={{ color: '#f97316' }}
               transition={{ duration: 0.2 }}
@@ -143,7 +133,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
             <div className="flex items-center space-x-1">
               {item.discounttype && item.discountvalue ? (
                 <>
-                  <motion.span 
+                  <motion.span
                     className="text-[10px] text-gray-400 line-through"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -151,7 +141,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
                   >
                     ₹{Number(item.price).toFixed(0)}
                   </motion.span>
-                  <motion.span 
+                  <motion.span
                     className="text-sm font-bold text-orange-600"
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -161,7 +151,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
                   </motion.span>
                 </>
               ) : (
-                <motion.span 
+                <motion.span
                   className="text-sm font-bold text-gray-900"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -175,7 +165,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
           <div className="ml-1">
             <AnimatePresence mode="wait">
               {quantity > 0 ? (
-                <motion.div 
+                <motion.div
                   key="quantity-controls"
                   className="flex items-center bg-gradient-to-r from-black to-gray-800 text-white rounded-full px-2 py-2 shadow-lg"
                   initial={{ scale: 0.8, opacity: 0 }}
@@ -192,7 +182,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
                   >
                     −
                   </motion.button>
-                  <motion.span 
+                  <motion.span
                     className="px-1 text-xs font-semibold"
                     key={quantity}
                     initial={{ scale: 1.2 }}
@@ -216,7 +206,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
                   key="add-button"
                   onClick={handleAddClick}
                   className="bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white rounded-full px-2 py-2 flex items-center space-x-1 text-xs shadow-lg transition-all duration-200"
-                  whileHover={{ 
+                  whileHover={{
                     scale: 1.05,
                     boxShadow: "0 10px 25px rgba(0,0,0,0.2)"
                   }}
@@ -234,14 +224,14 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
 const LikedItems = ({ foodItems, onItemClick }) => {
   const { likedItems } = useLikes();
   const { cartItems, addToCart, updateQuantity, removeItem } = useCart();
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   const [selectedItem, setSelectedItem] = useState(null);
   const [isOrderCardOpen, setIsOrderCardOpen] = useState(false);
@@ -282,12 +272,12 @@ const LikedItems = ({ foodItems, onItemClick }) => {
           View All <span className="ml-1 md:text-xl">›</span>
         </button>
       </div>
-      <div className="flex space-x-4 overflow-x-auto pb-2 scroll-smooth px-4">
+      <div className="flex space-x-4 overflow-x-auto overflow-y-hidden pb-4 pt-2 scroll-smooth px-4">
         {likedFoodItems.map((item, idx) => (
-          <LikedItemCard 
-            key={item.id} 
-            item={item} 
-            onItemClick={handleOpenItemCard} 
+          <LikedItemCard
+            key={item.id}
+            item={item}
+            onItemClick={handleOpenItemCard}
             index={idx}
           />
         ))}
