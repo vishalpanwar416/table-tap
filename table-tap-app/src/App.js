@@ -27,14 +27,8 @@ import EnvGuard from './modules/shared/config/EnvGuard';
 // register();
 
 // Loading spinner component
-const LoadingSpinner = () => (
-  <div className="flex justify-center items-center min-h-screen bg-black">
-    <div className="text-center text-white">
-      <div className="w-16 h-16 border-4 border-gray-700 border-t-[#2A9D8F] rounded-full animate-spin mx-auto mb-4" />
-      <p className="text-gray-400 font-spartan">Loading Table Tap...</p>
-    </div>
-  </div>
-);
+import LoadingScreen from './modules/shared/components/LoadingScreen';
+const LoadingSpinner = () => <LoadingScreen message="Loading Table Tap..." />;
 
 /**
  * Main App Component with Subdomain-based Routing
