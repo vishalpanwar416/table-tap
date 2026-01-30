@@ -586,16 +586,14 @@ export default function MyOrders() {
                 {/* Toggle Button */}
                 <button
                   onClick={() => setShowSummary(!showSummary)}
-                  className="w-full bg-white p-3 rounded-xl shadow-sm flex items-center justify-between hover:bg-gray-50 transition-colors"
+                  className="w-full bg-white p-3 rounded-xl shadow-sm flex items-center justify-center relative hover:bg-gray-50 transition-colors"
                 >
-                  <div className="flex items-center">
-                    <ShoppingBag size={16} className="text-gray-600 mr-1.5" />
-                    <h2 className="text-sm font-semibold text-gray-800">Order Summary</h2>
-                  </div>
+                  <ShoppingBag size={16} className="text-gray-600 absolute left-3" />
+                  <h2 className="text-sm font-semibold text-gray-800">Order Summary</h2>
                   {showSummary ? (
-                    <ChevronUp size={16} className="text-gray-600" />
+                    <ChevronUp size={16} className="text-gray-600 absolute right-3" />
                   ) : (
-                    <ChevronDown size={16} className="text-gray-600" />
+                    <ChevronDown size={16} className="text-gray-600 absolute right-3" />
                   )}
                 </button>
 
