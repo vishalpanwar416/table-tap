@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
@@ -42,7 +42,7 @@ const plans = {
     }
 };
 
-export default function RegisterPage() {
+function RegisterForm() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const selectedPlanId = searchParams.get('plan') || 'professional';
@@ -781,5 +781,17 @@ export default function RegisterPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function RegisterPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2A9D8F]"></div>
+            </div>
+        }>
+            <RegisterForm />
+        </Suspense>
     );
 }
