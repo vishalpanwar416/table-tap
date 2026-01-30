@@ -168,7 +168,10 @@ export const getRestaurantSubscription = async (restaurantId) => {
  */
 export const assignSubscriptionToRestaurant = async (subscriptionData) => {
   try {
-    const plan = SUBSCRIPTION_PLANS.find(p => p.id === subscriptionData.plan_id);
+    // Fetch plan from DB instead of constant
+    const { data: dbPlans } = await getSubscriptionPlans();
+    const plan = dbPlans?.find(p => p.key === subscriptionData.plan_id);
+
     if (!plan) {
       throw new Error('Invalid plan selected');
     }
@@ -205,7 +208,7 @@ export const assignSubscriptionToRestaurant = async (subscriptionData) => {
       .from('subscriptions')
       .insert([{
         restaurant_id: subscriptionData.restaurant_id,
-        plan_name: plan.id,
+        plan_name: plan.key,
         billing_cycle: subscriptionData.billing_cycle || 'monthly',
         plan_price: price,
         gst_amount: gstAmount,
@@ -248,7 +251,7 @@ export const assignSubscriptionToRestaurant = async (subscriptionData) => {
         subscription_id: data.id,
         restaurant_id: subscriptionData.restaurant_id,
         action: 'created',
-        new_plan: plan.id,
+        new_plan: plan.key,
         new_status: 'active',
         amount_paid: totalAmount,
         notes: subscriptionData.notes || 'Subscription created'
@@ -272,10 +275,25 @@ export const assignSubscriptionToRestaurant = async (subscriptionData) => {
  */
 export const updateRestaurantSubscription = async (subscriptionId, updates) => {
   try {
-    const plan = SUBSCRIPTION_PLANS.find(p => p.id === updates.plan_id);
+    // Fetch plan from DB instead of constant
+    const { data: dbPlans } = await getSubscriptionPlans();
+    const plan = dbPlans?.find(p => p.key === updates.plan_id);
+
     if (!plan) {
       throw new Error('Invalid plan selected');
     }
+
+    // Calculate price based on billing cycle and database configuration
+    const { data: cycles } = await getBillingCycles();
+    const cycle = cycles?.find(c => c.key === updates.billing_cycle);
+    if (!cycle) throw new Error('Invalid billing cycle');
+
+    const totalBase = plan.base_price * cycle.duration_months;
+    const discountAmount = Math.round(totalBase * (cycle.discount_percentage / 100));
+    const price = totalBase - discountAmount;
+
+    const gstAmount = Math.round(price * 0.18);
+    const totalAmount = price + gstAmount;
 
     // Get current subscription for history
     const { data: currentSub } = await supabase
@@ -284,14 +302,10 @@ export const updateRestaurantSubscription = async (subscriptionId, updates) => {
       .eq('id', subscriptionId)
       .single();
 
-    const price = updates.billing_cycle === 'yearly' ? plan.yearly_price : plan.price;
-    const gstAmount = Math.round(price * 0.18);
-    const totalAmount = price + gstAmount;
-
     const { data, error } = await supabase
       .from('subscriptions')
       .update({
-        plan_name: plan.id,
+        plan_name: plan.key,
         billing_cycle: updates.billing_cycle || 'monthly',
         plan_price: price,
         gst_amount: gstAmount,
@@ -327,9 +341,9 @@ export const updateRestaurantSubscription = async (subscriptionId, updates) => {
       .insert([{
         subscription_id: subscriptionId,
         restaurant_id: data.restaurant_id,
-        action: currentSub?.plan_name !== plan.id ? 'upgraded' : 'renewed',
+        action: currentSub?.plan_name !== plan.key ? 'upgraded' : 'renewed',
         old_plan: currentSub?.plan_name,
-        new_plan: plan.id,
+        new_plan: plan.key,
         old_status: currentSub?.status,
         new_status: updates.status || 'active',
         amount_paid: totalAmount,

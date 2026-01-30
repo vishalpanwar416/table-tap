@@ -28,7 +28,7 @@ const plans = {
     starter: {
         name: 'Starter',
         price: 999,
-        features: ['Up to 15 Tables', 'QR Menu & Ordering', 'Order Management', 'Basic Analytics', 'Email Support']
+        features: ['Unlimited Tables', 'QR Menu & Ordering', 'Order Management', 'Basic Analytics', 'Email Support']
     },
     professional: {
         name: 'Professional',
@@ -48,10 +48,48 @@ function RegisterForm() {
     const selectedPlanId = searchParams.get('plan') || 'professional';
     const billingCycle = searchParams.get('billing') || 'monthly';
 
+    const [dbPlans, setDbPlans] = useState(null);
     const [currentStep, setCurrentStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
+
+    useEffect(() => {
+        const fetchPlans = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('subscription_plans')
+                    .select('*')
+                    .eq('is_active', true);
+
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    const formattedPlans = {};
+                    data.forEach(p => {
+                        formattedPlans[p.key] = {
+                            name: p.name,
+                            price: p.base_price,
+                            features: p.features
+                        };
+                    });
+
+                    // Ensure enterprise is present (fallback if not in DB)
+                    if (!formattedPlans.enterprise) {
+                        formattedPlans.enterprise = plans.enterprise;
+                    }
+
+                    setDbPlans(formattedPlans);
+                }
+            } catch (err) {
+                console.error('Error fetching plans in register page:', err);
+            }
+        };
+
+        fetchPlans();
+    }, []);
+
+    const activePlans = dbPlans || plans;
 
     const [formData, setFormData] = useState({
         // Owner Details
@@ -91,10 +129,10 @@ function RegisterForm() {
         { id: 3, title: 'Review & Submit', icon: Check }
     ];
 
-    const plan = plans[formData.plan] || plans.professional;
+    const plan = activePlans[formData.plan] || activePlans.professional;
     const price = plan.price ? (formData.billingCycle === 'yearly' ? Math.floor(plan.price * 12 * 0.75) : plan.price) : 'Custom';
-    const gst = plan.price ? Math.round(price * 0.18) : 0;
-    const total = plan.price ? price + gst : 'Custom';
+    const gst = plan.price && typeof price === 'number' ? Math.round(price * 0.18) : 0;
+    const total = plan.price && typeof price === 'number' ? price + gst : 'Custom';
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;

@@ -234,13 +234,36 @@ const SubscriptionManagement = () => {
     setShowPlanModal(true);
   };
 
+  const openAssignModal = (subscription = null) => {
+    if (subscription) {
+      setEditingSubscription(subscription);
+      setAssignForm({
+        restaurant_id: subscription.restaurant_id,
+        plan_id: subscription.plan_name,
+        billing_cycle: subscription.billing_cycle,
+        payment_method: subscription.payment_method || 'manual',
+        notes: ''
+      });
+    } else {
+      setEditingSubscription(null);
+      resetAssignForm();
+      // Pre-select first plan if available
+      if (plans.length > 0) {
+        setAssignForm(prev => ({ ...prev, plan_id: plans[0].key }));
+      }
+    }
+    setShowAssignModal(true);
+  };
+
   const handlePlanSubmit = async (e) => {
     e.preventDefault();
     try {
       setProcessingId('plan');
       let response;
       if (editingPlan) {
-        response = await updateSubscriptionPlan(editingPlan.id, planForm);
+        // Strip read-only fields before updating
+        const { id, created_at, updated_at, ...updateData } = planForm;
+        response = await updateSubscriptionPlan(editingPlan.id, updateData);
       } else {
         response = await createSubscriptionPlan(planForm);
       }

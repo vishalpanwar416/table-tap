@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Check, Zap, Sparkles, Building2 } from 'lucide-react';
+import { Check, Zap, Sparkles, Building2, Loader2 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import data from '../data/landing-data.json';
 
 const IconMap = {
@@ -13,7 +14,55 @@ const IconMap = {
 
 const Pricing = () => {
     const [billingCycle, setBillingCycle] = useState('monthly');
+    const [plans, setPlans] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
     const { pricing } = data;
+
+    useEffect(() => {
+        const fetchPlans = async () => {
+            try {
+                const { data: dbPlans, error } = await supabase
+                    .from('subscription_plans')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('base_price', { ascending: true });
+
+                if (error) throw error;
+
+                if (dbPlans && dbPlans.length > 0) {
+                    // Map DB keys to frontend expected format
+                    const formattedPlans = dbPlans.map(plan => ({
+                        id: plan.key,
+                        name: plan.name,
+                        description: plan.description,
+                        price: plan.base_price,
+                        features: plan.features,
+                        popular: plan.key === 'professional', // Use logic or a DB field if it existed
+                    }));
+
+                    // Add Enterprise if it's not in the DB (usually custom)
+                    const hasEnterprise = formattedPlans.some(p => p.id === 'enterprise');
+                    if (!hasEnterprise) {
+                        const enterprisePlan = pricing.plans.find(p => p.id === 'enterprise');
+                        if (enterprisePlan) {
+                            formattedPlans.push(enterprisePlan);
+                        }
+                    }
+
+                    setPlans(formattedPlans);
+                } else {
+                    setPlans(pricing.plans);
+                }
+            } catch (err) {
+                console.error('Error fetching plans:', err);
+                setPlans(pricing.plans);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchPlans();
+    }, [pricing.plans]);
 
     return (
         <section id="pricing" className="py-24 bg-[#F8FAFC]/50 relative overflow-hidden">
@@ -66,83 +115,90 @@ const Pricing = () => {
                     </motion.div>
                 </div>
 
-                <div className="grid lg:grid-cols-3 gap-12 max-w-7xl mx-auto items-end">
-                    {pricing.plans.map((plan, index) => {
-                        const Icon = IconMap[plan.id];
-                        return (
-                            <motion.div
-                                key={plan.id}
-                                initial={{ opacity: 0, y: 60 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.8, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
-                                className={`p-16 rounded-[64px] flex flex-col relative transition-all duration-500 hover:shadow-3xl ${plan.popular
-                                    ? 'bg-white shadow-[0_40px_100px_rgba(0,0,0,0.1)] border-white border-[3px] scale-105 z-20 min-h-[720px]'
-                                    : 'glass border-gray-100 hover:bg-white/60 min-h-[640px]'
-                                    }`}
-                            >
-                                {plan.popular && (
-                                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#2A9D8F] text-white px-8 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.4em] shadow-xl shadow-[#2A9D8F]/20">
-                                        Most Popular
-                                    </div>
-                                )}
-
-                                <div className={`w-20 h-20 rounded-[28px] flex items-center justify-center mb-12 shadow-2xl ${plan.popular ? 'bg-[#2A9D8F] text-white' : 'bg-[#0F172A] text-white opacity-90'
-                                    }`}>
-                                    <Icon size={36} />
-                                </div>
-                                <h3 className="text-4xl font-black text-gray-900 mb-4 tracking-tighter">{plan.name}</h3>
-                                <p className="text-gray-500 text-sm font-bold mb-14 leading-relaxed opacity-70">{plan.description}</p>
-
-                                <div className="mb-14">
-                                    {plan.price ? (
-                                        <div className="flex flex-col">
-                                            <div className="flex items-baseline gap-2">
-                                                <span className="text-3xl font-black text-gray-300">₹</span>
-                                                <motion.span
-                                                    key={billingCycle}
-                                                    initial={{ y: 20, opacity: 0 }}
-                                                    animate={{ y: 0, opacity: 1 }}
-                                                    className="text-8xl font-black text-gray-900 tracking-tighter leading-none"
-                                                >
-                                                    {billingCycle === 'yearly' ? Math.floor(plan.price * 12 * 0.75) : plan.price}
-                                                </motion.span>
-                                                <span className="text-gray-400 font-black text-xs uppercase tracking-widest pb-2">
-                                                    /{billingCycle === 'monthly' ? 'mo' : 'yr'}
-                                                </span>
-                                            </div>
-                                            <span className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mt-2">+ 18% GST</span>
-                                        </div>
-                                    ) : (
-                                        <div className="text-6xl font-black text-gray-900 tracking-tighter">Custom</div>
-                                    )}
-                                </div>
-
-                                <div className="space-y-6 mb-16 flex-1">
-                                    {plan.features.map(feature => (
-                                        <div key={feature} className="flex items-center gap-4 group">
-                                            <div className="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-500 transition-colors">
-                                                <Check size={12} className="text-emerald-500 group-hover:text-white" />
-                                            </div>
-                                            <span className="text-gray-900 font-black text-sm uppercase tracking-wider opacity-80">{feature}</span>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <motion.a
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
-                                    href={`/register?plan=${plan.id}&billing=${billingCycle}`}
-                                    className={`w-full py-6 rounded-[28px] font-black text-center text-lg transition-all tracking-widest uppercase ${plan.popular
-                                        ? 'bg-[#2A9D8F] text-white shadow-2xl shadow-[#2A9D8F]/30 hover:brightness-110'
-                                        : 'bg-gray-100 text-gray-900 hover:bg-gray-900 hover:text-white shadow-sm'
+                <div className="grid lg:grid-cols-3 gap-12 max-w-7xl mx-auto items-end min-h-[400px]">
+                    {isLoading ? (
+                        <div className="lg:col-span-3 flex flex-col items-center justify-center py-20">
+                            <Loader2 className="w-12 h-12 text-[#2A9D8F] animate-spin mb-4" />
+                            <p className="text-gray-500 font-bold uppercase tracking-widest text-sm">Loading curated plans...</p>
+                        </div>
+                    ) : (
+                        plans.map((plan, index) => {
+                            const Icon = IconMap[plan.id] || Sparkles;
+                            return (
+                                <motion.div
+                                    key={plan.id}
+                                    initial={{ opacity: 0, y: 60 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ duration: 0.8, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
+                                    className={`p-16 rounded-[64px] flex flex-col relative transition-all duration-500 hover:shadow-3xl ${plan.popular
+                                        ? 'bg-white shadow-[0_40px_100px_rgba(0,0,0,0.1)] border-white border-[3px] scale-105 z-20 min-h-[720px]'
+                                        : 'glass border-gray-100 hover:bg-white/60 min-h-[640px]'
                                         }`}
                                 >
-                                    {plan.price ? 'Choose Plan' : 'Contact Sales'}
-                                </motion.a>
-                            </motion.div>
-                        );
-                    })}
+                                    {plan.popular && (
+                                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#2A9D8F] text-white px-8 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.4em] shadow-xl shadow-[#2A9D8F]/20">
+                                            Most Popular
+                                        </div>
+                                    )}
+
+                                    <div className={`w-20 h-20 rounded-[28px] flex items-center justify-center mb-12 shadow-2xl ${plan.popular ? 'bg-[#2A9D8F] text-white' : 'bg-[#0F172A] text-white opacity-90'
+                                        }`}>
+                                        <Icon size={36} />
+                                    </div>
+                                    <h3 className="text-4xl font-black text-gray-900 mb-4 tracking-tighter">{plan.name}</h3>
+                                    <p className="text-gray-500 text-sm font-bold mb-14 leading-relaxed opacity-70">{plan.description}</p>
+
+                                    <div className="mb-14">
+                                        {plan.price ? (
+                                            <div className="flex flex-col">
+                                                <div className="flex items-baseline gap-2">
+                                                    <span className="text-3xl font-black text-gray-300">₹</span>
+                                                    <motion.span
+                                                        key={billingCycle}
+                                                        initial={{ y: 20, opacity: 0 }}
+                                                        animate={{ y: 0, opacity: 1 }}
+                                                        className="text-8xl font-black text-gray-900 tracking-tighter leading-none"
+                                                    >
+                                                        {billingCycle === 'yearly' ? Math.floor(plan.price * 12 * 0.75) : plan.price}
+                                                    </motion.span>
+                                                    <span className="text-gray-400 font-black text-xs uppercase tracking-widest pb-2">
+                                                        /{billingCycle === 'monthly' ? 'mo' : 'yr'}
+                                                    </span>
+                                                </div>
+                                                <span className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mt-2">+ 18% GST</span>
+                                            </div>
+                                        ) : (
+                                            <div className="text-6xl font-black text-gray-900 tracking-tighter">Custom</div>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-6 mb-16 flex-1">
+                                        {plan.features.map(feature => (
+                                            <div key={feature} className="flex items-center gap-4 group">
+                                                <div className="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-500 transition-colors">
+                                                    <Check size={12} className="text-emerald-500 group-hover:text-white" />
+                                                </div>
+                                                <span className="text-gray-900 font-black text-sm uppercase tracking-wider opacity-80">{feature}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <motion.a
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        href={`/register?plan=${plan.id}&billing=${billingCycle}`}
+                                        className={`w-full py-6 rounded-[28px] font-black text-center text-lg transition-all tracking-widest uppercase ${plan.popular
+                                            ? 'bg-[#2A9D8F] text-white shadow-2xl shadow-[#2A9D8F]/30 hover:brightness-110'
+                                            : 'bg-gray-100 text-gray-900 hover:bg-gray-900 hover:text-white shadow-sm'
+                                            }`}
+                                    >
+                                        {plan.price ? 'Choose Plan' : 'Contact Sales'}
+                                    </motion.a>
+                                </motion.div>
+                            );
+                        })
+                    )}
                 </div>
             </div >
         </section >
