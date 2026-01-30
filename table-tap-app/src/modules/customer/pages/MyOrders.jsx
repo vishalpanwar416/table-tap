@@ -5,7 +5,6 @@ import { useOrders } from '../../shared/context/OrderContext';
 import OrderCard from '../components/OrderCard';
 import { getActiveRestaurants } from '../../restaurant/pages/RestaurantSelection/restaurantSelectionService';
 import { motion, AnimatePresence } from "framer-motion";
-import { FixedSizeList as List } from 'react-window';
 import LoadingScreen from '../../shared/components/LoadingScreen';
 
 const tabs = [
@@ -174,6 +173,11 @@ export default function MyOrders() {
     fetchRestaurants();
   }, [userOrders]); // Re-fetch when orders change to ensure we have all restaurant IDs
 
+  // Reset displayed count when search or filters change
+  useEffect(() => {
+    setDisplayedCount(10);
+  }, [searchQuery, filterPaymentMethod, filterDateRange, sortBy]);
+
   // Manual refresh handler for pull-to-refresh
   const handleManualRefresh = () => {
     handleFetchOrders(true);
@@ -186,6 +190,7 @@ export default function MyOrders() {
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     setExpandedOrderId(null); // Reset expanded order when changing tabs
+    setDisplayedCount(10); // Reset to show first 10 orders
   };
 
   // Order card click handler
@@ -265,33 +270,26 @@ export default function MyOrders() {
     });
   };
 
-  // Pagination state
-  const [ordersPage, setOrdersPage] = useState(1);
-  const [ordersPageSize] = useState(10); // Show 10 orders per page
+  // Infinite scroll state
+  const [displayedCount, setDisplayedCount] = useState(10); // Start with 10 orders
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  // Paginated and sorted orders
+  // Get filtered and sorted orders, then slice for infinite scroll
   const filteredOrders = getFilteredAndSortedOrders();
-  const paginatedOrders = filteredOrders.slice(
-    (ordersPage - 1) * ordersPageSize,
-    ordersPage * ordersPageSize
-  );
+  const displayedOrders = filteredOrders.slice(0, displayedCount);
+  const hasMore = displayedCount < filteredOrders.length;
 
-  // Virtualized row renderer for orders
-  const OrderRow = ({ index, style, data }) => {
-    const order = data[index];
-    const restaurantName = restaurantMap[order.restaurant_id] || 'Unknown Restaurant';
-    return (
-      <div style={style}>
-        <OrderCard
-          key={order.id}
-          order={order}
-          restaurantName={restaurantName}
-          isExpanded={expandedOrderId === order.id}
-          onClick={() => handleOrderClick(order.id)}
-        />
-      </div>
-    );
-  };
+  // Load more orders when scrolling
+  const loadMoreOrders = useCallback(() => {
+    if (isLoadingMore || !hasMore) return;
+
+    setIsLoadingMore(true);
+    // Simulate loading delay for smooth UX
+    setTimeout(() => {
+      setDisplayedCount(prev => Math.min(prev + 10, filteredOrders.length));
+      setIsLoadingMore(false);
+    }, 300);
+  }, [isLoadingMore, hasMore, filteredOrders.length]);
 
   // Empty state component
   const EmptyState = ({ tab }) => {
@@ -529,78 +527,87 @@ export default function MyOrders() {
               </AnimatePresence>
             </div>
 
-            {/* Orders List - Scrollable area */}
-            <div className="flex-1 bg-white rounded-xl p-4 overflow-y-auto shadow-sm" style={{ maxHeight: 'calc(100vh - 340px)' }}>
+            {/* Orders List - Scrollable area with infinite scroll */}
+            <div
+              className="flex-1 bg-white rounded-xl p-4 overflow-y-auto shadow-sm"
+              style={{ maxHeight: 'calc(100vh - 340px)' }}
+              onScroll={(e) => {
+                const { scrollTop, scrollHeight, clientHeight } = e.target;
+                // Load more when user scrolls to bottom (with 100px threshold)
+                if (scrollHeight - scrollTop - clientHeight < 100) {
+                  loadMoreOrders();
+                }
+              }}
+            >
               <h2 className="text-black text-xl font-semibold mb-4">
                 {activeTab === 'pending' ? 'Pending Orders' :
                   activeTab === 'preparing' ? 'Orders in Preparation' : 'Order History'}
               </h2>
 
-              {paginatedOrders.length > 0 ? (
-                <div style={{ height: 400 }}>
-                  <List
-                    height={400}
-                    itemCount={paginatedOrders.length}
-                    itemSize={120} // Adjust based on your OrderCard height
-                    width="100%"
-                    itemData={paginatedOrders}
-                  >
-                    {OrderRow}
-                  </List>
-                </div>
+              {displayedOrders.length > 0 ? (
+                <>
+                  {displayedOrders.map((order) => (
+                    <div key={order.id} className="mb-3">
+                      <OrderCard
+                        order={order}
+                        restaurantName={restaurantMap[order.restaurant_id] || 'Loading...'}
+                        isExpanded={expandedOrderId === order.id}
+                        onToggleExpand={() => setExpandedOrderId(
+                          expandedOrderId === order.id ? null : order.id
+                        )}
+                      />
+                    </div>
+                  ))}
+
+                  {/* Loading indicator */}
+                  {isLoadingMore && (
+                    <div className="flex justify-center items-center py-4">
+                      <Loader className="animate-spin text-orange-500" size={24} />
+                      <span className="ml-2 text-gray-500 text-sm">Loading more orders...</span>
+                    </div>
+                  )}
+
+                  {/* End of list indicator */}
+                  {!hasMore && displayedOrders.length > 10 && (
+                    <div className="text-center py-4 text-gray-400 text-sm">
+                      You've reached the end
+                    </div>
+                  )}
+                </>
               ) : (
                 <EmptyState tab={activeTab} />
               )}
             </div>
 
-            {/* Pagination controls (below the list) */}
-            <div className="flex justify-between items-center mt-4">
-              <button
-                onClick={() => setOrdersPage((p) => Math.max(1, p - 1))}
-                disabled={ordersPage === 1}
-                className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <span>
-                Page {ordersPage} of {Math.max(1, Math.ceil(filteredOrders.length / ordersPageSize))}
-              </span>
-              <button
-                onClick={() => setOrdersPage((p) => p + 1)}
-                disabled={ordersPage * ordersPageSize >= filteredOrders.length}
-                className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
-
-            {/* Order Summary */}
-            <div className="mt-4 bg-white p-4 rounded-xl shadow-sm">
-              <div className="flex items-center mb-3">
-                <ShoppingBag size={20} className="text-gray-600 mr-2" />
-                <h2 className="text-lg font-semibold text-gray-800">Order Summary</h2>
-              </div>
-              <div className="grid grid-cols-3 gap-3 text-center">
-                <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 shadow-sm">
-                  <p className="text-gray-600 text-xs md:text-sm mb-1">Pending</p>
-                  <p className="text-xl md:text-2xl font-bold text-yellow-500">
-                    {userOrders.filter(order => order.status === 'pending').length}
-                  </p>
+            {/* Order Summary - Only show on Order History tab */}
+            {activeTab === 'completed' && (
+              <div className="mt-4 bg-white p-4 rounded-xl shadow-sm">
+                <div className="flex items-center mb-3">
+                  <ShoppingBag size={20} className="text-gray-600 mr-2" />
+                  <h2 className="text-lg font-semibold text-gray-800">Order Summary</h2>
                 </div>
-                <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 shadow-sm">
-                  <p className="text-gray-600 text-xs md:text-sm mb-1">Preparing</p>
-                  <p className="text-xl md:text-2xl font-bold text-purple-500">
-                    {userOrders.filter(order => order.status === 'preparing').length}
-                  </p>
-                </div>
-                <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 shadow-sm">
-                  <p className="text-gray-600 text-xs md:text-sm mb-1">Completed</p>
-                  <p className="text-xl md:text-2xl font-bold text-green-500">
-                    {userOrders.filter(order => ['completed', 'rejected', 'ready'].includes(order.status)).length}
-                  </p>
+                <div className="grid grid-cols-3 gap-3 text-center">
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 shadow-sm">
+                    <p className="text-gray-600 text-xs md:text-sm mb-1">Pending</p>
+                    <p className="text-xl md:text-2xl font-bold text-yellow-500">
+                      {userOrders.filter(order => order.status === 'pending').length}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 shadow-sm">
+                    <p className="text-gray-600 text-xs md:text-sm mb-1">Preparing</p>
+                    <p className="text-xl md:text-2xl font-bold text-purple-500">
+                      {userOrders.filter(order => order.status === 'preparing').length}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 shadow-sm">
+                    <p className="text-gray-600 text-xs md:text-sm mb-1">Completed</p>
+                    <p className="text-xl md:text-2xl font-bold text-green-500">
+                      {userOrders.filter(order => ['completed', 'rejected', 'ready'].includes(order.status)).length}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Bottom Spacing */}
           </div>
