@@ -90,7 +90,6 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
   const menuOptions = React.useMemo(() => [
     { name: 'My Orders', icon: <ShoppingBag className="w-6 h-6" />, path: '/my-orders' },
     { name: 'My Profile', icon: <User className="w-6 h-6" />, path: '/profile' },
-    { name: 'Landing Page', icon: <Globe className="w-6 h-6" />, path: '/landing' },
     { name: 'Change Restaurant', icon: <Globe className="w-6 h-6" />, path: '/restaurant-selection' },
     { name: 'Contact Us', icon: <Phone className="w-6 h-6" />, path: '/contact' },
     { name: 'Help & FAQs', icon: <HelpCircle className="w-6 h-6" />, path: '/help' },
