@@ -3,46 +3,37 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut, ShoppingBag, User, CreditCard, Phone, HelpCircle, Shield, Globe } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../shared/supabase';
+import { useAuth } from '../../shared/config/AuthContext';
 import ContactPopup from './ContactPopup';
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+
   const [userData, setUserData] = useState({
     profileImg: '',
     userName: '',
     userEmail: '',
     profile_role: 'customer'
   });
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
   const [isContactPopupOpen, setIsContactPopupOpen] = useState(false);
   const sidebarRef = useRef(null);
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
 
-  // 1. Fetch user data only when sidebar is opened
+  const isAuthenticated = !!user;
+  const isLoading = authLoading || profileLoading;
+
+  // 1. Fetch user profile data only when sidebar is opened and user is authenticated
   useEffect(() => {
-    if (!isSidebarOpen) return;
+    if (!isSidebarOpen || !user) return;
+
     let isMounted = true;
-    const fetchUserData = async () => {
+    const fetchUserProfile = async () => {
       try {
-        setIsLoading(true);
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-        if (authError || !user) {
-          if (isMounted) {
-            setIsAuthenticated(false);
-            setUserData({
-              profileImg: '',
-              userName: '',
-              userEmail: '',
-              profile_role: 'customer'
-            });
-          }
-          return;
-        }
-
-        if (isMounted) setIsAuthenticated(true);
+        setProfileLoading(true);
+        // We already have user from context, just fetch profile
 
         // Attempt to fetch profile details
         const { data: profile, error: profileError } = await supabase
@@ -60,17 +51,14 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
           });
         }
       } catch (error) {
-        console.error('Error in fetchUserData:', error);
-        if (isMounted) {
-          setIsAuthenticated(false);
-        }
+        console.warn('Error in fetchUserProfile:', error);
       } finally {
-        if (isMounted) setIsLoading(false);
+        if (isMounted) setProfileLoading(false);
       }
     };
-    fetchUserData();
+    fetchUserProfile();
     return () => { isMounted = false; };
-  }, [isSidebarOpen]);
+  }, [isSidebarOpen, user]);
 
   // 4. Only subscribe to real-time updates when sidebar is open and user is authenticated
   useEffect(() => {
