@@ -142,7 +142,7 @@ const HomePage = memo(() => {
     loading,
     error,
     retryLoadData,
-    initializeData,
+    loadFoodData,
     currentRestaurantId
   } = useFoodData();
 
@@ -195,9 +195,9 @@ const HomePage = memo(() => {
   // Initialize data when restaurantId changes
   useEffect(() => {
     if (restaurantId && restaurantId !== currentRestaurantId) {
-      initializeData(restaurantId);
+      loadFoodData(restaurantId);
     }
-  }, [restaurantId, currentRestaurantId, initializeData]);
+  }, [restaurantId, currentRestaurantId, loadFoodData]);
 
   // Constants
   const categories = useMemo(() => ['Snacks', 'Main Course', 'Beverages', 'Dessert', 'Offers'], []);
