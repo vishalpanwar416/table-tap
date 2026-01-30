@@ -52,20 +52,20 @@ export const RestaurantProvider = ({ children }) => {
   useEffect(() => {
     // Check URL parameters first
     const urlParams = getUrlParams();
-    
+
     // Check if we have URL parameters
     if (urlParams.restaurantId && urlParams.tableNumber) {
       // Store in localStorage
       localStorageStore.set('restaurantId', urlParams.restaurantId);
       localStorageStore.set('tableNumber', urlParams.tableNumber);
-      
+
       setRestaurantId(urlParams.restaurantId);
       setTableNumber(urlParams.tableNumber);
     } else {
       // Try to get from localStorage
       const storedRestaurantId = localStorageStore.get('restaurantId');
       const storedTableNumber = localStorageStore.get('tableNumber');
-      
+
       if (storedRestaurantId && storedTableNumber) {
         setRestaurantId(storedRestaurantId);
         setTableNumber(storedTableNumber);
@@ -87,7 +87,7 @@ export const RestaurantProvider = ({ children }) => {
       try {
         setLoading(true);
         setError(null);
-        
+
         const { data, error } = await supabase
           .from('restaurants')
           .select('*')
@@ -106,7 +106,7 @@ export const RestaurantProvider = ({ children }) => {
         }
 
         setRestaurant(data);
-        
+
       } catch (err) {
         setError('Failed to load restaurant data');
       } finally {
@@ -123,9 +123,9 @@ export const RestaurantProvider = ({ children }) => {
     try {
       const { data, error } = await supabase
         .from('restaurants')
-        .update({ 
-          ...updates, 
-          updated_at: new Date().toISOString() 
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
         })
         .eq('id', restaurantId)
         .select()
@@ -137,7 +137,7 @@ export const RestaurantProvider = ({ children }) => {
 
       setRestaurant(data);
       return true;
-      
+
     } catch (err) {
       return false;
     }
@@ -163,7 +163,7 @@ export const RestaurantProvider = ({ children }) => {
       setRestaurant(data);
       setError(null);
       return true;
-      
+
     } catch (err) {
       setError('Failed to refresh restaurant data');
       return false;
@@ -174,19 +174,19 @@ export const RestaurantProvider = ({ children }) => {
 
   // Function to manually set restaurant and table
   const setRestaurantAndTable = (newRestaurantId, newTableNumber) => {
-    
+
     // Clear old restaurant data
     setRestaurant(null);
     setError(null);
-    
+
     // Update localStorage
     localStorageStore.set('restaurantId', newRestaurantId);
     localStorageStore.set('tableNumber', newTableNumber);
-    
+
     // Update state
     setRestaurantId(newRestaurantId);
     setTableNumber(newTableNumber);
-    
+
     // Clear any cached food data for the old restaurant
     try {
       const keysToRemove = [];

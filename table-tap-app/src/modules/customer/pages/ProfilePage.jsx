@@ -32,6 +32,7 @@ const ProfilePage = () => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const [errors, setErrors] = useState({});
+  const [pendingEmail, setPendingEmail] = useState(null); // Track email awaiting verification
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -69,6 +70,11 @@ const ProfilePage = () => {
 
           setProfileData(newProfileData);
           setFormData(newProfileData);
+
+          // Check if there's a pending email change
+          if (user.new_email && user.new_email !== user.email) {
+            setPendingEmail(user.new_email);
+          }
         }
       } catch (err) {
         setError('Failed to load profile');
@@ -281,9 +287,12 @@ const ProfilePage = () => {
               email: cleanEmail
             }));
 
-            if (!updatedUser.email_confirmed_at) {
-              alert('Profile updated successfully! Please check your new email for a verification link.');
+            // Set pending email if not yet confirmed
+            if (!updatedUser.email_confirmed_at || updatedUser.new_email) {
+              setPendingEmail(cleanEmail);
+              alert('A confirmation email has been sent to ' + cleanEmail + '. Please check your inbox and click the verification link to complete the email change.');
             } else {
+              setPendingEmail(null);
               alert('Profile and email updated successfully!');
             }
           }
@@ -364,6 +373,25 @@ const ProfilePage = () => {
         <div className="bg-white rounded-t-[30px] p-4 md:p-6 flex-1 flex flex-col min-h-[calc(100vh-200px)] overflow-y-auto shadow-xl">
           {isEditing ? (
             <form onSubmit={handleSubmit} className="flex flex-col space-y-6">
+              {/* Pending Email Verification Banner */}
+              {pendingEmail && (
+                <div className="bg-orange-50 border-l-4 border-orange-500 p-4 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <h3 className="text-sm font-semibold text-orange-900">Email Verification Pending</h3>
+                      <p className="text-sm text-orange-800 mt-1">
+                        A confirmation email has been sent to <strong>{pendingEmail}</strong>.
+                        Please check your inbox and click the verification link to complete the email change.
+                      </p>
+                      <p className="text-xs text-orange-700 mt-2">
+                        Your email will remain <strong>{user?.email}</strong> until you verify the new address.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Profile Image Section - Editing Mode */}
               <div className="flex flex-col items-center justify-center mb-8">
                 <div className="relative group">

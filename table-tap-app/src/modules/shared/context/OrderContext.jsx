@@ -3,9 +3,9 @@ import React, { createContext, useState, useEffect, useContext, useCallback } fr
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../shared/config/AuthContext';
 import { useRestaurant } from '../../restaurant/pages/RestaurantSelection/RestaurantContext';
-import { 
-  createOrder, 
-  getUserOrders, 
+import {
+  createOrder,
+  getUserOrders,
   getOrderById,
   updatePaymentStatus
 } from '../../customer/api/paymentService';
@@ -26,13 +26,13 @@ export const OrderProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { user } = useAuth();
-  
+
   // Safely access restaurant context with proper error handling
   let restaurantContext = null;
   let restaurant = null;
   let restaurantLoading = false;
   let restaurantError = null;
-  
+
   try {
     restaurantContext = useRestaurant();
     if (restaurantContext) {
@@ -43,7 +43,7 @@ export const OrderProvider = ({ children }) => {
   } catch (err) {
     // Continue without restaurant context - this is normal for admin pages
   }
-  
+
   const navigate = useNavigate();
 
   // Fetch user orders from Supabase with pagination support
@@ -53,10 +53,10 @@ export const OrderProvider = ({ children }) => {
       setLoading(false);
       return;
     }
-    
+
     try {
       setLoading(true);
-      
+
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
 
@@ -68,7 +68,7 @@ export const OrderProvider = ({ children }) => {
         .range(from, to);
 
       if (error) throw error;
-      
+
       setUserOrders(data || []);
       setOrdersTotal(count || 0);
       setError(null);
@@ -136,18 +136,18 @@ export const OrderProvider = ({ children }) => {
   const updateOrderPayment = async (orderId, paymentData) => {
     try {
       const updatedOrder = await updatePaymentStatus(orderId, paymentData);
-      
+
       // Update order in local state
-      setUserOrders(prev => 
-        prev.map(order => 
+      setUserOrders(prev =>
+        prev.map(order =>
           order.id === orderId ? updatedOrder : order
         )
       );
-      
+
       if (currentOrder && currentOrder.id === orderId) {
         setCurrentOrder(updatedOrder);
       }
-      
+
       return updatedOrder;
     } catch (err) {
       throw err;
@@ -161,20 +161,20 @@ export const OrderProvider = ({ children }) => {
     }
 
     const subscription = subscribeToOrderUpdates(orderId, (updatedOrder) => {
-      
+
       // Update order in local state
-      setUserOrders(prev => 
-        prev.map(order => 
+      setUserOrders(prev =>
+        prev.map(order =>
           order.id === updatedOrder.id ? updatedOrder : order
         )
       );
-      
+
       // Update current order if it's the one being viewed
       if (currentOrder && currentOrder.id === updatedOrder.id) {
         setCurrentOrder(updatedOrder);
       }
     });
-    
+
     return subscription;
   };
 
@@ -187,16 +187,16 @@ export const OrderProvider = ({ children }) => {
 
       setLoading(true);
       const order = await getOrderById(orderId);
-      
+
       if (!order) {
         throw new Error('Order not found');
       }
 
       setCurrentOrder(order);
-      
+
       // Subscribe to status updates for this order
       subscribeToOrderStatus(orderId);
-      
+
       return order;
     } catch (err) {
       setError('Failed to load order details');

@@ -5,7 +5,7 @@ import { supabase } from '../../../shared/supabase';
  */
 export const getActiveRestaurants = async () => {
   try {
-    
+
     const { data, error } = await supabase
       .from('restaurants')
       .select(`
@@ -40,7 +40,7 @@ export const getActiveRestaurants = async () => {
  */
 export const getRestaurantById = async (restaurantId) => {
   try {
-    
+
     const { data, error } = await supabase
       .from('restaurants')
       .select(`
@@ -75,7 +75,7 @@ export const getRestaurantById = async (restaurantId) => {
  */
 export const getRestaurantTables = async (restaurantId) => {
   try {
-    
+
     const { data, error } = await supabase
       .from('restaurants')
       .select('tables')
@@ -108,10 +108,10 @@ export const getRestaurantTables = async (restaurantId) => {
  */
 export const updateRestaurantTables = async (restaurantId, tables) => {
   try {
-    
+
     const { data, error } = await supabase
       .from('restaurants')
-      .update({ 
+      .update({
         tables: JSON.stringify(tables),
         updated_at: new Date().toISOString()
       })
@@ -134,7 +134,7 @@ export const updateRestaurantTables = async (restaurantId, tables) => {
  */
 export const searchRestaurants = async (searchTerm) => {
   try {
-    
+
     const { data, error } = await supabase
       .from('restaurants')
       .select(`
@@ -168,7 +168,7 @@ export const searchRestaurants = async (searchTerm) => {
  */
 export const getRestaurantsByCuisine = async (cuisineType) => {
   try {
-    
+
     const { data, error } = await supabase
       .from('restaurants')
       .select(`
@@ -202,7 +202,7 @@ export const getRestaurantsByCuisine = async (cuisineType) => {
  */
 export const getRestaurantStats = async (restaurantId) => {
   try {
-    
+
     // Get restaurant data
     const { data: restaurant, error: restaurantError } = await supabase
       .from('restaurants')
@@ -255,11 +255,11 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   const R = 6371000; // Earth's radius in meters
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
 
@@ -336,9 +336,9 @@ async function getClosestRestaurantsJavaScript(latitude, longitude, radiusMeters
         const location = parsePostGISPoint(restaurant.location);
         if (!location) return null;
         const distance = calculateDistance(
-          latitude, 
-          longitude, 
-          location.lat, 
+          latitude,
+          longitude,
+          location.lat,
           location.lng
         );
         return {

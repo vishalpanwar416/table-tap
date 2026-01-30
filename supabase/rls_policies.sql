@@ -191,6 +191,12 @@ create policy profiles_read_own
 on public.profiles for select
 using (id = auth.uid());
 
+-- Allow users to insert their own profile (needed for signup)
+drop policy if exists profiles_insert_own on public.profiles;
+create policy profiles_insert_own
+on public.profiles for insert
+with check (id = auth.uid());
+
 drop policy if exists profiles_update_own on public.profiles;
 create policy profiles_update_own
 on public.profiles for update
@@ -201,6 +207,65 @@ drop policy if exists profiles_admin_read_all on public.profiles;
 create policy profiles_admin_read_all
 on public.profiles for select
 using (public.is_platform_admin());
+
+-- -----------------------------
+-- Storage: avatars bucket
+-- -----------------------------
+
+-- Drop old policies
+drop policy if exists "Users can read their own avatar" on storage.objects;
+drop policy if exists "Users can upload their avatar" on storage.objects;
+
+-- 1. Anyone can read the default avatar (no auth required)
+drop policy if exists avatars_read_default on storage.objects;
+create policy avatars_read_default
+on storage.objects for select
+using (bucket_id = 'avatars' and name = 'default.jpg');
+
+-- 2. Authenticated users can read all avatars (public profile photos)
+drop policy if exists avatars_read_all on storage.objects;
+create policy avatars_read_all
+on storage.objects for select
+using (bucket_id = 'avatars' and auth.role() = 'authenticated');
+
+-- 3. Users can upload to their own folder only (profile-photos/{user_id}/*)
+drop policy if exists avatars_insert_own on storage.objects;
+create policy avatars_insert_own
+on storage.objects for insert
+with check (
+  bucket_id = 'avatars' 
+  and auth.role() = 'authenticated'
+  and (storage.foldername(name))[1] = 'profile-photos'
+  and (storage.foldername(name))[2] = auth.uid()::text
+);
+
+-- 4. Users can update their own photos only
+drop policy if exists avatars_update_own on storage.objects;
+create policy avatars_update_own
+on storage.objects for update
+using (
+  bucket_id = 'avatars'
+  and auth.role() = 'authenticated'
+  and (storage.foldername(name))[1] = 'profile-photos'
+  and (storage.foldername(name))[2] = auth.uid()::text
+)
+with check (
+  bucket_id = 'avatars'
+  and auth.role() = 'authenticated'
+  and (storage.foldername(name))[1] = 'profile-photos'
+  and (storage.foldername(name))[2] = auth.uid()::text
+);
+
+-- 5. Users can delete their own photos only
+drop policy if exists avatars_delete_own on storage.objects;
+create policy avatars_delete_own
+on storage.objects for delete
+using (
+  bucket_id = 'avatars'
+  and auth.role() = 'authenticated'
+  and (storage.foldername(name))[1] = 'profile-photos'
+  and (storage.foldername(name))[2] = auth.uid()::text
+);
 
 commit;
 
