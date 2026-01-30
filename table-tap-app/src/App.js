@@ -167,16 +167,39 @@ const App = () => {
                   position="top-center"
                   toastOptions={{
                     style: {
-                      background: '#333',
+                      background: 'rgba(0, 0, 0, 0.65)',
+                      backdropFilter: 'blur(12px)',
                       color: '#fff',
-                      border: '1px solid #2A9D8F',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      borderRadius: '50px',
+                      padding: '10px 20px',
+                      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      letterSpacing: '0.02em',
+                      maxWidth: '350px',
                     },
                     success: {
                       iconTheme: {
-                        primary: '#2A9D8F',
+                        primary: '#4ADE80', // Green accent
                         secondary: '#fff',
                       },
+                      style: {
+                        border: '1px solid rgba(74, 222, 128, 0.3)', // Subtle green border
+                      }
                     },
+                    error: {
+                      iconTheme: {
+                        primary: '#EF4444', // Red accent
+                        secondary: '#fff',
+                      },
+                      style: {
+                        border: '1px solid rgba(239, 68, 68, 0.3)', // Subtle red border
+                      }
+                    },
+                  }}
+                  containerStyle={{
+                    top: 20,
                   }}
                 />
 

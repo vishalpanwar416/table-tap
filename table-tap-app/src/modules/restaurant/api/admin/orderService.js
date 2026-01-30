@@ -97,8 +97,18 @@ export const updateOrderStatus = async (orderId, status, cancelReason = null, us
 // Helper function to create user notification for order status updates
 const createOrderStatusNotification = async (order) => {
   try {
-    // Skip if no user_id
-    if (!order.user_id) return;
+    console.log('[Notification] Attempting to create notification for order:', {
+      orderId: order.id,
+      orderNumber: order.order_number,
+      userId: order.user_id,
+      status: order.status
+    });
+
+    // Skip if no user_id (guest orders)
+    if (!order.user_id) {
+      console.warn('[Notification] Skipping notification - Order has no user_id (guest order)');
+      return;
+    }
 
     let title, message, type;
 
@@ -142,7 +152,9 @@ const createOrderStatusNotification = async (order) => {
       user_id: order.user_id,
       metadata: { order_status: order.status }
     });
+    console.log('Notification created for user:', order.user_id);
   } catch (error) {
+    console.error('Error creating order status notification:', error);
   }
 };
 
