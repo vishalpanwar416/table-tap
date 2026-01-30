@@ -113,7 +113,6 @@ const App = () => {
     }
 
     // Production: subdomain-based routing
-    // Production: subdomain-based routing
     // Allow path-based overrides for hybrid routing (e.g. /admin on main domain)
     if (window.location.pathname.startsWith('/admin')) {
       return (

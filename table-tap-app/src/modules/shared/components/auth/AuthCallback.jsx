@@ -50,6 +50,7 @@ const AuthCallback = () => {
       // No user and no pending hash, redirect to login
       navigate('/login');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, loading, navigate, redirecting]);
 
   return (
