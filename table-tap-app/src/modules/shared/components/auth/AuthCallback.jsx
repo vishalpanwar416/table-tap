@@ -41,7 +41,13 @@ const AuthCallback = () => {
 
       checkProfileAndRedirect();
     } else if (!loading && !user) {
-      // No user, redirect to login
+      // If we have an access token hash, we're likely still processing the OAuth callback
+      // Don't redirect to login yet, give Supabase a moment to fire the SIGNED_IN event
+      if (window.location.hash && window.location.hash.includes('access_token')) {
+        return;
+      }
+
+      // No user and no pending hash, redirect to login
       navigate('/login');
     }
   }, [user, loading, navigate, redirecting]);
