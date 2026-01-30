@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../shared/config/AuthContext';
 import { useCart } from '../../shared/config/CartContent';
 import { useRestaurant } from '../../restaurant/pages/RestaurantSelection/RestaurantContext';
+import { useNotifications } from '../../shared/context/NotificationContext';
 
 // Debounce utility
 function useDebouncedCallback(callback, delay) {
@@ -18,9 +19,9 @@ function useDebouncedCallback(callback, delay) {
   }, [delay]);
 }
 
-const Header = memo(({ 
-  isSearchActive, 
-  toggleSearch, 
+const Header = memo(({
+  isSearchActive,
+  toggleSearch,
   toggleSidebar,
   toggleNotifications,
   toggleCart,
@@ -34,6 +35,7 @@ const Header = memo(({
   const { cartItems } = useCart();
   const { restaurant, loading, error } = useRestaurant();
   const { user } = useAuth();
+  const { unreadCount } = useNotifications();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -133,20 +135,19 @@ const Header = memo(({
       {/* Left side - Restaurant info (only shown on home page) */}
       {shouldShowRestaurantInfo ? (
         <div className={`flex-1 transition-all duration-700 ease-out ${isSearchActive ? 'opacity-0 pointer-events-none transform -translate-x-4 scale-95' : 'opacity-100 transform translate-x-0 scale-100'}`}
-             style={{
-               transitionDelay: isSearchActive ? '0ms' : '300ms'
-             }}>
+          style={{
+            transitionDelay: isSearchActive ? '0ms' : '300ms'
+          }}>
           <div className="flex flex-col items-start justify-center text-left">
             <div className="flex items-center gap-1 sm:gap-2 w-full">
-              <button 
+              <button
                 onClick={handleLocationClick}
                 disabled={loading || error || !restaurant?.google_maps_link}
                 aria-label="Open restaurant location in Google Maps"
-                className={`flex items-center gap-1 transition-opacity duration-200 flex-1 min-w-0 ${
-                  loading || error || !restaurant?.google_maps_link 
-                    ? 'cursor-default opacity-70' 
-                    : 'hover:opacity-80 cursor-pointer'
-                }`}
+                className={`flex items-center gap-1 transition-opacity duration-200 flex-1 min-w-0 ${loading || error || !restaurant?.google_maps_link
+                  ? 'cursor-default opacity-70'
+                  : 'hover:opacity-80 cursor-pointer'
+                  }`}
               >
                 <MapPin size={12} className="sm:w-[14px] sm:h-[14px] text-white flex-shrink-0" />
                 <h2 className="text-white text-[14px] sm:text-[17px] font-spartan truncate" title={displayData.name}>
@@ -167,11 +168,10 @@ const Header = memo(({
       <div
         ref={searchBarRef}
         data-searchbar-area
-        className={`transition-all duration-700 ease-out ${
-          isSearchActive 
-            ? 'absolute left-2 sm:left-4 right-2 sm:right-4 top-1/2 transform -translate-y-1/2 z-10' 
-            : 'relative'
-        }`}
+        className={`transition-all duration-700 ease-out ${isSearchActive
+          ? 'absolute left-2 sm:left-4 right-2 sm:right-4 top-1/2 transform -translate-y-1/2 z-10'
+          : 'relative'
+          }`}
       >
         <form onSubmit={handleSearchSubmit} className="SearchBar">
           <div className={`flex items-center ${isSearchActive ? 'px-4 sm:px-6 py-4 sm:py-6' : 'px-1 sm:px-2 py-1 sm:py-2'} rounded-xl bg-transparent overflow-hidden transition-all duration-700 ease-out`}>
@@ -182,9 +182,8 @@ const Header = memo(({
               value={searchQuery}
               onChange={handleSearchInput}
               aria-label="Search menu items"
-              className={`transition-all duration-700 ease-out bg-white text-gray-700 text-sm sm:text-base outline-none font-medium rounded-full px-2 sm:px-3 py-1.5 sm:py-2 ${
-                isSearchActive ? 'w-full opacity-100 pr-4 transform scale-100' : 'w-0 opacity-0 pointer-events-none transform scale-95'
-              }`}
+              className={`transition-all duration-700 ease-out bg-white text-gray-700 text-sm sm:text-base outline-none font-medium rounded-full px-2 sm:px-3 py-1.5 sm:py-2 ${isSearchActive ? 'w-full opacity-100 pr-4 transform scale-100' : 'w-0 opacity-0 pointer-events-none transform scale-95'
+                }`}
               style={{
                 transformOrigin: 'center',
                 transition: 'all 700ms cubic-bezier(0.4, 0, 0.2, 1)',
@@ -213,9 +212,9 @@ const Header = memo(({
 
       {/* Right side - Icons section */}
       <div className={`flex space-x-2 sm:space-x-4 transition-all duration-700 ease-out ${isSearchActive ? 'opacity-20 transform translate-x-2 scale-95' : 'opacity-100 transform translate-x-0 scale-100'}`}
-           style={{
-             transitionDelay: isSearchActive ? '0ms' : '300ms'
-           }}>
+        style={{
+          transitionDelay: isSearchActive ? '0ms' : '300ms'
+        }}>
         {/* FIRST ICON: Get Location (MapPin, Orange) */}
         <button
           onClick={handleGetLocation}
@@ -230,13 +229,12 @@ const Header = memo(({
           type="button"
           onClick={handleSearchIconClick}
           aria-label="Toggle search bar"
-          className={`cursor-pointer text-white text-lg sm:text-xl transition-all duration-500 ease-out hover:scale-110 ${
-            isSearchActive ? 'text-blue-300 scale-110' : ''
-          }`}
+          className={`cursor-pointer text-white text-lg sm:text-xl transition-all duration-500 ease-out hover:scale-110 ${isSearchActive ? 'text-blue-300 scale-110' : ''
+            }`}
         >
           <Search size={28} className="sm:w-8 sm:h-8" />
         </button>
-        
+
         <button onClick={toggleCart} aria-label="Open cart" className="relative transition-transform duration-300 ease-out hover:scale-110">
           <ShoppingCart className="w-7 h-7 sm:w-9 sm:h-9 md:w-11 md:h-11 text-white" />
           {cartItems.length > 0 && (
@@ -245,11 +243,16 @@ const Header = memo(({
             </span>
           )}
         </button>
-        
-        <button onClick={toggleNotifications} aria-label="Open notifications" className="text-white transition-transform duration-300 ease-out hover:scale-110">
+
+        <button onClick={toggleNotifications} aria-label="Open notifications" className="relative text-white transition-transform duration-300 ease-out hover:scale-110">
           <Bell className="w-7 h-7 sm:w-9 sm:h-9 md:w-11 md:h-11" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] sm:text-xs w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full flex items-center justify-center animate-pulse">
+              {unreadCount}
+            </span>
+          )}
         </button>
-        
+
         <button
           onClick={toggleSidebar}
           aria-label="Open sidebar menu"

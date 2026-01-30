@@ -73,7 +73,6 @@ export const updateOrderStatus = async (orderId, status, cancelReason = null, us
   if (error) throw error;
   const updatedOrder = data[0];
 
-  // Log activity if userData is provided
   if (userData && updatedOrder) {
     await logActivity({
       restaurant_id: updatedOrder.restaurant_id,
@@ -88,6 +87,9 @@ export const updateOrderStatus = async (orderId, status, cancelReason = null, us
       description: `Order status changed to ${status}${cancelReason ? ' (Reason: ' + cancelReason + ')' : ''}`
     });
   }
+
+  // Helper function call to notify user
+  await createOrderStatusNotification(updatedOrder);
 
   return updatedOrder;
 };
