@@ -352,7 +352,7 @@ export default function MyOrders() {
             <h1 className="text-gray-100 text-3xl font-medium">
               My Orders
             </h1>
-            <p className="text-gray-400 text-sm mt-1">Track and manage your food orders</p>
+            <p className="text-gray-400 text-sm mt-1 text-center">Track and manage your food orders</p>
           </div>
 
           {/* Search Icon */}
