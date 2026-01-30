@@ -354,7 +354,7 @@ const ProfilePage = () => {
             <h1 className="text-2xl md:text-4xl text-white font-spartan-medium">
               My Profile
             </h1>
-            <p className="text-gray-400 mt-2 text-sm md:text-base">
+            <p className="text-orange-100/60 mt-2 text-sm md:text-base text-center">
               Manage your account information
             </p>
           </div>
