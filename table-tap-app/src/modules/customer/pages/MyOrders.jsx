@@ -581,27 +581,27 @@ export default function MyOrders() {
 
             {/* Order Summary - Only show on Order History tab */}
             {activeTab === 'completed' && (
-              <div className="mt-4 bg-white p-4 rounded-xl shadow-sm">
-                <div className="flex items-center mb-3">
-                  <ShoppingBag size={20} className="text-gray-600 mr-2" />
-                  <h2 className="text-lg font-semibold text-gray-800">Order Summary</h2>
+              <div className="mt-3 bg-white p-3 rounded-xl shadow-sm">
+                <div className="flex items-center mb-2">
+                  <ShoppingBag size={16} className="text-gray-600 mr-1.5" />
+                  <h2 className="text-sm font-semibold text-gray-800">Summary</h2>
                 </div>
-                <div className="grid grid-cols-3 gap-3 text-center">
-                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 shadow-sm">
-                    <p className="text-gray-600 text-xs md:text-sm mb-1">Pending</p>
-                    <p className="text-xl md:text-2xl font-bold text-yellow-500">
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-2">
+                    <p className="text-gray-600 text-[10px] mb-0.5">Pending</p>
+                    <p className="text-lg font-bold text-yellow-500">
                       {userOrders.filter(order => order.status === 'pending').length}
                     </p>
                   </div>
-                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 shadow-sm">
-                    <p className="text-gray-600 text-xs md:text-sm mb-1">Preparing</p>
-                    <p className="text-xl md:text-2xl font-bold text-purple-500">
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-2">
+                    <p className="text-gray-600 text-[10px] mb-0.5">Preparing</p>
+                    <p className="text-lg font-bold text-purple-500">
                       {userOrders.filter(order => order.status === 'preparing').length}
                     </p>
                   </div>
-                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 shadow-sm">
-                    <p className="text-gray-600 text-xs md:text-sm mb-1">Completed</p>
-                    <p className="text-xl md:text-2xl font-bold text-green-500">
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-2">
+                    <p className="text-gray-600 text-[10px] mb-0.5">Done</p>
+                    <p className="text-lg font-bold text-green-500">
                       {userOrders.filter(order => ['completed', 'rejected', 'ready'].includes(order.status)).length}
                     </p>
                   </div>
