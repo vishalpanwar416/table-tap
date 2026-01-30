@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ChevronLeft, ShoppingBag, Loader, Filter, RefreshCw, Search, X, ChevronDown } from 'lucide-react';
+import { ChevronLeft, ShoppingBag, Loader, Filter, RefreshCw, Search, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useOrders } from '../../shared/context/OrderContext';
 import OrderCard from '../components/OrderCard';
@@ -111,6 +111,7 @@ export default function MyOrders() {
   const [filterPaymentMethod, setFilterPaymentMethod] = useState('all'); // 'all', 'online', 'upi', 'cash'
   const [filterDateRange, setFilterDateRange] = useState('all'); // 'all', 'today', 'week', 'month'
   const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [showSummary, setShowSummary] = useState(false); // Order summary toggle
 
   const navigate = useNavigate();
   const { userOrders, fetchUserOrders, loading, error } = useOrders();
@@ -581,31 +582,58 @@ export default function MyOrders() {
 
             {/* Order Summary - Only show on Order History tab */}
             {activeTab === 'completed' && (
-              <div className="mt-3 bg-white p-3 rounded-xl shadow-sm">
-                <div className="flex items-center mb-2">
-                  <ShoppingBag size={16} className="text-gray-600 mr-1.5" />
-                  <h2 className="text-sm font-semibold text-gray-800">Summary</h2>
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-2">
-                    <p className="text-gray-600 text-[10px] mb-0.5">Pending</p>
-                    <p className="text-lg font-bold text-yellow-500">
-                      {userOrders.filter(order => order.status === 'pending').length}
-                    </p>
+              <div className="mt-3">
+                {/* Toggle Button */}
+                <button
+                  onClick={() => setShowSummary(!showSummary)}
+                  className="w-full bg-white p-3 rounded-xl shadow-sm flex items-center justify-between hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center">
+                    <ShoppingBag size={16} className="text-gray-600 mr-1.5" />
+                    <h2 className="text-sm font-semibold text-gray-800">Order Summary</h2>
                   </div>
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-2">
-                    <p className="text-gray-600 text-[10px] mb-0.5">Preparing</p>
-                    <p className="text-lg font-bold text-purple-500">
-                      {userOrders.filter(order => order.status === 'preparing').length}
-                    </p>
-                  </div>
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-2">
-                    <p className="text-gray-600 text-[10px] mb-0.5">Done</p>
-                    <p className="text-lg font-bold text-green-500">
-                      {userOrders.filter(order => ['completed', 'rejected', 'ready'].includes(order.status)).length}
-                    </p>
-                  </div>
-                </div>
+                  {showSummary ? (
+                    <ChevronUp size={16} className="text-gray-600" />
+                  ) : (
+                    <ChevronDown size={16} className="text-gray-600" />
+                  )}
+                </button>
+
+                {/* Collapsible Content */}
+                <AnimatePresence>
+                  {showSummary && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="bg-white p-3 rounded-xl shadow-sm mt-2">
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-2">
+                            <p className="text-gray-600 text-[10px] mb-0.5">Pending</p>
+                            <p className="text-lg font-bold text-yellow-500">
+                              {userOrders.filter(order => order.status === 'pending').length}
+                            </p>
+                          </div>
+                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-2">
+                            <p className="text-gray-600 text-[10px] mb-0.5">Preparing</p>
+                            <p className="text-lg font-bold text-purple-500">
+                              {userOrders.filter(order => order.status === 'preparing').length}
+                            </p>
+                          </div>
+                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-2">
+                            <p className="text-gray-600 text-[10px] mb-0.5">Done</p>
+                            <p className="text-lg font-bold text-green-500">
+                              {userOrders.filter(order => ['completed', 'rejected', 'ready'].includes(order.status)).length}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             )}
 
