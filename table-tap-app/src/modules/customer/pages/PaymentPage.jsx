@@ -256,7 +256,9 @@ const PaymentPage = () => {
       }
 
       // CRITICAL SECURITY STEP: Verify Razorpay signature for online payments
-      if (!paymentResponse.razorpay_payment_id.startsWith('DIRECT-')) {
+      // Skip verification for DIRECT (cash) and manual UPI payments
+      if (!paymentResponse.razorpay_payment_id.startsWith('DIRECT-') &&
+        !paymentResponse.razorpay_payment_id.startsWith('UPI-')) {
         setIsProcessing(true);
         // Inform user about verification progress
         setScriptError(null);

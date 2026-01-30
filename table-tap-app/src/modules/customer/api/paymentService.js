@@ -505,7 +505,9 @@ export const processDirectPayment = async (orderData) => {
 export const completePayment = async (paymentResponse, orderData) => {
   try {
     // Verify payment if using Razorpay
-    if (paymentResponse.razorpay_payment_id && paymentResponse.razorpay_payment_id !== 'DIRECT-' + Date.now()) {
+    if (paymentResponse.razorpay_payment_id &&
+      !paymentResponse.razorpay_payment_id.startsWith('DIRECT-') &&
+      !paymentResponse.razorpay_payment_id.startsWith('UPI-')) {
       const isValid = await verifyRazorpaySignature(
         paymentResponse.razorpay_payment_id,
         paymentResponse.razorpay_order_id,
