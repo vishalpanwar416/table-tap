@@ -140,6 +140,12 @@ create policy orders_restaurant_read_own
 on public.orders for select
 using (restaurant_id = public.current_restaurant_id());
 
+-- Allow users to read their own orders (CRITICAL for My Orders page)
+drop policy if exists orders_user_read_own on public.orders;
+create policy orders_user_read_own
+on public.orders for select
+using (user_id = auth.uid());
+
 -- Baseline: authenticated users can insert orders.
 -- If you support guest/anonymous ordering, move inserts to an Edge Function using service_role
 -- (or create dedicated anon policies with careful constraints).
