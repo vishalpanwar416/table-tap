@@ -159,13 +159,24 @@ const RestaurantSelectionPage = () => {
     checkUrlParameters();
   }, [location.search, navigate, setRestaurantAndTable]);
 
-  // Check for stored table number on component mount
+  // Check for stored selection on component mount
   useEffect(() => {
     const storedSelection = getStoredRestaurantSelection();
     if (storedSelection?.tableNumber) {
       setTableNumber(storedSelection.tableNumber);
     }
   }, []);
+
+  // Pre-select the current restaurant if returning to the page
+  useEffect(() => {
+    const storedSelection = getStoredRestaurantSelection();
+    if (storedSelection?.restaurantId && restaurants.length > 0 && !selectedRestaurant) {
+      const currentRestaurant = restaurants.find(r => r.id === storedSelection.restaurantId);
+      if (currentRestaurant) {
+        setSelectedRestaurant(currentRestaurant);
+      }
+    }
+  }, [restaurants, selectedRestaurant]);
 
   // Helper function for parsing tables (extracted from useEffect)
   const parseTables = (tables) => {
