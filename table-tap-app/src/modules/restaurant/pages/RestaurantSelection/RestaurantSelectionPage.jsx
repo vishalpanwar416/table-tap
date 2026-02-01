@@ -1153,13 +1153,17 @@ const RestaurantSelectionPage = () => {
                           {/* Show selected table details */}
                           {tableNumber && getSelectedTableDetails() && (
                             <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                              <div className="text-lg font-bold text-blue-800">
-                                Table {tableNumber}
+                              <div className="text-sm text-blue-800">
+                                <span className="font-bold">Table {tableNumber}</span>
+                                {getSelectedTableDetails().location && (
+                                  <span className="mx-1">•</span>
+                                )}
+                                {getSelectedTableDetails().location && (
+                                  <span>{getSelectedTableDetails().location}</span>
+                                )}
+                                <span className="mx-1">•</span>
+                                <span>{getSelectedTableDetails().capacity} people</span>
                               </div>
-                              {getSelectedTableDetails().location && (
-                                <div>Location: {getSelectedTableDetails().location}</div>
-                              )}
-                              <div>Capacity: {getSelectedTableDetails().capacity} people</div>
                             </div>
                           )}
                         </motion.div>
@@ -1337,16 +1341,12 @@ const RestaurantSelectionPage = () => {
                       >
                         <div className="flex items-center justify-between">
                           <div>
-                            <div className="font-semibold text-gray-900">
-                              Table {table.tableNumber}
-                            </div>
-                            {table.location && (
-                              <div className="text-sm text-gray-600">
-                                {table.location}
-                              </div>
-                            )}
-                            <div className="text-sm text-gray-500">
-                              Capacity: {table.capacity} people
+                            <div className="text-sm text-gray-900">
+                              <span className="font-semibold">Table {table.tableNumber}</span>
+                              {table.location && <span className="mx-1 text-gray-400">•</span>}
+                              {table.location && <span className="text-gray-600">{table.location}</span>}
+                              <span className="mx-1 text-gray-400">•</span>
+                              <span className="text-gray-500">{table.capacity} people</span>
                             </div>
                           </div>
                           {table.tableNumber === tableNumber && (
