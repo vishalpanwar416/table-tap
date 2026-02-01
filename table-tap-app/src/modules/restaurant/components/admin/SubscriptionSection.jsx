@@ -92,7 +92,7 @@ const SubscriptionSection = ({ restaurantId }) => {
                 .in('status', ['active', 'grace_period', 'expired'])
                 .order('created_at', { ascending: false })
                 .limit(1)
-                .single();
+                .maybeSingle();
 
             if (fetchError && fetchError.code !== 'PGRST116') {
                 throw fetchError;
@@ -152,7 +152,7 @@ const SubscriptionSection = ({ restaurantId }) => {
                 .from('restaurants')
                 .select('razorpay_key_id, name, contact_email, contact_phone')
                 .eq('id', restaurantId)
-                .single();
+                .maybeSingle();
 
             const razorpayKey = restaurantData?.razorpay_key_id || import.meta.env.VITE_RAZORPAY_KEY_ID;
 
@@ -219,11 +219,13 @@ const SubscriptionSection = ({ restaurantId }) => {
 
                         if (result.error) throw result.error;
 
+                        const { data: latestSub } = await supabase.from('subscriptions').select('id').eq('restaurant_id', restaurantId).order('created_at', { ascending: false }).limit(1).maybeSingle();
+
                         // Log to history
                         await supabase
                             .from('subscription_history')
                             .insert([{
-                                subscription_id: subscription?.id || (await supabase.from('subscriptions').select('id').eq('restaurant_id', restaurantId).order('created_at', { ascending: false }).limit(1).single()).data?.id,
+                                subscription_id: subscription?.id || latestSub?.id,
                                 restaurant_id: restaurantId,
                                 action: subscription ? 'renewed' : 'purchased',
                                 old_status: subscription?.status || 'none',

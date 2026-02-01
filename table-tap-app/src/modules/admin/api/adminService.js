@@ -37,7 +37,7 @@ export const addRestaurant = async (restaurantData) => {
       .from('profiles')
       .select('id, email')
       .eq('email', restaurantData.manager_email)
-      .single();
+      .maybeSingle();
 
     if (existingUser) {
       throw new Error('Manager email already registered. Please use a different email.');
@@ -95,7 +95,7 @@ export const addRestaurant = async (restaurantData) => {
         manager_id: userData.user.id
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (restaurantError) throw restaurantError;
 
@@ -115,7 +115,7 @@ export const updateRestaurant = async (id, updates) => {
       .update(updates)
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return { data, error: null };
@@ -134,7 +134,7 @@ export const deleteRestaurant = async (id) => {
       .from('restaurants')
       .select('manager_id')
       .eq('id', id)
-      .single();
+      .maybeSingle();
 
     if (fetchError) throw fetchError;
 

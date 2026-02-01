@@ -108,7 +108,7 @@ const AdminPanel = () => {
             .from('profiles')
             .select('full_name, email, avatar_url, profile_role')
             .eq('id', user.id)
-            .single();
+            .maybeSingle();
 
           if (!error && profile) {
             setCurrentUserProfile(profile);

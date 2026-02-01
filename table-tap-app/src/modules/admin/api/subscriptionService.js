@@ -49,7 +49,7 @@ export const createSubscriptionPlan = async (planData) => {
       .from('subscription_plans')
       .insert([planData])
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return { data, error: null };
@@ -68,7 +68,7 @@ export const updateSubscriptionPlan = async (id, planData) => {
       .update(planData)
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return { data, error: null };
@@ -145,9 +145,9 @@ export const getRestaurantSubscription = async (restaurantId) => {
       `)
       .eq('restaurant_id', restaurantId)
       .in('status', ['active', 'grace_period'])
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') throw error;
+    if (error) throw error;
 
     if (subscription) {
       return {
@@ -197,7 +197,7 @@ export const assignSubscriptionToRestaurant = async (subscriptionData) => {
       .select('id')
       .eq('restaurant_id', subscriptionData.restaurant_id)
       .in('status', ['active', 'grace_period'])
-      .single();
+      .maybeSingle();
 
     if (existingSub) {
       throw new Error('Restaurant already has an active subscription. Please cancel or expire it first.');
@@ -232,7 +232,7 @@ export const assignSubscriptionToRestaurant = async (subscriptionData) => {
           is_active
         )
       `)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
 
@@ -300,7 +300,7 @@ export const updateRestaurantSubscription = async (subscriptionId, updates) => {
       .from('subscriptions')
       .select('*')
       .eq('id', subscriptionId)
-      .single();
+      .maybeSingle();
 
     const { data, error } = await supabase
       .from('subscriptions')
@@ -325,7 +325,7 @@ export const updateRestaurantSubscription = async (subscriptionId, updates) => {
           is_active
         )
       `)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
 
@@ -373,7 +373,7 @@ export const cancelRestaurantSubscription = async (subscriptionId, reason = '') 
       .from('subscriptions')
       .select('*')
       .eq('id', subscriptionId)
-      .single();
+      .maybeSingle();
 
     // Update subscription status - trigger will deactivate restaurant
     const { data, error } = await supabase
@@ -396,7 +396,7 @@ export const cancelRestaurantSubscription = async (subscriptionId, reason = '') 
           is_active
         )
       `)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
 
@@ -430,7 +430,7 @@ export const reactivateSubscription = async (subscriptionId, durationMonths = 1)
       .from('subscriptions')
       .select('*')
       .eq('id', subscriptionId)
-      .single();
+      .maybeSingle();
 
     const { data, error } = await supabase
       .from('subscriptions')
@@ -455,7 +455,7 @@ export const reactivateSubscription = async (subscriptionId, durationMonths = 1)
           is_active
         )
       `)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
 
@@ -494,9 +494,12 @@ export const getSubscriptionStats = async () => {
     const expiredSubscriptions = subscriptions.filter(s => s.status === 'expired').length;
     const cancelledSubscriptions = subscriptions.filter(s => s.status === 'cancelled').length;
 
-    const starterPlans = subscriptions.filter(s => s.plan_name === 'starter' && s.status === 'active').length;
-    const professionalPlans = subscriptions.filter(s => s.plan_name === 'professional' && s.status === 'active').length;
-    const enterprisePlans = subscriptions.filter(s => s.plan_name === 'enterprise' && s.status === 'active').length;
+    const planCounts = {};
+    subscriptions.forEach(s => {
+      if (s.status === 'active') {
+        planCounts[s.plan_name] = (planCounts[s.plan_name] || 0) + 1;
+      }
+    });
 
     const totalRevenue = subscriptions
       .filter(s => s.status === 'active')
@@ -518,10 +521,11 @@ export const getSubscriptionStats = async () => {
         gracePeriodSubscriptions,
         expiredSubscriptions,
         cancelledSubscriptions,
-        premiumSubscriptions: professionalPlans + enterprisePlans,
-        starterPlans,
-        professionalPlans,
-        enterprisePlans,
+        planCounts, // Return full map for flexibility
+        starterPlans: planCounts['starter'] || 0,
+        professionalPlans: planCounts['professional'] || 0,
+        enterprisePlans: planCounts['enterprise'] || 0,
+        premiumSubscriptions: (planCounts['professional'] || 0) + (planCounts['enterprise'] || 0),
         totalRevenue,
         monthlyRecurringRevenue: monthlyRevenue + yearlyRevenue,
         cancellationRate: totalSubscriptions > 0 ?

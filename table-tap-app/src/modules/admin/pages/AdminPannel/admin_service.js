@@ -382,7 +382,7 @@ export const createRestaurant = async (restaurantData) => {
         is_active: true
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (restaurantError) {
       throw restaurantError;
@@ -470,7 +470,7 @@ export const updateRestaurant = async (restaurantId, updateData) => {
       })
       .eq('id', restaurantId)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return { data, error: null };
@@ -583,7 +583,7 @@ export const createStaff = async (staffData) => {
         connected: false
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return { data, error: null };
@@ -621,7 +621,8 @@ export const updateStaff = async (id, updates) => {
       .from('restaurant_staff')
       .update(dbUpdates)
       .eq('id', id)
-      .single();
+      .select()
+      .maybeSingle();
 
     console.log('🔍 Supabase response:', result);
 
@@ -692,7 +693,8 @@ export const updateManagerDetails = async (managerId, managerData) => {
       })
       .eq('id', managerId)
       .select()
-      .single();
+      .select()
+      .maybeSingle();
 
     if (error) {
       throw error;
@@ -816,7 +818,7 @@ export const updateRestaurantSubscription = async (restaurantId, subscriptionDat
         ai_enabled,
         created_at
       `) // removed updated_at
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
 
@@ -869,7 +871,7 @@ export const cancelRestaurantSubscription = async (restaurantId) => {
         ai_enabled,
         created_at
       `) // removed updated_at
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
 
@@ -932,7 +934,7 @@ export const updateInquiryStatus = async (id, status) => {
       .update({ status })
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return { data, error: null };

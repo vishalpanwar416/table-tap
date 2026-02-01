@@ -58,17 +58,17 @@ export const AdminRestaurantProvider = ({ children }) => {
 
     // Listen for popstate events (back/forward navigation)
     window.addEventListener('popstate', handleUrlChange);
-    
+
     // Listen for pushstate/replacestate events (programmatic navigation)
     const originalPushState = history.pushState;
     const originalReplaceState = history.replaceState;
-    
-    history.pushState = function(...args) {
+
+    history.pushState = function (...args) {
       originalPushState.apply(history, args);
       handleUrlChange();
     };
-    
-    history.replaceState = function(...args) {
+
+    history.replaceState = function (...args) {
       originalReplaceState.apply(history, args);
       handleUrlChange();
     };
@@ -90,13 +90,13 @@ export const AdminRestaurantProvider = ({ children }) => {
       try {
         setLoading(true);
         setError(null);
-        
+
         // First, check if user has admin profile role
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('profile_role')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
         if (profileError) {
           setError('Access denied: Profile not found');
@@ -107,10 +107,10 @@ export const AdminRestaurantProvider = ({ children }) => {
         // If user has admin profile role, they have full access
         if (profileData.profile_role === 'admin') {
           setUserRole('admin');
-          
+
           // Check URL parameters first for admin users
           let targetRestaurantId = null;
-          
+
           if (urlRestaurantId) {
             // Store the restaurant ID from URL in localStorage
             localStorageStore.set('admin_selected_restaurant', urlRestaurantId);
@@ -119,9 +119,9 @@ export const AdminRestaurantProvider = ({ children }) => {
             // Try to get from localStorage if no URL parameter
             targetRestaurantId = localStorageStore.get('admin_selected_restaurant');
           }
-          
+
           setUserRestaurantId(targetRestaurantId);
-          
+
           // If admin has a specific restaurant ID, fetch that restaurant
           if (targetRestaurantId) {
             const { data: restaurantData, error: restaurantError } = await supabase
@@ -129,7 +129,7 @@ export const AdminRestaurantProvider = ({ children }) => {
               .select('*')
               .eq('id', targetRestaurantId)
               .eq('is_active', true)
-              .single();
+              .maybeSingle();
 
             if (restaurantError) {
               setError('Restaurant not found or inactive');
@@ -139,7 +139,7 @@ export const AdminRestaurantProvider = ({ children }) => {
 
             setRestaurant(restaurantData);
           }
-          
+
           setLoading(false);
           return;
         }
@@ -153,7 +153,7 @@ export const AdminRestaurantProvider = ({ children }) => {
             .select('restaurant_id')
             .eq('user_id', user.id)
             .eq('connected', true)
-            .single();
+            .maybeSingle();
 
           if (staffError || !staffData) {
             setError(`Access denied: ${profileData.profile_role} not assigned to restaurant`);
@@ -169,7 +169,7 @@ export const AdminRestaurantProvider = ({ children }) => {
             .select('*')
             .eq('id', staffData.restaurant_id)
             .eq('is_active', true)
-            .single();
+            .maybeSingle();
 
           if (restaurantError) {
             setError('Restaurant not found or inactive');
@@ -188,7 +188,7 @@ export const AdminRestaurantProvider = ({ children }) => {
           .select('staff_role, restaurant_id')
           .eq('user_id', user.id)
           .eq('connected', true)
-          .single();
+          .maybeSingle();
 
         if (staffError) {
           setError('Access denied: Not a staff member');
@@ -219,7 +219,7 @@ export const AdminRestaurantProvider = ({ children }) => {
           .select('*')
           .eq('id', staffData.restaurant_id)
           .eq('is_active', true)
-          .single();
+          .maybeSingle();
 
         if (restaurantError) {
           setError('Restaurant not found or inactive');
@@ -227,7 +227,7 @@ export const AdminRestaurantProvider = ({ children }) => {
         }
 
         setRestaurant(restaurantData);
-        
+
       } catch (err) {
         setError('Failed to load restaurant data');
       } finally {
@@ -246,13 +246,13 @@ export const AdminRestaurantProvider = ({ children }) => {
 
     try {
       setLoading(true);
-      
+
       const { data: restaurantData, error: restaurantError } = await supabase
         .from('restaurants')
         .select('*')
         .eq('id', restaurantId)
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
       if (restaurantError) {
         setError('Restaurant not found or inactive');
@@ -262,15 +262,15 @@ export const AdminRestaurantProvider = ({ children }) => {
       setRestaurant(restaurantData);
       setUserRestaurantId(restaurantId);
       localStorageStore.set('admin_selected_restaurant', restaurantId);
-      
+
       // Update URL without page reload
       const url = new URL(window.location);
       url.searchParams.set('restaurant', restaurantId);
       window.history.replaceState({}, '', url);
-      
+
       setError(null);
       return true;
-      
+
     } catch (err) {
       setError('Failed to set restaurant');
       return false;
@@ -288,12 +288,12 @@ export const AdminRestaurantProvider = ({ children }) => {
     setRestaurant(null);
     setUserRestaurantId(null);
     localStorageStore.remove('admin_selected_restaurant');
-    
+
     // Remove restaurant parameter from URL
     const url = new URL(window.location);
     url.searchParams.delete('restaurant');
     window.history.replaceState({}, '', url);
-    
+
     return true;
   };
 
@@ -312,7 +312,7 @@ export const AdminRestaurantProvider = ({ children }) => {
       // For admin, they can update any restaurant (restaurantId should be passed in updates)
       // For staff, they can only update their assigned restaurant
       const restaurantId = userRole === 'admin' ? updates.restaurant_id || userRestaurantId : userRestaurantId;
-      
+
       if (!restaurantId) {
         return false;
       }
@@ -320,13 +320,13 @@ export const AdminRestaurantProvider = ({ children }) => {
       // Update in database
       const { data, error } = await supabase
         .from('restaurants')
-        .update({ 
-          ...updates, 
-          updated_at: new Date().toISOString() 
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
         })
         .eq('id', restaurantId)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         return false;
@@ -337,7 +337,7 @@ export const AdminRestaurantProvider = ({ children }) => {
         setRestaurant(data);
       }
       return true;
-      
+
     } catch (err) {
       return false;
     }
@@ -346,7 +346,7 @@ export const AdminRestaurantProvider = ({ children }) => {
   const refreshRestaurant = async (restaurantId = null) => {
     // Admin can refresh any restaurant, staff can only refresh their assigned one
     const targetRestaurantId = userRole === 'admin' ? restaurantId : userRestaurantId;
-    
+
     if (!targetRestaurantId) {
       return false;
     }
@@ -358,7 +358,7 @@ export const AdminRestaurantProvider = ({ children }) => {
         .select('*')
         .eq('id', targetRestaurantId)
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
       if (error) {
         setError(error.message);
@@ -371,7 +371,7 @@ export const AdminRestaurantProvider = ({ children }) => {
       }
       setError(null);
       return true;
-      
+
     } catch (err) {
       setError('Failed to refresh restaurant data');
       return false;

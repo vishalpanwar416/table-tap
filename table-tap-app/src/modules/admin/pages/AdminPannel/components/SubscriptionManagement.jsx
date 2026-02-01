@@ -160,7 +160,7 @@ const SubscriptionManagement = () => {
       setEditingSubscription(null);
       resetAssignForm();
       setSuccess(editingSubscription ? 'Subscription updated!' : 'Subscription assigned!');
-      fetchData();
+      await fetchData();
       setTimeout(() => setSuccess(null), 3000);
     } catch (error) {
       setError(error.message);
@@ -272,7 +272,7 @@ const SubscriptionManagement = () => {
 
       setShowPlanModal(false);
       setSuccess(editingPlan ? 'Plan updated!' : 'Plan created!');
-      fetchData();
+      await fetchData();
       setTimeout(() => setSuccess(null), 3000);
     } catch (error) {
       setError(error.message);
@@ -483,30 +483,26 @@ const SubscriptionManagement = () => {
 
           {/* Plan Breakdown */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-lg shadow border">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-gray-900">Starter Plans</h3>
-                <Zap className="w-5 h-5 text-blue-500" />
-              </div>
-              <p className="text-3xl font-bold text-blue-600">{stats.starterPlans || 0}</p>
-              <p className="text-sm text-gray-500">₹999/month each</p>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow border">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-gray-900">Professional Plans</h3>
-                <Brain className="w-5 h-5 text-purple-500" />
-              </div>
-              <p className="text-3xl font-bold text-purple-600">{stats.professionalPlans || 0}</p>
-              <p className="text-sm text-gray-500">₹1,999/month each</p>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow border">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-gray-900">Enterprise Plans</h3>
-                <Building2 className="w-5 h-5 text-indigo-500" />
-              </div>
-              <p className="text-3xl font-bold text-indigo-600">{stats.enterprisePlans || 0}</p>
-              <p className="text-sm text-gray-500">Custom pricing</p>
-            </div>
+            {plans.map(plan => {
+              const count = stats.planCounts?.[plan.key] || 0;
+              // Map icon name to component or fallback
+              const Icon = plan.key === 'starter' ? Zap : plan.key === 'professional' ? Brain : Building2;
+              const colorClass = plan.key === 'starter' ? 'text-blue-600' : plan.key === 'professional' ? 'text-purple-600' : 'text-indigo-600';
+              const iconColor = plan.key === 'starter' ? 'text-blue-500' : plan.key === 'professional' ? 'text-purple-500' : 'text-indigo-500';
+
+              return (
+                <div key={plan.id} className="bg-white p-6 rounded-lg shadow border">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-gray-900 capitalize">{plan.name}</h3>
+                    <Icon className={`w-5 h-5 ${iconColor}`} />
+                  </div>
+                  <p className={`text-3xl font-bold ${colorClass}`}>{count}</p>
+                  <p className="text-sm text-gray-500">
+                    ₹{plan.base_price?.toLocaleString()}/month each
+                  </p>
+                </div>
+              );
+            })}
           </div>
 
           {/* Expiring Soon Alert */}

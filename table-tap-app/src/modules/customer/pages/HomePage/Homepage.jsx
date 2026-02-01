@@ -1,6 +1,4 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback, memo, Suspense, lazy } from 'react';
-import { ArrowRight, Heart, ShoppingBag, Star, Clock, Flame, X } from 'lucide-react';
-import { useLikes } from '../../../shared/config/LikesContent';
 import LoadingScreen from '../../../shared/components/LoadingScreen';
 import { MenuDropdown, Divider } from '../../components/MenuDropdown';
 import CategoryButtons from '../../components/CategoryButtons';
@@ -16,7 +14,7 @@ import { useFoodData } from '../../../shared/context/FoodDataContext';
 import FloatingCartButton from '../../components/FloatingCartButton';
 import Tags from '../../components/Tags';
 import { useRestaurant } from '../../../restaurant/pages/RestaurantSelection/RestaurantContext';
-import { useScrollLock, useMultiScrollLock } from '../../../shared/hooks/useScrollLock';
+import { useMultiScrollLock } from '../../../shared/hooks/useScrollLock';
 import SearchResultsOverlay from '../../components/SearchResultsOverlay';
 
 // Enhanced lazy loading with preloading hints
@@ -141,7 +139,6 @@ const HomePage = memo(() => {
     allFoodItems,
     loading,
     error,
-    retryLoadData,
     loadFoodData,
     currentRestaurantId
   } = useFoodData();
@@ -188,7 +185,6 @@ const HomePage = memo(() => {
   const menuDropdownRef = useRef(null);
   const scrollRef = useRef(null);
   const searchBarContainerRef = useRef(null);
-  const pendingItemRef = useRef(null);
 
   const scrollToCategory = useScrollToCategory(categoryButtonsRef);
 

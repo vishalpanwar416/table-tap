@@ -129,22 +129,17 @@ const RegistrationRequests = () => {
                     ai_enabled: registration.selected_plan === 'professional' || registration.selected_plan === 'enterprise'
                 }])
                 .select()
-                .single();
+                .maybeSingle();
 
             if (restaurantError) throw restaurantError;
+            if (!restaurantData) throw new Error('Failed to create restaurant record');
 
             // 3. Create subscription (this will activate the restaurant via trigger)
-            const planPrices = {
-                starter: { monthly: 999, yearly: 8991 },
-                professional: { monthly: 1999, yearly: 17991 },
-                enterprise: { monthly: 4999, yearly: 44991 }
-            };
-
             const plan = registration.selected_plan || 'starter';
             const billingCycle = registration.billing_cycle || 'monthly';
-            const price = planPrices[plan]?.[billingCycle] || 999;
-            const gstAmount = Math.round(price * 0.18);
-            const totalAmount = price + gstAmount;
+            const price = registration.plan_price || 0;
+            const gstAmount = registration.gst_amount || 0;
+            const totalAmount = registration.total_amount || 0;
 
             const startDate = new Date();
             const endDate = new Date();
