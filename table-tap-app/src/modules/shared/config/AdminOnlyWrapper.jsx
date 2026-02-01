@@ -10,6 +10,9 @@ import AuthWrapper from './AuthWrapper';
  * - Then enforces profiles.profile_role === 'admin'
  */
 export default function AdminOnlyWrapper({ children }) {
+  // Log immediately when component renders
+  console.log('[AdminOnlyWrapper] Component rendering...');
+  
   const { user, loading: authLoading } = useAuth();
   const [checkingRole, setCheckingRole] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -18,6 +21,8 @@ export default function AdminOnlyWrapper({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
   const checkInProgressRef = useRef(false);
+  
+  console.log('[AdminOnlyWrapper] State:', { authLoading, userId: user?.id, checkingRole, isAdmin });
 
   useEffect(() => {
     let mounted = true;

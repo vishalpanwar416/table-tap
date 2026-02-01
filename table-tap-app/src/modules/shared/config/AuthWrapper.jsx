@@ -62,7 +62,16 @@ export default function AuthWrapper({ children, publicOnly = false }) {
         return;
       }
 
-      // Profile completion check
+      // Skip profile completion check for admin routes (admins may not need mobile/DOB)
+      const isAdminRoute = location.pathname.startsWith('/admin') || location.pathname.startsWith('/restaurant-dashboard');
+      
+      if (isAdminRoute) {
+        // For admin routes, just verify user is authenticated (already checked above)
+        setChecking(false);
+        return;
+      }
+
+      // Profile completion check (only for non-admin routes)
       try {
         const { data: profile, error } = await supabase
           .from('profiles')
