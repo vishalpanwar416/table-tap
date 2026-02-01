@@ -48,34 +48,48 @@ const AuthCallback = () => {
         // If we have tokens in URL, set the session manually
         if (accessToken && refreshToken) {
           setStatus('Setting up session...');
+          console.log('Setting session with tokens...');
           
-          const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken
-          });
+          try {
+            const { data, error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken
+            });
 
-          if (error) {
-            console.error('Session error:', error);
-            setStatus(`Session error: ${error.message}`);
+            console.log('setSession result:', { data, error });
+
+            if (error) {
+              console.error('Session error:', error);
+              setStatus(`Session error: ${error.message}`);
+              setTimeout(() => navigate('/login'), 2000);
+              return;
+            }
+
+            sessionUser = data.session?.user;
+            console.log('Session user:', sessionUser?.email);
+            
+            // Clear hash from URL
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          } catch (setSessionError) {
+            console.error('setSession threw:', setSessionError);
+            setStatus(`Session setup failed: ${setSessionError.message}`);
             setTimeout(() => navigate('/login'), 2000);
             return;
           }
-
-          sessionUser = data.session?.user;
-          
-          // Clear hash from URL
-          window.history.replaceState(null, '', window.location.pathname + window.location.search);
         } else {
           // No tokens in URL, check for existing session
           setStatus('Checking existing session...');
+          console.log('No tokens in URL, checking existing session...');
           const { data } = await supabase.auth.getSession();
           sessionUser = data.session?.user;
+          console.log('Existing session user:', sessionUser?.email);
         }
 
         // If no user found, redirect to login
         if (!sessionUser) {
-          setStatus('No session found, redirecting...');
-          setTimeout(() => navigate('/login'), 1000);
+          console.error('No session user found after auth');
+          setStatus('Authentication incomplete. Redirecting to login...');
+          setTimeout(() => navigate('/login'), 3000);
           return;
         }
 
