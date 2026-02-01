@@ -439,6 +439,13 @@ const RestaurantSelectionPage = () => {
           ...restaurant,
           distance: typeof restaurant.distance === 'number' ? restaurant.distance / 1000 : null
         }));
+        // Sort by distance (closest first)
+        data.sort((a, b) => {
+          if (a.distance === null && b.distance === null) return 0;
+          if (a.distance === null) return 1;
+          if (b.distance === null) return -1;
+          return a.distance - b.distance;
+        });
         setCachedNearby(data);
       } else {
         data = await getActiveRestaurants();
