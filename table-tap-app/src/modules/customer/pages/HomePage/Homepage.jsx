@@ -129,7 +129,7 @@ const useScrollToCategory = (categoryButtonsRef) => {
 // Memoized main component
 const HomePage = memo(() => {
   const navigate = useNavigate();
-  const { restaurantId } = useRestaurant();
+  const { restaurantId, loading: restaurantLoading } = useRestaurant();
   const { addToCart, cartItems, removeItem, updateQuantity } = useCart();
 
   // Use the global food data context (move this to the top)
@@ -142,6 +142,17 @@ const HomePage = memo(() => {
     loadFoodData,
     currentRestaurantId
   } = useFoodData();
+
+  // Redirect to restaurant selection if no restaurant is selected
+  useEffect(() => {
+    // Wait for restaurant context to finish loading
+    if (restaurantLoading) return;
+    
+    // If no restaurant is selected, redirect to restaurant selection
+    if (!restaurantId) {
+      navigate('/restaurant-selection', { replace: true });
+    }
+  }, [restaurantId, restaurantLoading, navigate]);
 
   // State management with useReducer for complex state
   const [isSearchActive, setIsSearchActive] = useState(false);
@@ -298,6 +309,11 @@ const HomePage = memo(() => {
     sidebar: isSidebarOpen,
     notifications: isNotificationOpen
   });
+
+  // Show loading while checking restaurant or redirecting
+  if (restaurantLoading || !restaurantId) {
+    return <LoadingScreen message="Loading..." variant="page" />;
+  }
 
   // Error boundary with retry mechanism
   if (error) {
