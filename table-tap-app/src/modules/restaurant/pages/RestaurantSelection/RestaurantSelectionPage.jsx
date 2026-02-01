@@ -1230,27 +1230,28 @@ const RestaurantSelectionPage = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+              className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50"
             >
               <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white rounded-xl p-6 max-w-sm w-full shadow-xl text-center"
+                initial={{ scale: 0.9, y: 10 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.9, y: 10 }}
+                transition={{ duration: 0.2 }}
+                className="bg-white rounded-xl p-4 max-w-xs w-full shadow-xl"
               >
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Restaurant Selected!
-                </h3>
-                <p className="text-gray-600 text-sm mb-4">
-                  Redirecting to {selectedRestaurant?.name}...
-                </p>
-                <div className="flex justify-center">
-                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-orange-500 border-t-transparent"></div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-900">Opening {selectedRestaurant?.name}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="animate-spin rounded-full h-3 w-3 border-2 border-orange-500 border-t-transparent"></div>
+                      <span className="text-xs text-gray-500">Redirecting...</span>
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             </motion.div>
@@ -1264,47 +1265,56 @@ const RestaurantSelectionPage = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+              className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50"
               onClick={() => setShowLocationModal(false)}
             >
               <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white rounded-xl p-6 max-w-sm w-full shadow-xl"
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.9, y: 20 }}
+                transition={{ duration: 0.2 }}
+                className="bg-white rounded-xl p-5 max-w-xs w-full shadow-xl relative"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <MapPin size={32} className="text-orange-500" />
+                <button
+                  onClick={() => setShowLocationModal(false)}
+                  className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                  aria-label="Close"
+                >
+                  <X size={14} />
+                </button>
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <MapPin size={18} className="text-orange-500" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Location Access Required
-                  </h3>
-                  <p className="text-gray-600 text-sm mb-6">
-                    To show you nearby restaurants, we need access to your location. Please enable location services in your browser settings.<br />
-                    <span className="text-xs text-gray-500 block mt-2">
-                      <b>Tip:</b> In Chrome, click the lock icon in the address bar &gt; Site settings &gt; Location: Allow.
-                    </span>
-                  </p>
-                  <div className="space-y-3">
-                    <button
-                      onClick={() => {
-                        setShowLocationModal(false);
-                        // Try to get location again
-                        getUserLocation();
-                      }}
-                      className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-lg font-medium transition-colors"
-                    >
-                      Try Again
-                    </button>
-                    <button
-                      onClick={() => setShowLocationModal(false)}
-                      className="w-full text-gray-500 hover:text-gray-700 px-4 py-2 text-sm transition-colors"
-                    >
-                      Continue without location
-                    </button>
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-900 mb-1">
+                      Location Required
+                    </h3>
+                    <p className="text-xs text-gray-500">
+                      Enable location to find nearby restaurants
+                    </p>
                   </div>
+                </div>
+                <p className="text-xs text-gray-400 mb-4 bg-gray-50 p-2 rounded-lg">
+                  <span className="font-medium">Tip:</span> Click the lock icon in address bar → Site settings → Allow location
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowLocationModal(false)}
+                    className="flex-1 text-sm text-gray-600 px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Skip
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowLocationModal(false);
+                      getUserLocation();
+                    }}
+                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Try Again
+                  </button>
                 </div>
               </motion.div>
             </motion.div>
@@ -1318,30 +1328,35 @@ const RestaurantSelectionPage = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-end md:items-center justify-center p-0 md:p-4 z-50"
+              className="fixed inset-0 bg-black/40 flex items-end md:items-center justify-center p-0 md:p-4 z-50"
               onClick={() => setShowTablePopup(false)}
               style={{ zIndex: 100 }}
             >
               <motion.div
-                initial={{ y: 40, scale: 1, opacity: 0 }}
-                animate={{ y: 0, scale: 1, opacity: 1 }}
-                exit={{ y: 40, scale: 1, opacity: 0 }}
-                className="bg-white rounded-t-2xl md:rounded-xl p-4 md:p-6 w-full max-w-md mx-auto shadow-xl"
+                initial={{ y: 40, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 40, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="bg-white rounded-t-xl md:rounded-xl p-4 w-full max-w-sm mx-auto shadow-xl"
                 onClick={(e) => e.stopPropagation()}
-                style={{ minHeight: 200, maxHeight: '80vh', overflowY: 'auto' }}
+                style={{ maxHeight: '70vh', overflowY: 'auto' }}
                 role="dialog"
                 aria-modal="true"
                 aria-label="Select Table Number"
               >
-                <div className="text-center mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                    Select Table Number
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-base font-semibold text-gray-900">
+                    Select Table
                   </h3>
-                  <p className="text-gray-600 text-sm">
-                    Choose your table from the available options
-                  </p>
+                  <button
+                    onClick={() => setShowTablePopup(false)}
+                    className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                    aria-label="Close"
+                  >
+                    <X size={14} />
+                  </button>
                 </div>
-                <div className="max-h-64 overflow-y-auto space-y-2">
+                <div className="max-h-60 overflow-y-auto space-y-1.5">
                   {availableTables.length > 0 ? (
                     availableTables.map((table) => (
                       <button
@@ -1350,27 +1365,24 @@ const RestaurantSelectionPage = () => {
                           setTableNumber(table.tableNumber);
                           setShowTablePopup(false);
                         }}
-                        className={`w-full p-4 rounded-lg border-2 transition-all duration-200 text-left text-base font-medium focus:outline-none focus:ring-2 focus:ring-orange-400 ${table.tableNumber === tableNumber
+                        className={`w-full px-3 py-2.5 rounded-lg border transition-all duration-150 text-left focus:outline-none focus:ring-2 focus:ring-orange-400 ${table.tableNumber === tableNumber
                           ? 'border-orange-500 bg-orange-50'
-                          : 'border-gray-200 hover:border-orange-300 hover:bg-orange-50'
+                          : 'border-gray-200 hover:border-orange-300 hover:bg-orange-50/50'
                           }`}
-                        style={{ minHeight: 48 }}
                         aria-label={`Select table ${table.tableNumber}`}
                       >
                         <div className="flex items-center justify-between">
-                          <div>
-                            <div className="text-sm text-gray-900">
-                              <span className="font-semibold">Table {table.tableNumber}</span>
-                              {table.location && <span className="mx-1 text-gray-400">•</span>}
-                              {table.location && <span className="text-gray-600">{table.location}</span>}
-                              <span className="mx-1 text-gray-400">•</span>
-                              <span className="text-gray-500">{table.capacity} people</span>
-                            </div>
+                          <div className="text-sm text-gray-900">
+                            <span className="font-medium">Table {table.tableNumber}</span>
+                            {table.location && <span className="mx-1 text-gray-400">•</span>}
+                            {table.location && <span className="text-gray-500">{table.location}</span>}
+                            <span className="mx-1 text-gray-400">•</span>
+                            <span className="text-gray-400">{table.capacity} seats</span>
                           </div>
                           {table.tableNumber === tableNumber && (
-                            <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
-                              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            <div className="w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
+                              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                               </svg>
                             </div>
                           )}
@@ -1378,26 +1390,24 @@ const RestaurantSelectionPage = () => {
                       </button>
                     ))
                   ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      <Store size={48} className="mx-auto mb-4 text-gray-300" />
-                      <p className="font-semibold text-lg">No tables available</p>
-                      <p className="text-sm mt-2">Please ask the staff for assistance.</p>
+                    <div className="text-center py-6 text-gray-500">
+                      <Store size={32} className="mx-auto mb-2 text-gray-300" />
+                      <p className="font-medium text-sm">No tables available</p>
+                      <p className="text-xs mt-1">Please ask staff for assistance</p>
                     </div>
                   )}
                 </div>
-                <div className="mt-6 flex gap-3">
+                <div className="mt-4 flex gap-2">
                   <button
                     onClick={() => setShowTablePopup(false)}
-                    className="flex-1 px-4 py-3 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                    style={{ minHeight: 44 }}
+                    className="flex-1 px-3 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                     aria-label="Cancel table selection"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={() => setShowTablePopup(false)}
-                    className={`flex-1 px-4 py-3 rounded-lg transition-colors ${tableNumber ? 'bg-orange-500 text-white hover:bg-orange-600' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
-                    style={{ minHeight: 44 }}
+                    className={`flex-1 px-3 py-2 text-sm rounded-lg transition-colors ${tableNumber ? 'bg-orange-500 text-white hover:bg-orange-600' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
                     aria-label="Confirm table selection"
                     disabled={!tableNumber}
                   >
@@ -1412,41 +1422,61 @@ const RestaurantSelectionPage = () => {
         {/* Nearest Restaurant Popup */}
         {showNearestRestaurantPopup && nearestRestaurant && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-            style={{ backdropFilter: 'blur(2px)' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 px-4"
+            onClick={() => setShowNearestRestaurantPopup(false)}
           >
-            <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-sm w-full border border-orange-200 relative">
-              <h2 className="text-2xl font-bold mb-2 text-center text-gray-900">Are you at <span className="text-orange-500">{nearestRestaurant.name}</span>?</h2>
-              <p className="mb-4 text-sm text-gray-600 text-center">{nearestRestaurant.address}</p>
-              <div className="flex gap-3 justify-center mt-6">
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="bg-white rounded-xl p-5 shadow-xl max-w-xs w-full relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                onClick={() => setShowNearestRestaurantPopup(false)}
+                aria-label="Close"
+              >
+                <X size={14} />
+              </button>
+              
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <MapPin size={18} className="text-orange-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs text-gray-500">You're near</p>
+                  <h3 className="text-base font-semibold text-gray-900 truncate">{nearestRestaurant.name}</h3>
+                </div>
+              </div>
+              
+              {nearestRestaurant.address && (
+                <p className="text-xs text-gray-500 mb-4 line-clamp-2">{nearestRestaurant.address}</p>
+              )}
+              
+              <div className="flex gap-2">
                 <button
-                  className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-full font-semibold shadow-md transition-colors"
+                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                   onClick={() => {
                     setSelectedRestaurant(nearestRestaurant);
                     setShowNearestRestaurantPopup(false);
                   }}
                 >
-                  Continue
+                  Yes, select
                 </button>
                 <button
-                  className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-full font-semibold shadow-md transition-colors"
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                   onClick={() => setShowNearestRestaurantPopup(false)}
                 >
-                  Select Other
+                  No, skip
                 </button>
               </div>
-              <button
-                className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
-                onClick={() => setShowNearestRestaurantPopup(false)}
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
+            </motion.div>
           </motion.div>
         )}
       </div>
