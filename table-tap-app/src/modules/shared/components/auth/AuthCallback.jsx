@@ -5,6 +5,14 @@ import { authService, syncProfile } from '../../api/authService';
 import { supabase } from '../../supabase';
 import LoadingScreen from '../LoadingScreen';
 
+// Helper to add timeout to promises
+const withTimeout = (promise, ms, errorMessage) => {
+  const timeout = new Promise((_, reject) => 
+    setTimeout(() => reject(new Error(errorMessage)), ms)
+  );
+  return Promise.race([promise, timeout]);
+};
+
 const AuthCallback = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -45,17 +53,33 @@ const AuthCallback = () => {
 
         let sessionUser = null;
 
+        // Check if Supabase is properly configured
+        const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+        console.log('Supabase URL configured:', !!supabaseUrl, supabaseUrl?.substring(0, 30));
+        
+        if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
+          setStatus('Configuration error: Supabase not configured');
+          console.error('Supabase URL not configured properly');
+          setTimeout(() => navigate('/login'), 2000);
+          return;
+        }
+
         // If we have tokens in URL, set the session manually
         if (accessToken && refreshToken) {
           setStatus('Setting up session...');
-          console.log('Setting session with tokens...');
+          console.log('Setting session with tokens (with 10s timeout)...');
           
           try {
-            const { data, error } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken
-            });
+            const result = await withTimeout(
+              supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken
+              }),
+              10000,
+              'Session setup timed out - check Supabase configuration'
+            );
 
+            const { data, error } = result;
             console.log('setSession result:', { data, error });
 
             if (error) {
@@ -80,7 +104,11 @@ const AuthCallback = () => {
           // No tokens in URL, check for existing session
           setStatus('Checking existing session...');
           console.log('No tokens in URL, checking existing session...');
-          const { data } = await supabase.auth.getSession();
+          const { data } = await withTimeout(
+            supabase.auth.getSession(),
+            5000,
+            'Session check timed out'
+          );
           sessionUser = data.session?.user;
           console.log('Existing session user:', sessionUser?.email);
         }
