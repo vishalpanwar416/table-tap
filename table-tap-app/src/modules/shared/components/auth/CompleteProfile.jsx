@@ -19,6 +19,8 @@ export default function CompleteProfile() {
   const [avatarLoading, setAvatarLoading] = useState(false);
   const fileInputRef = React.useRef();
 
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
   useEffect(() => {
     const checkProfile = async () => {
       try {
@@ -27,13 +29,16 @@ export default function CompleteProfile() {
         if (user) {
           const isComplete = await authService.isProfileComplete(user.id);
           if (isComplete) {
-            navigate('/home');
+            navigate('/restaurant-selection');
           }
-        } else {
-          navigate('/login');
         }
+        // Don't redirect to login immediately - the user might be in the process of auth
+        // Let them stay on complete-profile page
       } catch (err) {
-        navigate('/login');
+        console.error('Error checking profile:', err);
+        // Don't redirect to login on error - might be temporary
+      } finally {
+        setIsCheckingAuth(false);
       }
     };
 
