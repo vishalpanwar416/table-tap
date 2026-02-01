@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Upload, Trash2, MapPin, Phone, Mail, Clock, Globe, Building2, Users, ChevronDown, Check, UserCog, Star, Award, ChefHat, UtensilsCrossed, Coins } from 'lucide-react';
-import { uploadRestaurantPhotoForAdmin, getRestaurantManagers, updateManagerDetails } from '../admin_service';
+import { uploadRestaurantPhotoForAdmin, uploadRestaurantLogo, getRestaurantManagers, updateManagerDetails } from '../admin_service';
 // Remove the supabase import since we're moving all calls to the service
 // import { supabase } from '../../../../shared/supabase'; 
 
@@ -62,6 +62,11 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
   const [restaurantPhotoFile, setRestaurantPhotoFile] = useState(null);
   const [managers, setManagers] = useState([]); // Add this
   const [selectedManagerId, setSelectedManagerId] = useState(''); // Add this
+
+  // Update image preview when data change
+  useEffect(() => {
+    setImagePreview(data.logo_url || '');
+  }, [data.logo_url]);
 
   // Fetch managers when editing
   useEffect(() => {
@@ -125,15 +130,26 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
     }
   }, [data.google_maps_link, setData]);
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+      try {
+        setIsSubmitting(true);
+        // Use a temporary ID if restaurant is not yet created
+        const tempId = data.id || `temp_${Date.now()}`;
+        const { url, error } = await uploadRestaurantLogo(file, tempId);
+
+        if (url) {
+          setImagePreview(url);
+          setData({ ...data, logo_url: url });
+        } else {
+          alert(error || 'Failed to upload logo');
+        }
+      } catch (error) {
+        alert('Error uploading logo: ' + error.message);
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -580,19 +596,54 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
               </div>
             </div>
 
-            {/* Razorpay Key ID */}
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <Globe className="w-4 h-4 text-yellow-500" />
-                Razorpay Key ID
-              </label>
-              <input
-                type="text"
-                value={data.razorpay_key_id || ''}
-                onChange={(e) => setData({ ...data, razorpay_key_id: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
-                placeholder="Enter Razorpay Key ID"
-              />
+            {/* Aggregator Integrations */}
+            <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl p-6 border border-orange-100">
+              <div className="flex items-center justify-between mb-4">
+                <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-orange-500" />
+                  Aggregator Integrations
+                </label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600 font-medium">Enabled</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={data.aggregators_enabled || false}
+                      onChange={(e) => setData({ ...data, aggregators_enabled: e.target.checked })}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
+                  </label>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <img src="https://www.swiggy.com/favicon.ico" alt="Swiggy" className="w-4 h-4" />
+                    Swiggy API Key
+                  </label>
+                  <input
+                    type="text"
+                    value={data.swiggy_api_key || ''}
+                    onChange={(e) => setData({ ...data, swiggy_api_key: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 bg-white"
+                    placeholder="Enter Swiggy API Key"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <img src="https://www.zomato.com/favicon.ico" alt="Zomato" className="w-4 h-4" />
+                    Zomato API Key
+                  </label>
+                  <input
+                    type="text"
+                    value={data.zomato_api_key || ''}
+                    onChange={(e) => setData({ ...data, zomato_api_key: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-300 bg-white"
+                    placeholder="Enter Zomato API Key"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Restaurant Photo Upload */}

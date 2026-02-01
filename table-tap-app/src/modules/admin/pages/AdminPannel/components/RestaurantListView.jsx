@@ -1,30 +1,32 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import { 
-  Building2, 
-  MapPin, 
-  Phone, 
-  Users, 
-  Clock, 
+import {
+  Building2,
+  MapPin,
+  Phone,
+  Users,
+  Clock,
   Calendar,
-  Edit, 
-  Trash2, 
+  Edit,
+  Trash2,
   ToggleLeft,
   ToggleRight,
   ExternalLink,
   Brain,
+  ShoppingBag,
   Loader2,
   ChevronUp
 } from 'lucide-react';
 import { FixedSizeList as List } from 'react-window';
 
-const RestaurantListView = ({ 
-  restaurants, 
-  onToggleStatus, 
+const RestaurantListView = ({
+  restaurants,
+  onToggleStatus,
   onToggleAI,
-  onEdit, 
-  onDelete, 
+  onToggleAggregators,
+  onEdit,
+  onDelete,
   onClick,
-  onLoadMore 
+  onLoadMore
 }) => {
   // Infinite scroll state
   const [displayedRestaurants, setDisplayedRestaurants] = useState([]);
@@ -32,7 +34,7 @@ const RestaurantListView = ({
   const [itemsPerPage] = useState(20);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  
+
   const listRef = useRef(null);
   const observerRef = useRef(null);
 
@@ -49,12 +51,12 @@ const RestaurantListView = ({
     if (isLoading || !hasMore) return;
 
     setIsLoading(true);
-    
+
     try {
       const nextPage = currentPage + 1;
       const startIndex = (nextPage - 1) * itemsPerPage;
       const endIndex = startIndex + itemsPerPage;
-      
+
       // If we have local data, use it
       if (restaurants.length >= endIndex) {
         const newRestaurants = restaurants.slice(startIndex, endIndex);
@@ -110,14 +112,14 @@ const RestaurantListView = ({
   // Function to format time ago
   const getTimeAgo = (timestamp) => {
     if (!timestamp) return 'Recently';
-    
+
     const now = new Date();
     const updatedAt = new Date(timestamp);
     const diffInMs = now - updatedAt;
     const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
     const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
     const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-    
+
     if (diffInMinutes < 1) return 'Just now';
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
     if (diffInHours < 24) return `${diffInHours}h ago`;
@@ -135,6 +137,11 @@ const RestaurantListView = ({
   const handleToggleAI = (e, restaurant) => {
     e.stopPropagation();
     onToggleAI(restaurant.id);
+  };
+
+  const handleToggleAggregators = (e, restaurant) => {
+    e.stopPropagation();
+    onToggleAggregators(restaurant.id);
   };
 
   const handleEdit = (e, restaurant) => {
@@ -160,35 +167,44 @@ const RestaurantListView = ({
     }, [index, observeLastItem]);
 
     return (
-      <div 
-        style={style} 
+      <div
+        style={style}
         className="border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer group"
         data-restaurant-index={index}
         onClick={() => onClick(restaurant)}
       >
         <div className="grid grid-cols-12 gap-4 px-6 py-4 items-center">
           {/* Restaurant Info */}
-          <div className="col-span-3">
+          <div className="col-span-2">
             <div className="flex items-center space-x-3">
               {restaurant.logo_url ? (
-                <img 
-                  src={restaurant.logo_url} 
+                <img
+                  src={restaurant.logo_url}
                   alt={`${restaurant.name} logo`}
-                  className="w-10 h-10 rounded-lg object-cover border border-gray-200"
+                  className="w-10 h-10 rounded-lg object-contain bg-white border border-gray-200"
                 />
               ) : (
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                  restaurant.is_active 
-                    ? 'bg-blue-500' 
-                    : 'bg-gray-400'
-                }`}>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${restaurant.is_active
+                  ? 'bg-blue-500'
+                  : 'bg-gray-400'
+                  }`}>
                   <Building2 className="w-5 h-5 text-white" />
                 </div>
               )}
               <div>
-                <h4 className="font-medium text-gray-900 font-spartan">
-                  {restaurant.name}
-                </h4>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-medium text-gray-900 font-spartan">
+                    {restaurant.name}
+                  </h4>
+                  <div className="flex gap-1">
+                    {restaurant.swiggy_api_key && (
+                      <img src="https://www.swiggy.com/favicon.ico" alt="Swiggy" className="w-3 h-3" title="Swiggy Integrated" />
+                    )}
+                    {restaurant.zomato_api_key && (
+                      <img src="https://www.zomato.com/favicon.ico" alt="Zomato" className="w-3 h-3" title="Zomato Integrated" />
+                    )}
+                  </div>
+                </div>
                 <p className="text-sm text-gray-500 font-spartan">
                   {restaurant.cuisine_type || 'Cuisine'}
                 </p>
@@ -242,19 +258,17 @@ const RestaurantListView = ({
               {/* Status Toggle */}
               <button
                 onClick={(e) => handleToggleStatus(e, restaurant)}
-                className={`relative w-16 h-8 rounded-full focus:outline-none transition-all duration-300 shadow-lg group/btn overflow-hidden ${
-                  restaurant.is_active
-                    ? 'bg-gradient-to-r from-green-500 to-emerald-500 shadow-green-200'
-                    : 'bg-gradient-to-r from-gray-300 to-gray-400 shadow-gray-200'
-                }`}
+                className={`relative w-16 h-8 rounded-full focus:outline-none transition-all duration-300 shadow-lg group/btn overflow-hidden ${restaurant.is_active
+                  ? 'bg-gradient-to-r from-green-500 to-emerald-500 shadow-green-200'
+                  : 'bg-gradient-to-r from-gray-300 to-gray-400 shadow-gray-200'
+                  }`}
                 aria-label={restaurant.is_active ? 'Deactivate restaurant' : 'Activate restaurant'}
               >
                 <div
-                  className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ease-out ${
-                    restaurant.is_active
-                      ? 'translate-x-8 shadow-green-100'
-                      : 'translate-x-1 shadow-gray-100'
-                  }`}
+                  className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ease-out ${restaurant.is_active
+                    ? 'translate-x-8 shadow-green-100'
+                    : 'translate-x-1 shadow-gray-100'
+                    }`}
                 >
                   {restaurant.is_active ? (
                     <div className="w-3 h-3 bg-green-500 rounded-full"></div>
@@ -272,24 +286,50 @@ const RestaurantListView = ({
               {/* AI Toggle */}
               <button
                 onClick={(e) => handleToggleAI(e, restaurant)}
-                className={`relative w-16 h-8 rounded-full focus:outline-none transition-all duration-300 shadow-lg group/btn overflow-hidden ${
-                  restaurant.ai_enabled
-                    ? 'bg-gradient-to-r from-purple-500 to-indigo-500 shadow-purple-200'
-                    : 'bg-gradient-to-r from-gray-300 to-gray-400 shadow-gray-200'
-                }`}
+                className={`relative w-16 h-8 rounded-full focus:outline-none transition-all duration-300 shadow-lg group/btn overflow-hidden ${restaurant.ai_enabled
+                  ? 'bg-gradient-to-r from-purple-500 to-indigo-500 shadow-purple-200'
+                  : 'bg-gradient-to-r from-gray-300 to-gray-400 shadow-gray-200'
+                  }`}
                 aria-label={restaurant.ai_enabled ? 'Disable AI analytics' : 'Enable AI analytics'}
               >
                 <div
-                  className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ease-out ${
-                    restaurant.ai_enabled
-                      ? 'translate-x-8 shadow-purple-100'
-                      : 'translate-x-1 shadow-gray-100'
-                  }`}
+                  className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ease-out ${restaurant.ai_enabled
+                    ? 'translate-x-8 shadow-purple-100'
+                    : 'translate-x-1 shadow-gray-100'
+                    }`}
                 >
                   {restaurant.ai_enabled ? (
                     <Brain className="w-3 h-3 text-purple-500" />
                   ) : (
                     <Brain className="w-3 h-3 text-gray-400" />
+                  )}
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Aggregator Status */}
+          <div className="col-span-1">
+            <div className="flex items-center justify-center">
+              {/* Aggregator Toggle */}
+              <button
+                onClick={(e) => handleToggleAggregators(e, restaurant)}
+                className={`relative w-16 h-8 rounded-full focus:outline-none transition-all duration-300 shadow-lg group/btn overflow-hidden ${restaurant.aggregators_enabled
+                  ? 'bg-gradient-to-r from-orange-500 to-red-500 shadow-orange-200'
+                  : 'bg-gradient-to-r from-gray-300 to-gray-400 shadow-gray-200'
+                  }`}
+                aria-label={restaurant.aggregators_enabled ? 'Disable aggregators' : 'Enable aggregators'}
+              >
+                <div
+                  className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ease-out ${restaurant.aggregators_enabled
+                    ? 'translate-x-8 shadow-orange-100'
+                    : 'translate-x-1 shadow-gray-100'
+                    }`}
+                >
+                  {restaurant.aggregators_enabled ? (
+                    <ShoppingBag className="w-3 h-3 text-orange-500" />
+                  ) : (
+                    <ShoppingBag className="w-3 h-3 text-gray-400" />
                   )}
                 </div>
               </button>
@@ -393,13 +433,14 @@ const RestaurantListView = ({
         {/* Table Header */}
         <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
           <div className="grid grid-cols-12 gap-4 text-sm font-medium text-gray-700 font-spartan">
-            <div className="col-span-3">Restaurant</div>
+            <div className="col-span-2">Restaurant</div>
             <div className="col-span-2">Location</div>
             <div className="col-span-2">Contact</div>
-            <div className="col-span-1">Staff</div>
-            <div className="col-span-1">Status</div>
-            <div className="col-span-1">AI</div>
-            <div className="col-span-2">Actions</div>
+            <div className="col-span-1 text-center">Staff</div>
+            <div className="col-span-1 text-center">Status</div>
+            <div className="col-span-1 text-center">AI</div>
+            <div className="col-span-1 text-center">Aggregators</div>
+            <div className="col-span-2 text-center">Actions</div>
           </div>
         </div>
 

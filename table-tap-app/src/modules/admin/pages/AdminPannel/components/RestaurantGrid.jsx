@@ -2,14 +2,15 @@ import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { Building2, Loader2, ChevronUp } from 'lucide-react';
 import RestaurantCard from './RestaurantCard';
 
-const RestaurantGrid = ({ 
-  restaurants, 
-  onToggleStatus, 
+const RestaurantGrid = ({
+  restaurants,
+  onToggleStatus,
   onToggleAI,
-  onEdit, 
-  onDelete, 
+  onToggleAggregators,
+  onEdit,
+  onDelete,
   onClick,
-  onLoadMore 
+  onLoadMore
 }) => {
   // Infinite scroll state
   const [displayedRestaurants, setDisplayedRestaurants] = useState([]);
@@ -17,7 +18,7 @@ const RestaurantGrid = ({
   const [itemsPerPage] = useState(12); // Show 12 restaurants per page (4 rows of 3)
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  
+
   const gridRef = useRef(null);
   const observerRef = useRef(null);
 
@@ -34,12 +35,12 @@ const RestaurantGrid = ({
     if (isLoading || !hasMore) return;
 
     setIsLoading(true);
-    
+
     try {
       const nextPage = currentPage + 1;
       const startIndex = (nextPage - 1) * itemsPerPage;
       const endIndex = startIndex + itemsPerPage;
-      
+
       // If we have local data, use it
       if (restaurants.length >= endIndex) {
         const newRestaurants = restaurants.slice(startIndex, endIndex);
@@ -166,6 +167,7 @@ const RestaurantGrid = ({
               restaurant={restaurant}
               onToggleStatus={onToggleStatus}
               onToggleAI={onToggleAI}
+              onToggleAggregators={onToggleAggregators}
               onEdit={onEdit}
               onDelete={onDelete}
               onClick={onClick}

@@ -26,13 +26,15 @@ export default function AuthWrapper({ children, publicOnly = false }) {
     let mounted = true;
 
     const checkAuthAndProfile = async () => {
-      if (authLoading) return; // Wait for auth to finish loading
+      if (authLoading) return;
 
-      if (!mounted) return;
-
-      // Handle home route redirect
+      // Handle root route redirect
       if (location.pathname === '/' && user) {
-        // Check if user has restaurant selection, if not redirect to restaurant selection
+        if (location.pathname.startsWith('/admin') || location.pathname.startsWith('/restaurant')) {
+          setChecking(false);
+          return;
+        }
+
         if (hasValidRestaurantSelection()) {
           navigateWithParams('/home');
         } else {
@@ -44,7 +46,6 @@ export default function AuthWrapper({ children, publicOnly = false }) {
       // Public-only route handling
       if (publicOnly) {
         if (user) {
-          // Check if user has restaurant selection, if not redirect to restaurant selection
           if (hasValidRestaurantSelection()) {
             navigateWithParams('/home');
           } else {
@@ -62,11 +63,8 @@ export default function AuthWrapper({ children, publicOnly = false }) {
         return;
       }
 
-      // Skip profile completion check for admin routes (admins may not need mobile/DOB)
-      const isAdminRoute = location.pathname.startsWith('/admin') || location.pathname.startsWith('/restaurant-dashboard');
-      
+      const isAdminRoute = location.pathname.startsWith('/admin') || location.pathname.startsWith('/restaurant');
       if (isAdminRoute) {
-        // For admin routes, just verify user is authenticated (already checked above)
         setChecking(false);
         return;
       }
@@ -77,30 +75,23 @@ export default function AuthWrapper({ children, publicOnly = false }) {
           .from('profiles')
           .select('mobile_number, date_of_birth')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
         if (!mounted) return;
 
         if (error) {
-          if (error.code === 'PGRST116') {
-            // Profile doesn't exist, redirect to complete profile
-            navigateWithParams('/complete-profile');
-          }
+          if (error.name === 'AbortError') return;
+          console.error('[AuthWrapper] Profile check error:', error);
+        } else if (!profile) {
+          navigateWithParams('/complete-profile');
         } else {
           const needsCompletion = !profile?.mobile_number || !profile?.date_of_birth;
-
           if (needsCompletion && !location.pathname.startsWith('/complete-profile')) {
             navigateWithParams('/complete-profile');
-          } else if (!needsCompletion && location.pathname === '/complete-profile') {
-            // After profile completion, check restaurant selection
-            if (hasValidRestaurantSelection()) {
-              navigateWithParams(location.state?.from || '/home');
-            } else {
-              navigateWithParams('/restaurant-selection');
-            }
           }
         }
       } catch (error) {
+        if (error.name === 'AbortError') return;
       } finally {
         if (mounted) {
           setChecking(false);
@@ -113,7 +104,7 @@ export default function AuthWrapper({ children, publicOnly = false }) {
     return () => {
       mounted = false;
     };
-  }, [navigate, location, publicOnly, user, authLoading, urlRestaurant, urlTable]);
+  }, [user?.id, authLoading, publicOnly]);
 
   if (checking || authLoading) {
     return (

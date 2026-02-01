@@ -15,15 +15,25 @@ export const AuthProvider = ({ children }) => {
     let mounted = true;
 
     const getSession = async () => {
+      const safetyTimer = setTimeout(() => {
+        if (mounted && loading) {
+          console.warn('[AuthContext] Loading timeout, force clearing...');
+          setLoading(false);
+        }
+      }, 10000);
+
       try {
+        console.log('[AuthContext] Fetching session...');
         const { data: { session } } = await supabase.auth.getSession();
         if (mounted) {
           const hasUser = !!session?.user;
+          console.log('[AuthContext] User present:', hasUser);
           setUser(session?.user ?? null);
           setWasAuthenticated(hasUser);
           setLoading(false);
         }
       } catch (error) {
+        console.error('[AuthContext] Session error:', error);
         if (
           typeof error?.message === 'string' &&
           (error.message.includes('Invalid Refresh Token') || error.message.includes('Refresh Token Not Found'))
@@ -39,6 +49,8 @@ export const AuthProvider = ({ children }) => {
           setUser(null);
           setLoading(false);
         }
+      } finally {
+        clearTimeout(safetyTimer);
       }
     };
 

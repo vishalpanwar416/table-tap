@@ -21,7 +21,9 @@ import {
   Award,
   ChevronLeft,
   Zap,
-  Power
+  Power,
+  Image as ImageIcon,
+  Upload
 } from 'lucide-react';
 import { useAdminRestaurant } from '../../../shared/context/AdminRestaurantContext';
 import SubscriptionSection from './SubscriptionSection';
@@ -192,6 +194,66 @@ const RestaurantInformation = () => {
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-gray-700">Cuisine Type</label>
                       <input type="text" name="cuisine_type" value={formData.cuisine_type || ''} onChange={handleChange} className="w-full px-4 py-3 bg-white/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Restaurant Assets */}
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                    <ImageIcon className="w-5 h-5 mr-2 text-blue-600" /> Restaurant Assets
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Logo Section */}
+                    <div className="space-y-4">
+                      <label className="block text-sm font-semibold text-gray-700">Restaurant Logo</label>
+                      <div className="flex flex-col items-center p-6 bg-white/50 border-2 border-dashed border-gray-200 rounded-2xl">
+                        {formData.logo_url ? (
+                          <div className="relative group">
+                            <img
+                              src={formData.logo_url}
+                              alt="Logo"
+                              className="w-32 h-32 object-contain rounded-xl bg-white shadow-sm"
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
+                              <p className="text-white text-xs font-medium">Update in Admin Panel</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="w-32 h-32 bg-gray-100 rounded-xl flex items-center justify-center">
+                            <ImageIcon className="w-10 h-10 text-gray-400" />
+                          </div>
+                        )}
+                        <p className="mt-4 text-xs text-center text-gray-500 italic">
+                          Logo management is available in the Main Admin Panel
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Photo Section */}
+                    <div className="space-y-4">
+                      <label className="block text-sm font-semibold text-gray-700">Restaurant Photo</label>
+                      <div className="flex flex-col items-center p-6 bg-white/50 border-2 border-dashed border-gray-200 rounded-2xl">
+                        {formData.restaurant_photo_url ? (
+                          <div className="relative group w-full">
+                            <img
+                              src={formData.restaurant_photo_url}
+                              alt="Restaurant"
+                              className="w-full h-32 object-cover rounded-xl shadow-sm"
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
+                              <p className="text-white text-xs font-medium">Update in Admin Panel</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="w-full h-32 bg-gray-100 rounded-xl flex items-center justify-center">
+                            <ImageIcon className="w-10 h-10 text-gray-400" />
+                          </div>
+                        )}
+                        <p className="mt-4 text-xs text-center text-gray-500 italic">
+                          Photo management is available in the Main Admin Panel
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -386,6 +448,46 @@ const RestaurantInformation = () => {
                     <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border">
                       <h4 className="text-sm font-semibold text-gray-600 mb-2">Cuisine Type</h4>
                       <p className="text-lg font-medium text-gray-900">{restaurant?.cuisine_type || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Restaurant Assets Display */}
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                    <ImageIcon className="w-5 h-5 mr-2 text-blue-600" /> Restaurant Assets
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Logo Display */}
+                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center">
+                      <h4 className="text-sm font-semibold text-gray-600 mb-4 self-start">Official Logo</h4>
+                      {restaurant?.logo_url ? (
+                        <img
+                          src={restaurant.logo_url}
+                          alt="Logo"
+                          className="w-40 h-40 object-contain rounded-2xl bg-white shadow-sm border p-2"
+                        />
+                      ) : (
+                        <div className="w-40 h-40 bg-gray-50 rounded-2xl flex items-center justify-center border-2 border-dashed border-gray-200">
+                          <ImageIcon className="w-12 h-12 text-gray-300" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Photo Display */}
+                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center">
+                      <h4 className="text-sm font-semibold text-gray-600 mb-4 self-start">Cover Photo</h4>
+                      {restaurant?.restaurant_photo_url ? (
+                        <img
+                          src={restaurant.restaurant_photo_url}
+                          alt="Restaurant"
+                          className="w-full h-40 object-cover rounded-2xl shadow-sm border"
+                        />
+                      ) : (
+                        <div className="w-full h-40 bg-gray-50 rounded-2xl flex items-center justify-center border-2 border-dashed border-gray-200">
+                          <ImageIcon className="w-12 h-12 text-gray-300" />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

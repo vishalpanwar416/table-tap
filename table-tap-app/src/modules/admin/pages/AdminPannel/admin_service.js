@@ -55,16 +55,15 @@ export const uploadRestaurantPhotoForAdmin = async (file, restaurantId) => {
     });
 
     // Generate unique filename
-    const fileExt = optimizedFile.name.split('.').pop();
-    const fileName = `restaurant_${restaurantId}_${Date.now()}.${fileExt}`;
-    const filePath = `avatars/${fileName}`;
+    const fileName = `restaurant_${restaurantId}_${Date.now()}.webp`;
+    const filePath = `restaurants/${fileName}`;
 
     // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabaseClient.storage
-      .from('avatars')
+      .from('food-images')
       .upload(filePath, optimizedFile, {
         cacheControl: '3600',
-        upsert: false
+        upsert: true
       });
 
     if (uploadError) {
@@ -73,7 +72,61 @@ export const uploadRestaurantPhotoForAdmin = async (file, restaurantId) => {
 
     // Get public URL
     const { data: urlData } = supabaseClient.storage
-      .from('avatars')
+      .from('food-images')
+      .getPublicUrl(filePath);
+
+    return {
+      url: urlData.publicUrl,
+      path: filePath,
+      error: null
+    };
+  } catch (error) {
+    return {
+      url: null,
+      path: null,
+      error: error.message
+    };
+  }
+};
+
+/**
+ * Upload restaurant logo for admin panel
+ */
+export const uploadRestaurantLogo = async (file, restaurantId) => {
+  try {
+    // Validate the file first
+    const validation = await validateImageFile(file);
+    if (!validation.isValid) {
+      throw new Error(validation.errors.join(', '));
+    }
+
+    // Optimize the image
+    const optimizedFile = await optimizeImageForUpload(file, {
+      maxWidth: 400,
+      maxHeight: 400,
+      quality: 0.8,
+      format: 'webp'
+    });
+
+    // Generate unique filename
+    const fileName = `logo_${restaurantId}_${Date.now()}.webp`;
+    const filePath = `logos/${fileName}`;
+
+    // Upload to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabaseClient.storage
+      .from('food-images')
+      .upload(filePath, optimizedFile, {
+        cacheControl: '3600',
+        upsert: true
+      });
+
+    if (uploadError) {
+      throw new Error(`Upload failed: ${uploadError.message}`);
+    }
+
+    // Get public URL
+    const { data: urlData } = supabaseClient.storage
+      .from('food-images')
       .getPublicUrl(filePath);
 
     return {
@@ -98,13 +151,14 @@ export const deleteRestaurantPhotoForAdmin = async (url) => {
     if (!url) return { success: true, error: null };
 
     // Extract file path from URL
+    // Public URL format: .../storage/v1/object/public/food-images/restaurants/filename.webp
     const urlParts = url.split('/');
     const fileName = urlParts[urlParts.length - 1];
-    const filePath = `avatars/${fileName}`;
+    const filePath = `restaurants/${fileName}`;
 
     // Delete from storage
     const { error } = await supabaseClient.storage
-      .from('avatars')
+      .from('food-images')
       .remove([filePath]);
 
     if (error) {
@@ -133,6 +187,7 @@ export const getAllRestaurants = async () => {
 
 
     if (simpleError) {
+      if (simpleError.name === 'AbortError') return { data: [], error: null };
       throw simpleError;
     }
 
@@ -164,6 +219,7 @@ export const getAllRestaurants = async () => {
 
 
     if (error) {
+      if (error.name === 'AbortError') return { data: simpleData, error: null };
       // If complex query fails, return simple data
       return { data: simpleData, error: null };
     }
@@ -231,7 +287,10 @@ export const getAllRestaurants = async () => {
         staff_count: 0,
         created_at: restaurant.created_at,
         updated_at: restaurant.updated_at,
-        ai_enabled: restaurant.ai_enabled
+        ai_enabled: restaurant.ai_enabled,
+        aggregators_enabled: restaurant.aggregators_enabled,
+        swiggy_api_key: restaurant.swiggy_api_key,
+        zomato_api_key: restaurant.zomato_api_key
       };
 
       return transformed;
@@ -379,6 +438,10 @@ export const createRestaurant = async (restaurantData) => {
         gst_number: restaurantData.gst_number,
         fssai_license: restaurantData.fssai_license,
         social_media: socialMediaData,
+        // Aggregator Integration Keys
+        swiggy_api_key: restaurantData.swiggy_api_key || null,
+        zomato_api_key: restaurantData.zomato_api_key || null,
+        aggregators_enabled: restaurantData.aggregators_enabled || false,
         is_active: true
       })
       .select()
@@ -416,6 +479,23 @@ export const toggleRestaurantStatus = async (restaurantId, newStatus) => {
     const { error } = await supabase
       .from('restaurants')
       .update({ is_active: newStatus })
+      .eq('id', restaurantId);
+
+    if (error) throw error;
+    return { success: true, error: null };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Toggle restaurant aggregator integration
+ */
+export const toggleRestaurantAggregators = async (restaurantId, newStatus) => {
+  try {
+    const { error } = await supabase
+      .from('restaurants')
+      .update({ aggregators_enabled: newStatus })
       .eq('id', restaurantId);
 
     if (error) throw error;
@@ -466,6 +546,9 @@ export const updateRestaurant = async (restaurantId, updateData) => {
         gst_number: updateData.gst_number,
         fssai_license: updateData.fssai_license,
         social_media: socialMediaData,
+        swiggy_api_key: updateData.swiggy_api_key || null,
+        zomato_api_key: updateData.zomato_api_key || null,
+        aggregators_enabled: updateData.aggregators_enabled || false,
         updated_at: new Date().toISOString()
       })
       .eq('id', restaurantId)
@@ -534,6 +617,7 @@ export const getAllStaff = async () => {
       `);
 
     if (error) {
+      if (error.name === 'AbortError') return { data: [], error: null };
       throw error;
     }
 

@@ -4,16 +4,17 @@ import RestaurantCard from './RestaurantCard';
 import RestaurantListView from './RestaurantListView';
 import RestaurantGrid from './RestaurantGrid';
 
-const RestaurantManagement = ({ 
-  restaurants, 
-  loading, 
-  onAddRestaurant, 
-  onToggleStatus, 
+const RestaurantManagement = ({
+  restaurants,
+  loading,
+  onAddRestaurant,
+  onToggleStatus,
   onToggleAI,
-  onEdit, 
-  onDelete, 
+  onToggleAggregators,
+  onEdit,
+  onDelete,
   onClick,
-  onLoadMore 
+  onLoadMore
 }) => {
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
 
@@ -29,6 +30,7 @@ const RestaurantManagement = ({
     totalStaff: restaurants.reduce((sum, r) => sum + (r.staff_count || 0), 0),
     aiEnabled: restaurants.filter(r => r.ai_enabled).length,
     aiDisabled: restaurants.filter(r => !r.ai_enabled).length,
+    aggregatorsEnabled: restaurants.filter(r => r.aggregators_enabled).length,
     newThisMonth: restaurants.filter(r => {
       const createdDate = new Date(r.created_at);
       return createdDate >= thirtyDaysAgo;
@@ -63,7 +65,7 @@ const RestaurantManagement = ({
             <span className="font-medium font-spartan">Add Restaurant</span>
           </button>
         </div>
-        
+
         {/* Loading Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {[...Array(6)].map((_, index) => (
@@ -111,7 +113,7 @@ const RestaurantManagement = ({
           <span className="font-medium font-spartan">Add Restaurant</span>
         </button>
       </div>
-      
+
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-200">
@@ -121,7 +123,7 @@ const RestaurantManagement = ({
           <div className="text-xl font-bold text-gray-900 font-spartan">{stats.total}</div>
           <div className="text-sm text-gray-600 font-spartan">Total</div>
         </div>
-        
+
         <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-200">
           <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-3">
             <Building2 className="w-5 h-5 text-white" />
@@ -129,7 +131,7 @@ const RestaurantManagement = ({
           <div className="text-xl font-bold text-gray-900 font-spartan">{stats.active}</div>
           <div className="text-sm text-gray-600 font-spartan">Active</div>
         </div>
-        
+
         <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-200">
           <div className="w-10 h-10 bg-gray-400 rounded-full flex items-center justify-center mx-auto mb-3">
             <Building2 className="w-5 h-5 text-white" />
@@ -137,7 +139,7 @@ const RestaurantManagement = ({
           <div className="text-xl font-bold text-gray-900 font-spartan">{stats.inactive}</div>
           <div className="text-sm text-gray-600 font-spartan">Inactive</div>
         </div>
-        
+
         <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-200">
           <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
             <Users className="w-5 h-5 text-white" />
@@ -227,22 +229,20 @@ const RestaurantManagement = ({
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-lg transition-all duration-200 ${
-                  viewMode === 'grid'
+                className={`p-2 rounded-lg transition-all duration-200 ${viewMode === 'grid'
                     ? 'bg-blue-100 text-blue-700'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                  }`}
                 title="Grid View"
               >
                 <Grid className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 rounded-lg transition-all duration-200 ${
-                  viewMode === 'list'
+                className={`p-2 rounded-lg transition-all duration-200 ${viewMode === 'list'
                     ? 'bg-blue-100 text-blue-700'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                  }`}
                 title="List View"
               >
                 <List className="w-4 h-4" />
@@ -275,6 +275,7 @@ const RestaurantManagement = ({
                 restaurants={restaurants}
                 onToggleStatus={onToggleStatus}
                 onToggleAI={onToggleAI}
+                onToggleAggregators={onToggleAggregators}
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onClick={onClick}
@@ -285,6 +286,7 @@ const RestaurantManagement = ({
                 restaurants={restaurants}
                 onToggleStatus={onToggleStatus}
                 onToggleAI={onToggleAI}
+                onToggleAggregators={onToggleAggregators}
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onClick={onClick}

@@ -20,9 +20,14 @@ import {
     Users,
     Sparkles,
     Shield,
-    AlertCircle
+    AlertCircle,
+    ChevronDown,
+    Store,
+    MapPinned,
+    Navigation
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import LocationPicker from '../components/LocationPicker';
 
 const plans = {
     starter: {
@@ -42,6 +47,47 @@ const plans = {
     }
 };
 
+// Indian States and Union Territories
+const indianStates = [
+    'Andhra Pradesh',
+    'Arunachal Pradesh',
+    'Assam',
+    'Bihar',
+    'Chhattisgarh',
+    'Goa',
+    'Gujarat',
+    'Haryana',
+    'Himachal Pradesh',
+    'Jharkhand',
+    'Karnataka',
+    'Kerala',
+    'Madhya Pradesh',
+    'Maharashtra',
+    'Manipur',
+    'Meghalaya',
+    'Mizoram',
+    'Nagaland',
+    'Odisha',
+    'Punjab',
+    'Rajasthan',
+    'Sikkim',
+    'Tamil Nadu',
+    'Telangana',
+    'Tripura',
+    'Uttar Pradesh',
+    'Uttarakhand',
+    'West Bengal',
+    // Union Territories
+    'Andaman and Nicobar Islands',
+    'Chandigarh',
+    'Dadra and Nagar Haveli and Daman and Diu',
+    'Delhi',
+    'Jammu and Kashmir',
+    'Ladakh',
+    'Lakshadweep',
+    'Puducherry'
+];
+
 function RegisterForm() {
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -53,6 +99,32 @@ function RegisterForm() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
+    const [isGoogleUser, setIsGoogleUser] = useState(false);
+    const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+    const [showPhonePrompt, setShowPhonePrompt] = useState(false);
+    const [isPincodeLookup, setIsPincodeLookup] = useState(false);
+    const [pincodeError, setPincodeError] = useState(null);
+    const [showLocationPicker, setShowLocationPicker] = useState(false);
+
+    // Check for existing Google session on mount
+    useEffect(() => {
+        const checkGoogleSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+                const provider = session.user.app_metadata?.provider;
+                if (provider === 'google') {
+                    setIsGoogleUser(true);
+                    setShowPhonePrompt(true);
+                    setFormData(prev => ({
+                        ...prev,
+                        ownerName: session.user.user_metadata?.full_name || session.user.user_metadata?.name || '',
+                        ownerEmail: session.user.email || ''
+                    }));
+                }
+            }
+        };
+        checkGoogleSession();
+    }, []);
 
     useEffect(() => {
         const fetchPlans = async () => {
@@ -88,6 +160,81 @@ function RegisterForm() {
 
         fetchPlans();
     }, []);
+
+    const handleGoogleSignIn = async () => {
+        setIsGoogleLoading(true);
+        setError(null);
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/register?plan=${selectedPlanId}&billing=${billingCycle}`
+                }
+            });
+            if (error) throw error;
+        } catch (err) {
+            console.error('Google sign-in error:', err);
+            setError('Failed to sign in with Google. Please try again.');
+            setIsGoogleLoading(false);
+        }
+    };
+
+    const handlePhoneSubmit = () => {
+        if (!formData.ownerPhone) {
+            setError('Please enter your phone number');
+            return;
+        }
+        setError(null);
+        setShowPhonePrompt(false);
+        setCurrentStep(2); // Skip to restaurant details since owner info is complete
+    };
+
+    // Handle location selection from map picker
+    const handleLocationSelect = (location) => {
+        setFormData(prev => ({
+            ...prev,
+            address: location.address || prev.address,
+            city: location.city || prev.city,
+            state: location.state || prev.state,
+            pincode: location.pincode || prev.pincode,
+            googleMapsLink: location.googleMapsLink || prev.googleMapsLink
+        }));
+        setShowLocationPicker(false);
+        setPincodeError(null);
+    };
+
+    // PIN code lookup function using India Post API
+    const handlePincodeLookup = async (pincode) => {
+        if (pincode.length !== 6) {
+            setPincodeError(null);
+            return;
+        }
+
+        setIsPincodeLookup(true);
+        setPincodeError(null);
+
+        try {
+            const response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+            const data = await response.json();
+
+            if (data[0]?.Status === 'Success' && data[0]?.PostOffice?.length > 0) {
+                const postOffice = data[0].PostOffice[0];
+                setFormData(prev => ({
+                    ...prev,
+                    city: postOffice.District || postOffice.Block || '',
+                    state: postOffice.State || ''
+                }));
+                setPincodeError(null);
+            } else {
+                setPincodeError('Invalid PIN code');
+            }
+        } catch (err) {
+            console.error('PIN code lookup error:', err);
+            setPincodeError('Could not verify PIN code');
+        } finally {
+            setIsPincodeLookup(false);
+        }
+    };
 
     const activePlans = dbPlans || plans;
 
@@ -126,8 +273,12 @@ function RegisterForm() {
     const steps = [
         { id: 1, title: 'Owner Details', icon: User },
         { id: 2, title: 'Restaurant Info', icon: Building2 },
-        { id: 3, title: 'Review & Submit', icon: Check }
+        { id: 3, title: 'Payment', icon: CreditCard },
+        { id: 4, title: 'Review & Submit', icon: Check }
     ];
+
+    const [paymentStatus, setPaymentStatus] = useState(null);
+    const [paymentId, setPaymentId] = useState(null);
 
     const plan = activePlans[formData.plan] || activePlans.professional;
     const price = plan.price ? (formData.billingCycle === 'yearly' ? Math.floor(plan.price * 12 * 0.75) : plan.price) : 'Custom';
@@ -145,22 +296,35 @@ function RegisterForm() {
     const validateStep = (step) => {
         switch (step) {
             case 1:
-                if (!formData.ownerName || !formData.ownerEmail || !formData.ownerPhone || !formData.password) {
+                if (!formData.ownerName || !formData.ownerEmail || !formData.ownerPhone) {
                     setError('Please fill in all required fields');
                     return false;
                 }
-                if (formData.password !== formData.confirmPassword) {
-                    setError('Passwords do not match');
-                    return false;
-                }
-                if (formData.password.length < 6) {
-                    setError('Password must be at least 6 characters');
-                    return false;
+                // Only validate password for non-Google users
+                if (!isGoogleUser) {
+                    if (!formData.password) {
+                        setError('Please enter a password');
+                        return false;
+                    }
+                    if (formData.password !== formData.confirmPassword) {
+                        setError('Passwords do not match');
+                        return false;
+                    }
+                    if (formData.password.length < 6) {
+                        setError('Password must be at least 6 characters');
+                        return false;
+                    }
                 }
                 break;
             case 2:
                 if (!formData.restaurantName || !formData.restaurantType || !formData.address || !formData.city || !formData.state || !formData.pincode) {
                     setError('Please fill in all required fields');
+                    return false;
+                }
+                break;
+            case 3:
+                if (plan.price && paymentStatus !== 'success') {
+                    setError('Please complete the payment to continue');
                     return false;
                 }
                 break;
@@ -171,12 +335,87 @@ function RegisterForm() {
 
     const nextStep = () => {
         if (validateStep(currentStep)) {
-            setCurrentStep(prev => Math.min(prev + 1, 3));
+            setCurrentStep(prev => Math.min(prev + 1, 4));
         }
     };
 
     const prevStep = () => {
         setCurrentStep(prev => Math.max(prev - 1, 1));
+    };
+
+    // Load Razorpay script
+    const loadRazorpayScript = () => {
+        return new Promise((resolve) => {
+            if (window.Razorpay) {
+                resolve(true);
+                return;
+            }
+            const script = document.createElement('script');
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.onload = () => resolve(true);
+            script.onerror = () => resolve(false);
+            document.body.appendChild(script);
+        });
+    };
+
+    // Handle Razorpay payment
+    const handlePayment = async () => {
+        if (!plan.price) {
+            // Enterprise plan - skip payment
+            setPaymentStatus('success');
+            nextStep();
+            return;
+        }
+
+        const scriptLoaded = await loadRazorpayScript();
+        if (!scriptLoaded) {
+            setError('Failed to load payment gateway. Please try again.');
+            return;
+        }
+
+        const amountInPaise = total * 100; // Convert to paise
+
+        const options = {
+            key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_yourkeyhere',
+            amount: amountInPaise,
+            currency: 'INR',
+            name: 'Table Tap',
+            description: `${plan.name} Plan - ${formData.billingCycle === 'monthly' ? 'Monthly' : 'Yearly'} Subscription`,
+            image: '/logo.png',
+            handler: function (response) {
+                // Payment successful
+                setPaymentId(response.razorpay_payment_id);
+                setPaymentStatus('success');
+                setError(null);
+                // Auto-advance to next step
+                setCurrentStep(4);
+            },
+            prefill: {
+                name: formData.ownerName,
+                email: formData.ownerEmail,
+                contact: formData.ownerPhone
+            },
+            notes: {
+                restaurant_name: formData.restaurantName,
+                plan: formData.plan,
+                billing_cycle: formData.billingCycle
+            },
+            theme: {
+                color: '#2A9D8F'
+            },
+            modal: {
+                ondismiss: function () {
+                    setPaymentStatus('cancelled');
+                }
+            }
+        };
+
+        const razorpay = new window.Razorpay(options);
+        razorpay.on('payment.failed', function (response) {
+            setPaymentStatus('failed');
+            setError(`Payment failed: ${response.error.description}`);
+        });
+        razorpay.open();
     };
 
     const handleSubmit = async () => {
@@ -220,6 +459,10 @@ function RegisterForm() {
                     gst_amount: gst,
                     total_amount: total,
 
+                    // Payment Info
+                    payment_status: paymentStatus || (plan.price ? 'pending' : 'not_required'),
+                    payment_id: paymentId || null,
+
                     // Status
                     status: 'pending_review',
                     created_at: new Date().toISOString()
@@ -256,6 +499,9 @@ function RegisterForm() {
                         <p className="text-2xl font-black text-gray-900">{plan.name}</p>
                         {plan.price && (
                             <p className="text-[#2A9D8F] font-bold">₹{total}/{formData.billingCycle === 'monthly' ? 'mo' : 'yr'} (incl. GST)</p>
+                        )}
+                        {paymentId && (
+                            <p className="text-xs text-gray-400 mt-2">Payment ID: {paymentId}</p>
                         )}
                     </div>
                     <Link
@@ -330,74 +576,144 @@ function RegisterForm() {
                                                 </div>
                                             </div>
 
-                                            <div className="space-y-6">
-                                                <div>
-                                                    <label className="block text-[11px] font-black uppercase tracking-wider text-gray-400 mb-2">Full Name *</label>
-                                                    <input
-                                                        type="text"
-                                                        name="ownerName"
-                                                        value={formData.ownerName}
-                                                        onChange={handleInputChange}
-                                                        placeholder="Rajesh Kumar"
-                                                        className="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-bold text-gray-900"
-                                                        required
-                                                    />
-                                                </div>
+                                            {/* Phone Prompt for Google Users */}
+                                            {showPhonePrompt && isGoogleUser ? (
+                                                <div className="space-y-6">
+                                                    <div className="bg-green-50 border border-green-200 rounded-2xl p-6 flex items-start gap-4">
+                                                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center shrink-0">
+                                                            <Check className="text-green-600" size={20} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-bold text-green-800">Signed in with Google</p>
+                                                            <p className="text-green-700 text-sm">{formData.ownerEmail}</p>
+                                                        </div>
+                                                    </div>
 
-                                                <div className="grid md:grid-cols-2 gap-6">
-                                                    <div>
-                                                        <label className="block text-[11px] font-black uppercase tracking-wider text-gray-400 mb-2">Email *</label>
-                                                        <input
-                                                            type="email"
-                                                            name="ownerEmail"
-                                                            value={formData.ownerEmail}
-                                                            onChange={handleInputChange}
-                                                            placeholder="you@restaurant.com"
-                                                            className="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-bold text-gray-900"
-                                                            required
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-[11px] font-black uppercase tracking-wider text-gray-400 mb-2">Phone *</label>
-                                                        <input
-                                                            type="tel"
-                                                            name="ownerPhone"
-                                                            value={formData.ownerPhone}
-                                                            onChange={handleInputChange}
-                                                            placeholder="+91 98765 43210"
-                                                            className="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-bold text-gray-900"
-                                                            required
-                                                        />
-                                                    </div>
-                                                </div>
+                                                    <div className="bg-gray-50 rounded-2xl p-6">
+                                                        <p className="text-gray-900 font-bold mb-1">Welcome, {formData.ownerName}!</p>
+                                                        <p className="text-gray-500 text-sm mb-6">Please provide your phone number to continue</p>
+                                                        
+                                                        <div>
+                                                            <label className="block text-[11px] font-black uppercase tracking-wider text-gray-400 mb-2">Phone Number *</label>
+                                                            <input
+                                                                type="tel"
+                                                                name="ownerPhone"
+                                                                value={formData.ownerPhone}
+                                                                onChange={handleInputChange}
+                                                                placeholder="Phone number"
+                                                                className="w-full px-6 py-4 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-bold text-gray-900"
+                                                                required
+                                                                autoFocus
+                                                            />
+                                                        </div>
 
-                                                <div className="grid md:grid-cols-2 gap-6">
-                                                    <div>
-                                                        <label className="block text-[11px] font-black uppercase tracking-wider text-gray-400 mb-2">Password *</label>
-                                                        <input
-                                                            type="password"
-                                                            name="password"
-                                                            value={formData.password}
-                                                            onChange={handleInputChange}
-                                                            placeholder="••••••••"
-                                                            className="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-bold text-gray-900"
-                                                            required
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-[11px] font-black uppercase tracking-wider text-gray-400 mb-2">Confirm Password *</label>
-                                                        <input
-                                                            type="password"
-                                                            name="confirmPassword"
-                                                            value={formData.confirmPassword}
-                                                            onChange={handleInputChange}
-                                                            placeholder="••••••••"
-                                                            className="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-bold text-gray-900"
-                                                            required
-                                                        />
+                                                        <button
+                                                            onClick={handlePhoneSubmit}
+                                                            className="w-full mt-6 btn-premium flex items-center justify-center gap-2 py-4"
+                                                        >
+                                                            Continue <ArrowRight size={20} />
+                                                        </button>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            ) : (
+                                                <div className="space-y-6">
+                                                    {/* Google Sign-In Button */}
+                                                    <button
+                                                        onClick={handleGoogleSignIn}
+                                                        disabled={isGoogleLoading}
+                                                        className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border-2 border-gray-200 rounded-2xl font-bold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50"
+                                                    >
+                                                        {isGoogleLoading ? (
+                                                            <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                                                        ) : (
+                                                            <svg className="w-5 h-5" viewBox="0 0 24 24">
+                                                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                                                            </svg>
+                                                        )}
+                                                        {isGoogleLoading ? 'Connecting...' : 'Continue with Google'}
+                                                    </button>
+
+                                                    {/* Divider */}
+                                                    <div className="relative">
+                                                        <div className="absolute inset-0 flex items-center">
+                                                            <div className="w-full border-t border-gray-200"></div>
+                                                        </div>
+                                                        <div className="relative flex justify-center text-sm">
+                                                            <span className="px-4 bg-white text-gray-500 font-bold">or continue with email</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-[11px] font-black uppercase tracking-wider text-gray-400 mb-2">Full Name *</label>
+                                                        <input
+                                                            type="text"
+                                                            name="ownerName"
+                                                            value={formData.ownerName}
+                                                            onChange={handleInputChange}
+                                                            placeholder="Full name"
+                                                            className="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-bold text-gray-900"
+                                                            required
+                                                        />
+                                                    </div>
+
+                                                    <div className="grid md:grid-cols-2 gap-6">
+                                                        <div>
+                                                            <label className="block text-[11px] font-black uppercase tracking-wider text-gray-400 mb-2">Email *</label>
+                                                            <input
+                                                                type="email"
+                                                                name="ownerEmail"
+                                                                value={formData.ownerEmail}
+                                                                onChange={handleInputChange}
+                                                                placeholder="Email address"
+                                                                className="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-bold text-gray-900"
+                                                                required
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-[11px] font-black uppercase tracking-wider text-gray-400 mb-2">Phone *</label>
+                                                            <input
+                                                                type="tel"
+                                                                name="ownerPhone"
+                                                                value={formData.ownerPhone}
+                                                                onChange={handleInputChange}
+                                                                placeholder="Phone number"
+                                                                className="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-bold text-gray-900"
+                                                                required
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="grid md:grid-cols-2 gap-6">
+                                                        <div>
+                                                            <label className="block text-[11px] font-black uppercase tracking-wider text-gray-400 mb-2">Password *</label>
+                                                            <input
+                                                                type="password"
+                                                                name="password"
+                                                                value={formData.password}
+                                                                onChange={handleInputChange}
+                                                                placeholder="••••••••"
+                                                                className="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-bold text-gray-900"
+                                                                required
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-[11px] font-black uppercase tracking-wider text-gray-400 mb-2">Confirm Password *</label>
+                                                            <input
+                                                                type="password"
+                                                                name="confirmPassword"
+                                                                value={formData.confirmPassword}
+                                                                onChange={handleInputChange}
+                                                                placeholder="••••••••"
+                                                                className="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-bold text-gray-900"
+                                                                required
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </motion.div>
                                     )}
 
@@ -428,30 +744,61 @@ function RegisterForm() {
                                                             name="restaurantName"
                                                             value={formData.restaurantName}
                                                             onChange={handleInputChange}
-                                                            placeholder="The Good Place"
+                                                            placeholder="Restaurant name"
                                                             className="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-bold text-gray-900"
                                                             required
                                                         />
                                                     </div>
                                                     <div>
                                                         <label className="block text-[11px] font-black uppercase tracking-wider text-gray-400 mb-2">Restaurant Type *</label>
-                                                        <select
-                                                            name="restaurantType"
-                                                            value={formData.restaurantType}
-                                                            onChange={handleInputChange}
-                                                            className="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-bold text-gray-900"
-                                                            required
+                                                        <div className="relative">
+                                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                                                                <Store size={20} className={formData.restaurantType ? 'text-[#2A9D8F]' : 'text-gray-400'} />
+                                                            </div>
+                                                            <select
+                                                                name="restaurantType"
+                                                                value={formData.restaurantType}
+                                                                onChange={handleInputChange}
+                                                                className={`w-full pl-12 pr-12 py-4 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-bold appearance-none cursor-pointer transition-all ${formData.restaurantType ? 'bg-[#2A9D8F]/5 border-[#2A9D8F]/30 text-gray-900' : 'bg-gray-50 border-gray-200 text-gray-500'}`}
+                                                                required
+                                                            >
+                                                                <option value="">Select Type</option>
+                                                                <option value="fine-dining">Fine Dining</option>
+                                                                <option value="casual-dining">Casual Dining</option>
+                                                                <option value="cafe">Cafe</option>
+                                                                <option value="quick-service">Quick Service</option>
+                                                                <option value="food-court">Food Court</option>
+                                                                <option value="cloud-kitchen">Cloud Kitchen</option>
+                                                                <option value="bar-restaurant">Bar & Restaurant</option>
+                                                                <option value="other">Other</option>
+                                                            </select>
+                                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                                                                <ChevronDown size={20} className={formData.restaurantType ? 'text-[#2A9D8F]' : 'text-gray-400'} />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Location Selection */}
+                                                <div className="bg-gradient-to-r from-[#2A9D8F]/5 to-transparent p-4 rounded-2xl border border-[#2A9D8F]/10">
+                                                    <div className="flex items-center justify-between mb-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-10 h-10 bg-[#2A9D8F]/10 rounded-xl flex items-center justify-center">
+                                                                <Navigation className="text-[#2A9D8F]" size={20} />
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-bold text-gray-900 text-sm">Restaurant Location</p>
+                                                                <p className="text-gray-500 text-xs">Use map for accurate address</p>
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowLocationPicker(true)}
+                                                            className="px-4 py-2 bg-[#2A9D8F] text-white rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-[#238b7e] transition-colors"
                                                         >
-                                                            <option value="">Select Type</option>
-                                                            <option value="fine-dining">Fine Dining</option>
-                                                            <option value="casual-dining">Casual Dining</option>
-                                                            <option value="cafe">Cafe</option>
-                                                            <option value="quick-service">Quick Service</option>
-                                                            <option value="food-court">Food Court</option>
-                                                            <option value="cloud-kitchen">Cloud Kitchen</option>
-                                                            <option value="bar-restaurant">Bar & Restaurant</option>
-                                                            <option value="other">Other</option>
-                                                        </select>
+                                                            <MapPin size={16} />
+                                                            Select on Map
+                                                        </button>
                                                     </div>
                                                 </div>
 
@@ -461,14 +808,43 @@ function RegisterForm() {
                                                         name="address"
                                                         value={formData.address}
                                                         onChange={handleInputChange}
-                                                        placeholder="123, Main Street, Banjara Hills"
+                                                        placeholder="Street address (or select on map above)"
                                                         rows={2}
-                                                        className="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-bold text-gray-900 resize-none"
+                                                        className={`w-full px-6 py-4 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-bold text-gray-900 resize-none ${formData.address ? 'bg-[#2A9D8F]/5' : 'bg-gray-50'}`}
                                                         required
                                                     />
                                                 </div>
 
                                                 <div className="grid md:grid-cols-3 gap-6">
+                                                    <div>
+                                                        <label className="block text-[11px] font-black uppercase tracking-wider text-gray-400 mb-2">PIN Code *</label>
+                                                        <div className="relative">
+                                                            <input
+                                                                type="text"
+                                                                name="pincode"
+                                                                value={formData.pincode}
+                                                                onChange={(e) => {
+                                                                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                                                    handleInputChange({ target: { name: 'pincode', value } });
+                                                                    if (value.length === 6) {
+                                                                        handlePincodeLookup(value);
+                                                                    }
+                                                                }}
+                                                                placeholder="6-digit PIN"
+                                                                maxLength={6}
+                                                                className={`w-full px-6 py-4 bg-gray-50 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-bold text-gray-900 ${pincodeError ? 'border-red-300' : 'border-gray-200'}`}
+                                                                required
+                                                            />
+                                                            {isPincodeLookup && (
+                                                                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                                                    <div className="w-5 h-5 border-2 border-[#2A9D8F] border-t-transparent rounded-full animate-spin" />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        {pincodeError && (
+                                                            <p className="text-red-500 text-xs mt-1 font-medium">{pincodeError}</p>
+                                                        )}
+                                                    </div>
                                                     <div>
                                                         <label className="block text-[11px] font-black uppercase tracking-wider text-gray-400 mb-2">City *</label>
                                                         <input
@@ -476,34 +852,33 @@ function RegisterForm() {
                                                             name="city"
                                                             value={formData.city}
                                                             onChange={handleInputChange}
-                                                            placeholder="Hyderabad"
-                                                            className="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-bold text-gray-900"
+                                                            placeholder="Auto-filled from PIN"
+                                                            className={`w-full px-6 py-4 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-bold text-gray-900 ${formData.city ? 'bg-green-50' : 'bg-gray-50'}`}
                                                             required
                                                         />
                                                     </div>
                                                     <div>
                                                         <label className="block text-[11px] font-black uppercase tracking-wider text-gray-400 mb-2">State *</label>
-                                                        <input
-                                                            type="text"
-                                                            name="state"
-                                                            value={formData.state}
-                                                            onChange={handleInputChange}
-                                                            placeholder="Telangana"
-                                                            className="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-bold text-gray-900"
-                                                            required
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-[11px] font-black uppercase tracking-wider text-gray-400 mb-2">Pincode *</label>
-                                                        <input
-                                                            type="text"
-                                                            name="pincode"
-                                                            value={formData.pincode}
-                                                            onChange={handleInputChange}
-                                                            placeholder="500034"
-                                                            className="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-bold text-gray-900"
-                                                            required
-                                                        />
+                                                        <div className="relative">
+                                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                                                                <MapPinned size={20} className={formData.state ? 'text-[#2A9D8F]' : 'text-gray-400'} />
+                                                            </div>
+                                                            <select
+                                                                name="state"
+                                                                value={formData.state}
+                                                                onChange={handleInputChange}
+                                                                className={`w-full pl-12 pr-12 py-4 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-bold appearance-none cursor-pointer transition-all ${formData.state ? 'bg-[#2A9D8F]/5 border-[#2A9D8F]/30 text-gray-900' : 'bg-gray-50 border-gray-200 text-gray-500'}`}
+                                                                required
+                                                            >
+                                                                <option value="">Select State</option>
+                                                                {indianStates.map((state) => (
+                                                                    <option key={state} value={state}>{state}</option>
+                                                                ))}
+                                                            </select>
+                                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                                                                <ChevronDown size={20} className={formData.state ? 'text-[#2A9D8F]' : 'text-gray-400'} />
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
 
@@ -513,7 +888,7 @@ function RegisterForm() {
                                                         name="description"
                                                         value={formData.description}
                                                         onChange={handleInputChange}
-                                                        placeholder="Tell us about your restaurant - your specialty, ambiance, story..."
+                                                        placeholder="Brief description of your restaurant"
                                                         rows={3}
                                                         className="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-bold text-gray-900 resize-none"
                                                     />
@@ -561,7 +936,7 @@ function RegisterForm() {
                                                             name="gstNumber"
                                                             value={formData.gstNumber}
                                                             onChange={handleInputChange}
-                                                            placeholder="22AAAAA0000A1Z5"
+                                                            placeholder="GST number (optional)"
                                                             className="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-bold text-gray-900"
                                                         />
                                                     </div>
@@ -572,7 +947,7 @@ function RegisterForm() {
                                                             name="fssaiLicense"
                                                             value={formData.fssaiLicense}
                                                             onChange={handleInputChange}
-                                                            placeholder="12345678901234"
+                                                            placeholder="FSSAI number (optional)"
                                                             className="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-bold text-gray-900"
                                                         />
                                                     </div>
@@ -585,7 +960,7 @@ function RegisterForm() {
                                                         name="googleMapsLink"
                                                         value={formData.googleMapsLink}
                                                         onChange={handleInputChange}
-                                                        placeholder="https://maps.google.com/..."
+                                                        placeholder="Google Maps link (optional)"
                                                         className="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-bold text-gray-900"
                                                     />
                                                 </div>
@@ -593,10 +968,129 @@ function RegisterForm() {
                                         </motion.div>
                                     )}
 
-                                    {/* Step 3: Review & Submit */}
+                                    {/* Step 3: Payment */}
                                     {currentStep === 3 && (
                                         <motion.div
                                             key="step3"
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: -20 }}
+                                        >
+                                            <div className="flex items-center gap-4 mb-8">
+                                                <div className="w-14 h-14 bg-[#2A9D8F]/10 rounded-2xl flex items-center justify-center">
+                                                    <CreditCard className="text-[#2A9D8F]" size={28} />
+                                                </div>
+                                                <div>
+                                                    <h2 className="text-3xl font-black text-gray-900 tracking-tight">Payment</h2>
+                                                    <p className="text-gray-500 font-bold">Complete your subscription payment</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-6">
+                                                {/* Payment Summary */}
+                                                <div className="bg-gradient-to-br from-[#2A9D8F]/5 to-emerald-50 rounded-3xl p-8 border border-[#2A9D8F]/20">
+                                                    <div className="flex items-center justify-between mb-6">
+                                                        <div>
+                                                            <p className="text-sm text-gray-500 font-bold">Selected Plan</p>
+                                                            <p className="text-2xl font-black text-gray-900">{plan.name}</p>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="text-sm text-gray-500 font-bold">Billing</p>
+                                                            <p className="text-lg font-black text-gray-900 capitalize">{formData.billingCycle}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    {plan.price ? (
+                                                        <div className="space-y-3 border-t border-[#2A9D8F]/20 pt-6">
+                                                            <div className="flex justify-between text-sm">
+                                                                <span className="text-gray-600 font-bold">Plan Price</span>
+                                                                <span className="font-black text-gray-900">₹{price}</span>
+                                                            </div>
+                                                            <div className="flex justify-between text-sm">
+                                                                <span className="text-gray-600 font-bold">GST (18%)</span>
+                                                                <span className="font-black text-gray-900">₹{gst}</span>
+                                                            </div>
+                                                            <div className="flex justify-between text-lg border-t border-[#2A9D8F]/20 pt-3">
+                                                                <span className="font-black text-gray-900">Total Amount</span>
+                                                                <span className="font-black text-[#2A9D8F] text-2xl">₹{total}</span>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="border-t border-[#2A9D8F]/20 pt-6">
+                                                            <p className="text-gray-600 font-bold">Enterprise plans have custom pricing. Our team will contact you to discuss your requirements.</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Payment Status */}
+                                                {paymentStatus === 'success' && (
+                                                    <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 flex items-start gap-4">
+                                                        <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
+                                                            <Check className="text-emerald-600" size={24} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-black text-emerald-800 text-lg">Payment Successful!</p>
+                                                            <p className="text-emerald-700 text-sm">Payment ID: {paymentId}</p>
+                                                            <p className="text-emerald-600 text-sm mt-1">Click "Continue" to complete your registration.</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {paymentStatus === 'failed' && (
+                                                    <div className="bg-red-50 border border-red-200 rounded-2xl p-6 flex items-start gap-4">
+                                                        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center shrink-0">
+                                                            <AlertCircle className="text-red-600" size={24} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-black text-red-800 text-lg">Payment Failed</p>
+                                                            <p className="text-red-700 text-sm">Please try again or use a different payment method.</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {paymentStatus === 'cancelled' && (
+                                                    <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-6 flex items-start gap-4">
+                                                        <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center shrink-0">
+                                                            <AlertCircle className="text-yellow-600" size={24} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-black text-yellow-800 text-lg">Payment Cancelled</p>
+                                                            <p className="text-yellow-700 text-sm">You cancelled the payment. Click the button below to try again.</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Pay Now Button */}
+                                                {plan.price && paymentStatus !== 'success' && (
+                                                    <button
+                                                        onClick={handlePayment}
+                                                        className="w-full btn-premium flex items-center justify-center gap-3 py-5 text-lg"
+                                                    >
+                                                        <CreditCard size={24} />
+                                                        Pay ₹{total} Now
+                                                    </button>
+                                                )}
+
+                                                {!plan.price && (
+                                                    <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
+                                                        <p className="font-bold text-blue-800">Enterprise Plan</p>
+                                                        <p className="text-blue-700 text-sm mt-1">No upfront payment required. Our team will reach out to discuss pricing based on your specific needs.</p>
+                                                    </div>
+                                                )}
+
+                                                {/* Security Badge */}
+                                                <div className="flex items-center justify-center gap-3 text-gray-400 text-sm">
+                                                    <Shield size={16} />
+                                                    <span className="font-bold">Secured by Razorpay • 256-bit SSL Encryption</span>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )}
+
+                                    {/* Step 4: Review & Submit */}
+                                    {currentStep === 4 && (
+                                        <motion.div
+                                            key="step4"
                                             initial={{ opacity: 0, x: 20 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             exit={{ opacity: 0, x: -20 }}
@@ -686,6 +1180,30 @@ function RegisterForm() {
                                                     </div>
                                                 </div>
 
+                                                {/* Payment Summary */}
+                                                {plan.price && paymentId && (
+                                                    <div className="bg-emerald-50 rounded-3xl p-6">
+                                                        <div className="flex items-center gap-3 mb-4">
+                                                            <CreditCard size={20} className="text-emerald-600" />
+                                                            <h3 className="font-black text-gray-900 uppercase text-sm tracking-wider">Payment Details</h3>
+                                                        </div>
+                                                        <div className="grid md:grid-cols-2 gap-4 text-sm">
+                                                            <div>
+                                                                <p className="text-gray-400 font-bold">Status</p>
+                                                                <p className="font-black text-emerald-600">Paid ✓</p>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-gray-400 font-bold">Amount</p>
+                                                                <p className="font-black text-gray-900">₹{total}</p>
+                                                            </div>
+                                                            <div className="md:col-span-2">
+                                                                <p className="text-gray-400 font-bold">Payment ID</p>
+                                                                <p className="font-black text-gray-900 text-xs">{paymentId}</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
                                                 {/* Terms */}
                                                 <div className="bg-blue-50 rounded-3xl p-6 flex gap-4">
                                                     <Shield className="text-blue-500 flex-shrink-0" size={24} />
@@ -727,6 +1245,18 @@ function RegisterForm() {
                                         >
                                             Continue <ArrowRight size={20} />
                                         </button>
+                                    ) : currentStep === 3 ? (
+                                        // Payment step - show continue only if payment successful or enterprise plan
+                                        (paymentStatus === 'success' || !plan.price) ? (
+                                            <button
+                                                onClick={nextStep}
+                                                className="btn-premium flex items-center gap-2 px-8 py-4"
+                                            >
+                                                Continue <ArrowRight size={20} />
+                                            </button>
+                                        ) : (
+                                            <div /> // Hide continue button until payment is done
+                                        )
                                     ) : (
                                         <button
                                             onClick={handleSubmit}
@@ -818,6 +1348,14 @@ function RegisterForm() {
                     </div>
                 </div>
             </div>
+
+            {/* Location Picker Modal */}
+            {showLocationPicker && (
+                <LocationPicker
+                    onLocationSelect={handleLocationSelect}
+                    onClose={() => setShowLocationPicker(false)}
+                />
+            )}
         </div>
     );
 }

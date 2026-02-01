@@ -128,12 +128,6 @@ export const authService = {
       });
 
       if (error) throw error;
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await syncProfile(user);
-      }
-
       return data;
     } catch (error) {
       throw error;

@@ -32,6 +32,7 @@ const Sidebar = ({
   restaurantName,
   userRole,
   onProfilePhotoClick,
+  restaurantLogoUrl,
   collapsed = false,
   onToggleCollapsed
 }) => {
@@ -144,25 +145,14 @@ const Sidebar = ({
             </div>
 
             <div className="flex flex-col items-center space-y-2">
-              {currentUser?.restaurant_logo_url || restaurantName ? (
-                currentUser?.restaurant_logo_url ? (
-                  <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center overflow-hidden shadow">
-                    <img
-                      src={currentUser.restaurant_logo_url}
-                      alt={restaurantName || "Restaurant Logo"}
-                      className="w-10 h-10 object-contain"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center shadow">
-                    <Building2 className="w-8 h-8 text-white" />
-                  </div>
-                )
-              ) : (
-                <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center shadow">
-                  <Building2 className="w-8 h-8 text-white" />
-                </div>
-              )}
+              <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center overflow-hidden shadow-lg border border-white/10 p-2">
+                <img
+                  src={restaurantLogoUrl || currentUser?.restaurant_logo_url || tableTapLogo}
+                  alt={restaurantName || "Restaurant Logo"}
+                  className="w-full h-full object-contain"
+                  onError={(e) => { e.target.src = tableTapLogo; }}
+                />
+              </div>
               {!collapsed && (
                 <>
                   <h1 className="text-lg font-extrabold text-white tracking-tight mt-2">

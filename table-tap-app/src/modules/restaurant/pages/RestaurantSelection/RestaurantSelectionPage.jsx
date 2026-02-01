@@ -974,7 +974,7 @@ const RestaurantSelectionPage = () => {
                               <img
                                 src={restaurant.logo_url}
                                 alt={restaurant.name + ' logo'}
-                                className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg"
+                                className="w-16 h-16 md:w-20 md:h-20 object-contain rounded-lg bg-gray-50"
                                 loading={index > 2 ? 'lazy' : 'eager'}
                                 style={{
                                   WebkitUserDrag: 'none',
@@ -1444,7 +1444,7 @@ const RestaurantSelectionPage = () => {
               >
                 <X size={14} />
               </button>
-              
+
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
                   <MapPin size={18} className="text-orange-500" />
@@ -1454,11 +1454,11 @@ const RestaurantSelectionPage = () => {
                   <h3 className="text-base font-semibold text-gray-900 truncate">{nearestRestaurant.name}</h3>
                 </div>
               </div>
-              
+
               {nearestRestaurant.address && (
                 <p className="text-xs text-gray-500 mb-4 line-clamp-2">{nearestRestaurant.address}</p>
               )}
-              
+
               <div className="flex gap-2">
                 <button
                   className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"

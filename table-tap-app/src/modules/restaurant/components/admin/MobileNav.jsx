@@ -13,8 +13,9 @@ import {
   Clock,
   ShoppingBag
 } from 'lucide-react';
+import tableTapLogo from '../../../../assets/icons/logott.png';
 
-const MobileNav = ({ showMobileNav, setShowMobileNav, activeTab, setActiveTab, menuItems, handleLogout, currentUser, restaurantName, userRole }) => {
+const MobileNav = ({ showMobileNav, setShowMobileNav, activeTab, setActiveTab, menuItems, handleLogout, currentUser, restaurantName, restaurantLogoUrl, userRole }) => {
   // Map icon strings to actual components
   const getIcon = (iconName) => {
     const icons = {
@@ -58,10 +59,17 @@ const MobileNav = ({ showMobileNav, setShowMobileNav, activeTab, setActiveTab, m
   return (
     <>
       {/* Mobile Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 bg-gray-900 text-white z-20 px-4 py-3 flex justify-between items-center">
-        <h1 className="text-lg font-bold flex items-center gap-2">
-          <LayoutDashboard className="w-5 h-5 text-orange-500" />
-          <span>Admin Dashboard</span>
+      <div className="md:hidden fixed top-0 left-0 right-0 bg-gray-900 text-white z-20 px-4 py-3 flex justify-between items-center shadow-lg border-b border-gray-800">
+        <h1 className="text-lg font-bold flex items-center gap-3">
+          <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center overflow-hidden p-1">
+            <img
+              src={restaurantLogoUrl || currentUser?.restaurant_logo_url || tableTapLogo}
+              alt="Logo"
+              className="w-full h-full object-contain"
+              onError={(e) => { e.target.src = tableTapLogo; }}
+            />
+          </div>
+          <span className="truncate max-w-[150px]">{restaurantName || 'Dashboard'}</span>
         </h1>
         <button
           onClick={() => setShowMobileNav(!showMobileNav)}

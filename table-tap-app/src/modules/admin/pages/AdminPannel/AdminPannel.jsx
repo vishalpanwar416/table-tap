@@ -19,6 +19,7 @@ import {
   updateRestaurant,
   deleteRestaurant,
   toggleRestaurantStatus,
+  toggleRestaurantAggregators,
   createStaff,
   updateStaff,
   deleteStaff,
@@ -83,7 +84,9 @@ const AdminPanel = () => {
     },
     manager_name: '',
     manager_email: '',
-    manager_phone: ''
+    manager_phone: '',
+    swiggy_api_key: '',
+    zomato_api_key: ''
   });
 
   const [newStaff, setNewStaff] = useState({
@@ -213,6 +216,30 @@ const AdminPanel = () => {
     }
   };
 
+  const handleToggleRestaurantAggregators = async (id) => {
+    try {
+      const restaurant = restaurants.find(r => r.id === id);
+      const newStatus = !restaurant.aggregators_enabled;
+
+      const { error } = await toggleRestaurantAggregators(id, newStatus);
+      if (error) {
+        handleError('Failed to update restaurant aggregators: ' + error);
+        return;
+      }
+
+      setRestaurants(prev =>
+        prev.map(r =>
+          r.id === id
+            ? { ...r, aggregators_enabled: newStatus }
+            : r
+        )
+      );
+      handleSuccess(`Online aggregators ${newStatus ? 'enabled' : 'disabled'} successfully`);
+    } catch (err) {
+      handleError('Failed to toggle restaurant aggregators: ' + err.message);
+    }
+  };
+
   const handleAddRestaurant = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -249,7 +276,9 @@ const AdminPanel = () => {
         },
         manager_name: '',
         manager_email: '',
-        manager_phone: ''
+        manager_phone: '',
+        swiggy_api_key: '',
+        zomato_api_key: ''
       });
     } catch (err) {
       handleError('Failed to create restaurant: ' + err.message);
@@ -472,6 +501,7 @@ const AdminPanel = () => {
             onAddRestaurant={() => setShowAddRestaurant(true)}
             onToggleStatus={handleToggleRestaurantStatus}
             onToggleAI={handleToggleRestaurantAI}
+            onToggleAggregators={handleToggleRestaurantAggregators}
             onEdit={handleEditRestaurant}
             onDelete={handleDeleteRestaurant}
             onClick={handleRestaurantClick}
@@ -625,7 +655,9 @@ const AdminPanel = () => {
             },
             manager_name: '',
             manager_email: '',
-            manager_phone: ''
+            manager_phone: '',
+            swiggy_api_key: '',
+            zomato_api_key: ''
           }}
           setData={setSelectedRestaurant}
           isEditing={true}

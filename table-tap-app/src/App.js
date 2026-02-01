@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useMemo } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import './App.css';
 import './styles/admin-panel.css';
@@ -17,6 +17,7 @@ import { getSubdomain, isDevelopment } from './modules/shared/utils/subdomainRou
 const CustomerApp = lazy(() => import('./modules/customer/CustomerApp'));
 const RestaurantApp = lazy(() => import('./modules/restaurant/RestaurantApp'));
 const AdminApp = lazy(() => import('./modules/admin/AdminApp'));
+const AuthCallback = lazy(() => import('./modules/shared/components/auth/AuthCallback'));
 
 
 import "@fontsource/league-spartan";
@@ -41,6 +42,7 @@ const LoadingSpinner = () => <LoadingScreen message="Loading Table Tap..." />;
  * - admin.tabletap.com (or localhost/admin/*) → Admin Panel
  */
 const App = () => {
+  const location = useLocation();
   // Diagnostic: detect refresh loops
   React.useEffect(() => {
     const now = Date.now();
@@ -79,14 +81,21 @@ const App = () => {
 
   // Render the appropriate app based on subdomain
   const renderApp = () => {
-    const pathname = window.location.pathname;
+    const pathname = location.pathname;
     console.log('[App] Routing decision:', { isDevMode, subdomain, pathname });
-    
+
     // In development, we use path-based routing for convenience
     if (isDevMode) {
       console.log('[App] Using dev mode routing (React Router)');
       return (
         <Routes>
+          {/* Top-level callback to prevent unmounting during auth logic */}
+          <Route path="/auth-callback" element={
+            <Suspense fallback={<LoadingSpinner />}>
+              <AuthCallback />
+            </Suspense>
+          } />
+
           {/* Restaurant dashboard routes */}
           <Route path="/restaurant/*" element={
             <Suspense fallback={<LoadingSpinner />}>
@@ -113,6 +122,14 @@ const App = () => {
 
     // Production: subdomain-based routing
     // Allow path-based overrides for hybrid routing (e.g. /admin on main domain)
+    if (pathname === '/auth-callback') {
+      return (
+        <Suspense fallback={<LoadingSpinner />}>
+          <AuthCallback />
+        </Suspense>
+      );
+    }
+
     if (pathname.startsWith('/admin')) {
       console.log('[App] Loading AdminApp for /admin path');
       return (

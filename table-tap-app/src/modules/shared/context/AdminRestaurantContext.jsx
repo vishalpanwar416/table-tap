@@ -1,16 +1,9 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../shared/supabase';
 import { useAuth } from '../../shared/config/AuthContext';
 
 const AdminRestaurantContext = createContext();
-
-// Helper function to get URL parameters
-const getUrlParams = () => {
-  const urlParams = new URLSearchParams(window.location.search);
-  return {
-    restaurantId: urlParams.get('restaurant')
-  };
-};
 
 // Helper function to store in localStorage
 const localStorageStore = {
@@ -43,111 +36,61 @@ export const AdminRestaurantProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Add state to track URL changes
-  const [urlRestaurantId, setUrlRestaurantId] = useState(() => {
-    const urlParams = getUrlParams();
-    return urlParams.restaurantId;
-  });
+  const location = useLocation();
 
-  // Listen for URL changes
-  useEffect(() => {
-    const handleUrlChange = () => {
-      const urlParams = getUrlParams();
-      setUrlRestaurantId(urlParams.restaurantId);
-    };
-
-    // Listen for popstate events (back/forward navigation)
-    window.addEventListener('popstate', handleUrlChange);
-
-    // Listen for pushstate/replacestate events (programmatic navigation)
-    const originalPushState = history.pushState;
-    const originalReplaceState = history.replaceState;
-
-    history.pushState = function (...args) {
-      originalPushState.apply(history, args);
-      handleUrlChange();
-    };
-
-    history.replaceState = function (...args) {
-      originalReplaceState.apply(history, args);
-      handleUrlChange();
-    };
-
-    return () => {
-      window.removeEventListener('popstate', handleUrlChange);
-      history.pushState = originalPushState;
-      history.replaceState = originalReplaceState;
-    };
-  }, []);
+  // Get restaurant ID from URL
+  const urlRestaurantId = new URLSearchParams(location.search).get('restaurant');
 
   useEffect(() => {
+    let mounted = true;
+
     const fetchUserRoleAndRestaurant = async () => {
       if (!user?.id) {
-        setLoading(false);
+        if (mounted) setLoading(false);
+        return;
+      }
+
+      // Avoid redundant loading if possible
+      const currentStoredId = urlRestaurantId || localStorageStore.get('admin_selected_restaurant');
+      if (userRole && userRestaurantId === currentStoredId && restaurant) {
+        if (mounted) setLoading(false);
         return;
       }
 
       try {
-        setLoading(true);
+        if (!userRole) setLoading(true);
         setError(null);
 
-        // First, check if user has admin profile role
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('profile_role')
           .eq('id', user.id)
           .maybeSingle();
 
+        if (!mounted) return;
+
         if (profileError) {
-          setError('Access denied: Profile not found');
+          if (profileError.name === 'AbortError') return;
+          console.error('[AdminRestaurantContext] Profile fetch error:', profileError);
+          setError('Failed to load profile permissions');
           setLoading(false);
           return;
         }
 
-        // If user has admin profile role, they have full access
-        if (profileData.profile_role === 'admin') {
-          setUserRole('admin');
-
-          // Check URL parameters first for admin users
-          let targetRestaurantId = null;
-
-          if (urlRestaurantId) {
-            // Store the restaurant ID from URL in localStorage
-            localStorageStore.set('admin_selected_restaurant', urlRestaurantId);
-            targetRestaurantId = urlRestaurantId;
-          } else {
-            // Try to get from localStorage if no URL parameter
-            targetRestaurantId = localStorageStore.get('admin_selected_restaurant');
-          }
-
-          setUserRestaurantId(targetRestaurantId);
-
-          // If admin has a specific restaurant ID, fetch that restaurant
-          if (targetRestaurantId) {
-            const { data: restaurantData, error: restaurantError } = await supabase
-              .from('restaurants')
-              .select('*')
-              .eq('id', targetRestaurantId)
-              .eq('is_active', true)
-              .maybeSingle();
-
-            if (restaurantError) {
-              setError('Restaurant not found or inactive');
-              setLoading(false);
-              return;
-            }
-
-            setRestaurant(restaurantData);
-          }
-
+        if (!profileData) {
+          setError('Profile not found.');
           setLoading(false);
           return;
         }
 
-        // If user has captain or manager profile role, they have access
-        if (profileData.profile_role === 'captain' || profileData.profile_role === 'manager') {
-          setUserRole(profileData.profile_role);
-          // For captain/manager with profile_role, we need to get their restaurant_id
+        const role = profileData.profile_role || 'customer';
+        setUserRole(role);
+
+        let targetId = null;
+
+        if (role === 'admin') {
+          targetId = urlRestaurantId || localStorageStore.get('admin_selected_restaurant');
+        } else if (role === 'manager' || role === 'captain') {
           const { data: staffData, error: staffError } = await supabase
             .from('restaurant_staff')
             .select('restaurant_id')
@@ -155,91 +98,46 @@ export const AdminRestaurantProvider = ({ children }) => {
             .eq('connected', true)
             .maybeSingle();
 
-          if (staffError || !staffData) {
-            setError(`Access denied: ${profileData.profile_role} not assigned to restaurant`);
-            setLoading(false);
-            return;
-          }
+          if (staffError && staffError.name === 'AbortError') return;
+          targetId = staffData?.restaurant_id;
+        }
 
-          setUserRestaurantId(staffData.restaurant_id);
+        if (!mounted) return;
+        setUserRestaurantId(targetId);
 
-          // Fetch the restaurant data
-          const { data: restaurantData, error: restaurantError } = await supabase
+        if (targetId) {
+          const { data: restaurantData, error: restError } = await supabase
             .from('restaurants')
             .select('*')
-            .eq('id', staffData.restaurant_id)
-            .eq('is_active', true)
+            .eq('id', targetId)
             .maybeSingle();
 
-          if (restaurantError) {
-            setError('Restaurant not found or inactive');
-            setLoading(false);
-            return;
+          if (restError && restError.name === 'AbortError') return;
+          if (!mounted) return;
+
+          if (restaurantData) {
+            setRestaurant(restaurantData);
+            if (role === 'admin') {
+              localStorageStore.set('admin_selected_restaurant', targetId);
+            }
           }
-
-          setRestaurant(restaurantData);
-          setLoading(false);
-          return;
         }
-
-        // For other users, check staff role and restaurant assignment
-        const { data: staffData, error: staffError } = await supabase
-          .from('restaurant_staff')
-          .select('staff_role, restaurant_id')
-          .eq('user_id', user.id)
-          .eq('connected', true)
-          .maybeSingle();
-
-        if (staffError) {
-          setError('Access denied: Not a staff member');
-          setLoading(false);
-          return;
-        }
-
-        if (!staffData) {
-          setError('Access denied: Not authorized');
-          setLoading(false);
-          return;
-        }
-
-        // Check if user has required role (captain, admin, or manager)
-        const allowedRoles = ['captain', 'admin', 'manager'];
-        if (!allowedRoles.includes(staffData.staff_role)) {
-          setError('Access denied: Insufficient permissions');
-          setLoading(false);
-          return;
-        }
-
-        setUserRole(staffData.staff_role);
-        setUserRestaurantId(staffData.restaurant_id);
-
-        // Now fetch the restaurant data
-        const { data: restaurantData, error: restaurantError } = await supabase
-          .from('restaurants')
-          .select('*')
-          .eq('id', staffData.restaurant_id)
-          .eq('is_active', true)
-          .maybeSingle();
-
-        if (restaurantError) {
-          setError('Restaurant not found or inactive');
-          return;
-        }
-
-        setRestaurant(restaurantData);
 
       } catch (err) {
-        setError('Failed to load restaurant data');
+        if (err.name === 'AbortError') return;
+        console.error('[AdminRestaurantContext] Initialization error:', err);
+        setError('System error loading management data');
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
 
     fetchUserRoleAndRestaurant();
-  }, [user?.id, urlRestaurantId]); // Add urlRestaurantId to dependencies
+    return () => { mounted = false; };
+  }, [user?.id, urlRestaurantId]);
 
   // Function to set restaurant for admin users
-  const setAdminRestaurant = async (restaurantId) => {
+  const setAdminRestaurant = React.useCallback(async (restaurantId) => {
     if (userRole !== 'admin') {
       return false;
     }
@@ -272,15 +170,16 @@ export const AdminRestaurantProvider = ({ children }) => {
       return true;
 
     } catch (err) {
+      if (err.name === 'AbortError') return false;
       setError('Failed to set restaurant');
       return false;
     } finally {
       setLoading(false);
     }
-  };
+  }, [userRole]);
 
   // Function to clear admin restaurant selection
-  const clearAdminRestaurant = () => {
+  const clearAdminRestaurant = React.useCallback(() => {
     if (userRole !== 'admin') {
       return false;
     }
@@ -295,29 +194,24 @@ export const AdminRestaurantProvider = ({ children }) => {
     window.history.replaceState({}, '', url);
 
     return true;
-  };
+  }, [userRole]);
 
-  const updateRestaurant = async (updates) => {
-    // Admin can update any restaurant, staff need specific restaurant ID
+  const updateRestaurant = React.useCallback(async (updates) => {
     if (userRole !== 'admin' && !userRestaurantId) {
       return false;
     }
 
-    // Check if user has permission to update (admin or manager only)
     if (!['admin', 'manager'].includes(userRole)) {
       return false;
     }
 
     try {
-      // For admin, they can update any restaurant (restaurantId should be passed in updates)
-      // For staff, they can only update their assigned restaurant
       const restaurantId = userRole === 'admin' ? updates.restaurant_id || userRestaurantId : userRestaurantId;
 
       if (!restaurantId) {
         return false;
       }
 
-      // Update in database
       const { data, error } = await supabase
         .from('restaurants')
         .update({
@@ -329,10 +223,10 @@ export const AdminRestaurantProvider = ({ children }) => {
         .maybeSingle();
 
       if (error) {
+        if (error.name === 'AbortError') return false;
         return false;
       }
 
-      // Update local state if it's the user's assigned restaurant
       if (userRole !== 'admin' || restaurantId === userRestaurantId) {
         setRestaurant(data);
       }
@@ -341,10 +235,9 @@ export const AdminRestaurantProvider = ({ children }) => {
     } catch (err) {
       return false;
     }
-  };
+  }, [userRole, userRestaurantId]);
 
-  const refreshRestaurant = async (restaurantId = null) => {
-    // Admin can refresh any restaurant, staff can only refresh their assigned one
+  const refreshRestaurant = React.useCallback(async (restaurantId = null) => {
     const targetRestaurantId = userRole === 'admin' ? restaurantId : userRestaurantId;
 
     if (!targetRestaurantId) {
@@ -361,11 +254,11 @@ export const AdminRestaurantProvider = ({ children }) => {
         .maybeSingle();
 
       if (error) {
+        if (error.name === 'AbortError') return false;
         setError(error.message);
         return false;
       }
 
-      // Update local state if it's the user's assigned restaurant
       if (userRole !== 'admin' || targetRestaurantId === userRestaurantId) {
         setRestaurant(data);
       }
@@ -373,24 +266,25 @@ export const AdminRestaurantProvider = ({ children }) => {
       return true;
 
     } catch (err) {
+      if (err.name === 'AbortError') return false;
       setError('Failed to refresh restaurant data');
       return false;
     } finally {
       setLoading(false);
     }
-  };
+  }, [userRole, userRestaurantId]);
 
-  const canEdit = () => {
+  const canEdit = React.useCallback(() => {
     return ['admin', 'manager'].includes(userRole);
-  };
+  }, [userRole]);
 
-  const canView = () => {
+  const canView = React.useCallback(() => {
     return ['captain', 'admin', 'manager'].includes(userRole);
-  };
+  }, [userRole]);
 
-  const isAdmin = () => {
+  const isAdmin = React.useCallback(() => {
     return userRole === 'admin';
-  };
+  }, [userRole]);
 
   const value = {
     restaurant,

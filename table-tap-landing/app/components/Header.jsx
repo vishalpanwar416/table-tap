@@ -57,7 +57,13 @@ const Header = () => {
                 </nav>
 
                 {/* CTA */}
-                <div className="hidden lg:flex items-center">
+                <div className="hidden lg:flex items-center gap-4">
+                    <Link
+                        href="/login"
+                        className="text-gray-600 hover:text-gray-900 transition-colors text-[14px] font-bold"
+                    >
+                        Restaurant Login
+                    </Link>
                     <motion.button
                         onClick={() => openModal('starter')}
                         whileHover={{ scale: 1.05 }}
@@ -95,6 +101,13 @@ const Header = () => {
                                 {link.name}
                             </a>
                         ))}
+                        <Link
+                            href="/login"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="text-[#2A9D8F] text-lg font-bold border-b border-gray-100 pb-2"
+                        >
+                            Restaurant Login
+                        </Link>
                         <button
                             onClick={() => { openModal('starter'); setIsMobileMenuOpen(false); }}
                             className="btn-premium text-center"

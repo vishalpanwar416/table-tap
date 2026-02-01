@@ -125,6 +125,9 @@ const RegistrationRequests = () => {
                     gst_number: registration.gst_number,
                     fssai_license: registration.fssai_license,
                     google_maps_link: registration.google_maps_link,
+                    // Aggregator Integration Keys (can be added later via settings)
+                    swiggy_api_key: registration.swiggy_api_key || null,
+                    zomato_api_key: registration.zomato_api_key || null,
                     is_active: false, // Will be activated by subscription
                     ai_enabled: registration.selected_plan === 'professional' || registration.selected_plan === 'enterprise'
                 }])

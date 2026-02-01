@@ -92,6 +92,9 @@ export const addRestaurant = async (restaurantData) => {
         gst_number: restaurantData.gst_number,
         fssai_license: restaurantData.fssai_license,
         social_media: restaurantData.social_media,
+        // Aggregator Integration Keys
+        swiggy_api_key: restaurantData.swiggy_api_key || null,
+        zomato_api_key: restaurantData.zomato_api_key || null,
         manager_id: userData.user.id
       })
       .select()

@@ -90,10 +90,14 @@ const AdminDashboard = () => {
       { id: 'activity-logs', icon: 'Clock', label: 'Activity Logs' },
     ];
 
-    // Add AI Analytics and Aggregators only for managers and admins
+    // Add AI Analytics and Aggregators only for managers and admins if enabled for the restaurant
     if (contextUserRole === 'manager' || contextUserRole === 'admin' || contextIsAdmin()) {
-      baseItems.splice(7, 0, { id: 'analytics', icon: 'BarChart3', label: 'AI Analytics' });
-      baseItems.splice(8, 0, { id: 'aggregators', icon: 'ShoppingBag', label: 'Aggregators' });
+      if (restaurant?.ai_enabled) {
+        baseItems.splice(7, 0, { id: 'analytics', icon: 'BarChart3', label: 'AI Analytics' });
+      }
+      if (restaurant?.aggregators_enabled) {
+        baseItems.splice(8, 0, { id: 'aggregators', icon: 'ShoppingBag', label: 'Aggregators' });
+      }
     }
 
     return baseItems;
@@ -641,6 +645,7 @@ const AdminDashboard = () => {
           handleLogout={() => setShowLogoutPopup(true)}
           currentUser={currentUser}
           restaurantName={restaurant?.name}
+          restaurantLogoUrl={restaurant?.logo_url}
           userRole={contextUserRole}
           collapsed={isSidebarCollapsed}
           onToggleCollapsed={() => {
@@ -666,6 +671,7 @@ const AdminDashboard = () => {
           handleLogout={() => setShowLogoutPopup(true)}
           currentUser={currentUser}
           restaurantName={restaurant?.name}
+          restaurantLogoUrl={restaurant?.logo_url}
           userRole={contextUserRole}
         />
         <LogoutPopup
@@ -852,6 +858,7 @@ const AdminDashboard = () => {
                   foodItems={foodItems}
                   updateOrderStatus={updateOrderStatus}
                   setActiveTab={setActiveTab}
+                  restaurant={restaurant}
                 />
               )}
 
@@ -912,10 +919,10 @@ const AdminDashboard = () => {
                 />
               )}
 
-              {activeTab === 'analytics' && (contextUserRole === 'manager' || contextUserRole === 'admin' || restaurant.ai_enabled == true || contextIsAdmin()) && (
+              {activeTab === 'analytics' && (contextUserRole === 'manager' || contextUserRole === 'admin' || restaurant?.ai_enabled == true || contextIsAdmin()) && (
                 <div className="h-full flex flex-col">
-                  {restaurant.ai_enabled ? (
-                    <AIAnalyticsChat restaurantId={restaurant.id} />
+                  {restaurant?.ai_enabled ? (
+                    <AIAnalyticsChat restaurantId={restaurant?.id} />
                   ) : (
                     <div className="p-4 mb-8 bg-yellow-50 border border-yellow-200 rounded">
                       <p className="text-yellow-800 font-medium">
@@ -926,7 +933,7 @@ const AdminDashboard = () => {
                 </div>
               )}
 
-              {activeTab === 'aggregators' && (
+              {activeTab === 'aggregators' && restaurant && (
                 <AggregatorIntegration
                   restaurantId={restaurant.id}
                 />

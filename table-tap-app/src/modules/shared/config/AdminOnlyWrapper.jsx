@@ -12,7 +12,7 @@ import AuthWrapper from './AuthWrapper';
 export default function AdminOnlyWrapper({ children }) {
   // Log immediately when component renders
   console.log('[AdminOnlyWrapper] Component rendering...');
-  
+
   const { user, loading: authLoading } = useAuth();
   const [checkingRole, setCheckingRole] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -21,22 +21,22 @@ export default function AdminOnlyWrapper({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
   const checkInProgressRef = useRef(false);
-  
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
   console.log('[AdminOnlyWrapper] State:', { authLoading, userId: user?.id, checkingRole, isAdmin });
 
   useEffect(() => {
     let mounted = true;
 
     const checkRole = async () => {
-      // Wait for auth to finish loading
-      if (authLoading) {
-        console.log('[AdminCheck] Auth still loading...');
-        return;
-      }
-      
-      // If no user, AuthWrapper will handle redirect to login
+      if (authLoading) return;
+
       if (!user?.id) {
-        console.log('[AdminCheck] No user found');
         if (mounted) {
           setCheckingRole(false);
           setIsAdmin(false);
@@ -45,84 +45,54 @@ export default function AdminOnlyWrapper({ children }) {
         return;
       }
 
-      // Prevent duplicate concurrent checks
+      // Check if we already have the info in metadata to avoid unnecessary DB call
+      const metadataRole = user.user_metadata?.profile_role || user.app_metadata?.profile_role;
+      if (metadataRole === 'admin') {
+        if (mounted) {
+          setIsAdmin(true);
+          setCheckingRole(false);
+          setShouldRedirect(false);
+        }
+        return;
+      }
+
       if (checkInProgressRef.current) return;
       checkInProgressRef.current = true;
 
-      console.log('[AdminCheck] Checking role for user:', user.id);
-      console.log('[AdminCheck] user_metadata:', user.user_metadata);
-      console.log('[AdminCheck] app_metadata:', user.app_metadata);
-
       try {
-        // Check multiple sources for admin role
-        const metadataRole = user.user_metadata?.profile_role;
-        const appMetadataRole = user.app_metadata?.profile_role;
-        
-        console.log('[AdminCheck] metadataRole:', metadataRole);
-        console.log('[AdminCheck] appMetadataRole:', appMetadataRole);
-
-        // Check user_metadata first
-        if (metadataRole === 'admin') {
-          console.log('[AdminCheck] Admin found in user_metadata');
-          if (mounted) {
-            setIsAdmin(true);
-            setCheckingRole(false);
-            setShouldRedirect(false);
-          }
-          return;
-        }
-
-        // Check app_metadata (set by Supabase admin)
-        if (appMetadataRole === 'admin') {
-          console.log('[AdminCheck] Admin found in app_metadata');
-          if (mounted) {
-            setIsAdmin(true);
-            setCheckingRole(false);
-            setShouldRedirect(false);
-          }
-          return;
-        }
-
-        // Fallback: check profiles table
-        console.log('[AdminCheck] Checking profiles table...');
-        
         const { data, error } = await supabase
           .from('profiles')
           .select('profile_role')
           .eq('id', user.id)
-          .single();
-
-        console.log('[AdminCheck] Profile query result:', { data, error });
+          .maybeSingle();
 
         if (!mounted) return;
 
         if (error) {
-          console.error('[AdminCheck] Profile query error:', error);
-          setDebugInfo({ error: error.message, code: error.code });
+          if (error.name === 'AbortError') return;
+          console.error('[AdminCheck] Error:', error);
+          setDebugInfo({ error: error.message });
           setIsAdmin(false);
           setShouldRedirect(true);
-          setCheckingRole(false);
-          return;
+        } else {
+          const isAdminRole = data?.profile_role === 'admin';
+          setDebugInfo({ profileRole: data?.profile_role, isAdmin: isAdminRole });
+          setIsAdmin(isAdminRole);
+          setShouldRedirect(!isAdminRole);
         }
-
-        const profileRole = data?.profile_role;
-        console.log('[AdminCheck] Profile role from DB:', profileRole);
-        
-        const isAdminRole = profileRole === 'admin';
-        setDebugInfo({ profileRole, isAdmin: isAdminRole });
-        setIsAdmin(isAdminRole);
-        setShouldRedirect(!isAdminRole);
-        setCheckingRole(false);
       } catch (err) {
+        if (err.name === 'AbortError') return;
         console.error('[AdminCheck] Exception:', err);
         if (mounted) {
           setDebugInfo({ exception: err.message });
           setIsAdmin(false);
           setShouldRedirect(true);
-          setCheckingRole(false);
         }
       } finally {
-        checkInProgressRef.current = false;
+        if (mounted) {
+          setCheckingRole(false);
+          checkInProgressRef.current = false;
+        }
       }
     };
 
@@ -131,15 +101,15 @@ export default function AdminOnlyWrapper({ children }) {
     return () => {
       mounted = false;
     };
-  }, [authLoading, user?.id, user?.user_metadata?.profile_role, user?.app_metadata?.profile_role]);
+  }, [authLoading, user?.id]);
 
-  // Handle redirect in useEffect (not during render)
   useEffect(() => {
-    if (!checkingRole && shouldRedirect && !isAdmin) {
-      console.log('[AdminCheck] Redirecting to /home. Debug info:', debugInfo);
-      navigate('/home', { replace: true, state: { from: location.pathname } });
+    // Only redirect if NOT loading and we are sure they are NOT an admin
+    if (!checkingRole && !authLoading && shouldRedirect && !isAdmin && mountedRef.current) {
+      console.log('[AdminCheck] Redirecting to /home');
+      navigate('/home', { replace: true });
     }
-  }, [checkingRole, shouldRedirect, isAdmin, navigate, location.pathname, debugInfo]);
+  }, [checkingRole, authLoading, shouldRedirect, isAdmin, navigate]);
 
   // Show loading while checking
   if (checkingRole) {
