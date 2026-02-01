@@ -33,21 +33,31 @@ export default function SignUpPage() {
   const urlRestaurant = urlParams.get('restaurant');
   const urlTable = urlParams.get('table');
 
+  // Track if signup just completed (to avoid auto-redirect after signup)
+  const [justSignedUp, setJustSignedUp] = React.useState(false);
+
   useEffect(() => {
+    // Don't redirect if we just signed up - user needs to see email verification message
+    if (justSignedUp) return;
+    
     const checkSession = async () => {
       try {
         const user = await authService.getCurrentUser();
         if (user) {
-          // Preserve URL parameters when redirecting
-          const params = urlRestaurant && urlTable ? `?restaurant=${urlRestaurant}&table=${urlTable}` : '';
-          navigate(`/home${params}`);
+          // Check if email is verified before redirecting
+          // If email is not verified, the user should verify first
+          if (user.email_confirmed_at || user.confirmed_at) {
+            // Preserve URL parameters when redirecting
+            const params = urlRestaurant && urlTable ? `?restaurant=${urlRestaurant}&table=${urlTable}` : '';
+            navigate(`/restaurant-selection${params}`);
+          }
         }
       } catch (err) {
         // User not logged in, stay on signup page
       }
     };
     checkSession();
-  }, [navigate, urlRestaurant, urlTable]);
+  }, [navigate, urlRestaurant, urlTable, justSignedUp]);
 
   // Helper: get initials from full name
   const getInitials = (name) => {
@@ -223,6 +233,9 @@ export default function SignUpPage() {
         dateOfBirth: formData.dateOfBirth,
         avatar_url: avatarUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(formData.fullName) + '&background=random'
       });
+
+      // Mark that we just signed up to prevent auto-redirect
+      setJustSignedUp(true);
 
       // Show verification toast
       toast('Verify your profile by clicking on the email you receive.', {
