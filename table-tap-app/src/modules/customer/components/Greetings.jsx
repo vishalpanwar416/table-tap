@@ -25,16 +25,19 @@ export default function DynamicGreeting() {
 
         if (mounted) {
           if (data?.full_name) {
-            setUserName(data.full_name);
+            // Use only first name
+            setUserName(data.full_name.split(' ')[0]);
           } else {
-            // Fallback to metadata or email
-            setUserName(user.user_metadata?.name || user.email?.split('@')[0] || "Guest");
+            // Fallback to metadata or email (first name only)
+            const fallbackName = user.user_metadata?.name || user.email?.split('@')[0] || "Guest";
+            setUserName(fallbackName.split(' ')[0]);
           }
         }
       } catch (err) {
         console.error("Error fetching profile for greeting:", err);
         if (mounted) {
-          setUserName(user.user_metadata?.name || user.email?.split('@')[0] || "Guest");
+          const fallbackName = user.user_metadata?.name || user.email?.split('@')[0] || "Guest";
+          setUserName(fallbackName.split(' ')[0]);
         }
       }
     };
