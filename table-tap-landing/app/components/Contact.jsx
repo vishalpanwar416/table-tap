@@ -48,7 +48,7 @@ const Contact = () => {
     };
 
     return (
-        <section id="contact" className="py-24 relative bg-white overflow-hidden">
+        <section id="contact" aria-labelledby="contact-heading" className="py-24 relative bg-white overflow-hidden">
             {/* Background Aesthetic Section */}
             <div className="absolute bottom-0 right-0 w-[800px] h-[800px] bg-[#2A9D8F]/5 rounded-full blur-[120px] translate-x-1/3 translate-y-1/3" />
 
@@ -65,6 +65,7 @@ const Contact = () => {
                             <span className="text-[11px] font-black uppercase tracking-[0.3em]">{contact.badge}</span>
                         </motion.div>
                         <motion.h2
+                            id="contact-heading"
                             initial={{ opacity: 0, y: 30 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
@@ -134,35 +135,42 @@ const Contact = () => {
                         ) : (
                             <div className="relative z-10">
                                 <h3 className="text-4xl font-black text-gray-900 mb-12 tracking-tight">{contact.form.title}</h3>
-                                <form onSubmit={handleSubmit} className="space-y-8">
+                                <form onSubmit={handleSubmit} className="space-y-8" aria-label="Contact form for demo request">
                                     <div className="grid md:grid-cols-2 gap-8">
                                         <div className="space-y-3">
-                                            <label className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400 ml-2">Full Name</label>
+                                            <label htmlFor="contact-name" className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400 ml-2">Full Name</label>
                                             <input
+                                                id="contact-name"
                                                 type="text" placeholder="John Doe"
+                                                autoComplete="name"
                                                 value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                                 className="w-full px-8 py-5 bg-white border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] transition-all font-bold text-gray-900" required />
                                         </div>
                                         <div className="space-y-3">
-                                            <label className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400 ml-2">Email Address</label>
+                                            <label htmlFor="contact-email" className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400 ml-2">Email Address</label>
                                             <input
+                                                id="contact-email"
                                                 type="email" placeholder="john@restaurant.com"
+                                                autoComplete="email"
                                                 value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                                 className="w-full px-8 py-5 bg-white border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] transition-all font-bold text-gray-900" required />
                                         </div>
                                     </div>
                                     <div className="space-y-3">
-                                        <label className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400 ml-2">Restaurant Name</label>
+                                        <label htmlFor="contact-restaurant" className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400 ml-2">Restaurant Name</label>
                                         <input
+                                            id="contact-restaurant"
                                             type="text" placeholder="The Pizza Hub"
+                                            autoComplete="organization"
                                             value={formData.restaurant} onChange={(e) => setFormData({ ...formData, restaurant: e.target.value })}
                                             className="w-full px-8 py-5 bg-white border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] transition-all font-bold text-gray-900" required
                                         />
                                     </div>
 
                                     <div className="space-y-3">
-                                        <label className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400 ml-2">Message</label>
+                                        <label htmlFor="contact-message" className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400 ml-2">Message</label>
                                         <textarea
+                                            id="contact-message"
                                             rows={4}
                                             value={formData.message} onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                                             className="w-full bg-white border border-gray-100 rounded-2xl px-8 py-5 text-gray-900 font-bold focus:ring-2 focus:ring-[#2A9D8F]/20 focus:outline-none transition-all placeholder:text-gray-300 resize-none"

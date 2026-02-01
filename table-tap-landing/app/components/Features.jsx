@@ -19,7 +19,7 @@ const Features = () => {
     const { features } = data;
 
     return (
-        <section id="features" className="py-24 bg-[#F8FAFC]/30 relative overflow-hidden">
+        <section id="features" aria-labelledby="features-heading" className="py-24 bg-[#F8FAFC]/30 relative overflow-hidden">
             {/* Background Aesthetic Particles */}
             <motion.div
                 animate={{ x: [0, 100, 0], y: [0, -50, 0] }}
@@ -45,6 +45,7 @@ const Features = () => {
                     </motion.div>
 
                     <motion.h2
+                        id="features-heading"
                         initial={{ opacity: 0, y: 30 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
@@ -63,12 +64,13 @@ const Features = () => {
                     </motion.p>
                 </div>
 
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-12">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-12" role="list" aria-label="Restaurant management features">
                     {features.mainFeatures.map((feature, index) => {
                         const Icon = IconMap[feature.type] || Zap;
                         return (
-                            <motion.div
+                            <motion.article
                                 key={feature.title}
+                                role="listitem"
                                 initial={{ opacity: 0, y: 40 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
@@ -76,12 +78,12 @@ const Features = () => {
                                 whileHover={{ scale: 1.02 }}
                                 className="glass-card p-14 rounded-[56px] flex flex-col items-center text-center group border-white/50 active:scale-95 transition-all duration-300"
                             >
-                                <div className="w-24 h-24 rounded-[32px] bg-[#0F172A] shadow-2xl flex items-center justify-center mb-10 group-hover:rotate-12 transition-transform duration-500">
-                                    <Icon className="text-[#2A9D8F]" size={42} />
+                                <div className="w-24 h-24 rounded-[32px] bg-[#0F172A] shadow-2xl flex items-center justify-center mb-10 group-hover:rotate-12 transition-transform duration-500" aria-hidden="true">
+                                    <Icon className="text-[#2A9D8F]" size={42} aria-hidden="true" />
                                 </div>
                                 <h3 className="text-3xl font-black text-gray-900 mb-6 tracking-tight">{feature.title}</h3>
                                 <p className="text-gray-500 leading-relaxed font-bold text-base opacity-80">{feature.description}</p>
-                            </motion.div>
+                            </motion.article>
                         );
                     })}
                 </div>

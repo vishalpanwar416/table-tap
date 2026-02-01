@@ -62,12 +62,13 @@ const Services = () => {
                     </motion.div>
                 </div>
 
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8" role="list" aria-label="Table Tap services and features">
                     {services.items.map((service, index) => {
                         const Icon = IconMap[service.id];
                         return (
-                            <motion.div
+                            <motion.article
                                 key={service.title}
+                                role="listitem"
                                 initial={{ opacity: 0, y: 50 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
@@ -75,8 +76,8 @@ const Services = () => {
                                 whileHover={{ y: -15 }}
                                 className="glass-card p-12 rounded-[48px] group relative overflow-hidden flex flex-col min-h-[440px] border-white/40 shadow-xl hover:shadow-2xl transition-all duration-500"
                             >
-                                <div className="w-20 h-20 rounded-3xl bg-[#0F172A] flex items-center justify-center mb-10 shadow-2xl shadow-gray-200 group-hover:rotate-6 transition-transform duration-500">
-                                    <Icon className="text-white" size={38} />
+                                <div className="w-20 h-20 rounded-3xl bg-[#0F172A] flex items-center justify-center mb-10 shadow-2xl shadow-gray-200 group-hover:rotate-6 transition-transform duration-500" aria-hidden="true">
+                                    <Icon className="text-white" size={38} aria-hidden="true" />
                                 </div>
 
                                 <h3 className="text-3xl font-black text-gray-900 mb-6 tracking-tight leading-none">{service.title}</h3>
@@ -93,8 +94,8 @@ const Services = () => {
                                     ))}
                                 </div>
 
-                                <div className="absolute bottom-0 left-12 right-12 h-1.5 bg-[#2A9D8F] translate-y-full group-hover:translate-y-0 transition-transform duration-500 rounded-t-full opacity-50" />
-                            </motion.div>
+                                <div className="absolute bottom-0 left-12 right-12 h-1.5 bg-[#2A9D8F] translate-y-full group-hover:translate-y-0 transition-transform duration-500 rounded-t-full opacity-50" aria-hidden="true" />
+                            </motion.article>
                         );
                     })}
                 </div>

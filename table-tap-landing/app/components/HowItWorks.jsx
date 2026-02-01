@@ -14,7 +14,7 @@ const HowItWorks = () => {
     const { howItWorks } = data;
 
     return (
-        <section id="how-it-works" className="py-24 relative bg-white overflow-hidden">
+        <section id="how-it-works" aria-labelledby="how-it-works-heading" className="py-24 relative bg-white overflow-hidden">
             {/* Background Aesthetic Section */}
             <div className="absolute top-1/2 left-0 w-[500px] h-[500px] bg-[#F4A261]/5 rounded-full blur-[120px] -translate-x-1/2" />
 
@@ -29,6 +29,7 @@ const HowItWorks = () => {
                         <span className="text-[#2A9D8F] text-[12px] font-black uppercase tracking-[0.3em]">{howItWorks.badge}</span>
                     </motion.div>
                     <motion.h2
+                        id="how-it-works-heading"
                         initial={{ opacity: 0, y: 30 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8 }}
@@ -38,7 +39,7 @@ const HowItWorks = () => {
                     </motion.h2>
                 </div>
 
-                <div className="flex flex-col md:flex-row items-start justify-center gap-12 md:gap-8 relative">
+                <div className="flex flex-col md:flex-row items-start justify-center gap-12 md:gap-8 relative" role="list" aria-label="Setup steps">
                     {/* Visual Animated Timeline Connector */}
                     <motion.div
                         initial={{ scaleX: 0 }}
@@ -50,8 +51,9 @@ const HowItWorks = () => {
                     {howItWorks.steps.map((step, index) => {
                         const Icon = IconMap[step.number];
                         return (
-                            <motion.div
+                            <motion.article
                                 key={step.title}
+                                role="listitem"
                                 initial={{ opacity: 0, y: 50 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
@@ -68,7 +70,7 @@ const HowItWorks = () => {
                                 <p className="text-gray-500 text-sm font-bold max-w-[220px] text-center leading-relaxed">
                                     {step.description}
                                 </p>
-                            </motion.div>
+                            </motion.article>
                         );
                     })}
                 </div>

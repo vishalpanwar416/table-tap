@@ -16,7 +16,7 @@ const Footer = () => {
     const { footer } = data;
 
     return (
-        <footer className="bg-[#0F172A] pt-64 pb-20 relative overflow-hidden">
+        <footer className="bg-[#0F172A] pt-64 pb-20 relative overflow-hidden" role="contentinfo" aria-label="Site footer">
             {/* Background Aesthetic Section */}
             <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-[#2A9D8F]/10 rounded-full blur-[150px] -translate-x-1/2 -translate-y-1/2" />
 
@@ -43,9 +43,12 @@ const Footer = () => {
                                         key={i}
                                         whileHover={{ y: -5, scale: 1.1 }}
                                         href={social.href}
+                                        aria-label={`Follow Table Tap on ${social.platform}`}
+                                        rel="noopener noreferrer"
+                                        target="_blank"
                                         className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#2A9D8F] transition-all duration-300 border border-white/5"
                                     >
-                                        <Icon size={20} />
+                                        <Icon size={20} aria-hidden="true" />
                                     </motion.a>
                                 );
                             })}
@@ -53,9 +56,9 @@ const Footer = () => {
                     </div>
 
                     {footer.links.map((group) => (
-                        <div key={group.title}>
+                        <nav key={group.title} aria-label={`${group.title} links`}>
                             <h4 className="text-white font-black text-xs uppercase tracking-[0.4em] mb-10 opacity-50">{group.title}</h4>
-                            <ul className="space-y-6">
+                            <ul className="space-y-6" role="list">
                                 {group.items.map(link => (
                                     <li key={link.label}>
                                         <motion.a
@@ -69,7 +72,7 @@ const Footer = () => {
                                     </li>
                                 ))}
                             </ul>
-                        </div>
+                        </nav>
                     ))}
                 </div>
 

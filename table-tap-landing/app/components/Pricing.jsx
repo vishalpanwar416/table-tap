@@ -65,7 +65,7 @@ const Pricing = () => {
     }, [pricing.plans]);
 
     return (
-        <section id="pricing" className="py-24 bg-[#F8FAFC]/50 relative overflow-hidden">
+        <section id="pricing" aria-labelledby="pricing-heading" className="py-24 bg-[#F8FAFC]/50 relative overflow-hidden">
             {/* Background Aesthetic Section */}
             <div className="absolute top-0 left-1/2 w-[1000px] h-[1000px] bg-[#2A9D8F]/5 rounded-full blur-[150px] -translate-x-1/2 -translate-y-1/2" />
 
@@ -80,6 +80,7 @@ const Pricing = () => {
                         <span className="text-gray-900 text-[12px] font-black uppercase tracking-[0.3em]">{pricing.badge}</span>
                     </motion.div>
                     <motion.h2
+                        id="pricing-heading"
                         initial={{ opacity: 0, y: 30 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8 }}
@@ -98,6 +99,9 @@ const Pricing = () => {
                         <span className={`text-base font-black uppercase tracking-widest ${billingCycle === 'monthly' ? 'text-gray-900' : 'text-gray-300'} transition-colors`}>Monthly</span>
                         <button
                             onClick={() => setBillingCycle(prev => prev === 'monthly' ? 'yearly' : 'monthly')}
+                            aria-label={`Switch to ${billingCycle === 'monthly' ? 'yearly' : 'monthly'} billing`}
+                            aria-pressed={billingCycle === 'yearly'}
+                            role="switch"
                             className="w-20 h-10 bg-gray-900 rounded-full p-1.5 relative flex items-center shadow-2xl transition-all duration-500 hover:scale-110"
                         >
                             <motion.div
@@ -115,7 +119,7 @@ const Pricing = () => {
                     </motion.div>
                 </div>
 
-                <div className="grid lg:grid-cols-3 gap-12 max-w-7xl mx-auto items-end min-h-[400px]">
+                <div className="grid lg:grid-cols-3 gap-12 max-w-7xl mx-auto items-end min-h-[400px]" role="list" aria-label="Subscription plans">
                     {isLoading ? (
                         <div className="lg:col-span-3 flex flex-col items-center justify-center py-20">
                             <Loader2 className="w-12 h-12 text-[#2A9D8F] animate-spin mb-4" />
@@ -125,8 +129,10 @@ const Pricing = () => {
                         plans.map((plan, index) => {
                             const Icon = IconMap[plan.id] || Sparkles;
                             return (
-                                <motion.div
+                                <motion.article
                                     key={plan.id}
+                                    role="listitem"
+                                    aria-label={`${plan.name} plan - ${plan.price ? `₹${plan.price} per month` : 'Custom pricing'}`}
                                     initial={{ opacity: 0, y: 60 }}
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
@@ -188,6 +194,7 @@ const Pricing = () => {
                                         whileHover={{ scale: 1.02 }}
                                         whileTap={{ scale: 0.98 }}
                                         href={`/register?plan=${plan.id}&billing=${billingCycle}`}
+                                        aria-label={`${plan.price ? `Choose ${plan.name} plan` : `Contact sales for ${plan.name}`}`}
                                         className={`w-full py-6 rounded-[28px] font-black text-center text-lg transition-all tracking-widest uppercase ${plan.popular
                                             ? 'bg-[#2A9D8F] text-white shadow-2xl shadow-[#2A9D8F]/30 hover:brightness-110'
                                             : 'bg-gray-100 text-gray-900 hover:bg-gray-900 hover:text-white shadow-sm'
@@ -195,7 +202,7 @@ const Pricing = () => {
                                     >
                                         {plan.price ? 'Choose Plan' : 'Contact Sales'}
                                     </motion.a>
-                                </motion.div>
+                                </motion.article>
                             );
                         })
                     )}
