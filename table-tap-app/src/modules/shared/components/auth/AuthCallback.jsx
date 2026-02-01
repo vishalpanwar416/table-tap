@@ -57,9 +57,12 @@ const AuthCallback = () => {
 
     const processAuth = async () => {
       try {
-        // Check for hash fragment (implicit flow) or code parameter (PKCE flow)
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const hasAccessToken = hashParams.has('access_token');
+        // Check for hash fragment with tokens
+        const hash = window.location.hash.substring(1);
+        const hashParams = new URLSearchParams(hash);
+        
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
         const hasError = hashParams.has('error') || urlParams.has('error');
 
         if (hasError) {
@@ -70,13 +73,15 @@ const AuthCallback = () => {
           return;
         }
 
-        if (hasAccessToken) {
-          // For implicit flow - tokens are in the hash
-          // Supabase's detectSessionInUrl should handle this, but let's be explicit
-          const { data, error } = await supabase.auth.getSession();
+        if (accessToken && refreshToken) {
+          // Manually set the session from URL tokens since detectSessionInUrl isn't working
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
           
           if (error) {
-            console.error('Session error:', error);
+            console.error('Error setting session:', error);
             setAuthError(error.message);
             setTimeout(() => navigate('/login'), 2000);
             return;
@@ -98,7 +103,6 @@ const AuthCallback = () => {
         }
 
         // No session found, wait a bit for auth state to update then redirect
-        // This handles the case where onAuthStateChange hasn't fired yet
       } catch (error) {
         console.error('Auth processing error:', error);
         setAuthError('An error occurred during sign in');
@@ -127,7 +131,7 @@ const AuthCallback = () => {
             navigate('/login');
           }
         });
-      }, 2000);
+      }, 3000);
 
       return () => clearTimeout(timeout);
     }
