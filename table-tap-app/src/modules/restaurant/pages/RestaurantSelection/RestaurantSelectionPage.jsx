@@ -660,9 +660,9 @@ const RestaurantSelectionPage = () => {
     <div className="flex justify-center items-start min-h-screen bg-black">
       <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
         {/* Header */}
-        <div className="w-full px-6 py-8 relative flex items-center justify-center bg-black z-20 sticky top-0 md:static md:bg-transparent">
+        <div className="w-full px-6 py-6 flex items-center justify-center bg-black sticky top-0 z-10 md:static md:bg-transparent">
           <button
-            className="absolute left-4 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 touch-manipulation z-30"
+            className="absolute left-4 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 touch-manipulation"
             onClick={() => navigate(-1)}
             aria-label="Go back"
           >
@@ -914,9 +914,9 @@ const RestaurantSelectionPage = () => {
                             WebkitUserSelect: 'none',
                             userSelect: 'none',
                             transformOrigin: 'center',
-                            zIndex: selectedRestaurant?.id === restaurant.id ? 20 :
-                              hoveredRestaurant === restaurant.id ? 15 :
-                                index === 0 ? 10 : 1
+                            zIndex: selectedRestaurant?.id === restaurant.id ? 5 :
+                              hoveredRestaurant === restaurant.id ? 4 :
+                                index === 0 ? 3 : 1
                           }}
                           whileTap={{ scale: 0.97, backgroundColor: "#fff7ed" }}
                           whileHover={{ scale: 1.03, boxShadow: "0 0 0 4px #ffedd5" }}
