@@ -10,7 +10,7 @@ const Hero = () => {
     const { openModal } = useModal();
 
     return (
-        <section id="home" className="relative min-h-[100vh] flex items-center pt-40 pb-20 overflow-hidden bg-white">
+        <section id="home" aria-label="Hero section - Introduction to Table Tap" className="relative min-h-[100vh] flex items-center pt-40 pb-20 overflow-hidden bg-white">
             {/* Background Aesthetic Elements */}
             <div className="blob top-[-100px] left-[-100px] bg-[#2A9D8F]/20 opacity-60" />
             <div className="blob blob-secondary bottom-[-100px] right-[-100px] opacity-40" />
@@ -68,14 +68,16 @@ const Hero = () => {
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={() => openModal('starter')}
+                            aria-label="Start your free trial of Table Tap"
                             className="btn-premium flex items-center gap-3 text-lg px-12 py-6 shadow-2xl shadow-[#2A9D8F]/20"
                         >
-                            {hero.ctaPrimary.text} <ArrowRight size={22} />
+                            {hero.ctaPrimary.text} <ArrowRight size={22} aria-hidden="true" />
                         </motion.button>
                         <motion.a
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             href={hero.ctaSecondary.href}
+                            aria-label="Watch a demo of Table Tap in action"
                             className="btn-outline flex items-center gap-3 text-lg px-12 py-6 backdrop-blur-md"
                         >
                             {hero.ctaSecondary.text}

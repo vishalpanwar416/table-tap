@@ -21,7 +21,7 @@ const Services = () => {
     const { services } = data;
 
     return (
-        <section id="services" className="py-24 relative bg-white overflow-hidden">
+        <section id="services" aria-labelledby="services-heading" className="py-24 relative bg-white overflow-hidden">
             {/* Background Decorative Gradient */}
             <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-[#2A9D8F]/5 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2" />
 
@@ -38,6 +38,7 @@ const Services = () => {
                             {services.badge}
                         </motion.div>
                         <motion.h2
+                            id="services-heading"
                             initial={{ opacity: 0, y: 40 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}

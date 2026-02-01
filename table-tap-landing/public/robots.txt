@@ -1,0 +1,18 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://tabletap.in/sitemap.xml
+
+# Disallow admin/private areas
+Disallow: /api/
+Disallow: /_next/
+Disallow: /register/
+
+# Allow search engines to crawl everything else
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
