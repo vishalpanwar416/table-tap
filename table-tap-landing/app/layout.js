@@ -1,13 +1,19 @@
-import { League_Spartan } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ModalProvider } from "./context/ModalContext";
 import LeadModal from "./components/LeadModal";
 import StructuredData from "./components/StructuredData";
 
-const leagueSpartan = League_Spartan({
-  variable: "--font-league-spartan",
+const geist = Geist({
+  variable: "--font-geist",
   subsets: ["latin"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  display: "swap",
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata = {
@@ -141,7 +147,7 @@ export default function RootLayout({ children }) {
         <StructuredData />
       </head>
       <body
-        className={`${leagueSpartan.variable} font-sans antialiased bg-white text-gray-900`}
+        className={`${geist.variable} ${geistMono.variable} font-sans antialiased bg-white text-gray-900`}
       >
         <ModalProvider>
           {children}

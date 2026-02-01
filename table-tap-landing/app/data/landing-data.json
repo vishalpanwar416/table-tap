@@ -317,15 +317,15 @@
                 "items": [
                     {
                         "label": "Privacy Policy",
-                        "href": "#"
+                        "href": "/privacy"
                     },
                     {
                         "label": "Terms of Service",
-                        "href": "#"
+                        "href": "/terms"
                     },
                     {
                         "label": "Refund Policy",
-                        "href": "#"
+                        "href": "/refunds"
                     }
                 ]
             }

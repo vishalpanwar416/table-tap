@@ -19,13 +19,14 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-primary: var(--tt-primary);
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-sans: var(--font-geist), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
 }
 
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-geist), system-ui, sans-serif;
   overflow-x: hidden;
   background-image:
     radial-gradient(circle at 0% 0%, rgba(42, 157, 143, 0.03) 0%, transparent 50%),
@@ -198,8 +199,33 @@ body {
 /* Typography Enhancements */
 h1,
 h2,
-h3 {
-  letter-spacing: -0.02em;
+h3,
+h4 {
+  font-family: var(--font-geist), system-ui, sans-serif;
+  letter-spacing: -0.03em;
+  font-weight: 600;
+}
+
+h1 {
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+h2 {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+/* Mono text for code/numbers */
+.font-mono {
+  font-family: var(--font-geist-mono), monospace;
+}
+
+/* Better text rendering */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 .pricing-featured {

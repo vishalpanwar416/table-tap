@@ -28,6 +28,7 @@ const LoadingSpinner = () => (
  * Handles all admin panel routes and functionality
  */
 const AdminApp = () => {
+    console.log('[AdminApp] Rendering AdminApp, pathname:', window.location.pathname);
     return (
         <AdminRestaurantProvider>
             <ManagerNotificationProvider>

@@ -85,26 +85,41 @@ const Contact = () => {
                             {contact.description}
                         </motion.p>
 
-                        <div className="space-y-12">
+                        <div className="space-y-8">
                             {contact.info.map((info, index) => {
                                 const Icon = IconMap[info.type];
+                                
+                                // Generate href based on type
+                                const getHref = () => {
+                                    if (info.type === 'mail') return `mailto:${info.value}`;
+                                    if (info.type === 'phone') return `tel:${info.value.replace(/\s/g, '')}`;
+                                    if (info.type === 'map-pin') return `https://maps.google.com/?q=${encodeURIComponent(info.value)}`;
+                                    return '#';
+                                };
+
+                                const isClickable = info.type === 'mail' || info.type === 'phone' || info.type === 'map-pin';
+
                                 return (
-                                    <motion.div
+                                    <motion.a
                                         key={info.label}
+                                        href={getHref()}
+                                        target={info.type === 'map-pin' ? '_blank' : undefined}
+                                        rel={info.type === 'map-pin' ? 'noopener noreferrer' : undefined}
                                         initial={{ opacity: 0, x: -20 }}
                                         whileInView={{ opacity: 1, x: 0 }}
                                         viewport={{ once: true }}
                                         transition={{ delay: index * 0.1 }}
-                                        className="flex items-center gap-8 group"
+                                        className={`flex items-center gap-5 group ${isClickable ? 'cursor-pointer' : ''}`}
+                                        aria-label={`${info.label}: ${info.value}`}
                                     >
-                                        <div className="w-16 h-16 rounded-[24px] bg-[#0F172A] flex items-center justify-center text-[#2A9D8F] group-hover:rotate-12 group-hover:scale-110 transition-all duration-500 shadow-xl shadow-gray-200">
-                                            {Icon && <Icon size={28} />}
+                                        <div className="w-12 h-12 rounded-xl bg-[#2A9D8F]/10 flex items-center justify-center text-[#2A9D8F] group-hover:bg-[#2A9D8F] group-hover:text-white transition-all duration-300">
+                                            {Icon && <Icon size={22} />}
                                         </div>
                                         <div>
-                                            <p className="text-gray-400 text-[10px] font-black uppercase tracking-[0.3em] mb-1">{info.label}</p>
-                                            <p className="text-2xl font-black text-gray-900 tracking-tight">{info.value}</p>
+                                            <p className="text-gray-400 text-xs font-medium uppercase tracking-wider mb-0.5">{info.label}</p>
+                                            <p className="text-lg font-semibold text-gray-900 group-hover:text-[#2A9D8F] transition-colors">{info.value}</p>
                                         </div>
-                                    </motion.div>
+                                    </motion.a>
                                 );
                             })}
                         </div>
@@ -117,7 +132,7 @@ const Contact = () => {
                         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                         className="glass p-16 rounded-[64px] relative border-white shadow-3xl overflow-hidden"
                     >
-                        <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-transparent pointer-events-none" />
+                        <div className="absolute inset-0 bg-linear-to-br from-white/60 to-transparent pointer-events-none" />
 
                         {formStatus === 'success' ? (
                             <motion.div
@@ -141,7 +156,7 @@ const Contact = () => {
                                             <label htmlFor="contact-name" className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400 ml-2">Full Name</label>
                                             <input
                                                 id="contact-name"
-                                                type="text" placeholder="John Doe"
+                                                type="text" placeholder="Your name"
                                                 autoComplete="name"
                                                 value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                                 className="w-full px-8 py-5 bg-white border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] transition-all font-bold text-gray-900" required />
@@ -150,7 +165,7 @@ const Contact = () => {
                                             <label htmlFor="contact-email" className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400 ml-2">Email Address</label>
                                             <input
                                                 id="contact-email"
-                                                type="email" placeholder="john@restaurant.com"
+                                                type="email" placeholder="Your email"
                                                 autoComplete="email"
                                                 value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                                 className="w-full px-8 py-5 bg-white border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] transition-all font-bold text-gray-900" required />
@@ -160,7 +175,7 @@ const Contact = () => {
                                         <label htmlFor="contact-restaurant" className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400 ml-2">Restaurant Name</label>
                                         <input
                                             id="contact-restaurant"
-                                            type="text" placeholder="The Pizza Hub"
+                                            type="text" placeholder="Your restaurant name"
                                             autoComplete="organization"
                                             value={formData.restaurant} onChange={(e) => setFormData({ ...formData, restaurant: e.target.value })}
                                             className="w-full px-8 py-5 bg-white border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] transition-all font-bold text-gray-900" required
@@ -174,7 +189,7 @@ const Contact = () => {
                                             rows={4}
                                             value={formData.message} onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                                             className="w-full bg-white border border-gray-100 rounded-2xl px-8 py-5 text-gray-900 font-bold focus:ring-2 focus:ring-[#2A9D8F]/20 focus:outline-none transition-all placeholder:text-gray-300 resize-none"
-                                            placeholder="Tell us about your needs..."
+                                            placeholder="Your message"
                                             required
                                         />
                                     </div>

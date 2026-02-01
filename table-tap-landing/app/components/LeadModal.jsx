@@ -112,7 +112,7 @@ const LeadModal = () => {
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black uppercase tracking-wider text-gray-400 ml-2">Your Name</label>
                                             <input
-                                                type="text" placeholder="Rajesh Kumar"
+                                                type="text" placeholder="Full name"
                                                 value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                                 className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] transition-all font-bold text-gray-900 text-sm" required />
                                         </div>
@@ -121,14 +121,14 @@ const LeadModal = () => {
                                             <div className="space-y-2">
                                                 <label className="text-[10px] font-black uppercase tracking-wider text-gray-400 ml-2">Email</label>
                                                 <input
-                                                    type="email" placeholder="you@restaurant.com"
+                                                    type="email" placeholder="Email address"
                                                     value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                                     className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] transition-all font-bold text-gray-900 text-sm" required />
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-[10px] font-black uppercase tracking-wider text-gray-400 ml-2">Phone</label>
                                                 <input
-                                                    type="tel" placeholder="+91 98765..."
+                                                    type="tel" placeholder="Phone number"
                                                     value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                                     className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] transition-all font-bold text-gray-900 text-sm" required />
                                             </div>
@@ -137,7 +137,7 @@ const LeadModal = () => {
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black uppercase tracking-wider text-gray-400 ml-2">Restaurant Name</label>
                                             <input
-                                                type="text" placeholder="Your Restaurant"
+                                                type="text" placeholder="Restaurant name"
                                                 value={formData.restaurant} onChange={(e) => setFormData({ ...formData, restaurant: e.target.value })}
                                                 className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] transition-all font-bold text-gray-900 text-sm" required
                                             />
@@ -149,7 +149,7 @@ const LeadModal = () => {
                                                 rows={3}
                                                 value={formData.message} onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                                                 className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] transition-all font-bold text-gray-900 text-sm resize-none"
-                                                placeholder="How many tables? Any special requirements?"
+                                                placeholder="Number of tables, special requirements..."
                                             />
                                         </div>
 

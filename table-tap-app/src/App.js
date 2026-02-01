@@ -79,8 +79,12 @@ const App = () => {
 
   // Render the appropriate app based on subdomain
   const renderApp = () => {
+    const pathname = window.location.pathname;
+    console.log('[App] Routing decision:', { isDevMode, subdomain, pathname });
+    
     // In development, we use path-based routing for convenience
     if (isDevMode) {
+      console.log('[App] Using dev mode routing (React Router)');
       return (
         <Routes>
           {/* Restaurant dashboard routes */}
@@ -109,7 +113,8 @@ const App = () => {
 
     // Production: subdomain-based routing
     // Allow path-based overrides for hybrid routing (e.g. /admin on main domain)
-    if (window.location.pathname.startsWith('/admin')) {
+    if (pathname.startsWith('/admin')) {
+      console.log('[App] Loading AdminApp for /admin path');
       return (
         <Suspense fallback={<LoadingSpinner />}>
           <AdminApp />
@@ -117,7 +122,8 @@ const App = () => {
       );
     }
 
-    if (window.location.pathname.startsWith('/restaurant')) {
+    if (pathname.startsWith('/restaurant')) {
+      console.log('[App] Loading RestaurantApp for /restaurant path');
       return (
         <Suspense fallback={<LoadingSpinner />}>
           <RestaurantApp />
@@ -125,6 +131,7 @@ const App = () => {
       );
     }
 
+    console.log('[App] Loading app based on subdomain:', subdomain);
     switch (subdomain) {
       case 'app':
         return (
