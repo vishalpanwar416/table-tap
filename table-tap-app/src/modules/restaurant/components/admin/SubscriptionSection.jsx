@@ -13,7 +13,15 @@ import {
     Shield,
     Loader2,
     Star,
-    TrendingUp
+    TrendingUp,
+    Smartphone,
+    Wallet,
+    ToggleLeft,
+    ToggleRight,
+    X,
+    Info,
+    Bell,
+    BellOff
 } from 'lucide-react';
 import { supabase } from '../../../shared/supabase';
 
@@ -27,6 +35,13 @@ const SubscriptionSection = ({ restaurantId }) => {
     const [plans, setPlans] = useState({});
     const [billingCycles, setBillingCycles] = useState({});
     const [masterLoading, setMasterLoading] = useState(true);
+
+    // Autopay state
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [selectedPlan, setSelectedPlan] = useState(null);
+    const [paymentMethod, setPaymentMethod] = useState('card'); // 'card' or 'upi'
+    const [enableAutopay, setEnableAutopay] = useState(true);
+    const [autopayUpdating, setAutopayUpdating] = useState(false);
 
     const ICON_MAP = { Zap, Crown, Star, Shield, CreditCard };
 
@@ -129,8 +144,17 @@ const SubscriptionSection = ({ restaurantId }) => {
         });
     };
 
-    // Handle Razorpay payment
-    const handlePayment = async (planKey, billingCycle = 'monthly') => {
+    // Open payment modal with plan selection
+    const openPaymentModal = (planKey, billingCycle = 'monthly') => {
+        setSelectedPlan({ planKey, billingCycle });
+        setShowPaymentModal(true);
+    };
+
+    // Handle Razorpay payment with autopay option
+    const handlePayment = async () => {
+        if (!selectedPlan) return;
+        
+        const { planKey, billingCycle } = selectedPlan;
         const plan = plans[planKey];
         if (!plan) return;
 
@@ -145,6 +169,7 @@ const SubscriptionSection = ({ restaurantId }) => {
         }
 
         setProcessing(true);
+        setShowPaymentModal(false);
 
         try {
             // Get restaurant details
@@ -162,12 +187,13 @@ const SubscriptionSection = ({ restaurantId }) => {
                 return;
             }
 
+            // Payment options based on selected method
             const options = {
                 key: razorpayKey,
                 amount: total * 100,
                 currency: 'INR',
                 name: 'TableTap',
-                description: `${plan.name} Plan - ${billingCycles[billingCycle]?.label} Subscription`,
+                description: `${plan.name} Plan - ${billingCycles[billingCycle]?.label} Subscription${enableAutopay ? ' (Autopay)' : ''}`,
                 image: '/favicon.ico',
                 prefill: {
                     name: restaurantData?.name || '',
@@ -177,6 +203,26 @@ const SubscriptionSection = ({ restaurantId }) => {
                 theme: {
                     color: '#7C3AED'
                 },
+                // Restrict to selected payment method
+                config: {
+                    display: {
+                        blocks: {
+                            banks: {
+                                name: paymentMethod === 'upi' ? 'Pay via UPI' : 'Pay via Card',
+                                instruments: paymentMethod === 'upi' 
+                                    ? [{ method: 'upi' }]
+                                    : [{ method: 'card' }]
+                            }
+                        },
+                        sequence: ['block.banks'],
+                        preferences: {
+                            show_default_blocks: false
+                        }
+                    }
+                },
+                // For recurring payments / mandates
+                recurring: enableAutopay ? '1' : '0',
+                subscription_card_change: enableAutopay ? 1 : 0,
                 handler: async function (response) {
                     try {
                         const startDate = new Date();
@@ -196,9 +242,11 @@ const SubscriptionSection = ({ restaurantId }) => {
                             end_date: endDate.toISOString(),
                             next_payment_date: endDate.toISOString(),
                             last_payment_date: startDate.toISOString(),
-                            payment_method: 'razorpay',
+                            payment_method: paymentMethod === 'upi' ? 'razorpay_upi' : 'razorpay_card',
                             razorpay_subscription_id: response.razorpay_payment_id,
-                            auto_renew: true,
+                            auto_renew: enableAutopay,
+                            autopay_method: enableAutopay ? paymentMethod : null,
+                            autopay_token: enableAutopay ? (response.razorpay_payment_id || null) : null,
                             grace_period_days: 7,
                             updated_at: new Date().toISOString()
                         };
@@ -232,10 +280,10 @@ const SubscriptionSection = ({ restaurantId }) => {
                                 new_status: 'active',
                                 amount_paid: total,
                                 payment_reference: response.razorpay_payment_id,
-                                notes: `${subscription ? 'Renewed' : 'Purchased'} ${planKey} plan via Razorpay - ${billingCycle}`
+                                notes: `${subscription ? 'Renewed' : 'Purchased'} ${planKey} plan via ${paymentMethod.toUpperCase()} - ${billingCycle}${enableAutopay ? ' (Autopay enabled)' : ''}`
                             }]);
 
-                        alert(`Successfully ${subscription ? 'renewed' : 'activated'}! Your restaurant is now active.`);
+                        alert(`Successfully ${subscription ? 'renewed' : 'activated'}!${enableAutopay ? ' Autopay has been set up for future renewals.' : ''}`);
                         fetchSubscription();
                     } catch (err) {
                         console.error('Error saving subscription:', err);
@@ -256,6 +304,46 @@ const SubscriptionSection = ({ restaurantId }) => {
             alert('Failed to initiate payment. Please try again.');
         } finally {
             setProcessing(false);
+        }
+    };
+
+    // Toggle autopay for existing subscription
+    const toggleAutopay = async () => {
+        if (!subscription) return;
+        
+        setAutopayUpdating(true);
+        try {
+            const newAutoRenew = !subscription.auto_renew;
+            
+            const { error: updateError } = await supabase
+                .from('subscriptions')
+                .update({ 
+                    auto_renew: newAutoRenew,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', subscription.id);
+
+            if (updateError) throw updateError;
+
+            // Log to history
+            await supabase
+                .from('subscription_history')
+                .insert([{
+                    subscription_id: subscription.id,
+                    restaurant_id: restaurantId,
+                    action: newAutoRenew ? 'autopay_enabled' : 'autopay_disabled',
+                    old_status: subscription.status,
+                    new_status: subscription.status,
+                    notes: `Autopay ${newAutoRenew ? 'enabled' : 'disabled'} for ${subscription.plan_name} plan`
+                }]);
+
+            setSubscription(prev => ({ ...prev, auto_renew: newAutoRenew }));
+            alert(`Autopay has been ${newAutoRenew ? 'enabled' : 'disabled'} successfully.`);
+        } catch (err) {
+            console.error('Error toggling autopay:', err);
+            alert('Failed to update autopay setting. Please try again.');
+        } finally {
+            setAutopayUpdating(false);
         }
     };
 
@@ -402,7 +490,7 @@ const SubscriptionSection = ({ restaurantId }) => {
                                             )}
 
                                             <button
-                                                onClick={() => handlePayment(key, selectedCycle)}
+                                                onClick={() => openPaymentModal(key, selectedCycle)}
                                                 disabled={processing}
                                                 className={`w-full py-4 bg-gradient-to-r ${plan.color} text-white font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50`}
                                             >
@@ -416,7 +504,7 @@ const SubscriptionSection = ({ restaurantId }) => {
                                                 )}
                                             </button>
                                         </div>
-                                        <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Includes 18% GST • Secure via Razorpay</p>
+                                        <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Includes 18% GST • Autopay available</p>
                                     </div>
                                 </div>
                             );
@@ -544,7 +632,7 @@ const SubscriptionSection = ({ restaurantId }) => {
                             </div>
 
                             <button
-                                onClick={() => handlePayment(subscription.plan_name, selectedCycle)}
+                                onClick={() => openPaymentModal(subscription.plan_name, selectedCycle)}
                                 disabled={processing}
                                 className={`w-full max-w-sm mx-auto py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 mb-4`}
                             >
@@ -558,7 +646,7 @@ const SubscriptionSection = ({ restaurantId }) => {
                                 )}
                             </button>
                             <p className="text-xs text-gray-400">
-                                Total includes 18% GST • Your new validity will be added to current expiry
+                                Total includes 18% GST • Autopay available for future renewals
                             </p>
                         </div>
                     </div>
@@ -579,6 +667,55 @@ const SubscriptionSection = ({ restaurantId }) => {
                         </div>
                     </div>
 
+                    {/* Autopay Status */}
+                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-5 border border-indigo-100">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${subscription.auto_renew ? 'bg-green-100' : 'bg-gray-100'}`}>
+                                    {subscription.auto_renew ? (
+                                        <Bell className="w-6 h-6 text-green-600" />
+                                    ) : (
+                                        <BellOff className="w-6 h-6 text-gray-400" />
+                                    )}
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-gray-900">Auto-Renewal</h4>
+                                    <p className="text-sm text-gray-500">
+                                        {subscription.auto_renew 
+                                            ? `Will auto-renew on ${formatDate(subscription.end_date)}` 
+                                            : 'Subscription will expire without renewal'}
+                                    </p>
+                                    {subscription.autopay_method && subscription.auto_renew && (
+                                        <p className="text-xs text-indigo-600 mt-1 flex items-center gap-1">
+                                            {subscription.autopay_method === 'upi' ? (
+                                                <><Smartphone className="w-3 h-3" /> UPI Autopay</>
+                                            ) : (
+                                                <><CreditCard className="w-3 h-3" /> Card Autopay</>
+                                            )}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                            <button
+                                onClick={toggleAutopay}
+                                disabled={autopayUpdating}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition-all ${
+                                    subscription.auto_renew 
+                                        ? 'bg-red-50 text-red-600 hover:bg-red-100' 
+                                        : 'bg-green-50 text-green-600 hover:bg-green-100'
+                                } disabled:opacity-50`}
+                            >
+                                {autopayUpdating ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : subscription.auto_renew ? (
+                                    <><ToggleRight className="w-5 h-5" /> Disable</>
+                                ) : (
+                                    <><ToggleLeft className="w-5 h-5" /> Enable</>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+
                     {/* Payment History Link */}
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border">
                         <div className="flex items-center gap-3">
@@ -592,6 +729,153 @@ const SubscriptionSection = ({ restaurantId }) => {
                         </span>
                     </div>
                 </>
+            )}
+
+            {/* Payment Method Modal */}
+            {showPaymentModal && selectedPlan && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden">
+                        {/* Header */}
+                        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-5">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-xl font-bold text-white">Choose Payment Method</h3>
+                                    <p className="text-purple-200 text-sm mt-1">
+                                        {plans[selectedPlan.planKey]?.name} Plan - {billingCycles[selectedPlan.billingCycle]?.label}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => setShowPaymentModal(false)}
+                                    className="p-2 hover:bg-white/20 rounded-xl transition-colors"
+                                >
+                                    <X className="w-5 h-5 text-white" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-6 space-y-6">
+                            {/* Payment Method Selection */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                    Select Payment Method
+                                </label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button
+                                        onClick={() => setPaymentMethod('card')}
+                                        className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
+                                            paymentMethod === 'card'
+                                                ? 'border-purple-500 bg-purple-50'
+                                                : 'border-gray-200 hover:border-purple-200'
+                                        }`}
+                                    >
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                                            paymentMethod === 'card' ? 'bg-purple-100' : 'bg-gray-100'
+                                        }`}>
+                                            <CreditCard className={`w-6 h-6 ${paymentMethod === 'card' ? 'text-purple-600' : 'text-gray-500'}`} />
+                                        </div>
+                                        <span className={`font-semibold ${paymentMethod === 'card' ? 'text-purple-700' : 'text-gray-700'}`}>
+                                            Credit/Debit Card
+                                        </span>
+                                        <span className="text-xs text-gray-500">Visa, Mastercard, RuPay</span>
+                                    </button>
+
+                                    <button
+                                        onClick={() => setPaymentMethod('upi')}
+                                        className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
+                                            paymentMethod === 'upi'
+                                                ? 'border-green-500 bg-green-50'
+                                                : 'border-gray-200 hover:border-green-200'
+                                        }`}
+                                    >
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                                            paymentMethod === 'upi' ? 'bg-green-100' : 'bg-gray-100'
+                                        }`}>
+                                            <Smartphone className={`w-6 h-6 ${paymentMethod === 'upi' ? 'text-green-600' : 'text-gray-500'}`} />
+                                        </div>
+                                        <span className={`font-semibold ${paymentMethod === 'upi' ? 'text-green-700' : 'text-gray-700'}`}>
+                                            UPI
+                                        </span>
+                                        <span className="text-xs text-gray-500">GPay, PhonePe, Paytm</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Autopay Toggle */}
+                            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${enableAutopay ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                                            <RefreshCw className={`w-5 h-5 ${enableAutopay ? 'text-blue-600' : 'text-gray-400'}`} />
+                                        </div>
+                                        <div>
+                                            <h4 className="font-semibold text-gray-900">Enable Autopay</h4>
+                                            <p className="text-xs text-gray-500">Auto-renew subscription before expiry</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setEnableAutopay(!enableAutopay)}
+                                        className={`relative w-12 h-7 rounded-full transition-colors ${enableAutopay ? 'bg-blue-600' : 'bg-gray-300'}`}
+                                    >
+                                        <div className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform ${enableAutopay ? 'translate-x-6' : 'translate-x-1'}`} />
+                                    </button>
+                                </div>
+                                {enableAutopay && (
+                                    <div className="mt-3 pt-3 border-t border-blue-200">
+                                        <div className="flex items-start gap-2 text-xs text-blue-700">
+                                            <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                                            <p>
+                                                {paymentMethod === 'upi' 
+                                                    ? 'UPI mandate will be created for automatic debits. You can cancel anytime.'
+                                                    : 'Your card will be saved securely for automatic renewals. You can cancel anytime.'
+                                                }
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Price Summary */}
+                            <div className="bg-gray-50 rounded-xl p-4">
+                                <div className="flex justify-between items-center mb-2">
+                                    <span className="text-gray-600">Plan Amount</span>
+                                    <span className="font-semibold">₹{calculatePrice(plans[selectedPlan.planKey]?.basePrice, selectedPlan.billingCycle).toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between items-center mb-2">
+                                    <span className="text-gray-600">GST (18%)</span>
+                                    <span className="font-semibold">₹{Math.round(calculatePrice(plans[selectedPlan.planKey]?.basePrice, selectedPlan.billingCycle) * 0.18).toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                                    <span className="font-bold text-gray-900">Total</span>
+                                    <span className="text-xl font-bold text-purple-600">
+                                        ₹{Math.round(calculatePrice(plans[selectedPlan.planKey]?.basePrice, selectedPlan.billingCycle) * 1.18).toLocaleString()}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Pay Button */}
+                            <button
+                                onClick={handlePayment}
+                                disabled={processing}
+                                className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                                {processing ? (
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                ) : (
+                                    <>
+                                        {paymentMethod === 'upi' ? <Smartphone className="w-5 h-5" /> : <CreditCard className="w-5 h-5" />}
+                                        Pay with {paymentMethod === 'upi' ? 'UPI' : 'Card'}
+                                        {enableAutopay && ' + Setup Autopay'}
+                                    </>
+                                )}
+                            </button>
+
+                            <p className="text-center text-xs text-gray-400">
+                                Secured by Razorpay • 256-bit SSL Encryption
+                            </p>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
