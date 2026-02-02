@@ -34,7 +34,7 @@ import {
 import { supabase } from '../../../../shared/supabase';
 import { getSubscriptionStats, getUpcomingRenewals, getSubscriptionPlans } from '../../../api/subscriptionService';
 
-const AdminDashboard = ({ restaurants, staff, onTabChange }) => {
+const AdminDashboard = ({ restaurants, staff, currentUser, onTabChange }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState({
@@ -306,7 +306,7 @@ const AdminDashboard = ({ restaurants, staff, onTabChange }) => {
               <Calendar size={20} className="text-yellow-300" />
               <span className="text-purple-200 text-sm">{currentTime.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold">{greeting}, Admin!</h1>
+            <h1 className="text-2xl md:text-3xl font-bold">{greeting}, {currentUser?.full_name?.split(' ')[0] || 'Admin'}!</h1>
             <p className="text-purple-200 mt-1">Here's what's happening with your platform today.</p>
           </div>
           

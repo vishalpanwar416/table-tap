@@ -556,6 +556,7 @@ const AdminPanel = () => {
           <AdminDashboard 
             restaurants={restaurants} 
             staff={staff} 
+            currentUser={currentUserProfile}
             onTabChange={setActiveTab}
           />
         );
