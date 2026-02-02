@@ -108,37 +108,27 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
     path: '/admin'
   };
 
-  // 3. Reduce animation durations for snappier feel
+  // Smooth slide-only animation (right to left), no spring
   const slideVariants = {
-    hidden: { x: '100%', opacity: 0 },
+    hidden: { x: '100%' },
     visible: {
       x: 0,
-      opacity: 1,
-      transition: { type: 'spring', stiffness: 400, damping: 24, duration: 0.18 }
+      transition: { duration: 0.3, ease: [0.32, 0.72, 0, 1] }
     },
     exit: {
       x: '100%',
-      opacity: 0,
-      transition: {
-        type: 'spring',
-        stiffness: 500,
-        damping: 30,
-        duration: 0.15
-      }
+      transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] }
     }
   };
   const overlayVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: { duration: 0.15 }
+      transition: { duration: 0.25, ease: 'easeOut' }
     },
     exit: {
       opacity: 0,
-      transition: {
-        duration: 0.15,
-        ease: 'easeOut'
-      }
+      transition: { duration: 0.2, ease: 'easeOut' }
     }
   };
 

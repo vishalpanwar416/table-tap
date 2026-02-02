@@ -23,12 +23,12 @@ const PageSkeleton = memo(() => (
 ));
 
 const SidebarSkeleton = memo(() => (
-  <div className="fixed inset-0 z-50 bg-black/50">
-    <div className="fixed left-0 top-0 h-full w-80 bg-white animate-pulse">
-      <div className="p-4 space-y-4">
-        <div className="h-6 bg-gray-200 rounded"></div>
-        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+  <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm">
+    <div className="fixed right-0 top-0 h-full w-[70%] max-w-[70vw] rounded-l-[80px] overflow-hidden bg-black/60 backdrop-blur-2xl border border-white/10">
+      <div className="p-6 pt-16 space-y-4">
+        <div className="h-20 w-20 rounded-full bg-white/10 animate-pulse mx-auto" />
+        <div className="h-6 bg-white/10 rounded w-32 mx-auto animate-pulse" />
+        <div className="h-4 bg-white/10 rounded w-24 mx-auto animate-pulse" />
       </div>
     </div>
   </div>
