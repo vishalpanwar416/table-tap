@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { useAdminRestaurant } from '../../../shared/context/AdminRestaurantContext';
 import SubscriptionSection from './SubscriptionSection';
+import BillingInvoice from './BillingInvoice';
 const RestaurantInformation = () => {
   const {
     restaurant,
@@ -50,6 +51,7 @@ const RestaurantInformation = () => {
   const [saveError, setSaveError] = useState(null);
   const [showSwiggyKey, setShowSwiggyKey] = useState(false);
   const [showZomatoKey, setShowZomatoKey] = useState(false);
+  const [showBillingPanel, setShowBillingPanel] = useState(false);
 
   // Check if user is owner or admin (can see API keys)
   const canSeeApiKeys = () => {
@@ -859,7 +861,37 @@ const RestaurantInformation = () => {
           <SubscriptionSection restaurantId={restaurant?.id} />
         </div>
 
+        {/* Billing & Invoice Section */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border overflow-hidden p-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <Receipt className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Billing & Invoices</h3>
+                <p className="text-gray-500 text-sm">View payment history, download invoices, and manage billing</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowBillingPanel(true)}
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl"
+            >
+              <FileText className="w-5 h-5" />
+              View Billing
+            </button>
+          </div>
+        </div>
+
       </div>
+
+      {/* Billing Invoice Panel */}
+      <BillingInvoice
+        isOpen={showBillingPanel}
+        onClose={() => setShowBillingPanel(false)}
+        restaurantId={restaurant?.id}
+        restaurant={restaurant}
+      />
     </div>
   );
 };
