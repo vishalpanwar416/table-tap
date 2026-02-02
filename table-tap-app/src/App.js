@@ -25,9 +25,6 @@ import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
 import EnvGuard from './modules/shared/config/EnvGuard';
 
-// Register service worker
-// register();
-
 // Loading spinner component
 import LoadingScreen from './modules/shared/components/LoadingScreen';
 const LoadingSpinner = () => <LoadingScreen message="Loading Table Tap..." />;

@@ -7,31 +7,7 @@ const supabaseClient = supabase;
 // DRY: Define email regex once
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Test function to check database connection
-export const testDatabaseConnection = async () => {
-  try {
-
-    // Test 1: Simple count query
-    const { count, error: countError } = await supabase
-      .from('restaurants')
-      .select('*', { count: 'exact', head: true });
-
-
-    // Test 2: Simple select query
-    const { data, error } = await supabase
-      .from('restaurants')
-      .select('id, name, created_at')
-      .limit(5);
-
-
-    // Test 3: Check if user is authenticated
-    const { data: { user } } = await supabase.auth.getUser();
-
-    return { success: true, count, data, user };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
-};
+// Test function removed for cleanup
 
 // ========= RESTAURANT PHOTO UPLOAD FUNCTIONS =========
 

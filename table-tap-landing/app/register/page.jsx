@@ -24,7 +24,8 @@ import {
     ChevronDown,
     Store,
     MapPinned,
-    Navigation
+    Navigation,
+    FileText
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import LocationPicker from '../components/LocationPicker';
@@ -470,6 +471,24 @@ function RegisterForm() {
 
             if (submitError) throw submitError;
 
+            // Send confirmation email (don't wait for it, fire and forget)
+            try {
+                fetch('/api/send-registration-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ownerName: formData.ownerName,
+                        ownerEmail: formData.ownerEmail,
+                        restaurantName: formData.restaurantName,
+                        selectedPlan: formData.plan,
+                        paymentId: paymentId
+                    })
+                }).catch(err => console.error('Email notification error:', err));
+            } catch (emailErr) {
+                // Don't fail registration if email fails
+                console.error('Email send error:', emailErr);
+            }
+
             setSuccess(true);
         } catch (err) {
             console.error('Registration error:', err);
@@ -480,6 +499,8 @@ function RegisterForm() {
     };
 
     if (success) {
+        const statusUrl = `/application-status?email=${encodeURIComponent(formData.ownerEmail)}`;
+        
         return (
             <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center p-6">
                 <motion.div
@@ -493,8 +514,10 @@ function RegisterForm() {
                     <h1 className="text-4xl font-black text-gray-900 mb-4 tracking-tight">Registration Submitted!</h1>
                     <p className="text-gray-500 font-bold mb-8 leading-relaxed">
                         Thank you for choosing Table Tap! Our team will review your application and get back to you within 24-48 hours.
+                        <br /><br />
+                        <span className="text-[#2A9D8F]">A confirmation email has been sent to {formData.ownerEmail}</span>
                     </p>
-                    <div className="bg-gray-50 rounded-2xl p-6 mb-8">
+                    <div className="bg-gray-50 rounded-2xl p-6 mb-6">
                         <p className="text-sm text-gray-500 font-bold">Selected Plan</p>
                         <p className="text-2xl font-black text-gray-900">{plan.name}</p>
                         {plan.price && (
@@ -504,12 +527,21 @@ function RegisterForm() {
                             <p className="text-xs text-gray-400 mt-2">Payment ID: {paymentId}</p>
                         )}
                     </div>
-                    <Link
-                        href="/"
-                        className="btn-premium inline-flex items-center gap-3 px-8 py-4"
-                    >
-                        Back to Home <ArrowRight size={20} />
-                    </Link>
+                    
+                    <div className="flex flex-col gap-3">
+                        <Link
+                            href={statusUrl}
+                            className="btn-premium inline-flex items-center justify-center gap-3 px-8 py-4 w-full"
+                        >
+                            <Clock size={20} /> Track Application Status
+                        </Link>
+                        <Link
+                            href="/"
+                            className="inline-flex items-center justify-center gap-2 px-6 py-3 text-gray-500 hover:text-gray-700 font-bold transition-colors"
+                        >
+                            <ArrowLeft size={18} /> Back to Home
+                        </Link>
+                    </div>
                 </motion.div>
             </div>
         );
