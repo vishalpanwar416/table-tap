@@ -4,6 +4,7 @@ import { useAuth } from '../../../shared/config/AuthContext';
 import { useRestaurant } from './RestaurantContext';
 import { needsRestaurantSelection, hasValidRestaurantSelection } from '../../../shared/utils/restaurantCheck';
 import RestaurantSelectionPage from './RestaurantSelectionPage';
+import LoadingScreen from '../../../shared/components/LoadingScreen';
 
 const RestaurantSelectionWrapper = ({ children }) => {
   const navigate = useNavigate();
@@ -68,17 +69,7 @@ const RestaurantSelectionWrapper = ({ children }) => {
   }, [user, authLoading, loading, location.pathname, navigate, urlRestaurant, urlTable]);
 
   if (checking || authLoading || loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-black">
-        <div className="flex flex-col items-center">
-          <div className="relative w-16 h-16">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-orange-500 border-opacity-20"></div>
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-transparent border-t-orange-500 absolute top-0 left-0"></div>
-          </div>
-          <p className="text-white mt-4 text-lg font-medium">Loading...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Verifying session..." variant="page" />;
   }
 
   // If no restaurant is selected, show restaurant selection page

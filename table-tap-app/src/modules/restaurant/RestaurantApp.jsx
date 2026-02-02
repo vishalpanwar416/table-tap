@@ -1,10 +1,9 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useMemo } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import AuthWrapper from '../shared/config/AuthWrapper';
 import RestaurantDashboardWrapper from '../shared/config/RestaurantDashboardWrapper';
 import { AdminRestaurantProvider } from '../shared/context/AdminRestaurantContext';
 import { ManagerNotificationProvider } from '../shared/context/ManagerNotificationContext';
-import { BasePathProvider, useEffectiveLocation } from '../shared/config/BasePathContext';
+import { BasePathProvider, useBasePath } from '../shared/config/BasePathContext';
 import { isDevelopment } from '../shared/utils/subdomainRouter';
 
 // Lazy load restaurant pages
@@ -42,24 +41,23 @@ const RestaurantFallbackRedirect = () => {
 /**
  * Restaurant App Module
  * - Production (restaurant.table-tap.in): pathname is /, /login, /dashboard, etc.
- * - Development (localhost/restaurant/*): pathname is /restaurant/login — we pass effectiveLocation so Routes see /login.
+ * - Development (localhost/restaurant/*): pathname is /restaurant, /restaurant/login — use path prefix so we don't override location.
  */
 const RestaurantAppRoutes = () => {
-    const effectiveLocation = useEffectiveLocation('/restaurant');
     return (
         <Suspense fallback={<LoadingSpinner />}>
-            <Routes location={effectiveLocation}>
+            <Routes>
                 <Route index element={
                     <RestaurantDashboardWrapper>
                         <AdminDashboard />
                     </RestaurantDashboardWrapper>
                 } />
-                <Route path="/login/*" element={<RestaurantLoginPage />} />
-                <Route path="/signup/*" element={<SignupPage />} />
-                <Route path="/forgot-password/*" element={<ForgotPassword />} />
-                <Route path="/reset-password/*" element={<ResetPassword />} />
-                <Route path="/auth-callback/*" element={<AuthCallback />} />
-                <Route path="/dashboard" element={
+                <Route path="login/*" element={<RestaurantLoginPage />} />
+                <Route path="signup/*" element={<SignupPage />} />
+                <Route path="forgot-password/*" element={<ForgotPassword />} />
+                <Route path="reset-password/*" element={<ResetPassword />} />
+                <Route path="auth-callback/*" element={<AuthCallback />} />
+                <Route path="dashboard" element={
                     <RestaurantDashboardWrapper>
                         <AdminDashboard />
                     </RestaurantDashboardWrapper>

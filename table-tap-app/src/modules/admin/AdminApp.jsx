@@ -1,10 +1,9 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useMemo } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import AuthWrapper from '../shared/config/AuthWrapper';
 import AdminOnlyWrapper from '../shared/config/AdminOnlyWrapper';
 import { AdminRestaurantProvider } from '../shared/context/AdminRestaurantContext';
 import { ManagerNotificationProvider } from '../shared/context/ManagerNotificationContext';
-import { BasePathProvider, useEffectiveLocation } from '../shared/config/BasePathContext';
+import { BasePathProvider, useBasePath } from '../shared/config/BasePathContext';
 import { isDevelopment } from '../shared/utils/subdomainRouter';
 
 // Lazy load admin pages
@@ -28,6 +27,7 @@ const AUTH_PATHS = ['/login', '/signup', '/forgot-password', '/reset-password', 
 
 const AdminFallbackRedirect = () => {
     const location = useLocation();
+    const basePath = useBasePath();
     let pathname = (location.pathname || '/').replace(/\/$/, '') || '/';
     if (isDevelopment() && pathname.startsWith('/admin')) {
         pathname = pathname.slice('/admin'.length) || '/';
@@ -39,32 +39,31 @@ const AdminFallbackRedirect = () => {
         if (pathname === '/forgot-password' || pathname.startsWith('/forgot-password')) return <ForgotPassword />;
         if (pathname === '/reset-password' || pathname.startsWith('/reset-password')) return <ResetPassword />;
         if (pathname === '/auth-callback' || pathname.startsWith('/auth-callback')) return <AuthCallback />;
-        return <Navigate to={pathname} replace />;
+        return <Navigate to={basePath || pathname} replace />;
     }
-    return <Navigate to="/" replace />;
+    return <Navigate to={basePath || '/'} replace />;
 };
 
 /**
  * Admin App Module
  * - Production (admin.table-tap.in): pathname is /, /login, /panel, etc.
- * - Development (localhost/admin/*): pathname is /admin/login — we pass effectiveLocation so Routes see /login.
+ * - Development (localhost/admin/*): pathname is /admin, /admin/login — use path prefix so we don't override location.
  */
 const AdminAppRoutes = () => {
-    const effectiveLocation = useEffectiveLocation('/admin');
     return (
         <Suspense fallback={<LoadingSpinner />}>
-            <Routes location={effectiveLocation}>
+            <Routes>
                 <Route index element={
                     <AdminOnlyWrapper>
                         <AdminPanel />
                     </AdminOnlyWrapper>
                 } />
-                <Route path="/login/*" element={<LoginPage />} />
-                <Route path="/signup/*" element={<SignupPage />} />
-                <Route path="/forgot-password/*" element={<ForgotPassword />} />
-                <Route path="/reset-password/*" element={<ResetPassword />} />
-                <Route path="/auth-callback/*" element={<AuthCallback />} />
-                <Route path="/panel" element={
+                <Route path="login/*" element={<LoginPage />} />
+                <Route path="signup/*" element={<SignupPage />} />
+                <Route path="forgot-password/*" element={<ForgotPassword />} />
+                <Route path="reset-password/*" element={<ResetPassword />} />
+                <Route path="auth-callback/*" element={<AuthCallback />} />
+                <Route path="panel" element={
                     <AdminOnlyWrapper>
                         <AdminPanel />
                     </AdminOnlyWrapper>

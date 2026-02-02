@@ -6,8 +6,9 @@ import { FoodDataProvider } from '../shared/context/FoodDataContext';
 import { RestaurantProvider } from '../restaurant/pages/RestaurantSelection/RestaurantContext';
 import RestaurantSelectionWrapper from '../restaurant/pages/RestaurantSelection/RestaurantSelectionWrapper';
 
-// Lazy load pages for better performance
-const Opening = lazy(() => import('../shared/components/pages/opening'));
+// Opening loads eagerly so "/" never shows a black loading screen
+import Opening from '../shared/components/pages/opening';
+// Lazy load other pages for better performance
 const OnboardingScreen = lazy(() => import('../shared/components/pages/onboardingScreen'));
 const LoginPage = lazy(() => import('../shared/components/auth/LoginPage'));
 const SignupPage = lazy(() => import('../shared/components/auth/SignupPage'));

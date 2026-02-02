@@ -9,19 +9,21 @@ import { hasValidRestaurantSelection } from '../../../shared/utils/restaurantChe
 export default function OnboardingScreens() {
   const [currentScreen, setCurrentScreen] = useState(0);
   const navigate = useNavigate();
-  
+
   const screens = [
     {
       id: 1,
       image: logo1,
-      title: "Order For Food",
-      imagePlaceholder: "Pizza with melted cheese and basil"
+      title: 'Order For Food',
+      subtitle: 'Browse the menu, add items to cart, and order in a few taps.',
+      imagePlaceholder: 'Pizza with melted cheese and basil'
     },
     {
       id: 2,
       image: logo2,
-      title: "Easy Payment",
-      imagePlaceholder: "Brownie with ice cream and mint"
+      title: 'Easy Payment',
+      subtitle: 'Pay securely and get your order delivered to your table.',
+      imagePlaceholder: 'Brownie with ice cream and mint'
     }
   ];
 
@@ -29,7 +31,6 @@ export default function OnboardingScreens() {
     if (currentScreen < screens.length - 1) {
       setCurrentScreen(currentScreen + 1);
     } else {
-      // Check if user has restaurant selection
       if (hasValidRestaurantSelection()) {
         navigate('/home');
       } else {
@@ -39,7 +40,6 @@ export default function OnboardingScreens() {
   };
 
   const handleSkip = () => {
-    // Check if user has restaurant selection
     if (hasValidRestaurantSelection()) {
       navigate('/home');
     } else {
@@ -47,97 +47,110 @@ export default function OnboardingScreens() {
     }
   };
 
-  // Animation variants
   const imageVariants = {
-    enter: { x: 300, opacity: 0 },
+    enter: { x: 80, opacity: 0 },
     center: { x: 0, opacity: 1 },
-    exit: { x: -300, opacity: 0 }
+    exit: { x: -80, opacity: 0 }
   };
 
   const contentVariants = {
-    enter: { y: 50, opacity: 0 },
+    enter: { y: 24, opacity: 0 },
     center: { y: 0, opacity: 1 },
-    exit: { y: -50, opacity: 0 }
+    exit: { y: -24, opacity: 0 }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-black md: w-full">s
-      <div className="relative bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-lg min-h-screen md">
-        <AnimatePresence mode='wait'>
-          {/* Image Section */}
-          <motion.div
-            key={currentScreen}
-            variants={imageVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="h-2/3 w-full relative"
+    <div className="flex flex-col items-center justify-center min-h-screen bg-black w-full">
+      <div className="w-full max-w-[390px] md:max-w-lg flex flex-col min-h-screen z-10">
+        {/* Top bar with Skip - matches app header style */}
+        <div className="w-full px-6 py-8 relative flex items-center justify-end">
+          <button
+            onClick={handleSkip}
+            className="flex items-center gap-1.5 text-orange-500 hover:text-orange-600 transition-colors font-medium font-spartan text-base"
+            aria-label="Skip onboarding"
           >
-            <img 
-              src={screens[currentScreen].image} 
-              alt={screens[currentScreen].imagePlaceholder}
-              className="w-[600px] h-[600px] object-cover rounded-b-3xl"
-            />
-            <button 
-              onClick={handleSkip}
-              className="absolute top-12 right-6 px-3 py-1 bg-white bg-opacity-80 rounded-full flex items-center text-orange-600"
-            >
-              <span className="mr-1 text-sm font-medium">Skip</span>
-              <ArrowRight size={16} />
-            </button>
-          </motion.div>
-        </AnimatePresence>
+            Skip
+            <ArrowRight size={18} />
+          </button>
+        </div>
 
-        {/* Content Section */}
-        <AnimatePresence mode='wait'>
-          <motion.div
-            key={currentScreen}
-            variants={contentVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.3 }}
-            className="min-h-1/3 flex flex-col items-center justify-between py-8 px-6"
-          >
-            <h1 className="text-3xl font-bold text-center">
-              {screens[currentScreen].title}
-            </h1>
-            
-            {/* Pagination Dots */}
-            <div className="flex space-x-2 my-6">
-              {screens.map((_, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ width: '0.5rem', backgroundColor: '#e5e7eb' }}
-                  animate={{
-                    width: index === currentScreen ? '2rem' : '0.5rem',
-                    backgroundColor: index === currentScreen ? '#1f2937' : '#e5e7eb'
-                  }}
-                  transition={{ duration: 0.3 }}
-                  className="h-1 rounded-full"
-                />
-              ))}
-            </div>
-            
-            {/* Animated Button */}
-            <motion.button
-              onClick={handleNext}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-gray-300 text-black font-medium py-3 px-12 rounded-full"
+        {/* Image section - rounded card style */}
+        <div className="px-4 flex-1 flex flex-col min-h-0">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`img-${currentScreen}`}
+              variants={imageVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-xl bg-gray-800 flex-shrink-0"
             >
-              <motion.span
-                key={currentScreen}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+              <img
+                src={screens[currentScreen].image}
+                alt={screens[currentScreen].imagePlaceholder}
+                className="w-full h-full object-cover"
+              />
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Content card - matches LoginPage (bg-gray-200, rounded-t-3xl) */}
+          <motion.div
+            className="bg-gray-200 w-full flex-1 rounded-t-3xl mt-6 px-6 pt-8 pb-8 flex flex-col font-spartan shadow-2xl z-10 min-h-0"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.1 }}
+          >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`content-${currentScreen}`}
+                variants={contentVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.25 }}
+                className="flex flex-col flex-1"
               >
-                {currentScreen === screens.length - 1 ? 'Get Started' : 'Next'}
-              </motion.span>
-            </motion.button>
+                <h1 className="text-2xl md:text-3xl font-semibold text-black text-center mb-2">
+                  {screens[currentScreen].title}
+                </h1>
+                {screens[currentScreen].subtitle && (
+                  <p className="text-gray-600 text-center text-base mb-6">
+                    {screens[currentScreen].subtitle}
+                  </p>
+                )}
+
+                {/* Pagination dots - orange active state */}
+                <div className="flex justify-center gap-2 my-6">
+                  {screens.map((_, index) => (
+                    <motion.div
+                      key={index}
+                      animate={{
+                        width: index === currentScreen ? 24 : 8,
+                        opacity: index === currentScreen ? 1 : 0.5,
+                        backgroundColor: index === currentScreen ? '#f97316' : '#d1d5db'
+                      }}
+                      transition={{ duration: 0.25 }}
+                      className="h-2 rounded-full"
+                    />
+                  ))}
+                </div>
+
+                {/* Primary button - matches app (orange, rounded-xl) */}
+                <div className="mt-auto pt-4">
+                  <motion.button
+                    onClick={handleNext}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full bg-orange-500 text-white font-medium py-3.5 rounded-xl text-lg hover:bg-orange-600 transition-colors shadow-lg font-spartan"
+                  >
+                    {currentScreen === screens.length - 1 ? 'Get Started' : 'Next'}
+                  </motion.button>
+                </div>
+              </motion.div>
+            </AnimatePresence>
           </motion.div>
-        </AnimatePresence>
+        </div>
       </div>
     </div>
   );

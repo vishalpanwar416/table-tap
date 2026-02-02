@@ -131,6 +131,7 @@ export const viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+  viewportFit: "cover", // safe area for notched devices
 };
 
 export default function RootLayout({ children }) {

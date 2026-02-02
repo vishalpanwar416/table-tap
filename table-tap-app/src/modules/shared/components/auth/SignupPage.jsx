@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react';
+import { ChevronLeft, Eye, EyeOff, CheckCircle, XCircle, LogOut, Home } from 'lucide-react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { authService } from '../../api/authService';
 import GoogleButton from './auth/GoogleButton';
@@ -26,6 +26,7 @@ export default function SignUpPage() {
   });
   const [avatarUrl, setAvatarUrl] = useState('');
   const [avatarLoading, setAvatarLoading] = useState(false);
+  const [existingSession, setExistingSession] = useState(null);
   const fileInputRef = React.useRef();
 
   // Get URL parameters
@@ -39,17 +40,14 @@ export default function SignUpPage() {
   useEffect(() => {
     // Don't redirect if we just signed up - user needs to see email verification message
     if (justSignedUp) return;
-    
+
     const checkSession = async () => {
       try {
         const user = await authService.getCurrentUser();
         if (user) {
-          // Check if email is verified before redirecting
-          // If email is not verified, the user should verify first
+          // Check if email is verified before interrupting
           if (user.email_confirmed_at || user.confirmed_at) {
-            // Preserve URL parameters when redirecting
-            const params = urlRestaurant && urlTable ? `?restaurant=${urlRestaurant}&table=${urlTable}` : '';
-            navigate(`/restaurant-selection${params}`);
+            setExistingSession(user);
           }
         }
       } catch (err) {
@@ -58,6 +56,26 @@ export default function SignUpPage() {
     };
     checkSession();
   }, [navigate, urlRestaurant, urlTable, justSignedUp]);
+
+  const handleContinue = () => {
+    // Logic from LoginPage
+    // Check if user has restaurant selection is not imported here directly?
+    // But we can just navigate to restaurant-selection and let it handle
+    const params = urlRestaurant && urlTable ? `?restaurant=${urlRestaurant}&table=${urlTable}` : '';
+    navigate(`/restaurant-selection${params}`);
+  };
+
+  const handleLogout = async () => {
+    try {
+      setLoading(true);
+      await authService.signOut();
+      setExistingSession(null);
+      window.location.reload();
+    } catch (error) {
+      console.error('Logout failed', error);
+      setLoading(false);
+    }
+  };
 
   // Helper: get initials from full name
   const getInitials = (name) => {
@@ -360,279 +378,333 @@ export default function SignUpPage() {
       exit={{ opacity: 0 }}
     >
       <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl flex flex-col z-10">
-        {/* Header */}
-        <div className="w-full px-6 py-8 relative flex items-center justify-center">
-          <button
-            onClick={() => navigate(-1)}
-            className="absolute left-4 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-10"
-            aria-label="Go back"
-          >
-            <ChevronLeft size={30} />
-          </button>
-          <motion.h1
-            className="text-white text-2xl font-medium font-spartan"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            Create New Account
-          </motion.h1>
-        </div>
-        {/* Profile Photo Upload */}
-        <motion.div
-          className="flex justify-center items-center mb-6"
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.15, type: 'spring', stiffness: 120, damping: 12 }}
-        >
-          <motion.div
-            className="relative group cursor-pointer"
-            whileHover={{ scale: 1.06 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => fileInputRef.current && fileInputRef.current.click()}
-            style={{ width: 96, height: 96 }}
-          >
-            <div className="w-24 h-24 rounded-full bg-white shadow-lg flex items-center justify-center overflow-hidden border-4 border-gray-300 group-hover:border-orange-400 transition-all">
-              {avatarLoading ? (
-                <div className="w-10 h-10 border-4 border-orange-400 border-t-transparent rounded-full animate-spin"></div>
-              ) : avatarUrl ? (
-                <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
-              ) : formData.fullName ? (
-                <span className="text-3xl font-bold text-orange-600">{getInitials(formData.fullName)}</span>
-              ) : (
-                <UserIcon className="w-10 h-10 text-gray-400" />
-              )}
-            </div>
-            {/* Remove button */}
-            {avatarUrl && !avatarLoading && (
+        {existingSession ? (
+          <div className="w-full h-full flex flex-col">
+            <div className="w-full px-6 py-8 relative flex items-center justify-center">
               <button
-                type="button"
-                onClick={e => { e.stopPropagation(); handleRemoveAvatar(); }}
-                className="absolute -bottom-2 right-0 bg-white border border-gray-300 rounded-full px-2 py-0.5 text-xs text-gray-600 shadow hover:bg-red-100 hover:text-red-600 transition-all"
+                className="absolute left-4 text-orange-500 p-2"
+                onClick={() => navigate(-1)}
               >
-                Remove
+                <ChevronLeft size={30} />
               </button>
-            )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleAvatarChange}
-              aria-label="Choose profile photo"
-            />
-            <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-gray-500 bg-white/80 px-2 py-0.5 rounded shadow mt-1 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">Change Photo</span>
-          </motion.div>
-        </motion.div>
-        {/* Form Container */}
-        <motion.div
-          className="bg-gray-200 flex-1 rounded-t-3xl px-6 pt-8 pb-6 flex flex-col"
-          variants={cardVariants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-        >
-          <AnimatePresence>
-            {error && (
+              <h1 className="text-white text-3xl font-medium font-spartan">Account</h1>
+            </div>
+
+            <motion.div
+              className="bg-gray-200 w-full flex-1 rounded-t-3xl px-6 pt-10 pb-6 flex flex-col font-spartan shadow-2xl z-10 items-center justify-center text-center"
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+            >
+              <div className="mb-6 bg-green-100 p-4 rounded-full">
+                <LogOut size={48} className="text-green-600" />
+              </div>
+
+              <h2 className="text-2xl font-semibold text-gray-800 mb-2">You are already logged in</h2>
+              <p className="text-gray-600 mb-8 max-w-xs">
+                You are currently signed in as <span className="font-semibold">{existingSession.email}</span>.
+              </p>
+
+              <div className="w-full max-w-xs space-y-4">
+                <button
+                  onClick={handleContinue}
+                  className="w-full bg-orange-500 text-white py-3.5 rounded-xl font-medium text-lg flex items-center justify-center gap-2 hover:bg-orange-600 transition-colors shadow-lg"
+                >
+                  <Home size={20} />
+                  Go to Home
+                </button>
+
+                <button
+                  onClick={handleLogout}
+                  disabled={loading}
+                  className="w-full bg-gray-300 text-gray-800 py-3.5 rounded-xl font-medium text-lg flex items-center justify-center gap-2 hover:bg-gray-400 transition-colors"
+                >
+                  {loading ? 'Logging out...' : (
+                    <>
+                      <LogOut size={20} />
+                      Log Out
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        ) : (
+          <>
+            {/* Header */}
+            <div className="w-full px-6 py-8 relative flex items-center justify-center">
+              <button
+                onClick={() => navigate(-1)}
+                className="absolute left-4 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-10"
+                aria-label="Go back"
+              >
+                <ChevronLeft size={30} />
+              </button>
+              <motion.h1
+                className="text-white text-2xl font-medium font-spartan"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                Create New Account
+              </motion.h1>
+            </div>
+            {/* Profile Photo Upload */}
+            <motion.div
+              className="flex justify-center items-center mb-6"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.15, type: 'spring', stiffness: 120, damping: 12 }}
+            >
               <motion.div
-                className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
-                variants={errorVariants}
+                className="relative group cursor-pointer"
+                whileHover={{ scale: 1.06 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                style={{ width: 96, height: 96 }}
+              >
+                <div className="w-24 h-24 rounded-full bg-white shadow-lg flex items-center justify-center overflow-hidden border-4 border-gray-300 group-hover:border-orange-400 transition-all">
+                  {avatarLoading ? (
+                    <div className="w-10 h-10 border-4 border-orange-400 border-t-transparent rounded-full animate-spin"></div>
+                  ) : avatarUrl ? (
+                    <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                  ) : formData.fullName ? (
+                    <span className="text-3xl font-bold text-orange-600">{getInitials(formData.fullName)}</span>
+                  ) : (
+                    <UserIcon className="w-10 h-10 text-gray-400" />
+                  )}
+                </div>
+                {/* Remove button */}
+                {avatarUrl && !avatarLoading && (
+                  <button
+                    type="button"
+                    onClick={e => { e.stopPropagation(); handleRemoveAvatar(); }}
+                    className="absolute -bottom-2 right-0 bg-white border border-gray-300 rounded-full px-2 py-0.5 text-xs text-gray-600 shadow hover:bg-red-100 hover:text-red-600 transition-all"
+                  >
+                    Remove
+                  </button>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                  aria-label="Choose profile photo"
+                />
+                <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-gray-500 bg-white/80 px-2 py-0.5 rounded shadow mt-1 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">Change Photo</span>
+              </motion.div>
+            </motion.div>
+            {/* Form Container */}
+            <motion.div
+              className="bg-gray-200 flex-1 rounded-t-3xl px-6 pt-8 pb-6 flex flex-col"
+              variants={cardVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+            >
+              <AnimatePresence>
+                {error && (
+                  <motion.div
+                    className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+                    variants={errorVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    key={error}
+                  >
+                    <span className="block sm:inline">{error}</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <motion.form
+                onSubmit={handleSubmit}
+                className="space-y-5"
+                variants={stagger}
                 initial="initial"
                 animate="animate"
-                exit="exit"
-                key={error}
               >
-                <span className="block sm:inline">{error}</span>
+                {/* Full Name */}
+                <motion.div variants={itemVariants}>
+                  <label className="block text-black mb-2 font-medium font-spartan">Full Name</label>
+                  <input
+                    type="text"
+                    name="fullName"
+                    value={formData.fullName}
+                    onChange={handleChange}
+                    placeholder="Enter your full name"
+                    className="w-full px-4 py-3 rounded-xl bg-white text-black font-spartan"
+                    required
+                  />
+                </motion.div>
+                {/* Password */}
+                <motion.div variants={itemVariants}>
+                  <label className="block text-black mb-2 font-medium font-spartan">Password</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      placeholder="Create a strong password"
+                      className="w-full px-4 py-3 rounded-xl bg-white text-black pr-12 font-spartan"
+                      minLength="6"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={togglePasswordVisibility}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                    >
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                  </div>
+                </motion.div>
+                {/* Confirm Password */}
+                <motion.div variants={itemVariants}>
+                  <label className="block text-black mb-2 font-medium font-spartan">Confirm Password</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      placeholder="Confirm your password"
+                      className="w-full px-4 py-3 rounded-xl bg-white text-black pr-12 font-spartan"
+                      minLength="6"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={togglePasswordVisibility}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                    >
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                  </div>
+                </motion.div>
+                {/* Email */}
+                <motion.div variants={itemVariants}>
+                  <label className="block text-black mb-2 font-medium font-spartan">Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="example@domain.com"
+                    className="w-full px-4 py-3 rounded-xl bg-white text-black font-spartan"
+                    required
+                  />
+                </motion.div>
+                {/* Mobile Number */}
+                <motion.div className="mb-4" variants={itemVariants}>
+                  <label className="block text-black mb-2 font-medium font-spartan">Mobile Number</label>
+                  <div className="relative">
+                    <input
+                      type="tel"
+                      name="mobileNumber"
+                      value={formData.mobileNumber}
+                      onChange={handleChange}
+                      placeholder="+91 98765 43210"
+                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition-colors font-spartan"
+                      required
+                    />
+                  </div>
+                </motion.div>
+                {/* Date of Birth */}
+                <motion.div variants={itemVariants}>
+                  <label className="block text-black mb-2 font-medium font-spartan">Date of Birth</label>
+                  <input
+                    type="date"
+                    name="dateOfBirth"
+                    value={formData.dateOfBirth}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-xl bg-white text-black font-spartan "
+                    required
+                  />
+                </motion.div>
+                {/* Terms Agreement */}
+                <motion.div className="text-center mt-4 text-sm" variants={itemVariants}>
+                  <p className="text-gray-600 font-spartan">
+                    By continuing, you agree to our{' '}
+                    <Link
+                      to="/terms"
+                      className="text-red-500 font-medium hover:underline font-spartan"
+                    >
+                      Terms of Service
+                    </Link>{' '}
+                    and{' '}
+                    <Link
+                      to="/privacy"
+                      className="text-red-500 font-medium hover:underline font-spartan"
+                    >
+                      Privacy Policy
+                    </Link>
+                  </p>
+                </motion.div>
+                {/* Sign Up Button */}
+                <motion.div variants={itemVariants}>
+                  <motion.button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-gray-600 text-white py-3 rounded-full mt-6 font-medium text-lg hover:bg-gray-700 transition-colors disabled:bg-orange-300"
+                    variants={buttonVariants}
+                    whileHover={!loading ? 'hover' : undefined}
+                    whileTap={!loading ? 'tap' : undefined}
+                    animate={loading ? 'loading' : 'initial'}
+                  >
+                    {loading ? 'Creating Account...' : 'Create Account'}
+                  </motion.button>
+                </motion.div>
+              </motion.form>
+              {/* Google Sign-In */}
+              <motion.div className="mt-6 text-center" variants={itemVariants}>
+                <p className="text-gray-600 text-sm mb-4 font-spartan">or continue with</p>
+                <GoogleButton
+                  onClick={handleGoogleSignup}
+                  loading={loading}
+                  redirectTo="/complete-profile"
+                />
               </motion.div>
-            )}
-          </AnimatePresence>
-          <motion.form
-            onSubmit={handleSubmit}
-            className="space-y-5"
-            variants={stagger}
-            initial="initial"
-            animate="animate"
-          >
-            {/* Full Name */}
-            <motion.div variants={itemVariants}>
-              <label className="block text-black mb-2 font-medium font-spartan">Full Name</label>
-              <input
-                type="text"
-                name="fullName"
-                value={formData.fullName}
-                onChange={handleChange}
-                placeholder="Enter your full name"
-                className="w-full px-4 py-3 rounded-xl bg-white text-black font-spartan"
-                required
-              />
+              {/* Login Link */}
+              <motion.div className="mt-6 text-center" variants={itemVariants}>
+                <p className="text-black text-sm font-spartan">
+                  Already have an account?{' '}
+                  <Link
+                    to="/login"
+                    className="text-red-500 font-medium hover:underline font-spartan"
+                  >
+                    Login here
+                  </Link>
+                </p>
+              </motion.div>
             </motion.div>
-            {/* Password */}
-            <motion.div variants={itemVariants}>
-              <label className="block text-black mb-2 font-medium font-spartan">Password</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Create a strong password"
-                  className="w-full px-4 py-3 rounded-xl bg-white text-black pr-12 font-spartan"
-                  minLength="6"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={togglePasswordVisibility}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
-                >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
-            </motion.div>
-            {/* Confirm Password */}
-            <motion.div variants={itemVariants}>
-              <label className="block text-black mb-2 font-medium font-spartan">Confirm Password</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  placeholder="Confirm your password"
-                  className="w-full px-4 py-3 rounded-xl bg-white text-black pr-12 font-spartan"
-                  minLength="6"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={togglePasswordVisibility}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
-                >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
-            </motion.div>
-            {/* Email */}
-            <motion.div variants={itemVariants}>
-              <label className="block text-black mb-2 font-medium font-spartan">Email</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="example@domain.com"
-                className="w-full px-4 py-3 rounded-xl bg-white text-black font-spartan"
-                required
-              />
-            </motion.div>
-            {/* Mobile Number */}
-            <motion.div className="mb-4" variants={itemVariants}>
-              <label className="block text-black mb-2 font-medium font-spartan">Mobile Number</label>
-              <div className="relative">
-                <input
-                  type="tel"
-                  name="mobileNumber"
-                  value={formData.mobileNumber}
-                  onChange={handleChange}
-                  placeholder="+91 98765 43210"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition-colors font-spartan"
-                  required
-                />
-              </div>
-            </motion.div>
-            {/* Date of Birth */}
-            <motion.div variants={itemVariants}>
-              <label className="block text-black mb-2 font-medium font-spartan">Date of Birth</label>
-              <input
-                type="date"
-                name="dateOfBirth"
-                value={formData.dateOfBirth}
-                onChange={handleChange}
-                className="w-full px-4 py-3 rounded-xl bg-white text-black font-spartan "
-                required
-              />
-            </motion.div>
-            {/* Terms Agreement */}
-            <motion.div className="text-center mt-4 text-sm" variants={itemVariants}>
-              <p className="text-gray-600 font-spartan">
-                By continuing, you agree to our{' '}
-                <Link
-                  to="/terms"
-                  className="text-red-500 font-medium hover:underline font-spartan"
-                >
-                  Terms of Service
-                </Link>{' '}
-                and{' '}
-                <Link
-                  to="/privacy"
-                  className="text-red-500 font-medium hover:underline font-spartan"
-                >
-                  Privacy Policy
-                </Link>
-              </p>
-            </motion.div>
-            {/* Sign Up Button */}
-            <motion.div variants={itemVariants}>
-              <motion.button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-gray-600 text-white py-3 rounded-full mt-6 font-medium text-lg hover:bg-gray-700 transition-colors disabled:bg-orange-300"
-                variants={buttonVariants}
-                whileHover={!loading ? 'hover' : undefined}
-                whileTap={!loading ? 'tap' : undefined}
-                animate={loading ? 'loading' : 'initial'}
-              >
-                {loading ? 'Creating Account...' : 'Create Account'}
-              </motion.button>
-            </motion.div>
-          </motion.form>
-          {/* Google Sign-In */}
-          <motion.div className="mt-6 text-center" variants={itemVariants}>
-            <p className="text-gray-600 text-sm mb-4 font-spartan">or continue with</p>
-            <GoogleButton
-              onClick={handleGoogleSignup}
-              loading={loading}
-              redirectTo="/complete-profile"
+            <ToastContainer
+              position="top-center"
+              autoClose={2000}
+              hideProgressBar
+              newestOnTop={false}
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss={false}
+              draggable={false}
+              pauseOnHover={false}
+              theme="light"
+              style={{ width: 'auto', minWidth: 0, maxWidth: 320 }}
+              toastStyle={{
+                background: '#fff',
+                color: '#e53e3e',
+                borderRadius: '8px',
+                fontWeight: 500,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+                fontFamily: 'inherit',
+                fontSize: '15px',
+                padding: '12px 20px'
+              }}
+              transition={Slide}
+              closeButton={false}
             />
-          </motion.div>
-          {/* Login Link */}
-          <motion.div className="mt-6 text-center" variants={itemVariants}>
-            <p className="text-black text-sm font-spartan">
-              Already have an account?{' '}
-              <Link
-                to="/login"
-                className="text-red-500 font-medium hover:underline font-spartan"
-              >
-                Login here
-              </Link>
-            </p>
-          </motion.div>
-        </motion.div>
-        <ToastContainer
-          position="top-center"
-          autoClose={2000}
-          hideProgressBar
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss={false}
-          draggable={false}
-          pauseOnHover={false}
-          theme="light"
-          style={{ width: 'auto', minWidth: 0, maxWidth: 320 }}
-          toastStyle={{
-            background: '#fff',
-            color: '#e53e3e',
-            borderRadius: '8px',
-            fontWeight: 500,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
-            fontFamily: 'inherit',
-            fontSize: '15px',
-            padding: '12px 20px'
-          }}
-          transition={Slide}
-          closeButton={false}
-        />
+          </>
+        )}
       </div>
     </motion.div>
   );

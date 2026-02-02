@@ -23,14 +23,34 @@
   --font-mono: var(--font-geist-mono), monospace;
 }
 
+/* Mobile-first: prevent horizontal scroll and improve touch */
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist), system-ui, sans-serif;
   overflow-x: hidden;
+  min-height: 100dvh;
+  min-height: 100vh;
   background-image:
     radial-gradient(circle at 0% 0%, rgba(42, 157, 143, 0.03) 0%, transparent 50%),
     radial-gradient(circle at 100% 100%, rgba(231, 111, 81, 0.03) 0%, transparent 50%);
+}
+
+/* Safe area for notched devices (iPhone X+, etc.) */
+@supports (padding: env(safe-area-inset-top)) {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+.safe-area-inset-top {
+  padding-top: env(safe-area-inset-top, 0);
 }
 
 /* Glassmorphism Evolution */
@@ -62,6 +82,16 @@ body {
   background: rgba(255, 255, 255, 0.9);
   box-shadow: 0 30px 60px rgba(42, 157, 143, 0.1);
   border-color: rgba(42, 157, 143, 0.2);
+}
+
+/* Reduce hover lift on touch devices to avoid sticky hover */
+@media (hover: none) {
+  .glass-card:hover {
+    transform: none;
+  }
+  .magnetic-hover:hover {
+    transform: none;
+  }
 }
 
 /* New Aesthetic Components */
