@@ -610,11 +610,12 @@ const RestaurantInformation = () => {
                 </div>
               </div>
 
-              {/* Bill Sharing Status Display */}
+              {/* Bill Sharing Status Display with Toggles */}
               <div className="mt-8">
                 <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
                   <Receipt className="w-5 h-5 mr-2 text-blue-600" /> Bill Sharing Options
                 </h3>
+                <p className="text-sm text-gray-500 mb-4">Toggle to enable/disable bill sharing options</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -623,11 +624,26 @@ const RestaurantInformation = () => {
                       </div>
                       <div>
                         <h4 className="text-sm font-semibold text-gray-600 mb-1">Email Bill</h4>
-                        <p className={`text-lg font-bold ${restaurant?.email_bill_enabled !== false ? 'text-blue-600' : 'text-gray-500'}`}>
-                          {restaurant?.email_bill_enabled !== false ? 'Enabled' : 'Disabled'}
-                        </p>
+                        <p className="text-xs text-gray-500">Send bills via email</p>
                       </div>
                     </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={restaurant?.email_bill_enabled !== false}
+                        onChange={async (e) => {
+                          const newValue = e.target.checked;
+                          const success = await updateRestaurant({ ...restaurant, email_bill_enabled: newValue });
+                          if (success) {
+                            setSaveSuccess(true);
+                            setTimeout(() => setSaveSuccess(false), 2000);
+                          }
+                        }}
+                        className="sr-only peer"
+                        disabled={!canEdit()}
+                      />
+                      <div className={`w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 ${!canEdit() ? 'opacity-50 cursor-not-allowed' : ''}`}></div>
+                    </label>
                   </div>
 
                   <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border flex items-center justify-between">
@@ -637,11 +653,26 @@ const RestaurantInformation = () => {
                       </div>
                       <div>
                         <h4 className="text-sm font-semibold text-gray-600 mb-1">WhatsApp Bill</h4>
-                        <p className={`text-lg font-bold ${restaurant?.whatsapp_bill_enabled !== false ? 'text-green-600' : 'text-gray-500'}`}>
-                          {restaurant?.whatsapp_bill_enabled !== false ? 'Enabled' : 'Disabled'}
-                        </p>
+                        <p className="text-xs text-gray-500">Send bills via WhatsApp</p>
                       </div>
                     </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={restaurant?.whatsapp_bill_enabled !== false}
+                        onChange={async (e) => {
+                          const newValue = e.target.checked;
+                          const success = await updateRestaurant({ ...restaurant, whatsapp_bill_enabled: newValue });
+                          if (success) {
+                            setSaveSuccess(true);
+                            setTimeout(() => setSaveSuccess(false), 2000);
+                          }
+                        }}
+                        className="sr-only peer"
+                        disabled={!canEdit()}
+                      />
+                      <div className={`w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600 ${!canEdit() ? 'opacity-50 cursor-not-allowed' : ''}`}></div>
+                    </label>
                   </div>
                 </div>
               </div>
