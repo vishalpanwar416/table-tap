@@ -4,10 +4,37 @@ import { motion } from 'framer-motion';
 import { QrCode, ArrowRight, Zap, CreditCard, Smartphone } from 'lucide-react';
 import { useModal } from '../context/ModalContext';
 import data from '../data/landing-data.json';
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 
 const Hero = () => {
-    const { hero } = data;
+    const [hero, setHero] = useState(data.hero);
     const { openModal } = useModal();
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const { data: settings, error } = await supabase
+                    .from('system_settings')
+                    .select('value')
+                    .eq('key', 'landing_hero')
+                    .single();
+
+                if (error) {
+                    console.warn('Failed to fetch hero settings:', error);
+                    return;
+                }
+
+                if (settings?.value) {
+                    setHero(prev => ({ ...prev, ...settings.value }));
+                }
+            } catch (err) {
+                console.error('Error fetching hero settings:', err);
+            }
+        };
+
+        fetchSettings();
+    }, []);
 
     return (
         <section id="home" aria-label="Hero section - Introduction to Table Tap" className="relative min-h-[100vh] flex items-center pt-40 pb-20 overflow-hidden bg-white">

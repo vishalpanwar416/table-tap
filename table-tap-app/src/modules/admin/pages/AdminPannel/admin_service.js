@@ -1084,3 +1084,25 @@ export const deleteInquiry = async (id) => {
     return { success: false, error: error.message };
   }
 };
+
+// ========= SYSTEM SETTINGS =========
+
+/**
+ * Get a system setting by key
+ */
+export const getSystemSetting = async (key) => {
+  try {
+    const { data, error } = await supabase
+      .from('system_settings')
+      .select('value')
+      .eq('key', key)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return null;
+    return data.value;
+  } catch (error) {
+    console.error(`Error fetching setting ${key}:`, error);
+    return null;
+  }
+};

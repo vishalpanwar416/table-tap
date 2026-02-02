@@ -1,7 +1,6 @@
 // @ts-ignore
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-// @ts-ignore
-import { SmtpClient } from "https://deno.land/x/smtp@v0.7.0/mod.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,8 +14,6 @@ interface EmailRequest {
   text?: string;
   from?: string;
   replyTo?: string;
-  cc?: string;
-  bcc?: string;
 }
 
 interface EmailResponse {
@@ -33,15 +30,30 @@ serve(async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Get SMTP credentials from environment
-    const SMTP_HOST = Deno.env.get("SMTP_HOST") || "smtp.hostinger.com";
-    const SMTP_PORT = parseInt(Deno.env.get("SMTP_PORT") || "465");
-    const SMTP_USER = Deno.env.get("SMTP_USER");
-    const SMTP_PASS = Deno.env.get("SMTP_PASS");
-    const SMTP_FROM = Deno.env.get("SMTP_FROM") || SMTP_USER;
+    // Initialize Supabase Admin Client to fetch secrets from DB
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
 
-    if (!SMTP_USER || !SMTP_PASS) {
-      throw new Error("SMTP credentials not configured. Please set SMTP_USER and SMTP_PASS environment variables.");
+    // Fetch Resend Config from system_settings table
+    const { data: setting, error: dbError } = await supabaseAdmin
+      .from('system_settings')
+      .select('value')
+      .eq('key', 'resend_config')
+      .single();
+
+    let RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+    let EMAIL_FROM = Deno.env.get("EMAIL_FROM") || "TableTap <onboarding@resend.dev>";
+
+    if (setting?.value) {
+      if (setting.value.api_key) RESEND_API_KEY = setting.value.api_key;
+      if (setting.value.from_email) EMAIL_FROM = setting.value.from_email;
+      console.log("Using Resend configuration from Database.");
+    }
+
+    if (!RESEND_API_KEY) {
+      throw new Error("RESEND_API_KEY not configured. Set it in 'system_settings' table or Supabase secrets.");
     }
 
     // Parse request body
@@ -52,41 +64,41 @@ serve(async (req: Request): Promise<Response> => {
       throw new Error("Missing required fields: to, subject, and html are required");
     }
 
-    // Create SMTP client
-    const client = new SmtpClient();
+    console.log(`Sending email to ${emailData.to} via Resend...`);
 
-    // Connect to Hostinger SMTP (SSL/TLS)
-    await client.connectTLS({
-      hostname: SMTP_HOST,
-      port: SMTP_PORT,
-      username: SMTP_USER,
-      password: SMTP_PASS,
+    // Send email via Resend API
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: emailData.from || EMAIL_FROM,
+        to: [emailData.to],
+        subject: emailData.subject,
+        html: emailData.html,
+        text: emailData.text,
+        reply_to: emailData.replyTo,
+      }),
     });
 
-    // Send email
-    const result = await client.send({
-      from: emailData.from || SMTP_FROM || SMTP_USER,
-      to: emailData.to,
-      cc: emailData.cc ? [emailData.cc] : undefined,
-      bcc: emailData.bcc ? [emailData.bcc] : undefined,
-      replyTo: emailData.replyTo,
-      subject: emailData.subject,
-      content: emailData.text || "Please view this email in an HTML-capable email client.",
-      html: emailData.html,
-    });
+    const result = await response.json();
 
-    // Close connection
-    await client.close();
+    if (!response.ok) {
+      console.error("Resend API Error:", result);
+      throw new Error(result.message || "Failed to send email via Resend");
+    }
 
-    console.log(`Email sent successfully to ${emailData.to}`);
+    console.log(`Email sent successfully to ${emailData.to}`, result);
 
-    const response: EmailResponse = {
+    const emailResponse: EmailResponse = {
       success: true,
       message: `Email sent successfully to ${emailData.to}`,
-      messageId: result?.toString() || undefined,
+      messageId: result.id,
     };
 
-    return new Response(JSON.stringify(response), {
+    return new Response(JSON.stringify(emailResponse), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
@@ -103,7 +115,7 @@ serve(async (req: Request): Promise<Response> => {
 
     return new Response(JSON.stringify(response), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: error instanceof Error && error.message.includes("credentials") ? 503 : 400,
+      status: 400,
     });
   }
 });

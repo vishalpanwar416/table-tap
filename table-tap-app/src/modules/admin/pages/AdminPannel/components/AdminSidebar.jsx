@@ -19,21 +19,22 @@ import {
   ChevronLeft,
   ChevronRight,
   Bell,
-  Activity
+  Activity,
+  Settings
 } from 'lucide-react';
 import { supabase } from '../../../../shared/supabase';
 // Import the existing TableTap logo
 import tableTapLogo from '../../../../../assets/icons/logott.png';
 
-const AdminSidebar = ({ 
-  activeTab, 
-  setActiveTab, 
-  menuItems, 
-  currentUser, 
-  restaurantName, 
-  userRole, 
-  onProfilePhotoClick, 
-  showMobileNav, 
+const AdminSidebar = ({
+  activeTab,
+  setActiveTab,
+  menuItems,
+  currentUser,
+  restaurantName,
+  userRole,
+  onProfilePhotoClick,
+  showMobileNav,
   setShowMobileNav,
   collapsed = false,
   onToggleCollapsed
@@ -82,6 +83,8 @@ const AdminSidebar = ({
         return <Bell className="w-5 h-5" />;
       case 'Activity':
         return <Activity className="w-5 h-5" />;
+      case 'Settings':
+        return <Settings className="w-5 h-5" />;
       default:
         return null;
     }

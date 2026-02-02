@@ -254,6 +254,7 @@ export const assignSubscriptionToRestaurant = async (subscriptionData) => {
         new_plan: plan.key,
         new_status: 'active',
         amount_paid: totalAmount,
+        gst_amount: gstAmount,
         notes: subscriptionData.notes || 'Subscription created'
       }]);
 
@@ -347,6 +348,7 @@ export const updateRestaurantSubscription = async (subscriptionId, updates) => {
         old_status: currentSub?.status,
         new_status: updates.status || 'active',
         amount_paid: totalAmount,
+        gst_amount: gstAmount,
         notes: updates.notes || 'Subscription updated'
       }]);
 

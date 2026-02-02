@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
 // Email service configuration
 // You can use Resend, SendGrid, Mailgun, or any other email service
@@ -11,12 +12,12 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://tabletap.in';
 export async function POST(request) {
     try {
         const body = await request.json();
-        const { 
-            ownerName, 
-            ownerEmail, 
-            restaurantName, 
+        const {
+            ownerName,
+            ownerEmail,
+            restaurantName,
             selectedPlan,
-            paymentId 
+            paymentId
         } = body;
 
         if (!ownerEmail || !restaurantName) {
@@ -29,8 +30,57 @@ export async function POST(request) {
         // Status tracking URL
         const statusUrl = `${APP_URL}/application-status?email=${encodeURIComponent(ownerEmail)}`;
 
-        // Email HTML content
-        const emailHtml = `
+        // Fetch custom template
+        let customTemplate = null;
+        try {
+            const supabase = createClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL,
+                process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+            );
+            const { data } = await supabase
+                .from('system_settings')
+                .select('value')
+                .eq('key', 'email_template_application_received')
+                .single();
+            if (data?.value) customTemplate = data.value;
+        } catch (e) {
+            console.error('Failed to fetch template:', e);
+        }
+
+        let emailHtml;
+        let subject = `Application Received - ${restaurantName} | Table Tap`;
+
+        if (customTemplate) {
+            subject = customTemplate.subject;
+            emailHtml = customTemplate.html;
+
+            const paymentRowHtml = paymentId ? `
+            <tr>
+                <td style="padding: 8px 0; color: #777; font-size: 14px;">Payment:</td>
+                <td style="padding: 8px 0; font-size: 14px; text-align: right;">
+                    <span style="background-color: #D1FAE5; color: #065F46; padding: 4px 12px; border-radius: 20px; font-weight: 600; font-size: 12px;">
+                        ✓ Paid
+                    </span>
+                </td>
+            </tr>` : '';
+
+            const vars = {
+                owner_name: ownerName,
+                restaurant_name: restaurantName,
+                plan: selectedPlan,
+                status_url: statusUrl,
+                year: new Date().getFullYear(),
+                payment_row: paymentRowHtml
+            };
+
+            Object.keys(vars).forEach(key => {
+                const regex = new RegExp(`{{${key}}}`, 'g');
+                subject = subject.replace(regex, vars[key] || '');
+                emailHtml = emailHtml.replace(regex, vars[key] || '');
+            });
+        } else {
+            // Fallback
+            emailHtml = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -156,6 +206,7 @@ export async function POST(request) {
 </body>
 </html>
         `;
+        }
 
         // Plain text version
         const emailText = `
@@ -197,7 +248,8 @@ The Table Tap Team
                 body: JSON.stringify({
                     from: FROM_EMAIL,
                     to: ownerEmail,
-                    subject: `Application Received - ${restaurantName} | Table Tap`,
+                    to: ownerEmail,
+                    subject: subject,
                     html: emailHtml,
                     text: emailText,
                 }),
@@ -207,25 +259,25 @@ The Table Tap Team
                 const errorData = await response.json();
                 console.error('Email send error:', errorData);
                 // Don't fail the registration, just log the error
-                return NextResponse.json({ 
-                    success: true, 
+                return NextResponse.json({
+                    success: true,
                     emailSent: false,
                     message: 'Registration successful but email failed to send'
                 });
             }
 
             const data = await response.json();
-            return NextResponse.json({ 
-                success: true, 
+            return NextResponse.json({
+                success: true,
                 emailSent: true,
-                emailId: data.id 
+                emailId: data.id
             });
         } else {
             // No email service configured, just return success
             console.log('Email service not configured. Would have sent email to:', ownerEmail);
             console.log('Status URL:', statusUrl);
-            return NextResponse.json({ 
-                success: true, 
+            return NextResponse.json({
+                success: true,
                 emailSent: false,
                 message: 'Email service not configured'
             });

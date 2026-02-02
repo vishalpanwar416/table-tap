@@ -39,6 +39,9 @@ const logEmailActivity = async (emailData, status, errorMessage = null) => {
     }
 };
 
+// TableTap logo URL
+const TABLETAP_LOGO_URL = 'https://table-tap.in/logo.png';
+
 /**
  * Generate bill HTML for email
  */
@@ -83,6 +86,9 @@ const generateBillHTML = (order, restaurant) => {
                         <td style="background: linear-gradient(135deg, #1a1a1a 0%, #333 100%); padding: 30px;">
                             <table role="presentation" style="width: 100%;">
                                 <tr>
+                                    <td style="width: 60px; vertical-align: top;">
+                                        <img src="${TABLETAP_LOGO_URL}" alt="TableTap" style="width: 50px; height: 50px; border-radius: 10px;">
+                                    </td>
                                     <td>
                                         <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700;">
                                             ${restaurant.name}
@@ -240,10 +246,18 @@ const generateBillHTML = (order, restaurant) => {
                     </tr>
                 </table>
                 
-                <!-- Powered By -->
-                <p style="text-align: center; margin: 20px 0 0; color: #999; font-size: 12px;">
-                    Powered by <a href="https://tabletap.in" style="color: #f97316; text-decoration: none;">Table Tap</a>
-                </p>
+                <!-- Powered By TableTap -->
+                <table role="presentation" style="width: 100%; max-width: 600px; margin: 20px auto 0;">
+                    <tr>
+                        <td style="background: #1a1a1a; padding: 20px; border-radius: 12px; text-align: center;">
+                            <img src="${TABLETAP_LOGO_URL}" alt="TableTap" style="width: 30px; height: 30px; border-radius: 6px; vertical-align: middle;">
+                            <span style="color: #ffffff; margin-left: 10px; font-weight: 600; vertical-align: middle;">Powered by TableTap</span>
+                            <p style="margin: 10px 0 0; color: #666; font-size: 12px;">
+                                <a href="https://table-tap.in" style="color: #f97316; text-decoration: none;">table-tap.in</a>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
             </td>
         </tr>
     </table>

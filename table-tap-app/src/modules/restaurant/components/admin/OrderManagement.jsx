@@ -10,7 +10,8 @@ import { useAdminRestaurant } from '../../../shared/context/AdminRestaurantConte
 import ReactDOMServer from "react-dom/server";
 import PrintBill from "./PrintBill";
 import PrintKOT from "./PrintKOT";
-import { sendBillEmail, sendWhatsAppBill } from '../../../shared/api/emailService';
+import { sendBillEmail } from '../../../shared/api/emailService';
+import { sendWhatsAppBill, openWhatsAppBill } from '../../../shared/api/whatsappService';
 import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
 import {
@@ -666,7 +667,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
     setWhatsAppPhoneNumber('');
   };
 
-  const handleSendWhatsAppBill = () => {
+  const handleSendWhatsAppBill = async () => {
     if (!whatsAppPhoneNumber || whatsAppPhoneNumber.length < 10) {
       toast.error('Please enter a valid phone number');
       return;
@@ -678,12 +679,32 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
     }
 
     try {
-      sendWhatsAppBill(whatsAppBillOrder, restaurant, whatsAppPhoneNumber);
-      toast.success('Opening WhatsApp...');
+      // Try API first, fallback to opening WhatsApp app
+      const result = await sendWhatsAppBill(whatsAppBillOrder, restaurant, whatsAppPhoneNumber);
+      
+      if (result.success) {
+        toast.success('Bill sent via WhatsApp!');
+      } else if (result.fallback && result.shareURL) {
+        // API failed, open WhatsApp manually
+        window.open(result.shareURL, '_blank');
+        toast.success('Opening WhatsApp...');
+      } else {
+        // Complete fallback
+        openWhatsAppBill(whatsAppBillOrder, restaurant, whatsAppPhoneNumber);
+        toast.success('Opening WhatsApp...');
+      }
+      
       closeWhatsAppBillModal();
     } catch (error) {
       console.error('WhatsApp error:', error);
-      toast.error(error.message || 'Failed to open WhatsApp');
+      // Fallback to manual share
+      try {
+        openWhatsAppBill(whatsAppBillOrder, restaurant, whatsAppPhoneNumber);
+        toast.success('Opening WhatsApp...');
+        closeWhatsAppBillModal();
+      } catch (fallbackError) {
+        toast.error(error.message || 'Failed to send WhatsApp bill');
+      }
     }
   };
 

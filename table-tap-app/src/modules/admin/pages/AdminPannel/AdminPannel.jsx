@@ -35,6 +35,7 @@ import AdminDashboard from './components/AdminDashboard';
 const AdminNotificationsPage = lazy(() => import('./components/AdminNotificationsPage'));
 const AdminActivityLogs = lazy(() => import('./components/AdminActivityLogs'));
 const SubscriptionManagement = lazy(() => import('./components/SubscriptionManagement'));
+const SystemSettings = lazy(() => import('./components/SystemSettings'));
 
 const menuItems = [
   { id: 'dashboard', icon: 'LayoutDashboard', label: 'Dashboard' },
@@ -45,6 +46,7 @@ const menuItems = [
   { id: 'subscriptions', icon: 'CreditCard', label: 'Subscriptions' },
   { id: 'notifications', icon: 'Bell', label: 'Notifications' },
   { id: 'activity', icon: 'Activity', label: 'Activity Logs' },
+  { id: 'settings', icon: 'Settings', label: 'System Settings' },
 ];
 
 const AdminPanel = () => {
@@ -621,6 +623,12 @@ const AdminPanel = () => {
         return (
           <Suspense fallback={<LoadingSpinner />}>
             <AdminActivityLogs />
+          </Suspense>
+        );
+      case 'settings':
+        return (
+          <Suspense fallback={<LoadingSpinner />}>
+            <SystemSettings />
           </Suspense>
         );
       default:

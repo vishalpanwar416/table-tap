@@ -44,7 +44,7 @@ import {
   getSubscriptionHistory
 } from '../../../../admin/api/subscriptionService';
 import { supabase } from '../../../../shared/supabase';
-import { getAllRestaurants } from '../admin_service';
+import { getAllRestaurants, getSystemSetting } from '../admin_service';
 
 const SubscriptionManagementV2 = () => {
 
@@ -492,9 +492,18 @@ const SubscriptionManagementV2 = () => {
     });
 
     // Calculate subtotal and tax (assuming inclusive 18% GST)
+    // Calculate tax (Use stored GST if available)
     const amount = Number(txn.amount_paid);
-    const subtotal = (amount / 1.18).toFixed(2);
-    const gst = (amount - Number(subtotal)).toFixed(2);
+    let subtotal, gst;
+
+    if (txn.gst_amount) {
+      gst = Number(txn.gst_amount).toFixed(2);
+      subtotal = (amount - Number(gst)).toFixed(2);
+    } else {
+      // Fallback for legacy records
+      subtotal = (amount / 1.18).toFixed(2);
+      gst = (amount - Number(subtotal)).toFixed(2);
+    }
 
     return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
@@ -553,13 +562,54 @@ const SubscriptionManagementV2 = () => {
     setProcessingId(`email-${transaction.id}`);
 
     try {
-      const invoiceHtml = generateInvoiceHTML(transaction, selectedBillingRestaurant);
+      // Fetch template
+      const template = await getSystemSetting('email_template_invoice');
+
+      let subject = `Invoice #${transaction.id.slice(0, 8).toUpperCase()} - TableTap`;
+      let html = generateInvoiceHTML(transaction, selectedBillingRestaurant);
+
+      if (template) {
+        subject = template.subject;
+        html = template.html;
+
+        // Calculate values for template variables
+        const date = new Date(transaction.created_at).toLocaleDateString('en-IN', {
+          year: 'numeric', month: 'long', day: 'numeric'
+        });
+        const amount = Number(transaction.amount_paid);
+        let subtotal, gst;
+        if (transaction.gst_amount) {
+          gst = Number(transaction.gst_amount).toFixed(2);
+          subtotal = (amount - Number(gst)).toFixed(2);
+        } else {
+          subtotal = (amount / 1.18).toFixed(2);
+          gst = (amount - Number(subtotal)).toFixed(2);
+        }
+
+        const vars = {
+          invoice_number: transaction.id.slice(0, 8).toUpperCase(),
+          date: date,
+          restaurant_name: selectedBillingRestaurant.name,
+          plan_name: transaction.plan_name,
+          billing_cycle: transaction.billing_cycle,
+          subtotal: subtotal,
+          gst: gst,
+          total_paid: amount.toFixed(2),
+          year: new Date().getFullYear()
+        };
+
+        Object.keys(vars).forEach(key => {
+          const regex = new RegExp(`{{${key}}}`, 'g');
+          subject = subject.replace(regex, vars[key] || '');
+          html = html.replace(regex, vars[key] || '');
+        });
+      }
 
       const { data, error } = await supabase.functions.invoke('send-email', {
         body: {
           to: selectedBillingRestaurant.contact_email,
-          subject: `Invoice #${transaction.id.slice(0, 8).toUpperCase()} - TableTap`,
-          html: invoiceHtml,
+          subject: subject,
+          html: html,
           text: `Invoice for ₹${transaction.amount_paid} - ${new Date(transaction.created_at).toLocaleDateString()}`
         }
       });
