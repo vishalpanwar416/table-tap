@@ -330,13 +330,6 @@ const AdminDashboard = ({ restaurants, staff, currentUser, onTabChange }) => {
       {/* Quick Actions */}
       <div className="flex flex-wrap gap-3">
         <button 
-          onClick={() => onTabChange?.('restaurants')}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-purple-50 hover:border-purple-200 hover:text-purple-700 transition-all shadow-sm"
-        >
-          <Plus size={16} />
-          Add Restaurant
-        </button>
-        <button 
           onClick={() => onTabChange?.('staff')}
           className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-all shadow-sm"
         >
@@ -363,28 +356,63 @@ const AdminDashboard = ({ restaurants, staff, currentUser, onTabChange }) => {
       </div>
 
       {/* Main Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Restaurants */}
-        <div 
-          className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-lg hover:border-purple-200 transition-all cursor-pointer group"
-          onClick={() => onTabChange?.('restaurants')}
-        >
-          <div className="flex items-start justify-between mb-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-              <Building2 className="text-white" size={22} />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Restaurants - Expanded Card */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-lg transition-all md:col-span-2 lg:col-span-2">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Building2 className="text-white" size={22} />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{stats.restaurants.total}</p>
+                <p className="text-sm text-gray-500">Total Restaurants</p>
+              </div>
             </div>
-            <ChevronRight size={18} className="text-gray-300 group-hover:text-purple-500 group-hover:translate-x-1 transition-all" />
+            <button 
+              onClick={() => onTabChange?.('restaurants')}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-200 transition-all"
+            >
+              <Plus size={14} />
+              Add
+            </button>
           </div>
-          <p className="text-3xl font-bold text-gray-900">{stats.restaurants.total}</p>
-          <p className="text-sm text-gray-500 mt-0.5">Total Restaurants</p>
-          <div className="mt-3 flex items-center gap-2">
-            <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-green-400 to-green-500 rounded-full transition-all duration-500"
-                style={{ width: `${stats.restaurants.total > 0 ? (stats.restaurants.active / stats.restaurants.total * 100) : 0}%` }}
-              />
+          
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="bg-green-50 rounded-xl p-3 text-center">
+              <p className="text-xl font-bold text-green-600">{stats.restaurants.active}</p>
+              <p className="text-xs text-gray-600">Active</p>
             </div>
-            <span className="text-xs font-medium text-green-600">{stats.restaurants.active} active</span>
+            <div className="bg-red-50 rounded-xl p-3 text-center">
+              <p className="text-xl font-bold text-red-500">{stats.restaurants.inactive}</p>
+              <p className="text-xs text-gray-600">Inactive</p>
+            </div>
+            <div className="bg-blue-50 rounded-xl p-3 text-center">
+              <p className="text-xl font-bold text-blue-600">{stats.plans.starter || 0}</p>
+              <p className="text-xs text-gray-600">Starter</p>
+            </div>
+            <div className="bg-purple-50 rounded-xl p-3 text-center">
+              <p className="text-xl font-bold text-purple-600">{stats.plans.professional || 0}</p>
+              <p className="text-xs text-gray-600">Professional</p>
+            </div>
+          </div>
+          
+          {/* Enterprise & Progress */}
+          <div className="mt-3 flex items-center justify-between">
+            <div className="flex items-center gap-4 text-xs">
+              <span className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                <span className="text-gray-600">Enterprise:</span>
+                <span className="font-bold text-amber-600">{stats.plans.enterprise || 0}</span>
+              </span>
+            </div>
+            <button 
+              onClick={() => onTabChange?.('restaurants')}
+              className="text-xs text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1"
+            >
+              View All <ChevronRight size={14} />
+            </button>
           </div>
         </div>
 
