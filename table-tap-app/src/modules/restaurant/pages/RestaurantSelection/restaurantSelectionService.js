@@ -20,9 +20,11 @@ export const getActiveRestaurants = async () => {
         is_active,
         cuisine_type,
         location,
-        tables
+        tables,
+        subscriptions!inner(status)
       `)
       .eq('is_active', true)
+      .in('subscriptions.status', ['active', 'grace_period'])
       .order('name');
 
     if (error) {
@@ -147,9 +149,11 @@ export const searchRestaurants = async (searchTerm) => {
         logo_url,
         is_active,
         cuisine_type,
-        location
+        location,
+        subscriptions!inner(status)
       `)
       .eq('is_active', true)
+      .in('subscriptions.status', ['active', 'grace_period'])
       .or(`name.ilike.%${searchTerm}%,cuisine_type.ilike.%${searchTerm}%`)
       .order('name');
 
@@ -181,9 +185,11 @@ export const getRestaurantsByCuisine = async (cuisineType) => {
         logo_url,
         is_active,
         cuisine_type,
-        location
+        location,
+        subscriptions!inner(status)
       `)
       .eq('is_active', true)
+      .in('subscriptions.status', ['active', 'grace_period'])
       .eq('cuisine_type', cuisineType)
       .order('name');
 
@@ -306,6 +312,13 @@ async function getClosestRestaurantsPostGIS(latitude, longitude, radiusMeters = 
       console.error('PostGIS query failed:', error);
       throw error;
     }
+
+    // Filter by active subscription
+    if (data && data.length > 0) {
+      const activeIds = await fetchActiveRestaurantIds(data.map(r => r.id));
+      return data.filter(r => activeIds.includes(r.id));
+    }
+
     return data || [];
   } catch (err) {
     console.error('PostGIS method failed:', err);
@@ -321,8 +334,9 @@ async function getClosestRestaurantsJavaScript(latitude, longitude, radiusMeters
     // Fetch all active restaurants
     const { data: restaurants, error } = await supabase
       .from('restaurants')
-      .select('*')
-      .eq('is_active', true);
+      .select('*, subscriptions!inner(status)')
+      .eq('is_active', true)
+      .in('subscriptions.status', ['active', 'grace_period']);
     if (error) {
       console.error('Failed to fetch restaurants:', error);
       throw error;
@@ -400,8 +414,9 @@ export async function getAllRestaurants() {
   try {
     const { data, error } = await supabase
       .from('restaurants')
-      .select('*')
+      .select('*, subscriptions!inner(status)')
       .eq('is_active', true)
+      .in('subscriptions.status', ['active', 'grace_period'])
       .order('name');
     if (error) {
       console.error('Failed to fetch all restaurants:', error);
@@ -422,5 +437,28 @@ export function formatDistance(distanceMeters) {
     return `${Math.round(distanceMeters)}m`;
   } else {
     return `${(distanceMeters / 1000).toFixed(1)}km`;
+  }
+}
+
+/**
+ * Helper to fetch IDs of restaurants with active subscriptions
+ */
+async function fetchActiveRestaurantIds(restaurantIds) {
+  if (!restaurantIds || restaurantIds.length === 0) return [];
+
+  try {
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .select('restaurant_id')
+      .in('restaurant_id', restaurantIds)
+      .in('status', ['active', 'grace_period']);
+
+    if (error) throw error;
+
+    // Return unique IDs
+    return [...new Set(data.map(item => item.restaurant_id))];
+  } catch (err) {
+    console.error('Error fetching active subscriptions:', err);
+    return [];
   }
 }

@@ -118,7 +118,7 @@ const RestaurantManagement = ({
 
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
         {/* Total */}
         <div className="text-center p-4 bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl border border-gray-200">
           <div className="text-2xl font-bold text-gray-900 font-spartan">{stats.total}</div>
@@ -154,6 +154,17 @@ const RestaurantManagement = ({
           <div className="text-2xl font-bold text-amber-700 font-spartan">{planCounts.enterprise}</div>
           <div className="text-xs text-amber-600 font-spartan">Enterprise</div>
         </div>
+
+        {/* Add Restaurant Action Card - Restored */}
+        <button
+          onClick={onAddRestaurant}
+          className="bg-white p-4 rounded-xl border-dashed border-2 border-blue-300 shadow-sm flex flex-col items-center justify-center hover:bg-blue-50 transition-all group min-h-[100px]"
+        >
+          <div className="p-2 bg-blue-100 rounded-full group-hover:bg-blue-200 transition-colors mb-2">
+            <Plus className="w-5 h-5 text-blue-600" />
+          </div>
+          <p className="text-xs font-bold text-blue-600 uppercase tracking-wider">Add Restaurant (+)</p>
+        </button>
       </div>
 
       {/* Restaurant View */}

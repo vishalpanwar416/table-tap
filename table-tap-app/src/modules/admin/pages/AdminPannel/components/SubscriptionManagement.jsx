@@ -20,7 +20,8 @@ import {
   RefreshCw,
   AlertCircle,
   RotateCcw,
-  CalendarClock
+  CalendarClock,
+  ChevronDown
 } from 'lucide-react';
 import {
   getSubscriptionPlans,
@@ -321,6 +322,61 @@ const SubscriptionManagementV2 = () => {
     }
   };
 
+  const handleInitializeDefaults = async () => {
+    if (!window.confirm('This will create default plans (Starter, Professional, Enterprise). Continue?')) return;
+    setLoading(true);
+    try {
+      const defaultPlans = [
+        {
+          key: 'starter',
+          name: 'Starter',
+          description: 'Perfect for cafes and small restaurants just getting started.',
+          base_price: 999,
+          features: ["Unlimited Tables", "QR Menu & Ordering", "Order Management", "Basic Analytics", "Email Support"],
+          color: 'from-blue-500 to-cyan-500',
+          icon: 'Zap',
+          is_active: true,
+          is_public: true
+        },
+        {
+          key: 'professional',
+          name: 'Professional',
+          description: 'For growing restaurants that want the complete experience.',
+          base_price: 1999,
+          features: ["Unlimited Tables", "Swiggy & Zomato Sync", "Staff Management", "Inventory Tracking", "AI Analytics", "Offers & Promotions", "Priority Support"],
+          color: 'from-purple-500 to-pink-500',
+          icon: 'Sparkles',
+          is_active: true,
+          is_public: true
+        },
+        {
+          key: 'enterprise',
+          name: 'Enterprise',
+          description: 'Custom solutions for restaurant chains and franchises.',
+          base_price: 0,
+          features: ["Multi-Location Support", "Unified Analytics Dashboard", "Cross-Restaurant Insights", "Custom Integrations", "Dedicated Account Manager"],
+          color: 'from-slate-700 to-slate-900',
+          icon: 'Building2',
+          is_active: true,
+          is_public: true
+        }
+      ];
+
+      for (const plan of defaultPlans) {
+        const existing = plans.find(p => p.key === plan.key);
+        if (!existing) {
+          await createSubscriptionPlan(plan);
+        }
+      }
+      setSuccess('Default plans initialized successfully');
+      await fetchData();
+    } catch (err) {
+      setError('Failed to initialize plans: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Get restaurants without active subscription
   const availableRestaurants = restaurants.filter(r =>
     !subscriptions.some(s => s.restaurant_id === r.id && ['active', 'grace_period'].includes(s.status))
@@ -372,38 +428,7 @@ const SubscriptionManagementV2 = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-blue-600">Subscription Plans (UPDATED)</h1>
-          <p className="text-gray-600">Manage restaurant subscriptions and billing</p>
-        </div>
-        <div className="flex gap-3">
-          <button
-            onClick={handleProcessExpired}
-            className="flex items-center gap-2 px-4 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors"
-            title="Check for expired subscriptions"
-          >
-            <CalendarClock className="w-4 h-4" />
-            Process Expirations
-          </button>
-          <button
-            onClick={fetchData}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
-
-          <button
-            onClick={() => openAssignModal()}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-          >
-            <Package className="w-4 h-4" />
-            Assign Subscription
-          </button>
-        </div>
-      </div>
+      {/* Header Removed as per request */}
 
       {/* Alerts */}
       {error && (
@@ -421,83 +446,120 @@ const SubscriptionManagementV2 = () => {
       )}
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
+      {/* Tabs - Modern Pills */}
+      <div className="flex overflow-x-auto pb-2 no-scrollbar">
+        <nav className="flex space-x-2 p-1 bg-gray-100/50 rounded-2xl">
           {[
             { id: 'overview', label: 'Overview', icon: TrendingUp },
             { id: 'subscriptions', label: 'All Subscriptions', icon: Building2 },
             { id: 'expiring', label: 'Expiring Soon', icon: AlertTriangle, count: upcomingRenewals.length },
             { id: 'plans', label: 'Plans', icon: Package }
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 py-2 px-1 border-b-2 font-medium text-sm ${activeTab === tab.id
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-            >
-              <tab.icon className="w-4 h-4" />
-              {tab.label}
-              {tab.count > 0 && (
-                <span className="ml-1 px-2 py-0.5 text-xs bg-orange-100 text-orange-700 rounded-full">
-                  {tab.count}
-                </span>
-              )}
-            </button>
-          ))}
+          ].map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`group flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${isActive
+                  ? 'bg-black text-white shadow-lg shadow-gray-900/20'
+                  : 'text-gray-500 hover:bg-white hover:text-gray-900 hover:shadow-sm'
+                  }`}
+              >
+                <tab.icon className={`w-4 h-4 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-600'}`} />
+                {tab.label}
+                {tab.count > 0 && (
+                  <span className={`ml-1 px-2 py-0.5 text-[10px] rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-orange-100 text-orange-600'
+                    }`}>
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </nav>
       </div>
 
       {/* Overview Tab */}
       {activeTab === 'overview' && stats && (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-in fade-in duration-300">
+
+          {/* Quick Actions Toolbar */}
+          <div className="flex flex-wrap items-center justify-between gap-4 bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">Dashboard Overview</h3>
+              <p className="text-sm text-gray-500">Real-time subscription metrics</p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleProcessExpired}
+                className="flex items-center gap-2 px-4 py-2.5 bg-white border border-orange-200 text-orange-700 rounded-xl hover:bg-orange-50 transition-all shadow-sm text-sm font-medium"
+              >
+                <CalendarClock className="w-4 h-4" />
+                Process Expirations
+              </button>
+              <button
+                onClick={fetchData}
+                className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-all shadow-sm text-sm font-medium"
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                Refresh Data
+              </button>
+              <button
+                onClick={() => openAssignModal()}
+                className="flex items-center gap-2 px-5 py-2.5 bg-black text-white rounded-xl hover:bg-gray-800 transition-all shadow-lg shadow-gray-200 text-sm font-medium"
+              >
+                <Package className="w-4 h-4" />
+                Assign Subscription
+              </button>
+            </div>
+          </div>
+
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white p-6 rounded-lg shadow border">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100/50">
               <div className="flex items-center">
-                <div className="p-2 bg-blue-100 rounded-lg">
+                <div className="p-3 bg-blue-50 rounded-xl">
                   <CreditCard className="w-6 h-6 text-blue-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Subscriptions</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalSubscriptions}</p>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Subscriptions</p>
+                  <p className="text-3xl font-black text-gray-900 mt-1">{stats.totalSubscriptions}</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-lg shadow border">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100/50">
               <div className="flex items-center">
-                <div className="p-2 bg-green-100 rounded-lg">
+                <div className="p-3 bg-green-50 rounded-xl">
                   <CheckCircle className="w-6 h-6 text-green-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Active</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.activeSubscriptions}</p>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Active</p>
+                  <p className="text-3xl font-black text-gray-900 mt-1">{stats.activeSubscriptions}</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-lg shadow border">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100/50">
               <div className="flex items-center">
-                <div className="p-2 bg-orange-100 rounded-lg">
+                <div className="p-3 bg-orange-50 rounded-xl">
                   <AlertTriangle className="w-6 h-6 text-orange-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Grace Period</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.gracePeriodSubscriptions || 0}</p>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Grace Period</p>
+                  <p className="text-3xl font-black text-gray-900 mt-1">{stats.gracePeriodSubscriptions || 0}</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-lg shadow border">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100/50">
               <div className="flex items-center">
-                <div className="p-2 bg-yellow-100 rounded-lg">
+                <div className="p-3 bg-yellow-50 rounded-xl">
                   <DollarSign className="w-6 h-6 text-yellow-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Monthly Revenue</p>
-                  <p className="text-2xl font-bold text-gray-900">₹{(stats.monthlyRecurringRevenue || 0).toLocaleString()}</p>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Monthly Revenue</p>
+                  <p className="text-3xl font-black text-gray-900 mt-1">₹{(stats.monthlyRecurringRevenue || 0).toLocaleString()}</p>
                 </div>
               </div>
             </div>
@@ -513,15 +575,22 @@ const SubscriptionManagementV2 = () => {
               const iconColor = plan.key === 'starter' ? 'text-blue-500' : plan.key === 'professional' ? 'text-purple-500' : 'text-indigo-500';
 
               return (
-                <div key={plan.id} className="bg-white p-6 rounded-lg shadow border">
+                <div key={plan.id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100/50">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-gray-900 capitalize">{plan.name}</h3>
-                    <Icon className={`w-5 h-5 ${iconColor}`} />
+                    <h3 className="font-bold text-gray-900 capitalize text-lg">{plan.name}</h3>
+                    <div className="p-2 bg-gray-50 rounded-lg">
+                      <Icon className={`w-5 h-5 ${iconColor}`} />
+                    </div>
                   </div>
-                  <p className={`text-3xl font-bold ${colorClass}`}>{count}</p>
-                  <p className="text-sm text-gray-500">
-                    ₹{plan.base_price?.toLocaleString()}/month each
+                  <p className={`text-4xl font-black ${colorClass} mb-1`}>{count}</p>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    active users
                   </p>
+                  <div className="mt-4 pt-4 border-t border-dashed">
+                    <p className="text-sm font-medium text-gray-500">
+                      ₹{plan.base_price?.toLocaleString()}<span className="text-xs">/mo</span>
+                    </p>
+                  </div>
                 </div>
               );
             })}
@@ -551,113 +620,107 @@ const SubscriptionManagementV2 = () => {
       )}
 
       {/* Subscriptions Tab */}
+      {/* Subscriptions Tab - Premium Table */}
       {activeTab === 'subscriptions' && (
-        <div className="bg-white rounded-lg shadow border">
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden animate-in fade-in duration-300">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Restaurant
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Plan
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Period
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50/50 border-b border-gray-100 text-[10px] uppercase font-bold tracking-widest text-gray-400">
+                  <th className="px-8 py-4">Restaurant</th>
+                  <th className="px-6 py-4">Plan & Cycle</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4">Period</th>
+                  <th className="px-6 py-4">Amount</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-50">
                 {subscriptions.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
-                      No subscriptions found. Assign subscriptions to restaurants to get started.
+                    <td colSpan="6" className="px-6 py-16 text-center text-gray-400 flex flex-col items-center gap-2">
+                      <Package className="w-12 h-12 text-gray-200" />
+                      <p>No subscriptions found. Assign one to get started.</p>
                     </td>
                   </tr>
                 ) : (
                   subscriptions.map((subscription) => {
                     const daysLeft = getDaysRemaining(subscription.end_date);
                     return (
-                      <tr key={subscription.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                              <Building2 className="w-5 h-5 text-blue-600" />
+                      <tr key={subscription.id} className="hover:bg-gray-50/80 transition-colors group">
+                        <td className="px-8 py-5">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md shadow-blue-200 text-sm">
+                              {subscription.restaurant?.name?.charAt(0) || 'R'}
                             </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">
-                                {subscription.restaurant?.name || 'Unknown'}
+                            <div>
+                              <div className="text-sm font-bold text-gray-900 leading-tight">
+                                {subscription.restaurant?.name || 'Unknown Restaurant'}
                               </div>
-                              <div className="text-sm text-gray-500">
+                              <div className="text-xs text-gray-400 font-medium mt-0.5">
                                 {subscription.restaurant?.contact_email}
                               </div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900 capitalize">
-                            {subscription.plan_name}
+                        <td className="px-6 py-5">
+                          <div className="flex flex-col items-start gap-1">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-700 border border-gray-200 uppercase tracking-wide">
+                              {subscription.plan_name}
+                            </span>
+                            <span className="text-xs text-gray-400 font-medium ml-1 capitalize">
+                              {subscription.billing_cycle}
+                            </span>
                           </div>
-                          <div className="text-sm text-gray-500 capitalize">
-                            {subscription.billing_cycle}
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="flex flex-col gap-1">
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold w-fit ${getStatusColor(subscription.status)}`}>
+                              {getStatusIcon(subscription.status)}
+                              <span className="capitalize">{subscription.status.replace('_', ' ')}</span>
+                            </span>
+                            {subscription.status === 'active' && daysLeft !== null && daysLeft <= 14 && (
+                              <span className="text-[10px] font-bold text-orange-600 pl-1 animation-pulse">
+                                Expires in {daysLeft} days
+                              </span>
+                            )}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(subscription.status)}`}>
-                            {getStatusIcon(subscription.status)}
-                            {subscription.status.replace('_', ' ')}
-                          </span>
-                          {subscription.status === 'active' && daysLeft !== null && daysLeft <= 14 && (
-                            <p className="text-xs text-orange-600 mt-1">
-                              Expires in {daysLeft} days
-                            </p>
-                          )}
+                        <td className="px-6 py-5">
+                          <div className="text-xs font-medium text-gray-900">{formatDate(subscription.start_date)}</div>
+                          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mt-0.5">to {formatDate(subscription.end_date)}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <div className="text-gray-900">{formatDate(subscription.start_date)}</div>
-                          <div className="text-gray-500">to {formatDate(subscription.end_date)}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-6 py-5 text-sm font-black text-gray-900 font-mono">
                           ₹{subscription.total_amount?.toLocaleString() || 0}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex gap-2">
+                        <td className="px-6 py-5 text-right">
+                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
                               onClick={() => openAssignModal(subscription)}
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                              title="Edit"
+                              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                              title="Edit Subscription"
                               disabled={processingId === subscription.id}
                             >
-                              <Edit className="w-4 h-4" />
+                              <Edit size={16} />
                             </button>
                             {subscription.status === 'active' && (
                               <button
                                 onClick={() => handleCancelSubscription(subscription)}
-                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                title="Cancel"
+                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                title="Cancel Subscription"
                                 disabled={processingId === subscription.id}
                               >
-                                <XCircle className="w-4 h-4" />
+                                <XCircle size={16} />
                               </button>
                             )}
                             {['cancelled', 'expired'].includes(subscription.status) && (
                               <button
                                 onClick={() => handleReactivate(subscription)}
-                                className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                title="Reactivate"
+                                className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all"
+                                title="Reactivate Subscription"
                                 disabled={processingId === subscription.id}
                               >
-                                <RotateCcw className="w-4 h-4" />
+                                <RotateCcw size={16} />
                               </button>
                             )}
                           </div>
@@ -674,37 +737,46 @@ const SubscriptionManagementV2 = () => {
 
       {/* Expiring Soon Tab */}
       {activeTab === 'expiring' && (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
           {upcomingRenewals.length === 0 ? (
-            <div className="bg-white rounded-lg shadow border p-12 text-center">
-              <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900">All Good!</h3>
-              <p className="text-gray-500">No subscriptions expiring in the next 14 days</p>
+            <div className="col-span-full bg-white rounded-3xl shadow-sm border border-gray-100 p-12 text-center flex flex-col items-center">
+              <div className="bg-green-100 p-4 rounded-full mb-4">
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">All Good!</h3>
+              <p className="text-gray-500 mt-2">No subscriptions expiring in the next 14 days</p>
             </div>
           ) : (
             upcomingRenewals.map((sub) => (
-              <div key={sub.id} className="bg-white rounded-lg shadow border p-6 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className={`p-3 rounded-lg ${sub.daysUntilExpiry <= 3 ? 'bg-red-100' : 'bg-orange-100'}`}>
-                    <AlertTriangle className={`w-6 h-6 ${sub.daysUntilExpiry <= 3 ? 'text-red-600' : 'text-orange-600'}`} />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{sub.restaurant?.name}</h3>
-                    <p className="text-sm text-gray-500">{sub.plan?.name} - ₹{sub.total_amount?.toLocaleString()}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className={`font-bold ${sub.daysUntilExpiry <= 3 ? 'text-red-600' : 'text-orange-600'}`}>
-                    {sub.daysUntilExpiry <= 0 ? 'Expired!' : `${sub.daysUntilExpiry} days left`}
+              <div key={sub.id} className="bg-white rounded-3xl shadow-sm border border-orange-200 p-6 flex flex-col relative overflow-hidden group hover:shadow-md transition-all">
+                <div className={`absolute top-0 right-0 p-3 rounded-bl-2xl ${sub.daysUntilExpiry <= 3 ? 'bg-red-500 text-white' : 'bg-orange-100 text-orange-700'}`}>
+                  <p className="text-xs font-bold uppercase tracking-wider">
+                    {sub.daysUntilExpiry <= 0 ? 'Expired' : `${sub.daysUntilExpiry} days left`}
                   </p>
-                  <p className="text-sm text-gray-500">Expires {formatDate(sub.end_date)}</p>
                 </div>
-                <button
-                  onClick={() => openAssignModal(sub)}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
-                >
-                  Renew
-                </button>
+
+                <div className="flex items-start gap-4 mb-4">
+                  <div className={`p-3 rounded-2xl ${sub.daysUntilExpiry <= 3 ? 'bg-red-50' : 'bg-orange-50'}`}>
+                    <AlertTriangle className={`w-6 h-6 ${sub.daysUntilExpiry <= 3 ? 'text-red-500' : 'text-orange-500'}`} />
+                  </div>
+                  <div className="pt-1">
+                    <h3 className="font-bold text-gray-900 text-lg leading-tight">{sub.restaurant?.name}</h3>
+                    <p className="text-sm text-gray-500 font-medium">{sub.plan?.name}</p>
+                  </div>
+                </div>
+
+                <div className="mt-auto pt-4 border-t border-dashed border-gray-200">
+                  <div className="flex justify-between items-center mb-4 text-xs font-medium text-gray-500">
+                    <span>Expires: {formatDate(sub.end_date)}</span>
+                    <span className="font-bold text-gray-900">₹{sub.total_amount?.toLocaleString()}</span>
+                  </div>
+                  <button
+                    onClick={() => openAssignModal(sub)}
+                    className="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-orange-500/20 hover:to-red-600 transition-all"
+                  >
+                    Renew Subscription
+                  </button>
+                </div>
               </div>
             ))
           )}
@@ -716,25 +788,28 @@ const SubscriptionManagementV2 = () => {
         <div className="space-y-6">
           {/* Plan Stats */}
           {/* Plan Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white p-4 rounded-xl border shadow-sm">
+          {/* Plan Stats - One Line Scrollable */}
+          <div className="flex flex-row gap-4 overflow-x-auto pb-4 items-stretch no-scrollbar">
+            <div className="bg-white p-5 rounded-xl border shadow-sm min-w-[200px] flex-shrink-0 flex flex-col justify-center">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Plans</p>
-              <p className="text-2xl font-black text-gray-900 mt-1">{plans.length}</p>
+              <p className="text-3xl font-black text-gray-900 mt-2">{plans.length}</p>
             </div>
-            <div className="bg-white p-4 rounded-xl border shadow-sm">
+            <div className="bg-white p-5 rounded-xl border shadow-sm min-w-[200px] flex-shrink-0 flex flex-col justify-center">
               <p className="text-xs font-bold text-green-600 uppercase tracking-wider">Active Plans</p>
-              <p className="text-2xl font-black text-green-700 mt-1">{plans.filter(p => p.is_active).length}</p>
+              <p className="text-3xl font-black text-green-700 mt-2">{plans.filter(p => p.is_active).length}</p>
             </div>
-            <div className="bg-white p-4 rounded-xl border shadow-sm">
+            <div className="bg-white p-5 rounded-xl border shadow-sm min-w-[200px] flex-shrink-0 flex flex-col justify-center">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Inactive Plans</p>
-              <p className="text-2xl font-black text-gray-400 mt-1">{plans.filter(p => !p.is_active).length}</p>
+              <p className="text-3xl font-black text-gray-400 mt-2">{plans.filter(p => !p.is_active).length}</p>
             </div>
 
             {/* Plan Wise Subscription Counts */}
             {plans.map(plan => (
-              <div key={`stat-${plan.id}`} className="bg-white p-4 rounded-xl border shadow-sm">
-                <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider truncate">{plan.name} Users</p>
-                <p className="text-2xl font-black text-indigo-700 mt-1">
+              <div key={`stat-${plan.id}`} className="bg-white p-5 rounded-xl border shadow-sm min-w-[200px] flex-shrink-0 flex flex-col justify-center">
+                <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider truncate" title={`${plan.name} Users`}>
+                  {plan.name} Users
+                </p>
+                <p className="text-3xl font-black text-indigo-700 mt-2">
                   {stats?.planCounts?.[plan.key] || 0}
                 </p>
               </div>
@@ -743,7 +818,7 @@ const SubscriptionManagementV2 = () => {
             {/* Add Plan Action Card */}
             <button
               onClick={() => openPlanModal()}
-              className="bg-white p-4 rounded-xl border-dashed border-2 border-blue-300 shadow-sm flex flex-col items-center justify-center hover:bg-blue-50 transition-all group min-h-[100px]"
+              className="bg-white p-5 rounded-xl border-dashed border-2 border-blue-300 shadow-sm min-w-[200px] flex-shrink-0 flex flex-col items-center justify-center hover:bg-blue-50 transition-all group"
             >
               <div className="p-2 bg-blue-100 rounded-full group-hover:bg-blue-200 transition-colors mb-2">
                 <Plus className="w-5 h-5 text-blue-600" />
@@ -754,49 +829,55 @@ const SubscriptionManagementV2 = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {plans.length === 0 ? (
-              <div className="col-span-full p-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-300">
-                <p className="text-gray-500">No subscription plans found.</p>
+              <div className="col-span-full p-12 text-center bg-gray-50 rounded-3xl border border-dashed border-gray-300 flex flex-col items-center gap-4">
+                <p className="text-gray-500 font-medium">No subscription plans found in the system.</p>
+                <button
+                  onClick={handleInitializeDefaults}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-bold shadow-lg shadow-blue-500/20"
+                >
+                  Initialize Default Plans
+                </button>
               </div>
             ) : (
               plans.map((plan) => (
-                <div key={plan.id} className={`bg-white rounded-2xl shadow-sm border overflow-hidden flex flex-col ${!plan.is_active ? 'opacity-50 grayscale' : ''}`}>
-                  <div className={`h-2 bg-gradient-to-r ${plan.color || 'from-gray-400 to-gray-500'}`} />
-                  <div className="p-6 flex-1">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
-                        <p className="text-gray-500 text-sm mt-1">{plan.description}</p>
-                      </div>
-                      <div className="flex gap-1">
-                        <button onClick={() => openPlanModal(plan)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded">
-                          <Edit size={16} />
-                        </button>
-                        <button onClick={() => handleDeletePlan(plan.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded">
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
+                <div key={plan.id} className={`group relative bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden flex flex-col transition-all hover:shadow-xl hover:-translate-y-1 ${!plan.is_active ? 'opacity-75 grayscale' : ''}`}>
+                  <div className={`h-2.5 bg-gradient-to-r ${plan.color || 'from-gray-400 to-gray-500'}`} />
+
+                  <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => openPlanModal(plan)} className="p-2 bg-white text-blue-600 hover:bg-blue-50 rounded-full shadow-sm border border-gray-100">
+                      <Edit size={14} />
+                    </button>
+                    <button onClick={() => handleDeletePlan(plan.id)} className="p-2 bg-white text-red-600 hover:bg-red-50 rounded-full shadow-sm border border-gray-100">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+
+                  <div className="p-7 flex-1 flex flex-col">
+                    <div className="mb-4">
+                      <h3 className="text-2xl font-black text-gray-900">{plan.name}</h3>
+                      <p className="text-gray-500 text-sm mt-2 leading-relaxed">{plan.description}</p>
                     </div>
 
-                    <div className="mb-6">
-                      <span className="text-3xl font-black text-gray-900">₹{plan.base_price?.toLocaleString()}</span>
-                      <span className="text-gray-500 font-medium">/month</span>
+                    <div className="mb-6 pb-6 border-b border-gray-50">
+                      <span className="text-4xl font-black text-gray-900 tracking-tight">₹{plan.base_price?.toLocaleString()}</span>
+                      <span className="text-gray-400 font-bold text-sm ml-1">/month</span>
                     </div>
 
-                    <ul className="space-y-3">
+                    <ul className="space-y-3 mb-6 flex-1">
                       {plan.features?.map((feature, idx) => (
-                        <li key={idx} className="flex items-center gap-2 text-sm text-gray-600">
-                          <CheckCircle className="w-4 h-4 text-green-500" />
-                          {feature}
+                        <li key={idx} className="flex items-start gap-3 text-sm font-medium text-gray-600">
+                          <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                          <span className="leading-tight">{feature}</span>
                         </li>
                       ))}
                     </ul>
-                  </div>
 
-                  <div className="px-6 py-4 bg-gray-50 border-t flex justify-between items-center">
-                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${plan.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                      {plan.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                    <code className="text-[10px] font-mono text-gray-400">{plan.key}</code>
+                    <div className="flex justify-between items-center pt-2">
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${plan.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                        {plan.is_active ? 'Active Plan' : 'Inactive'}
+                      </span>
+                      <code className="text-[10px] font-mono text-gray-300 bg-gray-50 px-2 py-1 rounded">{plan.key}</code>
+                    </div>
                   </div>
                 </div>
               ))
@@ -951,94 +1032,145 @@ const SubscriptionManagementV2 = () => {
       )}
 
       {/* Assign Subscription Modal */}
+      {/* Assign Subscription Modal */}
       {showAssignModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">
-              {editingSubscription ? 'Update Subscription' : 'Assign Subscription'}
-            </h2>
-            <form onSubmit={handleAssignSubmit} className="space-y-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+              <h2 className="text-xl font-bold text-gray-900">
+                {editingSubscription ? 'Update Subscription' : 'Assign Subscription'}
+              </h2>
+              <button
+                onClick={() => setShowAssignModal(false)}
+                className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500"
+              >
+                <XCircle size={24} />
+              </button>
+            </div>
+
+            <form onSubmit={handleAssignSubmit} className="p-6 space-y-5 overflow-y-auto">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Restaurant</label>
-                <select
-                  value={assignForm.restaurant_id}
-                  onChange={(e) => setAssignForm({ ...assignForm, restaurant_id: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-                  required
-                  disabled={!!editingSubscription}
-                >
-                  <option value="">Select Restaurant</option>
-                  {(editingSubscription ? restaurants : availableRestaurants).map((restaurant) => (
-                    <option key={restaurant.id} value={restaurant.id}>
-                      {restaurant.name}
-                    </option>
-                  ))}
-                </select>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  Select Restaurant
+                </label>
+                <div className="relative">
+                  <select
+                    value={assignForm.restaurant_id}
+                    onChange={(e) => setAssignForm({ ...assignForm, restaurant_id: e.target.value })}
+                    className="w-full border rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-blue-500 outline-none appearance-none"
+                    required
+                    disabled={!!editingSubscription}
+                  >
+                    <option value="">Choose a restaurant...</option>
+                    {(editingSubscription ? restaurants : availableRestaurants).map((restaurant) => (
+                      <option key={restaurant.id} value={restaurant.id}>
+                        {restaurant.name}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                    <ChevronDown size={16} />
+                  </div>
+                </div>
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-700">Plan</label>
-                <select
-                  value={assignForm.plan_id}
-                  onChange={(e) => setAssignForm({ ...assignForm, plan_id: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-                  required
-                >
-                  {plans.map((plan) => (
-                    <option key={plan.id} value={plan.key}>
-                      {plan.name} - ₹{plan.base_price}
-                    </option>
-                  ))}
-                </select>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  Subscription Plan
+                </label>
+                <div className="relative">
+                  <select
+                    value={assignForm.plan_id}
+                    onChange={(e) => setAssignForm({ ...assignForm, plan_id: e.target.value })}
+                    className="w-full border rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-blue-500 outline-none appearance-none"
+                    required
+                  >
+                    <option value="">Select a plan...</option>
+                    {plans.map((plan) => (
+                      <option key={plan.id} value={plan.key}>
+                        {plan.name} — ₹{plan.base_price?.toLocaleString()}/mo
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                    <ChevronDown size={16} />
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Billing Cycle</label>
-                <select
-                  value={assignForm.billing_cycle}
-                  onChange={(e) => setAssignForm({ ...assignForm, billing_cycle: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-                >
-                  {billingCycles.map(cycle => (
-                    <option key={cycle.id} value={cycle.key}>
-                      {cycle.label} {cycle.discount_percentage > 0 ? `(${cycle.discount_percentage}% discount)` : ''}
-                    </option>
-                  ))}
-                </select>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    Billing Cycle
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={assignForm.billing_cycle}
+                      onChange={(e) => setAssignForm({ ...assignForm, billing_cycle: e.target.value })}
+                      className="w-full border rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-blue-500 outline-none appearance-none text-sm"
+                    >
+                      {billingCycles.map(cycle => (
+                        <option key={cycle.id} value={cycle.key}>
+                          {cycle.label}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                      <ChevronDown size={14} />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    Payment Method
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={assignForm.payment_method}
+                      onChange={(e) => setAssignForm({ ...assignForm, payment_method: e.target.value })}
+                      className="w-full border rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-blue-500 outline-none appearance-none text-sm"
+                    >
+                      <option value="manual">Manual Entry</option>
+                      <option value="razorpay">Razorpay</option>
+                      <option value="upi">UPI</option>
+                      <option value="bank_transfer">Bank Transfer</option>
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                      <ChevronDown size={14} />
+                    </div>
+                  </div>
+                </div>
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-700">Payment Method</label>
-                <select
-                  value={assignForm.payment_method}
-                  onChange={(e) => setAssignForm({ ...assignForm, payment_method: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-                >
-                  <option value="manual">Manual</option>
-                  <option value="razorpay">Razorpay</option>
-                  <option value="upi">UPI</option>
-                  <option value="bank_transfer">Bank Transfer</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Notes</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  Additional Notes
+                </label>
                 <textarea
                   value={assignForm.notes}
                   onChange={(e) => setAssignForm({ ...assignForm, notes: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-                  rows="3"
-                  placeholder="Optional notes..."
+                  className="w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none min-h-[80px]"
+                  placeholder="Payment details, transaction ID, or other remarks..."
                 />
               </div>
-              <div className="flex gap-3 pt-4">
+
+              <div className="flex gap-4 pt-4 sticky bottom-0 bg-white border-t border-transparent mt-2">
                 <button
                   type="submit"
                   disabled={processingId === 'assign'}
-                  className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 disabled:opacity-50"
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3.5 rounded-xl font-bold hover:shadow-lg hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {processingId === 'assign' ? 'Processing...' : (editingSubscription ? 'Update' : 'Assign')}
+                  {processingId === 'assign' ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <span>{editingSubscription ? 'Update Subscription' : 'Assign Plan'}</span>
+                  )}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowAssignModal(false)}
-                  className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400"
+                  className="flex-1 bg-gray-100 text-gray-700 py-3.5 rounded-xl font-bold hover:bg-gray-200 transition-all"
                 >
                   Cancel
                 </button>

@@ -203,26 +203,32 @@ export const getAllRestaurants = async () => {
     // Step 3: Transform the data
     const transformedData = data.map(restaurant => {
 
-      const managerStaff = restaurant.restaurant_staff?.find(
+      const ownerStaff = restaurant.restaurant_staff?.find(
+        staff => staff.staff_role === 'owner'
+      ) || restaurant.restaurant_staff?.find(
         staff => staff.staff_role === 'manager'
-      );
+      ); // Fallback to manager
 
-      let manager = null;
-      if (managerStaff) {
-        if (managerStaff.connected && managerStaff.profiles) {
+      let manager = null; // Variable name kept as 'manager' to match UI prop expectation or I should rename it?
+      // The frontend RestaurantCard uses `restaurant.manager`. I should keep the KEY `manager` but populate it with Owner info.
+
+      if (ownerStaff) {
+        if (ownerStaff.connected && ownerStaff.profiles) {
           manager = {
-            name: managerStaff.profiles.full_name,
-            email: managerStaff.profiles.email,
-            id: managerStaff.profiles.id,
-            connected: true
+            name: ownerStaff.profiles.full_name,
+            email: ownerStaff.profiles.email,
+            id: ownerStaff.profiles.id,
+            connected: true,
+            role: ownerStaff.staff_role // Add role info
           };
         } else {
           manager = {
-            name: managerStaff.staff_name,
-            email: managerStaff.staff_email,
-            phone: managerStaff.staff_phone_number,
+            name: ownerStaff.staff_name,
+            email: ownerStaff.staff_email,
+            phone: ownerStaff.staff_phone_number,
             connected: false,
-            staff_id: managerStaff.id
+            staff_id: ownerStaff.id,
+            role: ownerStaff.staff_role
           };
         }
       }
@@ -319,12 +325,12 @@ const validateRestaurantData = (data) => {
     errors.push('Restaurant name is required');
   }
 
-  if (!data.manager_email || data.manager_email.trim() === '') {
-    errors.push('Manager email is required');
+  if (!data.owner_email || data.owner_email.trim() === '') {
+    errors.push('Owner email is required');
   }
 
-  if (data.manager_email && !emailRegex.test(data.manager_email)) {
-    errors.push('Invalid manager email format');
+  if (data.owner_email && !emailRegex.test(data.owner_email)) {
+    errors.push('Invalid owner email format');
   }
 
   if (data.contact_email && !emailRegex.test(data.contact_email)) {
@@ -427,18 +433,35 @@ export const createRestaurant = async (restaurantData) => {
       throw restaurantError;
     }
 
-    // Create manager staff record
-    if (restaurantData.manager_email) {
-      await supabase
+    // Create owner staff record
+    if (restaurantData.owner_email) {
+      const { error: staffError } = await supabase
         .from('restaurant_staff')
         .insert({
           restaurant_id: restaurant.id,
-          staff_role: 'manager',
-          staff_name: restaurantData.manager_name || 'Manager',
-          staff_email: restaurantData.manager_email,
-          staff_phone_number: restaurantData.manager_phone,
+          staff_role: 'owner',
+          staff_name: restaurantData.owner_name || 'Owner',
+          staff_email: restaurantData.owner_email,
+          staff_phone_number: restaurantData.owner_phone,
           connected: false
         });
+
+      if (staffError) {
+        // Fallback if 'owner' role is not in enum: try 'manager' but log it
+        if (staffError.message?.includes('check constraint')) {
+          console.warn("Owner role not supported in DB, falling back to manager");
+          await supabase.from('restaurant_staff').insert({
+            restaurant_id: restaurant.id,
+            staff_role: 'manager',
+            staff_name: (restaurantData.owner_name || 'Owner') + ' (Owner)',
+            staff_email: restaurantData.owner_email,
+            staff_phone_number: restaurantData.owner_phone,
+            connected: false
+          });
+        } else {
+          throw staffError;
+        }
+      }
     }
 
     return { data: restaurant, error: null };
@@ -719,15 +742,29 @@ export const deleteStaff = async (staffId) => {
 // ========= RESTAURANT MANAGER FUNCTIONS =========
 
 /**
- * Get managers for a specific restaurant
+ * Get owners for a specific restaurant
  */
-export const getRestaurantManagers = async (restaurantId) => {
+export const getRestaurantOwners = async (restaurantId) => {
   try {
-    const { data, error } = await supabase
+    // Try picking 'owner' role first
+    let { data, error } = await supabase
       .from('restaurant_staff')
       .select('*')
       .eq('restaurant_id', restaurantId)
-      .eq('staff_role', 'manager');
+      .eq('staff_role', 'owner');
+
+    // If no owners found or error, maybe they are stored as managers?
+    // But for now strict check or fallback?
+    // Let's return what we found.
+    if (!data || data.length === 0) {
+      // Fallback: Check for managers if no owners found (migration support)
+      const { data: managers } = await supabase
+        .from('restaurant_staff')
+        .select('*')
+        .eq('restaurant_id', restaurantId)
+        .eq('staff_role', 'manager');
+      if (managers && managers.length > 0) return { data: managers, error: null };
+    }
 
     if (error) {
       throw error;
@@ -740,19 +777,18 @@ export const getRestaurantManagers = async (restaurantId) => {
 };
 
 /**
- * Update manager details
+ * Update owner details
  */
-export const updateManagerDetails = async (managerId, managerData) => {
+export const updateOwnerDetails = async (ownerId, ownerData) => {
   try {
     const { data, error } = await supabase
       .from('restaurant_staff')
       .update({
-        staff_name: managerData.manager_name,
-        staff_email: managerData.manager_email,
-        staff_phone_number: managerData.manager_phone
+        staff_name: ownerData.owner_name,
+        staff_email: ownerData.owner_email,
+        staff_phone_number: ownerData.owner_phone
       })
-      .eq('id', managerId)
-      .select()
+      .eq('id', ownerId)
       .select()
       .maybeSingle();
 

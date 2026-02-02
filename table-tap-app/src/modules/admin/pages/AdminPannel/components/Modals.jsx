@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Upload, Trash2, MapPin, Phone, Mail, Clock, Globe, Building2, Users, ChevronDown, Check, UserCog, Star, Award, ChefHat, UtensilsCrossed, Coins, Crown } from 'lucide-react';
-import { uploadRestaurantPhotoForAdmin, uploadRestaurantLogo, getRestaurantManagers, updateManagerDetails } from '../admin_service';
+import { uploadRestaurantPhotoForAdmin, uploadRestaurantLogo, getRestaurantOwners, updateOwnerDetails } from '../admin_service';
 // Remove the supabase import since we're moving all calls to the service
 // import { supabase } from '../../../../shared/supabase'; 
 
@@ -68,47 +68,47 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
     setImagePreview(data.logo_url || '');
   }, [data.logo_url]);
 
-  // Fetch managers when editing
+  // Fetch owners when editing
   useEffect(() => {
     if (isEditing && data.id) {
-      fetchManagers(data.id);
+      fetchOwners(data.id);
     }
   }, [isEditing, data.id]);
 
-  // Add this function to fetch managers
-  const fetchManagers = async (restaurantId) => {
+  // Add this function to fetch owners
+  const fetchOwners = async (restaurantId) => {
     try {
-      const { data: managersData, error } = await getRestaurantManagers(restaurantId);
+      const { data: ownersData, error } = await getRestaurantOwners(restaurantId);
 
-      if (!error && managersData) {
-        setManagers(managersData);
-        // Set the first manager as selected by default
-        if (managersData.length > 0) {
-          const firstManager = managersData[0];
-          setSelectedManagerId(firstManager.id);
+      if (!error && ownersData) {
+        setOwners(ownersData);
+        // Set the first owner as selected by default
+        if (ownersData.length > 0) {
+          const firstOwner = ownersData[0];
+          setSelectedOwnerId(firstOwner.id);
           setData(prev => ({
             ...prev,
-            manager_name: firstManager.staff_name || '',
-            manager_email: firstManager.staff_email || '',
-            manager_phone: firstManager.staff_phone_number || ''
+            owner_name: firstOwner.staff_name || '',
+            owner_email: firstOwner.staff_email || '',
+            owner_phone: firstOwner.staff_phone_number || ''
           }));
         }
       }
     } catch (error) {
-      console.error('Error fetching managers:', error);
+      console.error('Error fetching owners:', error);
     }
   };
 
-  // Handle manager selection
-  const handleManagerChange = (managerId) => {
-    setSelectedManagerId(managerId);
-    const selectedManager = managers.find(m => m.id === managerId);
-    if (selectedManager) {
+  // Handle owner selection
+  const handleOwnerChange = (ownerId) => {
+    setSelectedOwnerId(ownerId);
+    const selectedOwner = owners.find(m => m.id === ownerId);
+    if (selectedOwner) {
       setData(prev => ({
         ...prev,
-        manager_name: selectedManager.staff_name || '',
-        manager_email: selectedManager.staff_email || '',
-        manager_phone: selectedManager.staff_phone_number || ''
+        owner_name: selectedOwner.staff_name || '',
+        owner_email: selectedOwner.staff_email || '',
+        owner_phone: selectedOwner.staff_phone_number || ''
       }));
     }
   };
@@ -159,11 +159,11 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
     try {
       await onSubmit(e);
 
-      // If editing and a manager is selected, update the manager details
-      if (isEditing && selectedManagerId) {
-        const { error } = await updateManagerDetails(selectedManagerId, data);
+      // If editing and an owner is selected, update the owner details
+      if (isEditing && selectedOwnerId) {
+        const { error } = await updateOwnerDetails(selectedOwnerId, data);
         if (error) {
-          console.error('Error updating manager details:', error);
+          console.error('Error updating owner details:', error);
         }
       }
 
@@ -377,28 +377,28 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
               </div>
             </div>
 
-            {/* Manager Information */}
+            {/* Owner Information */}
             <div className="space-y-4">
               <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
                 <Users className="w-4 h-4 text-purple-500" />
-                Manager Information
+                Owner Information
               </label>
 
-              {isEditing && managers.length > 1 ? (
-                // Show dropdown if multiple managers
+              {isEditing && owners.length > 1 ? (
+                // Show dropdown if multiple owners
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Select Manager
+                      Select Owner
                     </label>
                     <select
-                      value={selectedManagerId}
-                      onChange={(e) => handleManagerChange(e.target.value)}
+                      value={selectedOwnerId}
+                      onChange={(e) => handleOwnerChange(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
-                      {managers.map(manager => (
-                        <option key={manager.id} value={manager.id}>
-                          {manager.staff_name || manager.staff_email} {manager.connected ? '(Connected)' : '(Not Connected)'}
+                      {owners.map(owner => (
+                        <option key={owner.id} value={owner.id}>
+                          {owner.staff_name || owner.staff_email} {owner.connected ? '(Connected)' : '(Not Connected)'}
                         </option>
                       ))}
                     </select>
@@ -407,69 +407,69 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Manager Name
+                        Owner Name
                       </label>
                       <input
                         type="text"
-                        value={data.manager_name || ''}
-                        onChange={(e) => setData({ ...data, manager_name: e.target.value })}
+                        value={data.owner_name || ''}
+                        onChange={(e) => setData({ ...data, owner_name: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Enter manager's name"
+                        placeholder="Enter owner's name"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Manager Email *
+                        Owner Email *
                       </label>
                       <input
                         type="email"
                         required
-                        value={data.manager_email || ''}
-                        onChange={(e) => setData({ ...data, manager_email: e.target.value })}
+                        value={data.owner_email || ''}
+                        onChange={(e) => setData({ ...data, owner_email: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Enter manager's email address"
+                        placeholder="Enter owner's email address"
                       />
                     </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Manager Phone
+                      Owner Phone
                     </label>
                     <input
                       type="tel"
-                      value={data.manager_phone || ''}
-                      onChange={(e) => setData({ ...data, manager_phone: e.target.value })}
+                      value={data.owner_phone || ''}
+                      onChange={(e) => setData({ ...data, owner_phone: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter manager's phone number"
+                      placeholder="Enter owner's phone number"
                     />
                   </div>
                 </div>
               ) : (
-                // Show regular form fields for new restaurant or single manager
+                // Show regular form fields for new restaurant or single owner
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Manager Name
+                      Owner Name
                     </label>
                     <input
                       type="text"
-                      value={data.manager_name || ''}
-                      onChange={(e) => setData({ ...data, manager_name: e.target.value })}
+                      value={data.owner_name || ''}
+                      onChange={(e) => setData({ ...data, owner_name: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter manager's name"
+                      placeholder="Enter owner's name"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Manager Email *
+                      Owner Email *
                     </label>
                     <input
                       type="email"
                       required
-                      value={data.manager_email || ''}
-                      onChange={(e) => setData({ ...data, manager_email: e.target.value })}
+                      value={data.owner_email || ''}
+                      onChange={(e) => setData({ ...data, owner_email: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter manager's email address"
+                      placeholder="Enter owner's email address"
                     />
                   </div>
                 </div>
@@ -478,14 +478,14 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
               {!isEditing && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Manager Phone
+                    Owner Phone
                   </label>
                   <input
                     type="tel"
-                    value={data.manager_phone || ''}
-                    onChange={(e) => setData({ ...data, manager_phone: e.target.value })}
+                    value={data.owner_phone || ''}
+                    onChange={(e) => setData({ ...data, owner_phone: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter manager's phone number"
+                    placeholder="Enter owner's phone number"
                   />
                 </div>
               )}

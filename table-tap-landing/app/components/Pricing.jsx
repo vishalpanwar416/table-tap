@@ -50,6 +50,15 @@ const Pricing = () => {
                         }
                     }
 
+                    // Sort plans: Starter -> Professional -> Enterprise, then others by price
+                    const orderMap = { starter: 1, professional: 2, enterprise: 3 };
+                    formattedPlans.sort((a, b) => {
+                        const orderA = orderMap[a.id] || 99;
+                        const orderB = orderMap[b.id] || 99;
+                        if (orderA !== orderB) return orderA - orderB;
+                        return (a.price || 0) - (b.price || 0);
+                    });
+
                     setPlans(formattedPlans);
                 } else {
                     setPlans(pricing.plans);
