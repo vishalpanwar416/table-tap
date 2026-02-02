@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { CartProvider } from '../shared/config/CartContent';
 import { LikesProvider } from '../shared/config/LikesContent';
 import { FoodDataProvider } from '../shared/context/FoodDataContext';
@@ -38,6 +38,18 @@ const LoadingSpinner = () => <LoadingScreen message="Loading..." />;
 /** Auth paths that must never be redirected to /. Fallback only sends unknown paths to /. */
 const AUTH_PATHS = ['/login', '/signup', '/complete-profile', '/forgot-password', '/reset-password', '/auth-callback', '/restaurant-selection', '/onboarding'];
 
+/** Only show Opening (splash) when path is exactly /. Prevents app.table-tap.in/restaurant-selection from showing splash. */
+const OpeningOrSync = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const pathname = location.pathname.replace(/\/$/, '') || '/';
+  if (pathname !== '/') {
+    const search = location.search || '';
+    return <Navigate to={pathname + search} replace />;
+  }
+  return <Opening />;
+};
+
 const FallbackRedirect = () => {
     const location = useLocation();
     const pathname = location.pathname.replace(/\/$/, '') || '/'; // normalize trailing slash
@@ -70,7 +82,7 @@ const CustomerApp = () => {
                         <Suspense fallback={<LoadingSpinner />}>
                             <Routes>
                                 {/* Root: use index so only exact "/" matches, not /login */}
-                                <Route index element={<Opening />} />
+                                <Route index element={<OpeningOrSync />} />
                                 <Route path="/onboarding" element={<OnboardingScreen />} />
                                 <Route path="/login/*" element={<LoginPage />} />
                                 <Route path="/signup/*" element={<SignupPage />} />
@@ -78,6 +90,7 @@ const CustomerApp = () => {
                                 <Route path="/forgot-password/*" element={<ForgotPassword />} />
                                 <Route path="/reset-password/*" element={<ResetPassword />} />
                                 <Route path="/auth-callback/*" element={<AuthCallback />} />
+                                <Route path="/restaurant-selection" element={<RestaurantSelectionPage />} />
                                 <Route path="/restaurant-selection/*" element={<RestaurantSelectionPage />} />
 
                                 {/* Protected Customer Routes */}
