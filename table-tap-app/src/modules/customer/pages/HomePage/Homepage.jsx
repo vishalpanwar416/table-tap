@@ -147,10 +147,12 @@ const HomePage = memo(() => {
   useEffect(() => {
     // Wait for restaurant context to finish loading
     if (restaurantLoading) return;
-    
+
     // If no restaurant is selected, redirect to restaurant selection
     if (!restaurantId) {
-      navigate('/restaurant-selection', { replace: true });
+      if (window.location.pathname !== '/restaurant-selection') {
+        navigate('/restaurant-selection', { replace: true });
+      }
     }
   }, [restaurantId, restaurantLoading, navigate]);
 

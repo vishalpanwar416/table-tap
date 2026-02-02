@@ -8,7 +8,7 @@ import { isDevelopment } from '../shared/utils/subdomainRouter';
 
 // Lazy load admin pages
 const AdminPanel = lazy(() => import('./pages/AdminPannel/AdminPannel'));
-const LoginPage = lazy(() => import('../shared/components/auth/LoginPage'));
+const LoginPage = lazy(() => import('./pages/AdminPannel/components/AdminLoginPage'));
 const SignupPage = lazy(() => import('../shared/components/auth/SignupPage'));
 const ForgotPassword = lazy(() => import('../shared/components/auth/ForgotPassward'));
 const ResetPassword = lazy(() => import('../shared/components/auth/ResetPassword'));

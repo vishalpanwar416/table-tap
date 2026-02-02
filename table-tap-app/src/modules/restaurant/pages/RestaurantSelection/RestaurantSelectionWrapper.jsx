@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '../../../shared/config/AuthContext';
 import { useRestaurant } from './RestaurantContext';
 import { needsRestaurantSelection, hasValidRestaurantSelection } from '../../../shared/utils/restaurantCheck';
@@ -72,9 +72,13 @@ const RestaurantSelectionWrapper = ({ children }) => {
     return <LoadingScreen message="Verifying session..." variant="page" />;
   }
 
-  // If no restaurant is selected, show restaurant selection page
-  if (!restaurantId) {
-    return <RestaurantSelectionPage />;
+  // If no restaurant is selected, redirect to selection page
+  if (!restaurantId && !checking) {
+    if (location.pathname !== '/restaurant-selection') {
+      return <Navigate to="/restaurant-selection" replace />;
+    }
+    // If we are somehow on /restaurant-selection (even if wrapped), allow it to render
+    // note: typically /restaurant-selection should NOT be wrapped by this component
   }
 
   // If there's an error, show error state
