@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Plus, TrendingUp, Clock, Users, List, Grid, Brain, Star, Zap, Crown } from 'lucide-react';
+import { Building2, Plus, List, Grid } from 'lucide-react';
 import RestaurantCard from './RestaurantCard';
 import RestaurantListView from './RestaurantListView';
 import RestaurantGrid from './RestaurantGrid';
@@ -30,7 +30,7 @@ const RestaurantManagement = ({
           .from('subscriptions')
           .select('plan_name, status')
           .in('status', ['active', 'grace_period']);
-        
+
         if (subscriptions) {
           const counts = {
             starter: subscriptions.filter(s => s.plan_name === 'starter').length,
@@ -115,69 +115,42 @@ const RestaurantManagement = ({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-end items-center">
-        <button
-          onClick={onAddRestaurant}
-          className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-spartan"
-        >
-          <Plus className="w-4 h-4" />
-          <span className="font-medium font-spartan">Add Restaurant</span>
-        </button>
-      </div>
+
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {/* Total */}
         <div className="text-center p-4 bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl border border-gray-200">
-          <div className="w-10 h-10 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex items-center justify-center mx-auto mb-2 shadow-md">
-            <Building2 className="w-5 h-5 text-white" />
-          </div>
           <div className="text-2xl font-bold text-gray-900 font-spartan">{stats.total}</div>
           <div className="text-xs text-gray-600 font-spartan">Total</div>
         </div>
 
         {/* Active */}
         <div className="text-center p-4 bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl border border-green-200">
-          <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-2 shadow-md">
-            <Building2 className="w-5 h-5 text-white" />
-          </div>
           <div className="text-2xl font-bold text-green-700 font-spartan">{stats.active}</div>
           <div className="text-xs text-green-600 font-spartan">Active</div>
         </div>
 
         {/* Inactive */}
         <div className="text-center p-4 bg-gradient-to-br from-red-50 to-rose-100 rounded-xl border border-red-200">
-          <div className="w-10 h-10 bg-gradient-to-br from-red-400 to-red-500 rounded-full flex items-center justify-center mx-auto mb-2 shadow-md">
-            <Building2 className="w-5 h-5 text-white" />
-          </div>
           <div className="text-2xl font-bold text-red-600 font-spartan">{stats.inactive}</div>
           <div className="text-xs text-red-500 font-spartan">Inactive</div>
         </div>
 
         {/* Starter Plan */}
         <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-sky-100 rounded-xl border border-blue-200">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-sky-600 rounded-full flex items-center justify-center mx-auto mb-2 shadow-md">
-            <Star className="w-5 h-5 text-white" />
-          </div>
           <div className="text-2xl font-bold text-blue-700 font-spartan">{planCounts.starter}</div>
           <div className="text-xs text-blue-600 font-spartan">Starter</div>
         </div>
 
         {/* Professional Plan */}
         <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-violet-100 rounded-xl border border-purple-200">
-          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-violet-600 rounded-full flex items-center justify-center mx-auto mb-2 shadow-md">
-            <Zap className="w-5 h-5 text-white" />
-          </div>
           <div className="text-2xl font-bold text-purple-700 font-spartan">{planCounts.professional}</div>
           <div className="text-xs text-purple-600 font-spartan">Professional</div>
         </div>
 
         {/* Enterprise Plan */}
         <div className="text-center p-4 bg-gradient-to-br from-amber-50 to-yellow-100 rounded-xl border border-amber-200">
-          <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-2 shadow-md">
-            <Crown className="w-5 h-5 text-white" />
-          </div>
           <div className="text-2xl font-bold text-amber-700 font-spartan">{planCounts.enterprise}</div>
           <div className="text-xs text-amber-600 font-spartan">Enterprise</div>
         </div>
