@@ -27,7 +27,7 @@ import {
   Eye,
   Settings,
   Bell,
-  Sparkles,
+  Stars,
   Award,
   Target,
   Percent,
@@ -310,7 +310,7 @@ const AdminDashboard = ({ restaurants, staff, onTabChange }) => {
         <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Sparkles size={20} className="text-yellow-300" />
+              <Stars size={20} className="text-yellow-300" />
               <span className="text-purple-200 text-sm">{currentTime.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
             </div>
             <h1 className="text-2xl md:text-3xl font-bold">{greeting}, Admin!</h1>
