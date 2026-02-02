@@ -26,7 +26,7 @@ export default function AdminLoginPage() {
                 if (user) {
                     // Check if user has admin role
                     const profile = await authService.getProfile(user.id);
-                    if (profile && ALLOWED_ROLES.includes(profile.role)) {
+                    if (profile && ALLOWED_ROLES.includes(profile.profile_role || profile.role)) {
                         navigate('/');
                     }
                 }
@@ -48,7 +48,7 @@ export default function AdminLoginPage() {
             // Get user profile to check role
             const profile = await authService.getProfile(authUser.id);
 
-            if (profile && ALLOWED_ROLES.includes(profile.role)) {
+            if (profile && ALLOWED_ROLES.includes(profile.profile_role || profile.role)) {
                 navigate('/');
             } else {
                 setError('Access denied. This portal is restricted to administrators only.');

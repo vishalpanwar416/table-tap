@@ -1,8 +1,11 @@
 import { useEffect, useState, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { supabase } from '../../shared/supabase';
 import { useAuth } from './AuthContext';
+import { useBasePathNavigate } from './BasePathContext';
 import AuthWrapper from './AuthWrapper';
+
+const LOADING_TIMEOUT_MS = 8000;
 
 /**
  * AdminOnlyWrapper
@@ -10,15 +13,12 @@ import AuthWrapper from './AuthWrapper';
  * - Then enforces profiles.profile_role === 'admin'
  */
 export default function AdminOnlyWrapper({ children }) {
-  // Log immediately when component renders
-  console.log('[AdminOnlyWrapper] Component rendering...');
-
   const { user, loading: authLoading } = useAuth();
   const [checkingRole, setCheckingRole] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [shouldRedirect, setShouldRedirect] = useState(false);
   const [debugInfo, setDebugInfo] = useState(null);
-  const navigate = useNavigate();
+  const navigate = useBasePathNavigate();
   const location = useLocation();
   const checkInProgressRef = useRef(false);
   const mountedRef = useRef(true);
@@ -28,36 +28,40 @@ export default function AdminOnlyWrapper({ children }) {
     return () => { mountedRef.current = false; };
   }, []);
 
-  console.log('[AdminOnlyWrapper] State:', { authLoading, userId: user?.id, checkingRole, isAdmin });
-
   useEffect(() => {
     let mounted = true;
+    let timeoutId;
+
+    const finishChecking = (admin, redirect) => {
+      if (!mounted) return;
+      setCheckingRole(false);
+      setIsAdmin(admin);
+      setShouldRedirect(redirect);
+      checkInProgressRef.current = false;
+    };
 
     const checkRole = async () => {
       if (authLoading) return;
 
       if (!user?.id) {
-        if (mounted) {
-          setCheckingRole(false);
-          setIsAdmin(false);
-          setShouldRedirect(true);
-        }
+        finishChecking(false, true);
         return;
       }
 
-      // Check if we already have the info in metadata to avoid unnecessary DB call
       const metadataRole = user.user_metadata?.profile_role || user.app_metadata?.profile_role;
       if (metadataRole === 'admin') {
-        if (mounted) {
-          setIsAdmin(true);
-          setCheckingRole(false);
-          setShouldRedirect(false);
-        }
+        finishChecking(true, false);
         return;
       }
 
       if (checkInProgressRef.current) return;
       checkInProgressRef.current = true;
+
+      timeoutId = setTimeout(() => {
+        if (!mounted) return;
+        console.warn('[AdminOnlyWrapper] Role check timeout');
+        finishChecking(false, true);
+      }, LOADING_TIMEOUT_MS);
 
       try {
         const { data, error } = await supabase
@@ -72,27 +76,19 @@ export default function AdminOnlyWrapper({ children }) {
           if (error.name === 'AbortError') return;
           console.error('[AdminCheck] Error:', error);
           setDebugInfo({ error: error.message });
-          setIsAdmin(false);
-          setShouldRedirect(true);
+          finishChecking(false, true);
         } else {
           const isAdminRole = data?.profile_role === 'admin';
           setDebugInfo({ profileRole: data?.profile_role, isAdmin: isAdminRole });
-          setIsAdmin(isAdminRole);
-          setShouldRedirect(!isAdminRole);
+          finishChecking(isAdminRole, !isAdminRole);
         }
       } catch (err) {
         if (err.name === 'AbortError') return;
         console.error('[AdminCheck] Exception:', err);
-        if (mounted) {
-          setDebugInfo({ exception: err.message });
-          setIsAdmin(false);
-          setShouldRedirect(true);
-        }
+        if (mounted) setDebugInfo({ exception: err.message });
+        finishChecking(false, true);
       } finally {
-        if (mounted) {
-          setCheckingRole(false);
-          checkInProgressRef.current = false;
-        }
+        clearTimeout(timeoutId);
       }
     };
 
@@ -100,20 +96,18 @@ export default function AdminOnlyWrapper({ children }) {
 
     return () => {
       mounted = false;
+      clearTimeout(timeoutId);
     };
   }, [authLoading, user?.id]);
 
   useEffect(() => {
-    // Only redirect if NOT loading and we are sure they are NOT an admin
     if (!checkingRole && !authLoading && shouldRedirect && !isAdmin && mountedRef.current) {
-      console.log('[AdminCheck] Redirecting to /login');
-      // Redirect to login with preserving the current location so we can redirect back after login
       navigate('/login', {
         replace: true,
         state: { from: location.pathname }
       });
     }
-  }, [checkingRole, authLoading, shouldRedirect, isAdmin, navigate]);
+  }, [checkingRole, authLoading, shouldRedirect, isAdmin, navigate, location.pathname]);
 
   // Show loading while checking
   if (checkingRole) {

@@ -56,9 +56,14 @@ export default function AuthWrapper({ children, publicOnly = false }) {
         return;
       }
 
-      // Protected route handling
+      // Protected route handling — stay in admin/restaurant app when redirecting to login
       if (!user) {
-        navigateWithParams('/login');
+        const loginPath = location.pathname.startsWith('/admin')
+          ? '/admin/login'
+          : location.pathname.startsWith('/restaurant')
+            ? '/restaurant/login'
+            : '/login';
+        navigateWithParams(loginPath);
         setChecking(false);
         return;
       }
