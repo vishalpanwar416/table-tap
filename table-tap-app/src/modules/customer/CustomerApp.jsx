@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { CartProvider } from '../shared/config/CartContent';
 import { LikesProvider } from '../shared/config/LikesContent';
 import { FoodDataProvider } from '../shared/context/FoodDataContext';
@@ -34,6 +34,27 @@ const HelpFAQPage = lazy(() => import('./pages/HelpFAQPage'));
 import LoadingScreen from '../shared/components/LoadingScreen';
 const LoadingSpinner = () => <LoadingScreen message="Loading..." />;
 
+/** Auth paths that must never be redirected to /. Fallback only sends unknown paths to /. */
+const AUTH_PATHS = ['/login', '/signup', '/complete-profile', '/forgot-password', '/reset-password', '/auth-callback', '/restaurant-selection', '/onboarding'];
+
+const FallbackRedirect = () => {
+    const location = useLocation();
+    const pathname = location.pathname.replace(/\/$/, '') || '/'; // normalize trailing slash
+    const isAuthPath = AUTH_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'));
+    if (isAuthPath) {
+        // If * matched an auth path (e.g. /login/), render the right page so login always shows
+        if (pathname === '/login' || pathname.startsWith('/login')) return <LoginPage />;
+        if (pathname === '/signup' || pathname.startsWith('/signup')) return <SignupPage />;
+        if (pathname === '/onboarding' || pathname.startsWith('/onboarding')) return <OnboardingScreen />;
+        if (pathname === '/complete-profile' || pathname.startsWith('/complete-profile')) return <CompleteProfile />;
+        if (pathname === '/forgot-password' || pathname.startsWith('/forgot-password')) return <ForgotPassword />;
+        if (pathname === '/reset-password' || pathname.startsWith('/reset-password')) return <ResetPassword />;
+        if (pathname === '/auth-callback' || pathname.startsWith('/auth-callback')) return <AuthCallback />;
+        if (pathname === '/restaurant-selection' || pathname.startsWith('/restaurant-selection')) return <RestaurantSelectionPage />;
+        return <Navigate to={pathname} replace />;
+    }
+    return <Navigate to="/" replace />;
+};
 
 /**
  * Customer App Module
@@ -47,8 +68,8 @@ const CustomerApp = () => {
                     <FoodDataProvider>
                         <Suspense fallback={<LoadingSpinner />}>
                             <Routes>
-                                {/* Auth & Onboarding - use /* for paths so /login and /login/ both match (avoids redirect to /) */}
-                                <Route path="/" element={<Opening />} />
+                                {/* Root: use index so only exact "/" matches, not /login */}
+                                <Route index element={<Opening />} />
                                 <Route path="/onboarding" element={<OnboardingScreen />} />
                                 <Route path="/login/*" element={<LoginPage />} />
                                 <Route path="/signup/*" element={<SignupPage />} />
@@ -115,8 +136,8 @@ const CustomerApp = () => {
                                     </RestaurantSelectionWrapper>
                                 } />
 
-                                {/* Fallback */}
-                                <Route path="*" element={<Navigate to="/" replace />} />
+                                {/* Fallback: never redirect /login etc. to / — show login if we landed on /login */}
+                                <Route path="*" element={<FallbackRedirect />} />
                             </Routes>
                         </Suspense>
                     </FoodDataProvider>

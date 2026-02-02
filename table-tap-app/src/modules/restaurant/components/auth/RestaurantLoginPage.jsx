@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, Eye, EyeOff, Store } from 'lucide-react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { useBasePathNavigate } from '../../../shared/config/BasePathContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FcGoogle } from 'react-icons/fc';
 import { authService } from '../../../shared/api/authService';
@@ -15,7 +16,7 @@ export default function RestaurantLoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
+    const navigate = useBasePathNavigate();
 
     // Check for existing session on mount
     useEffect(() => {
@@ -26,7 +27,7 @@ export default function RestaurantLoginPage() {
                     // Check if user has restaurant role
                     const profile = await authService.getProfile(user.id);
                     if (profile && ALLOWED_ROLES.includes(profile.role)) {
-                        navigate('/restaurant/');
+                        navigate('/');
                     }
                 }
             } catch (err) {
@@ -48,7 +49,7 @@ export default function RestaurantLoginPage() {
             const profile = await authService.getProfile(authUser.id);
             
             if (profile && ALLOWED_ROLES.includes(profile.role)) {
-                navigate('/restaurant/');
+                navigate('/');
             } else {
                 setError('You do not have access to the restaurant dashboard. Please contact your administrator.');
                 await authService.signOut();

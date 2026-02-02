@@ -1,9 +1,11 @@
 import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import AuthWrapper from '../shared/config/AuthWrapper';
 import RestaurantDashboardWrapper from '../shared/config/RestaurantDashboardWrapper';
 import { AdminRestaurantProvider } from '../shared/context/AdminRestaurantContext';
 import { ManagerNotificationProvider } from '../shared/context/ManagerNotificationContext';
+import { BasePathProvider, useEffectiveLocation } from '../shared/config/BasePathContext';
+import { isDevelopment } from '../shared/utils/subdomainRouter';
 
 // Lazy load restaurant pages
 const AdminDashboard = lazy(() => import('./pages/RestaurantManagement/adminDashboard'));
@@ -17,41 +19,66 @@ const AuthCallback = lazy(() => import('../shared/components/auth/AuthCallback')
 import LoadingScreen from '../shared/components/LoadingScreen';
 const LoadingSpinner = () => <LoadingScreen message="Loading Restaurant Dashboard..." />;
 
+const AUTH_PATHS = ['/login', '/signup', '/forgot-password', '/reset-password', '/auth-callback'];
+
+const RestaurantFallbackRedirect = () => {
+    const location = useLocation();
+    let pathname = (location.pathname || '/').replace(/\/$/, '') || '/';
+    if (isDevelopment() && pathname.startsWith('/restaurant')) {
+        pathname = pathname.slice('/restaurant'.length) || '/';
+    }
+    const isAuthPath = AUTH_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'));
+    if (isAuthPath) {
+        if (pathname === '/login' || pathname.startsWith('/login')) return <RestaurantLoginPage />;
+        if (pathname === '/signup' || pathname.startsWith('/signup')) return <SignupPage />;
+        if (pathname === '/forgot-password' || pathname.startsWith('/forgot-password')) return <ForgotPassword />;
+        if (pathname === '/reset-password' || pathname.startsWith('/reset-password')) return <ResetPassword />;
+        if (pathname === '/auth-callback' || pathname.startsWith('/auth-callback')) return <AuthCallback />;
+        return <Navigate to={pathname} replace />;
+    }
+    return <Navigate to="/" replace />;
+};
+
 /**
  * Restaurant App Module
- * Handles all restaurant manager-facing routes and functionality
+ * - Production (restaurant.table-tap.in): pathname is /, /login, /dashboard, etc.
+ * - Development (localhost/restaurant/*): pathname is /restaurant/login — we pass effectiveLocation so Routes see /login.
  */
+const RestaurantAppRoutes = () => {
+    const effectiveLocation = useEffectiveLocation('/restaurant');
+    return (
+        <Suspense fallback={<LoadingSpinner />}>
+            <Routes location={effectiveLocation}>
+                <Route index element={
+                    <RestaurantDashboardWrapper>
+                        <AdminDashboard />
+                    </RestaurantDashboardWrapper>
+                } />
+                <Route path="/login/*" element={<RestaurantLoginPage />} />
+                <Route path="/signup/*" element={<SignupPage />} />
+                <Route path="/forgot-password/*" element={<ForgotPassword />} />
+                <Route path="/reset-password/*" element={<ResetPassword />} />
+                <Route path="/auth-callback/*" element={<AuthCallback />} />
+                <Route path="/dashboard" element={
+                    <RestaurantDashboardWrapper>
+                        <AdminDashboard />
+                    </RestaurantDashboardWrapper>
+                } />
+                <Route path="*" element={<RestaurantFallbackRedirect />} />
+            </Routes>
+        </Suspense>
+    );
+};
+
 const RestaurantApp = () => {
     return (
-        <AdminRestaurantProvider>
-            <ManagerNotificationProvider>
-                <Suspense fallback={<LoadingSpinner />}>
-                    <Routes>
-                        {/* Auth Routes */}
-                        <Route path="/login" element={<RestaurantLoginPage />} />
-                        <Route path="/signup" element={<SignupPage />} />
-                        <Route path="/forgot-password" element={<ForgotPassword />} />
-                        <Route path="/reset-password" element={<ResetPassword />} />
-                        <Route path="/auth-callback" element={<AuthCallback />} />
-
-                        {/* Protected Restaurant Dashboard */}
-                        <Route path="/" element={
-                            <RestaurantDashboardWrapper>
-                                <AdminDashboard />
-                            </RestaurantDashboardWrapper>
-                        } />
-                        <Route path="/dashboard" element={
-                            <RestaurantDashboardWrapper>
-                                <AdminDashboard />
-                            </RestaurantDashboardWrapper>
-                        } />
-
-                        {/* Fallback */}
-                        <Route path="*" element={<Navigate to="/" replace />} />
-                    </Routes>
-                </Suspense>
-            </ManagerNotificationProvider>
-        </AdminRestaurantProvider>
+        <BasePathProvider basePathSegment="/restaurant">
+            <AdminRestaurantProvider>
+                <ManagerNotificationProvider>
+                    <RestaurantAppRoutes />
+                </ManagerNotificationProvider>
+            </AdminRestaurantProvider>
+        </BasePathProvider>
     );
 };
 

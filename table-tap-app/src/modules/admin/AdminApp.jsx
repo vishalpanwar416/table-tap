@@ -1,9 +1,11 @@
 import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import AuthWrapper from '../shared/config/AuthWrapper';
 import AdminOnlyWrapper from '../shared/config/AdminOnlyWrapper';
 import { AdminRestaurantProvider } from '../shared/context/AdminRestaurantContext';
 import { ManagerNotificationProvider } from '../shared/context/ManagerNotificationContext';
+import { BasePathProvider, useEffectiveLocation } from '../shared/config/BasePathContext';
+import { isDevelopment } from '../shared/utils/subdomainRouter';
 
 // Lazy load admin pages
 const AdminPanel = lazy(() => import('./pages/AdminPannel/AdminPannel'));
@@ -13,7 +15,6 @@ const ForgotPassword = lazy(() => import('../shared/components/auth/ForgotPasswa
 const ResetPassword = lazy(() => import('../shared/components/auth/ResetPassword'));
 const AuthCallback = lazy(() => import('../shared/components/auth/AuthCallback'));
 
-// Loading component
 const LoadingSpinner = () => (
     <div className="flex justify-center items-center min-h-screen bg-black">
         <div className="text-center text-white">
@@ -23,42 +24,66 @@ const LoadingSpinner = () => (
     </div>
 );
 
+const AUTH_PATHS = ['/login', '/signup', '/forgot-password', '/reset-password', '/auth-callback'];
+
+const AdminFallbackRedirect = () => {
+    const location = useLocation();
+    let pathname = (location.pathname || '/').replace(/\/$/, '') || '/';
+    if (isDevelopment() && pathname.startsWith('/admin')) {
+        pathname = pathname.slice('/admin'.length) || '/';
+    }
+    const isAuthPath = AUTH_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'));
+    if (isAuthPath) {
+        if (pathname === '/login' || pathname.startsWith('/login')) return <LoginPage />;
+        if (pathname === '/signup' || pathname.startsWith('/signup')) return <SignupPage />;
+        if (pathname === '/forgot-password' || pathname.startsWith('/forgot-password')) return <ForgotPassword />;
+        if (pathname === '/reset-password' || pathname.startsWith('/reset-password')) return <ResetPassword />;
+        if (pathname === '/auth-callback' || pathname.startsWith('/auth-callback')) return <AuthCallback />;
+        return <Navigate to={pathname} replace />;
+    }
+    return <Navigate to="/" replace />;
+};
+
 /**
  * Admin App Module
- * Handles all admin panel routes and functionality
+ * - Production (admin.table-tap.in): pathname is /, /login, /panel, etc.
+ * - Development (localhost/admin/*): pathname is /admin/login — we pass effectiveLocation so Routes see /login.
  */
-const AdminApp = () => {
-    console.log('[AdminApp] Rendering AdminApp, pathname:', window.location.pathname);
+const AdminAppRoutes = () => {
+    const effectiveLocation = useEffectiveLocation('/admin');
     return (
-        <AdminRestaurantProvider>
-            <ManagerNotificationProvider>
-                <Suspense fallback={<LoadingSpinner />}>
-                    <Routes>
-                        {/* Auth Routes */}
-                        <Route path="/login" element={<LoginPage />} />
-                        <Route path="/signup" element={<SignupPage />} />
-                        <Route path="/forgot-password" element={<ForgotPassword />} />
-                        <Route path="/reset-password" element={<ResetPassword />} />
-                        <Route path="/auth-callback" element={<AuthCallback />} />
+        <Suspense fallback={<LoadingSpinner />}>
+            <Routes location={effectiveLocation}>
+                <Route index element={
+                    <AdminOnlyWrapper>
+                        <AdminPanel />
+                    </AdminOnlyWrapper>
+                } />
+                <Route path="/login/*" element={<LoginPage />} />
+                <Route path="/signup/*" element={<SignupPage />} />
+                <Route path="/forgot-password/*" element={<ForgotPassword />} />
+                <Route path="/reset-password/*" element={<ResetPassword />} />
+                <Route path="/auth-callback/*" element={<AuthCallback />} />
+                <Route path="/panel" element={
+                    <AdminOnlyWrapper>
+                        <AdminPanel />
+                    </AdminOnlyWrapper>
+                } />
+                <Route path="*" element={<AdminFallbackRedirect />} />
+            </Routes>
+        </Suspense>
+    );
+};
 
-                        {/* Protected Admin Panel */}
-                        <Route path="/" element={
-                            <AdminOnlyWrapper>
-                                <AdminPanel />
-                            </AdminOnlyWrapper>
-                        } />
-                        <Route path="/panel" element={
-                            <AdminOnlyWrapper>
-                                <AdminPanel />
-                            </AdminOnlyWrapper>
-                        } />
-
-                        {/* Fallback */}
-                        <Route path="*" element={<Navigate to="/" replace />} />
-                    </Routes>
-                </Suspense>
-            </ManagerNotificationProvider>
-        </AdminRestaurantProvider>
+const AdminApp = () => {
+    return (
+        <BasePathProvider basePathSegment="/admin">
+            <AdminRestaurantProvider>
+                <ManagerNotificationProvider>
+                    <AdminAppRoutes />
+                </ManagerNotificationProvider>
+            </AdminRestaurantProvider>
+        </BasePathProvider>
     );
 };
 
