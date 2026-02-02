@@ -17,7 +17,7 @@ import ManagerNotificationsToast from '../../components/admin/ManagerNotificatio
 import QRManagement from '../../components/admin/QRManagement/QRManagement';
 import ActivityLogs from '../../components/admin/ActivityLogs';
 import AggregatorIntegration from '../../components/admin/AggregatorIntegration';
-import { X, ChevronLeft, Package, BarChart3, Sparkles, Plus, Building2, ChevronDown, Clock, Grid } from 'lucide-react';
+import { X, ChevronLeft, Package, BarChart3, Sparkles, Plus, Building2, ChevronDown, Clock, Grid, Crown } from 'lucide-react';
 import FloorPlanView from '../../components/admin/FloorPlan/FloorPlanView';
 import { getAllFoodItems, getRestaurantFoodItems } from '../../../customer/api/foodService';
 import { supabase } from '../../../shared/supabase';
@@ -67,7 +67,10 @@ const AdminDashboard = () => {
     error: restaurantError,
     userRole: contextUserRole,
     setAdminRestaurant,
-    isAdmin: contextIsAdmin
+    isAdmin: contextIsAdmin,
+    isOwner: contextIsOwner,
+    ownedRestaurants,
+    setOwnerRestaurant
   } = useAdminRestaurant();
 
   // State for restaurant selector
@@ -77,7 +80,8 @@ const AdminDashboard = () => {
 
   // Menu items shared across components - with role-based filtering
   const getMenuItems = () => {
-    const baseItems = [
+    // Full access items
+    const allItems = [
       { id: 'dashboard', icon: 'LayoutDashboard', label: 'Dashboard' },
       { id: 'floor-plan', icon: 'Map', label: 'Floor Planner' },
       { id: 'menu', icon: 'Utensils', label: 'Menu Management' },
@@ -90,17 +94,43 @@ const AdminDashboard = () => {
       { id: 'activity-logs', icon: 'Clock', label: 'Activity Logs' },
     ];
 
-    // Add AI Analytics and Aggregators only for managers and admins if enabled for the restaurant
-    if (contextUserRole === 'manager' || contextUserRole === 'admin' || contextIsAdmin()) {
+    let filteredItems = [];
+
+    // Owner, Admin, Manager have full access (initially)
+    if (['admin', 'manager', 'owner'].includes(contextUserRole) || contextIsAdmin()) {
+      filteredItems = [...allItems];
+
+      // Add AI Analytics and Aggregators only for managers, owners and admins if enabled for the restaurant
       if (restaurant?.ai_enabled) {
-        baseItems.splice(7, 0, { id: 'analytics', icon: 'BarChart3', label: 'AI Analytics' });
+        const insertIdx = filteredItems.findIndex(i => i.id === 'qr');
+        if (insertIdx !== -1) filteredItems.splice(insertIdx, 0, { id: 'analytics', icon: 'BarChart3', label: 'AI Analytics' });
       }
       if (restaurant?.aggregators_enabled) {
-        baseItems.splice(8, 0, { id: 'aggregators', icon: 'ShoppingBag', label: 'Aggregators' });
+        const insertIdx = filteredItems.findIndex(i => i.id === 'settings');
+        if (insertIdx !== -1) filteredItems.splice(insertIdx, 0, { id: 'aggregators', icon: 'ShoppingBag', label: 'Aggregators' });
       }
+    } else if (contextUserRole === 'captain') {
+      filteredItems = allItems.filter(item =>
+        ['dashboard', 'floor-plan', 'menu', 'orders', 'qr'].includes(item.id)
+      );
+    } else if (contextUserRole === 'chef') {
+      filteredItems = allItems.filter(item =>
+        ['orders', 'menu', 'inventory'].includes(item.id)
+      );
+      // Rename for clarity
+      const orderItem = filteredItems.find(i => i.id === 'orders');
+      if (orderItem) orderItem.label = 'Kitchen Orders';
+    } else if (contextUserRole === 'waiter') {
+      filteredItems = allItems.filter(item =>
+        ['dashboard', 'floor-plan', 'menu', 'orders'].includes(item.id)
+      );
+    } else if (contextUserRole === 'cashier') {
+      filteredItems = allItems.filter(item =>
+        ['dashboard', 'orders', 'offers', 'activity-logs'].includes(item.id)
+      );
     }
 
-    return baseItems;
+    return filteredItems;
   };
 
   const menuItems = getMenuItems();
@@ -142,6 +172,10 @@ const AdminDashboard = () => {
     }
   };
 
+  // Determine which list to show in selector
+  const selectorRestaurants = contextIsAdmin() ? allRestaurants : (contextIsOwner() ? ownedRestaurants : []);
+  const showSelector = (contextIsAdmin() || (contextIsOwner() && ownedRestaurants.length > 1));
+
   // Load restaurants when component mounts for admin users
   useEffect(() => {
     if (contextIsAdmin()) {
@@ -157,7 +191,13 @@ const AdminDashboard = () => {
     }
 
     try {
-      const success = await setAdminRestaurant(restaurantId);
+      let success = false;
+      if (contextIsAdmin()) {
+        success = await setAdminRestaurant(restaurantId);
+      } else if (contextIsOwner()) {
+        success = await setOwnerRestaurant(restaurantId);
+      }
+
       if (success) {
         setSuccessMsg('Restaurant switched successfully');
         setShowRestaurantSelector(false);
@@ -248,12 +288,15 @@ const AdminDashboard = () => {
             avatar_url: profileData.avatar_url ?? prev?.avatar_url ?? null,
           }));
 
-          // Allow manager, admin, and captain roles to access the dashboard
+          // Allow manager, admin, captain, owner, chef, waiter, cashier roles to access the dashboard
           setIsManager(role === 'manager');
-          setIsAdmin(role === 'admin');
+          setIsAdmin(role === 'admin' || role === 'owner');
 
-          // If user is neither manager, admin, nor captain, redirect them
-          if (role !== 'manager' && role !== 'admin' && role !== 'captain') {
+          // Allowed roles
+          const allowedRoles = ['manager', 'admin', 'captain', 'owner', 'chef', 'waiter', 'cashier'];
+
+          // If user is not in allowed roles, redirect
+          if (!allowedRoles.includes(role)) {
             navigate('/home');
             return;
           }
@@ -296,6 +339,16 @@ const AdminDashboard = () => {
       setLoading(false);
     }
   };
+
+  // Redirect to first allowed tab if current activeTab is restricted
+  useEffect(() => {
+    if (menuItems.length > 0) {
+      const allowedIds = menuItems.map(item => item.id);
+      if (!allowedIds.includes(activeTab)) {
+        setActiveTab(allowedIds[0]);
+      }
+    }
+  }, [menuItems, activeTab]);
 
   // Use in useEffect to fetch food items on component mount
   useEffect(() => {
@@ -698,14 +751,14 @@ const AdminDashboard = () => {
                 </h2>
               </div>
 
-              {/* Restaurant Selector for Admin Users */}
-              {contextIsAdmin() && (
+              {/* Restaurant Selector for Admin Users and Owners with multiple restaurants */}
+              {showSelector && (
                 <div className="hidden md:block relative restaurant-selector">
                   <button
                     onClick={() => setShowRestaurantSelector(!showRestaurantSelector)}
                     className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
                   >
-                    <Building2 size={18} className="text-gray-600" />
+                    {contextIsAdmin() ? <Building2 size={18} className="text-gray-600" /> : <Crown size={18} className="text-amber-600" />}
                     <span className="text-sm font-medium text-gray-700">
                       {restaurant?.name || 'Select Restaurant'}
                     </span>
@@ -717,19 +770,19 @@ const AdminDashboard = () => {
                     <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
                       <div className="p-2">
                         <div className="text-xs font-medium text-gray-500 px-3 py-1 border-b border-gray-100">
-                          Select Restaurant
+                          {contextIsAdmin() ? 'All Restaurants' : 'Your Restaurants'}
                         </div>
                         {loadingRestaurants ? (
                           <div className="flex items-center justify-center py-4">
                             <div className="animate-spin rounded-full h-4 w-4 border-2 border-orange-500 border-t-transparent"></div>
                             <span className="ml-2 text-sm text-gray-500">Loading...</span>
                           </div>
-                        ) : allRestaurants.length === 0 ? (
+                        ) : selectorRestaurants.length === 0 ? (
                           <div className="text-center py-4 text-sm text-gray-500">
                             No restaurants available
                           </div>
                         ) : (
-                          allRestaurants.map((rest) => (
+                          selectorRestaurants.map((rest) => (
                             <button
                               key={rest.id}
                               onClick={() => handleRestaurantSelect(rest.id)}
@@ -778,15 +831,15 @@ const AdminDashboard = () => {
             <div className={`px-2 ${activeTab === 'analytics' ? 'py-0 h-full' : 'py-6 md:py-8'} md:px-8 w-full mx-auto`}>
               {/* Mobile Search */}
               <div className="md:hidden mb-4">
-                {/* Mobile Restaurant Selector for Admin Users */}
-                {contextIsAdmin() && (
+                {/* Mobile Restaurant Selector for Admin Users and Owners with multiple restaurants */}
+                {showSelector && (
                   <div className="mb-4 restaurant-selector">
                     <button
                       onClick={() => setShowRestaurantSelector(!showRestaurantSelector)}
                       className="w-full flex items-center justify-between gap-2 px-3 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
                     >
                       <div className="flex items-center gap-2">
-                        <Building2 size={18} className="text-gray-600" />
+                        {contextIsAdmin() ? <Building2 size={18} className="text-gray-600" /> : <Crown size={18} className="text-amber-600" />}
                         <span className="text-sm font-medium text-gray-700">
                           {restaurant?.name || 'Select Restaurant'}
                         </span>
@@ -799,19 +852,19 @@ const AdminDashboard = () => {
                       <div className="mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                         <div className="p-2">
                           <div className="text-xs font-medium text-gray-500 px-2 py-1 border-b border-gray-100">
-                            Select Restaurant
+                            {contextIsAdmin() ? 'All Restaurants' : 'Your Restaurants'}
                           </div>
                           {loadingRestaurants ? (
                             <div className="flex items-center justify-center py-4">
                               <div className="animate-spin rounded-full h-4 w-4 border-2 border-orange-500 border-t-transparent"></div>
                               <span className="ml-2 text-sm text-gray-500">Loading...</span>
                             </div>
-                          ) : allRestaurants.length === 0 ? (
+                          ) : selectorRestaurants.length === 0 ? (
                             <div className="text-center py-4 text-sm text-gray-500">
                               No restaurants available
                             </div>
                           ) : (
-                            allRestaurants.map((rest) => (
+                            selectorRestaurants.map((rest) => (
                               <button
                                 key={rest.id}
                                 onClick={() => handleRestaurantSelect(rest.id)}
@@ -859,6 +912,7 @@ const AdminDashboard = () => {
                   updateOrderStatus={updateOrderStatus}
                   setActiveTab={setActiveTab}
                   restaurant={restaurant}
+                  userRole={contextUserRole}
                 />
               )}
 
@@ -919,7 +973,7 @@ const AdminDashboard = () => {
                 />
               )}
 
-              {activeTab === 'analytics' && (contextUserRole === 'manager' || contextUserRole === 'admin' || restaurant?.ai_enabled == true || contextIsAdmin()) && (
+              {activeTab === 'analytics' && (contextUserRole === 'manager' || contextUserRole === 'admin' || contextUserRole === 'owner' || restaurant?.ai_enabled == true || contextIsAdmin()) && (
                 <div className="h-full flex flex-col">
                   {restaurant?.ai_enabled ? (
                     <AIAnalyticsChat restaurantId={restaurant?.id} />

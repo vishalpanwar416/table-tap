@@ -89,6 +89,8 @@ const Sidebar = ({
   // Function to get role display name
   const getRoleDisplayName = (role) => {
     switch (role) {
+      case 'owner':
+        return 'Restaurant Owner';
       case 'admin':
         return 'Administrator';
       case 'manager':

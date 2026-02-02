@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, ShoppingBag, User, CreditCard, Phone, HelpCircle, Shield, Globe } from 'lucide-react';
+import { LogOut, ShoppingBag, User, CreditCard, Phone, HelpCircle, Shield, Globe, ChefHat, UtensilsCrossed, Coins, Crown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../shared/supabase';
 import { useAuth } from '../../shared/config/AuthContext';
@@ -344,6 +344,62 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
                             <Shield className="w-5 h-5 text-white" />
                           </div>
                           <span className="text-lg text-white font-medium drop-shadow-sm">Captain Dashboard</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {isAuthenticated && userData.profile_role === 'owner' && (
+                      <div>
+                        <button
+                          onClick={() => handleNavigation(managerOption.path)}
+                          className="w-full py-3 px-6 flex items-center text-left hover:bg-white/10 transition-all duration-200 group"
+                        >
+                          <div className="bg-gradient-to-r from-amber-500 to-yellow-600 backdrop-blur-md rounded-full p-3 mr-4 group-hover:from-amber-600 group-hover:to-yellow-700 transition-all border border-amber-400/30 shadow-xl">
+                            <Crown className="w-5 h-5 text-white" />
+                          </div>
+                          <span className="text-lg text-white font-medium drop-shadow-sm">Owner Dashboard</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {isAuthenticated && userData.profile_role === 'chef' && (
+                      <div>
+                        <button
+                          onClick={() => handleNavigation(managerOption.path)}
+                          className="w-full py-3 px-6 flex items-center text-left hover:bg-white/10 transition-all duration-200 group"
+                        >
+                          <div className="bg-orange-600/80 backdrop-blur-md rounded-full p-3 mr-4 group-hover:bg-orange-700/80 transition-all border border-orange-400/30 shadow-xl">
+                            <ChefHat className="w-5 h-5 text-white" />
+                          </div>
+                          <span className="text-lg text-white font-medium drop-shadow-sm">Kitchen Dashboard</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {isAuthenticated && userData.profile_role === 'waiter' && (
+                      <div>
+                        <button
+                          onClick={() => handleNavigation(managerOption.path)}
+                          className="w-full py-3 px-6 flex items-center text-left hover:bg-white/10 transition-all duration-200 group"
+                        >
+                          <div className="bg-green-600/80 backdrop-blur-md rounded-full p-3 mr-4 group-hover:bg-green-700/80 transition-all border border-green-400/30 shadow-xl">
+                            <UtensilsCrossed className="w-5 h-5 text-white" />
+                          </div>
+                          <span className="text-lg text-white font-medium drop-shadow-sm">Waiter Dashboard</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {isAuthenticated && userData.profile_role === 'cashier' && (
+                      <div>
+                        <button
+                          onClick={() => handleNavigation(managerOption.path)}
+                          className="w-full py-3 px-6 flex items-center text-left hover:bg-white/10 transition-all duration-200 group"
+                        >
+                          <div className="bg-amber-600/80 backdrop-blur-md rounded-full p-3 mr-4 group-hover:bg-amber-700/80 transition-all border border-amber-400/30 shadow-xl">
+                            <Coins className="w-5 h-5 text-white" />
+                          </div>
+                          <span className="text-lg text-white font-medium drop-shadow-sm">Cashier Dashboard</span>
                         </button>
                       </div>
                     )}

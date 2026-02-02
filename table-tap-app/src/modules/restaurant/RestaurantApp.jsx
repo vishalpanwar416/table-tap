@@ -7,7 +7,7 @@ import { ManagerNotificationProvider } from '../shared/context/ManagerNotificati
 
 // Lazy load restaurant pages
 const AdminDashboard = lazy(() => import('./pages/RestaurantManagement/adminDashboard'));
-const LoginPage = lazy(() => import('../shared/components/auth/LoginPage'));
+const RestaurantLoginPage = lazy(() => import('./components/auth/RestaurantLoginPage'));
 const SignupPage = lazy(() => import('../shared/components/auth/SignupPage'));
 const ForgotPassword = lazy(() => import('../shared/components/auth/ForgotPassward'));
 const ResetPassword = lazy(() => import('../shared/components/auth/ResetPassword'));
@@ -28,7 +28,7 @@ const RestaurantApp = () => {
                 <Suspense fallback={<LoadingSpinner />}>
                     <Routes>
                         {/* Auth Routes */}
-                        <Route path="/login" element={<LoginPage />} />
+                        <Route path="/login" element={<RestaurantLoginPage />} />
                         <Route path="/signup" element={<SignupPage />} />
                         <Route path="/forgot-password" element={<ForgotPassword />} />
                         <Route path="/reset-password" element={<ResetPassword />} />

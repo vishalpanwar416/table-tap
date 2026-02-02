@@ -1,7 +1,8 @@
 import React from 'react';
 import { TrendingUp, ShoppingCart, User, Utensils, PieChart, ChevronUp, ChevronDown, Truck, CheckCircle, RefreshCw } from 'lucide-react';
 
-const StatsCards = ({ revenueData, orderStats, activeUsers, menuStats, isCollapsed, toggleCollapse, period, onChangePeriod }) => {
+const StatsCards = ({ revenueData, orderStats, activeUsers, menuStats, isCollapsed, toggleCollapse, period, onChangePeriod, userRole }) => {
+  const isManagement = ['admin', 'manager', 'owner'].includes(userRole);
   // Assume activeUsers is an object with total and returning properties
   // If it's still a number, create a default object with meaningful data
   const userStats = typeof activeUsers === 'object' ? activeUsers : {
@@ -12,7 +13,7 @@ const StatsCards = ({ revenueData, orderStats, activeUsers, menuStats, isCollaps
   };
 
   // Calculate percentage of returning customers
-  const returningPercentage = userStats.total > 0 
+  const returningPercentage = userStats.total > 0
     ? ((userStats.returning / userStats.total) * 100).toFixed(1)
     : '0.0';
 
@@ -22,9 +23,14 @@ const StatsCards = ({ revenueData, orderStats, activeUsers, menuStats, isCollaps
         <h3 className="text-lg font-semibold text-gray-800">Overview</h3>
         <div className="flex items-center gap-2">
           <div className="hidden sm:flex bg-gray-100 rounded-lg p-1">
-            <button onClick={()=>onChangePeriod('daily')} className={`px-2 py-1 text-xs rounded-md ${period==='daily' ? 'bg-white shadow' : ''}`}>Today</button>
-            <button onClick={()=>onChangePeriod('weekly')} className={`px-2 py-1 text-xs rounded-md ${period==='weekly' ? 'bg-white shadow' : ''}`}>7d</button>
-            <button onClick={()=>onChangePeriod('monthly')} className={`px-2 py-1 text-xs rounded-md ${period==='monthly' ? 'bg-white shadow' : ''}`}>30d</button>
+            {isManagement && (
+              <>
+                <button onClick={() => onChangePeriod('daily')} className={`px-2 py-1 text-xs rounded-md ${period === 'daily' ? 'bg-white shadow' : ''}`}>Today</button>
+                <button onClick={() => onChangePeriod('weekly')} className={`px-2 py-1 text-xs rounded-md ${period === 'weekly' ? 'bg-white shadow' : ''}`}>7d</button>
+                <button onClick={() => onChangePeriod('monthly')} className={`px-2 py-1 text-xs rounded-md ${period === 'monthly' ? 'bg-white shadow' : ''}`}>30d</button>
+              </>
+            )}
+            {!isManagement && <span className="px-2 py-1 text-xs text-gray-500 font-medium">Today's Activity</span>}
           </div>
           <button onClick={toggleCollapse} className="p-1 rounded hover:bg-gray-100">
             {isCollapsed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
@@ -33,22 +39,24 @@ const StatsCards = ({ revenueData, orderStats, activeUsers, menuStats, isCollaps
       </div>
 
       {!isCollapsed && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
-          <div className="bg-gradient-to-br from-orange-50 to-white p-4 rounded-lg border border-orange-100 shadow-sm hover:shadow transition-shadow">
-            <div className="flex justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Today's Revenue</p>
-                <p className="text-2xl font-bold mt-1">₹{revenueData.daily.toFixed(2)}</p>
+        <div className={`grid grid-cols-1 sm:grid-cols-2 ${isManagement ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-4 p-4`}>
+          {isManagement && (
+            <div className="bg-gradient-to-br from-orange-50 to-white p-4 rounded-lg border border-orange-100 shadow-sm hover:shadow transition-shadow">
+              <div className="flex justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">Today's Revenue</p>
+                  <p className="text-2xl font-bold mt-1">₹{revenueData.daily.toFixed(2)}</p>
+                </div>
+                <div className="bg-orange-500/10 p-2 rounded-lg">
+                  <TrendingUp className="h-6 w-6 text-orange-500" />
+                </div>
               </div>
-              <div className="bg-orange-500/10 p-2 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-orange-500" />
+              <div className="mt-2 text-xs text-green-600 flex items-center">
+                <ChevronUp size={14} />
+                <span>{((revenueData.daily / ((revenueData.weekly / 7) || 1) - 1) * 100).toFixed(1)}% from yesterday</span>
               </div>
             </div>
-            <div className="mt-2 text-xs text-green-600 flex items-center">
-              <ChevronUp size={14} />
-              <span>{((revenueData.daily / ((revenueData.weekly / 7) || 1) - 1) * 100).toFixed(1)}% from yesterday</span>
-            </div>
-          </div>
+          )}
 
           <div className="bg-gradient-to-br from-blue-50 to-white p-4 rounded-lg border border-blue-100 shadow-sm hover:shadow transition-shadow">
             <div className="flex justify-between">
@@ -73,10 +81,10 @@ const StatsCards = ({ revenueData, orderStats, activeUsers, menuStats, isCollaps
             </div>
             <div className="mt-2 text-xs text-gray-600">
               <span className="font-medium">AOV:</span> ₹{((revenueData.daily + revenueData.weekly + revenueData.monthly) && orderStats.total
-                ? (period==='daily' && orderStats.total ? (revenueData.daily/(orderStats.completed||1))
-                : period==='weekly' && orderStats.total ? (revenueData.weekly/((orderStats.completed)||1))
-                : period==='monthly' && orderStats.total ? (revenueData.monthly/((orderStats.completed)||1))
-                : 0) : 0).toFixed(2)}
+                ? (period === 'daily' && orderStats.total ? (revenueData.daily / (orderStats.completed || 1))
+                  : period === 'weekly' && orderStats.total ? (revenueData.weekly / ((orderStats.completed) || 1))
+                    : period === 'monthly' && orderStats.total ? (revenueData.monthly / ((orderStats.completed) || 1))
+                      : 0) : 0).toFixed(2)}
             </div>
           </div>
 

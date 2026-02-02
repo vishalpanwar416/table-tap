@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, MapPin, Phone, Clock, RefreshCw, Store, ArrowRight, Navigation, Crosshair, ChevronDown, Edit3, Search, X } from 'lucide-react';
+import { ChevronLeft, MapPin, Phone, Clock, RefreshCw, Store, ArrowRight, Navigation, Crosshair, ChevronDown, Edit3, Search, X, Crown } from 'lucide-react';
 import { getActiveRestaurants, getClosestRestaurants, getAllRestaurants, searchRestaurants } from './restaurantSelectionService';
 import { useRestaurant } from './RestaurantContext';
+import { useAuth } from '../../../shared/config/AuthContext';
+import { supabase } from '../../../shared/supabase';
 import { getStoredRestaurantSelection, storeRestaurantSelection } from '../../../shared/utils/restaurantCheck';
 import { FixedSizeList as List } from 'react-window';
 
@@ -75,6 +77,12 @@ const RestaurantSelectionPage = () => {
   const [cachedAll, setCachedAll] = useState(null);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Owner specific states
+  const { user } = useAuth();
+  const [isOwner, setIsOwner] = useState(false);
+  const [showMyRestaurants, setShowMyRestaurants] = useState(false);
+  const [ownedRestaurants, setOwnedRestaurants] = useState([]);
 
   // Add state for search results and loading
   const [searchResults, setSearchResults] = useState(null);
@@ -167,6 +175,27 @@ const RestaurantSelectionPage = () => {
     }
   }, []);
 
+  // Check if user is an owner
+  useEffect(() => {
+    const checkUserRole = async () => {
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('profile_role')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (data?.profile_role === 'owner') {
+        setIsOwner(true);
+        // Default to showing my restaurants if owner
+        setShowMyRestaurants(true);
+        setShowAllRestaurants(false);
+      }
+    };
+    checkUserRole();
+  }, [user]);
+
   // Pre-select the current restaurant if returning to the page
   useEffect(() => {
     const storedSelection = getStoredRestaurantSelection();
@@ -191,9 +220,8 @@ const RestaurantSelectionPage = () => {
   // Consolidated useEffect for fetching restaurants
   useEffect(() => {
     fetchRestaurants(false);
-    // Only run when userLocation or showAllRestaurants changes
-    // This replaces the previous multiple useEffects for these dependencies
-  }, [userLocation, showAllRestaurants]);
+    // Only run when necessary dependencies change
+  }, [userLocation, showAllRestaurants, showMyRestaurants, isOwner]);
 
   // Throttled scroll handler with ref and stable effect
   useEffect(() => {
@@ -447,6 +475,26 @@ const RestaurantSelectionPage = () => {
           return a.distance - b.distance;
         });
         setCachedNearby(data);
+      } else if (showMyRestaurants && isOwner) {
+        // Fetch restaurants owned by the user
+        const { data: staffData, error: staffError } = await supabase
+          .from('restaurant_staff')
+          .select('restaurant_id')
+          .eq('user_id', user.id)
+          .eq('connected', true);
+
+        if (!staffError && staffData && staffData.length > 0) {
+          const ids = staffData.map(item => item.restaurant_id);
+          const { data: restaurantsData, error: restsError } = await supabase
+            .from('restaurants')
+            .select('*')
+            .in('id', ids)
+            .eq('is_active', true);
+
+          data = restaurantsData || [];
+        } else {
+          data = [];
+        }
       } else {
         data = await getActiveRestaurants();
       }
@@ -839,648 +887,673 @@ const RestaurantSelectionPage = () => {
                         <Crosshair size={18} className={userLocation ? 'text-orange-600' : 'text-white'} />
                       )}
                     </button>
-                    {/* Pill Toggle */}
-                    {userLocation && (
-                      <div className="pill-toggle flex gap-2">
-                        <button
-                          onClick={() => setShowAllRestaurants(false)}
-                          className={`pill-option px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${!showAllRestaurants
-                            ? 'bg-gray-600 text-white border-gray-600'
-                            : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'
-                            } border`}
-                        >
-                          Nearby
-                        </button>
-                        <button
-                          onClick={() => setShowAllRestaurants(true)}
-                          className={`pill-option px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${showAllRestaurants
-                            ? 'bg-gray-600 text-white border-gray-600'
-                            : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'
-                            } border`}
-                        >
-                          All
-                        </button>
-                      </div>
+                  </div>
+                  {/* Filter Toggles */}
+                  <div className="pill-toggle flex gap-2">
+                    {isOwner && (
+                      <button
+                        onClick={() => {
+                          setShowMyRestaurants(true);
+                          setShowAllRestaurants(false);
+                        }}
+                        className={`pill-option px-3 py-2 rounded-full text-xs font-medium transition-all duration-300 flex items-center gap-1 ${showMyRestaurants
+                          ? 'bg-amber-600 text-white border-amber-600'
+                          : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'
+                          } border`}
+                      >
+                        <Crown size={12} />
+                        My Restaurants
+                      </button>
                     )}
-                    {/* Search Button */}
+
+                    {userLocation && (
+                      <button
+                        onClick={() => {
+                          setShowAllRestaurants(false);
+                          setShowMyRestaurants(false);
+                        }}
+                        className={`pill-option px-3 py-2 rounded-full text-xs font-medium transition-all duration-300 ${(!showAllRestaurants && !showMyRestaurants)
+                          ? 'bg-gray-600 text-white border-gray-600'
+                          : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'
+                          } border`}
+                      >
+                        Nearby
+                      </button>
+                    )}
+
                     <button
-                      onClick={handleSearchToggle}
-                      className={`flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full transition-all duration-300 touch-manipulation flex-shrink-0 transform hover:scale-105 ${showSearch
-                        ? 'bg-orange-500 text-white hover:bg-orange-600'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
-                      aria-label="Search"
+                      onClick={() => {
+                        setShowAllRestaurants(true);
+                        setShowMyRestaurants(false);
+                      }}
+                      className={`pill-option px-3 py-2 rounded-full text-xs font-medium transition-all duration-300 ${showAllRestaurants
+                        ? 'bg-gray-600 text-white border-gray-600'
+                        : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'
+                        } border`}
                     >
-                      <Search size={18} className={`transition-transform duration-300 ${showSearch ? 'rotate-90' : 'rotate-0'}`} />
+                      All
                     </button>
                   </div>
+                  {/* Search Button */}
+                  <button
+                    onClick={handleSearchToggle}
+                    className={`flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full transition-all duration-300 touch-manipulation flex-shrink-0 transform hover:scale-105 ${showSearch
+                      ? 'bg-orange-500 text-white hover:bg-orange-600'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    aria-label="Search"
+                  >
+                    <Search size={18} className={`transition-transform duration-300 ${showSearch ? 'rotate-90' : 'rotate-0'}`} />
+                  </button>
                 </div>
               )}
-            </div>
+          </div>
 
-            {/* Restaurants List - Optimized for Touch Scrolling */}
+          {/* Restaurants List - Optimized for Touch Scrolling */}
+          <div
+            className="flex-1 bg-white rounded-xl overflow-hidden shadow-sm"
+            style={{
+              maxHeight: selectedRestaurant ? 'calc(100vh - 500px)' : 'calc(100vh - 200px)',
+              WebkitOverflowScrolling: 'touch'
+            }}
+          >
             <div
-              className="flex-1 bg-white rounded-xl overflow-hidden shadow-sm"
+              ref={scrollRef}
+              className="h-full overflow-y-auto overscroll-contain p-2 md:p-4"
               style={{
-                maxHeight: selectedRestaurant ? 'calc(100vh - 500px)' : 'calc(100vh - 200px)',
-                WebkitOverflowScrolling: 'touch'
+                scrollBehavior: 'smooth',
+                WebkitOverflowScrolling: 'touch',
+                touchAction: 'pan-y',
+                height: '100%'
               }}
             >
-              <div
-                ref={scrollRef}
-                className="h-full overflow-y-auto overscroll-contain p-2 md:p-4"
+              {loading && restaurants.length === 0 ? (
+                <div className="flex flex-col items-center w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="animate-pulse bg-white/10 rounded-2xl border-2 border-gray-800 shadow-sm mb-4 flex items-center px-2 py-3 md:px-4 md:py-4 w-full max-w-xl">
+                      <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-300 rounded-lg mr-3" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-gray-300 rounded w-1/2" />
+                        <div className="h-3 bg-gray-300 rounded w-1/3" />
+                        <div className="h-3 bg-gray-200 rounded w-1/4" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <List
+                  height={selectedRestaurant ? 320 : 520}
+                  itemCount={(showSearch && searchResults) ? searchResults.length : restaurants.length}
+                  itemSize={108} // Height of each card (px)
+                  width={"100%"}
+                  style={{ overflowX: 'hidden' }}
+                >
+                  {({ index, style }) => {
+                    const dataList = (showSearch && searchResults) ? searchResults : restaurants;
+                    const restaurant = dataList[index];
+                    if (!restaurant) return null;
+                    return (
+                      <motion.div
+                        key={restaurant.id}
+                        style={{
+                          ...style,
+                          minHeight: 88,
+                          minWidth: 0,
+                          touchAction: 'manipulation',
+                          WebkitUserSelect: 'none',
+                          userSelect: 'none',
+                          transformOrigin: 'center',
+                          zIndex: selectedRestaurant?.id === restaurant.id ? 5 :
+                            hoveredRestaurant === restaurant.id ? 4 :
+                              index === 0 ? 3 : 1
+                        }}
+                        whileTap={{ scale: 0.97, backgroundColor: "#fff7ed" }}
+                        whileHover={{ scale: 1.03, boxShadow: "0 0 0 4px #ffedd5" }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 20, duration: 0.25 }}
+                        onMouseEnter={() => setHoveredRestaurant(restaurant.id)}
+                        onMouseLeave={() => setHoveredRestaurant(null)}
+                        onClick={() => handleRestaurantClick(restaurant)}
+                        tabIndex={0}
+                        aria-label={`Select ${restaurant.name}`}
+                        role="button"
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' || e.key === ' ') handleRestaurantClick(restaurant);
+                        }}
+                        className={`bg-white rounded-2xl border-2 cursor-pointer transition-all shadow-sm hover:shadow-md touch-manipulation relative mb-4 flex items-center px-2 py-3 md:px-4 md:py-4 ${selectedRestaurant?.id === restaurant.id
+                          ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-200'
+                          : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                      >
+                        {/* Restaurant Image */}
+                        <div className="relative mr-3 flex-shrink-0">
+                          {restaurant.restaurant_photo_url && restaurant.restaurant_photo_url.trim() !== '' ? (
+                            <img
+                              src={restaurant.restaurant_photo_url}
+                              alt={restaurant.name}
+                              className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg"
+                              loading={index > 2 ? 'lazy' : 'eager'}
+                              style={{
+                                WebkitUserDrag: 'none',
+                                userDrag: 'none',
+                                minWidth: 64, minHeight: 64
+                              }}
+                              onError={e => {
+                                e.target.onerror = null; e.target.src = '';
+                              }}
+                            />
+                          ) : restaurant.logo_url && restaurant.logo_url.trim() !== '' ? (
+                            <img
+                              src={restaurant.logo_url}
+                              alt={restaurant.name + ' logo'}
+                              className="w-16 h-16 md:w-20 md:h-20 object-contain rounded-lg bg-gray-50"
+                              loading={index > 2 ? 'lazy' : 'eager'}
+                              style={{
+                                WebkitUserDrag: 'none',
+                                userDrag: 'none',
+                                minWidth: 64, minHeight: 64
+                              }}
+                              onError={e => {
+                                e.target.onerror = null; e.target.src = '';
+                              }}
+                            />
+                          ) : getDefaultRestaurantImage(restaurant.cuisine_type) ? (
+                            <img
+                              src={getDefaultRestaurantImage(restaurant.cuisine_type)}
+                              alt={restaurant.cuisine_type ? `${restaurant.cuisine_type} cuisine` : 'Restaurant'}
+                              className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg"
+                              loading={index > 2 ? 'lazy' : 'eager'}
+                              style={{
+                                WebkitUserDrag: 'none',
+                                userDrag: 'none',
+                                minWidth: 64, minHeight: 64
+                              }}
+                              onError={e => {
+                                e.target.onerror = null; e.target.src = '';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center text-3xl select-none" role="img" aria-label="Restaurant">
+                              🍽️
+                            </div>
+                          )}
+                          {/* Selection Badge */}
+                          {selectedRestaurant?.id === restaurant.id && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              className="absolute -top-1 -right-1 bg-orange-500 text-white px-2 py-0.5 rounded-full text-xs font-medium shadow-lg"
+                            >
+                              ✓
+                            </motion.div>
+                          )}
+                          {/* Cuisine Type Badge */}
+                          {restaurant.cuisine_type && (
+                            <div className="absolute -top-1 -left-1 bg-black bg-opacity-70 text-white px-2 py-0.5 rounded-full text-xs font-medium">
+                              {restaurant.cuisine_type}
+                            </div>
+                          )}
+                        </div>
+                        {/* Restaurant Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-semibold text-base text-gray-900 truncate">{restaurant.name}</span>
+                            <span className="ml-2 text-xs bg-orange-100 text-orange-600 rounded-full px-2 py-0.5 font-medium min-w-[36px] text-center">
+                              {userLocation
+                                ? (formatDistance(restaurant.distance) || '—')
+                                : null}
+                            </span>
+                          </div>
+                          <div className="text-xs text-gray-600 truncate mb-1">{restaurant.description}</div>
+                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <MapPin size={14} className="inline-block mr-1" />
+                            <span className="truncate">{restaurant.address}</span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  }}
+                </List>
+              )}
+            </div>
+          </div>
+
+          {/* Table Selection Section - Now positioned inside the main content */}
+          <AnimatePresence mode="wait">
+            {selectedRestaurant && (
+              <motion.div
+                initial={{ opacity: 0, y: 100, scale: 0.95 }}
+                animate={{
+                  opacity: isScrolling ? 0 : 1,
+                  y: isScrolling ? 20 : 0,
+                  scale: isScrolling ? 0.95 : 1
+                }}
+                exit={{
+                  opacity: 0,
+                  y: 100,
+                  scale: 0.95,
+                  transition: {
+                    duration: 0.3,
+                    ease: "easeIn"
+                  }
+                }}
+                transition={{
+                  duration: 0.4,
+                  ease: "easeOut",
+                  scale: { duration: 0.3, ease: "easeInOut" }
+                }}
+                className="mt-4 bg-white rounded-xl shadow-lg border-t-4 border-orange-500 overflow-hidden"
                 style={{
-                  scrollBehavior: 'smooth',
-                  WebkitOverflowScrolling: 'touch',
-                  touchAction: 'pan-y',
-                  height: '100%'
+                  // Ensure it stays above content
+                  zIndex: 30,
+                  // Smooth transition for visibility
+                  pointerEvents: isScrolling ? 'none' : 'auto',
+                  // Add transform origin for better animation
+                  transformOrigin: 'bottom center'
                 }}
               >
-                {loading && restaurants.length === 0 ? (
-                  <div className="flex flex-col items-center w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl">
-                    {[...Array(5)].map((_, i) => (
-                      <div key={i} className="animate-pulse bg-white/10 rounded-2xl border-2 border-gray-800 shadow-sm mb-4 flex items-center px-2 py-3 md:px-4 md:py-4 w-full max-w-xl">
-                        <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-300 rounded-lg mr-3" />
-                        <div className="flex-1 space-y-2">
-                          <div className="h-4 bg-gray-300 rounded w-1/2" />
-                          <div className="h-3 bg-gray-300 rounded w-1/3" />
-                          <div className="h-3 bg-gray-200 rounded w-1/4" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <List
-                    height={selectedRestaurant ? 320 : 520}
-                    itemCount={(showSearch && searchResults) ? searchResults.length : restaurants.length}
-                    itemSize={108} // Height of each card (px)
-                    width={"100%"}
-                    style={{ overflowX: 'hidden' }}
-                  >
-                    {({ index, style }) => {
-                      const dataList = (showSearch && searchResults) ? searchResults : restaurants;
-                      const restaurant = dataList[index];
-                      if (!restaurant) return null;
-                      return (
-                        <motion.div
-                          key={restaurant.id}
-                          style={{
-                            ...style,
-                            minHeight: 88,
-                            minWidth: 0,
-                            touchAction: 'manipulation',
-                            WebkitUserSelect: 'none',
-                            userSelect: 'none',
-                            transformOrigin: 'center',
-                            zIndex: selectedRestaurant?.id === restaurant.id ? 5 :
-                              hoveredRestaurant === restaurant.id ? 4 :
-                                index === 0 ? 3 : 1
-                          }}
-                          whileTap={{ scale: 0.97, backgroundColor: "#fff7ed" }}
-                          whileHover={{ scale: 1.03, boxShadow: "0 0 0 4px #ffedd5" }}
-                          transition={{ type: 'spring', stiffness: 300, damping: 20, duration: 0.25 }}
-                          onMouseEnter={() => setHoveredRestaurant(restaurant.id)}
-                          onMouseLeave={() => setHoveredRestaurant(null)}
-                          onClick={() => handleRestaurantClick(restaurant)}
-                          tabIndex={0}
-                          aria-label={`Select ${restaurant.name}`}
-                          role="button"
-                          onKeyDown={e => {
-                            if (e.key === 'Enter' || e.key === ' ') handleRestaurantClick(restaurant);
-                          }}
-                          className={`bg-white rounded-2xl border-2 cursor-pointer transition-all shadow-sm hover:shadow-md touch-manipulation relative mb-4 flex items-center px-2 py-3 md:px-4 md:py-4 ${selectedRestaurant?.id === restaurant.id
-                            ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-200'
-                            : 'border-gray-200 hover:border-gray-300'
-                            }`}
-                        >
-                          {/* Restaurant Image */}
-                          <div className="relative mr-3 flex-shrink-0">
-                            {restaurant.restaurant_photo_url && restaurant.restaurant_photo_url.trim() !== '' ? (
-                              <img
-                                src={restaurant.restaurant_photo_url}
-                                alt={restaurant.name}
-                                className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg"
-                                loading={index > 2 ? 'lazy' : 'eager'}
-                                style={{
-                                  WebkitUserDrag: 'none',
-                                  userDrag: 'none',
-                                  minWidth: 64, minHeight: 64
-                                }}
-                                onError={e => {
-                                  e.target.onerror = null; e.target.src = '';
-                                }}
-                              />
-                            ) : restaurant.logo_url && restaurant.logo_url.trim() !== '' ? (
-                              <img
-                                src={restaurant.logo_url}
-                                alt={restaurant.name + ' logo'}
-                                className="w-16 h-16 md:w-20 md:h-20 object-contain rounded-lg bg-gray-50"
-                                loading={index > 2 ? 'lazy' : 'eager'}
-                                style={{
-                                  WebkitUserDrag: 'none',
-                                  userDrag: 'none',
-                                  minWidth: 64, minHeight: 64
-                                }}
-                                onError={e => {
-                                  e.target.onerror = null; e.target.src = '';
-                                }}
-                              />
-                            ) : getDefaultRestaurantImage(restaurant.cuisine_type) ? (
-                              <img
-                                src={getDefaultRestaurantImage(restaurant.cuisine_type)}
-                                alt={restaurant.cuisine_type ? `${restaurant.cuisine_type} cuisine` : 'Restaurant'}
-                                className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg"
-                                loading={index > 2 ? 'lazy' : 'eager'}
-                                style={{
-                                  WebkitUserDrag: 'none',
-                                  userDrag: 'none',
-                                  minWidth: 64, minHeight: 64
-                                }}
-                                onError={e => {
-                                  e.target.onerror = null; e.target.src = '';
-                                }}
-                              />
-                            ) : (
-                              <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center text-3xl select-none" role="img" aria-label="Restaurant">
-                                🍽️
-                              </div>
-                            )}
-                            {/* Selection Badge */}
-                            {selectedRestaurant?.id === restaurant.id && (
-                              <motion.div
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                className="absolute -top-1 -right-1 bg-orange-500 text-white px-2 py-0.5 rounded-full text-xs font-medium shadow-lg"
-                              >
-                                ✓
-                              </motion.div>
-                            )}
-                            {/* Cuisine Type Badge */}
-                            {restaurant.cuisine_type && (
-                              <div className="absolute -top-1 -left-1 bg-black bg-opacity-70 text-white px-2 py-0.5 rounded-full text-xs font-medium">
-                                {restaurant.cuisine_type}
-                              </div>
-                            )}
-                          </div>
-                          {/* Restaurant Info */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-semibold text-base text-gray-900 truncate">{restaurant.name}</span>
-                              <span className="ml-2 text-xs bg-orange-100 text-orange-600 rounded-full px-2 py-0.5 font-medium min-w-[36px] text-center">
-                                {userLocation
-                                  ? (formatDistance(restaurant.distance) || '—')
-                                  : null}
-                              </span>
-                            </div>
-                            <div className="text-xs text-gray-600 truncate mb-1">{restaurant.description}</div>
-                            <div className="flex items-center gap-2 text-xs text-gray-500">
-                              <MapPin size={14} className="inline-block mr-1" />
-                              <span className="truncate">{restaurant.address}</span>
-                            </div>
-                          </div>
-                        </motion.div>
-                      );
-                    }}
-                  </List>
-                )}
-              </div>
-            </div>
-
-            {/* Table Selection Section - Now positioned inside the main content */}
-            <AnimatePresence mode="wait">
-              {selectedRestaurant && (
                 <motion.div
-                  initial={{ opacity: 0, y: 100, scale: 0.95 }}
-                  animate={{
-                    opacity: isScrolling ? 0 : 1,
-                    y: isScrolling ? 20 : 0,
-                    scale: isScrolling ? 0.95 : 1
-                  }}
+                  className="p-6"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
                   exit={{
                     opacity: 0,
-                    y: 100,
-                    scale: 0.95,
-                    transition: {
-                      duration: 0.3,
-                      ease: "easeIn"
-                    }
+                    y: 20,
+                    transition: { duration: 0.2, delay: 0.1 }
                   }}
-                  transition={{
-                    duration: 0.4,
-                    ease: "easeOut",
-                    scale: { duration: 0.3, ease: "easeInOut" }
-                  }}
-                  className="mt-4 bg-white rounded-xl shadow-lg border-t-4 border-orange-500 overflow-hidden"
-                  style={{
-                    // Ensure it stays above content
-                    zIndex: 30,
-                    // Smooth transition for visibility
-                    pointerEvents: isScrolling ? 'none' : 'auto',
-                    // Add transform origin for better animation
-                    transformOrigin: 'bottom center'
-                  }}
+                  transition={{ duration: 0.3, delay: 0.1 }}
                 >
-                  <motion.div
-                    className="p-6"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{
-                      opacity: 0,
-                      y: 20,
-                      transition: { duration: 0.2, delay: 0.1 }
-                    }}
-                    transition={{ duration: 0.3, delay: 0.1 }}
-                  >
-                    <div className="flex items-center mb-6">
-                      <Store size={24} className="text-orange-500 mr-3" />
-                      <h3 className="text-2xl font-bold text-orange-600">
-                        {selectedRestaurant.name}
-                      </h3>
-                    </div>
+                  <div className="flex items-center mb-6">
+                    <Store size={24} className="text-orange-500 mr-3" />
+                    <h3 className="text-2xl font-bold text-orange-600">
+                      {selectedRestaurant.name}
+                    </h3>
+                  </div>
 
-                    <div className="space-y-6">
-                      {/* Show auto-selected table with change option */}
-                      {isTableAutoSelected() && (
-                        <motion.div
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{
-                            opacity: 0,
-                            x: -20,
-                            transition: { duration: 0.2, delay: 0.05 }
-                          }}
-                          transition={{ duration: 0.3, delay: 0.2 }}
-                          className="bg-gradient-to-r from-green-100 to-green-50 border border-green-200 rounded-xl p-4"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 bg-green-200 rounded-full flex items-center justify-center">
-                                <svg className="w-5 h-5 text-green-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                              </div>
-                              <div>
-                                <p className="text-sm font-semibold text-green-800">
-                                  Table {getDisplayTableNumber()}
-                                </p>
-                                <p className="text-xs text-green-700">
-                                  Auto-selected from your QR code
-                                </p>
-                              </div>
-                            </div>
-                            <button
-                              onClick={() => setShowTableSelection(true)}
-                              className="flex items-center gap-1 text-green-700 hover:text-green-800 text-sm font-medium transition-colors"
-                            >
-                              <Edit3 size={14} />
-                              Change
-                            </button>
-                          </div>
-                        </motion.div>
-                      )}
-
-                      {/* Show table dropdown when needed */}
-                      {showTableSelection && (
-                        <motion.div
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{
-                            opacity: 0,
-                            x: -20,
-                            transition: { duration: 0.2, delay: 0.05 }
-                          }}
-                          transition={{ duration: 0.3, delay: 0.2 }}
-                        >
-                          <label className="block text-sm font-medium text-gray-700 mb-3">
-                            Select Table Number
-                          </label>
-
-                          {/* Table Selection Button */}
-                          <button
-                            onClick={() => setShowTablePopup(true)}
-                            className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-left hover:border-orange-300 transition-colors"
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="text-gray-700">
-                                {tableNumber ? `Table ${tableNumber}` : 'Select a table'}
-                              </span>
-                              <ChevronDown size={20} className="text-gray-400" />
-                            </div>
-                          </button>
-
-                          {/* Show selected table details */}
-                          {tableNumber && getSelectedTableDetails() && (
-                            <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                              <div className="text-sm text-blue-800">
-                                <span className="font-bold">Table {tableNumber}</span>
-                                {getSelectedTableDetails().location && (
-                                  <span className="mx-1">•</span>
-                                )}
-                                {getSelectedTableDetails().location && (
-                                  <span>{getSelectedTableDetails().location}</span>
-                                )}
-                                <span className="mx-1">•</span>
-                                <span>{getSelectedTableDetails().capacity} people</span>
-                              </div>
-                            </div>
-                          )}
-                        </motion.div>
-                      )}
-
-                      <motion.button
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
+                  <div className="space-y-6">
+                    {/* Show auto-selected table with change option */}
+                    {isTableAutoSelected() && (
+                      <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
                         exit={{
                           opacity: 0,
-                          y: 20,
-                          transition: { duration: 0.2 }
+                          x: -20,
+                          transition: { duration: 0.2, delay: 0.05 }
                         }}
-                        transition={{ duration: 0.3, delay: 0.3 }}
-                        onClick={handleContinue}
-                        disabled={isSelecting || (availableTables.length > 0 && !tableNumber.trim())}
-                        className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-5 px-6 rounded-xl transition-colors shadow-sm touch-manipulation"
-                        style={{
-                          minHeight: '56px'
-                        }}
-                      >
-                        {isSelecting ? (
-                          <span className="flex items-center justify-center gap-2">
-                            <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-                            Setting up...
-                          </span>
-                        ) : (
-                          <span className="flex items-center justify-center gap-2">
-                            Continue to Menu
-                            <ArrowRight size={18} />
-                          </span>
-                        )}
-                      </motion.button>
-                    </div>
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </motion.div>
-
-        {/* Success Message Modal */}
-        <AnimatePresence>
-          {showSuccessMessage && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50"
-            >
-              <motion.div
-                initial={{ scale: 0.9, y: 10 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.9, y: 10 }}
-                transition={{ duration: 0.2 }}
-                className="bg-white rounded-xl p-4 max-w-xs w-full shadow-xl"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-900">Opening {selectedRestaurant?.name}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="animate-spin rounded-full h-3 w-3 border-2 border-orange-500 border-t-transparent"></div>
-                      <span className="text-xs text-gray-500">Redirecting...</span>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Location Permission Modal (for when permission is denied) */}
-        <AnimatePresence>
-          {showLocationModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50"
-              onClick={() => setShowLocationModal(false)}
-            >
-              <motion.div
-                initial={{ scale: 0.9, y: 20 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.9, y: 20 }}
-                transition={{ duration: 0.2 }}
-                className="bg-white rounded-xl p-5 max-w-xs w-full shadow-xl relative"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  onClick={() => setShowLocationModal(false)}
-                  className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-                  aria-label="Close"
-                >
-                  <X size={14} />
-                </button>
-                <div className="flex items-start gap-3 mb-4">
-                  <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <MapPin size={18} className="text-orange-500" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-semibold text-gray-900 mb-1">
-                      Location Required
-                    </h3>
-                    <p className="text-xs text-gray-500">
-                      Enable location to find nearby restaurants
-                    </p>
-                  </div>
-                </div>
-                <p className="text-xs text-gray-400 mb-4 bg-gray-50 p-2 rounded-lg">
-                  <span className="font-medium">Tip:</span> Click the lock icon in address bar → Site settings → Allow location
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setShowLocationModal(false)}
-                    className="flex-1 text-sm text-gray-600 px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    Skip
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowLocationModal(false);
-                      getUserLocation();
-                    }}
-                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-                  >
-                    Try Again
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Table Selection Popup Modal */}
-        <AnimatePresence>
-          {showTablePopup && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/40 flex items-end md:items-center justify-center p-0 md:p-4 z-50"
-              onClick={() => setShowTablePopup(false)}
-              style={{ zIndex: 100 }}
-            >
-              <motion.div
-                initial={{ y: 40, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 40, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="bg-white rounded-t-xl md:rounded-xl p-4 w-full max-w-sm mx-auto shadow-xl"
-                onClick={(e) => e.stopPropagation()}
-                style={{ maxHeight: '70vh', overflowY: 'auto' }}
-                role="dialog"
-                aria-modal="true"
-                aria-label="Select Table Number"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-base font-semibold text-gray-900">
-                    Select Table
-                  </h3>
-                  <button
-                    onClick={() => setShowTablePopup(false)}
-                    className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-                    aria-label="Close"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-                <div className="max-h-60 overflow-y-auto space-y-1.5">
-                  {availableTables.length > 0 ? (
-                    availableTables.map((table) => (
-                      <button
-                        key={table.id}
-                        onClick={() => {
-                          setTableNumber(table.tableNumber);
-                          setShowTablePopup(false);
-                        }}
-                        className={`w-full px-3 py-2.5 rounded-lg border transition-all duration-150 text-left focus:outline-none focus:ring-2 focus:ring-orange-400 ${table.tableNumber === tableNumber
-                          ? 'border-orange-500 bg-orange-50'
-                          : 'border-gray-200 hover:border-orange-300 hover:bg-orange-50/50'
-                          }`}
-                        aria-label={`Select table ${table.tableNumber}`}
+                        transition={{ duration: 0.3, delay: 0.2 }}
+                        className="bg-gradient-to-r from-green-100 to-green-50 border border-green-200 rounded-xl p-4"
                       >
                         <div className="flex items-center justify-between">
-                          <div className="text-sm text-gray-900">
-                            <span className="font-medium">Table {table.tableNumber}</span>
-                            {table.location && <span className="mx-1 text-gray-400">•</span>}
-                            {table.location && <span className="text-gray-500">{table.location}</span>}
-                            <span className="mx-1 text-gray-400">•</span>
-                            <span className="text-gray-400">{table.capacity} seats</span>
-                          </div>
-                          {table.tableNumber === tableNumber && (
-                            <div className="w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
-                              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-green-200 rounded-full flex items-center justify-center">
+                              <svg className="w-5 h-5 text-green-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                               </svg>
                             </div>
-                          )}
+                            <div>
+                              <p className="text-sm font-semibold text-green-800">
+                                Table {getDisplayTableNumber()}
+                              </p>
+                              <p className="text-xs text-green-700">
+                                Auto-selected from your QR code
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => setShowTableSelection(true)}
+                            className="flex items-center gap-1 text-green-700 hover:text-green-800 text-sm font-medium transition-colors"
+                          >
+                            <Edit3 size={14} />
+                            Change
+                          </button>
                         </div>
-                      </button>
-                    ))
-                  ) : (
-                    <div className="text-center py-6 text-gray-500">
-                      <Store size={32} className="mx-auto mb-2 text-gray-300" />
-                      <p className="font-medium text-sm">No tables available</p>
-                      <p className="text-xs mt-1">Please ask staff for assistance</p>
-                    </div>
-                  )}
-                </div>
-                <div className="mt-4 flex gap-2">
-                  <button
-                    onClick={() => setShowTablePopup(false)}
-                    className="flex-1 px-3 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                    aria-label="Cancel table selection"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => setShowTablePopup(false)}
-                    className={`flex-1 px-3 py-2 text-sm rounded-lg transition-colors ${tableNumber ? 'bg-orange-500 text-white hover:bg-orange-600' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
-                    aria-label="Confirm table selection"
-                    disabled={!tableNumber}
-                  >
-                    Confirm
-                  </button>
-                </div>
+                      </motion.div>
+                    )}
+
+                    {/* Show table dropdown when needed */}
+                    {showTableSelection && (
+                      <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{
+                          opacity: 0,
+                          x: -20,
+                          transition: { duration: 0.2, delay: 0.05 }
+                        }}
+                        transition={{ duration: 0.3, delay: 0.2 }}
+                      >
+                        <label className="block text-sm font-medium text-gray-700 mb-3">
+                          Select Table Number
+                        </label>
+
+                        {/* Table Selection Button */}
+                        <button
+                          onClick={() => setShowTablePopup(true)}
+                          className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-left hover:border-orange-300 transition-colors"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-700">
+                              {tableNumber ? `Table ${tableNumber}` : 'Select a table'}
+                            </span>
+                            <ChevronDown size={20} className="text-gray-400" />
+                          </div>
+                        </button>
+
+                        {/* Show selected table details */}
+                        {tableNumber && getSelectedTableDetails() && (
+                          <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                            <div className="text-sm text-blue-800">
+                              <span className="font-bold">Table {tableNumber}</span>
+                              {getSelectedTableDetails().location && (
+                                <span className="mx-1">•</span>
+                              )}
+                              {getSelectedTableDetails().location && (
+                                <span>{getSelectedTableDetails().location}</span>
+                              )}
+                              <span className="mx-1">•</span>
+                              <span>{getSelectedTableDetails().capacity} people</span>
+                            </div>
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+
+                    <motion.button
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{
+                        opacity: 0,
+                        y: 20,
+                        transition: { duration: 0.2 }
+                      }}
+                      transition={{ duration: 0.3, delay: 0.3 }}
+                      onClick={handleContinue}
+                      disabled={isSelecting || (availableTables.length > 0 && !tableNumber.trim())}
+                      className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-5 px-6 rounded-xl transition-colors shadow-sm touch-manipulation"
+                      style={{
+                        minHeight: '56px'
+                      }}
+                    >
+                      {isSelecting ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                          Setting up...
+                        </span>
+                      ) : (
+                        <span className="flex items-center justify-center gap-2">
+                          Continue to Menu
+                          <ArrowRight size={18} />
+                        </span>
+                      )}
+                    </motion.button>
+                  </div>
+                </motion.div>
               </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Nearest Restaurant Popup */}
-        {showNearestRestaurantPopup && nearestRestaurant && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 px-4"
-            onClick={() => setShowNearestRestaurantPopup(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="bg-white rounded-xl p-5 shadow-xl max-w-xs w-full relative"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-                onClick={() => setShowNearestRestaurantPopup(false)}
-                aria-label="Close"
-              >
-                <X size={14} />
-              </button>
-
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <MapPin size={18} className="text-orange-500" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs text-gray-500">You're near</p>
-                  <h3 className="text-base font-semibold text-gray-900 truncate">{nearestRestaurant.name}</h3>
-                </div>
-              </div>
-
-              {nearestRestaurant.address && (
-                <p className="text-xs text-gray-500 mb-4 line-clamp-2">{nearestRestaurant.address}</p>
-              )}
-
-              <div className="flex gap-2">
-                <button
-                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                  onClick={() => {
-                    setSelectedRestaurant(nearestRestaurant);
-                    setShowNearestRestaurantPopup(false);
-                  }}
-                >
-                  Yes, select
-                </button>
-                <button
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                  onClick={() => setShowNearestRestaurantPopup(false)}
-                >
-                  No, skip
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
+            )}
+          </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
+
+        {/* Success Message Modal */ }
+  <AnimatePresence>
+    {showSuccessMessage && (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50"
+      >
+        <motion.div
+          initial={{ scale: 0.9, y: 10 }}
+          animate={{ scale: 1, y: 0 }}
+          exit={{ scale: 0.9, y: 10 }}
+          transition={{ duration: 0.2 }}
+          className="bg-white rounded-xl p-4 max-w-xs w-full shadow-xl"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-gray-900">Opening {selectedRestaurant?.name}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="animate-spin rounded-full h-3 w-3 border-2 border-orange-500 border-t-transparent"></div>
+                <span className="text-xs text-gray-500">Redirecting...</span>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+
+  {/* Location Permission Modal (for when permission is denied) */ }
+  <AnimatePresence>
+    {showLocationModal && (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50"
+        onClick={() => setShowLocationModal(false)}
+      >
+        <motion.div
+          initial={{ scale: 0.9, y: 20 }}
+          animate={{ scale: 1, y: 0 }}
+          exit={{ scale: 0.9, y: 20 }}
+          transition={{ duration: 0.2 }}
+          className="bg-white rounded-xl p-5 max-w-xs w-full shadow-xl relative"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={() => setShowLocationModal(false)}
+            className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+            aria-label="Close"
+          >
+            <X size={14} />
+          </button>
+          <div className="flex items-start gap-3 mb-4">
+            <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <MapPin size={18} className="text-orange-500" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-gray-900 mb-1">
+                Location Required
+              </h3>
+              <p className="text-xs text-gray-500">
+                Enable location to find nearby restaurants
+              </p>
+            </div>
+          </div>
+          <p className="text-xs text-gray-400 mb-4 bg-gray-50 p-2 rounded-lg">
+            <span className="font-medium">Tip:</span> Click the lock icon in address bar → Site settings → Allow location
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowLocationModal(false)}
+              className="flex-1 text-sm text-gray-600 px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Skip
+            </button>
+            <button
+              onClick={() => {
+                setShowLocationModal(false);
+                getUserLocation();
+              }}
+              className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+
+  {/* Table Selection Popup Modal */ }
+  <AnimatePresence>
+    {showTablePopup && (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/40 flex items-end md:items-center justify-center p-0 md:p-4 z-50"
+        onClick={() => setShowTablePopup(false)}
+        style={{ zIndex: 100 }}
+      >
+        <motion.div
+          initial={{ y: 40, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 40, opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="bg-white rounded-t-xl md:rounded-xl p-4 w-full max-w-sm mx-auto shadow-xl"
+          onClick={(e) => e.stopPropagation()}
+          style={{ maxHeight: '70vh', overflowY: 'auto' }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Select Table Number"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-base font-semibold text-gray-900">
+              Select Table
+            </h3>
+            <button
+              onClick={() => setShowTablePopup(false)}
+              className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+              aria-label="Close"
+            >
+              <X size={14} />
+            </button>
+          </div>
+          <div className="max-h-60 overflow-y-auto space-y-1.5">
+            {availableTables.length > 0 ? (
+              availableTables.map((table) => (
+                <button
+                  key={table.id}
+                  onClick={() => {
+                    setTableNumber(table.tableNumber);
+                    setShowTablePopup(false);
+                  }}
+                  className={`w-full px-3 py-2.5 rounded-lg border transition-all duration-150 text-left focus:outline-none focus:ring-2 focus:ring-orange-400 ${table.tableNumber === tableNumber
+                    ? 'border-orange-500 bg-orange-50'
+                    : 'border-gray-200 hover:border-orange-300 hover:bg-orange-50/50'
+                    }`}
+                  aria-label={`Select table ${table.tableNumber}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-900">
+                      <span className="font-medium">Table {table.tableNumber}</span>
+                      {table.location && <span className="mx-1 text-gray-400">•</span>}
+                      {table.location && <span className="text-gray-500">{table.location}</span>}
+                      <span className="mx-1 text-gray-400">•</span>
+                      <span className="text-gray-400">{table.capacity} seats</span>
+                    </div>
+                    {table.tableNumber === tableNumber && (
+                      <div className="w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                </button>
+              ))
+            ) : (
+              <div className="text-center py-6 text-gray-500">
+                <Store size={32} className="mx-auto mb-2 text-gray-300" />
+                <p className="font-medium text-sm">No tables available</p>
+                <p className="text-xs mt-1">Please ask staff for assistance</p>
+              </div>
+            )}
+          </div>
+          <div className="mt-4 flex gap-2">
+            <button
+              onClick={() => setShowTablePopup(false)}
+              className="flex-1 px-3 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              aria-label="Cancel table selection"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => setShowTablePopup(false)}
+              className={`flex-1 px-3 py-2 text-sm rounded-lg transition-colors ${tableNumber ? 'bg-orange-500 text-white hover:bg-orange-600' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
+              aria-label="Confirm table selection"
+              disabled={!tableNumber}
+            >
+              Confirm
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+
+  {/* Nearest Restaurant Popup */ }
+  {
+    showNearestRestaurantPopup && nearestRestaurant && (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 px-4"
+        onClick={() => setShowNearestRestaurantPopup(false)}
+      >
+        <motion.div
+          initial={{ scale: 0.9, y: 20 }}
+          animate={{ scale: 1, y: 0 }}
+          exit={{ scale: 0.9, y: 20 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+          className="bg-white rounded-xl p-5 shadow-xl max-w-xs w-full relative"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+            onClick={() => setShowNearestRestaurantPopup(false)}
+            aria-label="Close"
+          >
+            <X size={14} />
+          </button>
+
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <MapPin size={18} className="text-orange-500" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-gray-500">You're near</p>
+              <h3 className="text-base font-semibold text-gray-900 truncate">{nearestRestaurant.name}</h3>
+            </div>
+          </div>
+
+          {nearestRestaurant.address && (
+            <p className="text-xs text-gray-500 mb-4 line-clamp-2">{nearestRestaurant.address}</p>
+          )}
+
+          <div className="flex gap-2">
+            <button
+              className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              onClick={() => {
+                setSelectedRestaurant(nearestRestaurant);
+                setShowNearestRestaurantPopup(false);
+              }}
+            >
+              Yes, select
+            </button>
+            <button
+              className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              onClick={() => setShowNearestRestaurantPopup(false)}
+            >
+              No, skip
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    )
+  }
+      </div >
+    </div >
   );
 };
 

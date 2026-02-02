@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Upload, Trash2, MapPin, Phone, Mail, Clock, Globe, Building2, Users, ChevronDown, Check, UserCog, Star, Award, ChefHat, UtensilsCrossed, Coins } from 'lucide-react';
+import { X, Upload, Trash2, MapPin, Phone, Mail, Clock, Globe, Building2, Users, ChevronDown, Check, UserCog, Star, Award, ChefHat, UtensilsCrossed, Coins, Crown } from 'lucide-react';
 import { uploadRestaurantPhotoForAdmin, uploadRestaurantLogo, getRestaurantManagers, updateManagerDetails } from '../admin_service';
 // Remove the supabase import since we're moving all calls to the service
 // import { supabase } from '../../../../shared/supabase'; 
@@ -807,6 +807,7 @@ export const StaffModal = ({ show, onClose, onSubmit, data, setData, restaurants
 
   // Role toggle options
   const roles = [
+    { value: 'owner', label: 'Owner', icon: Crown, color: 'from-amber-600 to-yellow-600' },
     { value: 'manager', label: 'Manager', icon: UserCog, color: 'from-blue-600 to-indigo-600' },
     { value: 'captain', label: 'Captain', icon: Users, color: 'from-purple-600 to-pink-600' },
     { value: 'chef', label: 'Chef', icon: ChefHat, color: 'from-orange-600 to-red-600' },

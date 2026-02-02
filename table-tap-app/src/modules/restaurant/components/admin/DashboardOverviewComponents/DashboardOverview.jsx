@@ -7,7 +7,7 @@ import { generateChartData, formatDate, getStatusIcon, getStatusBadge } from './
 import * as XLSX from 'xlsx';
 import { supabase } from '../../../../shared/supabase';
 
-const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab, restaurant }) => {
+const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab, restaurant, userRole }) => {
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState('');
@@ -39,6 +39,13 @@ const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab, restaur
 
         if (restaurant?.id) {
           query = query.eq('restaurant_id', restaurant.id);
+        }
+
+        // Restrict data for non-management roles to today only
+        if (['captain', 'waiter', 'cashier'].includes(userRole)) {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          query = query.gte('created_at', today.toISOString());
         }
 
         const { data, error } = await query.order('created_at', { ascending: false });
@@ -351,14 +358,17 @@ const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab, restaur
         toggleCollapse={() => toggleCollapse('stats')}
         period={chartPeriod}
         onChangePeriod={setChartPeriod}
+        userRole={userRole}
       />
-      <RevenueChart
-        chartData={chartData}
-        chartPeriod={chartPeriod}
-        isCollapsed={isCollapsed.chart}
-        toggleCollapse={() => toggleCollapse('chart')}
-        onChangePeriod={setChartPeriod}
-      />
+      {['admin', 'manager', 'owner'].includes(userRole) && (
+        <RevenueChart
+          chartData={chartData}
+          chartPeriod={chartPeriod}
+          isCollapsed={isCollapsed.chart}
+          toggleCollapse={() => toggleCollapse('chart')}
+          onChangePeriod={setChartPeriod}
+        />
+      )}
       <ActiveOrders
         orders={activeOrders}
         expandedOrderId={expandedOrderId}
