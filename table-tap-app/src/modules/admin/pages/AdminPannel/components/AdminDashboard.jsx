@@ -10,13 +10,10 @@ import {
   Clock,
   AlertTriangle,
   BarChart3,
-  PieChart,
   Activity,
   RefreshCw,
   ChevronRight,
   Zap,
-  Crown,
-  Star,
   Calendar,
   IndianRupee,
   ShoppingBag,
@@ -24,19 +21,15 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Plus,
-  Eye,
-  Settings,
-  Bell,
-  Stars,
   Award,
   Target,
   Percent,
   ClipboardList,
   UserPlus,
-  Store,
   TrendingUp as Trending,
-  MoreHorizontal,
-  ExternalLink
+  Briefcase,
+  ChefHat,
+  Utensils
 } from 'lucide-react';
 import { supabase } from '../../../../shared/supabase';
 import { getSubscriptionStats, getUpcomingRenewals, getSubscriptionPlans } from '../../../api/subscriptionService';
@@ -310,7 +303,7 @@ const AdminDashboard = ({ restaurants, staff, onTabChange }) => {
         <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Stars size={20} className="text-yellow-300" />
+              <Calendar size={20} className="text-yellow-300" />
               <span className="text-purple-200 text-sm">{currentTime.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
             </div>
             <h1 className="text-2xl md:text-3xl font-bold">{greeting}, Admin!</h1>
@@ -771,27 +764,27 @@ const AdminDashboard = ({ restaurants, staff, onTabChange }) => {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Staff Distribution</h3>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="bg-purple-50 rounded-xl p-4 text-center">
-            <Crown size={24} className="mx-auto mb-2 text-purple-500" />
+            <Briefcase size={24} className="mx-auto mb-2 text-purple-500" />
             <p className="text-2xl font-bold text-gray-900">{stats.staff.managers}</p>
             <p className="text-xs text-gray-600">Managers</p>
           </div>
           <div className="bg-blue-50 rounded-xl p-4 text-center">
-            <Star size={24} className="mx-auto mb-2 text-blue-500" />
+            <ClipboardList size={24} className="mx-auto mb-2 text-blue-500" />
             <p className="text-2xl font-bold text-gray-900">{stats.staff.captains}</p>
             <p className="text-xs text-gray-600">Captains</p>
           </div>
           <div className="bg-orange-50 rounded-xl p-4 text-center">
-            <Zap size={24} className="mx-auto mb-2 text-orange-500" />
+            <ChefHat size={24} className="mx-auto mb-2 text-orange-500" />
             <p className="text-2xl font-bold text-gray-900">{stats.staff.chefs || 0}</p>
             <p className="text-xs text-gray-600">Chefs</p>
           </div>
           <div className="bg-green-50 rounded-xl p-4 text-center">
-            <Users size={24} className="mx-auto mb-2 text-green-500" />
+            <Utensils size={24} className="mx-auto mb-2 text-green-500" />
             <p className="text-2xl font-bold text-gray-900">{stats.staff.waiters || 0}</p>
             <p className="text-xs text-gray-600">Waiters</p>
           </div>
           <div className="bg-amber-50 rounded-xl p-4 text-center">
-            <Clock size={24} className="mx-auto mb-2 text-amber-500" />
+            <UserPlus size={24} className="mx-auto mb-2 text-amber-500" />
             <p className="text-2xl font-bold text-gray-900">{stats.staff.pending}</p>
             <p className="text-xs text-gray-600">Pending</p>
           </div>
