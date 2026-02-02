@@ -1,6 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
@@ -18,15 +17,13 @@ const Header = () => {
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 20);
         };
-        window.addEventListener('scroll', handleScroll);
+        window.addEventListener('scroll', handleScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
     return (
-        <motion.header
-            initial={{ y: -100 }}
-            animate={{ y: 0 }}
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled ? 'glass-header py-3 px-4 mx-auto max-w-[1200px] mt-4 rounded-2xl shadow-lg' : 'bg-transparent py-6'
+        <header
+            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 animate-slide-down ${isScrolled ? 'glass-header py-3 px-4 mx-auto max-w-[1200px] mt-4 rounded-2xl shadow-lg' : 'bg-transparent py-6'
                 }`}
         >
             <div className="container mx-auto px-6 flex items-center justify-between">
@@ -58,14 +55,12 @@ const Header = () => {
 
                 {/* CTA */}
                 <div className="hidden lg:flex items-center">
-                    <motion.button
+                    <button
                         onClick={() => openModal('starter')}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="btn-premium text-[14px]"
+                        className="btn-premium text-[14px] hover:scale-105 active:scale-95 transition-transform"
                     >
                         {header.cta.text}
-                    </motion.button>
+                    </button>
                 </div>
 
                 {/* Mobile Menu Button */}
@@ -79,11 +74,7 @@ const Header = () => {
 
             {/* Mobile Menu */}
             {isMobileMenuOpen && (
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="lg:hidden absolute top-full left-0 right-0 mt-4 mx-4 glass rounded-3xl overflow-hidden shadow-2xl p-6"
-                >
+                <div className="lg:hidden absolute top-full left-0 right-0 mt-4 mx-4 glass rounded-3xl overflow-hidden shadow-2xl p-6 animate-fade-in-up">
                     <div className="flex flex-col gap-6">
                         {header.navLinks.map((link) => (
                             <a
@@ -102,9 +93,9 @@ const Header = () => {
                             {header.cta.text}
                         </button>
                     </div>
-                </motion.div>
+                </div>
             )}
-        </motion.header>
+        </header>
     );
 };
 

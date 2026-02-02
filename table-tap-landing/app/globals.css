@@ -248,3 +248,184 @@ h2 {
   text-transform: uppercase;
   border-radius: 20px;
 }
+
+/* Performance-optimized CSS Animations */
+@keyframes slide-down {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes phone-appear {
+  from {
+    transform: translateY(100px) rotateX(20deg);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) rotateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes float-css {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes float-slow-css {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+  }
+  50% {
+    transform: translateY(20px) translateX(10px);
+  }
+}
+
+@keyframes float-medium-css {
+  0%, 100% {
+    transform: scale(1) translateY(0);
+  }
+  50% {
+    transform: scale(1.05) translateY(15px);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-down {
+  animation: slide-down 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s ease-out 0.4s forwards;
+  opacity: 0;
+}
+
+.animate-fade-in-up-delay {
+  animation: fade-in-up 0.8s ease-out 0.6s forwards;
+  opacity: 0;
+}
+
+.animate-phone-appear {
+  animation: phone-appear 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards;
+  opacity: 0;
+}
+
+.animate-float {
+  animation: float-css 5s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float-slow-css 7s ease-in-out infinite;
+}
+
+.animate-float-medium {
+  animation: float-medium-css 6s ease-in-out infinite;
+}
+
+/* Slow spin animations */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 30s linear infinite;
+}
+
+.animate-spin-reverse {
+  animation: spin-reverse 40s linear infinite;
+}
+
+/* Modal animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out forwards;
+}
+
+.animate-modal-appear {
+  animation: modal-appear 0.3s ease-out forwards;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .animate-slide-up,
+  .animate-fade-in-up,
+  .animate-fade-in-up-delay,
+  .animate-phone-appear,
+  .animate-float,
+  .animate-float-slow,
+  .animate-float-medium,
+  .animate-spin-slow,
+  .animate-spin-reverse,
+  .blob {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

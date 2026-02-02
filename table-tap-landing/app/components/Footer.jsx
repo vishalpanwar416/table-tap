@@ -1,6 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { Globe, Instagram, Twitter, Linkedin, Facebook, Mail, Phone, MapPin } from 'lucide-react';
 import Image from 'next/image';
 import data from '../data/landing-data.json';
@@ -18,7 +17,7 @@ const Footer = () => {
 
     return (
         <footer className="bg-[#0F172A] pt-16 pb-8 relative overflow-hidden" role="contentinfo" aria-label="Site footer">
-            {/* Subtle Background Glow */}
+            {/* Background Glow */}
             <div className="absolute top-0 left-1/2 w-[400px] h-[200px] bg-[#2A9D8F]/5 rounded-full blur-[100px] -translate-x-1/2 -translate-y-1/2" />
 
             <div className="container mx-auto px-6 relative z-10">
@@ -45,23 +44,22 @@ const Footer = () => {
                             {footer.socialLinks.map((social, i) => {
                                 const Icon = IconMap[social.icon] || Globe;
                                 return (
-                                    <motion.a
+                                    <a
                                         key={i}
-                                        whileHover={{ y: -2 }}
                                         href={social.href}
                                         aria-label={`Follow Table Tap on ${social.platform}`}
                                         rel="noopener noreferrer"
                                         target="_blank"
-                                        className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center text-gray-500 hover:text-white hover:bg-[#2A9D8F] transition-all duration-200"
+                                        className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center text-gray-500 hover:text-white hover:bg-[#2A9D8F] hover:-translate-y-1 transition-all duration-200"
                                     >
                                         <Icon size={16} aria-hidden="true" />
-                                    </motion.a>
+                                    </a>
                                 );
                             })}
                         </div>
                     </div>
 
-                    {/* Quick Links - Horizontal on larger screens */}
+                    {/* Quick Links */}
                     <div className="flex flex-wrap gap-x-16 gap-y-8">
                         {footer.links.slice(0, 2).map((group) => (
                             <nav key={group.title} aria-label={`${group.title} links`}>
