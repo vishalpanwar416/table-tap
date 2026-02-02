@@ -12,7 +12,7 @@ import {
     ArrowRight,
     Shield,
     Loader2,
-    Stars,
+    Star,
     TrendingUp
 } from 'lucide-react';
 import { supabase } from '../../../shared/supabase';
@@ -28,7 +28,7 @@ const SubscriptionSection = ({ restaurantId }) => {
     const [billingCycles, setBillingCycles] = useState({});
     const [masterLoading, setMasterLoading] = useState(true);
 
-    const ICON_MAP = { Zap, Crown, Stars, Shield, CreditCard };
+    const ICON_MAP = { Zap, Crown, Star, Shield, CreditCard };
 
     // Fetch master data (plans and billing cycles)
     const fetchMasterData = async () => {
@@ -325,7 +325,7 @@ const SubscriptionSection = ({ restaurantId }) => {
                     <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-blue-100 rounded-2xl p-6 flex flex-col md:flex-row items-center gap-6">
                         <div className="flex items-center gap-5 flex-1">
                             <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center flex-shrink-0">
-                                <Stars className="w-8 h-8 text-purple-600" />
+                                <Star className="w-8 h-8 text-purple-600" />
                             </div>
                             <div>
                                 <h4 className="text-xl font-bold text-gray-900">Choose your TableTap plan</h4>
@@ -552,7 +552,7 @@ const SubscriptionSection = ({ restaurantId }) => {
                                     <Loader2 className="w-5 h-5 animate-spin" />
                                 ) : (
                                     <>
-                                        <Stars className="w-5 h-5" />
+                                        <Star className="w-5 h-5" />
                                         Pay ₹{Math.round(calculatePrice(currentPlan.basePrice, selectedCycle) * 1.18).toLocaleString()} to Renew
                                     </>
                                 )}
@@ -566,7 +566,7 @@ const SubscriptionSection = ({ restaurantId }) => {
                     {/* Plan Features */}
                     <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl p-6 border">
                         <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                            <Stars className="w-5 h-5 text-blue-500" />
+                            <Star className="w-5 h-5 text-blue-500" />
                             Your Plan Includes
                         </h4>
                         <div className="grid md:grid-cols-2 gap-3">
