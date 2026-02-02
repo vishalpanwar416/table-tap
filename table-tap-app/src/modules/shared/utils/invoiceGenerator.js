@@ -4,7 +4,7 @@
  */
 
 // Company Details - Can be fetched from system_settings in production
-const COMPANY_DETAILS = {
+export const COMPANY_DETAILS = {
     name: 'TableTap Technologies Pvt. Ltd.',
     address: '123 Tech Park, Sector 62',
     city: 'Noida',
