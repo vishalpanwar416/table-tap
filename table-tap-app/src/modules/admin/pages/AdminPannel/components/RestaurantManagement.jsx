@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { Building2, Plus, TrendingUp, Clock, Users, List, Grid, Brain } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Building2, Plus, TrendingUp, Clock, Users, List, Grid, Brain, Star, Zap, Crown } from 'lucide-react';
 import RestaurantCard from './RestaurantCard';
 import RestaurantListView from './RestaurantListView';
 import RestaurantGrid from './RestaurantGrid';
+import { supabase } from '../../../../shared/supabase';
 
 const RestaurantManagement = ({
   restaurants,
@@ -19,6 +20,31 @@ const RestaurantManagement = ({
   onLoadMore
 }) => {
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [planCounts, setPlanCounts] = useState({ starter: 0, professional: 0, enterprise: 0 });
+
+  // Fetch plan counts from subscriptions
+  useEffect(() => {
+    const fetchPlanCounts = async () => {
+      try {
+        const { data: subscriptions } = await supabase
+          .from('subscriptions')
+          .select('plan_name, status')
+          .in('status', ['active', 'grace_period']);
+        
+        if (subscriptions) {
+          const counts = {
+            starter: subscriptions.filter(s => s.plan_name === 'starter').length,
+            professional: subscriptions.filter(s => s.plan_name === 'professional').length,
+            enterprise: subscriptions.filter(s => s.plan_name === 'enterprise').length
+          };
+          setPlanCounts(counts);
+        }
+      } catch (error) {
+        console.error('Error fetching plan counts:', error);
+      }
+    };
+    fetchPlanCounts();
+  }, [restaurants]);
 
   // Calculate stats
   const now = new Date();
@@ -61,12 +87,12 @@ const RestaurantManagement = ({
         </div>
 
         {/* Loading Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[...Array(3)].map((_, index) => (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {[...Array(6)].map((_, index) => (
             <div key={index} className="text-center p-4 bg-gray-50 rounded-xl border border-gray-200 animate-pulse">
-              <div className="w-10 h-10 bg-gray-200 rounded-full mx-auto mb-3"></div>
-              <div className="h-6 bg-gray-200 rounded mb-2"></div>
-              <div className="h-4 bg-gray-200 rounded"></div>
+              <div className="w-10 h-10 bg-gray-200 rounded-full mx-auto mb-2"></div>
+              <div className="h-6 bg-gray-200 rounded mb-2 mx-auto w-12"></div>
+              <div className="h-3 bg-gray-200 rounded mx-auto w-16"></div>
             </div>
           ))}
         </div>
@@ -101,29 +127,59 @@ const RestaurantManagement = ({
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-200">
-          <div className="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center mx-auto mb-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {/* Total */}
+        <div className="text-center p-4 bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl border border-gray-200">
+          <div className="w-10 h-10 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex items-center justify-center mx-auto mb-2 shadow-md">
             <Building2 className="w-5 h-5 text-white" />
           </div>
-          <div className="text-xl font-bold text-gray-900 font-spartan">{stats.total}</div>
-          <div className="text-sm text-gray-600 font-spartan">Total</div>
+          <div className="text-2xl font-bold text-gray-900 font-spartan">{stats.total}</div>
+          <div className="text-xs text-gray-600 font-spartan">Total</div>
         </div>
 
-        <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-200">
-          <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-3">
+        {/* Active */}
+        <div className="text-center p-4 bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl border border-green-200">
+          <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-2 shadow-md">
             <Building2 className="w-5 h-5 text-white" />
           </div>
-          <div className="text-xl font-bold text-gray-900 font-spartan">{stats.active}</div>
-          <div className="text-sm text-gray-600 font-spartan">Active</div>
+          <div className="text-2xl font-bold text-green-700 font-spartan">{stats.active}</div>
+          <div className="text-xs text-green-600 font-spartan">Active</div>
         </div>
 
-        <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-200">
-          <div className="w-10 h-10 bg-gray-400 rounded-full flex items-center justify-center mx-auto mb-3">
+        {/* Inactive */}
+        <div className="text-center p-4 bg-gradient-to-br from-red-50 to-rose-100 rounded-xl border border-red-200">
+          <div className="w-10 h-10 bg-gradient-to-br from-red-400 to-red-500 rounded-full flex items-center justify-center mx-auto mb-2 shadow-md">
             <Building2 className="w-5 h-5 text-white" />
           </div>
-          <div className="text-xl font-bold text-gray-900 font-spartan">{stats.inactive}</div>
-          <div className="text-sm text-gray-600 font-spartan">Inactive</div>
+          <div className="text-2xl font-bold text-red-600 font-spartan">{stats.inactive}</div>
+          <div className="text-xs text-red-500 font-spartan">Inactive</div>
+        </div>
+
+        {/* Starter Plan */}
+        <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-sky-100 rounded-xl border border-blue-200">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-sky-600 rounded-full flex items-center justify-center mx-auto mb-2 shadow-md">
+            <Star className="w-5 h-5 text-white" />
+          </div>
+          <div className="text-2xl font-bold text-blue-700 font-spartan">{planCounts.starter}</div>
+          <div className="text-xs text-blue-600 font-spartan">Starter</div>
+        </div>
+
+        {/* Professional Plan */}
+        <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-violet-100 rounded-xl border border-purple-200">
+          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-violet-600 rounded-full flex items-center justify-center mx-auto mb-2 shadow-md">
+            <Zap className="w-5 h-5 text-white" />
+          </div>
+          <div className="text-2xl font-bold text-purple-700 font-spartan">{planCounts.professional}</div>
+          <div className="text-xs text-purple-600 font-spartan">Professional</div>
+        </div>
+
+        {/* Enterprise Plan */}
+        <div className="text-center p-4 bg-gradient-to-br from-amber-50 to-yellow-100 rounded-xl border border-amber-200">
+          <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-2 shadow-md">
+            <Crown className="w-5 h-5 text-white" />
+          </div>
+          <div className="text-2xl font-bold text-amber-700 font-spartan">{planCounts.enterprise}</div>
+          <div className="text-xs text-amber-600 font-spartan">Enterprise</div>
         </div>
       </div>
 
