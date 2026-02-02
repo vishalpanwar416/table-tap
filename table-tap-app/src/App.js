@@ -118,8 +118,12 @@ const App = () => {
     }
 
     // Production: subdomain-based routing
-    // Allow path-based overrides for hybrid routing (e.g. /admin on main domain)
-    if (pathname === '/auth-callback') {
+    // Auth callback: handle /auth-callback and legacy /restaurant/auth-callback, /admin/auth-callback
+    // so OAuth redirects complete and tokens are not lost (e.g. on restaurant.table-tap.in)
+    const isAuthCallback = pathname === '/auth-callback' ||
+      pathname === '/restaurant/auth-callback' ||
+      pathname === '/admin/auth-callback';
+    if (isAuthCallback) {
       return (
         <Suspense fallback={<LoadingSpinner />}>
           <AuthCallback />

@@ -269,7 +269,7 @@ const SubscriptionSection = ({ restaurantId }) => {
 
                         const { data: latestSub } = await supabase.from('subscriptions').select('id').eq('restaurant_id', restaurantId).order('created_at', { ascending: false }).limit(1).maybeSingle();
 
-                        // Log to history
+                        // Log to history (this will also trigger automatic invoice creation)
                         await supabase
                             .from('subscription_history')
                             .insert([{
@@ -278,9 +278,12 @@ const SubscriptionSection = ({ restaurantId }) => {
                                 action: subscription ? 'renewed' : 'purchased',
                                 old_status: subscription?.status || 'none',
                                 new_status: 'active',
+                                old_plan: subscription?.plan_name || null,
+                                new_plan: planKey,
                                 amount_paid: total,
+                                gst_amount: gst,
                                 payment_reference: response.razorpay_payment_id,
-                                notes: `${subscription ? 'Renewed' : 'Purchased'} ${planKey} plan via ${paymentMethod.toUpperCase()} - ${billingCycle}${enableAutopay ? ' (Autopay enabled)' : ''}`
+                                notes: `${subscription ? 'Renewed' : 'Purchased'} ${plan.name} plan via ${paymentMethod.toUpperCase()} - ${billingCycles[billingCycle]?.label}${enableAutopay ? ' (Autopay enabled)' : ''}`
                             }]);
 
                         alert(`Successfully ${subscription ? 'renewed' : 'activated'}!${enableAutopay ? ' Autopay has been set up for future renewals.' : ''}`);

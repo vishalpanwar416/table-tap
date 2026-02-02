@@ -18,25 +18,67 @@ import {
     Phone,
     ExternalLink,
     Filter,
-    Search
+    Search,
+    Send,
+    Eye
 } from 'lucide-react';
 import { supabase } from '../../../shared/supabase';
+import {
+    createInvoiceData,
+    generateProfessionalInvoiceHTML,
+    printInvoice,
+    generateInvoicePDF,
+    generateInvoiceNumber,
+    COMPANY_DETAILS
+} from '../../../shared/utils/invoiceGenerator';
+import {
+    getRestaurantInvoices,
+    sendInvoiceEmail,
+    getCompanyDetails
+} from '../../../shared/api/invoiceService';
 
 const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
     const [subscription, setSubscription] = useState(null);
     const [paymentHistory, setPaymentHistory] = useState([]);
+    const [invoices, setInvoices] = useState([]);
     const [loading, setLoading] = useState(true);
     const [historyLoading, setHistoryLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('overview'); // overview, history, invoices
     const [filterStatus, setFilterStatus] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
+    const [companyDetails, setCompanyDetails] = useState(COMPANY_DETAILS);
+    const [processingId, setProcessingId] = useState(null);
+    const [previewInvoice, setPreviewInvoice] = useState(null);
 
     useEffect(() => {
         if (isOpen && restaurantId) {
             fetchSubscriptionData();
             fetchPaymentHistory();
+            fetchInvoices();
+            fetchCompanyDetails();
         }
     }, [isOpen, restaurantId]);
+
+    const fetchInvoices = async () => {
+        try {
+            const { data, error } = await getRestaurantInvoices(restaurantId);
+            if (error) throw error;
+            setInvoices(data || []);
+        } catch (err) {
+            console.error('Error fetching invoices:', err);
+        }
+    };
+
+    const fetchCompanyDetails = async () => {
+        try {
+            const { data } = await getCompanyDetails();
+            if (data) {
+                setCompanyDetails(data);
+            }
+        } catch (err) {
+            console.error('Error fetching company details:', err);
+        }
+    };
 
     const fetchSubscriptionData = async () => {
         try {
@@ -132,134 +174,107 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
         return days;
     };
 
-    const generateInvoiceHTML = (payment) => {
-        const invoiceNumber = `INV-${payment.id?.slice(0, 8).toUpperCase() || 'N/A'}`;
-        const invoiceDate = formatDate(payment.created_at);
+    // Create invoice data from payment/history record
+    const getInvoiceDataFromPayment = (payment) => {
+        const invoiceNumber = payment.invoice_number || 
+            `INV-${payment.id?.slice(0, 8).toUpperCase() || generateInvoiceNumber()}`;
         
-        return `
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Invoice ${invoiceNumber}</title>
-    <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 40px; background: #f5f5f5; }
-        .invoice { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 2px solid #eee; }
-        .logo { font-size: 28px; font-weight: 800; color: #7C3AED; }
-        .invoice-title { text-align: right; }
-        .invoice-title h2 { margin: 0; color: #333; font-size: 24px; }
-        .invoice-title p { margin: 5px 0 0; color: #666; }
-        .details { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; }
-        .detail-box h4 { margin: 0 0 10px; color: #999; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
-        .detail-box p { margin: 5px 0; color: #333; }
-        .items { margin-bottom: 40px; }
-        .items table { width: 100%; border-collapse: collapse; }
-        .items th { background: #f8f9fa; padding: 12px; text-align: left; font-size: 12px; text-transform: uppercase; color: #666; border-bottom: 2px solid #eee; }
-        .items td { padding: 16px 12px; border-bottom: 1px solid #eee; }
-        .items .amount { text-align: right; }
-        .totals { margin-left: auto; width: 300px; }
-        .totals .row { display: flex; justify-content: space-between; padding: 8px 0; }
-        .totals .row.total { border-top: 2px solid #333; font-weight: 700; font-size: 18px; padding-top: 12px; margin-top: 8px; }
-        .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #999; font-size: 12px; }
-        .badge { display: inline-block; padding: 4px 12px; background: #dcfce7; color: #166534; border-radius: 20px; font-size: 12px; font-weight: 600; }
-        @media print { body { background: white; padding: 0; } .invoice { box-shadow: none; } }
-    </style>
-</head>
-<body>
-    <div class="invoice">
-        <div class="header">
-            <div class="logo">TableTap</div>
-            <div class="invoice-title">
-                <h2>INVOICE</h2>
-                <p>${invoiceNumber}</p>
-            </div>
-        </div>
-        
-        <div class="details">
-            <div class="detail-box">
-                <h4>Bill To</h4>
-                <p><strong>${restaurant?.name || 'Restaurant'}</strong></p>
-                <p>${restaurant?.address || ''}</p>
-                <p>${restaurant?.contact_email || ''}</p>
-                <p>${restaurant?.contact_phone || ''}</p>
-                ${restaurant?.gst_number ? `<p>GST: ${restaurant.gst_number}</p>` : ''}
-            </div>
-            <div class="detail-box" style="text-align: right;">
-                <h4>Invoice Details</h4>
-                <p><strong>Invoice Date:</strong> ${invoiceDate}</p>
-                <p><strong>Payment ID:</strong> ${payment.payment_reference || 'N/A'}</p>
-                <p><strong>Status:</strong> <span class="badge">PAID</span></p>
-            </div>
-        </div>
-        
-        <div class="items">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Description</th>
-                        <th>Period</th>
-                        <th class="amount">Amount</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>
-                            <strong>${payment.notes || 'Subscription'}</strong>
-                            <br><small style="color: #666;">Plan: ${subscription?.plan_name?.toUpperCase() || 'N/A'}</small>
-                        </td>
-                        <td>${subscription?.billing_cycle || 'Monthly'}</td>
-                        <td class="amount">${formatCurrency(subscription?.plan_price || payment.amount_paid * 0.85)}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        
-        <div class="totals">
-            <div class="row">
-                <span>Subtotal</span>
-                <span>${formatCurrency(subscription?.plan_price || payment.amount_paid * 0.85)}</span>
-            </div>
-            <div class="row">
-                <span>GST (18%)</span>
-                <span>${formatCurrency(subscription?.gst_amount || payment.amount_paid * 0.15)}</span>
-            </div>
-            <div class="row total">
-                <span>Total</span>
-                <span>${formatCurrency(payment.amount_paid)}</span>
-            </div>
-        </div>
-        
-        <div class="footer">
-            <p>Thank you for your business!</p>
-            <p>TableTap • support@tabletap.in • www.tabletap.in</p>
-        </div>
-    </div>
-</body>
-</html>`;
+        return createInvoiceData({
+            transaction: {
+                id: payment.id,
+                created_at: payment.created_at,
+                amount_paid: payment.amount_paid,
+                gst_amount: payment.gst_amount || (payment.amount_paid - payment.amount_paid / 1.18),
+                plan_name: payment.new_plan || subscription?.plan_name,
+                billing_cycle: subscription?.billing_cycle,
+                payment_reference: payment.payment_reference
+            },
+            restaurant: restaurant,
+            subscription: subscription,
+            invoiceNumber: invoiceNumber,
+            companyDetails: companyDetails
+        });
     };
 
-    const handleDownloadInvoice = (payment) => {
-        const html = generateInvoiceHTML(payment);
-        const blob = new Blob([html], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Invoice-${payment.id?.slice(0, 8).toUpperCase() || 'N/A'}.html`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+    // Download invoice as PDF
+    const handleDownloadInvoice = async (payment) => {
+        try {
+            setProcessingId(`download-${payment.id}`);
+            const invoiceData = getInvoiceDataFromPayment(payment);
+            await generateInvoicePDF(invoiceData);
+        } catch (err) {
+            console.error('Error downloading invoice:', err);
+            // Fallback to HTML download
+            const invoiceData = getInvoiceDataFromPayment(payment);
+            const html = generateProfessionalInvoiceHTML(invoiceData);
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Invoice-${invoiceData.invoiceNumber}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } finally {
+            setProcessingId(null);
+        }
     };
 
+    // Print invoice
     const handlePrintInvoice = (payment) => {
-        const html = generateInvoiceHTML(payment);
-        const printWindow = window.open('', '', 'width=800,height=600');
-        printWindow.document.write(html);
-        printWindow.document.close();
-        printWindow.onload = function() {
-            printWindow.focus();
-            printWindow.print();
-        };
+        const invoiceData = getInvoiceDataFromPayment(payment);
+        printInvoice(invoiceData);
+    };
+
+    // Preview invoice in modal
+    const handlePreviewInvoice = (payment) => {
+        const invoiceData = getInvoiceDataFromPayment(payment);
+        setPreviewInvoice(invoiceData);
+    };
+
+    // Send invoice email
+    const handleSendInvoiceEmail = async (payment) => {
+        if (!restaurant?.contact_email) {
+            alert('No email address configured for this restaurant');
+            return;
+        }
+
+        try {
+            setProcessingId(`email-${payment.id}`);
+            
+            // Try to find existing invoice record
+            const existingInvoice = invoices.find(inv => 
+                inv.subscription_history_id === payment.id
+            );
+
+            if (existingInvoice) {
+                const { error } = await sendInvoiceEmail(existingInvoice.id);
+                if (error) throw new Error(error);
+            } else {
+                // Send email directly using edge function
+                const invoiceData = getInvoiceDataFromPayment(payment);
+                const html = generateProfessionalInvoiceHTML(invoiceData);
+                
+                const { error } = await supabase.functions.invoke('send-email', {
+                    body: {
+                        to: restaurant.contact_email,
+                        subject: `Invoice ${invoiceData.invoiceNumber} from TableTap`,
+                        html: `<p>Please find your invoice attached.</p><p>Invoice Number: ${invoiceData.invoiceNumber}</p><p>Amount: ₹${payment.amount_paid}</p>`,
+                        text: `Invoice ${invoiceData.invoiceNumber} for ₹${payment.amount_paid}`
+                    }
+                });
+                if (error) throw error;
+            }
+
+            alert(`Invoice sent to ${restaurant.contact_email}`);
+            fetchInvoices(); // Refresh to update email status
+        } catch (err) {
+            console.error('Error sending invoice:', err);
+            alert('Failed to send invoice email');
+        } finally {
+            setProcessingId(null);
+        }
     };
 
     const filteredHistory = paymentHistory.filter(item => {
@@ -543,51 +558,114 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                                         <div className="space-y-3">
                                             {paymentHistory
                                                 .filter(p => p.amount_paid > 0)
-                                                .map((payment, index) => (
-                                                    <div
-                                                        key={payment.id || index}
-                                                        className="bg-white rounded-xl p-5 border border-gray-200 hover:shadow-md transition-all"
-                                                    >
-                                                        <div className="flex items-center justify-between">
-                                                            <div className="flex items-center gap-4">
-                                                                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                                                                    <FileText className="w-6 h-6 text-purple-600" />
+                                                .map((payment, index) => {
+                                                    const existingInvoice = invoices.find(inv => 
+                                                        inv.subscription_history_id === payment.id
+                                                    );
+                                                    const invoiceNumber = existingInvoice?.invoice_number || 
+                                                        `INV-${payment.id?.slice(0, 8).toUpperCase() || `${index + 1}`.padStart(4, '0')}`;
+                                                    
+                                                    return (
+                                                        <div
+                                                            key={payment.id || index}
+                                                            className="bg-white rounded-xl p-5 border border-gray-200 hover:shadow-md transition-all group"
+                                                        >
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center gap-4">
+                                                                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-200">
+                                                                        <FileText className="w-6 h-6 text-white" />
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="font-bold text-gray-900">
+                                                                            {invoiceNumber}
+                                                                        </p>
+                                                                        <p className="text-sm text-gray-500">
+                                                                            {payment.notes || `${subscription?.plan_name || 'Professional'} Plan - ${subscription?.billing_cycle || 'Monthly'}`}
+                                                                        </p>
+                                                                        <p className="text-xs text-gray-400 mt-1">{formatDate(payment.created_at)}</p>
+                                                                    </div>
                                                                 </div>
-                                                                <div>
-                                                                    <p className="font-bold text-gray-900">
-                                                                        INV-{payment.id?.slice(0, 8).toUpperCase() || `${index + 1}`.padStart(4, '0')}
-                                                                    </p>
-                                                                    <p className="text-sm text-gray-500">{payment.notes || 'Subscription Payment'}</p>
-                                                                    <p className="text-xs text-gray-400 mt-1">{formatDate(payment.created_at)}</p>
+                                                                <div className="flex items-center gap-4">
+                                                                    <div className="text-right">
+                                                                        <p className="font-bold text-gray-900 text-lg">{formatCurrency(payment.amount_paid)}</p>
+                                                                        <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full font-semibold inline-flex items-center gap-1">
+                                                                            <CheckCircle className="w-3 h-3" />
+                                                                            PAID
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                        <button
+                                                                            onClick={() => handlePreviewInvoice(payment)}
+                                                                            className="p-2.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                                            title="Preview Invoice"
+                                                                        >
+                                                                            <Eye className="w-5 h-5" />
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handlePrintInvoice(payment)}
+                                                                            className="p-2.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                                                                            title="Print Invoice"
+                                                                        >
+                                                                            <Printer className="w-5 h-5" />
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleDownloadInvoice(payment)}
+                                                                            disabled={processingId === `download-${payment.id}`}
+                                                                            className="p-2.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
+                                                                            title="Download PDF"
+                                                                        >
+                                                                            {processingId === `download-${payment.id}` ? (
+                                                                                <RefreshCw className="w-5 h-5 animate-spin" />
+                                                                            ) : (
+                                                                                <Download className="w-5 h-5" />
+                                                                            )}
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleSendInvoiceEmail(payment)}
+                                                                            disabled={processingId === `email-${payment.id}`}
+                                                                            className="p-2.5 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors disabled:opacity-50"
+                                                                            title="Send via Email"
+                                                                        >
+                                                                            {processingId === `email-${payment.id}` ? (
+                                                                                <RefreshCw className="w-5 h-5 animate-spin" />
+                                                                            ) : (
+                                                                                <Send className="w-5 h-5" />
+                                                                            )}
+                                                                        </button>
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                            <div className="flex items-center gap-4">
-                                                                <div className="text-right">
-                                                                    <p className="font-bold text-gray-900">{formatCurrency(payment.amount_paid)}</p>
-                                                                    <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full font-semibold">
-                                                                        PAID
-                                                                    </span>
+                                                            
+                                                            {/* GST Breakdown Row */}
+                                                            <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-4 gap-4 text-xs">
+                                                                <div>
+                                                                    <span className="text-gray-400">Subtotal</span>
+                                                                    <p className="font-semibold text-gray-700">
+                                                                        {formatCurrency(payment.amount_paid / 1.18)}
+                                                                    </p>
                                                                 </div>
-                                                                <div className="flex gap-2">
-                                                                    <button
-                                                                        onClick={() => handlePrintInvoice(payment)}
-                                                                        className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                                                                        title="Print Invoice"
-                                                                    >
-                                                                        <Printer className="w-5 h-5" />
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => handleDownloadInvoice(payment)}
-                                                                        className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                                                                        title="Download Invoice"
-                                                                    >
-                                                                        <Download className="w-5 h-5" />
-                                                                    </button>
+                                                                <div>
+                                                                    <span className="text-gray-400">CGST (9%)</span>
+                                                                    <p className="font-semibold text-gray-700">
+                                                                        {formatCurrency((payment.gst_amount || payment.amount_paid - payment.amount_paid / 1.18) / 2)}
+                                                                    </p>
+                                                                </div>
+                                                                <div>
+                                                                    <span className="text-gray-400">SGST (9%)</span>
+                                                                    <p className="font-semibold text-gray-700">
+                                                                        {formatCurrency((payment.gst_amount || payment.amount_paid - payment.amount_paid / 1.18) / 2)}
+                                                                    </p>
+                                                                </div>
+                                                                <div>
+                                                                    <span className="text-gray-400">Total GST</span>
+                                                                    <p className="font-semibold text-gray-700">
+                                                                        {formatCurrency(payment.gst_amount || payment.amount_paid - payment.amount_paid / 1.18)}
+                                                                    </p>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                ))}
+                                                    );
+                                                })}
                                         </div>
                                     )}
                                 </div>
@@ -596,6 +674,70 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                     )}
                 </div>
             </div>
+
+            {/* Invoice Preview Modal */}
+            {previewInvoice && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+                    <div 
+                        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+                        onClick={() => setPreviewInvoice(null)}
+                    />
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                                    <FileText className="w-5 h-5 text-purple-600" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-gray-900">Invoice Preview</h3>
+                                    <p className="text-sm text-gray-500">{previewInvoice.invoiceNumber}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => printInvoice(previewInvoice)}
+                                    className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                >
+                                    <Printer className="w-4 h-4" />
+                                    Print
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        try {
+                                            await generateInvoicePDF(previewInvoice);
+                                        } catch {
+                                            // Fallback handled in function
+                                        }
+                                    }}
+                                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                                >
+                                    <Download className="w-4 h-4" />
+                                    Download PDF
+                                </button>
+                                <button
+                                    onClick={() => setPreviewInvoice(null)}
+                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors ml-2"
+                                >
+                                    <X className="w-5 h-5 text-gray-500" />
+                                </button>
+                            </div>
+                        </div>
+                        
+                        {/* Invoice Content */}
+                        <div className="flex-1 overflow-auto bg-gray-100 p-6">
+                            <div 
+                                className="bg-white shadow-lg mx-auto"
+                                style={{ maxWidth: '800px' }}
+                                dangerouslySetInnerHTML={{ 
+                                    __html: generateProfessionalInvoiceHTML(previewInvoice)
+                                        .replace(/<html[^>]*>|<\/html>|<head>[\s\S]*?<\/head>|<body[^>]*>|<\/body>|<!DOCTYPE[^>]*>/gi, '')
+                                }}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

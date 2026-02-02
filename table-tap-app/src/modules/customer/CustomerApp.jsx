@@ -47,16 +47,16 @@ const CustomerApp = () => {
                     <FoodDataProvider>
                         <Suspense fallback={<LoadingSpinner />}>
                             <Routes>
-                                {/* Auth & Onboarding */}
+                                {/* Auth & Onboarding - use /* for paths so /login and /login/ both match (avoids redirect to /) */}
                                 <Route path="/" element={<Opening />} />
                                 <Route path="/onboarding" element={<OnboardingScreen />} />
-                                <Route path="/login" element={<LoginPage />} />
-                                <Route path="/signup" element={<SignupPage />} />
-                                <Route path="/complete-profile" element={<CompleteProfile />} />
-                                <Route path="/forgot-password" element={<ForgotPassword />} />
-                                <Route path="/reset-password" element={<ResetPassword />} />
-                                <Route path="/auth-callback" element={<AuthCallback />} />
-                                <Route path="/restaurant-selection" element={<RestaurantSelectionPage />} />
+                                <Route path="/login/*" element={<LoginPage />} />
+                                <Route path="/signup/*" element={<SignupPage />} />
+                                <Route path="/complete-profile/*" element={<CompleteProfile />} />
+                                <Route path="/forgot-password/*" element={<ForgotPassword />} />
+                                <Route path="/reset-password/*" element={<ResetPassword />} />
+                                <Route path="/auth-callback/*" element={<AuthCallback />} />
+                                <Route path="/restaurant-selection/*" element={<RestaurantSelectionPage />} />
 
                                 {/* Protected Customer Routes */}
                                 <Route path="/home" element={

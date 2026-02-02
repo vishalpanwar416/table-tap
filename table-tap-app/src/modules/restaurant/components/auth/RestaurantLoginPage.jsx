@@ -69,10 +69,15 @@ export default function RestaurantLoginPage() {
         setError('');
 
         try {
+            // On production subdomains (app/restaurant/admin.table-tap.in), use /auth-callback
+            // so App.js renders AuthCallback. On localhost we use /restaurant/auth-callback for path-based routing.
+            const isProdSubdomain = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+            const callbackPath = isProdSubdomain ? '/auth-callback' : '/restaurant/auth-callback';
+
             await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: `${window.location.origin}/restaurant/auth-callback`
+                    redirectTo: `${window.location.origin}${callbackPath}`
                 }
             });
         } catch (err) {
