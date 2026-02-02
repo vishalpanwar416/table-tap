@@ -38,18 +38,6 @@ const LoadingSpinner = () => <LoadingScreen message="Loading..." />;
 /** Auth paths that must never be redirected to /. Fallback only sends unknown paths to /. */
 const AUTH_PATHS = ['/login', '/signup', '/complete-profile', '/forgot-password', '/reset-password', '/auth-callback', '/restaurant-selection', '/onboarding'];
 
-/** Only show Opening (splash) when path is exactly /. Prevents app.table-tap.in/restaurant-selection from showing splash. */
-const OpeningOrSync = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const pathname = location.pathname.replace(/\/$/, '') || '/';
-  if (pathname !== '/') {
-    const search = location.search || '';
-    return <Navigate to={pathname + search} replace />;
-  }
-  return <Opening />;
-};
-
 const FallbackRedirect = () => {
     const location = useLocation();
     const pathname = location.pathname.replace(/\/$/, '') || '/'; // normalize trailing slash
@@ -82,7 +70,7 @@ const CustomerApp = () => {
                         <Suspense fallback={<LoadingSpinner />}>
                             <Routes>
                                 {/* Root: use index so only exact "/" matches, not /login */}
-                                <Route index element={<OpeningOrSync />} />
+                                <Route index element={<Opening />} />
                                 <Route path="/onboarding" element={<OnboardingScreen />} />
                                 <Route path="/login/*" element={<LoginPage />} />
                                 <Route path="/signup/*" element={<SignupPage />} />
