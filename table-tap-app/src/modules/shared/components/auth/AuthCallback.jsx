@@ -6,6 +6,15 @@ import { hasValidRestaurantSelection } from '../../../shared/utils/restaurantChe
 import { authService, syncProfile } from '../../api/authService';
 import LoadingScreen from '../LoadingScreen';
 
+/** Fallback path for timeout/error: stay on admin/restaurant root, not /home */
+function getDefaultRedirectPath() {
+  if (typeof window === 'undefined') return '/home';
+  const h = (window.location.hostname || '').toLowerCase();
+  if (h.startsWith('admin.')) return '/';
+  if (h.startsWith('restaurant.') || h.startsWith('manager.')) return '/';
+  return '/home';
+}
+
 const AuthCallback = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
@@ -15,8 +24,6 @@ const AuthCallback = () => {
   const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
-    console.log('[AuthCallback] Running...', { loading, hasUser: !!user, retryCount });
-
     if (loading) return;
 
     if (!user) {
@@ -27,13 +34,11 @@ const AuthCallback = () => {
       if (hasToken) {
         setStatus('Syncing session...');
 
-        // Manual session push if Supabase missed the hash
         const params = new URLSearchParams(hash.substring(1));
         const accessToken = params.get('access_token');
         const refreshToken = params.get('refresh_token');
 
         if (accessToken && refreshToken && !checkStarted.current) {
-          console.log('[AuthCallback] Manual session restore triggered');
           supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken
@@ -58,31 +63,31 @@ const AuthCallback = () => {
       setRedirecting(true);
       setStatus('Identifying your role...');
 
+      const defaultPath = getDefaultRedirectPath();
+
       const timeout = setTimeout(() => {
         console.error('[AuthCallback] Redirection timeout');
-        navigate('/home', { replace: true });
+        navigate(defaultPath, { replace: true });
       }, 10000);
 
       try {
-        // Parallel check: Get profile and sync in background
         const profilePromise = authService.getProfile(user.id);
         const syncPromise = syncProfile(user).catch(e => console.warn('Sync failed:', e));
 
         const [profile] = await Promise.all([profilePromise, syncPromise]);
 
         const role = profile?.profile_role || 'customer';
-        console.log('[AuthCallback] Final role identified:', role);
-
         clearTimeout(timeout);
 
         if (role === 'admin') {
           setStatus('Welcome back, Admin');
-          navigate('/admin', { replace: true });
+          const h = (typeof window !== 'undefined' && window.location.hostname || '').toLowerCase();
+          navigate(h.startsWith('admin.') ? '/' : '/admin', { replace: true });
         } else if (role === 'manager' || role === 'captain') {
           setStatus('Welcome back, Manager');
-          navigate('/restaurant', { replace: true });
+          const h = (typeof window !== 'undefined' && window.location.hostname || '').toLowerCase();
+          navigate(h.startsWith('restaurant.') || h.startsWith('manager.') ? '/' : '/restaurant', { replace: true });
         } else {
-          // Customer Logic
           setStatus('Checking profile...');
           const isComplete = Boolean(profile?.mobile_number && profile?.date_of_birth);
 
@@ -95,7 +100,6 @@ const AuthCallback = () => {
         }
       } catch (error) {
         if (error.name === 'AbortError' || error.message?.includes('aborted')) {
-          console.warn('[AuthCallback] Aborted, retrying flow...');
           checkStarted.current = false;
           setRedirecting(false);
           setTimeout(() => setRetryCount(c => c + 1), 500);
@@ -104,7 +108,7 @@ const AuthCallback = () => {
 
         console.error('[AuthCallback] Login flow failed:', error);
         clearTimeout(timeout);
-        navigate('/home', { replace: true });
+        navigate(defaultPath, { replace: true });
       }
     };
 

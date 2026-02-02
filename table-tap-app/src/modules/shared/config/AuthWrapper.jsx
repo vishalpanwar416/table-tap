@@ -1,22 +1,30 @@
 // AuthWrapper.jsx
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../shared/supabase';
 import { useAuth } from './AuthContext';
 import { hasValidRestaurantSelection } from '../../shared/utils/restaurantCheck';
+
+const AUTH_CHECK_TIMEOUT_MS = 10000;
+
+/** True when on admin or restaurant subdomain (e.g. admin.table-tap.in). Pathname is "/" there, so we must use hostname. */
+function isAdminOrRestaurantOrigin() {
+  if (typeof window === 'undefined') return false;
+  const h = (window.location.hostname || '').toLowerCase();
+  return h.startsWith('admin.') || h.startsWith('restaurant.') || h.startsWith('manager.');
+}
 
 export default function AuthWrapper({ children, publicOnly = false }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [checking, setChecking] = useState(true);
   const { user, loading: authLoading } = useAuth();
+  const timeoutRef = useRef(null);
 
-  // Get URL parameters
   const urlParams = new URLSearchParams(location.search);
   const urlRestaurant = urlParams.get('restaurant');
   const urlTable = urlParams.get('table');
 
-  // Helper function to preserve parameters in navigation
   const navigateWithParams = (path) => {
     const params = urlRestaurant && urlTable ? `?restaurant=${urlRestaurant}&table=${urlTable}` : '';
     navigate(`${path}${params}`);
@@ -25,16 +33,31 @@ export default function AuthWrapper({ children, publicOnly = false }) {
   useEffect(() => {
     let mounted = true;
 
+    const stopChecking = () => {
+      if (mounted) setChecking(false);
+    };
+
+    timeoutRef.current = setTimeout(() => {
+      if (mounted && checking) {
+        console.warn('[AuthWrapper] Auth check timeout');
+        stopChecking();
+      }
+    }, AUTH_CHECK_TIMEOUT_MS);
+
     const checkAuthAndProfile = async () => {
       if (authLoading) return;
 
-      // Handle root route redirect
-      if (location.pathname === '/' && user) {
-        if (location.pathname.startsWith('/admin') || location.pathname.startsWith('/restaurant')) {
-          setChecking(false);
-          return;
-        }
+      const onAdminOrRestaurant = isAdminOrRestaurantOrigin();
+      const pathIsAdminOrRestaurant = location.pathname.startsWith('/admin') || location.pathname.startsWith('/restaurant');
 
+      // Admin/restaurant app: don't redirect to /home; don't run customer profile check
+      if (onAdminOrRestaurant || pathIsAdminOrRestaurant) {
+        stopChecking();
+        return;
+      }
+
+      // Handle root route redirect (customer app only)
+      if (location.pathname === '/' && user) {
         if (hasValidRestaurantSelection()) {
           navigateWithParams('/home');
         } else {
@@ -43,7 +66,6 @@ export default function AuthWrapper({ children, publicOnly = false }) {
         return;
       }
 
-      // Public-only route handling
       if (publicOnly) {
         if (user) {
           if (hasValidRestaurantSelection()) {
@@ -52,29 +74,22 @@ export default function AuthWrapper({ children, publicOnly = false }) {
             navigateWithParams('/restaurant-selection');
           }
         }
-        setChecking(false);
+        stopChecking();
         return;
       }
 
-      // Protected route handling — stay in admin/restaurant app when redirecting to login
       if (!user) {
-        const loginPath = location.pathname.startsWith('/admin')
-          ? '/admin/login'
-          : location.pathname.startsWith('/restaurant')
-            ? '/restaurant/login'
+        const loginPath = onAdminOrRestaurant
+          ? '/login'
+          : pathIsAdminOrRestaurant
+            ? (location.pathname.startsWith('/admin') ? '/admin/login' : '/restaurant/login')
             : '/login';
         navigateWithParams(loginPath);
-        setChecking(false);
+        stopChecking();
         return;
       }
 
-      const isAdminRoute = location.pathname.startsWith('/admin') || location.pathname.startsWith('/restaurant');
-      if (isAdminRoute) {
-        setChecking(false);
-        return;
-      }
-
-      // Profile completion check (only for non-admin routes)
+      // Profile completion check (customer app only)
       try {
         const { data: profile, error } = await supabase
           .from('profiles')
@@ -98,9 +113,7 @@ export default function AuthWrapper({ children, publicOnly = false }) {
       } catch (error) {
         if (error.name === 'AbortError') return;
       } finally {
-        if (mounted) {
-          setChecking(false);
-        }
+        if (mounted) setChecking(false);
       }
     };
 
@@ -108,15 +121,16 @@ export default function AuthWrapper({ children, publicOnly = false }) {
 
     return () => {
       mounted = false;
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [user?.id, authLoading, publicOnly]);
+  }, [user?.id, authLoading, publicOnly, location.pathname, location.search]);
 
   if (checking || authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex justify-center items-center min-h-screen bg-black">
         <div className="text-center p-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Checking authentication...</p>
+          <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-400">Checking authentication...</p>
         </div>
       </div>
     );
