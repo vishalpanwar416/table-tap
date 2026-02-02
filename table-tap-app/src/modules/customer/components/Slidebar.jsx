@@ -4,6 +4,7 @@ import { LogOut, ShoppingBag, User, CreditCard, Phone, HelpCircle, Shield, Globe
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../shared/supabase';
 import { useAuth } from '../../shared/config/AuthContext';
+import { getSubdomainUrl } from '../../shared/utils/subdomainRouter';
 import ContactPopup from './ContactPopup';
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
@@ -142,10 +143,29 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
   };
 
   const handleNavigation = React.useCallback((path) => {
-    // Force hard navigation for cross-app routes (e.g. Admin or Restaurant dashboard)
-    // This allows App.js to re-evaluate the routing logic based on the new path
+    // Handle cross-app navigation (Admin or Restaurant dashboard)
     if (path.startsWith('/admin') || path.startsWith('/restaurant')) {
-      window.location.href = path;
+      const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+      if (isDev) {
+        // In dev, use path-based routing
+        window.location.href = path;
+      } else {
+        // In production, switch subdomains
+        const newSubdomain = path.startsWith('/admin') ? 'admin' : 'restaurant';
+        const hostParts = window.location.hostname.split('.');
+
+        // Assuming format [subdomain, domain, tld] e.g., app.table-tap.in
+        // If we are on app.table-tap.in, replace 'app' with target
+        if (hostParts.length >= 3) {
+          hostParts[0] = newSubdomain;
+          const newUrl = `${window.location.protocol}//${hostParts.join('.')}`;
+          window.location.href = newUrl;
+        } else {
+          // Fallback if domain structure is unexpected
+          window.location.href = path;
+        }
+      }
       return;
     }
 
