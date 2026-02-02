@@ -23,7 +23,9 @@ import {
   Zap,
   Power,
   Image as ImageIcon,
-  Upload
+  Upload,
+  MessageCircle,
+  Receipt
 } from 'lucide-react';
 import { useAdminRestaurant } from '../../../shared/context/AdminRestaurantContext';
 import SubscriptionSection from './SubscriptionSection';
@@ -338,6 +340,59 @@ const RestaurantInformation = () => {
                   </div>
                 </div>
 
+                {/* Bill Sharing Options */}
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                    <Receipt className="w-5 h-5 mr-2 text-blue-600" /> Bill Sharing Options
+                  </h3>
+                  <p className="text-sm text-gray-500 mb-4">Allow customers to receive their bills via email or WhatsApp</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-white/50 border border-gray-200 p-4 rounded-xl flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                          <Mail className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <span className="block text-sm font-semibold text-gray-700">Email Bill</span>
+                          <span className="text-xs text-gray-500">Send bills via email</span>
+                        </div>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          name="email_bill_enabled"
+                          checked={formData.email_bill_enabled !== false}
+                          onChange={handleChange}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      </label>
+                    </div>
+
+                    <div className="bg-white/50 border border-gray-200 p-4 rounded-xl flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                          <MessageCircle className="w-5 h-5 text-green-600" />
+                        </div>
+                        <div>
+                          <span className="block text-sm font-semibold text-gray-700">WhatsApp Bill</span>
+                          <span className="text-xs text-gray-500">Send bills via WhatsApp</span>
+                        </div>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          name="whatsapp_bill_enabled"
+                          checked={formData.whatsapp_bill_enabled !== false}
+                          onChange={handleChange}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Location & Online Presence */}
                 <div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
@@ -550,6 +605,42 @@ const RestaurantInformation = () => {
                     </div>
                     <div className={`p-3 rounded-full ${restaurant?.is_active ? 'bg-green-100' : 'bg-red-100'}`}>
                       <Power className={`w-6 h-6 ${restaurant?.is_active ? 'text-green-600' : 'text-red-500'}`} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bill Sharing Status Display */}
+              <div className="mt-8">
+                <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                  <Receipt className="w-5 h-5 mr-2 text-blue-600" /> Bill Sharing Options
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-3 rounded-full ${restaurant?.email_bill_enabled !== false ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                        <Mail className={`w-6 h-6 ${restaurant?.email_bill_enabled !== false ? 'text-blue-600' : 'text-gray-400'}`} />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-600 mb-1">Email Bill</h4>
+                        <p className={`text-lg font-bold ${restaurant?.email_bill_enabled !== false ? 'text-blue-600' : 'text-gray-500'}`}>
+                          {restaurant?.email_bill_enabled !== false ? 'Enabled' : 'Disabled'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-3 rounded-full ${restaurant?.whatsapp_bill_enabled !== false ? 'bg-green-100' : 'bg-gray-100'}`}>
+                        <MessageCircle className={`w-6 h-6 ${restaurant?.whatsapp_bill_enabled !== false ? 'text-green-600' : 'text-gray-400'}`} />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-600 mb-1">WhatsApp Bill</h4>
+                        <p className={`text-lg font-bold ${restaurant?.whatsapp_bill_enabled !== false ? 'text-green-600' : 'text-gray-500'}`}>
+                          {restaurant?.whatsapp_bill_enabled !== false ? 'Enabled' : 'Disabled'}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>

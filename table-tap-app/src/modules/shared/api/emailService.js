@@ -353,8 +353,135 @@ export const getBillPreviewHTML = (order, restaurant) => {
     return generateBillHTML(order, restaurant);
 };
 
+/**
+ * Generate WhatsApp bill message
+ */
+const generateWhatsAppBillMessage = (order, restaurant) => {
+    const formatCurrency = (amount) => `₹${(amount || 0).toFixed(2)}`;
+    const formatDate = (date) => new Date(date).toLocaleString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+
+    const items = order.items.map(item => 
+        `• ${item.name} x${item.quantity} - ${formatCurrency(item.price * item.quantity)}`
+    ).join('\n');
+    
+    const message = `
+🧾 *BILL FROM ${restaurant.name?.toUpperCase()}*
+━━━━━━━━━━━━━━━━━━━━
+
+📋 *Order Details*
+Order #: ${order.id?.slice(0, 8) || 'N/A'}
+Date: ${formatDate(order.created_at)}
+Table: T${order.table_number || 'N/A'}
+${order.customer_name ? `Customer: ${order.customer_name}` : ''}
+
+━━━━━━━━━━━━━━━━━━━━
+📦 *ITEMS*
+━━━━━━━━━━━━━━━━━━━━
+${items}
+
+━━━━━━━━━━━━━━━━━━━━
+💰 *BILL SUMMARY*
+━━━━━━━━━━━━━━━━━━━━
+Subtotal: ${formatCurrency(order.subtotal)}
+${order.discount > 0 ? `Discount: -${formatCurrency(order.discount)} 🎉` : ''}
+SGST (2.5%): ${formatCurrency((order.gst || 0) / 2)}
+CGST (2.5%): ${formatCurrency((order.gst || 0) / 2)}
+${order.deliveryFee > 0 ? `Delivery: ${formatCurrency(order.deliveryFee)}` : ''}
+━━━━━━━━━━━━━━━━━━━━
+*TOTAL: ${formatCurrency(order.total)}*
+━━━━━━━━━━━━━━━━━━━━
+Payment: ${order.payment_method?.toUpperCase() || 'N/A'}
+
+${order.special_instructions ? `📝 Note: ${order.special_instructions}\n` : ''}
+🙏 *Thank you for dining with us!*
+${restaurant.contact_phone ? `📞 ${restaurant.contact_phone}` : ''}
+${restaurant.address ? `📍 ${restaurant.address}` : ''}
+
+_Powered by Table Tap_
+    `.trim();
+
+    return message;
+};
+
+/**
+ * Generate WhatsApp share URL
+ * @param {string} phoneNumber - Phone number with country code (e.g., 919876543210)
+ * @param {string} message - Message to send
+ * @returns {string} WhatsApp URL
+ */
+export const generateWhatsAppURL = (phoneNumber, message) => {
+    // Clean the phone number - remove spaces, dashes, and +
+    const cleanPhone = phoneNumber.replace(/[\s\-\+]/g, '');
+    
+    // Add country code if not present (default to India +91)
+    const phoneWithCode = cleanPhone.startsWith('91') ? cleanPhone : `91${cleanPhone}`;
+    
+    // Encode the message for URL
+    const encodedMessage = encodeURIComponent(message);
+    
+    return `https://wa.me/${phoneWithCode}?text=${encodedMessage}`;
+};
+
+/**
+ * Send bill via WhatsApp
+ * Opens WhatsApp with pre-filled bill message
+ * @param {Object} order - Order details
+ * @param {Object} restaurant - Restaurant details  
+ * @param {string} phoneNumber - Customer phone number
+ * @returns {Object} - Result with WhatsApp URL
+ */
+export const sendWhatsAppBill = (order, restaurant, phoneNumber) => {
+    if (!order || !restaurant || !phoneNumber) {
+        throw new Error('Missing required parameters: order, restaurant, or phoneNumber');
+    }
+
+    const message = generateWhatsAppBillMessage(order, restaurant);
+    const whatsappURL = generateWhatsAppURL(phoneNumber, message);
+    
+    // Open WhatsApp in new tab
+    window.open(whatsappURL, '_blank');
+    
+    return { 
+        success: true, 
+        url: whatsappURL,
+        message: 'WhatsApp opened with bill'
+    };
+};
+
+/**
+ * Get WhatsApp bill message for preview
+ */
+export const getWhatsAppBillMessage = (order, restaurant) => {
+    return generateWhatsAppBillMessage(order, restaurant);
+};
+
+/**
+ * Copy bill to clipboard for manual sharing
+ */
+export const copyBillToClipboard = async (order, restaurant) => {
+    const message = generateWhatsAppBillMessage(order, restaurant);
+    
+    try {
+        await navigator.clipboard.writeText(message);
+        return { success: true, message: 'Bill copied to clipboard' };
+    } catch (error) {
+        console.error('Failed to copy:', error);
+        throw new Error('Failed to copy bill to clipboard');
+    }
+};
+
 export default {
     sendBillEmail,
     sendBillToCustomer,
-    getBillPreviewHTML
+    getBillPreviewHTML,
+    sendWhatsAppBill,
+    getWhatsAppBillMessage,
+    generateWhatsAppURL,
+    copyBillToClipboard
 };

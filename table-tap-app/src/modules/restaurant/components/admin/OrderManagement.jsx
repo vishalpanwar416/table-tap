@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Check, X, Truck, CheckCircle, ChevronDown, ChevronRight, User,
   Clock, Calendar, MapPin, Phone, Filter, AlertCircle,
-  Printer, Download, AlertTriangle, ShoppingBag, Info, Grid, List, Package, Plus, RefreshCw, Mail, Send
+  Printer, Download, AlertTriangle, ShoppingBag, Info, Grid, List, Package, Plus, RefreshCw, Mail, Send, MessageCircle, Copy
 } from 'lucide-react';
 import { useManagerNotifications } from '../../../shared/context/ManagerNotificationContext';
 import { format, isToday, isYesterday } from 'date-fns';
@@ -10,7 +10,7 @@ import { useAdminRestaurant } from '../../../shared/context/AdminRestaurantConte
 import ReactDOMServer from "react-dom/server";
 import PrintBill from "./PrintBill";
 import PrintKOT from "./PrintKOT";
-import { sendBillEmail } from '../../../shared/api/emailService';
+import { sendBillEmail, sendWhatsAppBill } from '../../../shared/api/emailService';
 import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
 import {
@@ -109,6 +109,11 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
   const [emailBillOrder, setEmailBillOrder] = useState(null);
   const [emailBillAddress, setEmailBillAddress] = useState('');
   const [sendingEmail, setSendingEmail] = useState(false);
+
+  // WhatsApp Bill Modal State
+  const [showWhatsAppBillModal, setShowWhatsAppBillModal] = useState(false);
+  const [whatsAppBillOrder, setWhatsAppBillOrder] = useState(null);
+  const [whatsAppPhoneNumber, setWhatsAppPhoneNumber] = useState('');
   const [coStep, setCoStep] = useState(1); // 1: Select Items, 2: Customer Info
 
   // Use the prop if provided, otherwise fallback to local state (for safety)
@@ -487,10 +492,18 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
       );
     }
     if (order.status === 'completed') {
+      const emailEnabled = restaurant?.email_bill_enabled !== false;
+      const whatsappEnabled = restaurant?.whatsapp_bill_enabled !== false;
+      
       return (
         <>
           <button onClick={() => handlePrintBill(order)} className="p-1.5 rounded-full bg-orange-100 text-orange-600 hover:bg-orange-200" title="Print Bill"><Printer size={16} /></button>
-          <button onClick={() => openEmailBillModal(order)} className="p-1.5 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200" title="Email Bill"><Mail size={16} /></button>
+          {emailEnabled && (
+            <button onClick={() => openEmailBillModal(order)} className="p-1.5 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200" title="Email Bill"><Mail size={16} /></button>
+          )}
+          {whatsappEnabled && (
+            <button onClick={() => openWhatsAppBillModal(order)} className="p-1.5 rounded-full bg-green-100 text-green-600 hover:bg-green-200" title="WhatsApp Bill"><MessageCircle size={16} /></button>
+          )}
         </>
       );
     }
@@ -637,6 +650,40 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
       toast.error(error.message || 'Failed to send email');
     } finally {
       setSendingEmail(false);
+    }
+  };
+
+  // WhatsApp Bill Handlers
+  const openWhatsAppBillModal = (order) => {
+    setWhatsAppBillOrder(order);
+    setWhatsAppPhoneNumber(order.customer_phone || '');
+    setShowWhatsAppBillModal(true);
+  };
+
+  const closeWhatsAppBillModal = () => {
+    setShowWhatsAppBillModal(false);
+    setWhatsAppBillOrder(null);
+    setWhatsAppPhoneNumber('');
+  };
+
+  const handleSendWhatsAppBill = () => {
+    if (!whatsAppPhoneNumber || whatsAppPhoneNumber.length < 10) {
+      toast.error('Please enter a valid phone number');
+      return;
+    }
+
+    if (!whatsAppBillOrder || !restaurant) {
+      toast.error('Order or restaurant data missing');
+      return;
+    }
+
+    try {
+      sendWhatsAppBill(whatsAppBillOrder, restaurant, whatsAppPhoneNumber);
+      toast.success('Opening WhatsApp...');
+      closeWhatsAppBillModal();
+    } catch (error) {
+      console.error('WhatsApp error:', error);
+      toast.error(error.message || 'Failed to open WhatsApp');
     }
   };
 
@@ -1839,6 +1886,104 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                       Send Bill
                     </>
                   )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* WhatsApp Bill Modal */}
+      {showWhatsAppBillModal && whatsAppBillOrder && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                    <MessageCircle className="text-white" size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">WhatsApp Bill</h3>
+                    <p className="text-green-100 text-sm">Order #{whatsAppBillOrder.id?.slice(0, 8)}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={closeWhatsAppBillModal}
+                  className="text-white/80 hover:text-white transition-colors"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              {/* Order Summary */}
+              <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-gray-600 text-sm">Customer</span>
+                  <span className="font-semibold text-gray-900">{whatsAppBillOrder.customer_name || 'Guest'}</span>
+                </div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-gray-600 text-sm">Table</span>
+                  <span className="font-semibold text-gray-900">T{whatsAppBillOrder.table_number}</span>
+                </div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-gray-600 text-sm">Items</span>
+                  <span className="font-semibold text-gray-900">{whatsAppBillOrder.items?.length || 0} items</span>
+                </div>
+                <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                  <span className="text-gray-800 font-medium">Total</span>
+                  <span className="font-bold text-lg text-green-600">₹{whatsAppBillOrder.total?.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Phone Input */}
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Send bill to WhatsApp number
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <input
+                    type="tel"
+                    value={whatsAppPhoneNumber}
+                    onChange={(e) => setWhatsAppPhoneNumber(e.target.value.replace(/[^0-9]/g, ''))}
+                    placeholder="9876543210"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-gray-900"
+                    maxLength={12}
+                    autoFocus
+                  />
+                </div>
+                <p className="mt-2 text-xs text-gray-500">Enter number without country code (India +91 will be added automatically)</p>
+                {whatsAppBillOrder.customer_phone && whatsAppPhoneNumber !== whatsAppBillOrder.customer_phone && (
+                  <button
+                    onClick={() => setWhatsAppPhoneNumber(whatsAppBillOrder.customer_phone.replace(/[^0-9]/g, ''))}
+                    className="mt-2 text-sm text-green-600 hover:text-green-700 flex items-center gap-1"
+                  >
+                    <User size={14} />
+                    Use customer's phone: {whatsAppBillOrder.customer_phone}
+                  </button>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3">
+                <button
+                  onClick={closeWhatsAppBillModal}
+                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSendWhatsAppBill}
+                  disabled={!whatsAppPhoneNumber || whatsAppPhoneNumber.length < 10}
+                  className="flex-1 px-4 py-3 bg-green-500 text-white rounded-xl font-semibold hover:bg-green-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <MessageCircle size={18} />
+                  Open WhatsApp
                 </button>
               </div>
             </div>
