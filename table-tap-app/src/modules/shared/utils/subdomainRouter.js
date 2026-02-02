@@ -80,7 +80,7 @@ export const getBasePath = () => {
  */
 export const isDevelopment = () => {
     const hostname = window.location.hostname;
-    return hostname === 'localhost' || hostname === '127.0.0.1';
+    return hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('vercel.app');
 };
 
 /**

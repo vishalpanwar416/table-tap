@@ -145,13 +145,16 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
   const handleNavigation = React.useCallback((path) => {
     // Handle cross-app navigation (Admin or Restaurant dashboard)
     if (path.startsWith('/admin') || path.startsWith('/restaurant')) {
-      const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      // Treat localhost and Vercel preview deployments as "dev" environments for path-based routing
+      const isDev = window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname.includes('vercel.app');
 
       if (isDev) {
-        // In dev, use path-based routing
+        // In dev/preview, use path-based routing
         window.location.href = path;
       } else {
-        // In production, switch subdomains
+        // In production custom domain, switch subdomains
         const newSubdomain = path.startsWith('/admin') ? 'admin' : 'restaurant';
         const hostParts = window.location.hostname.split('.');
 
