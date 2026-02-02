@@ -104,6 +104,16 @@
         "description": "You know your restaurant best. Table Tap gives you powerful tools to manage everything—from your menu to your team to your inventory. No tech skills required.",
         "mainFeatures": [
             {
+                "title": "Multi-Restaurant Management",
+                "description": "Own multiple locations? Manage all your restaurants from one dashboard. Switch between outlets instantly, view consolidated analytics, and maintain consistency across your brand.",
+                "type": "building"
+            },
+            {
+                "title": "Unified Analytics Dashboard",
+                "description": "See the big picture with aggregated insights across all your restaurants. Compare performance, track revenue trends, and identify your best performers—all in one view.",
+                "type": "chart"
+            },
+            {
                 "title": "Menu Editor",
                 "description": "Add dishes with photos, descriptions, and prices. Organize by categories. Mark items as sold out instantly. Your menu, your way.",
                 "type": "zap"
@@ -220,6 +230,8 @@
                 "price": null,
                 "features": [
                     "Multi-Location Support",
+                    "Unified Analytics Dashboard",
+                    "Cross-Restaurant Insights",
                     "Custom Integrations",
                     "Dedicated Account Manager",
                     "SLA Guarantee",

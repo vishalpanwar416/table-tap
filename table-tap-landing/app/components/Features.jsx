@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import {
-    Zap, Lock, Smartphone, Globe, Headphones, Palette, Sparkles, ArrowRight
+    Zap, Lock, Smartphone, Globe, Headphones, Palette, Sparkles, ArrowRight, Building2, BarChart3
 } from 'lucide-react';
 import data from '../data/landing-data.json';
 
@@ -12,7 +12,9 @@ const IconMap = {
     smartphone: Smartphone,
     globe: Globe,
     headphones: Headphones,
-    palette: Palette
+    palette: Palette,
+    building: Building2,
+    chart: BarChart3
 };
 
 const Features = () => {

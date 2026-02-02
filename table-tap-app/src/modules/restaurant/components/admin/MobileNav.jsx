@@ -11,7 +11,9 @@ import {
   BarChart3,
   Package,
   Clock,
-  ShoppingBag
+  ShoppingBag,
+  Building2,
+  Map
 } from 'lucide-react';
 import tableTapLogo from '../../../../assets/icons/logott.png';
 
@@ -29,7 +31,9 @@ const MobileNav = ({ showMobileNav, setShowMobileNav, activeTab, setActiveTab, m
       'Package': Package,
       'Clock': Clock,
       'Settings': Settings,
-      'ShoppingBag': ShoppingBag
+      'ShoppingBag': ShoppingBag,
+      'Building2': Building2,
+      'Map': Map
     };
 
     const IconComponent = icons[iconName];
@@ -39,6 +43,8 @@ const MobileNav = ({ showMobileNav, setShowMobileNav, activeTab, setActiveTab, m
   // Function to get role display name
   const getRoleDisplayName = (role) => {
     switch (role) {
+      case 'owner':
+        return 'Restaurant Owner';
       case 'admin':
         return 'Administrator';
       case 'manager':

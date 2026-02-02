@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Sidebar from '../../components/admin/Sidebar';
 import MobileNav from '../../components/admin/MobileNav';
 import DashboardOverview from '../../components/admin/DashboardOverviewComponents/DashboardOverview';
+import AggregateAnalytics from '../../components/admin/DashboardOverviewComponents/AggregateAnalytics';
 import MenuManagement from '../../components/admin/MenuManagementComponent/MenuManagement';
 import OrderManagement from '../../components/admin/OrderManagement';
 import StaffManagement from '../../components/admin/StaffManagement';
@@ -99,6 +100,12 @@ const AdminDashboard = () => {
     // Owner, Admin, Manager have full access (initially)
     if (['admin', 'manager', 'owner'].includes(contextUserRole) || contextIsAdmin()) {
       filteredItems = [...allItems];
+
+      // Add Multi-Restaurant Overview for owners with multiple restaurants
+      if (contextIsOwner() && ownedRestaurants && ownedRestaurants.length > 1) {
+        // Insert at the beginning for easy access
+        filteredItems.unshift({ id: 'aggregate-analytics', icon: 'Building2', label: 'All Restaurants' });
+      }
 
       // Add AI Analytics and Aggregators only for managers, owners and admins if enabled for the restaurant
       if (restaurant?.ai_enabled) {
@@ -906,6 +913,18 @@ const AdminDashboard = () => {
               </div>
 
               {/* Content Components - Removed redundant padding */}
+              {activeTab === 'aggregate-analytics' && contextIsOwner() && ownedRestaurants && ownedRestaurants.length > 1 && (
+                <AggregateAnalytics
+                  onSelectRestaurant={async (restaurantId) => {
+                    const success = await setOwnerRestaurant(restaurantId);
+                    if (success) {
+                      setActiveTab('dashboard');
+                      setSuccessMsg('Switched to restaurant dashboard');
+                    }
+                  }}
+                />
+              )}
+
               {activeTab === 'dashboard' && (
                 <DashboardOverview
                   foodItems={foodItems}
@@ -990,6 +1009,7 @@ const AdminDashboard = () => {
               {activeTab === 'aggregators' && restaurant && (
                 <AggregatorIntegration
                   restaurantId={restaurant.id}
+                  restaurant={restaurant}
                 />
               )}
 
