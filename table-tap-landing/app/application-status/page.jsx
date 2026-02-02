@@ -36,8 +36,11 @@ const statusConfig = {
         label: 'Under Review',
         color: 'blue',
         icon: FileText,
-        message: 'Our team is currently reviewing your application. We\'ll notify you once the review is complete.',
         bgColor: 'bg-blue-50',
+        borderColor: 'border-blue-200',
+        textColor: 'text-blue-800',
+        iconColor: 'text-blue-500',
+        message: 'Our team is currently reviewing your application. We&apos;ll notify you once the review is complete.',
         borderColor: 'border-blue-200',
         textColor: 'text-blue-800',
         iconColor: 'text-blue-500'
@@ -89,9 +92,9 @@ function StatusContent() {
             setEmail(urlEmail);
             handleSearch(urlEmail);
         }
-    }, [searchParams]);
+    }, [searchParams, handleSearch]);
 
-    const handleSearch = async (searchEmail = email) => {
+    const handleSearch = useCallback(async (searchEmail = email) => {
         if (!searchEmail || !searchEmail.includes('@')) {
             setError('Please enter a valid email address');
             return;
@@ -127,7 +130,7 @@ function StatusContent() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [email]); // Added email as dependency since it's used as default param
 
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleDateString('en-IN', {
@@ -323,7 +326,7 @@ function StatusContent() {
                             </div>
                             <h3 className="text-xl font-black text-gray-900 mb-2">No Application Found</h3>
                             <p className="text-gray-500 font-bold mb-6">
-                                We couldn't find any application with this email address.
+                                We couldn&apos;t find any application with this email address.
                             </p>
                             <Link
                                 href="/register"

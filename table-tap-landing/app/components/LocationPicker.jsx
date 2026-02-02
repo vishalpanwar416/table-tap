@@ -12,20 +12,82 @@ export default function LocationPicker({ onLocationSelect, onClose, initialLocat
 
     const [isLoaded, setIsLoaded] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedLocation, setSelectedLocation] = useState(null);
+    const [selectedLocation, setSelectedLocation] = useState(initialLocation || null);
     const [isLocating, setIsLocating] = useState(false);
     const [error, setError] = useState(null);
+
+    // Helper to process helper results
+    const processPlaceResult = useCallback((place, lat, lng) => {
+        const addressComponents = place.address_components || [];
+        let address = '';
+        let city = '';
+        let state = '';
+        let pincode = '';
+        let country = '';
+
+        addressComponents.forEach(component => {
+            const types = component.types;
+            if (types.includes('street_number') || types.includes('route') || types.includes('sublocality_level_2') || types.includes('sublocality_level_1')) {
+                address += (address ? ', ' : '') + component.long_name;
+            }
+            if (types.includes('locality') || types.includes('administrative_area_level_2')) {
+                if (!city) city = component.long_name;
+            }
+            if (types.includes('administrative_area_level_1')) {
+                state = component.long_name;
+            }
+            if (types.includes('postal_code')) {
+                pincode = component.long_name;
+            }
+            if (types.includes('country')) {
+                country = component.long_name;
+            }
+        });
+
+        const latitude = lat || place.geometry?.location?.lat();
+        const longitude = lng || place.geometry?.location?.lng();
+
+        const locationData = {
+            address: address || place.formatted_address?.split(',')[0] || '',
+            city,
+            state,
+            pincode,
+            country,
+            lat: latitude,
+            lng: longitude,
+            formattedAddress: place.formatted_address || '',
+            googleMapsLink: `https://www.google.com/maps?q=${latitude},${longitude}`
+        };
+
+        setSelectedLocation(locationData);
+    }, []);
+
+    // Helper for Reverse Geocoding
+    const reverseGeocode = useCallback(async (lat, lng) => {
+        if (!window.google?.maps) return;
+
+        const geocoder = new window.google.maps.Geocoder();
+        try {
+            const response = await geocoder.geocode({ location: { lat, lng } });
+            if (response.results[0]) {
+                processPlaceResult(response.results[0], lat, lng);
+            }
+        } catch (err) {
+            console.error('Geocoding error:', err);
+        }
+    }, [processPlaceResult]);
 
     // Load Google Maps Script
     useEffect(() => {
         if (window.google?.maps) {
-            setIsLoaded(true);
+            // Use setTimeout to avoid synchronous state update warning
+            setTimeout(() => setIsLoaded(true), 0);
             return;
         }
 
         const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
         if (!apiKey) {
-            setError('Google Maps API key not configured');
+            setTimeout(() => setError('Google Maps API key not configured'), 0);
             return;
         }
 
@@ -87,7 +149,6 @@ export default function LocationPicker({ onLocationSelect, onClose, initialLocat
 
         if (initialLocation?.lat && initialLocation?.lng) {
             marker.setPosition(defaultCenter);
-            setSelectedLocation(initialLocation);
         }
 
         markerRef.current = marker;
@@ -125,66 +186,7 @@ export default function LocationPicker({ onLocationSelect, onClose, initialLocat
 
             autocompleteRef.current = autocomplete;
         }
-    }, [isLoaded, initialLocation]);
-
-    const reverseGeocode = async (lat, lng) => {
-        if (!window.google?.maps) return;
-
-        const geocoder = new window.google.maps.Geocoder();
-        try {
-            const response = await geocoder.geocode({ location: { lat, lng } });
-            if (response.results[0]) {
-                processPlaceResult(response.results[0], lat, lng);
-            }
-        } catch (err) {
-            console.error('Geocoding error:', err);
-        }
-    };
-
-    const processPlaceResult = (place, lat, lng) => {
-        const addressComponents = place.address_components || [];
-        let address = '';
-        let city = '';
-        let state = '';
-        let pincode = '';
-        let country = '';
-
-        addressComponents.forEach(component => {
-            const types = component.types;
-            if (types.includes('street_number') || types.includes('route') || types.includes('sublocality_level_2') || types.includes('sublocality_level_1')) {
-                address += (address ? ', ' : '') + component.long_name;
-            }
-            if (types.includes('locality') || types.includes('administrative_area_level_2')) {
-                if (!city) city = component.long_name;
-            }
-            if (types.includes('administrative_area_level_1')) {
-                state = component.long_name;
-            }
-            if (types.includes('postal_code')) {
-                pincode = component.long_name;
-            }
-            if (types.includes('country')) {
-                country = component.long_name;
-            }
-        });
-
-        const latitude = lat || place.geometry?.location?.lat();
-        const longitude = lng || place.geometry?.location?.lng();
-
-        const locationData = {
-            address: address || place.formatted_address?.split(',')[0] || '',
-            city,
-            state,
-            pincode,
-            country,
-            lat: latitude,
-            lng: longitude,
-            formattedAddress: place.formatted_address || '',
-            googleMapsLink: `https://www.google.com/maps?q=${latitude},${longitude}`
-        };
-
-        setSelectedLocation(locationData);
-    };
+    }, [isLoaded, initialLocation, reverseGeocode, processPlaceResult]);
 
     const handleCurrentLocation = () => {
         if (!navigator.geolocation) {

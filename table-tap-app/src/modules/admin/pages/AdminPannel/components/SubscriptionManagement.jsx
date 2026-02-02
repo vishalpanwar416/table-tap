@@ -217,7 +217,15 @@ const SubscriptionManagement = () => {
   const openPlanModal = (plan = null) => {
     if (plan) {
       setEditingPlan(plan);
-      setPlanForm({ ...plan });
+      // Ensure features is an array and exclude potentially problematic fields like nested objects
+      setPlanForm({
+        ...plan,
+        features: Array.isArray(plan.features) ? plan.features : [],
+        // Ensure other fields have defaults if missing
+        color: plan.color || 'from-blue-500 to-cyan-500',
+        icon: plan.icon || 'Zap',
+        is_public: plan.is_public !== false // Default to true if undefined
+      });
     } else {
       setEditingPlan(null);
       setPlanForm({
@@ -228,7 +236,8 @@ const SubscriptionManagement = () => {
         features: [],
         color: 'from-blue-500 to-cyan-500',
         icon: 'Zap',
-        is_active: true
+        is_active: true,
+        is_public: true
       });
     }
     setShowPlanModal(true);
@@ -260,12 +269,26 @@ const SubscriptionManagement = () => {
     try {
       setProcessingId('plan');
       let response;
+
+      // Extract only the fields we want to save/update
+      const payload = {
+        key: planForm.key,
+        name: planForm.name,
+        description: planForm.description,
+        base_price: parseInt(planForm.base_price),
+        features: planForm.features,
+        color: planForm.color,
+        icon: planForm.icon,
+        is_active: planForm.is_active,
+        is_public: planForm.is_public
+      };
+
       if (editingPlan) {
-        // Strip read-only fields before updating
-        const { id, created_at, updated_at, ...updateData } = planForm;
-        response = await updateSubscriptionPlan(editingPlan.id, updateData);
+        // Remove key from update payload if it shouldn't be changed
+        // const { key, ...updatePayload } = payload;
+        response = await updateSubscriptionPlan(editingPlan.id, payload);
       } else {
-        response = await createSubscriptionPlan(planForm);
+        response = await createSubscriptionPlan(payload);
       }
 
       if (response.error) throw new Error(response.error);
@@ -837,15 +860,28 @@ const SubscriptionManagement = () => {
                 />
               </div>
 
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="is_active"
-                  checked={planForm.is_active}
-                  onChange={(e) => setPlanForm({ ...planForm, is_active: e.target.checked })}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                />
-                <label htmlFor="is_active" className="text-sm font-bold text-gray-700">Plan isActive (Visible to Restaurants)</label>
+              <div className="flex items-center gap-4 pt-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="is_active"
+                    checked={planForm.is_active}
+                    onChange={(e) => setPlanForm({ ...planForm, is_active: e.target.checked })}
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="is_active" className="text-sm font-bold text-gray-700">Active (Usable)</label>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="is_public"
+                    checked={planForm.is_public}
+                    onChange={(e) => setPlanForm({ ...planForm, is_public: e.target.checked })}
+                    className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
+                  />
+                  <label htmlFor="is_public" className="text-sm font-bold text-gray-700">Public (Show on Website)</label>
+                </div>
               </div>
 
               <div className="flex gap-4 pt-4 sticky bottom-0 bg-white">

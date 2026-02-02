@@ -25,6 +25,7 @@ const Pricing = () => {
                     .from('subscription_plans')
                     .select('*')
                     .eq('is_active', true)
+                    .eq('is_public', true)
                     .order('base_price', { ascending: true });
 
                 if (error) throw error;
@@ -100,7 +101,7 @@ const Pricing = () => {
                         <button
                             onClick={() => setBillingCycle(prev => prev === 'monthly' ? 'yearly' : 'monthly')}
                             aria-label={`Switch to ${billingCycle === 'monthly' ? 'yearly' : 'monthly'} billing`}
-                            aria-pressed={billingCycle === 'yearly'}
+                            aria-checked={billingCycle === 'yearly'}
                             role="switch"
                             className="w-20 h-10 bg-gray-900 rounded-full p-1.5 relative flex items-center shadow-2xl transition-all duration-500 hover:scale-110"
                         >

@@ -63,15 +63,15 @@ export default function TermsOfService() {
             <div className="bg-[#0F172A] text-white">
                 <div className="container mx-auto px-6 py-8">
                     <div className="flex items-center justify-between max-w-4xl mx-auto">
-                        <Link 
-                            href="/" 
+                        <Link
+                            href="/"
                             className="flex items-center gap-2 text-[#2A9D8F] hover:text-[#3DBDAD] transition-all duration-300 p-2 -ml-2 rounded-full hover:bg-white/5"
                         >
                             <ChevronLeft size={28} />
                             <span className="font-medium">Back</span>
                         </Link>
                     </div>
-                    
+
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -97,7 +97,7 @@ export default function TermsOfService() {
                 >
                     <h2 className="text-2xl font-bold text-gray-900 mb-4">Acceptance of Terms</h2>
                     <p className="text-gray-600 leading-relaxed text-lg">
-                        By accessing or using Table Tap's services, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.
+                        By accessing or using Table Tap&apos;s services, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.
                     </p>
                 </motion.div>
 
@@ -117,11 +117,11 @@ export default function TermsOfService() {
                                     </div>
                                     <h3 className="text-xl font-bold text-gray-900 pt-2">{section.title}</h3>
                                 </div>
-                                
+
                                 {section.description && (
                                     <p className="text-gray-600 leading-relaxed mb-4">{section.description}</p>
                                 )}
-                                
+
                                 {section.items && (
                                     <ul className="space-y-2">
                                         {section.items.map((item, i) => (

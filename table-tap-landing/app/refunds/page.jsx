@@ -11,15 +11,15 @@ export default function RefundPolicy() {
             <div className="bg-[#0F172A] text-white">
                 <div className="container mx-auto px-6 py-8">
                     <div className="flex items-center justify-between max-w-4xl mx-auto">
-                        <Link 
-                            href="/" 
+                        <Link
+                            href="/"
                             className="flex items-center gap-2 text-[#2A9D8F] hover:text-[#3DBDAD] transition-all duration-300 p-2 -ml-2 rounded-full hover:bg-white/5"
                         >
                             <ChevronLeft size={28} />
                             <span className="font-medium">Back</span>
                         </Link>
                     </div>
-                    
+
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -71,7 +71,7 @@ export default function RefundPolicy() {
                             </div>
                             <h3 className="text-xl font-bold text-gray-900 pt-2">Subscription Refunds</h3>
                         </div>
-                        
+
                         <div className="grid md:grid-cols-2 gap-6">
                             <div className="bg-[#2A9D8F]/10 p-6 rounded-xl border border-[#2A9D8F]/20">
                                 <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
@@ -89,7 +89,7 @@ export default function RefundPolicy() {
                                     </li>
                                 </ul>
                             </div>
-                            
+
                             <div className="bg-blue-50 p-6 rounded-xl border border-blue-100">
                                 <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
                                     <Calendar className="w-5 h-5 text-blue-500" />
@@ -124,7 +124,7 @@ export default function RefundPolicy() {
                             </div>
                             <h3 className="text-xl font-bold text-gray-900 pt-2">How to Request a Refund</h3>
                         </div>
-                        
+
                         <div className="grid md:grid-cols-4 gap-4">
                             {[
                                 { step: "1", title: "Email Us", desc: "Send request with account details" },
@@ -208,7 +208,7 @@ export default function RefundPolicy() {
                 >
                     <h3 className="text-2xl font-bold mb-4">Our Commitment</h3>
                     <p className="text-white/90 text-lg leading-relaxed">
-                        At Table Tap, customer satisfaction is our priority. If you're not happy with our service, we'll work with you to make it right. Our goal is to build long-term partnerships with restaurants, not just transactions.
+                        At Table Tap, customer satisfaction is our priority. If you&apos;re not happy with our service, we&apos;ll work with you to make it right. Our goal is to build long-term partnerships with restaurants, not just transactions.
                     </p>
                 </motion.div>
 
