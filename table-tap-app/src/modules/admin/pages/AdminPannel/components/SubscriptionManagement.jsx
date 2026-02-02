@@ -39,7 +39,12 @@ import {
 } from '../../../../admin/api/subscriptionService';
 import { getAllRestaurants } from '../admin_service';
 
-const SubscriptionManagement = () => {
+const SubscriptionManagementV2 = () => {
+  // DEBUG CHECK
+  useEffect(() => {
+    console.log("SubscriptionManagementV2 Component Loaded - ULTRA FORCE");
+  }, []);
+
   const [activeTab, setActiveTab] = useState('overview');
   const [plans, setPlans] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
@@ -370,7 +375,7 @@ const SubscriptionManagement = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Subscription Management</h1>
+          <h1 className="text-2xl font-bold text-blue-600">Subscription Plans (UPDATED)</h1>
           <p className="text-gray-600">Manage restaurant subscriptions and billing</p>
         </div>
         <div className="flex gap-3">
@@ -1046,4 +1051,4 @@ const SubscriptionManagement = () => {
   );
 };
 
-export default SubscriptionManagement;
+export default SubscriptionManagementV2;
