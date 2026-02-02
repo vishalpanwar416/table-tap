@@ -168,10 +168,12 @@ const RestaurantListView = ({
       observeLastItem(index);
     }, [index, observeLastItem]);
 
+    const isInactive = !restaurant.is_active;
+
     return (
       <div
         style={style}
-        className="border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer group"
+        className={`border-b transition-colors cursor-pointer group ${isInactive ? 'bg-red-50/80 border-red-200 hover:bg-red-100/80' : 'border-gray-200 hover:bg-gray-50'}`}
         data-restaurant-index={index}
         onClick={() => onClick(restaurant)}
       >
@@ -188,14 +190,14 @@ const RestaurantListView = ({
               ) : (
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${restaurant.is_active
                   ? 'bg-blue-500'
-                  : 'bg-gray-400'
+                  : 'bg-red-500'
                   }`}>
                   <Building2 className="w-5 h-5 text-white" />
                 </div>
               )}
               <div>
                 <div className="flex items-center gap-2">
-                  <h4 className="font-medium text-gray-900 font-spartan">
+                  <h4 className={`font-medium font-spartan ${isInactive ? 'text-red-800' : 'text-gray-900'}`}>
                     {restaurant.name}
                   </h4>
                   <div className="flex gap-1">
@@ -262,20 +264,20 @@ const RestaurantListView = ({
                 onClick={(e) => handleToggleStatus(e, restaurant)}
                 className={`relative w-16 h-8 rounded-full focus:outline-none transition-all duration-300 shadow-lg group/btn overflow-hidden ${restaurant.is_active
                   ? 'bg-gradient-to-r from-green-500 to-emerald-500 shadow-green-200'
-                  : 'bg-gradient-to-r from-gray-300 to-gray-400 shadow-gray-200'
+                  : 'bg-gradient-to-r from-red-400 to-red-500 shadow-red-200'
                   }`}
                 aria-label={restaurant.is_active ? 'Deactivate restaurant' : 'Activate restaurant'}
               >
                 <div
                   className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ease-out ${restaurant.is_active
                     ? 'translate-x-8 shadow-green-100'
-                    : 'translate-x-1 shadow-gray-100'
+                    : 'translate-x-1 shadow-red-100'
                     }`}
                 >
                   {restaurant.is_active ? (
                     <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                   ) : (
-                    <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
+                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
                   )}
                 </div>
               </button>

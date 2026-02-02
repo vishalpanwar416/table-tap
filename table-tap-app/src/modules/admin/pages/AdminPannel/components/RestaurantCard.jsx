@@ -121,13 +121,15 @@ const RestaurantCard = ({
     </button>
   );
 
+  const isInactive = !restaurant.is_active;
+
   return (
     <div
-      className={`group relative rounded-2xl shadow-lg overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-2xl hover:scale-[1.01] bg-white border border-gray-100 flex flex-col h-full`}
+      className={`group relative rounded-2xl shadow-lg overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-2xl hover:scale-[1.01] flex flex-col h-full ${isInactive ? 'bg-red-50/80 border-2 border-red-200' : 'bg-white border border-gray-100'}`}
       onClick={() => onClick(restaurant)}
     >
       {/* Status Bar (Top) */}
-      <div className={`h-1.5 w-full ${restaurant.is_active ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 'bg-gray-200'}`} />
+      <div className={`h-1.5 w-full ${restaurant.is_active ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 'bg-gradient-to-r from-red-500 to-red-600'}`} />
 
       <div className="p-5 flex-1 flex flex-col">
         {/* Header content */}
@@ -140,12 +142,12 @@ const RestaurantCard = ({
                 className="w-12 h-12 rounded-xl object-contain bg-gray-50 border border-gray-100"
               />
             ) : (
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${restaurant.is_active ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${restaurant.is_active ? 'bg-blue-100 text-blue-600' : 'bg-red-100 text-red-500'}`}>
                 <ChefHat className="w-6 h-6" />
               </div>
             )}
             <div>
-              <h3 className="font-bold text-gray-900 leading-tight">{restaurant.name}</h3>
+              <h3 className={`font-bold leading-tight ${isInactive ? 'text-red-800' : 'text-gray-900'}`}>{restaurant.name}</h3>
               <div className="flex items-center text-xs text-gray-500 mt-0.5 gap-1">
                 <span className="truncate max-w-[100px]">{restaurant.cuisine_type || 'Cuisine'}</span>
                 <span>•</span>
@@ -159,7 +161,7 @@ const RestaurantCard = ({
             onClick={(e) => handleAction(e, onToggleStatus)}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border transition-all ${restaurant.is_active
               ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
-              : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
+              : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
               }`}
           >
             <Power className="w-3 h-3" />
