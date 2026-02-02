@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     ShoppingBag,
     ExternalLink,
@@ -17,71 +17,171 @@ import {
     Info,
     Zap,
     Utensils,
-    BarChart3
+    BarChart3,
+    RefreshCw,
+    Loader2,
+    LinkIcon,
+    Link2Off
 } from 'lucide-react';
+import {
+    getAggregatorStatus,
+    getAggregatorOrders,
+    getAggregatorStats,
+    getMenuItemsWithAggregatorStatus,
+    toggleMenuItemPlatform,
+    togglePlatformStatus,
+    getPlatformStatus,
+    getAggregatorPerformance,
+    subscribeToAggregatorOrders,
+    updateSurgePrepTime,
+    getSurgePrepTime,
+    updateNotificationSettings,
+    getNotificationSettings
+} from '../../api/aggregatorService';
 
-const AggregatorIntegration = ({ restaurantId }) => {
-    const [activePlatform, setActivePlatform] = React.useState('all');
-    const [activeView, setActiveView] = React.useState('operations'); // operations, menu, performance
-    const [notifEnabled, setNotifEnabled] = React.useState(true);
-    const [surgePrepTime, setSurgePrepTime] = React.useState(0); // 0, 10, 20, 30 mins additional
+const AggregatorIntegration = ({ restaurantId, restaurant }) => {
+    const [activePlatform, setActivePlatform] = useState('all');
+    const [activeView, setActiveView] = useState('operations'); // operations, menu, performance
+    const [notifEnabled, setNotifEnabled] = useState(true);
+    const [surgePrepTime, setSurgePrepTime] = useState(0); // 0, 10, 20, 30 mins additional
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [error, setError] = useState(null);
+    const [menuSearch, setMenuSearch] = useState('');
 
-    const [integrationStatus, setIntegrationStatus] = React.useState({
-        swiggy: { status: 'online', ordersCount: 12, revenue: 4500, rating: 4.2, cancelRate: '1.2%' },
-        zomato: { status: 'online', ordersCount: 8, revenue: 3200, rating: 4.5, cancelRate: '0.8%' }
+    const [integrationStatus, setIntegrationStatus] = useState({
+        swiggy: { status: 'offline', ordersCount: 0, revenue: 0, rating: 4.2, cancelRate: '0%', connected: false },
+        zomato: { status: 'offline', ordersCount: 0, revenue: 0, rating: 4.5, cancelRate: '0%', connected: false }
     });
 
-    const [menuItems, setMenuItems] = React.useState([
-        { id: 1, name: 'Butter Chicken', category: 'Main Course', swiggy: true, zomato: true },
-        { id: 2, name: 'Paneer Tikka', category: 'Starters', swiggy: true, zomato: true },
-        { id: 3, name: 'Garlic Naan', category: 'Breads', swiggy: true, zomato: false },
-        { id: 4, name: 'Dal Makhani', category: 'Main Course', swiggy: false, zomato: true },
-        { id: 5, name: 'Mango Lassi', category: 'Drinks', swiggy: true, zomato: true },
-    ]);
+    const [menuItems, setMenuItems] = useState([]);
+    const [recentOrders, setRecentOrders] = useState([]);
+    const [performance, setPerformance] = useState(null);
 
-    const [recentOrders, setRecentOrders] = React.useState([
-        {
-            id: 'SW-1029',
-            platform: 'Swiggy',
-            items: [{ name: 'Butter Chicken', qty: 1 }, { name: 'Naan', qty: 2 }],
-            total: 540,
-            timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-            status: 'preparing'
-        },
-        {
-            id: 'ZO-4482',
-            platform: 'Zomato',
-            items: [{ name: 'Veg Pulao', qty: 1 }],
-            total: 210,
-            timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-            status: 'delivered'
-        },
-        {
-            id: 'SW-1105',
-            platform: 'Swiggy',
-            items: [{ name: 'Paneer Tikka', qty: 1 }],
-            total: 320,
-            timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-            status: 'cancelled',
-            reason: 'Out of stock'
+    // Load initial data
+    const loadData = useCallback(async (showRefreshing = false) => {
+        if (!restaurantId) return;
+        
+        try {
+            if (showRefreshing) {
+                setRefreshing(true);
+            } else {
+                setLoading(true);
+            }
+            setError(null);
+
+            // Fetch all data in parallel
+            const [statusData, statsData, ordersData, menuData, perfData] = await Promise.all([
+                getAggregatorStatus(restaurantId),
+                getAggregatorStats(restaurantId),
+                getAggregatorOrders(restaurantId, 'all', 20),
+                getMenuItemsWithAggregatorStatus(restaurantId),
+                getAggregatorPerformance(restaurantId)
+            ]);
+
+            // Get platform status from localStorage
+            const platformStatus = getPlatformStatus(restaurantId);
+
+            // Update integration status with real data
+            setIntegrationStatus({
+                swiggy: {
+                    status: statusData.swiggy.hasApiKey ? platformStatus.swiggy : 'offline',
+                    ordersCount: statsData.swiggy.ordersCount,
+                    revenue: statsData.swiggy.revenue,
+                    rating: statsData.swiggy.rating,
+                    cancelRate: statsData.swiggy.cancelRate,
+                    connected: statusData.swiggy.connected
+                },
+                zomato: {
+                    status: statusData.zomato.hasApiKey ? platformStatus.zomato : 'offline',
+                    ordersCount: statsData.zomato.ordersCount,
+                    revenue: statsData.zomato.revenue,
+                    rating: statsData.zomato.rating,
+                    cancelRate: statsData.zomato.cancelRate,
+                    connected: statusData.zomato.connected
+                }
+            });
+
+            setRecentOrders(ordersData);
+            setMenuItems(menuData);
+            setPerformance(perfData);
+
+            // Load saved settings
+            setSurgePrepTime(getSurgePrepTime(restaurantId));
+            setNotifEnabled(getNotificationSettings(restaurantId));
+
+        } catch (err) {
+            console.error('Error loading aggregator data:', err);
+            setError('Failed to load aggregator data. Please try again.');
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
         }
-    ]);
+    }, [restaurantId]);
+
+    // Initial data load
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
+
+    // Subscribe to real-time updates
+    useEffect(() => {
+        if (!restaurantId) return;
+
+        const unsubscribe = subscribeToAggregatorOrders(restaurantId, (payload) => {
+            // Refresh orders when new order comes in
+            if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+                loadData(true);
+            }
+        });
+
+        return () => {
+            unsubscribe();
+        };
+    }, [restaurantId, loadData]);
 
     const toggleStatus = (platform) => {
+        if (!integrationStatus[platform].connected) {
+            // Can't toggle if not connected
+            return;
+        }
+        
+        const updated = togglePlatformStatus(restaurantId, platform);
         setIntegrationStatus(prev => ({
             ...prev,
             [platform]: {
                 ...prev[platform],
-                status: prev[platform].status === 'online' ? 'offline' : 'online'
+                status: updated[platform]
             }
         }));
     };
 
-    const toggleItemPlatform = (itemId, platform) => {
-        setMenuItems(prev => prev.map(item =>
-            item.id === itemId ? { ...item, [platform]: !item[platform] } : item
-        ));
+    const toggleItemPlatform = async (itemId, platform) => {
+        try {
+            await toggleMenuItemPlatform(itemId, platform);
+            setMenuItems(prev => prev.map(item =>
+                item.id === itemId ? { ...item, [platform]: !item[platform] } : item
+            ));
+        } catch (err) {
+            console.error('Error toggling menu item:', err);
+        }
     };
+
+    const handleSurgePrepTimeChange = (mins) => {
+        setSurgePrepTime(mins);
+        updateSurgePrepTime(restaurantId, mins);
+    };
+
+    const handleNotifToggle = () => {
+        const newValue = !notifEnabled;
+        setNotifEnabled(newValue);
+        updateNotificationSettings(restaurantId, newValue);
+    };
+
+    const filteredMenuItems = menuItems.filter(item =>
+        item.name.toLowerCase().includes(menuSearch.toLowerCase()) ||
+        item.category.toLowerCase().includes(menuSearch.toLowerCase())
+    );
 
     const getStatusStyle = (status) => {
         switch (status) {
@@ -92,8 +192,48 @@ const AggregatorIntegration = ({ restaurantId }) => {
         }
     };
 
+    // Loading state
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+                <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
+                <p className="text-slate-500 font-medium">Loading aggregator data...</p>
+            </div>
+        );
+    }
+
+    // Determine gateway status
+    const isAnyConnected = integrationStatus.swiggy.connected || integrationStatus.zomato.connected;
+    const isAnyOnline = integrationStatus.swiggy.status === 'online' || integrationStatus.zomato.status === 'online';
+
     return (
         <div className="flex flex-col gap-6 p-6 animate-in fade-in duration-500 max-w-7xl mx-auto w-full">
+            {/* Error Message */}
+            {error && (
+                <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <AlertCircle className="text-red-500" size={20} />
+                        <p className="text-red-700 font-medium">{error}</p>
+                    </div>
+                    <button onClick={() => setError(null)} className="text-red-500 hover:text-red-700">
+                        <X size={18} />
+                    </button>
+                </div>
+            )}
+
+            {/* Connection Warning if no API keys */}
+            {!isAnyConnected && (
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+                    <AlertCircle className="text-amber-500 mt-0.5" size={20} />
+                    <div>
+                        <p className="text-amber-800 font-semibold">No Aggregator Connected</p>
+                        <p className="text-amber-700 text-sm mt-1">
+                            Add your Swiggy or Zomato API keys in Restaurant Information to enable aggregator integration.
+                        </p>
+                    </div>
+                </div>
+            )}
+
             {/* Mission Control Header */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-2">
                 <div className="flex items-center gap-5">
@@ -103,13 +243,34 @@ const AggregatorIntegration = ({ restaurantId }) => {
                     <div>
                         <h1 className="text-3xl font-black text-slate-900 tracking-tight">Aggregator Ops</h1>
                         <div className="flex items-center gap-2 mt-1">
-                            <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <p className="text-slate-500 text-sm font-medium">Gateway: Active & Synced</p>
+                            {isAnyConnected ? (
+                                <>
+                                    <span className={`flex h-2 w-2 rounded-full ${isAnyOnline ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`}></span>
+                                    <p className="text-slate-500 text-sm font-medium">
+                                        Gateway: {isAnyOnline ? 'Active & Synced' : 'Connected but Offline'}
+                                    </p>
+                                </>
+                            ) : (
+                                <>
+                                    <span className="flex h-2 w-2 rounded-full bg-slate-300"></span>
+                                    <p className="text-slate-500 text-sm font-medium">Gateway: Not Connected</p>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
+                    {/* Refresh Button */}
+                    <button
+                        onClick={() => loadData(true)}
+                        disabled={refreshing}
+                        className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50"
+                    >
+                        <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
+                        {refreshing ? 'Refreshing...' : 'Refresh'}
+                    </button>
+
                     <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200 shadow-inner">
                         {[
                             { id: 'operations', label: 'Operations', icon: <Wifi size={14} /> },
