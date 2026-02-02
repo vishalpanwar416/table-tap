@@ -481,15 +481,17 @@ const AdminDashboard = ({ restaurants, staff, onTabChange }) => {
             <div className="relative w-36 h-36">
               <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="40" fill="none" stroke="#f3f4f6" strokeWidth="12" />
-                {planTotal > 0 && planData.reduce((acc, plan, i) => {
-                  const percentage = (plan.value / planTotal) * 100;
+                {planTotal > 0 && (() => {
                   const circumference = 2 * Math.PI * 40;
-                  const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
-                  const offset = acc;
-                  acc += percentage;
-                  return (
-                    <React.Fragment key={plan.name}>
+                  let accumulatedPercentage = 0;
+                  return planData.map((plan) => {
+                    const percentage = (plan.value / planTotal) * 100;
+                    const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
+                    const offset = accumulatedPercentage;
+                    accumulatedPercentage += percentage;
+                    return (
                       <circle
+                        key={plan.name}
                         cx="50"
                         cy="50"
                         r="40"
@@ -501,10 +503,9 @@ const AdminDashboard = ({ restaurants, staff, onTabChange }) => {
                         strokeLinecap="round"
                         className="transition-all duration-500"
                       />
-                      {acc}
-                    </React.Fragment>
-                  );
-                }, 0)}
+                    );
+                  });
+                })()}
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <p className="text-2xl font-bold text-gray-900">{stats.subscriptions.active}</p>
@@ -769,19 +770,31 @@ const AdminDashboard = ({ restaurants, staff, onTabChange }) => {
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Staff Distribution</h3>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          {[
-            { role: 'Managers', count: stats.staff.managers, icon: Crown, color: 'purple' },
-            { role: 'Captains', count: stats.staff.captains, icon: Star, color: 'blue' },
-            { role: 'Chefs', count: stats.staff.chefs, icon: Zap, color: 'orange' },
-            { role: 'Waiters', count: stats.staff.waiters, icon: Users, color: 'green' },
-            { role: 'Pending', count: stats.staff.pending, icon: Clock, color: 'amber' },
-          ].map((item) => (
-            <div key={item.role} className={`bg-${item.color}-50 rounded-xl p-4 text-center`}>
-              <item.icon size={24} className={`mx-auto mb-2 text-${item.color}-500`} />
-              <p className="text-2xl font-bold text-gray-900">{item.count}</p>
-              <p className="text-xs text-gray-600">{item.role}</p>
-            </div>
-          ))}
+          <div className="bg-purple-50 rounded-xl p-4 text-center">
+            <Crown size={24} className="mx-auto mb-2 text-purple-500" />
+            <p className="text-2xl font-bold text-gray-900">{stats.staff.managers}</p>
+            <p className="text-xs text-gray-600">Managers</p>
+          </div>
+          <div className="bg-blue-50 rounded-xl p-4 text-center">
+            <Star size={24} className="mx-auto mb-2 text-blue-500" />
+            <p className="text-2xl font-bold text-gray-900">{stats.staff.captains}</p>
+            <p className="text-xs text-gray-600">Captains</p>
+          </div>
+          <div className="bg-orange-50 rounded-xl p-4 text-center">
+            <Zap size={24} className="mx-auto mb-2 text-orange-500" />
+            <p className="text-2xl font-bold text-gray-900">{stats.staff.chefs || 0}</p>
+            <p className="text-xs text-gray-600">Chefs</p>
+          </div>
+          <div className="bg-green-50 rounded-xl p-4 text-center">
+            <Users size={24} className="mx-auto mb-2 text-green-500" />
+            <p className="text-2xl font-bold text-gray-900">{stats.staff.waiters || 0}</p>
+            <p className="text-xs text-gray-600">Waiters</p>
+          </div>
+          <div className="bg-amber-50 rounded-xl p-4 text-center">
+            <Clock size={24} className="mx-auto mb-2 text-amber-500" />
+            <p className="text-2xl font-bold text-gray-900">{stats.staff.pending}</p>
+            <p className="text-xs text-gray-600">Pending</p>
+          </div>
         </div>
       </div>
 
