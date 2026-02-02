@@ -1,11 +1,14 @@
+import dynamic from 'next/dynamic';
 import Header from './components/Header';
 import Hero from './components/Hero';
-import Services from './components/Services';
-import Features from './components/Features';
-import HowItWorks from './components/HowItWorks';
-import Pricing from './components/Pricing';
-import Contact from './components/Contact';
-import Footer from './components/Footer';
+
+// Optimize: Lazy load components below the fold to improve initial load speed
+const Services = dynamic(() => import('./components/Services'));
+const Features = dynamic(() => import('./components/Features'));
+const HowItWorks = dynamic(() => import('./components/HowItWorks'));
+const Pricing = dynamic(() => import('./components/Pricing'));
+const Contact = dynamic(() => import('./components/Contact'));
+const Footer = dynamic(() => import('./components/Footer'));
 
 export default function Home() {
   return (

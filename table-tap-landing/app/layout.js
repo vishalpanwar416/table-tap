@@ -1,8 +1,11 @@
 import { Geist, Geist_Mono } from "next/font/google";
+import dynamic from "next/dynamic";
 import "./globals.css";
 import { ModalProvider } from "./context/ModalContext";
-import LeadModal from "./components/LeadModal";
 import StructuredData from "./components/StructuredData";
+
+// Lazy load modal - it's hidden initially and interaction-only
+const LeadModal = dynamic(() => import("./components/LeadModal"), { ssr: false });
 
 const geist = Geist({
   variable: "--font-geist",

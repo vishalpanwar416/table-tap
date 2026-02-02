@@ -1,13 +1,39 @@
 import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { CartProvider } from '../shared/config/CartContent';
 import { LikesProvider } from '../shared/config/LikesContent';
 import { FoodDataProvider } from '../shared/context/FoodDataContext';
 import { RestaurantProvider } from '../restaurant/pages/RestaurantSelection/RestaurantContext';
 import RestaurantSelectionWrapper from '../restaurant/pages/RestaurantSelection/RestaurantSelectionWrapper';
+import { useAuth } from '../shared/config/AuthContext';
+import { hasValidRestaurantSelection } from '../shared/utils/restaurantCheck';
 
 // Opening loads eagerly so "/" never shows a black loading screen
 import Opening from '../shared/components/pages/opening';
+
+/** On "/": show Opening (splash) only when not logged in; if logged in, redirect to /home or /restaurant-selection. */
+function OpeningOrRedirect() {
+  const location = useLocation();
+  const { user, loading: authLoading } = useAuth();
+  const pathname = (location.pathname || '/').replace(/\/$/, '') || '/';
+  const search = location.search || '';
+
+  // Only run redirect on customer app root (not admin/restaurant subdomain)
+  const isCustomerOrigin = () => {
+    if (typeof window === 'undefined') return true;
+    const h = (window.location.hostname || '').toLowerCase();
+    return !h.startsWith('admin.') && !h.startsWith('restaurant.') && !h.startsWith('manager.');
+  };
+
+  if (pathname !== '/') return <Opening />;
+  if (!isCustomerOrigin()) return <Opening />;
+  if (authLoading) return <Opening />;
+  if (user) {
+    const to = hasValidRestaurantSelection() ? '/home' : '/restaurant-selection';
+    return <Navigate to={to + search} replace />;
+  }
+  return <Opening />;
+}
 // Lazy load other pages for better performance
 const OnboardingScreen = lazy(() => import('../shared/components/pages/onboardingScreen'));
 const LoginPage = lazy(() => import('../shared/components/auth/LoginPage'));
@@ -70,7 +96,7 @@ const CustomerApp = () => {
                         <Suspense fallback={<LoadingSpinner />}>
                             <Routes>
                                 {/* Root: use index so only exact "/" matches, not /login */}
-                                <Route index element={<Opening />} />
+                                <Route index element={<OpeningOrRedirect />} />
                                 <Route path="/onboarding" element={<OnboardingScreen />} />
                                 <Route path="/login/*" element={<LoginPage />} />
                                 <Route path="/signup/*" element={<SignupPage />} />

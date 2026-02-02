@@ -12,6 +12,7 @@ import { RestaurantModal, StaffModal } from './components/Modals';
 import InquiryManagement from './components/InquiryManagement';
 import { useAuth } from '../../../shared/config/AuthContext';
 import { supabase } from '../../../shared/supabase';
+import { getSubdomainUrl, isDevelopment } from '../../../shared/utils/subdomainRouter';
 import {
   getAllRestaurants,
   getAllStaff,
@@ -522,7 +523,13 @@ const AdminPanel = () => {
   };
 
   const handleRestaurantClick = (restaurant) => {
-    navigate(`/restaurant?restaurant=${restaurant.id}`);
+    const restaurantId = restaurant?.id;
+    if (!restaurantId) return;
+    if (isDevelopment()) {
+      navigate(`/restaurant?restaurant=${restaurantId}`, { replace: false });
+    } else {
+      window.location.href = getSubdomainUrl('restaurant', `/?restaurant=${restaurantId}`);
+    }
   };
 
   const handleAddStaffClick = (restaurantId = null) => {
