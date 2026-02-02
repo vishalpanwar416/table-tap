@@ -389,13 +389,7 @@ const SubscriptionManagement = () => {
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </button>
-          <button
-            onClick={() => openPlanModal()}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Add Plan
-          </button>
+
           <button
             onClick={() => openAssignModal()}
             className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
@@ -714,49 +708,95 @@ const SubscriptionManagement = () => {
 
       {/* Plans Tab */}
       {activeTab === 'plans' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {plans.map((plan) => (
-            <div key={plan.id} className={`bg-white rounded-2xl shadow-sm border overflow-hidden flex flex-col ${!plan.is_active ? 'opacity-50 grayscale' : ''}`}>
-              <div className={`h-2 bg-gradient-to-r ${plan.color}`} />
-              <div className="p-6 flex-1">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
-                    <p className="text-gray-500 text-sm mt-1">{plan.description}</p>
-                  </div>
-                  <div className="flex gap-1">
-                    <button onClick={() => openPlanModal(plan)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded">
-                      <Edit size={16} />
-                    </button>
-                    <button onClick={() => handleDeletePlan(plan.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded">
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="mb-6">
-                  <span className="text-3xl font-black text-gray-900">₹{plan.base_price?.toLocaleString()}</span>
-                  <span className="text-gray-500 font-medium">/month</span>
-                </div>
-
-                <ul className="space-y-3">
-                  {plan.features?.map((feature, idx) => (
-                    <li key={idx} className="flex items-center gap-2 text-sm text-gray-600">
-                      <CheckCircle className="w-4 h-4 text-green-500" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="px-6 py-4 bg-gray-50 border-t flex justify-between items-center">
-                <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${plan.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                  {plan.is_active ? 'Active' : 'Inactive'}
-                </span>
-                <code className="text-[10px] font-mono text-gray-400">{plan.key}</code>
-              </div>
+        <div className="space-y-6">
+          {/* Plan Stats */}
+          {/* Plan Stats */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white p-4 rounded-xl border shadow-sm">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Plans</p>
+              <p className="text-2xl font-black text-gray-900 mt-1">{plans.length}</p>
             </div>
-          ))}
+            <div className="bg-white p-4 rounded-xl border shadow-sm">
+              <p className="text-xs font-bold text-green-600 uppercase tracking-wider">Active Plans</p>
+              <p className="text-2xl font-black text-green-700 mt-1">{plans.filter(p => p.is_active).length}</p>
+            </div>
+            <div className="bg-white p-4 rounded-xl border shadow-sm">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Inactive Plans</p>
+              <p className="text-2xl font-black text-gray-400 mt-1">{plans.filter(p => !p.is_active).length}</p>
+            </div>
+
+            {/* Plan Wise Subscription Counts */}
+            {plans.map(plan => (
+              <div key={`stat-${plan.id}`} className="bg-white p-4 rounded-xl border shadow-sm">
+                <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider truncate">{plan.name} Users</p>
+                <p className="text-2xl font-black text-indigo-700 mt-1">
+                  {stats?.planCounts?.[plan.key] || 0}
+                </p>
+              </div>
+            ))}
+
+            {/* Add Plan Action Card */}
+            <button
+              onClick={() => openPlanModal()}
+              className="bg-white p-4 rounded-xl border-dashed border-2 border-blue-300 shadow-sm flex flex-col items-center justify-center hover:bg-blue-50 transition-all group min-h-[100px]"
+            >
+              <div className="p-2 bg-blue-100 rounded-full group-hover:bg-blue-200 transition-colors mb-2">
+                <Plus className="w-5 h-5 text-blue-600" />
+              </div>
+              <p className="text-xs font-bold text-blue-600 uppercase tracking-wider">Add New Plan (+)</p>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {plans.length === 0 ? (
+              <div className="col-span-full p-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                <p className="text-gray-500">No subscription plans found.</p>
+              </div>
+            ) : (
+              plans.map((plan) => (
+                <div key={plan.id} className={`bg-white rounded-2xl shadow-sm border overflow-hidden flex flex-col ${!plan.is_active ? 'opacity-50 grayscale' : ''}`}>
+                  <div className={`h-2 bg-gradient-to-r ${plan.color || 'from-gray-400 to-gray-500'}`} />
+                  <div className="p-6 flex-1">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
+                        <p className="text-gray-500 text-sm mt-1">{plan.description}</p>
+                      </div>
+                      <div className="flex gap-1">
+                        <button onClick={() => openPlanModal(plan)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded">
+                          <Edit size={16} />
+                        </button>
+                        <button onClick={() => handleDeletePlan(plan.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="mb-6">
+                      <span className="text-3xl font-black text-gray-900">₹{plan.base_price?.toLocaleString()}</span>
+                      <span className="text-gray-500 font-medium">/month</span>
+                    </div>
+
+                    <ul className="space-y-3">
+                      {plan.features?.map((feature, idx) => (
+                        <li key={idx} className="flex items-center gap-2 text-sm text-gray-600">
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="px-6 py-4 bg-gray-50 border-t flex justify-between items-center">
+                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${plan.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                      {plan.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                    <code className="text-[10px] font-mono text-gray-400">{plan.key}</code>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       )}
 

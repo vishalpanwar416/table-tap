@@ -28,8 +28,10 @@ import ProfilePhotoModal from './components/ProfilePhotoModal';
 import { ManagerNotificationProvider } from '../../../shared/context/ManagerNotificationContext';
 import SubscriptionManagement from './components/SubscriptionManagement';
 import RegistrationRequests from '../../../restaurant/components/admin/RegistrationRequests';
+import AdminDashboard from './components/AdminDashboard';
 
 const menuItems = [
+  { id: 'dashboard', icon: 'LayoutDashboard', label: 'Dashboard' },
   { id: 'restaurants', icon: 'Building2', label: 'Restaurants' },
   { id: 'registrations', icon: 'ClipboardList', label: 'Registrations' },
   { id: 'staff', icon: 'Users', label: 'Staff Management' },
@@ -39,7 +41,7 @@ const menuItems = [
 
 const AdminPanel = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('restaurants');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [restaurants, setRestaurants] = useState([]);
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -549,6 +551,14 @@ const AdminPanel = () => {
 
   const renderActiveTab = () => {
     switch (activeTab) {
+      case 'dashboard':
+        return (
+          <AdminDashboard 
+            restaurants={restaurants} 
+            staff={staff} 
+            onTabChange={setActiveTab}
+          />
+        );
       case 'restaurants':
         return (
           <RestaurantManagement

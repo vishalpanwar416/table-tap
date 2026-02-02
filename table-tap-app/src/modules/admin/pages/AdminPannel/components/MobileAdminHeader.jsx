@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { Search, Bell, Building2, Users, X, Filter, ChevronDown, RefreshCw, TrendingUp, MapPin, Clock, Star, Menu } from 'lucide-react';
 import { useManagerNotifications } from '../../../../shared/context/ManagerNotificationContext';
 
-const MobileAdminHeader = ({ 
-  activeTab, 
-  searchTerm, 
-  setSearchTerm, 
-  restaurants = [], 
+const MobileAdminHeader = ({
+  activeTab,
+  searchTerm,
+  setSearchTerm,
+  restaurants = [],
   staff = [],
   currentUser,
   selectedRestaurantId,
@@ -28,20 +28,20 @@ const MobileAdminHeader = ({
     const totalRestaurants = restaurants.length;
     const activeRestaurants = restaurants.filter(r => r.is_active).length;
     const inactiveRestaurants = totalRestaurants - activeRestaurants;
-    
+
     // Cuisine type distribution
     const cuisineTypes = [...new Set(restaurants.map(r => r.cuisine_type).filter(Boolean))];
     const cuisineDistribution = cuisineTypes.length;
-    
+
     // Location analysis
     const restaurantsWithLocation = restaurants.filter(r => r.location).length;
     const locationPercentage = totalRestaurants > 0 ? Math.round((restaurantsWithLocation / totalRestaurants) * 100) : 0;
-    
+
     // Contact information completeness
     const restaurantsWithPhone = restaurants.filter(r => r.contact_phone).length;
     const restaurantsWithEmail = restaurants.filter(r => r.contact_email).length;
     const restaurantsWithCompleteContact = restaurants.filter(r => r.contact_phone && r.contact_email).length;
-    
+
     // Recent activity (restaurants created in last 30 days)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -69,7 +69,7 @@ const MobileAdminHeader = ({
     const totalStaff = staff.length;
     const connectedStaff = staff.filter(s => s.connected).length;
     const disconnectedStaff = totalStaff - connectedStaff;
-    
+
     // Role distribution - updated for manager and captain only
     const managers = staff.filter(s => s.role === 'manager').length;
     const captains = staff.filter(s => s.role === 'captain').length;
@@ -126,16 +126,23 @@ const MobileAdminHeader = ({
           >
             <Menu className="h-5 w-5 text-gray-700" />
           </button>
-          
+
           <div>
             <h2 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-spartan">
-              {activeTab === 'restaurants' ? 'Restaurants' : 'Staff'}
+              {{
+                restaurants: 'Restaurants',
+                registrations: 'Registrations',
+                staff: 'Staff Management',
+                inquiries: 'Lead Inquiries',
+                subscriptions: 'Subscriptions'
+              }[activeTab] || 'Admin Panel'}
             </h2>
             <p className="text-xs text-gray-600 font-spartan">
-              {activeTab === 'restaurants' 
-                ? `${restaurantStats.totalRestaurants} total • ${restaurantStats.activeRestaurants} active` 
-                : `${staffStats.totalStaff} total • ${staffStats.connectedStaff} online`
-              }
+              {activeTab === 'restaurants' && `${restaurantStats.totalRestaurants} total • ${restaurantStats.activeRestaurants} active`}
+              {activeTab === 'staff' && `${staffStats.totalStaff} total • ${staffStats.connectedStaff} online`}
+              {activeTab === 'registrations' && 'Manage registration requests'}
+              {activeTab === 'inquiries' && 'View lead inquiries'}
+              {activeTab === 'subscriptions' && 'Manage subscriptions'}
             </p>
           </div>
         </div>
@@ -143,12 +150,15 @@ const MobileAdminHeader = ({
         {/* Right: Action Buttons */}
         <div className="flex items-center space-x-2">
           {/* Search Button */}
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <Search className="h-5 w-5" />
-          </button>
+          {/* Search Button - Only for Restaurants and Staff */}
+          {(activeTab === 'restaurants' || activeTab === 'staff') && (
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <Search className="h-5 w-5" />
+            </button>
+          )}
 
           {/* Notifications */}
           <div className="relative">
@@ -166,7 +176,7 @@ const MobileAdminHeader = ({
 
             {showNotifications && (
               <>
-                <div 
+                <div
                   className="fixed inset-0 z-40"
                   onClick={() => setShowNotifications(false)}
                 />
@@ -193,9 +203,8 @@ const MobileAdminHeader = ({
                       notifications.map((notification, index) => (
                         <div key={index} className="p-4 border-b border-gray-100 hover:bg-gray-50">
                           <div className="flex items-start space-x-3">
-                            <div className={`w-2 h-2 rounded-full mt-2 ${
-                              notification.read ? 'bg-gray-300' : 'bg-blue-500'
-                            }`} />
+                            <div className={`w-2 h-2 rounded-full mt-2 ${notification.read ? 'bg-gray-300' : 'bg-blue-500'
+                              }`} />
                             <div className="flex-1">
                               <p className="text-sm font-medium text-gray-900 font-spartan">
                                 {notification.title}
@@ -219,8 +228,8 @@ const MobileAdminHeader = ({
         </div>
       </div>
 
-      {/* Search and Filter Section */}
-      {showFilters && (
+      {/* Search and Filter Section - Only for Restaurants and Staff */}
+      {showFilters && (activeTab === 'restaurants' || activeTab === 'staff') && (
         <div className="px-4 pb-4 border-t border-gray-200">
           <div className="pt-4 space-y-4">
             <div className="flex justify-between items-center">
@@ -243,9 +252,9 @@ const MobileAdminHeader = ({
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Search className="h-5 w-5 text-gray-400" />
                 </div>
-                <input 
-                  type="search" 
-                  placeholder={`Search ${activeTab === 'restaurants' ? 'restaurants' : 'staff'}...`}
+                <input
+                  type="search"
+                  placeholder={`Search ${activeTab === 'restaurants' ? 'restaurants' : activeTab === 'staff' ? 'staff' : '...'}...`}
                   className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50 backdrop-blur-sm transition-all duration-200 hover:bg-white/70 font-spartan"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}

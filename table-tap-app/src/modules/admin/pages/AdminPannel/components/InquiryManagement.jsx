@@ -111,10 +111,7 @@ const InquiryManagement = () => {
         <div className="space-y-8 font-spartan">
             {/* Header & Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="col-span-full mb-2">
-                    <h1 className="text-2xl font-bold text-gray-900">Lead Inquiries</h1>
-                    <p className="text-gray-500">Manage reach-outs and demos from the landing page</p>
-                </div>
+                {/* Header removed as it is handled by AdminHeader */}
 
                 <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                     <div className="flex items-center gap-4">

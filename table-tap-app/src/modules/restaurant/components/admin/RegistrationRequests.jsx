@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../shared/supabase';
+import { createRestaurant } from '../../../admin/pages/AdminPannel/admin_service';
 import {
     Building2,
     User,
@@ -83,17 +84,34 @@ const RegistrationRequests = () => {
 
     // Approve registration
     const handleApprove = async (registration) => {
-        if (!window.confirm(`Approve registration for "${registration.restaurant_name}"? This will create the restaurant, subscription, and user account.`)) {
+        // Validation
+        if (!registration.restaurant_name || !registration.owner_email) {
+            alert('Error: Missing required restaurant name or owner email.');
             return;
         }
 
+        // Processing starts immediately (removed window.confirm)
         setProcessingId(registration.id);
+        setError(null);
 
         try {
-            // 1. Create auth user (optional - may fail if user exists)
-            // 1. Create auth user via Edge Function (Secure)
+            // Check for existing restaurant by email (Safety check)
+            const { data: existingRestaurant } = await supabase
+                .from('restaurants')
+                .select('id, name')
+                .eq('contact_email', registration.owner_email)
+                .maybeSingle();
+
+            if (existingRestaurant) {
+                // Strict duplicate check
+                alert(`A restaurant with email ${registration.owner_email} already exists (${existingRestaurant.name}). Please handle this request manually.`);
+                setProcessingId(null);
+                return;
+            }
+
+            // 1. Create auth user (optional)
             try {
-                const { data: userData, error: userError } = await supabase.functions.invoke('create-user', {
+                const { error: userError } = await supabase.functions.invoke('create-user', {
                     body: {
                         email: registration.owner_email,
                         password: 'TempPass@123',
@@ -107,37 +125,40 @@ const RegistrationRequests = () => {
 
                 if (userError) throw userError;
             } catch (authError) {
-                console.log('User creation warning:', authError);
-                // Continue flow even if user creation fails (e.g. user already exists)
+                console.warn('User creation skipped:', authError);
             }
 
-            // 2. Create restaurant (initially not active - subscription will activate it)
-            const { data: restaurantData, error: restaurantError } = await supabase
-                .from('restaurants')
-                .insert([{
-                    name: registration.restaurant_name,
-                    address: registration.address,
-                    description: registration.description,
-                    contact_phone: registration.owner_phone,
-                    contact_email: registration.owner_email,
-                    cuisine_type: registration.restaurant_type,
-                    opening_hours: registration.opening_hours,
-                    gst_number: registration.gst_number,
-                    fssai_license: registration.fssai_license,
-                    google_maps_link: registration.google_maps_link,
-                    // Aggregator Integration Keys (can be added later via settings)
-                    swiggy_api_key: registration.swiggy_api_key || null,
-                    zomato_api_key: registration.zomato_api_key || null,
-                    is_active: false, // Will be activated by subscription
-                    ai_enabled: registration.selected_plan === 'professional' || registration.selected_plan === 'enterprise'
-                }])
-                .select()
-                .maybeSingle();
+            // 2. Create Restaurant using Service (Handles validation, staff creation, etc.)
+            const restaurantPayload = {
+                name: registration.restaurant_name,
+                address: registration.address || 'Address pending',
+                description: registration.description,
+                contact_phone: registration.owner_phone,
+                contact_email: registration.owner_email,
+                cuisine_type: registration.restaurant_type || registration.cuisine_type,
+                opening_hours: registration.opening_hours,
+                gst_number: registration.gst_number,
+                fssai_license: registration.fssai_license,
+                google_maps_link: registration.google_maps_link,
+                // Manager details for staff creation
+                manager_name: registration.owner_name,
+                manager_email: registration.owner_email,
+                manager_phone: registration.owner_phone,
+                // Aggregator Keys
+                swiggy_api_key: registration.swiggy_api_key,
+                zomato_api_key: registration.zomato_api_key
+            };
 
-            if (restaurantError) throw restaurantError;
+            const { data: restaurantData, error: restaurantError } = await createRestaurant(restaurantPayload);
+
+            if (restaurantError) {
+                throw new Error('Restaurant service failed: ' + restaurantError);
+            }
+
             if (!restaurantData) throw new Error('Failed to create restaurant record');
 
-            // 3. Create subscription (this will activate the restaurant via trigger)
+
+            // 3. Create Subscription
             const plan = registration.selected_plan || 'starter';
             const billingCycle = registration.billing_cycle || 'monthly';
             const price = registration.plan_price || 0;
@@ -152,6 +173,7 @@ const RegistrationRequests = () => {
                 endDate.setMonth(endDate.getMonth() + 1);
             }
 
+            // Manually insert subscription
             const { error: subError } = await supabase
                 .from('subscriptions')
                 .insert([{
@@ -171,30 +193,27 @@ const RegistrationRequests = () => {
                     grace_period_days: 7
                 }]);
 
-            if (subError) {
-                console.error('Failed to create subscription:', subError);
-                // Still continue - restaurant was created
-            }
+            if (subError) console.error('Subscription creation failed:', subError);
 
-            // 4. Update registration status
+            // 4. Update Registration Status
             const { error: updateError } = await supabase
                 .from('restaurant_registrations')
                 .update({
                     status: 'approved',
                     reviewed_at: new Date().toISOString(),
-                    review_notes: `Restaurant created with ID: ${restaurantData.id}. Subscription: ${plan} (${billingCycle})`
+                    review_notes: `Restaurant created via Admin Service. ID: ${restaurantData.id}`
                 })
                 .eq('id', registration.id);
 
             if (updateError) throw updateError;
 
-            // Refresh list
             fetchRegistrations();
             setShowDetailModal(false);
-            alert(`Successfully approved! Restaurant "${registration.restaurant_name}" has been created with ${plan} subscription.`);
+            alert(`Approved! Restaurant "${registration.restaurant_name}" created & staff assigned.`);
 
         } catch (err) {
-            console.error('Error approving registration:', err);
+            console.error('Approval Error:', err);
+            setError(err.message);
             alert('Failed to approve: ' + err.message);
         } finally {
             setProcessingId(null);
@@ -259,19 +278,7 @@ const RegistrationRequests = () => {
     return (
         <div className="p-6">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Registration Requests</h1>
-                    <p className="text-gray-500 text-sm">Review and approve restaurant registrations from the landing page</p>
-                </div>
-                <button
-                    onClick={fetchRegistrations}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                >
-                    <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
-                    Refresh
-                </button>
-            </div>
+            {/* Header removed as it is handled by AdminHeader */}
 
             {/* Filters */}
             <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -301,6 +308,16 @@ const RegistrationRequests = () => {
                     </select>
                     <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 </div>
+
+                {/* Refresh Button */}
+                <button
+                    onClick={fetchRegistrations}
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-gray-700"
+                    title="Refresh List"
+                >
+                    <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+                    <span className="hidden md:inline">Refresh</span>
+                </button>
             </div>
 
             {/* Stats */}
@@ -602,7 +619,7 @@ const RegistrationRequests = () => {
                                     ) : (
                                         <Check size={18} />
                                     )}
-                                    Approve & Create Restaurant
+                                    Confirm Approval
                                 </button>
                             </div>
                         )}

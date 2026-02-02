@@ -511,10 +511,7 @@ const RestaurantInformation = () => {
                     <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
                       <ShoppingBag className="w-5 h-5 mr-2 text-blue-600" /> Aggregator Integration
                     </h3>
-                    <p className="text-sm text-gray-500 mb-4 flex items-center gap-2">
-                      <Lock className="w-4 h-4" />
-                      Only visible to Restaurant Owner and Admin
-                    </p>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {/* Swiggy API Key */}
                       <div className="space-y-2">
@@ -525,13 +522,13 @@ const RestaurantInformation = () => {
                           Swiggy API Key
                         </label>
                         <div className="relative">
-                          <input 
-                            type={showSwiggyKey ? "text" : "password"} 
-                            name="swiggy_api_key" 
-                            value={formData.swiggy_api_key || ''} 
-                            onChange={handleChange} 
-                            className="w-full px-4 py-3 pr-12 bg-white/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 transition-all" 
-                            placeholder="Enter Swiggy API Key" 
+                          <input
+                            type={showSwiggyKey ? "text" : "password"}
+                            name="swiggy_api_key"
+                            value={formData.swiggy_api_key || ''}
+                            onChange={handleChange}
+                            className="w-full px-4 py-3 pr-12 bg-white/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 transition-all"
+                            placeholder="Enter Swiggy API Key"
                           />
                           <button
                             type="button"
@@ -557,13 +554,13 @@ const RestaurantInformation = () => {
                           Zomato API Key
                         </label>
                         <div className="relative">
-                          <input 
-                            type={showZomatoKey ? "text" : "password"} 
-                            name="zomato_api_key" 
-                            value={formData.zomato_api_key || ''} 
-                            onChange={handleChange} 
-                            className="w-full px-4 py-3 pr-12 bg-white/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 transition-all" 
-                            placeholder="Enter Zomato API Key" 
+                          <input
+                            type={showZomatoKey ? "text" : "password"}
+                            name="zomato_api_key"
+                            value={formData.zomato_api_key || ''}
+                            onChange={handleChange}
+                            className="w-full px-4 py-3 pr-12 bg-white/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 transition-all"
+                            placeholder="Enter Zomato API Key"
                           />
                           <button
                             type="button"
@@ -846,10 +843,7 @@ const RestaurantInformation = () => {
                     </div>
                     Aggregator Integration
                   </h3>
-                  <p className="text-sm text-gray-500 mb-4 flex items-center gap-2 bg-amber-50 px-4 py-2 rounded-lg border border-amber-200">
-                    <Lock className="w-4 h-4 text-amber-600" />
-                    <span className="text-amber-700">Only visible to Restaurant Owner and Admin</span>
-                  </p>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Swiggy Status */}
                     <div className={`rounded-2xl p-6 border flex items-center justify-between ${restaurant?.swiggy_api_key ? 'bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200' : 'bg-gray-50 border-gray-200'}`}>
@@ -871,8 +865,8 @@ const RestaurantInformation = () => {
                         </div>
                       </div>
                       {canEdit() && (
-                        <button 
-                          onClick={() => setIsEditing(true)} 
+                        <button
+                          onClick={() => setIsEditing(true)}
                           className="px-4 py-2 text-sm font-bold text-orange-600 hover:bg-orange-100 rounded-xl transition-colors"
                         >
                           {restaurant?.swiggy_api_key ? 'Edit' : 'Add Key'}
@@ -900,8 +894,8 @@ const RestaurantInformation = () => {
                         </div>
                       </div>
                       {canEdit() && (
-                        <button 
-                          onClick={() => setIsEditing(true)} 
+                        <button
+                          onClick={() => setIsEditing(true)}
                           className="px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-100 rounded-xl transition-colors"
                         >
                           {restaurant?.zomato_api_key ? 'Edit' : 'Add Key'}
