@@ -106,8 +106,12 @@ export default function AdminOnlyWrapper({ children }) {
   useEffect(() => {
     // Only redirect if NOT loading and we are sure they are NOT an admin
     if (!checkingRole && !authLoading && shouldRedirect && !isAdmin && mountedRef.current) {
-      console.log('[AdminCheck] Redirecting to /home');
-      navigate('/home', { replace: true });
+      console.log('[AdminCheck] Redirecting to /login');
+      // Redirect to login with preserving the current location so we can redirect back after login
+      navigate('/login', {
+        replace: true,
+        state: { from: location.pathname }
+      });
     }
   }, [checkingRole, authLoading, shouldRedirect, isAdmin, navigate]);
 
