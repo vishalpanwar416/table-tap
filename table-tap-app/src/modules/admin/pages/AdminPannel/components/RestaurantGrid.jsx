@@ -105,20 +105,8 @@ const RestaurantGrid = ({
     </div>
   ), []);
 
-  // End of list indicator
-  const EndOfListIndicator = useCallback(() => (
-    <div className="col-span-full flex items-center justify-center py-12">
-      <div className="text-center">
-        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Building2 className="w-8 h-8 text-gray-400" />
-        </div>
-        <p className="text-sm text-gray-600 font-spartan">All restaurants loaded</p>
-        <p className="text-xs text-gray-500 font-spartan mt-1">
-          Showing {displayedRestaurants.length} of {restaurants.length} total restaurants
-        </p>
-      </div>
-    </div>
-  ), [displayedRestaurants.length, restaurants.length]);
+  // End of list indicator - hidden
+  const EndOfListIndicator = useCallback(() => null, []);
 
   if (restaurants.length === 0) {
     return (

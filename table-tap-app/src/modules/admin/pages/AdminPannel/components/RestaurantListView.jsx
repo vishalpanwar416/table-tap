@@ -384,20 +384,8 @@ const RestaurantListView = ({
     </div>
   ), []);
 
-  // End of list indicator
-  const EndOfListIndicator = useCallback(() => (
-    <div className="flex items-center justify-center py-8">
-      <div className="text-center">
-        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-          <Building2 className="w-6 h-6 text-gray-400" />
-        </div>
-        <p className="text-sm text-gray-600 font-spartan">All restaurants loaded</p>
-        <p className="text-xs text-gray-500 font-spartan mt-1">
-          Showing {displayedRestaurants.length} of {restaurants.length} total restaurants
-        </p>
-      </div>
-    </div>
-  ), [displayedRestaurants.length, restaurants.length]);
+  // End of list indicator - hidden
+  const EndOfListIndicator = useCallback(() => null, []);
 
   if (restaurants.length === 0) {
     return (
