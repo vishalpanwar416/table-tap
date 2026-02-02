@@ -2,7 +2,42 @@
  * Email Service - Handles sending various emails (bills, notifications, etc.)
  */
 
+import { supabase } from '../supabase';
+
 const API_BASE_URL = process.env.REACT_APP_API_URL || '';
+
+/**
+ * Log email activity to admin_activity_logs table
+ */
+const logEmailActivity = async (emailData, status, errorMessage = null) => {
+    try {
+        await supabase
+            .from('admin_activity_logs')
+            .insert([{
+                activity_type: status === 'failed' ? 'email_failed' : status === 'queued' ? 'email_queued' : 'email_sent',
+                activity_name: `Email: ${emailData.email_type || 'bill'}`,
+                restaurant_id: emailData.restaurant_id || null,
+                user_id: emailData.triggered_by || null,
+                user_name: emailData.triggered_by_name || 'System (Automated)',
+                target_type: 'email',
+                target_id: emailData.order_id || null,
+                target_name: emailData.to,
+                status: status,
+                details: {
+                    email_type: emailData.email_type || 'bill',
+                    recipient_email: emailData.to,
+                    subject: emailData.subject,
+                    amount: emailData.amount || null,
+                    order_id: emailData.order_id || null,
+                    error_message: errorMessage
+                },
+                description: `${emailData.email_type || 'Bill'} email ${status === 'failed' ? 'failed to send' : status === 'queued' ? 'queued' : 'sent'} to ${emailData.to}`,
+                created_at: new Date().toISOString()
+            }]);
+    } catch (error) {
+        console.error('Failed to log email activity:', error);
+    }
+};
 
 /**
  * Generate bill HTML for email
@@ -290,6 +325,16 @@ export const sendBillEmail = async (order, restaurant, recipientEmail) => {
         replyTo: restaurant.email || undefined
     };
 
+    // Email metadata for logging
+    const emailLogData = {
+        to: recipientEmail,
+        subject: emailData.subject,
+        email_type: 'bill',
+        restaurant_id: restaurant.id,
+        order_id: order.id,
+        amount: order.total
+    };
+
     try {
         // Try Supabase Edge Function first
         const response = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/send-email`, {
@@ -303,32 +348,34 @@ export const sendBillEmail = async (order, restaurant, recipientEmail) => {
 
         if (response.ok) {
             const result = await response.json();
+            // Log successful email
+            await logEmailActivity(emailLogData, 'success');
             return { success: true, ...result };
         }
         
         // If Supabase function fails, try alternative
-        throw new Error('Supabase email function unavailable');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Supabase email function unavailable');
     } catch (error) {
-        console.warn('Primary email service failed, trying fallback:', error);
+        console.warn('Primary email service failed:', error);
         
-        // Fallback: Store email request for later processing or use alternative service
-        // For now, we'll log and return partial success
-        console.log('Email would be sent to:', recipientEmail);
-        console.log('Email subject:', emailData.subject);
+        // Log failed email
+        await logEmailActivity(emailLogData, 'failed', error.message);
         
         // Store in localStorage for debugging/testing
         const storedEmails = JSON.parse(localStorage.getItem('pendingBillEmails') || '[]');
         storedEmails.push({
             ...emailData,
             timestamp: new Date().toISOString(),
-            orderId: order.id
+            orderId: order.id,
+            error: error.message
         });
         localStorage.setItem('pendingBillEmails', JSON.stringify(storedEmails.slice(-10))); // Keep last 10
         
         return { 
-            success: true, 
-            queued: true, 
-            message: 'Email queued for sending' 
+            success: false, 
+            error: error.message,
+            message: 'Email failed to send' 
         };
     }
 };

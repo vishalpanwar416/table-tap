@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Bell, Building2, Users, X, Filter, ChevronDown, RefreshCw, ChevronLeft } from 'lucide-react';
-import { useManagerNotifications } from '../../../../shared/context/ManagerNotificationContext';
 import { useNavigate } from 'react-router-dom';
+import AdminNotificationBell from './AdminNotificationBell';
 
 const AdminHeader = ({
   activeTab,
@@ -17,10 +17,9 @@ const AdminHeader = ({
   selectedStaffRole,
   setSelectedStaffRole,
   selectedConnectionStatus,
-  setSelectedConnectionStatus
+  setSelectedConnectionStatus,
+  onTabChange
 }) => {
-  const { notifications, unreadCount, markAllAsRead } = useManagerNotifications();
-  const [showNotifications, setShowNotifications] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const navigate = useNavigate();
 
@@ -40,15 +39,6 @@ const AdminHeader = ({
   };
 
   const stats = getStats();
-
-  const handleNotificationClick = () => {
-    setShowNotifications(!showNotifications);
-  };
-
-  const handleMarkAllAsRead = async () => {
-    await markAllAsRead();
-    setShowNotifications(false);
-  };
 
   const handleClearFilters = () => {
     setSearchTerm('');
@@ -301,75 +291,8 @@ const AdminHeader = ({
             )}
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center space-x-2">
-            {/* Notifications */}
-            <div className="relative">
-              <button
-                onClick={handleNotificationClick}
-                className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors relative"
-              >
-                <Bell className="h-5 w-5 text-gray-700" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-spartan">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
-              </button>
-
-              {/* Notifications Dropdown */}
-              {showNotifications && (
-                <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setShowNotifications(false)}
-                  />
-                  <div className="absolute right-0 mt-2 w-80 max-h-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50 overflow-hidden font-spartan">
-                    <div className="p-4 border-b border-gray-200">
-                      <div className="flex justify-between items-center">
-                        <h3 className="font-semibold text-gray-900 font-spartan">Notifications</h3>
-                        {unreadCount > 0 && (
-                          <button
-                            onClick={handleMarkAllAsRead}
-                            className="text-sm text-blue-600 hover:text-blue-700 font-spartan"
-                          >
-                            Mark all read
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                    <div className="max-h-64 overflow-y-auto">
-                      {notifications.length === 0 ? (
-                        <div className="p-4 text-center text-gray-500 font-spartan">
-                          No notifications
-                        </div>
-                      ) : (
-                        notifications.map((notification, index) => (
-                          <div key={index} className="p-4 border-b border-gray-100 hover:bg-gray-50">
-                            <div className="flex items-start space-x-3">
-                              <div className={`w-2 h-2 rounded-full mt-2 ${notification.read ? 'bg-gray-300' : 'bg-blue-500'
-                                }`} />
-                              <div className="flex-1">
-                                <p className="text-sm font-medium text-gray-900 font-spartan">
-                                  {notification.title}
-                                </p>
-                                <p className="text-xs text-gray-600 mt-1 font-spartan">
-                                  {notification.message}
-                                </p>
-                                <p className="text-xs text-gray-400 mt-1 font-spartan">
-                                  {new Date(notification.created_at).toLocaleString()}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
+          {/* Admin Notifications */}
+          <AdminNotificationBell onTabChange={onTabChange} />
         </div>
       </div>
     </div>

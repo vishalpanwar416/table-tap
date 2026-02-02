@@ -19,7 +19,11 @@ import {
   ShoppingBag,
   Mail,
   MessageCircle,
-  Power
+  Power,
+  Crown,
+  Zap,
+  Package,
+  AlertTriangle
 } from 'lucide-react';
 
 const RestaurantCard = ({
@@ -162,6 +166,62 @@ const RestaurantCard = ({
             {restaurant.is_active ? 'Active' : 'Inactive'}
           </button>
         </div>
+
+        {/* Active Plan Badge */}
+        {restaurant.subscription ? (
+          <div className={`mb-3 flex items-center justify-between p-2.5 rounded-xl border ${
+            restaurant.subscription.plan_name === 'enterprise' 
+              ? 'bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200' 
+              : restaurant.subscription.plan_name === 'professional'
+                ? 'bg-gradient-to-r from-purple-50 to-violet-50 border-purple-200'
+                : 'bg-gradient-to-r from-blue-50 to-sky-50 border-blue-200'
+          }`}>
+            <div className="flex items-center gap-2">
+              {restaurant.subscription.plan_name === 'enterprise' ? (
+                <Crown className="w-4 h-4 text-amber-600" />
+              ) : restaurant.subscription.plan_name === 'professional' ? (
+                <Zap className="w-4 h-4 text-purple-600" />
+              ) : (
+                <Package className="w-4 h-4 text-blue-600" />
+              )}
+              <div>
+                <span className={`text-xs font-bold capitalize ${
+                  restaurant.subscription.plan_name === 'enterprise' 
+                    ? 'text-amber-700' 
+                    : restaurant.subscription.plan_name === 'professional'
+                      ? 'text-purple-700'
+                      : 'text-blue-700'
+                }`}>
+                  {restaurant.subscription.plan_name} Plan
+                </span>
+                {restaurant.subscription.billing_cycle && (
+                  <span className="text-[10px] text-gray-500 ml-1.5">
+                    ({restaurant.subscription.billing_cycle})
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {restaurant.subscription.status === 'grace_period' && (
+                <span className="flex items-center gap-1 text-[10px] font-medium text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded">
+                  <AlertTriangle className="w-3 h-3" />
+                  Grace
+                </span>
+              )}
+              {restaurant.subscription.end_date && (
+                <span className="text-[10px] text-gray-500 flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  {new Date(restaurant.subscription.end_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                </span>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="mb-3 flex items-center gap-2 p-2.5 rounded-xl bg-gray-50 border border-gray-200">
+            <CreditCard className="w-4 h-4 text-gray-400" />
+            <span className="text-xs font-medium text-gray-500">No active plan</span>
+          </div>
+        )}
 
         {/* Info Grid */}
         <div className="space-y-2 mb-4">

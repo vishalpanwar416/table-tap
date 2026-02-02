@@ -364,7 +364,8 @@ export const updateRestaurantSubscription = async (subscriptionId, updates) => {
 
 /**
  * Cancel restaurant subscription
- * This will automatically deactivate the restaurant via database trigger
+ * NOTE: This only updates subscription status - restaurant stays active but hidden from customers
+ * When user re-subscribes, the restaurant automatically becomes visible again
  */
 export const cancelRestaurantSubscription = async (subscriptionId, reason = '') => {
   try {
@@ -375,7 +376,8 @@ export const cancelRestaurantSubscription = async (subscriptionId, reason = '') 
       .eq('id', subscriptionId)
       .maybeSingle();
 
-    // Update subscription status - trigger will deactivate restaurant
+    // Update subscription status only - DO NOT deactivate restaurant
+    // Restaurant visibility in customer app is controlled by subscription status
     const { data, error } = await supabase
       .from('subscriptions')
       .update({
@@ -595,14 +597,55 @@ export const getSubscriptionHistory = async (restaurantId) => {
 
 /**
  * Process expired subscriptions (call this periodically)
+ * NOTE: This only updates subscription status to 'expired' - does NOT deactivate restaurants
+ * Restaurants stay active but are hidden from customer app based on subscription status
+ * When user re-subscribes, the restaurant automatically becomes visible again
  */
 export const processExpiredSubscriptions = async () => {
   try {
-    const { data, error } = await supabase.rpc('process_expired_subscriptions');
+    const now = new Date().toISOString();
 
-    if (error) throw error;
+    // Find all active/grace_period subscriptions that have passed their end date
+    const { data: expiredSubs, error: fetchError } = await supabase
+      .from('subscriptions')
+      .select('id, restaurant_id, status, end_date')
+      .in('status', ['active', 'grace_period'])
+      .lt('end_date', now);
 
-    return { data: { processedCount: data }, error: null };
+    if (fetchError) throw fetchError;
+
+    if (!expiredSubs || expiredSubs.length === 0) {
+      return { data: { processedCount: 0 }, error: null };
+    }
+
+    // Update each expired subscription - only change subscription status, NOT restaurant
+    let processedCount = 0;
+    for (const sub of expiredSubs) {
+      const { error: updateError } = await supabase
+        .from('subscriptions')
+        .update({
+          status: 'expired',
+          updated_at: now
+        })
+        .eq('id', sub.id);
+
+      if (!updateError) {
+        // Log to history
+        await supabase
+          .from('subscription_history')
+          .insert([{
+            subscription_id: sub.id,
+            restaurant_id: sub.restaurant_id,
+            action: 'expired',
+            old_status: sub.status,
+            new_status: 'expired',
+            notes: 'Subscription expired - restaurant hidden from customers until renewed'
+          }]);
+        processedCount++;
+      }
+    }
+
+    return { data: { processedCount }, error: null };
   } catch (error) {
     return { data: null, error: error.message };
   }

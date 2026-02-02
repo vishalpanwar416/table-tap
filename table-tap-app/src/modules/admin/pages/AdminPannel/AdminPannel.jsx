@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader, X, Bell } from 'lucide-react';
 import AdminSidebar from './components/AdminSidebar';
@@ -26,9 +26,15 @@ import {
 } from './admin_service';
 import ProfilePhotoModal from './components/ProfilePhotoModal';
 import { ManagerNotificationProvider } from '../../../shared/context/ManagerNotificationContext';
-import SubscriptionManagement from './components/SubscriptionManagement';
+import { AdminNotificationProvider } from '../../context/AdminNotificationContext';
+// SubscriptionManagement import removed for lazy loading
 import RegistrationRequests from '../../../restaurant/components/admin/RegistrationRequests';
 import AdminDashboard from './components/AdminDashboard';
+
+// Lazy load pages to avoid HMR issues
+const AdminNotificationsPage = lazy(() => import('./components/AdminNotificationsPage'));
+const AdminActivityLogs = lazy(() => import('./components/AdminActivityLogs'));
+const SubscriptionManagement = lazy(() => import('./components/SubscriptionManagement'));
 
 const menuItems = [
   { id: 'dashboard', icon: 'LayoutDashboard', label: 'Dashboard' },
@@ -37,6 +43,8 @@ const menuItems = [
   { id: 'staff', icon: 'Users', label: 'Staff Management' },
   { id: 'inquiries', icon: 'MessageSquare', label: 'Lead Inquiries' },
   { id: 'subscriptions', icon: 'CreditCard', label: 'Subscriptions' },
+  { id: 'notifications', icon: 'Bell', label: 'Notifications' },
+  { id: 'activity', icon: 'Activity', label: 'Activity Logs' },
 ];
 
 const AdminPanel = () => {
@@ -101,6 +109,7 @@ const AdminPanel = () => {
 
   const [showProfilePhotoModal, setShowProfilePhotoModal] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const navigate = useNavigate();
 
@@ -553,9 +562,9 @@ const AdminPanel = () => {
     switch (activeTab) {
       case 'dashboard':
         return (
-          <AdminDashboard 
-            restaurants={restaurants} 
-            staff={staff} 
+          <AdminDashboard
+            restaurants={restaurants}
+            staff={staff}
             currentUser={currentUserProfile}
             onTabChange={setActiveTab}
           />
@@ -593,11 +602,27 @@ const AdminPanel = () => {
           </div>
         );
       case 'subscriptions':
-        return <SubscriptionManagement />;
+        return (
+          <Suspense fallback={<LoadingSpinner />}>
+            <SubscriptionManagement />
+          </Suspense>
+        );
       case 'registrations':
         return <RegistrationRequests />;
       case 'inquiries':
         return <InquiryManagement />;
+      case 'notifications':
+        return (
+          <Suspense fallback={<LoadingSpinner />}>
+            <AdminNotificationsPage onTabChange={setActiveTab} />
+          </Suspense>
+        );
+      case 'activity':
+        return (
+          <Suspense fallback={<LoadingSpinner />}>
+            <AdminActivityLogs />
+          </Suspense>
+        );
       default:
         return null;
     }
@@ -609,44 +634,27 @@ const AdminPanel = () => {
 
   return (
     <ManagerNotificationProvider>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 font-spartan">
-        {/* Sidebar */}
-        <AdminSidebar
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          menuItems={menuItems}
-          currentUser={currentUserProfile}
-          restaurantName="Admin Panel"
-          userRole="admin"
-          onProfilePhotoClick={() => setShowProfilePhotoModal(true)}
-          showMobileNav={showMobileMenu}
-          setShowMobileNav={setShowMobileMenu}
-        />
-
-        {/* Main Content */}
-        <div className="md:ml-64 transition-all duration-300 font-spartan">
-          {/* Mobile Header */}
-          <MobileAdminHeader
+      <AdminNotificationProvider>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 font-spartan">
+          {/* Sidebar */}
+          <AdminSidebar
             activeTab={activeTab}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            restaurants={restaurants}
-            staff={staff}
+            setActiveTab={setActiveTab}
+            menuItems={menuItems}
             currentUser={currentUserProfile}
-            selectedRestaurantId={selectedRestaurantId}
-            setSelectedRestaurantId={setSelectedRestaurantId}
-            selectedCuisineType={selectedCuisineType}
-            setSelectedCuisineType={setSelectedCuisineType}
-            selectedStaffRole={selectedStaffRole}
-            setSelectedStaffRole={setSelectedStaffRole}
-            selectedConnectionStatus={selectedConnectionStatus}
-            setSelectedConnectionStatus={setSelectedConnectionStatus}
-            onMenuToggle={() => setShowMobileMenu(!showMobileMenu)}
+            restaurantName="Admin Panel"
+            userRole="admin"
+            onProfilePhotoClick={() => setShowProfilePhotoModal(true)}
+            showMobileNav={showMobileMenu}
+            setShowMobileNav={setShowMobileMenu}
+            collapsed={sidebarCollapsed}
+            onToggleCollapsed={() => setSidebarCollapsed(!sidebarCollapsed)}
           />
 
-          {/* Desktop Header */}
-          <div className="hidden md:block">
-            <AdminHeader
+          {/* Main Content */}
+          <div className={`${sidebarCollapsed ? 'md:ml-20' : 'md:ml-64'} transition-all duration-300 font-spartan`}>
+            {/* Mobile Header */}
+            <MobileAdminHeader
               activeTab={activeTab}
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
@@ -661,114 +669,137 @@ const AdminPanel = () => {
               setSelectedStaffRole={setSelectedStaffRole}
               selectedConnectionStatus={selectedConnectionStatus}
               setSelectedConnectionStatus={setSelectedConnectionStatus}
+              onMenuToggle={() => setShowMobileMenu(!showMobileMenu)}
+              onTabChange={setActiveTab}
             />
+
+            {/* Desktop Header */}
+            <div className="hidden md:block">
+              <AdminHeader
+                activeTab={activeTab}
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                restaurants={restaurants}
+                staff={staff}
+                currentUser={currentUserProfile}
+                selectedRestaurantId={selectedRestaurantId}
+                setSelectedRestaurantId={setSelectedRestaurantId}
+                selectedCuisineType={selectedCuisineType}
+                setSelectedCuisineType={setSelectedCuisineType}
+                selectedStaffRole={selectedStaffRole}
+                setSelectedStaffRole={setSelectedStaffRole}
+                selectedConnectionStatus={selectedConnectionStatus}
+                setSelectedConnectionStatus={setSelectedConnectionStatus}
+                onTabChange={setActiveTab}
+              />
+            </div>
+
+            {/* Main Content Area */}
+            <div className="p-4 md:p-6">
+              {loading ? (
+                <LoadingSpinner />
+              ) : (
+                renderActiveTab()
+              )}
+            </div>
           </div>
 
-          {/* Main Content Area */}
-          <div className="p-4 md:p-6">
-            {loading ? (
-              <LoadingSpinner />
-            ) : (
-              renderActiveTab()
-            )}
-          </div>
+          {/* Toast Notifications */}
+          <ToastNotifications
+            showError={showError}
+            showSuccess={showSuccess}
+            error={error}
+            success={success}
+            onCloseError={() => setShowError(false)}
+            onCloseSuccess={() => setShowSuccess(false)}
+          />
+
+          {/* Modals */}
+          <RestaurantModal
+            show={showAddRestaurant}
+            onClose={() => setShowAddRestaurant(false)}
+            onSubmit={handleAddRestaurant}
+            data={newRestaurant}
+            setData={setNewRestaurant}
+            isEditing={false}
+          />
+
+          <RestaurantModal
+            show={showEditRestaurant}
+            onClose={() => {
+              setShowEditRestaurant(false);
+              setSelectedRestaurant(null);
+            }}
+            onSubmit={handleUpdateRestaurant}
+            data={selectedRestaurant || {
+              name: '',
+              address: '',
+              contact_phone: '',
+              contact_email: '',
+              cuisine_type: '',
+              description: '',
+              opening_hours: '',
+              latitude: '',
+              longitude: '',
+              logo_url: '',
+              razorpay_key_id: '',
+              google_maps_link: '',
+              gst_number: '',
+              fssai_license: '',
+              social_media: {
+                facebook: '',
+                instagram: '',
+                twitter: '',
+                website: ''
+              },
+              manager_name: '',
+              manager_email: '',
+              manager_phone: '',
+              swiggy_api_key: '',
+              zomato_api_key: ''
+            }}
+            setData={setSelectedRestaurant}
+            isEditing={true}
+          />
+
+          <StaffModal
+            show={showAddStaff}
+            onClose={() => setShowAddStaff(false)}
+            onSubmit={handleAddStaff}
+            data={newStaff}
+            setData={setNewStaff}
+            restaurants={restaurants}
+            isEditing={false}
+          />
+
+          <StaffModal
+            show={showEditStaff}
+            onClose={() => {
+              setShowEditStaff(false);
+              setEditingStaff(null);
+            }}
+            onSubmit={handleUpdateStaff}
+            data={editingStaff || {
+              name: '',
+              email: '',
+              phone_number: '',
+              role: 'captain',
+              restaurant_id: ''
+            }}
+            setData={setEditingStaff}
+            restaurants={restaurants}
+            isEditing={true}
+          />
+
+          {/* Profile Photo Modal */}
+          <ProfilePhotoModal
+            show={showProfilePhotoModal}
+            onClose={() => setShowProfilePhotoModal(false)}
+            currentUser={currentUserProfile}
+            onPhotoUpdate={handleProfilePhotoUpdate}
+          />
         </div>
-
-        {/* Toast Notifications */}
-        <ToastNotifications
-          showError={showError}
-          showSuccess={showSuccess}
-          error={error}
-          success={success}
-          onCloseError={() => setShowError(false)}
-          onCloseSuccess={() => setShowSuccess(false)}
-        />
-
-        {/* Modals */}
-        <RestaurantModal
-          show={showAddRestaurant}
-          onClose={() => setShowAddRestaurant(false)}
-          onSubmit={handleAddRestaurant}
-          data={newRestaurant}
-          setData={setNewRestaurant}
-          isEditing={false}
-        />
-
-        <RestaurantModal
-          show={showEditRestaurant}
-          onClose={() => {
-            setShowEditRestaurant(false);
-            setSelectedRestaurant(null);
-          }}
-          onSubmit={handleUpdateRestaurant}
-          data={selectedRestaurant || {
-            name: '',
-            address: '',
-            contact_phone: '',
-            contact_email: '',
-            cuisine_type: '',
-            description: '',
-            opening_hours: '',
-            latitude: '',
-            longitude: '',
-            logo_url: '',
-            razorpay_key_id: '',
-            google_maps_link: '',
-            gst_number: '',
-            fssai_license: '',
-            social_media: {
-              facebook: '',
-              instagram: '',
-              twitter: '',
-              website: ''
-            },
-            manager_name: '',
-            manager_email: '',
-            manager_phone: '',
-            swiggy_api_key: '',
-            zomato_api_key: ''
-          }}
-          setData={setSelectedRestaurant}
-          isEditing={true}
-        />
-
-        <StaffModal
-          show={showAddStaff}
-          onClose={() => setShowAddStaff(false)}
-          onSubmit={handleAddStaff}
-          data={newStaff}
-          setData={setNewStaff}
-          restaurants={restaurants}
-          isEditing={false}
-        />
-
-        <StaffModal
-          show={showEditStaff}
-          onClose={() => {
-            setShowEditStaff(false);
-            setEditingStaff(null);
-          }}
-          onSubmit={handleUpdateStaff}
-          data={editingStaff || {
-            name: '',
-            email: '',
-            phone_number: '',
-            role: 'captain',
-            restaurant_id: ''
-          }}
-          setData={setEditingStaff}
-          restaurants={restaurants}
-          isEditing={true}
-        />
-
-        {/* Profile Photo Modal */}
-        <ProfilePhotoModal
-          show={showProfilePhotoModal}
-          onClose={() => setShowProfilePhotoModal(false)}
-          currentUser={currentUserProfile}
-          onPhotoUpdate={handleProfilePhotoUpdate}
-        />
-      </div>
+      </AdminNotificationProvider>
     </ManagerNotificationProvider>
   );
 };

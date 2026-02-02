@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   CreditCard,
   Calendar,
-  DollarSign,
+  IndianRupee,
   Users,
   TrendingUp,
   AlertTriangle,
@@ -19,6 +19,10 @@ import {
   Brain,
   RefreshCw,
   AlertCircle,
+  ArrowLeft,
+  Download,
+  Filter,
+  Search,
   RotateCcw,
   CalendarClock,
   ChevronDown
@@ -36,15 +40,14 @@ import {
   reactivateSubscription,
   getSubscriptionStats,
   getUpcomingRenewals,
-  processExpiredSubscriptions
+  processExpiredSubscriptions,
+  getSubscriptionHistory
 } from '../../../../admin/api/subscriptionService';
+import { supabase } from '../../../../shared/supabase';
 import { getAllRestaurants } from '../admin_service';
 
 const SubscriptionManagementV2 = () => {
-  // DEBUG CHECK
-  useEffect(() => {
-    console.log("SubscriptionManagementV2 Component Loaded - ULTRA FORCE");
-  }, []);
+
 
   const [activeTab, setActiveTab] = useState('overview');
   const [plans, setPlans] = useState([]);
@@ -62,6 +65,13 @@ const SubscriptionManagementV2 = () => {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [editingSubscription, setEditingSubscription] = useState(null);
   const [processingId, setProcessingId] = useState(null);
+
+  // Billing & Invoice State
+  const [showBillingModal, setShowBillingModal] = useState(false);
+  const [viewingInvoices, setViewingInvoices] = useState(false);
+  const [billingHistory, setBillingHistory] = useState([]);
+  const [selectedBillingRestaurant, setSelectedBillingRestaurant] = useState(null);
+  const [downloadingInvoice, setDownloadingInvoice] = useState(null);
 
   // Form states
   const [assignForm, setAssignForm] = useState({
@@ -426,6 +436,274 @@ const SubscriptionManagementV2 = () => {
     );
   }
 
+  const handleViewBilling = async (subscription) => {
+    try {
+      setProcessingId(subscription.id);
+      setSelectedBillingRestaurant(subscription.restaurant);
+
+      const { data, error } = await getSubscriptionHistory(subscription.restaurant_id);
+      if (error) throw error;
+
+      setBillingHistory(data || []);
+      setViewingInvoices(true);
+    } catch (err) {
+      console.error('Error fetching billing history:', err);
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const generateInvoice = (transaction) => {
+    // In a real app, this would fetch a PDF from backend URL or generate one using a library like jspdf
+    // For now, we simulate a download
+    setDownloadingInvoice(transaction.id);
+
+    setTimeout(() => {
+      // Mock download
+      const invoiceData = `
+        INVOICE #${transaction.id.slice(0, 8).toUpperCase()}
+        Date: ${new Date(transaction.created_at).toLocaleDateString()}
+        
+        Restaurant: ${selectedBillingRestaurant?.name || 'Valued Customer'}
+        Plan: ${transaction.plan_name}
+        Billing Cycle: ${transaction.billing_cycle}
+        
+        Amount: ₹${transaction.amount_paid}
+        Status: Paid
+        
+        Thank you for your business!
+      `;
+
+      const blob = new Blob([invoiceData], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Invoice_${transaction.id.slice(0, 8)}.txt`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      setDownloadingInvoice(null);
+    }, 1000);
+  };
+
+  // Helper to generate Invoice HTML
+  const generateInvoiceHTML = (txn, restaurant) => {
+    const date = new Date(txn.created_at).toLocaleDateString('en-IN', {
+      year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    // Calculate subtotal and tax (assuming inclusive 18% GST)
+    const amount = Number(txn.amount_paid);
+    const subtotal = (amount / 1.18).toFixed(2);
+    const gst = (amount - Number(subtotal)).toFixed(2);
+
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
+        <div style="background-color: #f8fafc; padding: 24px; text-align: center; border-bottom: 2px solid #e2e8f0;">
+          <h1 style="color: #0f172a; margin: 0; font-size: 24px;">Invoice</h1>
+          <p style="color: #64748b; margin: 8px 0 0;">#${txn.id.slice(0, 8).toUpperCase()}</p>
+        </div>
+        
+        <div style="padding: 32px 24px;">
+          <p>Hello <strong>${restaurant.name}</strong>,</p>
+          <p>Thank you for your business. Here is the receipt for your recent subscription payment.</p>
+          
+          <div style="background-color: #f1f5f9; padding: 20px; border-radius: 12px; margin: 24px 0;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr style="border-bottom: 1px solid #cbd5e1;">
+                <td style="padding-bottom: 12px; color: #64748b;">Date</td>
+                <td style="padding-bottom: 12px; text-align: right; font-weight: bold;">${date}</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #cbd5e1;">
+                <td style="padding: 12px 0; color: #64748b;">Plan</td>
+                <td style="padding: 12px 0; text-align: right; font-weight: bold;">${txn.plan_name} (${txn.billing_cycle})</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #cbd5e1;">
+                <td style="padding: 12px 0; color: #64748b;">Subtotal</td>
+                <td style="padding: 12px 0; text-align: right; font-weight: bold;">₹${subtotal}</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #cbd5e1;">
+                <td style="padding: 12px 0; color: #64748b;">GST (18%)</td>
+                <td style="padding: 12px 0; text-align: right; font-weight: bold;">₹${gst}</td>
+              </tr>
+              <tr>
+                <td style="padding-top: 12px; font-size: 18px; font-weight: bold;">Total Paid</td>
+                <td style="padding-top: 12px; text-align: right; font-size: 18px; font-weight: bold; color: #16a34a;">₹${amount.toFixed(2)}</td>
+              </tr>
+            </table>
+          </div>
+
+          <p style="font-size: 14px; color: #64748b; text-align: center;">
+            This is an automated email. If you have any questions, please contact support.
+          </p>
+        </div>
+        
+        <div style="background-color: #0f172a; color: white; padding: 20px; text-align: center; font-size: 12px;">
+          &copy; ${new Date().getFullYear()} TableTap. All rights reserved.
+        </div>
+      </div>
+    `;
+  };
+
+  const handleResendEmail = async (transaction) => {
+    if (!selectedBillingRestaurant?.contact_email) {
+      handleError("This restaurant currently has no contact email configured.");
+      return;
+    }
+
+    setProcessingId(`email-${transaction.id}`);
+
+    try {
+      const invoiceHtml = generateInvoiceHTML(transaction, selectedBillingRestaurant);
+
+      const { data, error } = await supabase.functions.invoke('send-email', {
+        body: {
+          to: selectedBillingRestaurant.contact_email,
+          subject: `Invoice #${transaction.id.slice(0, 8).toUpperCase()} - TableTap`,
+          html: invoiceHtml,
+          text: `Invoice for ₹${transaction.amount_paid} - ${new Date(transaction.created_at).toLocaleDateString()}`
+        }
+      });
+
+      if (error) throw error;
+
+      // Check response success (if function returns success: false)
+      if (data && data.success === false) {
+        throw new Error(data.error || "Email service returned failure.");
+      }
+
+      setSuccess(`Invoice email sent to ${selectedBillingRestaurant.contact_email}`);
+
+      // Update local state to show 'Sent'
+      setBillingHistory(prev => prev.map(txn =>
+        txn.id === transaction.id ? { ...txn, email_sent: true } : txn
+      ));
+
+    } catch (err) {
+      console.error('Email send failed:', err);
+      // Friendly message for common error (Missing secrets)
+      if (err.message && (err.message.includes('Function not found') || err.message.includes('Failed to fetch'))) {
+        handleError("Email service unavailable. Please define and deploy the 'send-email' function.");
+      } else {
+        handleError(`Failed to send email: ${err.message}`);
+      }
+    } finally {
+      setProcessingId(null);
+      setTimeout(() => setSuccess(null), 3000);
+    }
+  };
+
+  // Dedicated Invoice Page View
+  if (viewingInvoices && selectedBillingRestaurant) {
+    return (
+      <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setViewingInvoices(false)}
+            className="p-3 hover:bg-white bg-gray-50 rounded-xl transition-all text-gray-500 hover:text-gray-900 shadow-sm hover:shadow"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Invoices: {selectedBillingRestaurant.name}</h1>
+            <p className="text-gray-500 text-sm">Sorted by date and time • {billingHistory.length} Records</p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Date & Time</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Plan Details</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Amount</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Email Status</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {billingHistory.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
+                      <div className="flex flex-col items-center gap-2">
+                        <CreditCard className="w-8 h-8 opacity-20" />
+                        <p>No invoices found for this restaurant.</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  billingHistory.map((txn) => (
+                    <tr key={txn.id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-gray-900">{new Date(txn.created_at).toLocaleDateString()}</span>
+                          <span className="text-xs text-gray-500 font-medium">{new Date(txn.created_at).toLocaleTimeString()}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div>
+                          <p className="font-bold text-gray-900 capitalize">{txn.plan_name} Plan</p>
+                          <p className="text-xs text-gray-500 mt-0.5 capitalize">{txn.billing_cycle} Cycle</p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="font-bold text-gray-900">₹{txn.amount_paid?.toLocaleString()}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${txn.action === 'created' || txn.action === 'renewed' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                          }`}>
+                          {txn.action === 'created' || txn.action === 'renewed' ? <CheckCircle size={10} /> : <AlertCircle size={10} />}
+                          Paid
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-1.5">
+                          {txn.email_sent ? (
+                            <span className="flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">
+                              <CheckCircle size={10} /> Sent
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => handleResendEmail(txn)}
+                              disabled={processingId === `email-${txn.id}`}
+                              className="flex items-center gap-1 text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-100 hover:bg-orange-100 transition-colors"
+                            >
+                              {processingId === `email-${txn.id}` ? (
+                                <RefreshCw size={10} className="animate-spin" />
+                              ) : (
+                                <AlertCircle size={10} />
+                              )}
+                              {processingId === `email-${txn.id}` ? 'Sending...' : 'Not Sent'}
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={() => generateInvoice(txn)}
+                          disabled={downloadingInvoice === txn.id}
+                          className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-900 text-white rounded-lg text-xs font-bold hover:bg-gray-800 transition-colors shadow-sm disabled:opacity-70 ml-auto"
+                        >
+                          {downloadingInvoice === txn.id ? (
+                            <RefreshCw size={14} className="animate-spin" />
+                          ) : (
+                            <Download size={14} />
+                          )}
+                          Download PDF
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header Removed as per request */}
@@ -452,6 +730,7 @@ const SubscriptionManagementV2 = () => {
           {[
             { id: 'overview', label: 'Overview', icon: TrendingUp },
             { id: 'subscriptions', label: 'All Subscriptions', icon: Building2 },
+            { id: 'billing', label: 'Billing & Invoices', icon: IndianRupee },
             { id: 'expiring', label: 'Expiring Soon', icon: AlertTriangle, count: upcomingRenewals.length },
             { id: 'plans', label: 'Plans', icon: Package }
           ].map((tab) => {
@@ -555,7 +834,7 @@ const SubscriptionManagementV2 = () => {
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100/50">
               <div className="flex items-center">
                 <div className="p-3 bg-yellow-50 rounded-xl">
-                  <DollarSign className="w-6 h-6 text-yellow-600" />
+                  <IndianRupee className="w-6 h-6 text-yellow-600" />
                 </div>
                 <div className="ml-4">
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Monthly Revenue</p>
@@ -703,6 +982,14 @@ const SubscriptionManagementV2 = () => {
                             >
                               <Edit size={16} />
                             </button>
+                            <button
+                              onClick={() => handleViewBilling(subscription)}
+                              className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                              title="View Billing & Invoices"
+                              disabled={processingId === subscription.id}
+                            >
+                              {processingId === subscription.id ? <RefreshCw size={16} className="animate-spin" /> : <IndianRupee size={16} />}
+                            </button>
                             {subscription.status === 'active' && (
                               <button
                                 onClick={() => handleCancelSubscription(subscription)}
@@ -780,6 +1067,88 @@ const SubscriptionManagementV2 = () => {
               </div>
             ))
           )}
+        </div>
+      )}
+
+      {/* Plans Tab */}
+      {/* Billing & Invoices Tab */}
+      {activeTab === 'billing' && (
+        <div className="space-y-6 animate-in fade-in duration-300">
+          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Billing & Invoices</h3>
+                <p className="text-sm text-gray-500">Manage invoices and payment history for all restaurants</p>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Restaurant</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Current Plan</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {subscriptions.map((sub) => (
+                    <tr key={sub.id} className="hover:bg-gray-50/50 transition-colors group">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-200">
+                            {sub.restaurant?.name?.charAt(0) || 'R'}
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900">{sub.restaurant?.name}</p>
+                            <p className="text-xs text-gray-500 font-medium">{sub.restaurant?.contact_email || 'No email'}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div>
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 text-xs font-bold border border-gray-200">
+                            {sub.plan_name}
+                          </span>
+                          <p className="text-xs text-gray-400 mt-1 font-medium pl-1">
+                            By {sub.payment_method || 'Manual'} ({sub.billing_cycle})
+                          </p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${getStatusColor(sub.status)}`}>
+                          {getStatusIcon(sub.status)}
+                          <span className="capitalize">{sub.status.replace('_', ' ')}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={() => handleViewBilling(sub)}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-all shadow-md shadow-indigo-200 hover:shadow-lg"
+                        >
+                          <IndianRupee size={14} />
+                          View Internal Invoices
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {subscriptions.length === 0 && (
+                    <tr>
+                      <td colSpan="4" className="px-6 py-12 text-center text-gray-500 bg-gray-50/30 border-dashed border-2 border-gray-200 rounded-xl m-4">
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="p-3 bg-gray-100 rounded-full">
+                            <IndianRupee className="w-6 h-6 text-gray-400" />
+                          </div>
+                          <p className="font-medium">No billing records found.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
 
@@ -1176,6 +1545,107 @@ const SubscriptionManagementV2 = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Billing History Modal */}
+      {showBillingModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                  <IndianRupee size={20} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Billing History</h3>
+                  <p className="text-sm text-gray-500">{selectedBillingRestaurant?.name}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowBillingModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <XCircle size={24} className="text-gray-400" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto custom-scrollbar">
+              {billingHistory.length === 0 ? (
+                <div className="text-center py-10 text-gray-400 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                  <CreditCard size={48} className="mx-auto mb-3 opacity-20" />
+                  <p className="font-bold">No transactions found</p>
+                  <p className="text-sm">This restaurant hasn't made any payments yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {billingHistory.map((txn, idx) => (
+                    <div key={txn.id} className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-2xl hover:shadow-md transition-all group">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${txn.action === 'created' ? 'bg-green-100 text-green-700' :
+                          txn.action === 'renewed' ? 'bg-blue-100 text-blue-700' :
+                            'bg-gray-100 text-gray-700'
+                          }`}>
+                          {idx + 1}
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900">{txn.plan_name} Plan <span className="text-xs font-normal text-gray-500 px-2 bg-gray-100 rounded-full">{txn.billing_cycle}</span></p>
+                          <p className="text-xs text-gray-500 mt-0.5">{new Date(txn.created_at).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-6">
+                        <div className="flex flex-col items-end gap-1">
+                          <div className="text-right">
+                            <p className="font-black text-gray-900">₹{txn.amount_paid}</p>
+                            <span className="text-[10px] font-bold uppercase text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Paid</span>
+                          </div>
+
+                          {/* Email Status Indicator */}
+                          <div className="flex items-center gap-1.5 mt-1">
+                            {txn.email_sent ? (
+                              <span className="flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                                <CheckCircle size={10} /> Email Sent
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => handleResendEmail(txn)}
+                                disabled={processingId === `email-${txn.id}`}
+                                className="flex items-center gap-1 text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full hover:bg-orange-100 transition-colors"
+                              >
+                                {processingId === `email-${txn.id}` ? (
+                                  <RefreshCw size={10} className="animate-spin" />
+                                ) : (
+                                  <AlertCircle size={10} />
+                                )}
+                                {processingId === `email-${txn.id}` ? 'Sending...' : 'Email Not Sent'}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => generateInvoice(txn)}
+                          disabled={downloadingInvoice === txn.id}
+                          className="flex items-center gap-2 px-3 py-2 bg-gray-900 text-white rounded-xl text-xs font-bold hover:bg-gray-800 transition-colors disabled:opacity-70"
+                        >
+                          {downloadingInvoice === txn.id ? (
+                            <RefreshCw size={14} className="animate-spin" />
+                          ) : (
+                            <Package size={14} />
+                          )}
+                          Invoice
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 bg-gray-50 rounded-b-3xl border-t border-gray-100 text-center">
+              <p className="text-xs text-gray-500">Invoices are automatically generated for each successful payment.</p>
+            </div>
           </div>
         </div>
       )}

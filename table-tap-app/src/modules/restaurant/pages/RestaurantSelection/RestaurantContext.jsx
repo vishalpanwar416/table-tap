@@ -88,24 +88,44 @@ export const RestaurantProvider = ({ children }) => {
         setLoading(true);
         setError(null);
 
-        const { data, error } = await supabase
+        // First fetch the restaurant
+        const { data: restaurantData, error: restaurantError } = await supabase
           .from('restaurants')
           .select('*')
           .eq('id', restaurantId)
           .eq('is_active', true)
           .single();
 
-        if (error) {
-          setError(error.message);
+        if (restaurantError) {
+          setError(restaurantError.message);
           return;
         }
 
-        if (!data) {
+        if (!restaurantData) {
           setError('Restaurant not found or inactive');
           return;
         }
 
-        setRestaurant(data);
+        // Check if restaurant has an active subscription
+        const { data: subscription } = await supabase
+          .from('subscriptions')
+          .select('id, status, end_date')
+          .eq('restaurant_id', restaurantId)
+          .in('status', ['active', 'grace_period'])
+          .maybeSingle();
+
+        // If no active subscription, show error to customer
+        if (!subscription) {
+          setError('This restaurant is currently unavailable. Please try again later.');
+          return;
+        }
+
+        // Add subscription info to restaurant data
+        setRestaurant({
+          ...restaurantData,
+          subscription_status: subscription.status,
+          subscription_end_date: subscription.end_date
+        });
 
       } catch (err) {
         setError('Failed to load restaurant data');
@@ -148,19 +168,38 @@ export const RestaurantProvider = ({ children }) => {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Fetch restaurant
+      const { data: restaurantData, error: restaurantError } = await supabase
         .from('restaurants')
         .select('*')
         .eq('id', restaurantId)
         .eq('is_active', true)
         .single();
 
-      if (error) {
-        setError(error.message);
+      if (restaurantError) {
+        setError(restaurantError.message);
         return false;
       }
 
-      setRestaurant(data);
+      // Check subscription status
+      const { data: subscription } = await supabase
+        .from('subscriptions')
+        .select('id, status, end_date')
+        .eq('restaurant_id', restaurantId)
+        .in('status', ['active', 'grace_period'])
+        .maybeSingle();
+
+      if (!subscription) {
+        setError('This restaurant is currently unavailable. Please try again later.');
+        return false;
+      }
+
+      setRestaurant({
+        ...restaurantData,
+        subscription_status: subscription.status,
+        subscription_end_date: subscription.end_date
+      });
       setError(null);
       return true;
 

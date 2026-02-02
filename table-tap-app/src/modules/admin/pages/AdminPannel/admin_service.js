@@ -292,6 +292,35 @@ export const getAllRestaurants = async () => {
       }
     }
 
+    // Step 5: Get active subscriptions for all restaurants
+    const restaurantIds = transformedData.map(r => r.id);
+    const { data: subscriptions } = await supabase
+      .from('subscriptions')
+      .select('restaurant_id, plan_name, status, end_date, billing_cycle')
+      .in('restaurant_id', restaurantIds)
+      .in('status', ['active', 'grace_period']);
+
+    // Map subscription data to restaurants
+    if (subscriptions && subscriptions.length > 0) {
+      const subscriptionMap = {};
+      subscriptions.forEach(sub => {
+        subscriptionMap[sub.restaurant_id] = {
+          plan_name: sub.plan_name,
+          status: sub.status,
+          end_date: sub.end_date,
+          billing_cycle: sub.billing_cycle
+        };
+      });
+
+      transformedData.forEach(restaurant => {
+        restaurant.subscription = subscriptionMap[restaurant.id] || null;
+      });
+    } else {
+      transformedData.forEach(restaurant => {
+        restaurant.subscription = null;
+      });
+    }
+
     return { data: transformedData, error: null };
   } catch (error) {
     return { data: [], error: error.message };
@@ -947,17 +976,16 @@ export const updateRestaurantSubscription = async (restaurantId, subscriptionDat
 };
 
 /**
- * Cancel restaurant subscription (deactivate restaurant)
+ * Cancel restaurant subscription
+ * NOTE: This does NOT deactivate the restaurant - it stays active but hidden from customers
+ * Restaurant visibility in customer app is controlled by subscription status
+ * When user re-subscribes, the restaurant automatically becomes visible again
  */
 export const cancelRestaurantSubscription = async (restaurantId) => {
   try {
+    // Get restaurant data without deactivating it
     const { data, error } = await supabase
       .from('restaurants')
-      .update({
-        is_active: false
-        // removed updated_at
-      })
-      .eq('id', restaurantId)
       .select(`
         id,
         name,
@@ -966,7 +994,8 @@ export const cancelRestaurantSubscription = async (restaurantId) => {
         is_active,
         ai_enabled,
         created_at
-      `) // removed updated_at
+      `)
+      .eq('id', restaurantId)
       .maybeSingle();
 
     if (error) throw error;
@@ -985,7 +1014,7 @@ export const cancelRestaurantSubscription = async (restaurantId) => {
       start_date: data.created_at,
       end_date: new Date().toISOString(),
       payment_method: 'manual',
-      notes: 'Subscription cancelled',
+      notes: 'Subscription cancelled - restaurant hidden from customers until renewed',
       restaurant: {
         id: data.id,
         name: data.name,
