@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Check, X, Truck, CheckCircle, ChevronDown, ChevronRight, User,
   Clock, Calendar, MapPin, Phone, Filter, AlertCircle,
-  Printer, Download, AlertTriangle, ShoppingBag, Info, Grid, List, Package, Plus, RefreshCw
+  Printer, Download, AlertTriangle, ShoppingBag, Info, Grid, List, Package, Plus, RefreshCw, Mail, Send
 } from 'lucide-react';
 import { useManagerNotifications } from '../../../shared/context/ManagerNotificationContext';
 import { format, isToday, isYesterday } from 'date-fns';
@@ -10,6 +10,8 @@ import { useAdminRestaurant } from '../../../shared/context/AdminRestaurantConte
 import ReactDOMServer from "react-dom/server";
 import PrintBill from "./PrintBill";
 import PrintKOT from "./PrintKOT";
+import { sendBillEmail } from '../../../shared/api/emailService';
+import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
 import {
   fetchAllOrders,
@@ -101,6 +103,12 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
   const [showTableDropdown, setShowTableDropdown] = useState(false);
   const [availableTables, setAvailableTables] = useState([]);
   const [tableSearch, setTableSearch] = useState('');
+  
+  // Email Bill Modal State
+  const [showEmailBillModal, setShowEmailBillModal] = useState(false);
+  const [emailBillOrder, setEmailBillOrder] = useState(null);
+  const [emailBillAddress, setEmailBillAddress] = useState('');
+  const [sendingEmail, setSendingEmail] = useState(false);
   const [coStep, setCoStep] = useState(1); // 1: Select Items, 2: Customer Info
 
   // Use the prop if provided, otherwise fallback to local state (for safety)
@@ -480,7 +488,10 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
     }
     if (order.status === 'completed') {
       return (
-        <button onClick={() => handlePrintBill(order)} className="p-1.5 rounded-full bg-orange-100 text-orange-600 hover:bg-orange-200" title="Print Bill"><Printer size={16} /></button>
+        <>
+          <button onClick={() => handlePrintBill(order)} className="p-1.5 rounded-full bg-orange-100 text-orange-600 hover:bg-orange-200" title="Print Bill"><Printer size={16} /></button>
+          <button onClick={() => openEmailBillModal(order)} className="p-1.5 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200" title="Email Bill"><Mail size={16} /></button>
+        </>
       );
     }
     return null;
@@ -589,6 +600,44 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
     };
 
     // Fallback: If onload doesn't fire (rare), let the user close the window manually
+  };
+
+  // Email Bill Handlers
+  const openEmailBillModal = (order) => {
+    setEmailBillOrder(order);
+    setEmailBillAddress(order.customer_email || '');
+    setShowEmailBillModal(true);
+  };
+
+  const closeEmailBillModal = () => {
+    setShowEmailBillModal(false);
+    setEmailBillOrder(null);
+    setEmailBillAddress('');
+    setSendingEmail(false);
+  };
+
+  const handleSendEmailBill = async () => {
+    if (!emailBillAddress || !emailBillAddress.includes('@')) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    if (!emailBillOrder || !restaurant) {
+      toast.error('Order or restaurant data missing');
+      return;
+    }
+
+    setSendingEmail(true);
+    try {
+      await sendBillEmail(emailBillOrder, restaurant, emailBillAddress);
+      toast.success(`Bill sent to ${emailBillAddress}`);
+      closeEmailBillModal();
+    } catch (error) {
+      console.error('Email send error:', error);
+      toast.error(error.message || 'Failed to send email');
+    } finally {
+      setSendingEmail(false);
+    }
   };
 
   // Download handler
@@ -1686,6 +1735,112 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
               >
                 {isLoading ? 'Processing...' : 'Confirm'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Email Bill Modal */}
+      {showEmailBillModal && emailBillOrder && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                    <Mail className="text-white" size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">Email Bill</h3>
+                    <p className="text-blue-100 text-sm">Order #{emailBillOrder.id?.slice(0, 8)}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={closeEmailBillModal}
+                  className="text-white/80 hover:text-white transition-colors"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              {/* Order Summary */}
+              <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-gray-600 text-sm">Customer</span>
+                  <span className="font-semibold text-gray-900">{emailBillOrder.customer_name || 'Guest'}</span>
+                </div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-gray-600 text-sm">Table</span>
+                  <span className="font-semibold text-gray-900">T{emailBillOrder.table_number}</span>
+                </div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-gray-600 text-sm">Items</span>
+                  <span className="font-semibold text-gray-900">{emailBillOrder.items?.length || 0} items</span>
+                </div>
+                <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                  <span className="text-gray-800 font-medium">Total</span>
+                  <span className="font-bold text-lg text-blue-600">₹{emailBillOrder.total?.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Email Input */}
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Send bill to email address
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <input
+                    type="email"
+                    value={emailBillAddress}
+                    onChange={(e) => setEmailBillAddress(e.target.value)}
+                    placeholder="customer@email.com"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-gray-900"
+                    autoFocus
+                  />
+                </div>
+                {emailBillOrder.customer_email && emailBillAddress !== emailBillOrder.customer_email && (
+                  <button
+                    onClick={() => setEmailBillAddress(emailBillOrder.customer_email)}
+                    className="mt-2 text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                  >
+                    <User size={14} />
+                    Use customer's email: {emailBillOrder.customer_email}
+                  </button>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3">
+                <button
+                  onClick={closeEmailBillModal}
+                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+                  disabled={sendingEmail}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSendEmailBill}
+                  disabled={sendingEmail || !emailBillAddress}
+                  className="flex-1 px-4 py-3 bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {sendingEmail ? (
+                    <>
+                      <RefreshCw className="animate-spin" size={18} />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send size={18} />
+                      Send Bill
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
