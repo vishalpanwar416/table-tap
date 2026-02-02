@@ -140,6 +140,15 @@ const App = () => {
       );
     }
 
+    // Explicitly handle restaurant-selection via CustomerApp BEFORE checking /restaurant prefix
+    if (pathname.startsWith('/restaurant-selection')) {
+      return (
+        <Suspense fallback={<LoadingSpinner />}>
+          <CustomerApp />
+        </Suspense>
+      );
+    }
+
     if (pathname.startsWith('/restaurant')) {
       console.log('[App] Loading RestaurantApp for /restaurant path');
       return (
