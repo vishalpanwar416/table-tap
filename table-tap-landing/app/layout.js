@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  metadataBase: new URL('https://tabletap.in'),
+  metadataBase: new URL('https://table-tap.in'),
   title: {
     default: "Table Tap - QR Based Restaurant Ordering System India | Digital Menu & Contactless Ordering",
     template: "%s | Table Tap - Restaurant Ordering System"
@@ -54,7 +54,7 @@ export const metadata = {
     "restaurant automation",
     "smart restaurant solutions"
   ],
-  authors: [{ name: "Table Tap", url: "https://tabletap.in" }],
+  authors: [{ name: "Table Tap", url: "https://table-tap.in" }],
   creator: "Table Tap",
   publisher: "Table Tap",
   category: "Technology",
@@ -75,7 +75,7 @@ export const metadata = {
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "https://tabletap.in",
+    url: "https://table-tap.in",
     siteName: "Table Tap",
     title: "Table Tap - QR Based Restaurant Ordering System | Digital Menu India",
     description: "Transform your restaurant with India's best QR-based ordering system. Digital menus, Swiggy & Zomato integration, real-time orders. Start free trial - ₹999/month.",
@@ -106,9 +106,9 @@ export const metadata = {
     // bing: "your-bing-verification-code",
   },
   alternates: {
-    canonical: "https://tabletap.in",
+    canonical: "https://table-tap.in",
     languages: {
-      "en-IN": "https://tabletap.in",
+      "en-IN": "https://table-tap.in",
     },
   },
   other: {
@@ -118,6 +118,11 @@ export const metadata = {
     "apple-mobile-web-app-capable": "yes",
     "apple-mobile-web-app-status-bar-style": "default",
     "apple-mobile-web-app-title": "Table Tap",
+  },
+  icons: {
+    icon: '/logo.png',
+    shortcut: '/logo.png',
+    apple: '/logo.png',
   },
 };
 
@@ -132,10 +137,6 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en-IN" className="scroll-smooth" dir="ltr">
       <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/logo.png" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/logo.png" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/logo.png" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

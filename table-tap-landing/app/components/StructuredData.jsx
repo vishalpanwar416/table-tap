@@ -3,8 +3,8 @@ export default function StructuredData() {
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "Table Tap",
-    "url": "https://tabletap.in",
-    "logo": "https://tabletap.in/logo.png",
+    "url": "https://table-tap.in",
+    "logo": "https://table-tap.in/logo.png",
     "description": "Table Tap helps restaurants deliver exceptional guest experiences through seamless QR-based digital ordering.",
     "foundingDate": "2024",
     "founders": [
@@ -72,7 +72,7 @@ export default function StructuredData() {
       "AI-Powered Analytics",
       "Multi-Platform Support"
     ],
-    "screenshot": "https://tabletap.in/og-image.png",
+    "screenshot": "https://table-tap.in/og-image.png",
     "softwareVersion": "1.0",
     "author": {
       "@type": "Organization",
@@ -139,8 +139,8 @@ export default function StructuredData() {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
     "name": "Table Tap",
-    "@id": "https://tabletap.in",
-    "url": "https://tabletap.in",
+    "@id": "https://table-tap.in",
+    "url": "https://table-tap.in",
     "telephone": "+91-75009-88212",
     "email": "vishalpanwar416@gmail.com",
     "address": {
@@ -171,25 +171,25 @@ export default function StructuredData() {
         "@type": "ListItem",
         "position": 1,
         "name": "Home",
-        "item": "https://tabletap.in"
+        "item": "https://table-tap.in"
       },
       {
         "@type": "ListItem",
         "position": 2,
         "name": "Features",
-        "item": "https://tabletap.in/#features"
+        "item": "https://table-tap.in/#features"
       },
       {
         "@type": "ListItem",
         "position": 3,
         "name": "Pricing",
-        "item": "https://tabletap.in/#pricing"
+        "item": "https://table-tap.in/#pricing"
       },
       {
         "@type": "ListItem",
         "position": 4,
         "name": "Contact",
-        "item": "https://tabletap.in/#contact"
+        "item": "https://table-tap.in/#contact"
       }
     ]
   };

@@ -3,7 +3,7 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://tabletap.in/sitemap.xml
+Sitemap: https://table-tap.in/sitemap.xml
 
 # Disallow admin/private areas
 Disallow: /api/
