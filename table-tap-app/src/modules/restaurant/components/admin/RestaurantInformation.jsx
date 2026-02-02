@@ -25,7 +25,11 @@ import {
   Image as ImageIcon,
   Upload,
   MessageCircle,
-  Receipt
+  Receipt,
+  ShoppingBag,
+  Eye,
+  EyeOff,
+  Key
 } from 'lucide-react';
 import { useAdminRestaurant } from '../../../shared/context/AdminRestaurantContext';
 import SubscriptionSection from './SubscriptionSection';
@@ -44,6 +48,13 @@ const RestaurantInformation = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState(null);
+  const [showSwiggyKey, setShowSwiggyKey] = useState(false);
+  const [showZomatoKey, setShowZomatoKey] = useState(false);
+
+  // Check if user is owner or admin (can see API keys)
+  const canSeeApiKeys = () => {
+    return userRole === 'owner' || userRole === 'admin';
+  };
 
   useEffect(() => {
     if (restaurant) {
@@ -467,6 +478,87 @@ const RestaurantInformation = () => {
                   </div>
                 </div>
 
+                {/* Aggregator Integration - Only visible to Owner and Admin */}
+                {canSeeApiKeys() && (
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                      <ShoppingBag className="w-5 h-5 mr-2 text-blue-600" /> Aggregator Integration
+                    </h3>
+                    <p className="text-sm text-gray-500 mb-4 flex items-center gap-2">
+                      <Lock className="w-4 h-4" />
+                      Only visible to Restaurant Owner and Admin
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Swiggy API Key */}
+                      <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
+                          <div className="w-6 h-6 bg-orange-500 rounded-lg flex items-center justify-center">
+                            <ShoppingBag className="w-3 h-3 text-white" />
+                          </div>
+                          Swiggy API Key
+                        </label>
+                        <div className="relative">
+                          <input 
+                            type={showSwiggyKey ? "text" : "password"} 
+                            name="swiggy_api_key" 
+                            value={formData.swiggy_api_key || ''} 
+                            onChange={handleChange} 
+                            className="w-full px-4 py-3 pr-12 bg-white/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 transition-all" 
+                            placeholder="Enter Swiggy API Key" 
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowSwiggyKey(!showSwiggyKey)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          >
+                            {showSwiggyKey ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          </button>
+                        </div>
+                        {formData.swiggy_api_key && (
+                          <p className="text-xs text-green-600 flex items-center gap-1">
+                            <Key className="w-3 h-3" /> API key configured
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Zomato API Key */}
+                      <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
+                          <div className="w-6 h-6 bg-red-500 rounded-lg flex items-center justify-center">
+                            <ShoppingBag className="w-3 h-3 text-white" />
+                          </div>
+                          Zomato API Key
+                        </label>
+                        <div className="relative">
+                          <input 
+                            type={showZomatoKey ? "text" : "password"} 
+                            name="zomato_api_key" 
+                            value={formData.zomato_api_key || ''} 
+                            onChange={handleChange} 
+                            className="w-full px-4 py-3 pr-12 bg-white/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 transition-all" 
+                            placeholder="Enter Zomato API Key" 
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowZomatoKey(!showZomatoKey)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          >
+                            {showZomatoKey ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          </button>
+                        </div>
+                        {formData.zomato_api_key && (
+                          <p className="text-xs text-green-600 flex items-center gap-1">
+                            <Key className="w-3 h-3" /> API key configured
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <p className="mt-4 text-xs text-gray-400 italic">
+                      * API keys are encrypted and stored securely. Contact support if you need help with integration.
+                    </p>
+                  </div>
+                )}
+
                 {/* Description */}
                 <div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
@@ -676,6 +768,78 @@ const RestaurantInformation = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Aggregator Integration Status - Only visible to Owner and Admin */}
+              {canSeeApiKeys() && (
+                <div className="mt-8">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                    <ShoppingBag className="w-5 h-5 mr-2 text-blue-600" /> Aggregator Integration
+                  </h3>
+                  <p className="text-sm text-gray-500 mb-4 flex items-center gap-2">
+                    <Lock className="w-4 h-4" />
+                    Only visible to Restaurant Owner and Admin
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Swiggy Status */}
+                    <div className={`rounded-xl p-6 border flex items-center justify-between ${restaurant?.swiggy_api_key ? 'bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200' : 'bg-gray-50 border-gray-200'}`}>
+                      <div className="flex items-center gap-3">
+                        <div className={`p-3 rounded-full ${restaurant?.swiggy_api_key ? 'bg-orange-100' : 'bg-gray-100'}`}>
+                          <ShoppingBag className={`w-6 h-6 ${restaurant?.swiggy_api_key ? 'text-orange-600' : 'text-gray-400'}`} />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-700 mb-1">Swiggy</h4>
+                          <p className={`text-sm font-bold ${restaurant?.swiggy_api_key ? 'text-orange-600' : 'text-gray-500'}`}>
+                            {restaurant?.swiggy_api_key ? 'Connected' : 'Not Connected'}
+                          </p>
+                          {restaurant?.swiggy_api_key && (
+                            <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                              <Key className="w-3 h-3" />
+                              API Key: ••••••{restaurant.swiggy_api_key.slice(-4)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      {canEdit() && (
+                        <button 
+                          onClick={() => setIsEditing(true)} 
+                          className="px-4 py-2 text-sm font-semibold text-orange-600 hover:bg-orange-100 rounded-lg transition-colors"
+                        >
+                          {restaurant?.swiggy_api_key ? 'Edit' : 'Add Key'}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Zomato Status */}
+                    <div className={`rounded-xl p-6 border flex items-center justify-between ${restaurant?.zomato_api_key ? 'bg-gradient-to-br from-red-50 to-rose-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
+                      <div className="flex items-center gap-3">
+                        <div className={`p-3 rounded-full ${restaurant?.zomato_api_key ? 'bg-red-100' : 'bg-gray-100'}`}>
+                          <ShoppingBag className={`w-6 h-6 ${restaurant?.zomato_api_key ? 'text-red-600' : 'text-gray-400'}`} />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-700 mb-1">Zomato</h4>
+                          <p className={`text-sm font-bold ${restaurant?.zomato_api_key ? 'text-red-600' : 'text-gray-500'}`}>
+                            {restaurant?.zomato_api_key ? 'Connected' : 'Not Connected'}
+                          </p>
+                          {restaurant?.zomato_api_key && (
+                            <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                              <Key className="w-3 h-3" />
+                              API Key: ••••••{restaurant.zomato_api_key.slice(-4)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      {canEdit() && (
+                        <button 
+                          onClick={() => setIsEditing(true)} 
+                          className="px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                        >
+                          {restaurant?.zomato_api_key ? 'Edit' : 'Add Key'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="flex justify-end mt-12 pt-8 border-t">
                 {canEdit() ? (
