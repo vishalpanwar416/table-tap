@@ -7,6 +7,8 @@ const RestaurantGrid = ({
   onToggleStatus,
   onToggleAI,
   onToggleAggregators,
+  onToggleEmailBill,
+  onToggleWhatsAppBill,
   onEdit,
   onDelete,
   onClick,
@@ -168,6 +170,8 @@ const RestaurantGrid = ({
               onToggleStatus={onToggleStatus}
               onToggleAI={onToggleAI}
               onToggleAggregators={onToggleAggregators}
+              onToggleEmailBill={onToggleEmailBill}
+              onToggleWhatsAppBill={onToggleWhatsAppBill}
               onEdit={onEdit}
               onDelete={onDelete}
               onClick={onClick}

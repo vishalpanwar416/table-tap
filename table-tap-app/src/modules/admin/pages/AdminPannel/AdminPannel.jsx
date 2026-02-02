@@ -240,6 +240,62 @@ const AdminPanel = () => {
     }
   };
 
+  const handleToggleEmailBill = async (id) => {
+    try {
+      const restaurant = restaurants.find(r => r.id === id);
+      const newStatus = !(restaurant.email_bill_enabled !== false);
+
+      const { error } = await supabase
+        .from('restaurants')
+        .update({ email_bill_enabled: newStatus })
+        .eq('id', id);
+
+      if (error) {
+        handleError('Failed to update email bill setting: ' + error.message);
+        return;
+      }
+
+      setRestaurants(prev =>
+        prev.map(r =>
+          r.id === id
+            ? { ...r, email_bill_enabled: newStatus }
+            : r
+        )
+      );
+      handleSuccess(`Email bill ${newStatus ? 'enabled' : 'disabled'} successfully`);
+    } catch (err) {
+      handleError('Failed to toggle email bill: ' + err.message);
+    }
+  };
+
+  const handleToggleWhatsAppBill = async (id) => {
+    try {
+      const restaurant = restaurants.find(r => r.id === id);
+      const newStatus = !(restaurant.whatsapp_bill_enabled !== false);
+
+      const { error } = await supabase
+        .from('restaurants')
+        .update({ whatsapp_bill_enabled: newStatus })
+        .eq('id', id);
+
+      if (error) {
+        handleError('Failed to update WhatsApp bill setting: ' + error.message);
+        return;
+      }
+
+      setRestaurants(prev =>
+        prev.map(r =>
+          r.id === id
+            ? { ...r, whatsapp_bill_enabled: newStatus }
+            : r
+        )
+      );
+      handleSuccess(`WhatsApp bill ${newStatus ? 'enabled' : 'disabled'} successfully`);
+    } catch (err) {
+      handleError('Failed to toggle WhatsApp bill: ' + err.message);
+    }
+  };
+
   const handleAddRestaurant = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -502,6 +558,8 @@ const AdminPanel = () => {
             onToggleStatus={handleToggleRestaurantStatus}
             onToggleAI={handleToggleRestaurantAI}
             onToggleAggregators={handleToggleRestaurantAggregators}
+            onToggleEmailBill={handleToggleEmailBill}
+            onToggleWhatsAppBill={handleToggleWhatsAppBill}
             onEdit={handleEditRestaurant}
             onDelete={handleDeleteRestaurant}
             onClick={handleRestaurantClick}

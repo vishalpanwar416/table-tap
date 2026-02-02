@@ -6,6 +6,63 @@ import axios from 'axios';
 // Note: Order creation has been moved to paymentService.js
 // This file now focuses on order management and status updates
 
+// Process refund for an order via Razorpay
+export const processRefund = async (order) => {
+  try {
+    // Validate that order has required payment info
+    if (!order.razorpay_payment_id) {
+      console.warn('Cannot process refund: No Razorpay payment ID found');
+      return { success: false, error: 'No payment ID found for refund' };
+    }
+
+    if (order.payment_status !== 'completed') {
+      console.warn('Cannot process refund: Payment status is not completed');
+      return { success: false, error: 'Payment was not completed' };
+    }
+
+    // Get the session for authorization
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      throw new Error('No active session');
+    }
+
+    // Call the Supabase edge function to process refund
+    const response = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-refund`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          payment_id: order.razorpay_payment_id,
+          order_id: order.id,
+          amount: order.total, // Full refund
+          notes: {
+            order_id: order.id,
+            order_number: order.order_number,
+            reason: order.cancel_reason || 'Order rejected by restaurant',
+          },
+        }),
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      console.error('Refund processing failed:', result);
+      return { success: false, error: result.error || 'Refund failed' };
+    }
+
+    console.log('Refund processed successfully:', result);
+    return { success: true, refund: result.refund };
+  } catch (error) {
+    console.error('Error processing refund:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 // Helper function to create admin notification for new orders
 const createManagerOrderNotification = async (order) => {
   try {
@@ -73,7 +130,48 @@ export const updateOrderStatus = async (orderId, status, cancelReason = null, us
   if (error) throw error;
   const updatedOrder = data[0];
 
+  // Auto-process refund when order is rejected and payment was completed
+  let refundResult = null;
+  if (status === 'rejected' && updatedOrder) {
+    if (updatedOrder.payment_status === 'completed' && updatedOrder.razorpay_payment_id) {
+      console.log('Processing automatic refund for rejected order:', updatedOrder.id);
+      refundResult = await processRefund({
+        ...updatedOrder,
+        cancel_reason: cancelReason || 'Order rejected by restaurant',
+      });
+      
+      if (refundResult.success) {
+        console.log('Refund processed successfully:', refundResult.refund);
+      } else {
+        console.error('Refund processing failed:', refundResult.error);
+      }
+    } else {
+      console.log('Skipping refund - payment not completed or no payment ID:', {
+        payment_status: updatedOrder.payment_status,
+        has_payment_id: !!updatedOrder.razorpay_payment_id,
+      });
+    }
+  }
+
   if (userData && updatedOrder) {
+    const activityDetails = { 
+      old_status: null, 
+      new_status: status, 
+      cancel_reason: cancelReason 
+    };
+    
+    // Add refund info to activity log if refund was processed
+    if (refundResult) {
+      activityDetails.refund_processed = refundResult.success;
+      if (refundResult.refund) {
+        activityDetails.refund_id = refundResult.refund.id;
+        activityDetails.refund_amount = refundResult.refund.amount;
+      }
+      if (refundResult.error) {
+        activityDetails.refund_error = refundResult.error;
+      }
+    }
+
     await logActivity({
       restaurant_id: updatedOrder.restaurant_id,
       user_id: userData.id,
@@ -83,25 +181,26 @@ export const updateOrderStatus = async (orderId, status, cancelReason = null, us
       action_name: 'status_change',
       target_id: updatedOrder.id,
       target_name: `Order #${updatedOrder.order_number || updatedOrder.id.slice(0, 8)}`,
-      details: { old_status: null, new_status: status, cancel_reason: cancelReason },
-      description: `Order status changed to ${status}${cancelReason ? ' (Reason: ' + cancelReason + ')' : ''}`
+      details: activityDetails,
+      description: `Order status changed to ${status}${cancelReason ? ' (Reason: ' + cancelReason + ')' : ''}${refundResult?.success ? ' - Refund processed' : ''}`
     });
   }
 
-  // Helper function call to notify user
-  await createOrderStatusNotification(updatedOrder);
+  // Helper function call to notify user (with refund info if applicable)
+  await createOrderStatusNotification(updatedOrder, refundResult);
 
   return updatedOrder;
 };
 
 // Helper function to create user notification for order status updates
-const createOrderStatusNotification = async (order) => {
+const createOrderStatusNotification = async (order, refundResult = null) => {
   try {
     console.log('[Notification] Attempting to create notification for order:', {
       orderId: order.id,
       orderNumber: order.order_number,
       userId: order.user_id,
-      status: order.status
+      status: order.status,
+      refundProcessed: refundResult?.success || false
     });
 
     // Skip if no user_id (guest orders)
@@ -130,7 +229,16 @@ const createOrderStatusNotification = async (order) => {
         break;
       case 'rejected':
         title = 'Order Rejected';
-        message = `Your order #${order.order_number} has been rejected`;
+        // Include refund information in the message if refund was successful
+        if (refundResult?.success && refundResult.refund) {
+          message = `Your order #${order.order_number} has been rejected. A refund of ₹${refundResult.refund.amount} has been initiated and will be credited to your account within 5-7 business days.`;
+        } else if (order.payment_status === 'completed') {
+          // Payment was made but refund failed
+          message = `Your order #${order.order_number} has been rejected. Your refund is being processed and will be credited soon.`;
+        } else {
+          // No payment was made (COD or pending payment)
+          message = `Your order #${order.order_number} has been rejected`;
+        }
         type = 'order_rejected';
         break;
       case 'completed':
@@ -144,13 +252,21 @@ const createOrderStatusNotification = async (order) => {
         type = 'order_received';
     }
 
+    // Build metadata with refund info if applicable
+    const metadata = { order_status: order.status };
+    if (refundResult?.success && refundResult.refund) {
+      metadata.refund_id = refundResult.refund.id;
+      metadata.refund_amount = refundResult.refund.amount;
+      metadata.refund_status = refundResult.refund.status;
+    }
+
     await createNotification({
       title,
       message,
       type,
       order_id: order.id,
       user_id: order.user_id,
-      metadata: { order_status: order.status }
+      metadata
     });
     console.log('Notification created for user:', order.user_id);
   } catch (error) {

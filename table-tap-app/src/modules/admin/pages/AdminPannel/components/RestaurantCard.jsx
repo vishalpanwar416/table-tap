@@ -16,7 +16,9 @@ import {
   ToggleLeft,
   ToggleRight,
   Brain,
-  ShoppingBag
+  ShoppingBag,
+  Mail,
+  MessageCircle
 } from 'lucide-react';
 
 const RestaurantCard = ({
@@ -24,6 +26,8 @@ const RestaurantCard = ({
   onToggleStatus,
   onToggleAI,
   onToggleAggregators,
+  onToggleEmailBill,
+  onToggleWhatsAppBill,
   onEdit,
   onDelete,
   onClick
@@ -94,6 +98,16 @@ const RestaurantCard = ({
   const handleToggleAggregators = (e) => {
     e.stopPropagation();
     onToggleAggregators(restaurant.id);
+  };
+
+  const handleToggleEmailBill = (e) => {
+    e.stopPropagation();
+    onToggleEmailBill(restaurant.id);
+  };
+
+  const handleToggleWhatsAppBill = (e) => {
+    e.stopPropagation();
+    onToggleWhatsAppBill(restaurant.id);
   };
 
   const handleEdit = (e) => {
@@ -235,6 +249,64 @@ const RestaurantCard = ({
                     <ShoppingBag className="w-3 h-3 text-orange-500" />
                   ) : (
                     <ShoppingBag className="w-3 h-3 text-gray-400" />
+                  )}
+                </div>
+              </button>
+            </div>
+
+            {/* Email Bill Toggle */}
+            <div onClick={handleToggleEmailBill} className="relative z-10">
+              <button
+                className={`relative w-16 h-8 rounded-full focus:outline-none transition-all duration-300 shadow-lg group/btn overflow-hidden
+                  ${restaurant.email_bill_enabled !== false
+                    ? 'bg-gradient-to-r from-blue-500 to-cyan-500 shadow-blue-200'
+                    : 'bg-gradient-to-r from-gray-300 to-gray-400 shadow-gray-200'
+                  }
+                `}
+                aria-label={restaurant.email_bill_enabled !== false ? 'Disable email bill' : 'Enable email bill'}
+              >
+                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover/btn:opacity-100 transition-opacity"></div>
+                <div
+                  className={`absolute top-1 w-6 h-6 bg-white rounded-full flex items-center justify-center transition-all duration-300 shadow-sm
+                    ${restaurant.email_bill_enabled !== false
+                      ? 'translate-x-8 shadow-blue-100'
+                      : 'translate-x-1 shadow-gray-100'
+                    }
+                  `}
+                >
+                  {restaurant.email_bill_enabled !== false ? (
+                    <Mail className="w-3 h-3 text-blue-500" />
+                  ) : (
+                    <Mail className="w-3 h-3 text-gray-400" />
+                  )}
+                </div>
+              </button>
+            </div>
+
+            {/* WhatsApp Bill Toggle */}
+            <div onClick={handleToggleWhatsAppBill} className="relative z-10">
+              <button
+                className={`relative w-16 h-8 rounded-full focus:outline-none transition-all duration-300 shadow-lg group/btn overflow-hidden
+                  ${restaurant.whatsapp_bill_enabled !== false
+                    ? 'bg-gradient-to-r from-green-500 to-emerald-500 shadow-green-200'
+                    : 'bg-gradient-to-r from-gray-300 to-gray-400 shadow-gray-200'
+                  }
+                `}
+                aria-label={restaurant.whatsapp_bill_enabled !== false ? 'Disable WhatsApp bill' : 'Enable WhatsApp bill'}
+              >
+                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover/btn:opacity-100 transition-opacity"></div>
+                <div
+                  className={`absolute top-1 w-6 h-6 bg-white rounded-full flex items-center justify-center transition-all duration-300 shadow-sm
+                    ${restaurant.whatsapp_bill_enabled !== false
+                      ? 'translate-x-8 shadow-green-100'
+                      : 'translate-x-1 shadow-gray-100'
+                    }
+                  `}
+                >
+                  {restaurant.whatsapp_bill_enabled !== false ? (
+                    <MessageCircle className="w-3 h-3 text-green-500" />
+                  ) : (
+                    <MessageCircle className="w-3 h-3 text-gray-400" />
                   )}
                 </div>
               </button>

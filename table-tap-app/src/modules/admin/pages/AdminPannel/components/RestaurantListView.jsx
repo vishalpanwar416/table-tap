@@ -23,6 +23,8 @@ const RestaurantListView = ({
   onToggleStatus,
   onToggleAI,
   onToggleAggregators,
+  onToggleEmailBill,
+  onToggleWhatsAppBill,
   onEdit,
   onDelete,
   onClick,
