@@ -128,11 +128,7 @@ const AdminPanel = () => {
 
           if (!error && profile) {
             setCurrentUserProfile(profile);
-            // Defense-in-depth: hard block non-admins
-            if (profile.profile_role !== 'admin') {
-              navigate('/home', { replace: true });
-              return;
-            }
+            // Redundant check removed - AdminOnlyWrapper handles protection
           } else {
             console.error('Error loading profile:', error);
           }
@@ -801,10 +797,10 @@ const AdminPanel = () => {
 
           {/* Profile Photo Modal */}
           <ProfilePhotoModal
-            show={showProfilePhotoModal}
+            isOpen={showProfilePhotoModal}
             onClose={() => setShowProfilePhotoModal(false)}
-            currentUser={currentUserProfile}
-            onPhotoUpdate={handleProfilePhotoUpdate}
+            onUpdate={handleProfilePhotoUpdate}
+            currentPhotoUrl={currentUserProfile?.avatar_url}
           />
         </div>
       </AdminNotificationProvider>
