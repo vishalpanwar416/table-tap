@@ -46,7 +46,6 @@ const AdminDashboard = () => {
   const [showOrderToast, setShowOrderToast] = useState(false);
   const [orderToastMessage, setOrderToastMessage] = useState('');
   const [orderToastTitle, setOrderToastTitle] = useState('');
-  const [showLoadingOverlay, setShowLoadingOverlay] = useState(false);
   const [showCreateOrderModal, setShowCreateOrderModal] = useState(false);
   const [createOrderData, setCreateOrderData] = useState({
     customer_name: '',
@@ -315,19 +314,9 @@ const AdminDashboard = () => {
     fetchUserProfile();
   }, [currentUser, navigate]);
 
-  // Fetch food items with restaurant filter
+  // Fetch food items with restaurant filter (no global loading overlay to avoid "Processing..." popup on dashboard open)
   const fetchFoodItems = async () => {
-    let loadingTimeout;
     try {
-      setLoading(true);
-
-      // Set a timeout to force loading to false after 15 seconds, preventing stuck loading states
-      loadingTimeout = setTimeout(() => {
-        setLoading(false);
-        setErrorMsg('Request took too long. Please try again.');
-      }, 15000);
-
-      // Use restaurant-specific function if restaurant ID is available
       let data;
       if (userRestaurantId) {
         data = await getRestaurantFoodItems(userRestaurantId);
@@ -336,14 +325,10 @@ const AdminDashboard = () => {
       }
 
       setFoodItems(data || []);
-      clearTimeout(loadingTimeout);
       return data;
     } catch (error) {
       setErrorMsg('Failed to load menu items: ' + (error.message || error));
       return [];
-    } finally {
-      clearTimeout(loadingTimeout);
-      setLoading(false);
     }
   };
 
@@ -364,20 +349,12 @@ const AdminDashboard = () => {
     }
   }, [currentUser, userRestaurantId]); // Add userRestaurantId to dependencies
 
-  // Enhanced fetch orders with restaurant filter
+  // Realtime subscription for orders (OrderManagement loads its own orders; no initial fetch here to avoid "Processing..." popup on open)
   useEffect(() => {
     if (!currentUser) return;
 
-    let loadingTimeout;
-
     const fetchOrders = async () => {
       try {
-        setLoading(true);
-        loadingTimeout = setTimeout(() => {
-          setLoading(false);
-          setErrorMsg('Orders request took too long. Please try again.');
-        }, 15000);
-
         let query = supabase
           .from('orders')
           .select('*');
@@ -390,12 +367,9 @@ const AdminDashboard = () => {
         const { data, error } = await query.order('created_at', { ascending: false });
 
         if (error) throw error;
-        // setOrders(data || []); // This line is removed
+        // Orders are loaded by OrderManagement; this run is only to satisfy the subscription setup below if needed
       } catch (error) {
         setErrorMsg('Failed to load orders: ' + (error.message || error));
-      } finally {
-        clearTimeout(loadingTimeout);
-        setLoading(false);
       }
     };
 
@@ -436,7 +410,6 @@ const AdminDashboard = () => {
     orderChannelRef.current = channel;
 
     return () => {
-      if (loadingTimeout) clearTimeout(loadingTimeout);
       if (orderChannelRef.current) {
         supabase.removeChannel(orderChannelRef.current);
         orderChannelRef.current = null;
@@ -510,16 +483,6 @@ const AdminDashboard = () => {
       });
     }
   };
-
-  useEffect(() => {
-    let timer;
-    if (loading) {
-      timer = setTimeout(() => setShowLoadingOverlay(true), 700);
-    } else {
-      setShowLoadingOverlay(false);
-    }
-    return () => clearTimeout(timer);
-  }, [loading]);
 
   const handleCreateOrder = async () => {
     setIsLoading(true);
@@ -664,22 +627,6 @@ const AdminDashboard = () => {
 
       <NotificationSound play={playOrderSound} soundType={orderSoundType} />
 
-      {showLoadingOverlay && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-5 rounded-lg shadow-lg flex items-center space-x-3">
-            <div className="animate-spin rounded-full h-6 w-6 border-2 border-orange-500 border-t-transparent"></div>
-            <span>Processing...</span>
-            {/* Emergency escape button */}
-            <button
-              onClick={() => setLoading(false)}
-              className="ml-4 text-xs text-gray-500 underline hover:text-gray-700"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
       {notificationPermission === 'default' && (
         <div className="fixed top-20 right-4 z-50 bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded shadow-md flex items-center max-w-md">
           <span className="text-xl mr-3">🔔</span>
@@ -696,7 +643,7 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      <div className="flex h-screen">
+      <div className="restaurant-dashboard flex h-screen">
         {/* Sidebar Component */}
         <Sidebar
           activeTab={activeTab}
@@ -762,8 +709,9 @@ const AdminDashboard = () => {
               {showSelector && (
                 <div className="hidden md:block relative restaurant-selector">
                   <button
+                    type="button"
                     onClick={() => setShowRestaurantSelector(!showRestaurantSelector)}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="restaurant-selector-trigger flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white shadow-sm hover:border-orange-300 hover:bg-orange-50/50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
                   >
                     {contextIsAdmin() ? <Building2 size={18} className="text-gray-600" /> : <Crown size={18} className="text-amber-600" />}
                     <span className="text-sm font-medium text-gray-700">
@@ -774,9 +722,9 @@ const AdminDashboard = () => {
 
                   {/* Restaurant Dropdown */}
                   {showRestaurantSelector && (
-                    <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                    <div className="restaurant-selector-dropdown absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto">
                       <div className="p-2">
-                        <div className="text-xs font-medium text-gray-500 px-3 py-1 border-b border-gray-100">
+                        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide px-3 py-2 border-b border-gray-100">
                           {contextIsAdmin() ? 'All Restaurants' : 'Your Restaurants'}
                         </div>
                         {loadingRestaurants ? (
@@ -793,9 +741,9 @@ const AdminDashboard = () => {
                             <button
                               key={rest.id}
                               onClick={() => handleRestaurantSelect(rest.id)}
-                              className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${rest.id === userRestaurantId
-                                ? 'bg-orange-100 text-orange-700 font-medium'
-                                : 'hover:bg-gray-50 text-gray-700'
+                                className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${rest.id === userRestaurantId
+                                ? 'bg-orange-100 text-orange-700'
+                                : 'hover:bg-orange-50 text-gray-700'
                                 }`}
                             >
                               <div className="flex items-center justify-between">
@@ -842,8 +790,9 @@ const AdminDashboard = () => {
                 {showSelector && (
                   <div className="mb-4 restaurant-selector">
                     <button
+                      type="button"
                       onClick={() => setShowRestaurantSelector(!showRestaurantSelector)}
-                      className="w-full flex items-center justify-between gap-2 px-3 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="restaurant-selector-trigger w-full flex items-center justify-between gap-2 px-3 py-3 rounded-xl border border-gray-200 bg-white shadow-sm hover:border-orange-300 hover:bg-orange-50/50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
                     >
                       <div className="flex items-center gap-2">
                         {contextIsAdmin() ? <Building2 size={18} className="text-gray-600" /> : <Crown size={18} className="text-amber-600" />}
@@ -856,9 +805,9 @@ const AdminDashboard = () => {
 
                     {/* Mobile Restaurant Dropdown */}
                     {showRestaurantSelector && (
-                      <div className="mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      <div className="restaurant-selector-dropdown mt-2 bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-y-auto">
                         <div className="p-2">
-                          <div className="text-xs font-medium text-gray-500 px-2 py-1 border-b border-gray-100">
+                          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide px-2 py-2 border-b border-gray-100">
                             {contextIsAdmin() ? 'All Restaurants' : 'Your Restaurants'}
                           </div>
                           {loadingRestaurants ? (
@@ -875,9 +824,9 @@ const AdminDashboard = () => {
                               <button
                                 key={rest.id}
                                 onClick={() => handleRestaurantSelect(rest.id)}
-                                className={`w-full text-left px-2 py-3 rounded-md text-sm transition-colors ${rest.id === userRestaurantId
-                                  ? 'bg-orange-100 text-orange-700 font-medium'
-                                  : 'hover:bg-gray-50 text-gray-700'
+                                className={`w-full text-left px-2 py-3 rounded-lg text-sm font-medium transition-colors ${rest.id === userRestaurantId
+                                  ? 'bg-orange-100 text-orange-700'
+                                  : 'hover:bg-orange-50 text-gray-700'
                                   }`}
                               >
                                 <div className="flex items-center justify-between">

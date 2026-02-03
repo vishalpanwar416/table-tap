@@ -51,115 +51,123 @@ const StaffManagement = ({
   };
 
   return (
-    <div className="space-y-8 font-spartan">
-      {/* Enhanced Stats with Add Button */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 font-spartan">Overview</h3>
+    <div className="space-y-6 sm:space-y-8 font-spartan px-2 sm:px-0">
+      {/* Overview section with stats and Add Staff CTA */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 font-spartan">Staff Overview</h2>
+            <p className="text-sm text-gray-500 font-spartan mt-0.5">Manage staff across restaurants</p>
+          </div>
           <button
             onClick={onAddStaff}
-            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md font-spartan"
+            className="inline-flex items-center justify-center min-h-[44px] sm:min-h-[42px] px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 active:from-blue-800 transition-all duration-200 shadow-md hover:shadow-lg font-semibold font-spartan touch-manipulation shrink-0"
           >
-            <Plus className="w-4 h-4 mr-2" />
-            <span className="font-medium font-spartan">Add Staff</span>
+            <Plus className="w-5 h-5 mr-2 shrink-0" />
+            Add Staff
           </button>
         </div>
-        <StaffStats staff={staff} restaurants={restaurants} />
+        <div className="p-4 sm:p-6">
+          <StaffStats staff={staff} restaurants={restaurants} />
+        </div>
       </div>
       
-      {/* View Mode Toggle */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 font-spartan">Staff Members</h3>
-          <div className="flex items-center space-x-4">
-            <div className="text-sm text-gray-500 font-spartan">
-              {filteredStaff.length} staff member{filteredStaff.length !== 1 ? 's' : ''}
+      {/* Staff Members section with view toggles */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 font-spartan">Staff Members</h2>
+              <p className="text-sm text-gray-500 font-spartan mt-0.5">
+                {filteredStaff.length} member{filteredStaff.length !== 1 ? 's' : ''}
+                {viewMode === 'restaurant' && restaurants.length > 0 && ` · ${restaurants.length} restaurant${restaurants.length !== 1 ? 's' : ''}`}
+              </p>
             </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => setViewMode('restaurant')}
-                className={`p-2 rounded-lg transition-all duration-200 ${
-                  viewMode === 'restaurant'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-                title="Restaurant View"
-              >
-                <Building2 className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`p-2 rounded-lg transition-all duration-200 ${
-                  viewMode === 'list'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-                title="List View"
-              >
-                <List className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-lg transition-all duration-200 ${
-                  viewMode === 'grid'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-                title="Grid View"
-              >
-                <Grid className="w-4 h-4" />
-              </button>
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Main view: Restaurant / List / Grid */}
+              <div className="flex items-center bg-gray-100 rounded-xl p-0.5">
+                <button
+                  onClick={() => setViewMode('restaurant')}
+                  className={`flex items-center min-h-[42px] px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 touch-manipulation ${
+                    viewMode === 'restaurant'
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-blue-600'
+                  }`}
+                  title="By Restaurant"
+                >
+                  <Building2 className="w-4 h-4 mr-2 shrink-0" />
+                  Restaurant
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`flex items-center min-h-[42px] px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 touch-manipulation ${
+                    viewMode === 'list'
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-blue-600'
+                  }`}
+                  title="List View"
+                >
+                  <List className="w-4 h-4 mr-2 shrink-0" />
+                  List
+                </button>
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`flex items-center min-h-[42px] px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 touch-manipulation ${
+                    viewMode === 'grid'
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-blue-600'
+                  }`}
+                  title="Grid View"
+                >
+                  <Grid className="w-4 h-4 mr-2 shrink-0" />
+                  Grid
+                </button>
+              </div>
+              {/* Restaurant sub-view: Table / Grid (only when Restaurant view selected) */}
+              {viewMode === 'restaurant' && (
+                <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
+                  <button
+                    onClick={() => setRestaurantViewMode('table')}
+                    className={`flex items-center min-h-[40px] px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                      restaurantViewMode === 'table'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                    title="Table"
+                  >
+                    <List className="w-4 h-4 mr-1.5" />
+                    Table
+                  </button>
+                  <button
+                    onClick={() => setRestaurantViewMode('grid')}
+                    className={`flex items-center min-h-[40px] px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                      restaurantViewMode === 'grid'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                    title="Grid"
+                  >
+                    <Grid className="w-4 h-4 mr-1.5" />
+                    Grid
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Restaurant View Mode Toggle */}
-        {viewMode === 'restaurant' && (
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-md font-medium text-gray-700 font-spartan">Restaurant Staff</h4>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => setRestaurantViewMode('table')}
-                className={`p-2 rounded-lg transition-all duration-200 ${
-                  restaurantViewMode === 'table'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-                title="Table View"
-              >
-                <List className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setRestaurantViewMode('grid')}
-                className={`p-2 rounded-lg transition-all duration-200 ${
-                  restaurantViewMode === 'grid'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-                title="Grid View"
-              >
-                <Grid className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Staff Views */}
+        {/* Staff content */}
+        <div className="p-4 sm:p-6">
         {viewMode === 'restaurant' ? (
           restaurants.length > 0 ? (
-            <div className="space-y-6">
-              <div className="text-sm text-gray-500 font-spartan">
-                {restaurants.length} restaurants
-              </div>
-              
-              {restaurants.map((restaurant, index) => {
+            <div className="space-y-5">
+              {restaurants.map((restaurant) => {
                 const restaurantStaff = getRestaurantStaff(restaurant.id);
 
                 return (
                   <div
                     key={restaurant.id}
-                    className="transform transition-all duration-300 hover:scale-[1.02]"
-                    style={{ animationDelay: `${index * 100}ms` }}
+                    className="transition-all duration-300"
                   >
                     {restaurantViewMode === 'table' ? (
                       <RestaurantStaffSection
@@ -191,15 +199,15 @@ const StaffManagement = ({
               })}
             </div>
           ) : (
-            <div className="text-center py-20 bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl border border-blue-100">
-              <div className="w-32 h-32 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-8 shadow-lg">
-                <Building2 className="h-16 w-16 text-blue-600" />
+            <div className="text-center py-16 sm:py-20 px-6 bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl border border-slate-200">
+              <div className="w-24 h-24 sm:w-28 sm:h-28 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
+                <Building2 className="h-12 w-12 sm:h-14 sm:w-14 text-blue-600" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3 font-spartan">No restaurants found</h3>
-              <p className="text-gray-600 mb-8 max-w-md mx-auto text-lg font-spartan">
-                You need to add restaurants before managing staff
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 font-spartan">No restaurants yet</h3>
+              <p className="text-gray-600 mb-6 max-w-sm mx-auto text-sm sm:text-base font-spartan">
+                Add restaurants first to manage staff per location
               </p>
-              <button className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl font-spartan">
+              <button className="inline-flex items-center min-h-[44px] px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg font-semibold font-spartan touch-manipulation">
                 Add Restaurant
               </button>
             </div>
@@ -222,21 +230,22 @@ const StaffManagement = ({
             onLoadMore={onLoadMore}
           />
         )}
+        </div>
       </div>
 
-      {/* Enhanced No staff found message */}
+      {/* No staff found overlay */}
       {restaurants.length > 0 && staff.length === 0 && (
-        <div className="text-center py-20 bg-gradient-to-br from-gray-50 to-blue-50 rounded-2xl border border-gray-200">
-          <div className="w-32 h-32 bg-gradient-to-r from-gray-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-8 shadow-lg">
-            <Users className="h-16 w-16 text-gray-600" />
+        <div className="text-center py-16 sm:py-20 px-6 bg-white rounded-2xl border border-gray-200 shadow-sm">
+          <div className="w-24 h-24 sm:w-28 sm:h-28 bg-gradient-to-r from-slate-100 to-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
+            <Users className="h-12 w-12 sm:h-14 sm:w-14 text-slate-600" />
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-3 font-spartan">No staff members found</h3>
-          <p className="text-gray-600 mb-8 max-w-md mx-auto text-lg font-spartan">
-            Get started by adding your first staff member
+          <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 font-spartan">No staff members yet</h3>
+          <p className="text-gray-600 mb-6 max-w-sm mx-auto text-sm sm:text-base font-spartan">
+            Add your first staff member to get started
           </p>
           <button
             onClick={onAddStaff}
-            className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl font-spartan"
+            className="inline-flex items-center min-h-[44px] px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg font-semibold font-spartan touch-manipulation"
           >
             <Plus className="w-5 h-5 mr-2" />
             Add Staff Member

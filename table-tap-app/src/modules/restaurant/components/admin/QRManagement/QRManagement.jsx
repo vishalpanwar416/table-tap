@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAdminRestaurant } from '../../../../shared/context/AdminRestaurantContext';
+import StyledQRCode from './StyledQRCode';
 import { supabase } from '../../../../shared/supabase';
 import {
   Plus,
@@ -322,29 +322,12 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
   };
 
   const downloadQR = (table) => {
-    const svg = document.getElementById(`qr-${table.id}`);
-    if (!svg) return;
-
-    const svgData = new XMLSerializer().serializeToString(svg);
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-
-    canvas.width = 300;
-    canvas.height = 300;
-
-    img.onload = function () {
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      const link = document.createElement('a');
-      link.download = `QR-Table-${table.tableNumber}.png`;
-      link.href = canvas.toDataURL();
-      link.click();
-    };
-
-    img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+    const instance = qrInstancesRef.current[table.id];
+    if (!instance) return;
+    instance.download({
+      name: `QR-Table-${table.tableNumber}`,
+      extension: 'png',
+    });
   };
 
   const filteredTables = tables.filter(table =>
@@ -677,13 +660,12 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
               </div>
 
               <div className="text-center mb-6">
-                <div className="bg-white p-4 rounded-lg border inline-block">
-                  <QRCodeSVG
+                <div className="p-4 rounded-lg border bg-[#cffafe]/30 inline-block">
+                  <StyledQRCode
                     id={`qr-detail-${selectedTable.id}`}
                     value={generateQRUrl(selectedTable)}
                     size={200}
-                    level="H"
-                    includeMargin={true}
+                    onInstanceReady={(qr) => { qrInstancesRef.current[selectedTable.id] = qr; }}
                   />
                 </div>
               </div>

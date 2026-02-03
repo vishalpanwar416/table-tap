@@ -858,7 +858,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
             <div className="flex items-center bg-gray-100 rounded-lg p-0.5 flex-shrink-0">
               <button
                 onClick={() => setViewType('tiles')}
-                className={`flex items-center min-h-[44px] sm:min-h-0 px-3 py-2 sm:px-2 sm:py-1 rounded-md text-sm transition-all duration-200 touch-manipulation ${viewType === 'tiles'
+                className={`flex items-center min-h-[44px] sm:min-h-[42px] px-4 py-3 sm:px-3 sm:py-2 rounded-lg text-sm transition-all duration-200 touch-manipulation ${viewType === 'tiles'
                   ? 'bg-white text-orange-600 shadow-sm'
                   : 'text-gray-600 hover:text-orange-600 active:bg-gray-200'
                   }`}
@@ -869,7 +869,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
               </button>
               <button
                 onClick={() => setViewType('table')}
-                className={`flex items-center min-h-[44px] sm:min-h-0 px-3 py-2 sm:px-2 sm:py-1 rounded-md text-sm transition-all duration-200 touch-manipulation ${viewType === 'table'
+                className={`flex items-center min-h-[44px] sm:min-h-[42px] px-4 py-3 sm:px-3 sm:py-2 rounded-lg text-sm transition-all duration-200 touch-manipulation ${viewType === 'table'
                   ? 'bg-white text-orange-600 shadow-sm'
                   : 'text-gray-600 hover:text-orange-600 active:bg-gray-200'
                   }`}
@@ -953,7 +953,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
               return (
                 <button
                   key={key}
-                  className={`min-h-[44px] sm:min-h-0 px-3 py-2.5 sm:px-2 sm:py-1 text-sm sm:text-xs rounded-lg transition-colors touch-manipulation active:opacity-90 ${periodFilter === key ? styles[key] : inactive[key] + ' hover:opacity-90'}`}
+                  className={`min-h-[44px] sm:min-h-[42px] px-4 py-3 sm:px-3 sm:py-2 text-sm rounded-lg transition-colors touch-manipulation active:opacity-90 ${periodFilter === key ? styles[key] : inactive[key] + ' hover:opacity-90'}`}
                   onClick={() => setPeriodFilter(key)}
                 >
                   {labels[key]}
