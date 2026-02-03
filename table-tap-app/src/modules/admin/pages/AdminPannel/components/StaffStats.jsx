@@ -39,13 +39,9 @@ const StaffStats = ({ staff, restaurants }) => {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 font-spartan">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 font-spartan">
       {stats.map((stat, index) => (
-        <div
-          key={index}
-          className="transform transition-all duration-300 hover:scale-105"
-          style={{ animationDelay: `${index * 100}ms` }}
-        >
+        <div key={index} className="transition-all duration-300 hover:shadow-md">
           <StaffStatCard {...stat} />
         </div>
       ))}

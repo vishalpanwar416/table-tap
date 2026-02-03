@@ -163,17 +163,17 @@ const RestaurantStaffSection = ({
           </div>
 
           {/* Actions */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center justify-end gap-1 sm:gap-2">
             <button
               onClick={() => onEdit(member)}
-              className="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-all duration-200"
+              className="min-h-[36px] min-w-[36px] flex items-center justify-center p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-all duration-200 touch-manipulation"
               title="Edit staff member"
             >
               <Edit className="w-4 h-4" />
             </button>
             <button
               onClick={() => onDelete(member.id)}
-              className="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-all duration-200"
+              className="min-h-[36px] min-w-[36px] flex items-center justify-center p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-all duration-200 touch-manipulation"
               title="Delete staff member"
             >
               <Trash2 className="w-4 h-4" />
@@ -221,31 +221,27 @@ const RestaurantStaffSection = ({
 
   // Loading indicator component
   const LoadingIndicator = useCallback(() => (
-    <div className="flex items-center justify-center py-6">
-      <div className="flex items-center space-x-2 text-gray-600">
-        <Loader2 className="w-4 h-4 animate-spin" />
-        <span className="text-sm font-spartan">Loading more staff...</span>
+    <div className="flex items-center justify-center py-5 border-t border-gray-50">
+      <div className="flex items-center gap-2 text-gray-500">
+        <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+        <span className="text-sm font-spartan">Loading more...</span>
       </div>
     </div>
   ), []);
 
   // End of list indicator
   const EndOfListIndicator = useCallback(() => (
-    <div className="flex items-center justify-center py-6">
+    <div className="flex items-center justify-center py-5 border-t border-gray-50 bg-gray-50/30">
       <div className="text-center">
-        <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2">
-          <Users className="w-4 h-4 text-gray-400" />
-        </div>
-        <p className="text-xs text-gray-600 font-spartan">All staff loaded</p>
-        <p className="text-xs text-gray-500 font-spartan">
-          Showing {displayedStaff.length} of {filteredRestaurantStaff.length} staff members
+        <p className="text-xs font-medium text-gray-500 font-spartan">
+          {displayedStaff.length} of {filteredRestaurantStaff.length} staff shown
         </p>
       </div>
     </div>
   ), [displayedStaff.length, filteredRestaurantStaff.length]);
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300 font-spartan">
+    <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300 font-spartan">
       <RestaurantStaffHeader
         restaurant={restaurant}
         restaurantStaff={restaurantStaff}
@@ -258,13 +254,13 @@ const RestaurantStaffSection = ({
           {filteredRestaurantStaff.length > 0 ? (
             <div className="overflow-hidden">
               {/* Table Header */}
-              <div className="bg-gray-50 px-4 py-3 border-b border-gray-100">
-                <div className="grid grid-cols-5 gap-4 text-xs font-medium text-gray-500 uppercase tracking-wider font-spartan">
+              <div className="bg-gray-50/80 px-3 sm:px-4 py-3 border-b border-gray-100 sticky top-0 z-10">
+                <div className="grid grid-cols-5 gap-2 sm:gap-4 text-xs font-semibold text-gray-500 uppercase tracking-wider font-spartan">
                   <div>Staff Member</div>
                   <div>Role</div>
                   <div>Contact</div>
                   <div>Status</div>
-                  <div>Actions</div>
+                  <div className="text-right">Actions</div>
                 </div>
               </div>
 

@@ -8,7 +8,11 @@ import {
   UserPlus,
   RefreshCw,
   Users,
-  UserCheck
+  UserCheck,
+  List,
+  LayoutGrid,
+  Phone,
+  Mail
 } from 'lucide-react';
 import { supabase } from '../../../shared/supabase';
 import NotificationToast from './NotificationToast';
@@ -21,22 +25,21 @@ import {
   connectStaffUser
 } from '../../api/admin/staffService';
 
-// Simple avatar component: uses Lucide User icon if no image
+// Avatar with border and consistent styling
 const StaffAvatar = ({ src, alt, size = 48 }) => (
   <div
-    className="flex items-center justify-center bg-gray-100 rounded-full"
+    className="flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 rounded-full border-2 border-white shadow-inner overflow-hidden flex-shrink-0"
     style={{ width: size, height: size }}
   >
     {src ? (
       <img
         src={src}
         alt={alt}
-        className="object-cover rounded-full"
-        style={{ width: size, height: size }}
+        className="object-cover w-full h-full"
         onError={e => { e.target.onerror = null; e.target.src = ''; }}
       />
     ) : (
-      <User className="text-gray-400" style={{ width: size * 0.7, height: size * 0.7 }} />
+      <User className="text-gray-500" style={{ width: size * 0.5, height: size * 0.5 }} />
     )}
   </div>
 );
@@ -236,65 +239,63 @@ const StaffManagement = ({
 
   if (!userRestaurantId && !isAdmin()) {
     return (
-      <div className="bg-white rounded-2xl shadow-lg p-8">
-        <div className="text-center py-12">
-          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-gray-100 mb-6">
-            <AlertCircle className="h-8 w-8 text-gray-400" />
+      <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+        <div className="text-center py-16 px-6">
+          <div className="mx-auto flex items-center justify-center w-20 h-20 rounded-2xl bg-amber-50 border border-amber-100 mb-5">
+            <AlertCircle className="h-10 w-10 text-amber-500" />
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-3">No Restaurant Assigned</h3>
-          <p className="text-gray-500 max-w-md mx-auto">You need to be assigned to a restaurant to manage staff members.</p>
+          <h3 className="text-lg font-bold text-gray-900 mb-2">No restaurant assigned</h3>
+          <p className="text-sm text-gray-500 max-w-sm mx-auto">You need to be assigned to a restaurant to manage staff.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header with Stats */}
-      <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl shadow-lg p-6 text-white">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-white/20 rounded-xl">
-              <Users className="h-6 w-6" />
-            </div>
-            <div>
-              {/* Removed redundant title */}
-              <p className="text-orange-100">Manage your restaurant team</p>
-            </div>
+    <div className="space-y-6 sm:space-y-8 px-1 sm:px-0">
+      {/* Overview card: title, subtitle, Add Staff, and stat cards */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-amber-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Staff</h2>
+            <p className="text-sm text-gray-500 mt-0.5">Manage your restaurant team</p>
           </div>
-          <div className="flex gap-2">
-            {(userRole === 'admin' || userRole === 'manager') && (
-              <button
-                onClick={() => {
-                  setIsCreating(true);
-                  setIsEditing(false);
-                  setFormData({ name: '', email: '', phone_number: '', role: 'captain' });
-                }}
-                className="flex items-center gap-2 px-4 py-2 bg-white text-orange-500 rounded-xl hover:bg-orange-50 transition-all duration-200 font-medium"
-              >
-                <Plus className="w-4 h-4" />
-                Add Staff
-              </button>
-            )}
-          </div>
+          {(userRole === 'admin' || userRole === 'manager') && (
+            <button
+              onClick={() => {
+                setIsCreating(true);
+                setIsEditing(false);
+                setFormData({ name: '', email: '', phone_number: '', role: 'captain' });
+              }}
+              className="inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl hover:from-orange-600 hover:to-amber-600 shadow-md hover:shadow-lg font-semibold transition-all touch-manipulation shrink-0"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Add Staff
+            </button>
+          )}
         </div>
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <div className="text-sm text-orange-100">Total Staff</div>
-          </div>
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
-            <div className="text-2xl font-bold">{stats.connected}</div>
-            <div className="text-sm text-orange-100">Connected</div>
-          </div>
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
-            <div className="text-2xl font-bold">{stats.notConnected}</div>
-            <div className="text-sm text-orange-100">Not Connected</div>
-          </div>
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
-            <div className="text-2xl font-bold">{Object.values(stats.byRole).reduce((a, b) => a + b, 0)}</div>
-            <div className="text-sm text-orange-100">All Roles</div>
+        <div className="p-4 sm:p-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4 border-l-4 border-l-orange-400">
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Total</p>
+              <p className="text-2xl font-bold text-gray-900 mt-0.5 tabular-nums">{stats.total}</p>
+              <p className="text-xs text-gray-500 mt-0.5">Staff members</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-green-50/50 p-4 border-l-4 border-l-green-500">
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Connected</p>
+              <p className="text-2xl font-bold text-gray-900 mt-0.5 tabular-nums">{stats.connected}</p>
+              <p className="text-xs text-gray-500 mt-0.5">Online</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-amber-50/50 p-4 border-l-4 border-l-amber-500">
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Not connected</p>
+              <p className="text-2xl font-bold text-gray-900 mt-0.5 tabular-nums">{stats.notConnected}</p>
+              <p className="text-xs text-gray-500 mt-0.5">Pending link</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-blue-50/50 p-4 border-l-4 border-l-blue-400">
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Roles</p>
+              <p className="text-2xl font-bold text-gray-900 mt-0.5 tabular-nums">{Object.keys(roleConfig).length}</p>
+              <p className="text-xs text-gray-500 mt-0.5">Types</p>
+            </div>
           </div>
         </div>
       </div>
@@ -306,117 +307,90 @@ const StaffManagement = ({
 
       {/* Error/Success Messages */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
-          <div className="flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-            <p className="text-red-700">{error}</p>
-          </div>
+        <div className="bg-red-50 border border-red-200 rounded-xl sm:rounded-2xl p-4 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
       {success && (
-        <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
-          <div className="flex items-center gap-3">
-            <UserCheck className="w-5 h-5 text-green-500 flex-shrink-0" />
-            <p className="text-green-700">{success}</p>
-          </div>
+        <div className="bg-green-50 border border-green-200 rounded-xl sm:rounded-2xl p-4 flex items-start gap-3">
+          <UserCheck className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-green-800">{success}</p>
         </div>
       )}
 
       {/* Create/Edit Form */}
       {(isCreating || isEditing) && (userRole === 'admin' || userRole === 'manager') && (
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-orange-100 rounded-xl">
+        <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+          <div className="px-4 sm:px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
               <User className="h-5 w-5 text-orange-600" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900">
+            <h3 className="text-lg font-bold text-gray-900">
               {isEditing ? 'Edit Staff Member' : 'Add New Staff Member'}
             </h3>
           </div>
-          <form onSubmit={isEditing ? handleUpdateStaff : handleAddStaff} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <form onSubmit={isEditing ? handleUpdateStaff : handleAddStaff} className="p-4 sm:p-6 space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name *
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name *</label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
-                  placeholder="Enter full name"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900"
+                  placeholder="Full name"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address *
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Email *</label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
-                  placeholder="Enter email address"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900"
+                  placeholder="email@example.com"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone</label>
                 <input
                   type="tel"
                   value={formData.phone_number}
                   onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
-                  placeholder="Enter phone number"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900"
+                  placeholder="Phone number"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Role *
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Role *</label>
                 <select
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900 bg-white"
                   required
                 >
                   {Object.keys(roleConfig).map(role => (
-                    <option key={role} value={role}>
-                      {roleConfig[role].icon} {role.charAt(0).toUpperCase() + role.slice(1)}
-                    </option>
+                    <option key={role} value={role}>{role.charAt(0).toUpperCase() + role.slice(1)}</option>
                   ))}
                 </select>
               </div>
             </div>
-            <div className="flex gap-3 pt-4">
+            <div className="flex flex-wrap gap-3 pt-2">
               <button
                 type="submit"
                 disabled={loading}
-                className="flex items-center gap-2 px-6 py-3 bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                className="min-h-[44px] px-5 py-2.5 bg-orange-500 text-white rounded-xl hover:bg-orange-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2 touch-manipulation"
               >
-                {loading ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    {isEditing ? 'Updating...' : 'Adding...'}
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-4 h-4" />
-                    {isEditing ? 'Update Staff' : 'Add Staff'}
-                  </>
-                )}
+                {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                {loading ? (isEditing ? 'Updating...' : 'Adding...') : (isEditing ? 'Update' : 'Add Staff')}
               </button>
               <button
                 type="button"
-                onClick={isEditing ? handleCancelEdit : () => {
-                  setIsCreating(false);
-                  setError('');
-                  setFormData({ name: '', email: '', phone_number: '', role: 'captain' });
-                }}
-                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium"
+                onClick={isEditing ? handleCancelEdit : () => { setIsCreating(false); setError(''); setFormData({ name: '', email: '', phone_number: '', role: 'captain' }); }}
+                className="min-h-[44px] px-5 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 font-medium touch-manipulation"
               >
                 Cancel
               </button>
@@ -425,94 +399,124 @@ const StaffManagement = ({
         </div>
       )}
 
-      {/* Staff Display */}
-      <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+      {/* Staff list / grid */}
+      <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 bg-gray-50/50 flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-base font-bold text-gray-900">Team members</h3>
+          <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`flex items-center min-h-[40px] px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                viewMode === 'table' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-600 hover:text-orange-600'
+              }`}
+            >
+              <List className="w-4 h-4 mr-2" />
+              Table
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`flex items-center min-h-[40px] px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                viewMode === 'grid' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-600 hover:text-orange-600'
+              }`}
+            >
+              <LayoutGrid className="w-4 h-4 mr-2" />
+              Grid
+            </button>
+          </div>
+        </div>
+
         {loading ? (
-          <div className="text-center py-12">
-            <RefreshCw className="h-8 w-8 animate-spin text-orange-500 mx-auto mb-4" />
-            <p className="text-gray-500">Loading staff members...</p>
+          <div className="flex flex-col items-center justify-center py-16">
+            <RefreshCw className="h-10 w-10 animate-spin text-orange-500 mb-4" />
+            <p className="text-sm text-gray-500">Loading staff...</p>
+          </div>
+        ) : filteredStaff.length === 0 ? (
+          <div className="text-center py-16 px-6">
+            <div className="w-20 h-20 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center mx-auto mb-4">
+              <Users className="h-10 w-10 text-orange-400" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">No team members yet</h3>
+            <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">Add your first staff member to get started.</p>
+            {(userRole === 'admin' || userRole === 'manager') && (
+              <button
+                onClick={() => { setIsCreating(true); setIsEditing(false); setFormData({ name: '', email: '', phone_number: '', role: 'captain' }); }}
+                className="inline-flex items-center min-h-[44px] px-5 py-2.5 bg-orange-500 text-white rounded-xl hover:bg-orange-600 font-semibold touch-manipulation"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                Add Staff
+              </button>
+            )}
           </div>
         ) : viewMode === 'table' ? (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-gray-100 text-sm">
+              <thead className="bg-gray-50/80 sticky top-0 z-10">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Staff Member
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Contact
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Role
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Member</th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact</th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
                   {(userRole === 'admin' || userRole === 'manager') && (
-                    <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
+                    <th className="px-4 sm:px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                   )}
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-gray-50">
                 {filteredStaff.map((member) => (
-                  <tr key={member.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="">
-                          <div className="text-sm font-medium text-gray-900">
+                  <tr key={member.id} className="hover:bg-orange-50/30 transition-colors">
+                    <td className="px-4 sm:px-6 py-3">
+                      <div className="flex items-center gap-3">
+                        <StaffAvatar
+                          src={member.connected && member.profiles?.avatar_url ? member.profiles.avatar_url : ''}
+                          alt={member.staff_name}
+                          size={40}
+                        />
+                        <div>
+                          <div className="font-medium text-gray-900">
                             {member.connected && member.profiles ? member.profiles.full_name : member.staff_name}
-                            {member.user_id === currentUserId && (
-                              <span className="ml-2 text-xs text-blue-600 font-medium">(You)</span>
-                            )}
+                            {member.user_id === currentUserId && <span className="ml-1 text-xs text-orange-600 font-medium">(You)</span>}
                           </div>
-                          <div className="text-xs text-gray-500">{member.staff_email}</div>
+                          <div className="text-xs text-gray-500 flex items-center gap-1">
+                            <Mail className="w-3 h-3" />
+                            {member.staff_email}
+                          </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{member.staff_phone_number || 'N/A'}</div>
+                    <td className="px-4 sm:px-6 py-3">
+                      <div className="flex items-center gap-1 text-gray-700">
+                        <Phone className="w-3.5 h-3.5 text-gray-400" />
+                        {member.staff_phone_number || '—'}
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full border ${roleConfig[member.staff_role]?.color || 'bg-gray-100 text-gray-800 border-gray-200'}`}>
-                        {roleConfig[member.staff_role]?.icon} {member.staff_role.charAt(0).toUpperCase() + member.staff_role.slice(1)}
+                    <td className="px-4 sm:px-6 py-3">
+                      <span className={`inline-flex px-2.5 py-1 text-xs font-semibold rounded-full border ${roleConfig[member.staff_role]?.color || 'bg-gray-100 text-gray-800 border-gray-200'}`}>
+                        {member.staff_role.charAt(0).toUpperCase() + member.staff_role.slice(1)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${member.connected ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                        {member.connected ? 'Connected' : 'Not Connected'}
+                    <td className="px-4 sm:px-6 py-3">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full ${
+                        member.connected ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${member.connected ? 'bg-green-500' : 'bg-amber-500'}`} />
+                        {member.connected ? 'Connected' : 'Not connected'}
                       </span>
                     </td>
                     {(userRole === 'admin' || userRole === 'manager') && (
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end gap-2">
+                      <td className="px-4 sm:px-6 py-3 text-right">
+                        <div className="flex justify-end gap-1">
                           {canModifyStaff(member) && (
-                            <button
-                              onClick={() => handleEditStaff(member)}
-                              className="text-blue-600 hover:text-blue-900"
-                              title="Edit staff member"
-                            >
+                            <button onClick={() => handleEditStaff(member)} className="min-w-[36px] min-h-[36px] flex items-center justify-center p-2 text-blue-600 hover:bg-blue-50 rounded-lg" title="Edit">
                               <Edit2 className="w-4 h-4" />
                             </button>
                           )}
                           {!member.connected && (
-                            <button
-                              onClick={() => handleConnectUser(member.id, member.staff_email)}
-                              className="text-blue-600 hover:text-blue-900"
-                              title="Connect to user account"
-                            >
+                            <button onClick={() => handleConnectUser(member.id, member.staff_email)} className="min-w-[36px] min-h-[36px] flex items-center justify-center p-2 text-blue-600 hover:bg-blue-50 rounded-lg" title="Connect">
                               <UserPlus className="w-4 h-4" />
                             </button>
                           )}
                           {canModifyStaff(member) && (
-                            <button
-                              onClick={() => handleRemoveStaff(member.id)}
-                              className="text-red-600 hover:text-red-900"
-                              title="Remove from staff"
-                            >
+                            <button onClick={() => handleRemoveStaff(member.id)} className="min-w-[36px] min-h-[36px] flex items-center justify-center p-2 text-red-600 hover:bg-red-50 rounded-lg" title="Remove">
                               <Trash2 className="w-4 h-4" />
                             </button>
                           )}
@@ -521,78 +525,55 @@ const StaffManagement = ({
                     )}
                   </tr>
                 ))}
-                {filteredStaff.length === 0 && (
-                  <tr>
-                    <td colSpan={userRole === 'admin' || userRole === 'manager' ? 5 : 4} className="px-6 py-4 text-center text-gray-500">
-                      No staff members found
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>
         ) : (
-          // Grid View
-          <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredStaff.length === 0 ? (
-              <div className="col-span-full text-center text-gray-500">No staff members found</div>
-            ) : (
-              filteredStaff.map((member) => (
-                <div key={member.id} className="bg-gray-50 rounded-xl shadow p-4 flex flex-col items-center">
+          <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            {filteredStaff.map((member) => (
+              <div key={member.id} className="rounded-xl border border-gray-100 bg-gray-50/30 hover:bg-orange-50/20 hover:border-orange-100 p-4 transition-all shadow-sm">
+                <div className="flex flex-col items-center text-center">
                   <StaffAvatar
                     src={member.connected && member.profiles?.avatar_url ? member.profiles.avatar_url : ''}
                     alt={member.staff_name}
-                    size={64}
+                    size={56}
                   />
-                  <div className="text-base font-semibold text-gray-900 text-center">
+                  <div className="mt-3 font-semibold text-gray-900">
                     {member.connected && member.profiles ? member.profiles.full_name : member.staff_name}
-                    {member.user_id === currentUserId && (
-                      <span className="ml-2 text-xs text-blue-600 font-medium">(You)</span>
-                    )}
+                    {member.user_id === currentUserId && <span className="ml-1 text-xs text-orange-600">(You)</span>}
                   </div>
-                  <div className="text-xs text-gray-500 text-center">{member.staff_email}</div>
-                  <div className="text-xs text-gray-500 text-center">{member.staff_phone_number || 'N/A'}</div>
-                  <div className={`mt-2 px-2 py-1 text-xs rounded-full border font-semibold ${roleConfig[member.staff_role]?.color || 'bg-gray-100 text-gray-800 border-gray-200'}`}>
-                    {roleConfig[member.staff_role]?.icon} {member.staff_role.charAt(0).toUpperCase() + member.staff_role.slice(1)}
-                  </div>
-                  <div className={`mt-1 px-2 py-1 text-xs rounded-full font-semibold ${member.connected ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                    {member.connected ? 'Connected' : 'Not Connected'}
+                  <div className="text-xs text-gray-500 mt-0.5">{member.staff_email}</div>
+                  <div className="text-xs text-gray-500">{member.staff_phone_number || 'No phone'}</div>
+                  <div className="flex flex-wrap justify-center gap-1.5 mt-2">
+                    <span className={`px-2 py-0.5 text-xs font-semibold rounded-full border ${roleConfig[member.staff_role]?.color || 'bg-gray-100 text-gray-800 border-gray-200'}`}>
+                      {member.staff_role.charAt(0).toUpperCase() + member.staff_role.slice(1)}
+                    </span>
+                    <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${member.connected ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
+                      {member.connected ? 'Connected' : 'Not connected'}
+                    </span>
                   </div>
                   {(userRole === 'admin' || userRole === 'manager') && (
                     <div className="flex gap-2 mt-3">
                       {canModifyStaff(member) && (
-                        <button
-                          onClick={() => handleEditStaff(member)}
-                          className="text-blue-600 hover:text-blue-900"
-                          title="Edit staff member"
-                        >
+                        <button onClick={() => handleEditStaff(member)} className="min-w-[36px] min-h-[36px] flex items-center justify-center p-2 text-blue-600 hover:bg-blue-50 rounded-lg" title="Edit">
                           <Edit2 className="w-4 h-4" />
                         </button>
                       )}
                       {!member.connected && (
-                        <button
-                          onClick={() => handleConnectUser(member.id, member.staff_email)}
-                          className="text-blue-600 hover:text-blue-900"
-                          title="Connect to user account"
-                        >
+                        <button onClick={() => handleConnectUser(member.id, member.staff_email)} className="min-w-[36px] min-h-[36px] flex items-center justify-center p-2 text-blue-600 hover:bg-blue-50 rounded-lg" title="Connect">
                           <UserPlus className="w-4 h-4" />
                         </button>
                       )}
                       {canModifyStaff(member) && (
-                        <button
-                          onClick={() => handleRemoveStaff(member.id)}
-                          className="text-red-600 hover:text-red-900"
-                          title="Remove from staff"
-                        >
+                        <button onClick={() => handleRemoveStaff(member.id)} className="min-w-[36px] min-h-[36px] flex items-center justify-center p-2 text-red-600 hover:bg-red-50 rounded-lg" title="Remove">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       )}
                     </div>
                   )}
                 </div>
-              ))
-            )}
+              </div>
+            ))}
           </div>
         )}
       </div>

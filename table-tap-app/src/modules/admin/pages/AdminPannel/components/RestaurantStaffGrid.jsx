@@ -231,7 +231,7 @@ const RestaurantStaffGrid = ({
   ), [displayedStaff.length, filteredRestaurantStaff.length]);
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300 font-spartan">
+    <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300 font-spartan">
       <RestaurantStaffHeader
         restaurant={restaurant}
         restaurantStaff={restaurantStaff}
@@ -246,11 +246,7 @@ const RestaurantStaffGrid = ({
               {/* Grid */}
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" ref={gridRef}>
                 {displayedStaff.map((member, index) => (
-                  <div
-                    key={member.id}
-                    className="transform transition-all duration-300 hover:scale-[1.02]"
-                    style={{ animationDelay: `${index * 50}ms` }}
-                  >
+                  <div key={member.id} className="transition-all duration-300">
                     <StaffCard member={member} index={index} />
                   </div>
                 ))}

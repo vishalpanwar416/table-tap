@@ -1,10 +1,9 @@
-import React, { useEffect, useRef } from 'react';
-import QRCodeStyling from 'qr-code-styling';
+import React, { useEffect, useRef, useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 
-// Table Tap splash screen colors (opening.jsx: white/cyan-100 gradient, gray-800 accent)
-const SPLASH_COLORS = {
-  background: '#cffafe', // Tailwind cyan-100 (splash gradient)
-  dots: '#1f2937',       // Tailwind gray-800 (splash button border/text)
+const QR_COLORS = {
+  background: '#ffffff', // White
+  dots: '#cffafe',      // Cyan-100
 };
 
 const StyledQRCode = ({ value, size = 120, id, onInstanceReady }) => {
@@ -12,47 +11,96 @@ const StyledQRCode = ({ value, size = 120, id, onInstanceReady }) => {
   const instanceRef = useRef(null);
   const onReadyRef = useRef(onInstanceReady);
   onReadyRef.current = onInstanceReady;
+  const [useFallback, setUseFallback] = useState(false);
 
   useEffect(() => {
-    if (!containerRef.current || !value) return;
+    if (!value || typeof value !== 'string') return;
+    setUseFallback(false);
+    if (!containerRef.current) return;
 
-    const qr = new QRCodeStyling({
-      width: size,
-      height: size,
-      type: 'svg',
-      data: value,
-      margin: 8,
-      qrOptions: { errorCorrectionLevel: 'H' },
-      dotsOptions: {
-        color: SPLASH_COLORS.dots,
-        type: 'rounded',
-      },
-      cornersSquareOptions: {
-        color: SPLASH_COLORS.dots,
-        type: 'extra-rounded',
-      },
-      cornersDotOptions: {
-        color: SPLASH_COLORS.dots,
-        type: 'rounded',
-      },
-      backgroundOptions: {
-        color: SPLASH_COLORS.background,
-      },
-    });
+    const container = containerRef.current;
+    container.innerHTML = '';
+    let cancelled = false;
 
-    instanceRef.current = qr;
-    qr.append(containerRef.current);
-    onReadyRef.current?.(qr);
-  }, [value, size]);
+    const run = async () => {
+      try {
+        const mod = await import('qr-code-styling');
+        const QRCodeStyling = mod.default ?? mod.QRCodeStyling;
+        if (cancelled || !containerRef.current || !QRCodeStyling) return;
 
-  useEffect(() => {
+        const qr = new QRCodeStyling({
+          width: size,
+          height: size,
+          type: 'canvas',
+          data: value,
+          margin: 8,
+          qrOptions: { errorCorrectionLevel: 'M' }, // Lower ECC for fewer dots
+          dotsOptions: {
+            type: 'dots', // Modern circular dots
+            gradient: {
+              type: 'linear',
+              rotation: 45,
+              colorStops: [
+                { offset: 0, color: '#2A9D8F' }, // Primary Teal
+                { offset: 1, color: '#264653' }  // Darker Secondary
+              ]
+            }
+          },
+          cornersSquareOptions: {
+            type: 'extra-rounded',
+            color: '#264653'
+          },
+          cornersDotOptions: {
+            type: 'dot',
+            color: '#2A9D8F'
+          },
+          backgroundOptions: {
+            color: '#ffffff',
+          },
+          imageOptions: {
+            crossOrigin: 'anonymous',
+            margin: 10
+          },
+        });
+        if (cancelled || !containerRef.current) return;
+        container.innerHTML = '';
+        instanceRef.current = qr;
+        qr.append(container);
+        onReadyRef.current?.(qr);
+      } catch (err) {
+        if (!cancelled) {
+          console.warn('StyledQRCode: using fallback QR', err);
+          setUseFallback(true);
+        }
+      }
+    };
+
+    run();
     return () => {
+      cancelled = true;
       if (containerRef.current) containerRef.current.innerHTML = '';
       instanceRef.current = null;
     };
-  }, []);
+  }, [value, size]);
 
-  return <div ref={containerRef} id={id} className="styled-qr-container" />;
+  // Fallback: show standard QR with splash colors when qr-code-styling fails (download uses SVG by id)
+  if (useFallback) {
+    return (
+      <div className="styled-qr-container" style={{ width: size, height: size }}>
+        <QRCodeSVG
+          id={id}
+          value={value}
+          size={size}
+          level="H"
+          includeMargin
+          bgColor={QR_COLORS.background}
+          fgColor={QR_COLORS.dots}
+        />
+      </div>
+    );
+  }
+
+  return <div ref={containerRef} id={id} className="styled-qr-container" style={{ width: size, height: size }} />;
 };
 
 export default StyledQRCode;

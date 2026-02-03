@@ -323,11 +323,33 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
 
   const downloadQR = (table) => {
     const instance = qrInstancesRef.current[table.id];
-    if (!instance) return;
-    instance.download({
-      name: `QR-Table-${table.tableNumber}`,
-      extension: 'png',
-    });
+    if (instance && typeof instance.download === 'function') {
+      instance.download({
+        name: `QR-Table-${table.tableNumber}`,
+        extension: 'png',
+      });
+      return;
+    }
+    // Fallback when StyledQRCode used qrcode.react (SVG); download via canvas
+    const el = document.getElementById(`qr-${table.id}`);
+    const svg = el?.tagName === 'svg' ? el : el?.querySelector?.('svg');
+    if (!svg) return;
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    canvas.width = 300;
+    canvas.height = 300;
+    img.onload = () => {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const link = document.createElement('a');
+      link.download = `QR-Table-${table.tableNumber}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    };
+    img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
   };
 
   const filteredTables = tables.filter(table =>
@@ -460,19 +482,6 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
                   </div>
                 )}
 
-                {/* QR Code Preview */}
-                <div className="flex justify-center mb-4">
-                  <div className="bg-white p-2 rounded border">
-                    <QRCodeSVG
-                      id={`qr-${table.id}`}
-                      value={generateQRUrl(table)}
-                      size={120}
-                      level="H"
-                      includeMargin={true}
-                    />
-                  </div>
-                </div>
-
                 {/* Action Buttons */}
                 <div className="flex flex-col gap-2">
                   <button
@@ -482,22 +491,13 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
                     <QrCode size={16} />
                     View Details
                   </button>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => copyToClipboard(generateQRUrl(table))}
-                      className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center gap-2"
-                    >
-                      <Copy size={16} />
-                      Copy URL
-                    </button>
-                    <button
-                      onClick={() => downloadQR(table)}
-                      className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                    >
-                      <Download size={16} />
-                      Download
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => copyToClipboard(generateQRUrl(table))}
+                    className="w-full bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Copy size={16} />
+                    Copy URL
+                  </button>
                 </div>
               </div>
             </div>
@@ -660,9 +660,9 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
               </div>
 
               <div className="text-center mb-6">
-                <div className="p-4 rounded-lg border bg-[#cffafe]/30 inline-block">
+                <div className="p-4 rounded-lg border bg-white inline-block">
                   <StyledQRCode
-                    id={`qr-detail-${selectedTable.id}`}
+                    id={`qr-${selectedTable.id}`}
                     value={generateQRUrl(selectedTable)}
                     size={200}
                     onInstanceReady={(qr) => { qrInstancesRef.current[selectedTable.id] = qr; }}
