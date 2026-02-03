@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import StatsCards from './StatsCards';
-import RevenueChart from './RevenueChart';
+// Lazy load RevenueChart (contains heavy Recharts library ~200KB)
+const RevenueChart = React.lazy(() => import('./RevenueChart'));
 import ActiveOrders from './ActiveOrders';
 import PopularItems from './PopularItems';
 import { generateChartData, formatDate, getStatusIcon, getStatusBadge } from './helpers';
@@ -363,13 +364,23 @@ const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab, restaur
         userRole={userRole}
       />
       {['admin', 'manager', 'owner'].includes(userRole) && (
-        <RevenueChart
-          chartData={chartData}
-          chartPeriod={chartPeriod}
-          isCollapsed={isCollapsed.chart}
-          toggleCollapse={() => toggleCollapse('chart')}
-          onChangePeriod={setChartPeriod}
-        />
+        <Suspense fallback={
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-orange-100/50">
+            <div className="flex items-center justify-between mb-4">
+              <div className="h-6 bg-gray-200 rounded w-32 animate-pulse"></div>
+              <div className="h-8 bg-gray-200 rounded w-24 animate-pulse"></div>
+            </div>
+            <div className="h-64 bg-gray-100 rounded animate-pulse"></div>
+          </div>
+        }>
+          <RevenueChart
+            chartData={chartData}
+            chartPeriod={chartPeriod}
+            isCollapsed={isCollapsed.chart}
+            toggleCollapse={() => toggleCollapse('chart')}
+            onChangePeriod={setChartPeriod}
+          />
+        </Suspense>
       )}
       <ActiveOrders
         orders={activeOrders}

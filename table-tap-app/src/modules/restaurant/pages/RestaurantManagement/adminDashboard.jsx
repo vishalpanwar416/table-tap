@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Sidebar from '../../components/admin/Sidebar';
 import MobileNav from '../../components/admin/MobileNav';
@@ -13,7 +13,8 @@ import InventoryManagement from '../../components/admin/InventoryManagement';
 import LogoutPopup from '../../../shared/components/auth/auth/LogoutPopup';
 import NotificationSound from '../../components/admin/NotificationSound';
 import NotificationToast from '../../components/admin/NotificationToast';
-import AIAnalyticsChat from '../../components/admin/AIAnalyticsChat';
+// Lazy load AI Analytics (contains heavy Recharts library)
+const AIAnalyticsChat = React.lazy(() => import('../../components/admin/AIAnalyticsChat'));
 import ManagerNotificationsToast from '../../components/admin/ManagerNotificationsToast';
 import QRManagement from '../../components/admin/QRManagement/QRManagement';
 import ActivityLogs from '../../components/admin/ActivityLogs';
@@ -741,7 +742,7 @@ const AdminDashboard = () => {
                             <button
                               key={rest.id}
                               onClick={() => handleRestaurantSelect(rest.id)}
-                                className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${rest.id === userRestaurantId
+                              className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${rest.id === userRestaurantId
                                 ? 'bg-orange-100 text-orange-700'
                                 : 'hover:bg-orange-50 text-gray-700'
                                 }`}
@@ -944,7 +945,21 @@ const AdminDashboard = () => {
               {activeTab === 'analytics' && (contextUserRole === 'manager' || contextUserRole === 'admin' || contextUserRole === 'owner' || restaurant?.ai_enabled == true || contextIsAdmin()) && (
                 <div className="h-full flex flex-col">
                   {restaurant?.ai_enabled ? (
-                    <AIAnalyticsChat restaurantId={restaurant?.id} />
+                    <Suspense fallback={
+                      <div className="bg-white rounded-2xl p-6 shadow-sm">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="h-8 w-8 bg-purple-100 rounded-lg animate-pulse"></div>
+                          <div className="h-6 bg-gray-200 rounded w-40 animate-pulse"></div>
+                        </div>
+                        <div className="space-y-3">
+                          <div className="h-4 bg-gray-100 rounded w-3/4 animate-pulse"></div>
+                          <div className="h-4 bg-gray-100 rounded w-1/2 animate-pulse"></div>
+                          <div className="h-32 bg-gray-50 rounded animate-pulse"></div>
+                        </div>
+                      </div>
+                    }>
+                      <AIAnalyticsChat restaurantId={restaurant?.id} />
+                    </Suspense>
                   ) : (
                     <div className="p-4 mb-8 bg-yellow-50 border border-yellow-200 rounded">
                       <p className="text-yellow-800 font-medium">
