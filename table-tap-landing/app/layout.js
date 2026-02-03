@@ -1,4 +1,3 @@
-import { Geist, Geist_Mono } from "next/font/google";
 import dynamic from "next/dynamic";
 import "./globals.css";
 import { ModalProvider } from "./context/ModalContext";
@@ -6,18 +5,6 @@ import StructuredData from "./components/StructuredData";
 
 // Lazy load modal - it's hidden initially and interaction-only
 import LeadModal from "./components/LeadModal";
-
-const geist = Geist({
-  variable: "--font-geist",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-  display: "swap",
-});
 
 export const metadata = {
   metadataBase: new URL('https://table-tap.in'),
@@ -142,18 +129,13 @@ export default function RootLayout({ children }) {
     <html lang="en-IN" className="scroll-smooth" dir="ltr">
       <head>
         <link rel="manifest" href="/manifest.json" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
         <meta name="geo.region" content="IN-TG" />
         <meta name="geo.placename" content="Hyderabad" />
         <meta name="geo.position" content="17.385044;78.486671" />
         <meta name="ICBM" content="17.385044, 78.486671" />
         <StructuredData />
       </head>
-      <body
-        className={`${geist.variable} ${geistMono.variable} font-sans antialiased bg-white text-gray-900`}
-      >
+      <body className="font-sans antialiased bg-white text-gray-900">
         <ModalProvider>
           {children}
           <LeadModal />

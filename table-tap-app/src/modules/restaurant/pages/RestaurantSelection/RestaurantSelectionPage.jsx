@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 import { ChevronLeft, MapPin, Phone, Clock, RefreshCw, Store, ArrowRight, Navigation, Crosshair, ChevronDown, Edit3, Search, X, Crown } from 'lucide-react';
 import { getActiveRestaurants, getClosestRestaurants, getAllRestaurants, searchRestaurants } from './restaurantSelectionService';
 import { useRestaurant } from './RestaurantContext';
@@ -139,6 +140,7 @@ const RestaurantSelectionPage = () => {
   const scrollRef = useRef(null);
   const scrollYRef = useRef(0); // Add this near your other refs
   const scrollTimeoutRef = useRef(null);
+  const locationToastShownRef = useRef(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -357,6 +359,45 @@ const RestaurantSelectionPage = () => {
       // Don't set error here as coordinates are still useful
     }
   };
+
+  // Show location prompt as toast at top when opening page without location (once per visit)
+  useEffect(() => {
+    if (locationToastShownRef.current) return;
+    const timer = setTimeout(() => {
+      if (userLocation || locationLoading || locationError) return;
+      locationToastShownRef.current = true;
+      toast.custom(
+        (t) => (
+          <div
+            className="flex items-center justify-between gap-3 bg-white border border-orange-200 rounded-lg shadow-lg p-3 max-w-md"
+            style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.12)' }}
+          >
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="w-9 h-9 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <MapPin size={18} className="text-white" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-gray-900">Find Restaurants Near You</p>
+                <p className="text-xs text-gray-600 mt-0.5">Enable location for nearby list</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                getUserLocation();
+                toast.dismiss(t.id);
+              }}
+              className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium px-3 py-2 rounded-lg flex-shrink-0 transition-colors"
+            >
+              Enable
+            </button>
+          </div>
+        ),
+        { position: 'top-center', duration: 8000 }
+      );
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [userLocation, locationLoading, locationError]);
 
   // Calculate distance between two points
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -796,37 +837,6 @@ const RestaurantSelectionPage = () => {
         >
           <div className="flex-1 flex flex-col bg-gray-200 rounded-t-3xl overflow-hidden min-h-[500px] px-4 pt-10 pb-6">
 
-            {/* Prominent Location Prompt - Show when no location and no error */}
-            {!userLocation && !locationError && !locationLoading && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-4 bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-3 shadow-sm"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center flex-1">
-                    <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center mr-3">
-                      <MapPin size={18} className="text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xs font-semibold text-gray-900 mb-0.5">
-                        Find Restaurants Near You
-                      </h3>
-                      <p className="text-xs text-gray-600">
-                        Enable location to see nearby restaurants
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={getUserLocation}
-                    className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors shadow-sm"
-                  >
-                    Enable
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
             {/* Location Bar */}
             <div className="mb-6 bg-white rounded-xl py-3 px-3 shadow-sm">
               {showSearch ? (
@@ -873,54 +883,93 @@ const RestaurantSelectionPage = () => {
                   </button>
                 </motion.div>
               ) : (
-                <div className="flex flex-row items-center gap-x-3 flex-wrap animate-in fade-in-0 slide-in-from-left-2 duration-300">
-                  {/* Location Icon and Content */}
-                  <div className="flex flex-row items-center gap-x-3 flex-1 min-w-0">
-                    <div className="relative flex-shrink-0">
-                      <MapPin size={20} className="text-gray-600 mt-0.5" />
-                      <span className={`absolute left-1/2 top-[38%] -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full border-2 border-white ${userLocation ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                <>
+                  {/* Mobile: single scrollable line */}
+                  <div
+                    className="flex sm:hidden items-center gap-2 flex-nowrap overflow-x-auto min-h-[44px] py-1 -mr-3 animate-in fade-in-0 slide-in-from-left-2 duration-300"
+                    style={{ WebkitOverflowScrolling: 'touch' }}
+                  >
+                    <div className="flex items-center gap-2 flex-shrink-0 min-w-0 max-w-[40%]">
+                      <div className="relative flex-shrink-0">
+                        <MapPin size={20} className="text-gray-600" />
+                        <span className={`absolute left-1/2 top-[38%] -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full border-2 border-white ${userLocation ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        {userLocation ? (
+                          <span className="text-sm font-medium text-gray-700 truncate block">{userLocation.address || 'Current Location'}</span>
+                        ) : (
+                          <span className="text-sm font-medium text-gray-700 truncate block">{locationError ? 'Location off' : 'Enable location'}</span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      {userLocation ? (
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-gray-700 truncate">
-                              {userLocation.address || 'Current Location'}
-                            </span>
-                          </div>
-                          <span className="text-xs text-gray-500 block">
-                            Location detected
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="space-y-1">
-                          <span className="text-sm font-medium text-gray-700 block">
-                            {locationError ? 'Location unavailable' : 'Enable location for nearby restaurants'}
-                          </span>
-                          {locationError && (
-                            <span className="text-xs text-red-500 block">
-                              {locationError}
-                            </span>
-                          )}
-                          {!locationError && !userLocation && (
-                            <span className="text-xs text-orange-600 block">
-                              Tap the location button to enable
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  {/* Controls - Location Button, Toggle, and Search */}
-                  <div className="flex gap-2 items-center">
-                    {/* Location Button */}
                     <button
                       onClick={handleLocationRequest}
                       disabled={locationLoading}
-                      className={`flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full transition-colors touch-manipulation flex-shrink-0 ${userLocation
-                        ? 'bg-orange-100 hover:bg-orange-200'
-                        : 'bg-orange-500 hover:bg-orange-600'
-                        }`}
+                      className={`flex items-center justify-center w-9 h-9 rounded-full transition-colors touch-manipulation flex-shrink-0 ${userLocation ? 'bg-orange-100 hover:bg-orange-200' : 'bg-orange-500 hover:bg-orange-600'}`}
+                      aria-label="Get location"
+                      title="Enable location"
+                    >
+                      {locationLoading ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-orange-500 border-t-transparent"></div>
+                      ) : (
+                        <Crosshair size={16} className={userLocation ? 'text-orange-600' : 'text-white'} />
+                      )}
+                    </button>
+                    {isOwner && (
+                      <button
+                        onClick={() => { setShowMyRestaurants(true); setShowAllRestaurants(false); }}
+                        className={`pill-option px-2.5 py-2 rounded-full text-xs font-medium transition-all flex items-center flex-1 min-w-0 justify-center ${showMyRestaurants ? 'bg-amber-600 text-white border-amber-600' : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'} border`}
+                      >
+                        My Restaurants
+                      </button>
+                    )}
+                    {userLocation && (
+                      <button
+                        onClick={() => { setShowAllRestaurants(false); setShowMyRestaurants(false); }}
+                        className={`pill-option px-2.5 py-2 rounded-full text-xs font-medium transition-all flex-shrink-0 ${(!showAllRestaurants && !showMyRestaurants) ? 'bg-gray-600 text-white border-gray-600' : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'} border`}
+                      >
+                        Nearby
+                      </button>
+                    )}
+                    <button
+                      onClick={() => { setShowAllRestaurants(true); setShowMyRestaurants(false); }}
+                      className={`pill-option px-2.5 py-2 rounded-full text-xs font-medium transition-all flex-shrink-0 ${showAllRestaurants ? 'bg-gray-600 text-white border-gray-600' : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'} border`}
+                    >
+                      All
+                    </button>
+                    <button
+                      onClick={handleSearchToggle}
+                      className={`flex items-center justify-center w-9 h-9 rounded-full transition-all touch-manipulation flex-shrink-0 mr-0 ${showSearch ? 'bg-orange-500 text-white hover:bg-orange-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                      aria-label="Search"
+                    >
+                      <Search size={18} className={`transition-transform duration-300 ${showSearch ? 'rotate-90' : 'rotate-0'}`} />
+                    </button>
+                  </div>
+
+                  {/* Desktop (sm and up): single line with full text and Crown on My Restaurants */}
+                  <div
+                    className="hidden sm:flex flex-row items-center gap-x-3 flex-nowrap overflow-x-auto min-h-[44px] py-1 -mr-3 animate-in fade-in-0 slide-in-from-left-2 duration-300"
+                    style={{ WebkitOverflowScrolling: 'touch' }}
+                  >
+                    <div className="flex flex-row items-center gap-x-3 flex-shrink-0 min-w-0">
+                      <div className="relative flex-shrink-0">
+                        <MapPin size={20} className="text-gray-600 mt-0.5" />
+                        <span className={`absolute left-1/2 top-[38%] -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full border-2 border-white ${userLocation ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                      </div>
+                      <div className="min-w-0 max-w-[200px] lg:max-w-[280px]">
+                        {userLocation ? (
+                          <span className="text-sm font-medium text-gray-700 truncate block">{userLocation.address || 'Current Location'}</span>
+                        ) : (
+                          <span className="text-sm font-medium text-gray-700 truncate block">
+                            {locationError ? 'Location unavailable' : 'Enable location for nearby restaurants'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleLocationRequest}
+                      disabled={locationLoading}
+                      className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors touch-manipulation flex-shrink-0 ${userLocation ? 'bg-orange-100 hover:bg-orange-200' : 'bg-orange-500 hover:bg-orange-600'}`}
                       aria-label="Get location"
                     >
                       {locationLoading ? (
@@ -929,65 +978,40 @@ const RestaurantSelectionPage = () => {
                         <Crosshair size={18} className={userLocation ? 'text-orange-600' : 'text-white'} />
                       )}
                     </button>
-                  </div>
-                  {/* Filter Toggles */}
-                  <div className="pill-toggle flex gap-2">
-                    {isOwner && (
+                    <div className="pill-toggle flex gap-2 flex-1 min-w-0">
+                      {isOwner && (
+                        <button
+                          onClick={() => { setShowMyRestaurants(true); setShowAllRestaurants(false); }}
+                          className={`pill-option px-3 py-2 rounded-full text-xs font-medium transition-all duration-300 flex items-center gap-1 flex-1 min-w-0 justify-center whitespace-nowrap ${showMyRestaurants ? 'bg-amber-600 text-white border-amber-600' : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'} border`}
+                        >
+                          <Crown size={12} />
+                          My Restaurants
+                        </button>
+                      )}
+                      {userLocation && (
+                        <button
+                          onClick={() => { setShowAllRestaurants(false); setShowMyRestaurants(false); }}
+                          className={`pill-option px-3 py-2 rounded-full text-xs font-medium transition-all duration-300 flex-shrink-0 whitespace-nowrap ${(!showAllRestaurants && !showMyRestaurants) ? 'bg-gray-600 text-white border-gray-600' : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'} border`}
+                        >
+                          Nearby
+                        </button>
+                      )}
                       <button
-                        onClick={() => {
-                          setShowMyRestaurants(true);
-                          setShowAllRestaurants(false);
-                        }}
-                        className={`pill-option px-3 py-2 rounded-full text-xs font-medium transition-all duration-300 flex items-center gap-1 ${showMyRestaurants
-                          ? 'bg-amber-600 text-white border-amber-600'
-                          : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'
-                          } border`}
+                        onClick={() => { setShowAllRestaurants(true); setShowMyRestaurants(false); }}
+                        className={`pill-option px-3 py-2 rounded-full text-xs font-medium transition-all duration-300 flex-shrink-0 whitespace-nowrap ${showAllRestaurants ? 'bg-gray-600 text-white border-gray-600' : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'} border`}
                       >
-                        <Crown size={12} />
-                        My Restaurants
+                        All
                       </button>
-                    )}
-
-                    {userLocation && (
-                      <button
-                        onClick={() => {
-                          setShowAllRestaurants(false);
-                          setShowMyRestaurants(false);
-                        }}
-                        className={`pill-option px-3 py-2 rounded-full text-xs font-medium transition-all duration-300 ${(!showAllRestaurants && !showMyRestaurants)
-                          ? 'bg-gray-600 text-white border-gray-600'
-                          : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'
-                          } border`}
-                      >
-                        Nearby
-                      </button>
-                    )}
-
+                    </div>
                     <button
-                      onClick={() => {
-                        setShowAllRestaurants(true);
-                        setShowMyRestaurants(false);
-                      }}
-                      className={`pill-option px-3 py-2 rounded-full text-xs font-medium transition-all duration-300 ${showAllRestaurants
-                        ? 'bg-gray-600 text-white border-gray-600'
-                        : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'
-                        } border`}
+                      onClick={handleSearchToggle}
+                      className={`flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300 touch-manipulation flex-shrink-0 mr-0 ${showSearch ? 'bg-orange-500 text-white hover:bg-orange-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                      aria-label="Search"
                     >
-                      All
+                      <Search size={18} className={`transition-transform duration-300 ${showSearch ? 'rotate-90' : 'rotate-0'}`} />
                     </button>
                   </div>
-                  {/* Search Button */}
-                  <button
-                    onClick={handleSearchToggle}
-                    className={`flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full transition-all duration-300 touch-manipulation flex-shrink-0 transform hover:scale-105 ${showSearch
-                      ? 'bg-orange-500 text-white hover:bg-orange-600'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                    aria-label="Search"
-                  >
-                    <Search size={18} className={`transition-transform duration-300 ${showSearch ? 'rotate-90' : 'rotate-0'}`} />
-                  </button>
-                </div>
+                </>
               )}
             </div>
 

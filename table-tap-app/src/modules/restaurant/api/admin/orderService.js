@@ -1,4 +1,4 @@
-import { supabase } from '../../../shared/supabase';
+import { supabase, SUPABASE_URL } from '../../../shared/supabase';
 import { createNotification } from '../../../shared/api/notificationService';
 import { logActivity } from '../../../shared/api/activityLogService';
 import axios from 'axios';
@@ -28,7 +28,7 @@ export const processRefund = async (order) => {
 
     // Call the Supabase edge function to process refund
     const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-refund`,
+      `${SUPABASE_URL}/functions/v1/process-refund`,
       {
         method: 'POST',
         headers: {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom';
 import Sidebar from '../../components/admin/Sidebar';
 import MobileNav from '../../components/admin/MobileNav';
 import DashboardOverview from '../../components/admin/DashboardOverviewComponents/DashboardOverview';
@@ -28,8 +28,22 @@ import { useAdminRestaurant } from '../../../shared/context/AdminRestaurantConte
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { restaurantId } = useParams();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTabState] = useState('dashboard');
+  const tabFromUrlInitialized = useRef(false);
+
+  // Keep URL in sync with active tab and provide a single setter for tab changes
+  const setActiveTab = (tab) => {
+    setActiveTabState(tab);
+    setSearchParams(params => {
+      const next = new URLSearchParams(params);
+      if (tab && tab !== 'dashboard') next.set('tab', tab);
+      else next.delete('tab');
+      return next;
+    }, { replace: true });
+  };
   const [foodItems, setFoodItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showMobileNav, setShowMobileNav] = useState(false);
@@ -302,14 +316,15 @@ const AdminDashboard = () => {
           // Allowed roles
           const allowedRoles = ['manager', 'admin', 'captain', 'owner', 'chef', 'waiter', 'cashier'];
 
-          // If user is not in allowed roles, redirect
+          // If user is not in allowed roles, redirect to restaurant login (stay in restaurant app)
           if (!allowedRoles.includes(role)) {
-            navigate('/home');
+            navigate('/login');
             return;
           }
         }
       } catch (error) {
-        navigate('/home');
+        // On profile fetch error, don't redirect to customer home; stay on dashboard and let user retry
+        console.error('Dashboard: failed to load profile', error);
       }
     };
     fetchUserProfile();
@@ -332,6 +347,17 @@ const AdminDashboard = () => {
       return [];
     }
   };
+
+  // Restore active tab from URL on load (e.g. after refresh) so user stays on the same page
+  useEffect(() => {
+    if (menuItems.length === 0 || tabFromUrlInitialized.current) return;
+    const allowedIds = menuItems.map(item => item.id);
+    const tabFromUrl = searchParams.get('tab');
+    if (tabFromUrl && allowedIds.includes(tabFromUrl)) {
+      setActiveTab(tabFromUrl);
+    }
+    tabFromUrlInitialized.current = true;
+  }, [menuItems, searchParams]);
 
   // Redirect to first allowed tab if current activeTab is restricted
   useEffect(() => {
@@ -886,7 +912,10 @@ const AdminDashboard = () => {
               )}
 
               {activeTab === 'floor-plan' && (
-                <FloorPlanView searchTerm={searchTerm} />
+                <FloorPlanView
+                  searchTerm={searchTerm}
+                  onViewOrders={() => setActiveTab('orders')}
+                />
               )}
 
               {activeTab === 'menu' && (

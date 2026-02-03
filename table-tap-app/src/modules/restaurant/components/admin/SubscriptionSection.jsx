@@ -179,7 +179,7 @@ const SubscriptionSection = ({ restaurantId }) => {
                 .eq('id', restaurantId)
                 .maybeSingle();
 
-            const razorpayKey = restaurantData?.razorpay_key_id || import.meta.env.VITE_RAZORPAY_KEY_ID;
+            const razorpayKey = restaurantData?.razorpay_key_id || process.env.REACT_APP_RAZORPAY_KEY_ID || process.env.VITE_RAZORPAY_KEY_ID;
 
             if (!razorpayKey) {
                 alert('Payment gateway not configured. Please contact support.');

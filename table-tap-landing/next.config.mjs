@@ -1,5 +1,12 @@
+import path from 'path';
+import { fileURLToPath } from 'url';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Monorepo: explicitly set root to silence lockfile/root inference warnings
+  outputFileTracingRoot: path.join(__dirname, '..'),
+
   // Performance optimizations
   reactStrictMode: true,
   poweredByHeader: false,
