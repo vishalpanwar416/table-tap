@@ -54,7 +54,7 @@ const Features = () => {
                                 style={{ animationDelay: `${index * 0.1}s` }}
                             >
                                 <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-[24px] sm:rounded-[32px] bg-[#0F172A] shadow-2xl flex items-center justify-center mb-6 sm:mb-10 group-hover:rotate-12 transition-transform duration-500" aria-hidden="true">
-                                    <Icon className="text-[#2A9D8F]" size={32} className="sm:w-10 sm:h-10 md:w-[42px] md:h-[42px]" aria-hidden="true" />
+                                    <Icon className="text-[#2A9D8F] w-8 h-8 sm:w-10 sm:h-10 md:w-[42px] md:h-[42px]" aria-hidden="true" />
                                 </div>
                                 <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 mb-4 sm:mb-6 tracking-tight">{feature.title}</h3>
                                 <p className="text-gray-500 leading-relaxed font-bold text-sm sm:text-base opacity-80">{feature.description}</p>
