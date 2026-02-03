@@ -79,14 +79,20 @@ const AuthCallback = () => {
         const role = profile?.profile_role || 'customer';
         clearTimeout(timeout);
 
-        if (role === 'admin') {
+        // Check environment context
+        const h = (typeof window !== 'undefined' && window.location.hostname || '').toLowerCase();
+        const path = window.location.pathname;
+
+        // Determine if we are in a specific app context
+        const isAdminContext = h.startsWith('admin.') || path.startsWith('/admin');
+        const isRestaurantContext = h.startsWith('restaurant.') || h.startsWith('manager.') || path.startsWith('/restaurant');
+
+        if (role === 'admin' && isAdminContext) {
           setStatus('Welcome back, Admin');
-          const h = (typeof window !== 'undefined' && window.location.hostname || '').toLowerCase();
           navigate(h.startsWith('admin.') ? '/' : '/admin', { replace: true });
-        } else if (role === 'manager' || role === 'captain') {
+        } else if ((role === 'manager' || role === 'captain') && isRestaurantContext) {
           setStatus('Welcome back, Manager');
-          const h = (typeof window !== 'undefined' && window.location.hostname || '').toLowerCase();
-          navigate(h.startsWith('restaurant.') || h.startsWith('manager.') ? '/' : '/restaurant', { replace: true });
+          navigate((h.startsWith('restaurant.') || h.startsWith('manager.')) ? '/' : '/restaurant', { replace: true });
         } else {
           setStatus('Checking profile...');
           const isComplete = Boolean(profile?.mobile_number && profile?.date_of_birth);

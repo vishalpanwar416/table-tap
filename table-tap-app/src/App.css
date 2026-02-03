@@ -58,3 +58,8 @@ input, textarea {
   -webkit-user-select: text;
   user-select: text;
 }
+
+/* Helper to force white text in dark sections where components have hardcoded text-black */
+.homepage-dark-section .text-black {
+  color: white !important;
+}

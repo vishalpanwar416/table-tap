@@ -13,8 +13,10 @@ import InstallPrompt from './modules/shared/components/InstallPrompt';
 import { register } from './modules/shared/utils/serviceWorkerRegistration';
 import { getSubdomain, isDevelopment } from './modules/shared/utils/subdomainRouter';
 
-// Lazy load app modules for better performance
-const CustomerApp = lazy(() => import('./modules/customer/CustomerApp'));
+// Eagerly load CustomerApp for immediate Splash Screen (no initial loading spinner)
+import CustomerApp from './modules/customer/CustomerApp';
+
+// Lazy load other app modules for better performance
 const RestaurantApp = lazy(() => import('./modules/restaurant/RestaurantApp'));
 const AdminApp = lazy(() => import('./modules/admin/AdminApp'));
 const AuthCallback = lazy(() => import('./modules/shared/components/auth/AuthCallback'));
@@ -109,9 +111,7 @@ const App = () => {
 
           {/* Customer app routes (Catch-all for development) */}
           <Route path="/*" element={
-            <Suspense fallback={<LoadingSpinner />}>
-              <CustomerApp />
-            </Suspense>
+            <CustomerApp />
           } />
         </Routes>
       );
@@ -143,9 +143,7 @@ const App = () => {
     // Explicitly handle restaurant-selection via CustomerApp BEFORE checking /restaurant prefix
     if (pathname.startsWith('/restaurant-selection')) {
       return (
-        <Suspense fallback={<LoadingSpinner />}>
-          <CustomerApp />
-        </Suspense>
+        <CustomerApp />
       );
     }
 
@@ -162,9 +160,7 @@ const App = () => {
     switch (subdomain) {
       case 'app':
         return (
-          <Suspense fallback={<LoadingSpinner />}>
-            <CustomerApp />
-          </Suspense>
+          <CustomerApp />
         );
       case 'restaurant':
         return (
@@ -181,9 +177,7 @@ const App = () => {
       case 'landing':
       default:
         return (
-          <Suspense fallback={<LoadingSpinner />}>
-            <CustomerApp />
-          </Suspense>
+          <CustomerApp />
         );
     }
   };
