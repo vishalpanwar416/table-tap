@@ -1,29 +1,34 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable React strict mode for better debugging
+  // Performance optimizations
   reactStrictMode: true,
-  
-  // Compress responses
+  poweredByHeader: false,
   compress: true,
-  
+
+  // Compiler options
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+
   // Optimize images
   images: {
     formats: ['image/avif', 'image/webp'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256],
-    minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 31536000,
   },
-  
+
   // Experimental optimizations
   experimental: {
-    optimizeCss: true,
+    optimizeCss: true, // Requires 'critters' package
+    optimizePackageImports: ['lucide-react', 'framer-motion'], // Tree shake these icons/anim libs
   },
-  
-  // Headers for caching
+
+  // Headers for aggressive caching
   async headers() {
     return [
       {
-        source: '/:all*(svg|jpg|jpeg|png|gif|ico|webp|avif)',
+        source: '/:all*(svg|jpg|jpeg|png|gif|ico|webp|avif|woff2)',
         headers: [
           {
             key: 'Cache-Control',
@@ -37,6 +42,16 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      // Cache HTML pages with stale-while-revalidate for instant subsequent loads
+      {
+        source: '/',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=3600, stale-while-revalidate=86400',
           },
         ],
       },
