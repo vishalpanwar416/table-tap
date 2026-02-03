@@ -25,6 +25,7 @@ import {
 const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) => {
   const { restaurant, userRole, isAdmin, canEdit, refreshRestaurant } = useAdminRestaurant();
   const [tables, setTables] = useState([]);
+  const qrInstancesRef = useRef({}); // Store QR instances for download
 
   const [selectedTable, setSelectedTable] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
