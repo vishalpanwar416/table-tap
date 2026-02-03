@@ -68,6 +68,16 @@ const RestaurantSelectionWrapper = ({ children }) => {
     }
   }, [user, authLoading, loading, location.pathname, navigate, urlRestaurant, urlTable]);
 
+  // If there's an authentication error, redirect to login
+  useEffect(() => {
+    if (error === 'AUTH_ERROR') {
+      // Clear session and redirect to login
+      clearSession();
+      const returnUrl = location.pathname + location.search;
+      navigate(`/login?redirect=${encodeURIComponent(returnUrl)}`, { replace: true });
+    }
+  }, [error, navigate, clearSession, location.pathname, location.search]);
+
   if (checking || authLoading || loading) {
     return <LoadingScreen message="Verifying session..." variant="page" />;
   }
@@ -80,16 +90,6 @@ const RestaurantSelectionWrapper = ({ children }) => {
     // If we are somehow on /restaurant-selection (even if wrapped), allow it to render
     // note: typically /restaurant-selection should NOT be wrapped by this component
   }
-
-  // If there's an authentication error, redirect to login
-  useEffect(() => {
-    if (error === 'AUTH_ERROR') {
-      // Clear session and redirect to login
-      clearSession();
-      const returnUrl = location.pathname + location.search;
-      navigate(`/login?redirect=${encodeURIComponent(returnUrl)}`, { replace: true });
-    }
-  }, [error, navigate, clearSession, location.pathname, location.search]);
 
   // If there's an error (and it's not an auth error), show error state
   if (error && error !== 'AUTH_ERROR') {
