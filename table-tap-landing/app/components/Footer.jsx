@@ -1,4 +1,4 @@
-'use client';
+
 
 import { Globe, Instagram, Twitter, Linkedin, Facebook, Mail, Phone, MapPin } from 'lucide-react';
 import Image from 'next/image';
@@ -27,10 +27,10 @@ const Footer = () => {
                     <div className="shrink-0 text-center lg:text-left">
                         <a href="#home" className="inline-flex items-center gap-3 mb-4 group min-h-[44px]">
                             <div className="h-10 sm:h-12 rounded-xl overflow-hidden group-hover:scale-105 transition-transform bg-white/10 p-1">
-                                <Image 
-                                    src="/logo.png" 
-                                    alt="Table Tap Logo" 
-                                    width={120} 
+                                <Image
+                                    src="/logo.png"
+                                    alt="Table Tap Logo"
+                                    width={120}
                                     height={48}
                                     className="h-full w-auto object-contain brightness-0 invert"
                                 />

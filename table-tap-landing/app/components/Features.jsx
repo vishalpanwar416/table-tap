@@ -1,4 +1,4 @@
-'use client';
+
 
 import {
     Zap, Lock, Smartphone, Globe, Headphones, Palette, Sparkles, ArrowRight, Building2, BarChart3
