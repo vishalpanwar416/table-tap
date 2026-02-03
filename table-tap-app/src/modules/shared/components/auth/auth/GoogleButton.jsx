@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { FcGoogle } from 'react-icons/fc';
 import { supabase } from '../../../supabase';
 import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import GoogleIcon from '../../icons/GoogleIcon';
+
+
 
 const GoogleButton = ({ loading = false, redirectTo = '' }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -15,17 +17,17 @@ const GoogleButton = ({ loading = false, redirectTo = '' }) => {
       const urlParams = new URLSearchParams(location.search);
       const restaurant = urlParams.get('restaurant');
       const table = urlParams.get('table');
-      
+
       let finalRedirectTo = redirectTo;
       if (!finalRedirectTo) {
         finalRedirectTo = '/auth-callback';
       }
-      
+
       // Add parameters to redirect URL if they exist
       if (restaurant && table) {
         finalRedirectTo += `?restaurant=${restaurant}&table=${table}`;
       }
-      
+
       await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -76,7 +78,7 @@ const GoogleButton = ({ loading = false, redirectTo = '' }) => {
           />
         ) : (
           <motion.span key="icon" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <FcGoogle size={20} />
+            <GoogleIcon size={20} />
           </motion.span>
         )}
       </AnimatePresence>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaShoppingCart, FaBell, FaUser, FaSlidersH } from 'react-icons/fa';
+import { ShoppingCart, Bell, User, SlidersHorizontal } from 'lucide-react';
 
 const DashboardHeader = () => {
   return (
@@ -13,19 +13,19 @@ const DashboardHeader = () => {
             placeholder="Search"
             className="w-full py-2 px-4 pr-10 rounded-full text-black focus:outline-none"
           />
-          <FaSlidersH className="absolute right-3 top-1/2 transform -translate-y-1/2 text-black" />
+          <SlidersHorizontal className="absolute right-3 top-1/2 transform -translate-y-1/2 text-black" size={18} />
         </div>
 
         {/* Icons */}
         <div className="flex items-center gap-3 ml-4">
           <div className="bg-white text-black p-2 rounded-full cursor-pointer">
-            <FaShoppingCart />
+            <ShoppingCart size={18} />
           </div>
           <div className="bg-white text-black p-2 rounded-full cursor-pointer">
-            <FaBell />
+            <Bell size={18} />
           </div>
           <div className="bg-white text-black p-2 rounded-full cursor-pointer">
-            <FaUser />
+            <User size={18} />
           </div>
         </div>
       </div>

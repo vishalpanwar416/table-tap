@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaSearch, FaTimes } from 'react-icons/fa';
+import { Search, X } from 'lucide-react';
 
 const SearchBar = () => {
   const [isActive, setIsActive] = useState(false);
@@ -13,12 +13,11 @@ const SearchBar = () => {
       <input
         type="text"
         placeholder=" Search"
-        className={`transition-all duration-500 ease-in-out bg-white text-gray-700 text-base outline-none font-medium rounded-xl justify-right ${
-          isActive ? 'w-600 pr-4' : 'w-0'
-        }`}
+        className={`transition-all duration-500 ease-in-out bg-white text-gray-700 text-base outline-none font-medium rounded-xl justify-right ${isActive ? 'w-600 pr-4' : 'w-0'
+          }`}
       />
       <div onClick={toggleSearch} className="cursor-pointer text-gray-400 text-xl ml-2">
-        {isActive ? <FaTimes /> : <FaSearch />}
+        {isActive ? <X size={20} /> : <Search size={20} />}
       </div>
     </div>
   );

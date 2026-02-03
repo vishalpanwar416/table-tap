@@ -3,7 +3,7 @@ import { ChevronLeft, Eye, EyeOff, Store } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useBasePathNavigate } from '../../../shared/config/BasePathContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FcGoogle } from 'react-icons/fc';
+import GoogleIcon from '../../../shared/components/icons/GoogleIcon';
 import { authService } from '../../../shared/api/authService';
 import { supabase } from '../../../shared/supabase';
 
@@ -286,7 +286,7 @@ export default function RestaurantLoginPage() {
                             {loading ? (
                                 <span className="inline-block h-5 w-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
                             ) : (
-                                <FcGoogle size={22} />
+                                <GoogleIcon size={22} />
                             )}
                             <span>{loading ? 'Signing in...' : 'Continue with Google'}</span>
                         </motion.button>

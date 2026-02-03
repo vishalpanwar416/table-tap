@@ -1,6 +1,6 @@
 'use client'
 import React from 'react';
-import { FaShoppingCart, FaBell, FaUser, FaSlidersH } from 'react-icons/fa';
+import { ShoppingCart, Bell, User, SlidersHorizontal, Menu, Search, ShoppingBag, X } from 'lucide-react';
 import { Fragment, useState } from 'react'
 import {
   Dialog,
@@ -16,7 +16,6 @@ import {
   TabPanel,
   TabPanels,
 } from '@headlessui/react'
-import { Bars3Icon, MagnifyingGlassIcon, ShoppingBagIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import SearchBar from '../components/Searchbar/SearchBar'
 const navigation = {
   categories: [
@@ -167,7 +166,7 @@ export default function Navigation() {
               >
                 <span className="absolute -inset-0.5" />
                 <span className="sr-only">Close menu</span>
-                <XMarkIcon aria-hidden="true" className="size-6" />
+                <X aria-hidden="true" className="size-6" />
               </button>
             </div>
 
@@ -272,7 +271,7 @@ export default function Navigation() {
               >
                 <span className="absolute -inset-0.5" />
                 <span className="sr-only">Open menu</span>
-                <Bars3Icon aria-hidden="true" className="size-6" />
+                <Menu aria-hidden="true" className="size-6" />
               </button>
 
               {/* Logo */}
@@ -379,12 +378,12 @@ export default function Navigation() {
                 </div>
 
                 {/* Search */}
-                <SearchBar/>
+                <SearchBar />
 
                 {/* Cart */}
                 <div className="ml-4 flow-root lg:ml-6">
                   <a href="#" className="group -m-2 flex items-center p-2">
-                    <ShoppingBagIcon
+                    <ShoppingBag
                       aria-hidden="true"
                       className="size-6 shrink-0 text-gray-400 group-hover:text-gray-500"
                     />
