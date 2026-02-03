@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit, Plus, X, Upload, Image as ImageIcon, Save, RotateCcw, Tag, DollarSign, FileText, Hash } from 'lucide-react';
+import { Edit, Plus, X, Upload, Image as ImageIcon, Save, RotateCcw, Tag, IndianRupee, FileText, Hash } from 'lucide-react';
 import { categories } from '../../../../customer/api/foodData';
 import { createFoodItem, updateFoodItem, uploadFoodImage } from '../../../../customer/api/foodService';
 import { useAdminRestaurant } from '../../../../shared/context/AdminRestaurantContext';
@@ -217,7 +217,7 @@ const FoodItemForm = ({
           {/* Pricing Section */}
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm mb-4">
             <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-green-500" />
+              <IndianRupee className="w-5 h-5 text-green-500" />
               Pricing & Discounts
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -425,10 +425,10 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
     setConfirmModal({ show: true, type, order });
   };
 
-  // Helper: Render status dashboard card
+  // Helper: Render status dashboard card (explicit Tailwind classes for status colors)
   const StatusCard = ({ status }) => (
     <div
-      className={`p-2 sm:p-3 rounded-lg bg-white shadow-sm border-l-4 border-${STATUS_META[status].color}-400 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === status ? `ring-2 ring-${STATUS_META[status].color}-400` : ''}`}
+      className={`p-2 sm:p-3 rounded-lg bg-white shadow-sm border-l-4 cursor-pointer hover:shadow-md transition-shadow ${STATUS_META[status].cardBorder} ${statusFilter === status ? STATUS_META[status].cardRing : ''}`}
       onClick={() => setStatusFilter(statusFilter === status ? 'all' : status)}
     >
       <div className="flex items-center justify-between">
@@ -436,8 +436,8 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
           <p className="text-[10px] sm:text-xs text-gray-500 uppercase font-medium">{STATUS_META[status].label}</p>
           <p className="text-xl sm:text-2xl font-bold text-gray-800">{statusCounts[status]}</p>
         </div>
-        <div className={`flex flex-col items-end`}>
-          <div className={`p-1.5 sm:p-2 rounded-full bg-${STATUS_META[status].color}-100`}>
+        <div className="flex flex-col items-end">
+          <div className={`p-1.5 sm:p-2 rounded-full ${STATUS_META[status].iconBg}`}>
             {STATUS_META[status].icon}
           </div>
           {/* Download button for this status */}
@@ -464,21 +464,22 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
   );
 
   // Helper: Render action buttons for each order status
+  const actionBtnClass = 'flex items-center justify-center min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 p-2.5 sm:p-1.5 rounded-full touch-manipulation active:opacity-90 transition-colors';
   const ActionButtons = ({ order }) => {
     if (order.status === 'pending') {
       return (
         <>
-          <button onClick={() => openConfirmModal(order, 'accept')} className="p-1.5 rounded-full bg-green-100 text-green-600 hover:bg-green-200" title="Accept Order" disabled={isLoading}><Check size={16} /></button>
-          <button onClick={() => openConfirmModal(order, 'rejected')} className="p-1.5 rounded-full bg-red-100 text-red-600 hover:bg-red-200" title="Reject Order" disabled={isLoading}><X size={16} /></button>
+          <button onClick={() => openConfirmModal(order, 'accept')} className={`${actionBtnClass} bg-green-100 text-green-600 hover:bg-green-200`} title="Accept Order" disabled={isLoading}><Check size={18} className="sm:w-4 sm:h-4" /></button>
+          <button onClick={() => openConfirmModal(order, 'rejected')} className={`${actionBtnClass} bg-red-100 text-red-600 hover:bg-red-200`} title="Reject Order" disabled={isLoading}><X size={18} className="sm:w-4 sm:h-4" /></button>
         </>
       );
     }
     if (order.status === 'preparing') {
       return (
         <>
-          <button onClick={() => handlePrintKOT(order)} className="p-1.5 rounded-full bg-orange-100 text-orange-600 hover:bg-orange-200" title="Print KOT"><Printer size={16} /></button>
-          <button onClick={() => openConfirmModal(order, 'ready')} className="px-2 py-1 sm:px-4 sm:py-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 flex items-center transition-colors" disabled={isLoading} title="Mark as Ready">
-            <CheckCircle size={16} className="mr-0 sm:mr-1" />
+          <button onClick={() => handlePrintKOT(order)} className={`${actionBtnClass} bg-orange-100 text-orange-600 hover:bg-orange-200`} title="Print KOT"><Printer size={18} className="sm:w-4 sm:h-4" /></button>
+          <button onClick={() => openConfirmModal(order, 'ready')} className="min-h-[44px] sm:min-h-0 px-3 py-2.5 sm:px-4 sm:py-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 flex items-center transition-colors touch-manipulation" disabled={isLoading} title="Mark as Ready">
+            <CheckCircle size={18} className="mr-0 sm:mr-1 sm:w-4 sm:h-4" />
             <span className="hidden sm:inline">Ready</span>
           </button>
         </>
@@ -486,8 +487,8 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
     }
     if (order.status === 'ready') {
       return (
-        <button onClick={() => openConfirmModal(order, 'complete')} className="px-2 py-1 sm:px-4 sm:py-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 flex items-center transition-colors" disabled={isLoading} title="Complete">
-          <Check size={16} className="mr-0 sm:mr-1" />
+        <button onClick={() => openConfirmModal(order, 'complete')} className="min-h-[44px] sm:min-h-0 px-3 py-2.5 sm:px-4 sm:py-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 flex items-center transition-colors touch-manipulation" disabled={isLoading} title="Complete">
+          <Check size={18} className="mr-0 sm:mr-1 sm:w-4 sm:h-4" />
           <span className="hidden sm:inline">Complete</span>
         </button>
       );
@@ -498,12 +499,12 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
       
       return (
         <>
-          <button onClick={() => handlePrintBill(order)} className="p-1.5 rounded-full bg-orange-100 text-orange-600 hover:bg-orange-200" title="Print Bill"><Printer size={16} /></button>
+          <button onClick={() => handlePrintBill(order)} className={`${actionBtnClass} bg-orange-100 text-orange-600 hover:bg-orange-200`} title="Print Bill"><Printer size={18} className="sm:w-4 sm:h-4" /></button>
           {emailEnabled && (
-            <button onClick={() => openEmailBillModal(order)} className="p-1.5 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200" title="Email Bill"><Mail size={16} /></button>
+            <button onClick={() => openEmailBillModal(order)} className={`${actionBtnClass} bg-blue-100 text-blue-600 hover:bg-blue-200`} title="Email Bill"><Mail size={18} className="sm:w-4 sm:h-4" /></button>
           )}
           {whatsappEnabled && (
-            <button onClick={() => openWhatsAppBillModal(order)} className="p-1.5 rounded-full bg-green-100 text-green-600 hover:bg-green-200" title="WhatsApp Bill"><MessageCircle size={16} /></button>
+            <button onClick={() => openWhatsAppBillModal(order)} className={`${actionBtnClass} bg-green-100 text-green-600 hover:bg-green-200`} title="WhatsApp Bill"><MessageCircle size={18} className="sm:w-4 sm:h-4" /></button>
           )}
         </>
       );
@@ -789,7 +790,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
           </button>
         </div>
         {overviewOpen && (
-          <div id="order-status-overview" className="grid grid-cols-2 md:grid-cols-6 gap-4">
+          <div id="order-status-overview" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 sm:gap-4">
             {['pending', 'preparing', 'ready', 'completed', 'rejected'].map(status => (
               <StatusCard key={status} status={status} />
             ))}
@@ -799,7 +800,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                 <p className="text-xs text-gray-500 uppercase font-medium">Download</p>
                 <button
                   onClick={() => setShowDownloadMenu((prev) => !prev)}
-                  className="p-2 rounded-full bg-orange-100 hover:bg-orange-200 transition-colors cursor-pointer"
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-full bg-orange-100 hover:bg-orange-200 transition-colors cursor-pointer touch-manipulation"
                   title="Download Orders as Excel"
                 >
                   <Download className="h-5 w-5 text-orange-500" />
@@ -809,31 +810,31 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                 {showDownloadMenu && (
                   <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-48">
                     <div
-                      className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100"
+                      className="min-h-[44px] flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 touch-manipulation"
                       onClick={() => handleDownload('daily')}
                     >
                       Download Daily Orders
                     </div>
                     <div
-                      className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100"
+                      className="min-h-[44px] flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 touch-manipulation"
                       onClick={() => handleDownload('weekly')}
                     >
                       Download Weekly Orders
                     </div>
                     <div
-                      className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100"
+                      className="min-h-[44px] flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 touch-manipulation"
                       onClick={() => handleDownload('monthly')}
                     >
                       Download Monthly Orders
                     </div>
                     <div
-                      className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100"
+                      className="min-h-[44px] flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 touch-manipulation"
                       onClick={() => handleDownload('filtered')}
                     >
                       Download Filtered Orders
                     </div>
                     <div
-                      className="px-4 py-2 hover:bg-gray-50 cursor-pointer"
+                      className="min-h-[44px] flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer touch-manipulation"
                       onClick={() => handleDownload('all')}
                     >
                       Download All (3 Sheets)
@@ -846,139 +847,136 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
         )}
       </div>
 
-      {/* Enhanced Header Section */}
-      <div className="px-3 sm:px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="flex items-center">
+      {/* Toolbar: stacked on mobile/tablet, single row on desktop; touch-friendly */}
+      <div className="px-3 sm:px-6 py-3 sm:py-2 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-2 w-full">
+          {/* Row 1 on mobile: View + filters; Create Order on the right */}
+          <div className="flex flex-wrap items-center gap-3 sm:gap-3 flex-1 min-w-0">
             {isLoading && (
-              <RefreshCw size={20} className="text-orange-500 animate-spin" />
+              <RefreshCw size={18} className="text-orange-500 animate-spin flex-shrink-0" aria-hidden />
             )}
-          </div>
-
-          <div className="flex flex-row items-center gap-2 w-full lg:w-auto justify-between sm:justify-start">
-
-            {/* Enhanced View Switcher */}
-            <div className="flex items-center bg-gray-100 rounded-xl p-1">
+            <div className="flex items-center bg-gray-100 rounded-lg p-0.5 flex-shrink-0">
               <button
                 onClick={() => setViewType('tiles')}
-                className={`flex items-center px-4 py-2 rounded-lg transition-all duration-200 ${viewType === 'tiles'
+                className={`flex items-center min-h-[44px] sm:min-h-0 px-3 py-2 sm:px-2 sm:py-1 rounded-md text-sm transition-all duration-200 touch-manipulation ${viewType === 'tiles'
                   ? 'bg-white text-orange-600 shadow-sm'
-                  : 'text-gray-600 hover:text-orange-600'
+                  : 'text-gray-600 hover:text-orange-600 active:bg-gray-200'
                   }`}
+                aria-pressed={viewType === 'tiles'}
               >
-                <Grid size={16} className="mr-2" />
+                <Grid size={16} className="mr-1.5 sm:mr-1 sm:w-3.5 sm:h-3.5" />
                 Tiles
               </button>
               <button
                 onClick={() => setViewType('table')}
-                className={`flex items-center px-4 py-2 rounded-lg transition-all duration-200 ${viewType === 'table'
+                className={`flex items-center min-h-[44px] sm:min-h-0 px-3 py-2 sm:px-2 sm:py-1 rounded-md text-sm transition-all duration-200 touch-manipulation ${viewType === 'table'
                   ? 'bg-white text-orange-600 shadow-sm'
-                  : 'text-gray-600 hover:text-orange-600'
+                  : 'text-gray-600 hover:text-orange-600 active:bg-gray-200'
                   }`}
+                aria-pressed={viewType === 'table'}
               >
-                <List size={16} className="mr-2" />
+                <List size={16} className="mr-1.5 sm:mr-1 sm:w-3.5 sm:h-3.5" />
                 Table
               </button>
             </div>
-
-            {/* Create Order Button */}
+            {/* All Status filter - icon in separate column so it never overlaps text */}
+            <div className="flex flex-shrink-0 min-w-[8.5rem] flex-1 sm:flex-initial sm:w-40 border border-gray-200 rounded-lg bg-white overflow-hidden focus-within:ring-2 focus-within:ring-orange-500 focus-within:border-transparent">
+              <div className="flex items-center justify-center w-10 flex-shrink-0 bg-gray-50 border-r border-gray-200 text-gray-500">
+                <Filter size={18} className="shrink-0" aria-hidden />
+              </div>
+              <div className="relative flex-1 min-w-0">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full min-h-[44px] sm:min-h-0 pl-3 pr-9 py-2.5 sm:py-1.5 text-sm border-0 bg-transparent focus:outline-none focus:ring-0 touch-manipulation text-gray-900 appearance-none bg-none"
+                  style={{ WebkitAppearance: 'none', MozAppearance: 'none', backgroundImage: 'none' }}
+                  aria-label="Filter by status"
+                >
+                  <option value="all">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="preparing">Preparing</option>
+                  <option value="ready">Ready</option>
+                  <option value="completed">Completed</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+                <div className="absolute right-0 top-0 bottom-0 w-9 flex items-center justify-center pointer-events-none text-gray-400">
+                  <ChevronDown size={18} className="shrink-0" aria-hidden />
+                </div>
+              </div>
+            </div>
+            {/* Sort (Newest First) filter - icon in separate column so it never overlaps text */}
+            <div className="flex flex-shrink-0 min-w-[9.5rem] flex-1 sm:flex-initial sm:w-44 border border-gray-200 rounded-lg bg-white overflow-hidden focus-within:ring-2 focus-within:ring-orange-500 focus-within:border-transparent">
+              <div className="flex items-center justify-center w-10 flex-shrink-0 bg-gray-50 border-r border-gray-200 text-gray-500">
+                <Filter size={18} className="shrink-0" aria-hidden />
+              </div>
+              <div className="relative flex-1 min-w-0">
+                <select
+                  value={`${sortBy}-${sortDirection}`}
+                  onChange={(e) => {
+                    const [newSortBy, newSortDirection] = e.target.value.split('-');
+                    setSortBy(newSortBy);
+                    setSortDirection(newSortDirection);
+                  }}
+                  className="w-full min-h-[44px] sm:min-h-0 pl-3 pr-9 py-2.5 sm:py-1.5 text-sm border-0 bg-transparent focus:outline-none focus:ring-0 touch-manipulation text-gray-900 appearance-none"
+                  style={{ WebkitAppearance: 'none', MozAppearance: 'none', backgroundImage: 'none' }}
+                  aria-label="Sort orders"
+                >
+                  <option value="created_at-desc">Newest First</option>
+                  <option value="created_at-asc">Oldest First</option>
+                  <option value="total-desc">Highest Amount</option>
+                  <option value="total-asc">Lowest Amount</option>
+                  <option value="status-asc">Status: Pending → Completed</option>
+                  <option value="status-desc">Status: Completed → Pending</option>
+                </select>
+                <div className="absolute right-0 top-0 bottom-0 w-9 flex items-center justify-center pointer-events-none text-gray-400">
+                  <ChevronDown size={18} className="shrink-0" aria-hidden />
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* Period: second row on mobile, inline on desktop */}
+          <div className="flex items-center gap-2 flex-wrap sm:ml-auto">
+            {(['daily', 'weekly', 'monthly', 'all']).map((key, i) => {
+              const labels = { daily: 'Today', weekly: 'This Week', monthly: 'This Month', all: 'All' };
+              const styles = {
+                daily: 'bg-blue-500 text-white',
+                weekly: 'bg-green-500 text-white',
+                monthly: 'bg-purple-500 text-white',
+                all: 'bg-gray-500 text-white',
+              };
+              const inactive = {
+                daily: 'bg-blue-100 text-blue-700',
+                weekly: 'bg-green-100 text-green-700',
+                monthly: 'bg-purple-100 text-purple-700',
+                all: 'bg-gray-100 text-gray-700',
+              };
+              return (
+                <button
+                  key={key}
+                  className={`min-h-[44px] sm:min-h-0 px-3 py-2.5 sm:px-2 sm:py-1 text-sm sm:text-xs rounded-lg transition-colors touch-manipulation active:opacity-90 ${periodFilter === key ? styles[key] : inactive[key] + ' hover:opacity-90'}`}
+                  onClick={() => setPeriodFilter(key)}
+                >
+                  {labels[key]}
+                </button>
+              );
+            })}
+          </div>
+          {/* Create Order: right-most, bigger */}
+          <div className="w-full sm:w-auto sm:ml-auto flex-shrink-0">
             <button
               onClick={() => setShowCreateOrderModal(true)}
-              className="flex items-center px-3 py-1.5 text-sm sm:px-4 sm:py-2 sm:text-base bg-gradient-to-r from-green-600 to-emerald-500 text-white rounded-lg hover:from-green-700 hover:to-emerald-600 transition-all duration-200 shadow-md hover:shadow-lg"
+              className="flex items-center justify-center min-h-[48px] sm:min-h-[44px] w-full sm:w-auto px-6 py-3 sm:px-5 sm:py-2.5 text-base sm:text-sm font-semibold bg-gradient-to-r from-green-600 to-emerald-500 text-white rounded-xl hover:from-green-700 hover:to-emerald-600 active:from-green-800 transition-all duration-200 shadow-md hover:shadow-lg flex-shrink-0 touch-manipulation"
               title="Create Order"
             >
-              <Plus size={14} className="mr-2" />
+              <Plus size={20} className="mr-2 sm:mr-1.5 sm:w-4 sm:h-4" />
               Create Order
-            </button>
-          </div>
-        </div>
-
-        {/* Enhanced Filters Row */}
-        <div className="grid grid-cols-2 gap-2 px-0 sm:px-0 sm:flex sm:flex-wrap sm:gap-4 mt-6 w-full">
-          {/* Status Filter */}
-          <div className="relative w-full sm:w-44">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Filter size={16} className="text-gray-400" />
-            </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full pl-10 pr-8 py-2 border border-gray-200 rounded-xl appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white"
-            >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="preparing">Preparing</option>
-              <option value="ready">Ready</option>
-              <option value="completed">Completed</option>
-              <option value="rejected">Rejected</option>
-            </select>
-            <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-              <ChevronDown size={16} className="text-gray-400" />
-            </div>
-          </div>
-
-          {/* Sort Options */}
-          <div className="relative w-full sm:w-44">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Filter size={16} className="text-gray-400" />
-            </div>
-            <select
-              value={`${sortBy}-${sortDirection}`}
-              onChange={(e) => {
-                const [newSortBy, newSortDirection] = e.target.value.split('-');
-                setSortBy(newSortBy);
-                setSortDirection(newSortDirection);
-              }}
-              className="w-full pl-10 pr-8 py-2 border border-gray-200 rounded-xl appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white"
-            >
-              <option value="created_at-desc">Newest First</option>
-              <option value="created_at-asc">Oldest First</option>
-              <option value="total-desc">Highest Amount</option>
-              <option value="total-asc">Lowest Amount</option>
-              <option value="status-asc">Status: Pending → Completed</option>
-              <option value="status-desc">Status: Completed → Pending</option>
-            </select>
-            <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-              <ChevronDown size={16} className="text-gray-400" />
-            </div>
-          </div>
-
-          {/* Quick Filter Buttons */}
-          <div className="flex gap-1 sm:gap-1 sm:ml-auto col-span-2 justify-end w-full -mr-3 sm:mr-0">
-            <button
-              className={`px-2 sm:px-3 py-1 text-sm rounded-lg transition-colors ${periodFilter === 'daily' ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                }`}
-              onClick={() => setPeriodFilter('daily')}
-            >
-              Today
-            </button>
-            <button
-              className={`px-2 sm:px-3 py-1 text-sm rounded-lg transition-colors ${periodFilter === 'weekly' ? 'bg-green-500 text-white' : 'bg-green-100 text-green-700 hover:bg-green-200'
-                }`}
-              onClick={() => setPeriodFilter('weekly')}
-            >
-              This Week
-            </button>
-            <button
-              className={`px-2 sm:px-3 py-1 text-sm rounded-lg transition-colors ${periodFilter === 'monthly' ? 'bg-purple-500 text-white' : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                }`}
-              onClick={() => setPeriodFilter('monthly')}
-            >
-              This Month
-            </button>
-            <button
-              className={`px-3 py-1 text-sm rounded-lg transition-colors ${periodFilter === 'all' ? 'bg-gray-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              onClick={() => setPeriodFilter('all')}
-            >
-              All
             </button>
           </div>
         </div>
       </div>
 
       {/* Content area */}
-      <div className="px-2 sm:px-6 py-4">
+      <div className="px-3 sm:px-6 py-4 overflow-x-hidden">
         {ordersLoading && (
           <div className="text-center py-8 text-gray-500">Loading orders...</div>
         )}
@@ -1003,7 +1001,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
             )}
           </div>
         ) : viewType === 'tiles' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {sortedOrders.map((order) => (
               <div
                 key={order.id}
@@ -1023,12 +1021,12 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                   }
                     ${order.status === 'pending' ? 'ring-2 ring-yellow-100' : ''}
                   `}
-                style={{ minHeight: 340 }}
+                    style={{ minHeight: 'min(340px, 50vh)' }}
               >
                 {/* Status Ribbon */}
                 <div
                   className={`
-                      absolute top-0 right-0 px-4 py-1 text-xs font-bold tracking-wide rounded-bl-2xl shadow-md z-10
+                      absolute top-0 right-0 px-3 py-1.5 sm:px-4 sm:py-1 text-xs font-bold tracking-wide rounded-bl-2xl shadow-md z-10
                       ${order.status === 'pending'
                       ? 'bg-yellow-200 text-yellow-900'
                       : order.status === 'preparing'
@@ -1047,12 +1045,12 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                 </div>
 
                 {/* Card Header */}
-                <div className="p-5 border-b border-gray-100 bg-gradient-to-r from-white to-gray-50">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-xl font-extrabold text-gray-900 flex items-center gap-2">
-                        #{order.order_number || order.id.slice(0, 8)}
-                        <span className="ml-2 text-xs font-semibold text-gray-400">{formatDate(order.created_at)}</span>
+                <div className="p-4 sm:p-5 border-b border-gray-100 bg-gradient-to-r from-white to-gray-50">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-lg sm:text-xl font-extrabold text-gray-900 flex flex-wrap items-center gap-2">
+                        <span className="truncate">#{order.order_number || order.id.slice(0, 8)}</span>
+                        <span className="text-xs font-semibold text-gray-400 shrink-0">{formatDate(order.created_at)}</span>
                       </div>
                       {order.table_number && (
                         <span className="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
@@ -1062,16 +1060,17 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                     </div>
                     <button
                       onClick={() => toggleOrderExpansion(order.id)}
-                      className="rounded-full p-2 bg-gray-100 hover:bg-orange-100 transition"
+                      className="flex-shrink-0 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center rounded-full p-2.5 sm:p-2 bg-gray-100 hover:bg-orange-100 active:bg-orange-200 transition touch-manipulation"
                       title={expandedOrderId === order.id ? "Hide details" : "View details"}
+                      aria-expanded={expandedOrderId === order.id}
                     >
-                      {expandedOrderId === order.id ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                      {expandedOrderId === order.id ? <ChevronDown size={20} className="sm:w-[18px] sm:h-[18px]" /> : <ChevronRight size={20} className="sm:w-[18px] sm:h-[18px]" />}
                     </button>
                   </div>
                 </div>
 
                 {/* Customer Info */}
-                <div className="flex items-center gap-4 px-5 pt-4 pb-2">
+                <div className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 pt-3 sm:pt-4 pb-2">
                   <div className="h-12 w-12 rounded-full ring-2 ring-orange-200 bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center overflow-hidden">
                     <img
                       src={order.profile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(order.customer_name || 'Guest')}&background=f59e42&color=fff`}
@@ -1091,7 +1090,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                 </div>
 
                 {/* Items Preview */}
-                <div className="px-5 pb-2">
+                <div className="px-4 sm:px-5 pb-2">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
                       {(order.items || []).slice(0, 4).map((item, idx) => (
@@ -1122,10 +1121,10 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                 </div>
 
                 {/* Payment and Total */}
-                <div className="flex justify-between items-center pt-4 pb-3 px-5 border-t border-gray-100 bg-gradient-to-r from-gray-50 to-white shadow-inner rounded-b-xl">
+                <div className="flex flex-wrap justify-between items-center gap-3 pt-3 sm:pt-4 pb-3 px-4 sm:px-5 border-t border-gray-100 bg-gradient-to-r from-gray-50 to-white shadow-inner rounded-b-xl">
                   <div>
                     <div className="text-xs text-gray-500">Total</div>
-                    <div className="font-bold text-lg text-gray-800">₹{order.total?.toFixed(2) || '0.00'}</div>
+                    <div className="font-bold text-base sm:text-lg text-gray-800">₹{order.total?.toFixed(2) || '0.00'}</div>
                   </div>
                   <div>
                     <div className="text-xs text-gray-500">Payment</div>
@@ -1147,7 +1146,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2 min-h-[44px] sm:min-h-0 items-center">
                     <ActionButtons order={order} />
                   </div>
                 </div>
@@ -1155,8 +1154,8 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
             ))}
           </div>
         ) : (
-          <div className="overflow-x-hidden">
-            <table className="w-full table-fixed divide-y divide-gray-200 text-xs sm:text-sm">
+          <div className="overflow-x-auto -mx-2 sm:mx-0 rounded-lg border border-gray-200" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <table className="w-full min-w-[640px] divide-y divide-gray-200 text-xs sm:text-sm">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-2 py-2 sm:px-6 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider sm:whitespace-nowrap hidden sm:table-cell">Order ID</th>
@@ -1235,18 +1234,19 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                         <td className="px-3 py-2 sm:px-6 sm:py-4 sm:whitespace-nowrap text-gray-500 hidden sm:table-cell w-2/12 sm:w-auto">
                           {formatDate(order.created_at)}
                         </td>
-                        <td className="px-2 py-2 sm:px-6 sm:py-4 sm:whitespace-nowrap font-medium w-4/12 sm:w-auto">
-                          <div className="flex flex-wrap items-center gap-1 sm:space-x-2 [&>*]:px-2 [&>*]:py-1 [&>*]:text-[10px]">
-                            {/* Mobile expand button */}
+                        <td className="px-2 py-3 sm:px-6 sm:py-4 sm:whitespace-nowrap font-medium w-4/12 sm:w-auto">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {/* Mobile expand button - touch-friendly */}
                             <button
                               onClick={() => toggleOrderExpansion(order.id)}
-                              className="inline-flex sm:hidden p-1.5 rounded-md text-orange-600 bg-orange-50 hover:bg-orange-100"
+                              className="inline-flex sm:hidden min-h-[44px] min-w-[44px] items-center justify-center p-2 rounded-lg text-orange-600 bg-orange-50 hover:bg-orange-100 active:bg-orange-200 touch-manipulation"
                               title={expandedOrderId === order.id ? 'Collapse' : 'Expand'}
+                              aria-expanded={expandedOrderId === order.id}
                             >
                               {expandedOrderId === order.id ? (
-                                <ChevronDown size={14} />
+                                <ChevronDown size={18} />
                               ) : (
-                                <ChevronRight size={14} />
+                                <ChevronRight size={18} />
                               )}
                             </button>
                             <ActionButtons order={order} />
@@ -1325,14 +1325,15 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
         )}
       </div>
 
-      {/* Create Order Modal */}
+      {/* Create Order Modal - full-screen on mobile/tablet, centered on desktop */}
       {showCreateOrderModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 safe-area-inset">
           <div
-            className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity duration-300"
+            className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity duration-300 sm:block"
             onClick={() => { setShowCreateOrderModal(false); resetCreateOrder(); }}
+            aria-hidden
           />
-          <div className="relative bg-white w-full max-w-[1600px] h-full max-h-[95vh] rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-300 scale-100 mx-auto">
+          <div className="relative bg-white w-full h-full sm:h-auto sm:max-h-[95vh] sm:max-w-[1600px] sm:rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-300 flex flex-col">
             {/* Enhanced Header */}
             <div className="flex items-center justify-between px-4 sm:px-6 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white">
               <div className="flex items-center gap-3">
@@ -1351,10 +1352,11 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                   <span className="text-xs font-medium ml-1">Step {coStep}/2</span>
                 </div>
                 <button
-                  className="p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-colors duration-200"
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-lg hover:bg-white hover:bg-opacity-20 active:bg-white active:bg-opacity-30 transition-colors duration-200 touch-manipulation"
                   onClick={() => { setShowCreateOrderModal(false); resetCreateOrder(); }}
+                  aria-label="Close"
                 >
-                  <X size={20} />
+                  <X size={22} className="sm:w-5 sm:h-5" />
                 </button>
               </div>
             </div>
@@ -1747,10 +1749,10 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
       )}
       {/* Confirmation Modal */}
       {confirmModal.show && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
-          <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 p-4">
+          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 max-w-sm w-full">
             <div className="flex items-center mb-4">
-              <AlertTriangle className="text-yellow-500 mr-2" />
+              <AlertTriangle className="text-yellow-500 mr-2 flex-shrink-0" />
               <h3 className="text-lg font-semibold text-gray-800">
                 Confirm {confirmModal.type === 'accept' ? 'Accept' : confirmModal.type === 'rejected' ? 'Reject' : confirmModal.type === 'ready' ? 'Mark Ready' : 'Complete'} Order
               </h3>
@@ -1762,7 +1764,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Reason for rejection <span className="text-red-500">*</span></label>
                 <textarea
-                  className="w-full border border-gray-300 rounded p-2"
+                  className="w-full border border-gray-300 rounded p-2 min-h-[88px]"
                   rows={3}
                   value={rejectionReason}
                   onChange={e => setRejectionReason(e.target.value)}
@@ -1771,13 +1773,13 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                 />
               </div>
             )}
-            <div className="flex justify-end space-x-2">
+            <div className="flex flex-wrap justify-end gap-2">
               <button
                 onClick={() => {
                   setConfirmModal({ show: false, type: null, order: null });
                   setRejectionReason('');
                 }}
-                className="px-4 py-2 rounded bg-gray-100 text-gray-700 hover:bg-gray-200"
+                className="min-h-[44px] px-4 py-3 rounded bg-gray-100 text-gray-700 hover:bg-gray-200 touch-manipulation"
                 disabled={isLoading}
               >
                 Cancel
@@ -1798,7 +1800,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                     normalizedType === 'rejected' ? rejectionReason : undefined
                   );
                 }}
-                className={`px-4 py-2 rounded text-white ${confirmModal.type === 'rejected' ? 'bg-red-500 hover:bg-red-600' : 'bg-orange-500 hover:bg-orange-600'}`}
+                className={`min-h-[44px] px-4 py-3 rounded text-white touch-manipulation ${confirmModal.type === 'rejected' ? 'bg-red-500 hover:bg-red-600' : 'bg-orange-500 hover:bg-orange-600'}`}
                 disabled={isLoading || (confirmModal.type === 'rejected' && !rejectionReason.trim())}
               >
                 {isLoading ? 'Processing...' : 'Confirm'}
@@ -1810,23 +1812,24 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
 
       {/* Email Bill Modal */}
       {showEmailBillModal && emailBillOrder && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden max-h-[95vh] flex flex-col">
             {/* Header */}
-            <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
+            <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-4 sm:px-6 py-4 flex-shrink-0">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
                     <Mail className="text-white" size={20} />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <h3 className="text-lg font-bold text-white">Email Bill</h3>
-                    <p className="text-blue-100 text-sm">Order #{emailBillOrder.id?.slice(0, 8)}</p>
+                    <p className="text-blue-100 text-sm truncate">Order #{emailBillOrder.id?.slice(0, 8)}</p>
                   </div>
                 </div>
                 <button
                   onClick={closeEmailBillModal}
-                  className="text-white/80 hover:text-white transition-colors"
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0 text-white/80 hover:text-white transition-colors touch-manipulation rounded-lg"
+                  aria-label="Close"
                 >
                   <X size={24} />
                 </button>
@@ -1834,7 +1837,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
             </div>
 
             {/* Content */}
-            <div className="p-6">
+            <div className="p-4 sm:p-6 overflow-auto flex-1">
               {/* Order Summary */}
               <div className="bg-gray-50 rounded-xl p-4 mb-6">
                 <div className="flex justify-between items-center mb-2">
@@ -1883,10 +1886,10 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3">
+              <div className="flex flex-col-reverse sm:flex-row gap-3">
                 <button
                   onClick={closeEmailBillModal}
-                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+                  className="flex-1 min-h-[44px] px-4 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors touch-manipulation"
                   disabled={sendingEmail}
                 >
                   Cancel
@@ -1894,7 +1897,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                 <button
                   onClick={handleSendEmailBill}
                   disabled={sendingEmail || !emailBillAddress}
-                  className="flex-1 px-4 py-3 bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 min-h-[44px] px-4 py-3 bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
                 >
                   {sendingEmail ? (
                     <>
@@ -1916,23 +1919,24 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
 
       {/* WhatsApp Bill Modal */}
       {showWhatsAppBillModal && whatsAppBillOrder && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden max-h-[95vh] flex flex-col">
             {/* Header */}
-            <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4">
+            <div className="bg-gradient-to-r from-green-500 to-green-600 px-4 sm:px-6 py-4 flex-shrink-0">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
                     <MessageCircle className="text-white" size={20} />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <h3 className="text-lg font-bold text-white">WhatsApp Bill</h3>
-                    <p className="text-green-100 text-sm">Order #{whatsAppBillOrder.id?.slice(0, 8)}</p>
+                    <p className="text-green-100 text-sm truncate">Order #{whatsAppBillOrder.id?.slice(0, 8)}</p>
                   </div>
                 </div>
                 <button
                   onClick={closeWhatsAppBillModal}
-                  className="text-white/80 hover:text-white transition-colors"
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0 text-white/80 hover:text-white transition-colors touch-manipulation rounded-lg"
+                  aria-label="Close"
                 >
                   <X size={24} />
                 </button>
@@ -1940,7 +1944,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
             </div>
 
             {/* Content */}
-            <div className="p-6">
+            <div className="p-4 sm:p-6 overflow-auto flex-1">
               {/* Order Summary */}
               <div className="bg-gray-50 rounded-xl p-4 mb-6">
                 <div className="flex justify-between items-center mb-2">
@@ -1991,17 +1995,17 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3">
+              <div className="flex flex-col-reverse sm:flex-row gap-3">
                 <button
                   onClick={closeWhatsAppBillModal}
-                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+                  className="flex-1 min-h-[44px] px-4 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors touch-manipulation"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSendWhatsAppBill}
                   disabled={!whatsAppPhoneNumber || whatsAppPhoneNumber.length < 10}
-                  className="flex-1 px-4 py-3 bg-green-500 text-white rounded-xl font-semibold hover:bg-green-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 min-h-[44px] px-4 py-3 bg-green-500 text-white rounded-xl font-semibold hover:bg-green-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
                 >
                   <MessageCircle size={18} />
                   Open WhatsApp

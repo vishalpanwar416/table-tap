@@ -2,8 +2,15 @@ import React from 'react';
 import FoodItemCard from './FoodtemsCard';
 import { deleteFoodItem, toggleFoodItemActive } from '../../../../customer/api/foodService';
 
+const GRID_CLASSES = {
+  2: 'md:grid-cols-2',
+  3: 'md:grid-cols-3',
+  4: 'md:grid-cols-4',
+};
+
 const FoodItemList = ({ 
   filteredFoodItems, 
+  gridColumns = 3, 
   handleEdit, 
   setLoading, 
   setErrorMsg, 
@@ -33,12 +40,15 @@ const FoodItemList = ({
     );
   }
 
+  const gridClass = GRID_CLASSES[gridColumns] ?? GRID_CLASSES[3];
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className={`grid grid-cols-1 gap-4 ${gridClass}`}>
       {filteredFoodItems.map(item => (
         <FoodItemCard 
           key={item.id}
           item={item}
+          gridColumns={gridColumns}
           handleEdit={handleEdit}
           handleDelete={handleDelete}
           fetchFoodItems={fetchFoodItems}

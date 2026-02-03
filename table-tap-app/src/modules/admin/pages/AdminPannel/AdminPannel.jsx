@@ -1,5 +1,5 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, lazy, Suspense, useMemo, useCallback } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader, X, Bell } from 'lucide-react';
 import AdminSidebar from './components/AdminSidebar';
 import AdminHeader from './components/AdminHeader';
@@ -50,9 +50,38 @@ const menuItems = [
   { id: 'settings', icon: 'Settings', label: 'System Settings' },
 ];
 
+const VALID_TAB_IDS = new Set(menuItems.map((m) => m.id));
+const ADMIN_TAB_STORAGE_KEY = 'admin_active_tab';
+
+const getValidTab = (value) => (value && VALID_TAB_IDS.has(value) ? value : 'dashboard');
+
 const AdminPanel = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const tabFromUrl = searchParams.get('tab');
+  const tabFromStorage = typeof window !== 'undefined' ? localStorage.getItem(ADMIN_TAB_STORAGE_KEY) : null;
+  const activeTab = useMemo(
+    () => getValidTab(tabFromUrl || tabFromStorage || 'dashboard'),
+    [tabFromUrl, tabFromStorage]
+  );
+
+  const setActiveTab = useCallback(
+    (tabId) => {
+      const id = getValidTab(tabId);
+      setSearchParams({ tab: id }, { replace: true });
+      try {
+        localStorage.setItem(ADMIN_TAB_STORAGE_KEY, id);
+      } catch (_) {}
+    },
+    [setSearchParams]
+  );
+
+  useEffect(() => {
+    if (!tabFromUrl && tabFromStorage && VALID_TAB_IDS.has(tabFromStorage)) {
+      setSearchParams({ tab: tabFromStorage }, { replace: true });
+    }
+  }, [tabFromUrl, tabFromStorage, setSearchParams]);
   const [restaurants, setRestaurants] = useState([]);
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
