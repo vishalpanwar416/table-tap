@@ -99,8 +99,8 @@ const FoodItemCard = ({ item, onItemClick }) => {
                 onClick={handleAddClick}
                 className="bg-black/90 hover:bg-gray-800 text-white rounded-full px-2 py-0.5 flex items-center space-x-1 text-xs shadow"
               >
-                <ShoppingBag className="h-3 w-3" />
-                <span>Add</span>
+                <ShoppingBag className="h-3 w-3 flex-shrink-0" />
+                <span className="leading-none pt-0.5">Add</span>
               </button>
             )}
           </div>

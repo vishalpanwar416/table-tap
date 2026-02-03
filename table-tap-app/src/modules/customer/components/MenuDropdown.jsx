@@ -168,7 +168,7 @@ const MenuItem = React.memo(({
             {quantity > 0 ? (
               <motion.div 
                 key="quantity-controls"
-                className="flex items-center bg-gradient-to-r from-black to-gray-800 backdrop-blur-sm rounded-full px-3 py-2 shadow-lg"
+                className="flex items-center bg-gradient-to-r from-black to-gray-800 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-lg"
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.8, opacity: 0 }}
@@ -208,7 +208,7 @@ const MenuItem = React.memo(({
               <motion.button
                 key="add-button"
                 onClick={handleAddClick}
-                className="bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white rounded-full px-4 py-2 shadow-lg transition-all duration-200 flex items-center space-x-2"
+                className="bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white rounded-full px-3 py-1.5 shadow-lg transition-all duration-200 flex items-center space-x-2"
                 whileHover={{ 
                   scale: 1.05,
                   boxShadow: "0 10px 25px rgba(0,0,0,0.2)"

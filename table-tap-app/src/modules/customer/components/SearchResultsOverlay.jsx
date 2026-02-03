@@ -176,8 +176,8 @@ const SearchResultsOverlay = ({
                           transition={{ duration: 0.15 }}
                           type="button"
                         >
-                          <ShoppingBag className="h-3 w-3" />
-                          <span>Add</span>
+                          <ShoppingBag className="h-3 w-3 flex-shrink-0" />
+                          <span className="leading-none pt-0.5">Add</span>
                         </motion.button>
                       )}
                     </AnimatePresence>

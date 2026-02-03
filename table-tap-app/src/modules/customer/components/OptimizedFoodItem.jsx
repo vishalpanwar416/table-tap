@@ -119,7 +119,7 @@ const OptimizedFoodItem = memo(({
     
     return (
       <button 
-        className="bg-black/90 hover:bg-black p-1.5 rounded-lg transition-colors"
+        className="bg-black/90 hover:bg-black p-1 rounded-lg transition-colors"
         onClick={handleAddToCart}
         aria-label="Add to cart"
       >
