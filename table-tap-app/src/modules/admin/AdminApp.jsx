@@ -14,14 +14,9 @@ const ForgotPassword = lazy(() => import('../shared/components/auth/ForgotPasswa
 const ResetPassword = lazy(() => import('../shared/components/auth/ResetPassword'));
 const AuthCallback = lazy(() => import('../shared/components/auth/AuthCallback'));
 
-const LoadingSpinner = () => (
-    <div className="flex justify-center items-center min-h-screen bg-black">
-        <div className="text-center text-white">
-            <div className="w-12 h-12 border-4 border-gray-700 border-t-[#2A9D8F] rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-gray-400">Loading Admin Panel...</p>
-        </div>
-    </div>
-);
+// Use unified loading component
+import LoadingScreen from '../shared/components/LoadingScreen';
+const LoadingSpinner = () => <LoadingScreen message="Loading Admin Panel..." />;
 
 const AUTH_PATHS = ['/login', '/signup', '/forgot-password', '/reset-password', '/auth-callback'];
 

@@ -97,6 +97,17 @@ export const RestaurantProvider = ({ children }) => {
           .single();
 
         if (restaurantError) {
+          // Check if it's an authentication error
+          if (restaurantError.code === 'PGRST301' || 
+              restaurantError.message?.includes('JWT') ||
+              restaurantError.message?.includes('expired') ||
+              restaurantError.message?.includes('Invalid Refresh Token') ||
+              restaurantError.message?.includes('Refresh Token Not Found') ||
+              restaurantError.status === 401) {
+            // This is an auth error, don't set error here - let the wrapper handle redirect
+            setError('AUTH_ERROR');
+            return;
+          }
           setError(restaurantError.message);
           return;
         }
@@ -107,12 +118,25 @@ export const RestaurantProvider = ({ children }) => {
         }
 
         // Check if restaurant has an active subscription
-        const { data: subscription } = await supabase
+        const { data: subscription, error: subscriptionError } = await supabase
           .from('subscriptions')
           .select('id, status, end_date')
           .eq('restaurant_id', restaurantId)
           .in('status', ['active', 'grace_period'])
           .maybeSingle();
+
+        // Check if subscription query failed due to auth
+        if (subscriptionError) {
+          if (subscriptionError.code === 'PGRST301' || 
+              subscriptionError.message?.includes('JWT') ||
+              subscriptionError.message?.includes('expired') ||
+              subscriptionError.message?.includes('Invalid Refresh Token') ||
+              subscriptionError.message?.includes('Refresh Token Not Found') ||
+              subscriptionError.status === 401) {
+            setError('AUTH_ERROR');
+            return;
+          }
+        }
 
         // If no active subscription, show error to customer
         if (!subscription) {
@@ -128,7 +152,17 @@ export const RestaurantProvider = ({ children }) => {
         });
 
       } catch (err) {
-        setError('Failed to load restaurant data');
+        // Check if it's an authentication error
+        if (err?.code === 'PGRST301' || 
+            err?.message?.includes('JWT') ||
+            err?.message?.includes('expired') ||
+            err?.message?.includes('Invalid Refresh Token') ||
+            err?.message?.includes('Refresh Token Not Found') ||
+            err?.status === 401) {
+          setError('AUTH_ERROR');
+        } else {
+          setError('Failed to load restaurant data');
+        }
       } finally {
         setLoading(false);
       }
@@ -178,17 +212,40 @@ export const RestaurantProvider = ({ children }) => {
         .single();
 
       if (restaurantError) {
-        setError(restaurantError.message);
+        // Check if it's an authentication error
+        if (restaurantError.code === 'PGRST301' || 
+            restaurantError.message?.includes('JWT') ||
+            restaurantError.message?.includes('expired') ||
+            restaurantError.message?.includes('Invalid Refresh Token') ||
+            restaurantError.message?.includes('Refresh Token Not Found') ||
+            restaurantError.status === 401) {
+          setError('AUTH_ERROR');
+        } else {
+          setError(restaurantError.message);
+        }
         return false;
       }
 
       // Check subscription status
-      const { data: subscription } = await supabase
+      const { data: subscription, error: subscriptionError } = await supabase
         .from('subscriptions')
         .select('id, status, end_date')
         .eq('restaurant_id', restaurantId)
         .in('status', ['active', 'grace_period'])
         .maybeSingle();
+
+      // Check if subscription query failed due to auth
+      if (subscriptionError) {
+        if (subscriptionError.code === 'PGRST301' || 
+            subscriptionError.message?.includes('JWT') ||
+            subscriptionError.message?.includes('expired') ||
+            subscriptionError.message?.includes('Invalid Refresh Token') ||
+            subscriptionError.message?.includes('Refresh Token Not Found') ||
+            subscriptionError.status === 401) {
+          setError('AUTH_ERROR');
+          return false;
+        }
+      }
 
       if (!subscription) {
         setError('This restaurant is currently unavailable. Please try again later.');
@@ -204,7 +261,17 @@ export const RestaurantProvider = ({ children }) => {
       return true;
 
     } catch (err) {
-      setError('Failed to refresh restaurant data');
+      // Check if it's an authentication error
+      if (err?.code === 'PGRST301' || 
+          err?.message?.includes('JWT') ||
+          err?.message?.includes('expired') ||
+          err?.message?.includes('Invalid Refresh Token') ||
+          err?.message?.includes('Refresh Token Not Found') ||
+          err?.status === 401) {
+        setError('AUTH_ERROR');
+      } else {
+        setError('Failed to refresh restaurant data');
+      }
       return false;
     } finally {
       setLoading(false);

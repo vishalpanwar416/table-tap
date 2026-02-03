@@ -10,7 +10,7 @@ const RestaurantSelectionWrapper = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
-  const { restaurantId, loading, error } = useRestaurant();
+  const { restaurantId, loading, error, clearSession } = useRestaurant();
   const [checking, setChecking] = useState(true);
 
   // Get URL parameters
@@ -81,20 +81,43 @@ const RestaurantSelectionWrapper = ({ children }) => {
     // note: typically /restaurant-selection should NOT be wrapped by this component
   }
 
-  // If there's an error, show error state
-  if (error) {
+  // If there's an authentication error, redirect to login
+  useEffect(() => {
+    if (error === 'AUTH_ERROR') {
+      // Clear session and redirect to login
+      clearSession();
+      const returnUrl = location.pathname + location.search;
+      navigate(`/login?redirect=${encodeURIComponent(returnUrl)}`, { replace: true });
+    }
+  }, [error, navigate, clearSession, location.pathname, location.search]);
+
+  // If there's an error (and it's not an auth error), show error state
+  if (error && error !== 'AUTH_ERROR') {
+    const handleBackToSelection = () => {
+      clearSession();
+      navigate('/restaurant-selection');
+    };
+
     return (
       <div className="flex justify-center items-center min-h-screen bg-black">
         <div className="bg-red-50 border border-red-200 rounded-xl p-6 max-w-md shadow-lg">
           <div className="text-red-500 text-6xl mb-4 text-center">⚠️</div>
           <h3 className="text-red-600 text-xl font-semibold mb-2 text-center">Error Loading Restaurant</h3>
           <p className="text-red-500 text-center mb-4">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="w-full bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
-          >
-            Try Again
-          </button>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
+            >
+              Try Again
+            </button>
+            <button
+              onClick={handleBackToSelection}
+              className="w-full bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+            >
+              Back to Restaurant Selection
+            </button>
+          </div>
         </div>
       </div>
     );

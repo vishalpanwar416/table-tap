@@ -1,6 +1,18 @@
 import { supabase } from '../../../shared/supabase';
 
 /**
+ * Helper function to mark authentication errors
+ */
+const markAuthError = (error) => {
+  if (error && (error.code === 'PGRST301' || error.status === 401 || 
+      error.message?.includes('JWT') || error.message?.includes('expired') ||
+      error.message?.includes('Invalid Refresh Token') || error.message?.includes('Refresh Token Not Found'))) {
+    error.isAuthError = true;
+  }
+  return error;
+};
+
+/**
  * Get all active restaurants
  */
 export const getActiveRestaurants = async () => {
@@ -28,12 +40,12 @@ export const getActiveRestaurants = async () => {
       .order('name');
 
     if (error) {
-      throw error;
+      throw markAuthError(error);
     }
 
     return data || [];
   } catch (error) {
-    throw error;
+    throw markAuthError(error);
   }
 };
 
@@ -158,12 +170,12 @@ export const searchRestaurants = async (searchTerm) => {
       .order('name');
 
     if (error) {
-      throw error;
+      throw markAuthError(error);
     }
 
     return data || [];
   } catch (error) {
-    throw error;
+    throw markAuthError(error);
   }
 };
 
@@ -194,12 +206,12 @@ export const getRestaurantsByCuisine = async (cuisineType) => {
       .order('name');
 
     if (error) {
-      throw error;
+      throw markAuthError(error);
     }
 
     return data || [];
   } catch (error) {
-    throw error;
+    throw markAuthError(error);
   }
 };
 
@@ -420,7 +432,7 @@ export async function getAllRestaurants() {
       .order('name');
     if (error) {
       console.error('Failed to fetch all restaurants:', error);
-      throw error;
+      throw markAuthError(error);
     }
     return data || [];
   } catch (err) {

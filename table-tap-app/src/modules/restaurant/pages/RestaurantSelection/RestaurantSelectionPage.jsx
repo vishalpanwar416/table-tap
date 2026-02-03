@@ -505,9 +505,45 @@ const RestaurantSelectionPage = () => {
         data = await getActiveRestaurants();
       }
 
-      setRestaurants(data || []);
+      const restaurantsData = data || [];
+      setRestaurants(restaurantsData);
+      
+      // Log for debugging
+      if (restaurantsData.length === 0) {
+        console.warn('No restaurants found. Filters:', {
+          showAllRestaurants,
+          showMyRestaurants,
+          isOwner,
+          hasUserLocation: !!userLocation,
+          userId: user?.id
+        });
+      } else {
+        console.log(`Loaded ${restaurantsData.length} restaurant(s)`);
+      }
     } catch (err) {
-      setError('Failed to load restaurants');
+      console.error('Error fetching restaurants:', err);
+      
+      // Check if it's an authentication error
+      const isAuthError = err?.isAuthError ||
+                         err?.code === 'PGRST301' || 
+                         err?.message?.includes('JWT') ||
+                         err?.message?.includes('expired') ||
+                         err?.message?.includes('Invalid Refresh Token') ||
+                         err?.message?.includes('Refresh Token Not Found') ||
+                         err?.status === 401 ||
+                         err?.error?.code === 'PGRST301' ||
+                         err?.error?.status === 401 ||
+                         err?.error?.isAuthError;
+      
+      if (isAuthError) {
+        // Redirect to login on auth error
+        const returnUrl = window.location.pathname + window.location.search;
+        navigate(`/login?redirect=${encodeURIComponent(returnUrl)}`, { replace: true });
+        return;
+      }
+      
+      const errorMessage = err?.message || err?.error?.message || 'Failed to load restaurants. Please check your connection and try again.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
       if (showRefreshAnimation) {
@@ -985,6 +1021,82 @@ const RestaurantSelectionPage = () => {
                         </div>
                       </div>
                     ))}
+                  </div>
+                ) : error ? (
+                  <div className="flex flex-col items-center justify-center h-full p-6">
+                    <div className="bg-red-50 border border-red-200 rounded-xl p-6 max-w-md shadow-lg text-center">
+                      <div className="text-red-500 text-6xl mb-4">⚠️</div>
+                      <h3 className="text-red-600 text-xl font-semibold mb-2">Error Loading Restaurants</h3>
+                      <p className="text-red-500 text-sm mb-4">{error}</p>
+                      <button
+                        onClick={() => {
+                          setError(null);
+                          fetchRestaurants(false, true);
+                        }}
+                        className="w-full bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
+                      >
+                        Try Again
+                      </button>
+                    </div>
+                  </div>
+                ) : showSearch && searchResults !== null && searchResults.length === 0 && !searchLoading ? (
+                  <div className="flex flex-col items-center justify-center h-full p-6">
+                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 max-w-md shadow-lg text-center">
+                      <div className="text-gray-400 text-6xl mb-4">🔍</div>
+                      <h3 className="text-gray-700 text-xl font-semibold mb-2">No Results Found</h3>
+                      <p className="text-gray-500 text-sm mb-4">
+                        No restaurants found matching "{searchQuery}". Try a different search term.
+                      </p>
+                      <button
+                        onClick={handleClearSearch}
+                        className="w-full bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
+                      >
+                        Clear Search
+                      </button>
+                    </div>
+                  </div>
+                ) : !loading && restaurants.length === 0 && !(showSearch && searchResults !== null) ? (
+                  <div className="flex flex-col items-center justify-center h-full p-6">
+                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 max-w-md shadow-lg text-center">
+                      <div className="text-gray-400 text-6xl mb-4">🍽️</div>
+                      <h3 className="text-gray-700 text-xl font-semibold mb-2">No Restaurants Available</h3>
+                      <p className="text-gray-500 text-sm mb-4">
+                        {showMyRestaurants 
+                          ? "You don't have any restaurants assigned to your account."
+                          : showAllRestaurants
+                          ? "There are no restaurants available at the moment. This may be because no restaurants have active subscriptions."
+                          : userLocation
+                          ? "No restaurants found nearby. Try enabling location or viewing all restaurants."
+                          : "No restaurants found. Try enabling location to see nearby restaurants or view all restaurants."}
+                      </p>
+                      <div className="flex flex-col gap-2">
+                        {!showAllRestaurants && (
+                          <button
+                            onClick={() => {
+                              setShowAllRestaurants(true);
+                              setShowMyRestaurants(false);
+                            }}
+                            className="w-full bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
+                          >
+                            View All Restaurants
+                          </button>
+                        )}
+                        {!userLocation && (
+                          <button
+                            onClick={getUserLocation}
+                            className="w-full bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                          >
+                            Enable Location
+                          </button>
+                        )}
+                        <button
+                          onClick={() => fetchRestaurants(true, true)}
+                          className="w-full bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"
+                        >
+                          Refresh
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <List

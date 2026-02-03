@@ -70,6 +70,20 @@ $$;
 
 alter table public.restaurants enable row level security;
 
+-- Allow public read access to active restaurants with active subscriptions (for customers)
+drop policy if exists restaurants_public_read_active on public.restaurants;
+create policy restaurants_public_read_active
+on public.restaurants for select
+using (
+  is_active = true
+  and exists (
+    select 1
+    from public.subscriptions s
+    where s.restaurant_id = restaurants.id
+      and s.status in ('active', 'grace_period')
+  )
+);
+
 drop policy if exists restaurants_admin_read_all on public.restaurants;
 create policy restaurants_admin_read_all
 on public.restaurants for select
@@ -91,6 +105,32 @@ drop policy if exists restaurants_admin_insert on public.restaurants;
 create policy restaurants_admin_insert
 on public.restaurants for insert
 with check (public.is_platform_admin());
+
+-- -----------------------------
+-- subscriptions
+-- -----------------------------
+
+-- Enable RLS on subscriptions if not already enabled
+alter table public.subscriptions enable row level security;
+
+-- Allow public read access to subscription status for active/grace_period subscriptions
+-- This is needed for the restaurant selection queries
+drop policy if exists subscriptions_public_read_status on public.subscriptions;
+create policy subscriptions_public_read_status
+on public.subscriptions for select
+using (status in ('active', 'grace_period'));
+
+-- Allow admins to read all subscriptions
+drop policy if exists subscriptions_admin_read_all on public.subscriptions;
+create policy subscriptions_admin_read_all
+on public.subscriptions for select
+using (public.is_platform_admin());
+
+-- Allow restaurant staff to read their own restaurant's subscription
+drop policy if exists subscriptions_staff_read_own on public.subscriptions;
+create policy subscriptions_staff_read_own
+on public.subscriptions for select
+using (restaurant_id = public.current_restaurant_id());
 
 -- -----------------------------
 -- restaurant_staff
