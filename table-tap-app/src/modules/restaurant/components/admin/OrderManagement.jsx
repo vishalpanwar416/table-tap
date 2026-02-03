@@ -13,7 +13,7 @@ import PrintKOT from "./PrintKOT";
 import { sendBillEmail } from '../../../shared/api/emailService';
 import { sendWhatsAppBill, openWhatsAppBill } from '../../../shared/api/whatsappService';
 import toast from 'react-hot-toast';
-import * as XLSX from 'xlsx';
+
 import {
   fetchAllOrders,
   subscribeToAllOrderChanges,
@@ -104,7 +104,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
   const [showTableDropdown, setShowTableDropdown] = useState(false);
   const [availableTables, setAvailableTables] = useState([]);
   const [tableSearch, setTableSearch] = useState('');
-  
+
   // Email Bill Modal State
   const [showEmailBillModal, setShowEmailBillModal] = useState(false);
   const [emailBillOrder, setEmailBillOrder] = useState(null);
@@ -496,7 +496,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
     if (order.status === 'completed') {
       const emailEnabled = restaurant?.email_bill_enabled !== false;
       const whatsappEnabled = restaurant?.whatsapp_bill_enabled !== false;
-      
+
       return (
         <>
           <button onClick={() => handlePrintBill(order)} className={`${actionBtnClass} bg-orange-100 text-orange-600 hover:bg-orange-200`} title="Print Bill"><Printer size={18} className="sm:w-4 sm:h-4" /></button>
@@ -682,7 +682,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
     try {
       // Try API first, fallback to opening WhatsApp app
       const result = await sendWhatsAppBill(whatsAppBillOrder, restaurant, whatsAppPhoneNumber);
-      
+
       if (result.success) {
         toast.success('Bill sent via WhatsApp!');
       } else if (result.fallback && result.shareURL) {
@@ -694,7 +694,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
         openWhatsAppBill(whatsAppBillOrder, restaurant, whatsAppPhoneNumber);
         toast.success('Opening WhatsApp...');
       }
-      
+
       closeWhatsAppBillModal();
     } catch (error) {
       console.error('WhatsApp error:', error);
@@ -709,8 +709,9 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
     }
   };
 
-  // Download handler
-  const handleDownload = (period) => {
+  // Download handler - lazy loads XLSX
+  const handleDownload = async (period) => {
+    const XLSX = await import('xlsx');
     const { data, sheetName } = handleOrderDownload(orders, period);
     if (!data || data.length === 0) return; // Prevent empty downloads
     const ws = XLSX.utils.json_to_sheet(data);
@@ -720,8 +721,9 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
     setShowDownloadMenu(false);
   };
 
-  // 1. Add a new helper to download by status
-  const handleDownloadByStatus = (status) => {
+  // Download by status - lazy loads XLSX
+  const handleDownloadByStatus = async (status) => {
+    const XLSX = await import('xlsx');
     const { data, sheetName } = handleOrderDownload(orders, null, status);
     if (!data || data.length === 0) return; // Prevent empty downloads
     const ws = XLSX.utils.json_to_sheet(data);
@@ -1021,7 +1023,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                   }
                     ${order.status === 'pending' ? 'ring-2 ring-yellow-100' : ''}
                   `}
-                    style={{ minHeight: 'min(340px, 50vh)' }}
+                style={{ minHeight: 'min(340px, 50vh)' }}
               >
                 {/* Status Ribbon */}
                 <div

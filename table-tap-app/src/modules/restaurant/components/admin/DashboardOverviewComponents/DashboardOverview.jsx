@@ -4,7 +4,6 @@ import RevenueChart from './RevenueChart';
 import ActiveOrders from './ActiveOrders';
 import PopularItems from './PopularItems';
 import { generateChartData, formatDate, getStatusIcon, getStatusBadge } from './helpers';
-import * as XLSX from 'xlsx';
 import { supabase } from '../../../../shared/supabase';
 
 const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab, restaurant, userRole }) => {
@@ -269,8 +268,11 @@ const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab, restaur
     return [...data, emptyRow, totalRow];
   };
 
-  // Download handler
-  const handleDownload = (period) => {
+  // Download handler - lazy loads XLSX only when user clicks download
+  const handleDownload = async (period) => {
+    // Dynamically import XLSX only when needed (saves ~500KB from initial bundle)
+    const XLSX = await import('xlsx');
+
     let data = [];
     let sheetName = '';
     if (period === 'daily') {
