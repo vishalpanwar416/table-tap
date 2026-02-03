@@ -27,7 +27,7 @@ export default function RestaurantLoginPage() {
                     // Check if user has restaurant role
                     const profile = await authService.getProfile(user.id);
                     if (profile && ALLOWED_ROLES.includes(profile.role)) {
-                        navigate('/');
+                        navigate('/dashboard');
                     }
                 }
             } catch (err) {
@@ -47,9 +47,9 @@ export default function RestaurantLoginPage() {
 
             // Get user profile to check role
             const profile = await authService.getProfile(authUser.id);
-            
+
             if (profile && ALLOWED_ROLES.includes(profile.role)) {
-                navigate('/');
+                navigate('/dashboard');
             } else {
                 setError('You do not have access to the restaurant dashboard. Please contact your administrator.');
                 await authService.signOut();
@@ -153,7 +153,7 @@ export default function RestaurantLoginPage() {
                     exit="exit"
                 >
                     {/* Welcome Section */}
-                    <motion.div 
+                    <motion.div
                         className="text-center mb-8"
                         variants={itemVariants}
                     >
@@ -228,8 +228,8 @@ export default function RestaurantLoginPage() {
                                 </button>
                             </div>
                             <div className="flex justify-end mt-2">
-                                <Link 
-                                    to="/restaurant/forgot-password" 
+                                <Link
+                                    to="/restaurant/forgot-password"
                                     className="text-orange-500 text-sm font-medium hover:text-orange-600"
                                 >
                                     Forgot Password?
@@ -263,7 +263,7 @@ export default function RestaurantLoginPage() {
                     </motion.div>
 
                     {/* Divider */}
-                    <motion.div 
+                    <motion.div
                         className="flex items-center my-6"
                         variants={itemVariants}
                     >
@@ -293,7 +293,7 @@ export default function RestaurantLoginPage() {
                     </motion.div>
 
                     {/* Role Info */}
-                    <motion.div 
+                    <motion.div
                         className="mt-6 p-4 bg-orange-50 rounded-xl border border-orange-100"
                         variants={itemVariants}
                     >
@@ -303,14 +303,14 @@ export default function RestaurantLoginPage() {
                     </motion.div>
 
                     {/* Register Link */}
-                    <motion.div 
+                    <motion.div
                         className="mt-auto pt-6 text-center"
                         variants={itemVariants}
                     >
                         <p className="text-gray-600 text-base pb-8">
                             Ready to grow your business?{' '}
-                            <a 
-                                href="https://tabletap.in/register" 
+                            <a
+                                href="https://tabletap.in/register"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-orange-500 font-semibold hover:text-orange-600"
