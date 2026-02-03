@@ -5,7 +5,7 @@ import { ModalProvider } from "./context/ModalContext";
 import StructuredData from "./components/StructuredData";
 
 // Lazy load modal - it's hidden initially and interaction-only
-const LeadModal = dynamic(() => import("./components/LeadModal"), { ssr: false });
+import LeadModal from "./components/LeadModal";
 
 const geist = Geist({
   variable: "--font-geist",
