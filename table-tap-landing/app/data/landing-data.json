@@ -28,9 +28,9 @@
         }
     },
     "hero": {
-        "titlePrefix": "Table Tap is",
-        "titleMain": "Simpler. Cheaper. Faster.",
-        "subtitle": "The all-in-one QR menu and ordering system built specifically for small restaurants. No complex setup. No hidden fees. No expensive tablets. Just instant orders, happy customers, and more revenue—starting at just ₹999/month.",
+        "titlePrefix": "Dining is about",
+        "titleMain": "the Memory.",
+        "subtitle": "Every great meal tells a story. We built Table Tap to fade into the background—so nothing stands between your guests and the moments they'll remember forever. Seamless ordering. Effortless service. Pure hospitality.",
         "ctaPrimary": {
             "text": "Start Your Free Trial",
             "href": "#"
@@ -51,102 +51,102 @@
         ]
     },
     "services": {
-        "badge": "Why Choose Table Tap",
-        "title": "Built for Small Restaurants.",
-        "titleHighlight": "Not Enterprise Giants.",
-        "description": "While others charge thousands and lock you into contracts, we give you enterprise-grade features at small-business prices. No setup fees. No per-order commissions. No complicated integrations. Just simple, powerful restaurant management.",
+        "badge": "Why Table Tap",
+        "title": "Your Restaurant,",
+        "titleHighlight": "Your Rules.",
+        "description": "Complete freedom to customize every aspect of your digital presence. Edit menus, launch offers, manage orders from every platform—all in real-time, all from your phone. No developers needed.",
         "items": [
             {
                 "id": "qr-ordering",
-                "title": "Instant QR Ordering",
-                "description": "Guests scan your table QR code and order instantly—no app downloads, no account creation. Works on any smartphone. Your menu loads in under 2 seconds with beautiful photos that make dishes irresistible.",
+                "title": "Scan. Order. Enjoy.",
+                "description": "Guests scan a beautiful QR code at their table, browse your visual menu, and order instantly. No downloads required—works on any phone, any browser.",
                 "features": [
-                    "Zero setup cost - just print QR codes",
-                    "Works on all phones instantly",
-                    "Gorgeous visual menu"
+                    "Table-wise QR Codes",
+                    "Instant Menu Access",
+                    "Works Everywhere"
                 ]
             },
             {
                 "id": "digital-menu",
-                "title": "Real-Time Menu Control",
-                "description": "Update your menu from anywhere in 30 seconds. Mark dishes sold out with one tap. Launch happy hour specials instantly. Add seasonal items without calling anyone. Your menu, your control—24/7.",
+                "title": "Menus That Come Alive",
+                "description": "Showcase your dishes with stunning photos, detailed descriptions, and real-time pricing. Update items, mark sold-out, or add specials—changes reflect instantly.",
                 "features": [
-                    "Update from your phone",
-                    "Instant sold-out toggle",
-                    "Unlimited menu changes"
+                    "Visual Food Gallery",
+                    "Real-Time Updates",
+                    "Category Management"
                 ]
             },
             {
                 "id": "unified-orders",
-                "title": "All Orders in One Place",
-                "description": "Whether customers order via QR code, Swiggy, or Zomato—everything appears on one unified dashboard. Your kitchen sees all orders in real-time with notification sounds. No more tablet juggling or missed orders.",
+                "title": "One Dashboard. All Orders.",
+                "description": "QR orders, Swiggy, Zomato—everything flows into one unified screen. Your kitchen sees all orders in real-time with notification sounds. No more tablet juggling.",
                 "features": [
-                    "QR + Swiggy + Zomato unified",
-                    "Kitchen sound notifications",
-                    "Real-time order tracking"
+                    "Multi-Platform Sync",
+                    "Kitchen Notifications",
+                    "Order Status Tracking"
                 ]
             },
             {
                 "id": "offers-promotions",
-                "title": "Smart Promotions",
-                "description": "Create happy hour deals, festive discounts, combo meals, or BOGO offers in under 2 minutes. Schedule them to activate automatically. Watch your revenue grow without spending on marketing.",
+                "title": "Offers That Drive Sales",
+                "description": "Create happy hour deals, festive discounts, BOGO offers, or combo meals in minutes. Schedule them to go live automatically and watch your revenue grow.",
                 "features": [
-                    "Discount & combo creator",
-                    "Auto-scheduled promotions",
-                    "Built-in revenue boosters"
+                    "Discount Codes",
+                    "Scheduled Promotions",
+                    "Combo Builder"
                 ]
             }
         ]
     },
     "features": {
-        "badge": "Built for Restaurant Owners",
-        "title": "Everything You Need. Nothing You Don't.",
-        "description": "We built Table Tap specifically for small restaurant owners who want powerful technology without the complexity or cost. Manage one restaurant or twenty—all from your phone.",
+        "badge": "Owner Superpowers",
+        "title": "Total Control.",
+        "description": "You know your restaurant best. Table Tap gives you powerful tools to manage everything—from your menu to your team to your inventory. No tech skills required.",
         "mainFeatures": [
             {
-                "title": "Multi-Restaurant Dashboard",
-                "description": "Own multiple outlets? Manage all your restaurants from a single dashboard. Switch locations instantly, view consolidated sales, sync menus across branches, and control everything from one place.",
+                "title": "Multi-Restaurant Management",
+                "description": "Own multiple locations? Manage all your restaurants from one dashboard. Switch between outlets instantly, view consolidated analytics, and maintain consistency across your brand.",
                 "type": "building"
             },
             {
-                "title": "Unified Analytics for All Locations",
-                "description": "See the complete picture across all your restaurants. Compare outlet performance, track revenue trends, identify best-sellers, and make data-driven decisions with powerful cross-location insights.",
+                "title": "Unified Analytics Dashboard",
+                "description": "See the big picture with aggregated insights across all your restaurants. Compare performance, track revenue trends, and identify your best performers—all in one view.",
                 "type": "chart"
             },
             {
-                "title": "Instant Menu Updates",
-                "description": "Add new dishes in 30 seconds. Mark items sold out with one tap. Change prices instantly across all branches. Push happy hour specials live from your phone—no tech skills needed.",
+                "title": "Menu Editor",
+                "description": "Add dishes with photos, descriptions, and prices. Organize by categories. Mark items as sold out instantly. Your menu, your way.",
                 "type": "zap"
             },
             {
-                "title": "Smart Inventory Tracking",
-                "description": "Never run out of ingredients again. Track stock across all locations in real-time. Get low-stock alerts. View purchase history and activity logs for complete transparency.",
+                "title": "Smart Inventory",
+                "description": "Track stock levels in real-time. Get alerts when supplies run low. View activity logs for complete transparency.",
                 "type": "palette"
             },
             {
-                "title": "Team Management Made Easy",
-                "description": "Add unlimited staff with role-based access—Owner, Manager, Captain, Chef, Waiter, Cashier. Everyone sees only what they need. Perfect for multi-location management.",
+                "title": "Staff Management",
+                "description": "Add your team with role-based access—Manager, Captain, Chef, Waiter, Cashier. Everyone sees only what they need.",
                 "type": "smartphone"
             },
             {
-                "title": "AI-Powered Insights",
-                "description": "Ask questions in plain English and get instant answers. \"Which dish sells best on weekends?\" \"What's my revenue trend?\" AI analyzes your data and gives you actionable insights.",
+                "title": "AI Analytics",
+                "description": "Understand your business with AI-powered insights. Ask questions in plain English and get instant answers about sales, trends, and more.",
                 "type": "globe"
             },
             {
-                "title": "Beautiful QR Codes",
-                "description": "Generate elegant, print-ready QR codes for every table. Customize colors to match your brand. Replace or add tables anytime with zero hassle.",
+                "title": "QR Code Generator",
+                "description": "Generate unique QR codes for each table. Print-ready designs that match your restaurant's style. Easy to replace anytime.",
                 "type": "lock"
             },
             {
-                "title": "Never Miss an Order",
-                "description": "Instant desktop notifications with sound alerts. Orders flow directly to your kitchen display. Browser notifications even when you're on another tab. Zero missed orders.",
+                "title": "Real-Time Notifications",
+                "description": "Instant order alerts with sounds. Browser notifications even when you're away. Never miss an order again.",
                 "type": "headphones"
             }
         ],
         "banner": {
-            "title": "Ready to Grow?",
-            "description": "Join 500+ restaurant owners who are saving money, serving faster, and growing their business with Table Tap.",
+            "title": "Ready to Transform?",
+            "description": "Join 500+ restaurants that have already elevated their guest experience with Table Tap.",
             "ctaText": "Get Started Free",
             "ctaHref": "#contact",
             "statValue": "40%",
