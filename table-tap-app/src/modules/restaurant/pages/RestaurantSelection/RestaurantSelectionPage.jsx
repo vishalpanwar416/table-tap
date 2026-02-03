@@ -899,10 +899,10 @@ const RestaurantSelectionPage = () => {
           variants={pageVariants}
           className="flex-1 flex flex-col"
         >
-          <div className="flex-1 flex flex-col bg-gray-200 rounded-t-3xl overflow-hidden min-h-[500px] px-4 pt-10 pb-6">
+          <div className="flex-1 flex flex-col bg-gray-200 rounded-t-3xl overflow-hidden min-h-[500px] px-4 pt-4 pb-6">
 
             {/* Location Bar - compact, fixed height when search opens */}
-            <div className="mb-4 bg-white rounded-xl py-2 px-3 shadow-sm min-h-[48px] flex items-center">
+            <div className={`bg-white rounded-xl py-2 px-3 shadow-sm min-h-[48px] flex items-center ${isOwner ? 'mb-1.5' : 'mb-4'}`}>
               {showSearch ? (
                 <motion.div
                   initial={{ x: 40, opacity: 0 }}
@@ -948,45 +948,45 @@ const RestaurantSelectionPage = () => {
                 </motion.div>
               ) : (
                 <>
-                  {/* Mobile: compact single line */}
+                  {/* Mobile: one horizontal row — location group | Near me | All | Search */}
                   <div
-                    className="flex sm:hidden items-center gap-1.5 flex-nowrap overflow-x-auto min-h-[40px] py-0.5 -mr-3 animate-in fade-in-0 slide-in-from-left-2 duration-300"
+                    className="flex sm:hidden items-center gap-2 flex-nowrap overflow-x-auto min-h-[40px] py-0.5 -mr-3 animate-in fade-in-0 slide-in-from-left-2 duration-300"
                     style={{ WebkitOverflowScrolling: 'touch' }}
                   >
-                    <div className="flex items-center gap-1.5 flex-shrink-0 min-w-0 max-w-[36%]">
+                    <div className="flex items-center gap-1.5 flex-shrink-0 min-w-0 max-w-[40%]">
                       <div className="relative flex-shrink-0">
                         <MapPin size={18} className="text-gray-600" />
                         <span className={`absolute left-1/2 top-[38%] -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full border-2 border-white ${userLocation ? 'bg-green-500' : 'bg-red-500'}`}></span>
                       </div>
-                      <span className="text-xs font-medium text-gray-700 truncate block">
+                      <span className="text-xs font-medium text-gray-700 truncate whitespace-nowrap">
                         {userLocation ? (userLocation.address || 'Current location') : (locationError ? 'Location off' : 'Enable location')}
                       </span>
+                      <button
+                        onClick={handleLocationRequest}
+                        disabled={locationLoading}
+                        className="flex items-center justify-center w-8 h-8 rounded-full transition-colors touch-manipulation flex-shrink-0 bg-orange-500 hover:bg-orange-600 disabled:opacity-70"
+                        aria-label="Get location"
+                        title="Enable location"
+                      >
+                        {locationLoading ? (
+                          <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent"></div>
+                        ) : (
+                          <Crosshair size={14} className="text-white" />
+                        )}
+                      </button>
                     </div>
-                    <button
-                      onClick={handleLocationRequest}
-                      disabled={locationLoading}
-                      className="flex items-center justify-center w-8 h-8 rounded-full transition-colors touch-manipulation flex-shrink-0 ml-auto bg-orange-500 hover:bg-orange-600 disabled:opacity-70"
-                      aria-label="Get location"
-                      title="Enable location"
-                    >
-                      {locationLoading ? (
-                        <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent"></div>
-                      ) : (
-                        <Crosshair size={14} className="text-white" />
-                      )}
-                    </button>
                     <button
                       onClick={() => {
                         if (!userLocation) getUserLocation();
                         else { setShowAllRestaurants(false); setShowMyRestaurants(false); }
                       }}
-                      className={`pill-option px-2 py-1.5 rounded-full text-xs font-medium flex-shrink-0 ${(!showAllRestaurants && !showMyRestaurants) ? 'bg-gray-600 text-white border-gray-600' : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'} border`}
+                      className={`pill-option px-2 py-1.5 rounded-full text-xs font-medium flex-shrink-0 whitespace-nowrap ${(!showAllRestaurants && !showMyRestaurants) ? 'bg-gray-600 text-white border-gray-600' : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'} border`}
                     >
                       Near me
                     </button>
                     <button
                       onClick={() => { setShowAllRestaurants(true); setShowMyRestaurants(false); }}
-                      className={`pill-option px-2 py-1.5 rounded-full text-xs font-medium flex-shrink-0 ${showAllRestaurants ? 'bg-gray-600 text-white border-gray-600' : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'} border`}
+                      className={`pill-option px-2 py-1.5 rounded-full text-xs font-medium flex-shrink-0 whitespace-nowrap ${showAllRestaurants ? 'bg-gray-600 text-white border-gray-600' : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'} border`}
                     >
                       All
                     </button>
@@ -999,35 +999,33 @@ const RestaurantSelectionPage = () => {
                     </button>
                   </div>
 
-                  {/* Desktop (sm and up): compact single line with Near me always visible */}
+                  {/* Desktop (sm and up): one row — location group | Near me | All | Search */}
                   <div
                     className="hidden sm:flex flex-row items-center gap-x-2 flex-nowrap overflow-x-auto min-h-[40px] py-0.5 -mr-3 animate-in fade-in-0 slide-in-from-left-2 duration-300"
                     style={{ WebkitOverflowScrolling: 'touch' }}
                   >
-                    <div className="flex flex-row items-center gap-x-2 flex-shrink-0 min-w-0">
+                    <div className="flex flex-row items-center gap-x-2 flex-shrink-0 min-w-0 max-w-[200px] lg:max-w-[260px]">
                       <div className="relative flex-shrink-0">
                         <MapPin size={18} className="text-gray-600" />
                         <span className={`absolute left-1/2 top-[38%] -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full border-2 border-white ${userLocation ? 'bg-green-500' : 'bg-red-500'}`}></span>
                       </div>
-                      <div className="min-w-0 max-w-[160px] lg:max-w-[220px]">
-                        <span className="text-xs font-medium text-gray-700 truncate block">
-                          {userLocation ? (userLocation.address || 'Current location') : (locationError ? 'Location unavailable' : 'Enable location')}
-                        </span>
-                      </div>
+                      <span className="text-xs font-medium text-gray-700 truncate whitespace-nowrap">
+                        {userLocation ? (userLocation.address || 'Current location') : (locationError ? 'Location unavailable' : 'Enable location')}
+                      </span>
+                      <button
+                        onClick={handleLocationRequest}
+                        disabled={locationLoading}
+                        className="flex items-center justify-center w-9 h-9 rounded-full transition-colors touch-manipulation flex-shrink-0 bg-orange-500 hover:bg-orange-600 disabled:opacity-70"
+                        aria-label="Get location"
+                      >
+                        {locationLoading ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                        ) : (
+                          <Crosshair size={16} className="text-white" />
+                        )}
+                      </button>
                     </div>
-                    <button
-                      onClick={handleLocationRequest}
-                      disabled={locationLoading}
-                      className="flex items-center justify-center w-9 h-9 rounded-full transition-colors touch-manipulation flex-shrink-0 ml-auto bg-orange-500 hover:bg-orange-600 disabled:opacity-70"
-                      aria-label="Get location"
-                    >
-                      {locationLoading ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                      ) : (
-                        <Crosshair size={16} className="text-white" />
-                      )}
-                    </button>
-                    <div className="pill-toggle flex gap-1.5 min-w-0">
+                    <div className="pill-toggle flex gap-1.5 min-w-0 flex-shrink-0">
                       <button
                         onClick={() => {
                           if (!userLocation) getUserLocation();
@@ -1056,26 +1054,29 @@ const RestaurantSelectionPage = () => {
               )}
             </div>
 
-            {/* My Restaurants - staff/owner/admin only, large CTA below location bar */}
+            {/* My Restaurants - staff/owner/admin only, compact CTA below location bar */}
             {isOwner && (
-              <div className="mt-3 mb-2">
+              <div className="mt-0 mb-1.5">
                 <button
                   type="button"
                   onClick={() => { setShowMyRestaurants(true); setShowAllRestaurants(false); }}
-                  className={`w-full rounded-xl py-3.5 px-4 text-left font-semibold text-base transition-all flex items-center justify-between gap-3 border-2 ${showMyRestaurants
-                    ? 'bg-amber-500 border-amber-600 text-white shadow-md'
+                  className={`w-full rounded-lg py-2 px-3 font-medium text-sm transition-all flex items-center justify-between gap-2 border ${showMyRestaurants
+                    ? 'bg-amber-500 border-amber-600 text-white shadow-sm'
                     : 'bg-white border-amber-200 text-amber-800 hover:bg-amber-50 hover:border-amber-300'
                   }`}
                 >
-                  <span className="flex items-center gap-3">
-                    <span className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
-                      <Store size={20} className={showMyRestaurants ? 'text-amber-900' : 'text-amber-600'} />
+                  <span className="flex-1 min-w-0" aria-hidden="true" />
+                  <span className="flex items-center gap-2 flex-shrink-0">
+                    <span className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${showMyRestaurants ? 'bg-amber-400' : 'bg-amber-100'}`}>
+                      <Store size={16} className={showMyRestaurants ? 'text-amber-900' : 'text-amber-600'} />
                     </span>
                     <span>My Restaurants</span>
                   </span>
-                  {showMyRestaurants && (
-                    <span className="text-sm font-medium opacity-90">Active</span>
-                  )}
+                  <span className="flex-1 min-w-0 flex justify-end items-center">
+                    {showMyRestaurants && (
+                      <span className="text-xs font-medium opacity-90">Active</span>
+                    )}
+                  </span>
                 </button>
               </div>
             )}
