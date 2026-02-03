@@ -574,7 +574,7 @@ const RestaurantSelectionPage = () => {
           return;
         }
         data = await getClosestRestaurants(userLocation.latitude, userLocation.longitude, 5000);
-        data = data.map(restaurant => ({
+        data = (data || []).map(restaurant => ({
           ...restaurant,
           distance: typeof restaurant.distance === 'number' ? restaurant.distance / 1000 : null
         }));
@@ -657,24 +657,15 @@ const RestaurantSelectionPage = () => {
     }
   };
 
-  // When location changes, refresh without loading screen or clearing data
-  useEffect(() => {
-    if (userLocation) {
-      fetchRestaurants(true, true); // force refresh
-    }
-  }, [userLocation]);
-
   // When toggling, call fetchRestaurants only if not cached
   useEffect(() => {
     fetchRestaurants(false);
   }, [showAllRestaurants]);
 
-  // Invalidate cache if userLocation changes
+  // Invalidate nearby cache when userLocation changes so next fetch gets fresh nearby list
   useEffect(() => {
-    setCachedNearby(null);
-    setCachedAll(null);
     if (userLocation) {
-      fetchRestaurants(true, true); // force refresh
+      setCachedNearby(null);
     }
   }, [userLocation]);
 
@@ -902,18 +893,18 @@ const RestaurantSelectionPage = () => {
           <div className="flex-1 flex flex-col bg-gray-200 rounded-t-3xl overflow-hidden min-h-[500px] px-4 pt-4 pb-6">
 
             {/* Location Bar - compact, fixed height when search opens */}
-            <div className={`bg-white rounded-xl py-2 px-3 shadow-sm min-h-[48px] flex items-center ${isOwner ? 'mb-1.5' : 'mb-4'}`}>
+            <div className={`bg-white rounded-xl py-2 px-3 shadow-sm flex items-center ${showSearch ? 'min-h-[40px] py-1.5' : 'min-h-[48px]'} ${isOwner ? 'mb-1.5' : 'mb-4'}`}>
               {showSearch ? (
                 <motion.div
                   initial={{ x: 40, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   exit={{ x: 40, opacity: 0 }}
                   transition={{ duration: 0.25, ease: 'easeOut' }}
-                  className="flex items-center gap-2 bg-white/80 backdrop-blur-md rounded-full shadow-lg border border-gray-100 px-3 py-1.5 w-full min-h-[40px]"
+                  className="flex items-center gap-1.5 bg-white/80 backdrop-blur-md rounded-full shadow-lg border border-gray-100 px-2.5 py-1 w-full min-h-[36px]"
                   style={{ boxShadow: '0 4px 24px 0 rgba(0,0,0,0.08)' }}
                 >
-                  <div className="flex-1 relative overflow-hidden min-h-[36px] flex items-center">
-                    <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 flex-shrink-0" />
+                  <div className="flex-1 relative overflow-hidden min-h-[32px] flex items-center">
+                    <Search size={16} className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 flex-shrink-0" />
                     <motion.input
                       type="text"
                       value={searchQuery}
@@ -923,7 +914,7 @@ const RestaurantSelectionPage = () => {
                       animate={{ width: '100%', opacity: 1, scale: 1 }}
                       exit={{ width: 0, opacity: 0, scale: 0.95 }}
                       transition={{ duration: 0.6, ease: 'easeOut' }}
-                      className="w-full pl-9 pr-3 py-2 rounded-full border-none focus:outline-none text-sm bg-white/80 text-gray-800 placeholder-gray-400 shadow-inner transition-colors"
+                      className="w-full pl-8 pr-2 py-1.5 rounded-full border-none focus:outline-none text-sm bg-white/80 text-gray-800 placeholder-gray-400 shadow-inner transition-colors"
                       autoFocus
                       onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit()}
                       style={{ minWidth: 0 }}
@@ -932,28 +923,28 @@ const RestaurantSelectionPage = () => {
                   <button
                     type="button"
                     onClick={handleSearchSubmit}
-                    className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-600 hover:bg-gray-700 text-white shadow transition-all duration-200 hover:scale-105 focus:outline-none flex-shrink-0"
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-600 hover:bg-gray-700 text-white shadow transition-all duration-200 hover:scale-105 focus:outline-none flex-shrink-0"
                     style={{ boxShadow: '0 2px 8px 0 rgba(0,0,0,0.10)' }}
                   >
-                    <Search size={18} />
+                    <Search size={16} />
                   </button>
                   <button
                     type="button"
                     onClick={handleSearchToggle}
-                    className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-400 hover:text-gray-600 shadow transition-all duration-200 hover:scale-105 focus:outline-none flex-shrink-0"
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-400 hover:text-gray-600 shadow transition-all duration-200 hover:scale-105 focus:outline-none flex-shrink-0"
                     style={{ boxShadow: '0 2px 8px 0 rgba(0,0,0,0.06)' }}
                   >
-                    <X size={18} />
+                    <X size={16} />
                   </button>
                 </motion.div>
               ) : (
                 <>
-                  {/* Mobile: one horizontal row — location group | Near me | All | Search */}
+                  {/* Mobile: location label left; location button + Near me + All + Search right */}
                   <div
                     className="flex sm:hidden items-center gap-2 flex-nowrap overflow-x-auto min-h-[40px] py-0.5 -mr-3 animate-in fade-in-0 slide-in-from-left-2 duration-300"
                     style={{ WebkitOverflowScrolling: 'touch' }}
                   >
-                    <div className="flex items-center gap-1.5 flex-shrink-0 min-w-0 max-w-[40%]">
+                    <div className="flex items-center gap-1.5 flex-shrink-0 min-w-0 max-w-[45%]">
                       <div className="relative flex-shrink-0">
                         <MapPin size={18} className="text-gray-600" />
                         <span className={`absolute left-1/2 top-[38%] -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full border-2 border-white ${userLocation ? 'bg-green-500' : 'bg-red-500'}`}></span>
@@ -961,6 +952,9 @@ const RestaurantSelectionPage = () => {
                       <span className="text-xs font-medium text-gray-700 truncate whitespace-nowrap">
                         {userLocation ? (userLocation.address || 'Current location') : (locationError ? 'Location off' : 'Enable location')}
                       </span>
+                    </div>
+                    <div className="flex-1 min-w-0" />
+                    <div className="flex items-center gap-1.5 flex-shrink-0 ml-auto">
                       <button
                         onClick={handleLocationRequest}
                         disabled={locationLoading}
@@ -974,37 +968,37 @@ const RestaurantSelectionPage = () => {
                           <Crosshair size={14} className="text-white" />
                         )}
                       </button>
+                      <button
+                        onClick={() => {
+                          if (!userLocation) getUserLocation();
+                          else { setShowAllRestaurants(false); setShowMyRestaurants(false); }
+                        }}
+                        className={`pill-option px-2 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${(!showAllRestaurants && !showMyRestaurants) ? 'bg-gray-600 text-white border-gray-600' : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'} border`}
+                      >
+                        Near me
+                      </button>
+                      <button
+                        onClick={() => { setShowAllRestaurants(true); setShowMyRestaurants(false); }}
+                        className={`pill-option px-2 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${showAllRestaurants ? 'bg-gray-600 text-white border-gray-600' : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'} border`}
+                      >
+                        All
+                      </button>
+                      <button
+                        onClick={handleSearchToggle}
+                        className={`flex items-center justify-center w-8 h-8 rounded-full transition-all touch-manipulation flex-shrink-0 ${showSearch ? 'bg-orange-500 text-white hover:bg-orange-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                        aria-label="Search"
+                      >
+                        <Search size={16} className={`transition-transform duration-300 ${showSearch ? 'rotate-90' : 'rotate-0'}`} />
+                      </button>
                     </div>
-                    <button
-                      onClick={() => {
-                        if (!userLocation) getUserLocation();
-                        else { setShowAllRestaurants(false); setShowMyRestaurants(false); }
-                      }}
-                      className={`pill-option px-2 py-1.5 rounded-full text-xs font-medium flex-shrink-0 whitespace-nowrap ${(!showAllRestaurants && !showMyRestaurants) ? 'bg-gray-600 text-white border-gray-600' : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'} border`}
-                    >
-                      Near me
-                    </button>
-                    <button
-                      onClick={() => { setShowAllRestaurants(true); setShowMyRestaurants(false); }}
-                      className={`pill-option px-2 py-1.5 rounded-full text-xs font-medium flex-shrink-0 whitespace-nowrap ${showAllRestaurants ? 'bg-gray-600 text-white border-gray-600' : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'} border`}
-                    >
-                      All
-                    </button>
-                    <button
-                      onClick={handleSearchToggle}
-                      className={`flex items-center justify-center w-8 h-8 rounded-full transition-all touch-manipulation flex-shrink-0 ${showSearch ? 'bg-orange-500 text-white hover:bg-orange-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                      aria-label="Search"
-                    >
-                      <Search size={16} className={`transition-transform duration-300 ${showSearch ? 'rotate-90' : 'rotate-0'}`} />
-                    </button>
                   </div>
 
-                  {/* Desktop (sm and up): one row — location group | Near me | All | Search */}
+                  {/* Desktop (sm and up): location label left; location button + Near me + All + Search right */}
                   <div
                     className="hidden sm:flex flex-row items-center gap-x-2 flex-nowrap overflow-x-auto min-h-[40px] py-0.5 -mr-3 animate-in fade-in-0 slide-in-from-left-2 duration-300"
                     style={{ WebkitOverflowScrolling: 'touch' }}
                   >
-                    <div className="flex flex-row items-center gap-x-2 flex-shrink-0 min-w-0 max-w-[200px] lg:max-w-[260px]">
+                    <div className="flex flex-row items-center gap-x-2 flex-shrink-0 min-w-0 max-w-[220px] lg:max-w-[280px]">
                       <div className="relative flex-shrink-0">
                         <MapPin size={18} className="text-gray-600" />
                         <span className={`absolute left-1/2 top-[38%] -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full border-2 border-white ${userLocation ? 'bg-green-500' : 'bg-red-500'}`}></span>
@@ -1012,6 +1006,9 @@ const RestaurantSelectionPage = () => {
                       <span className="text-xs font-medium text-gray-700 truncate whitespace-nowrap">
                         {userLocation ? (userLocation.address || 'Current location') : (locationError ? 'Location unavailable' : 'Enable location')}
                       </span>
+                    </div>
+                    <div className="flex-1 min-w-0" />
+                    <div className="pill-toggle flex items-center gap-1.5 flex-shrink-0 ml-auto">
                       <button
                         onClick={handleLocationRequest}
                         disabled={locationLoading}
@@ -1024,31 +1021,29 @@ const RestaurantSelectionPage = () => {
                           <Crosshair size={16} className="text-white" />
                         )}
                       </button>
-                    </div>
-                    <div className="pill-toggle flex gap-1.5 min-w-0 flex-shrink-0">
                       <button
                         onClick={() => {
                           if (!userLocation) getUserLocation();
                           else { setShowAllRestaurants(false); setShowMyRestaurants(false); }
                         }}
-                        className={`pill-option px-2.5 py-1.5 rounded-full text-xs font-medium flex-shrink-0 whitespace-nowrap ${(!showAllRestaurants && !showMyRestaurants) ? 'bg-gray-600 text-white border-gray-600' : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'} border`}
+                        className={`pill-option px-2.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${(!showAllRestaurants && !showMyRestaurants) ? 'bg-gray-600 text-white border-gray-600' : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'} border`}
                       >
                         Near me
                       </button>
                       <button
                         onClick={() => { setShowAllRestaurants(true); setShowMyRestaurants(false); }}
-                        className={`pill-option px-2.5 py-1.5 rounded-full text-xs font-medium flex-shrink-0 whitespace-nowrap ${showAllRestaurants ? 'bg-gray-600 text-white border-gray-600' : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'} border`}
+                        className={`pill-option px-2.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${showAllRestaurants ? 'bg-gray-600 text-white border-gray-600' : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'} border`}
                       >
                         All
                       </button>
+                      <button
+                        onClick={handleSearchToggle}
+                        className={`flex items-center justify-center w-9 h-9 rounded-full transition-all touch-manipulation flex-shrink-0 ${showSearch ? 'bg-orange-500 text-white hover:bg-orange-600' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}
+                        aria-label="Search"
+                      >
+                        <Search size={16} className={`transition-transform duration-300 ${showSearch ? 'rotate-90' : 'rotate-0'}`} />
+                      </button>
                     </div>
-                    <button
-                      onClick={handleSearchToggle}
-                      className={`flex items-center justify-center w-9 h-9 rounded-full transition-all touch-manipulation flex-shrink-0 ${showSearch ? 'bg-orange-500 text-white hover:bg-orange-600' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}
-                      aria-label="Search"
-                    >
-                      <Search size={16} className={`transition-transform duration-300 ${showSearch ? 'rotate-90' : 'rotate-0'}`} />
-                    </button>
                   </div>
                 </>
               )}
