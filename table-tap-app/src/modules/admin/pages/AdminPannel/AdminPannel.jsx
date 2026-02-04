@@ -72,7 +72,7 @@ const AdminPanel = () => {
       setSearchParams({ tab: id }, { replace: true });
       try {
         localStorage.setItem(ADMIN_TAB_STORAGE_KEY, id);
-      } catch (_) {}
+      } catch (_) { }
     },
     [setSearchParams]
   );
@@ -279,59 +279,35 @@ const AdminPanel = () => {
     }
   };
 
-  const handleToggleEmailBill = async (id) => {
+  const handleToggleOnlineBill = async (id) => {
     try {
       const restaurant = restaurants.find(r => r.id === id);
-      const newStatus = !(restaurant.email_bill_enabled !== false);
+      const currentStatus = (restaurant.billing_features_enabled !== false || restaurant.online_bill_enabled !== false);
+      const newStatus = !currentStatus;
 
       const { error } = await supabase
         .from('restaurants')
-        .update({ email_bill_enabled: newStatus })
+        .update({
+          online_bill_enabled: newStatus,
+          billing_features_enabled: newStatus
+        })
         .eq('id', id);
 
       if (error) {
-        handleError('Failed to update email bill setting: ' + error.message);
+        handleError('Failed to update Online Bill setting: ' + error.message);
         return;
       }
 
       setRestaurants(prev =>
         prev.map(r =>
           r.id === id
-            ? { ...r, email_bill_enabled: newStatus }
+            ? { ...r, online_bill_enabled: newStatus, billing_features_enabled: newStatus }
             : r
         )
       );
-      handleSuccess(`Email bill ${newStatus ? 'enabled' : 'disabled'} successfully`);
+      handleSuccess(`Online Bill ${newStatus ? 'enabled' : 'disabled'} successfully`);
     } catch (err) {
-      handleError('Failed to toggle email bill: ' + err.message);
-    }
-  };
-
-  const handleToggleWhatsAppBill = async (id) => {
-    try {
-      const restaurant = restaurants.find(r => r.id === id);
-      const newStatus = !(restaurant.whatsapp_bill_enabled !== false);
-
-      const { error } = await supabase
-        .from('restaurants')
-        .update({ whatsapp_bill_enabled: newStatus })
-        .eq('id', id);
-
-      if (error) {
-        handleError('Failed to update WhatsApp bill setting: ' + error.message);
-        return;
-      }
-
-      setRestaurants(prev =>
-        prev.map(r =>
-          r.id === id
-            ? { ...r, whatsapp_bill_enabled: newStatus }
-            : r
-        )
-      );
-      handleSuccess(`WhatsApp bill ${newStatus ? 'enabled' : 'disabled'} successfully`);
-    } catch (err) {
-      handleError('Failed to toggle WhatsApp bill: ' + err.message);
+      handleError('Failed to toggle Online Bill: ' + err.message);
     }
   };
 
@@ -555,7 +531,8 @@ const AdminPanel = () => {
     const restaurantId = restaurant?.id;
     if (!restaurantId) return;
     if (isDevelopment()) {
-      navigate(`/restaurant?restaurant=${restaurantId}`, { replace: false });
+      const port = window.location.port ? `:${window.location.port}` : '';
+      window.location.href = `${window.location.protocol}//${window.location.hostname}${port}/restaurant?restaurant=${restaurantId}`;
     } else {
       window.location.href = getSubdomainUrl('restaurant', `/?restaurant=${restaurantId}`);
     }
@@ -612,8 +589,7 @@ const AdminPanel = () => {
             onToggleStatus={handleToggleRestaurantStatus}
             onToggleAI={handleToggleRestaurantAI}
             onToggleAggregators={handleToggleRestaurantAggregators}
-            onToggleEmailBill={handleToggleEmailBill}
-            onToggleWhatsAppBill={handleToggleWhatsAppBill}
+            onToggleOnlineBill={handleToggleOnlineBill}
             onEdit={handleEditRestaurant}
             onDelete={handleDeleteRestaurant}
             onClick={handleRestaurantClick}

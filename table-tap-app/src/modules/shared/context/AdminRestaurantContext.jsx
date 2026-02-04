@@ -5,6 +5,11 @@ import { useAuth } from '../../shared/config/AuthContext';
 
 const AdminRestaurantContext = createContext();
 
+// Restaurants we never want to surface in the admin UI (legacy demo data)
+const BLOCKED_RESTAURANT_NAMES = ['Restaurant-1', 'Resturant-1'];
+const filterBlockedRestaurants = (list = []) =>
+  list.filter(r => !BLOCKED_RESTAURANT_NAMES.includes((r.name || '').trim()));
+
 // Helper function to store in localStorage
 const localStorageStore = {
   set: (key, value) => {
@@ -85,7 +90,7 @@ export const AdminRestaurantProvider = ({ children }) => {
           return;
         }
 
-        const role = profileData.profile_role || 'customer';
+        let role = profileData.profile_role || 'customer';
         setUserRole(role);
 
         let targetId = null;
@@ -93,15 +98,18 @@ export const AdminRestaurantProvider = ({ children }) => {
         if (role === 'admin') {
           targetId = urlRestaurantId || localStorageStore.get('admin_selected_restaurant');
         } else if (role === 'manager' || role === 'captain' || role === 'chef' || role === 'waiter' || role === 'cashier') {
-          const { data: staffData, error: staffError } = await supabase
+          // Use limit(1) instead of maybeSingle() so multiple staff rows don't cause an error
+          const { data: staffRows, error: staffError } = await supabase
             .from('restaurant_staff')
-            .select('restaurant_id')
+            .select('restaurant_id, staff_role')
             .eq('user_id', user.id)
             .eq('connected', true)
-            .maybeSingle();
+            .limit(1);
 
           if (staffError && staffError.name === 'AbortError') return;
-          targetId = staffData?.restaurant_id;
+          if (staffRows && staffRows.length > 0) {
+            targetId = staffRows[0].restaurant_id;
+          }
         } else if (role === 'owner') {
           // For owners, fetch ALL connected restaurants
           const { data: staffDataArray, error: staffError } = await supabase
@@ -124,22 +132,41 @@ export const AdminRestaurantProvider = ({ children }) => {
             if (restsError) {
               console.error('Error fetching owned restaurants:', restsError);
             } else {
-              setOwnedRestaurants(restaurantsData || []);
+              const filteredRestaurants = filterBlockedRestaurants(restaurantsData || []);
+              setOwnedRestaurants(filteredRestaurants);
 
               // Determine which one to select
               // 1. URL param
               // 2. Previously selected in local storage (if it belongs to them)
               // 3. The first one in the list
               const storedId = localStorageStore.get('admin_selected_restaurant');
+              const filteredIds = filteredRestaurants.map(r => r.id);
 
-              if (urlRestaurantId && ids.includes(urlRestaurantId)) {
+              if (urlRestaurantId && filteredIds.includes(urlRestaurantId)) {
                 targetId = urlRestaurantId;
-              } else if (storedId && ids.includes(storedId)) {
+              } else if (storedId && filteredIds.includes(storedId)) {
                 targetId = storedId;
-              } else if (restaurantsData.length > 0) {
-                targetId = restaurantsData[0].id;
+              } else if (filteredRestaurants.length > 0) {
+                targetId = filteredRestaurants[0].id;
               }
             }
+          }
+        }
+
+        // Fallback: if no restaurant yet (e.g. profile_role is customer but user is staff), check restaurant_staff
+        if (!targetId && (role === 'customer' || role === 'staff')) {
+          const { data: staffRows, error: staffError } = await supabase
+            .from('restaurant_staff')
+            .select('restaurant_id, staff_role')
+            .eq('user_id', user.id)
+            .eq('connected', true)
+            .limit(1);
+
+          if (!staffError && staffRows && staffRows.length > 0) {
+            targetId = staffRows[0].restaurant_id;
+            const effectiveRole = staffRows[0].staff_role || 'captain';
+            setUserRole(effectiveRole);
+            role = effectiveRole;
           }
         }
 
@@ -162,11 +189,16 @@ export const AdminRestaurantProvider = ({ children }) => {
             if (restError && restError.name === 'AbortError') return;
             if (!mounted) return;
 
-            if (restaurantData) {
+            const isStaffAssigned = ['captain', 'manager', 'chef', 'waiter', 'cashier'].includes(role);
+            const isAdminUser = role === 'admin';
+            const isBlocked = BLOCKED_RESTAURANT_NAMES.includes((restaurantData?.name || '').trim());
+            if (restaurantData && (!isBlocked || isStaffAssigned || isAdminUser)) {
               setRestaurant(restaurantData);
               if (role === 'admin' || role === 'owner') {
                 localStorageStore.set('admin_selected_restaurant', targetId);
               }
+            } else if (restaurantData && !isStaffAssigned && !isAdminUser) {
+              setError('Selected restaurant is no longer available.');
             }
           }
         }
@@ -197,10 +229,14 @@ export const AdminRestaurantProvider = ({ children }) => {
         .from('restaurants')
         .select('*')
         .eq('id', restaurantId)
-        .eq('is_active', true)
         .maybeSingle();
 
       if (restaurantError) {
+        setError('Restaurant not found');
+        return false;
+      }
+
+      if (!restaurantData) {
         setError('Restaurant not found or inactive');
         return false;
       }
@@ -391,7 +427,7 @@ export const AdminRestaurantProvider = ({ children }) => {
   }, [userRole]);
 
   const canView = React.useCallback(() => {
-    return ['captain', 'admin', 'manager', 'owner'].includes(userRole);
+    return ['captain', 'admin', 'manager', 'owner', 'chef', 'waiter', 'cashier'].includes(userRole);
   }, [userRole]);
 
   const isAdmin = React.useCallback(() => {

@@ -1,6 +1,7 @@
 import { supabase, SUPABASE_URL } from '../../../shared/supabase';
 import { createNotification } from '../../../shared/api/notificationService';
 import { logActivity } from '../../../shared/api/activityLogService';
+import { sendOrderStatusEmail, sendBillToCustomer } from '../../../shared/api/emailService';
 import axios from 'axios';
 
 // Note: Order creation has been moved to paymentService.js
@@ -188,6 +189,74 @@ export const updateOrderStatus = async (orderId, status, cancelReason = null, us
 
   // Helper function call to notify user (with refund info if applicable)
   await createOrderStatusNotification(updatedOrder, refundResult);
+
+  // Auto email billing: send emails on acceptance, rejection, or completion when restaurant has it enabled
+  const customerEmail = updatedOrder.customer_email;
+  if (customerEmail) {
+    let restaurant = null;
+    try {
+      const { data: restData } = await supabase
+        .from('restaurants')
+        .select('*')
+        .eq('id', updatedOrder.restaurant_id)
+        .maybeSingle();
+      restaurant = restData;
+    } catch (e) {
+      console.warn('[Auto email] Could not fetch restaurant:', e);
+    }
+    // Require online billing enabled from admin (billing_features_enabled + online_bill_enabled) and auto email billing on
+    const onlineBillingEnabled = restaurant?.billing_features_enabled !== false && restaurant?.online_bill_enabled !== false;
+    if (restaurant?.auto_email_billing_enabled && onlineBillingEnabled) {
+      const orderLabel = `Order #${updatedOrder.order_number || updatedOrder.id?.slice(0, 8) || 'N/A'}`;
+      try {
+        if (status === 'preparing') {
+          await sendOrderStatusEmail(updatedOrder, restaurant, 'accepted');
+          await logActivity({
+            restaurant_id: restaurant.id,
+            user_id: null,
+            user_name: 'System (Auto)',
+            user_role: 'system',
+            action_type: 'email',
+            action_name: 'auto_email_sent',
+            target_id: updatedOrder.id,
+            target_name: orderLabel,
+            details: { email_kind: 'accepted', recipient_email: customerEmail },
+            description: `Auto email (order accepted) sent to ${customerEmail}`
+          });
+        } else if (status === 'rejected') {
+          await sendOrderStatusEmail(updatedOrder, restaurant, 'rejected');
+          await logActivity({
+            restaurant_id: restaurant.id,
+            user_id: null,
+            user_name: 'System (Auto)',
+            user_role: 'system',
+            action_type: 'email',
+            action_name: 'auto_email_sent',
+            target_id: updatedOrder.id,
+            target_name: orderLabel,
+            details: { email_kind: 'rejected', recipient_email: customerEmail },
+            description: `Auto email (order rejected) sent to ${customerEmail}`
+          });
+        } else if (status === 'completed') {
+          await sendBillToCustomer(updatedOrder, restaurant);
+          await logActivity({
+            restaurant_id: restaurant.id,
+            user_id: null,
+            user_name: 'System (Auto)',
+            user_role: 'system',
+            action_type: 'email',
+            action_name: 'auto_email_sent',
+            target_id: updatedOrder.id,
+            target_name: orderLabel,
+            details: { email_kind: 'bill', recipient_email: customerEmail, amount: updatedOrder.total },
+            description: `Auto email (bill on completion) sent to ${customerEmail}`
+          });
+        }
+      } catch (emailErr) {
+        console.warn('[Auto email] Failed to send:', emailErr);
+      }
+    }
+  }
 
   return updatedOrder;
 };

@@ -9,7 +9,9 @@ import {
     RefreshCw,
     LayoutGrid,
     X,
-    ExternalLink
+    ExternalLink,
+    Minus,
+    Plus
 } from 'lucide-react';
 import PrintBill from '../PrintBill';
 
@@ -22,6 +24,51 @@ const FloorPlanView = ({ searchTerm, onViewOrders }) => {
     const [selectedTable, setSelectedTable] = useState(null);
     const [orderToPrint, setOrderToPrint] = useState(null);
     const printRef = useRef(null);
+
+    // Table box size: 'compact' | 'medium' | 'large' — default compact to fit more tables
+    const [tableBoxSize, setTableBoxSize] = useState(() => {
+        try {
+            const saved = localStorage.getItem('floor_plan_table_box_size');
+            if (['compact', 'medium', 'large'].includes(saved)) return saved;
+        } catch (_) {}
+        return 'compact';
+    });
+
+    const TABLE_SIZE_CONFIG = {
+        compact: {
+            gridClass: 'grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-2',
+            boxClass: 'p-2',
+            numberClass: 'text-base',
+            metaClass: 'text-[10px]'
+        },
+        medium: {
+            gridClass: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4',
+            boxClass: 'p-3',
+            numberClass: 'text-lg',
+            metaClass: 'text-xs'
+        },
+        large: {
+            gridClass: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4',
+            boxClass: 'p-4',
+            numberClass: 'text-xl',
+            metaClass: 'text-sm'
+        }
+    };
+
+    const sizeConfig = TABLE_SIZE_CONFIG[tableBoxSize] || TABLE_SIZE_CONFIG.medium;
+
+    const handleTableSizeChange = (direction) => {
+        const order = ['compact', 'medium', 'large'];
+        const idx = order.indexOf(tableBoxSize);
+        let next = direction === 'up' ? idx + 1 : idx - 1;
+        if (next < 0) next = 0;
+        if (next >= order.length) next = order.length - 1;
+        const nextSize = order[next];
+        setTableBoxSize(nextSize);
+        try {
+            localStorage.setItem('floor_plan_table_box_size', nextSize);
+        } catch (_) {}
+    };
 
     // Status definitions mapping to the visual style requested
     const STATUS_CONFIG = {
@@ -200,55 +247,58 @@ const FloorPlanView = ({ searchTerm, onViewOrders }) => {
 
     return (
         <div className="p-4 md:p-6 bg-white rounded-xl shadow-sm min-h-[calc(100vh-140px)]">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pb-4 border-b border-gray-200">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-orange-100 text-orange-600">
-                        <LayoutGrid className="w-6 h-6" />
-                    </div>
-                    <div>
-                        <h1 className="text-xl font-bold text-gray-900">Floor plan</h1>
-                        <p className="text-sm text-gray-500">
-                            {tables.length} table{tables.length !== 1 ? 's' : ''} · Live status
-                        </p>
-                    </div>
+            {/* Single-line bar: left = tables + legend; right = size + Refresh */}
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-6 pb-4 border-b border-gray-200 text-sm">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                    <span className="text-gray-600 whitespace-nowrap">
+                        {tables.length} table{tables.length !== 1 ? 's' : ''} · Live status
+                    </span>
+                    {Object.entries(STATUS_CONFIG).map(([key, config]) => {
+                        const count = statusCounts[key] || 0;
+                        return (
+                            <span key={key} className="flex items-center gap-1.5 text-gray-600 whitespace-nowrap">
+                                <span className={`w-2 h-2 rounded-full shrink-0 ${config.legendColor}`} />
+                                <span>{config.label}: {count}</span>
+                            </span>
+                        );
+                    })}
                 </div>
-
-                <div className="flex flex-wrap items-center gap-3">
-                    {/* Status summary */}
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600">
-                        {Object.entries(STATUS_CONFIG).map(([key, config]) => {
-                            const count = statusCounts[key] || 0;
-                            if (count === 0 && key === 'empty') return null;
-                            return (
-                                <span key={key} className="flex items-center gap-1.5">
-                                    <span className={`w-2 h-2 rounded-full ${config.legendColor}`} />
-                                    <span>{config.shortLabel}: {count}</span>
-                                </span>
-                            );
-                        })}
+                <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-0.5 rounded-lg border border-blue-200 bg-blue-50 p-1">
+                        <button
+                            type="button"
+                            onClick={() => handleTableSizeChange('down')}
+                            disabled={tableBoxSize === 'compact'}
+                            className="p-1.5 rounded-md text-blue-600 hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            title="Smaller tables"
+                        >
+                            <Minus className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => handleTableSizeChange('up')}
+                            disabled={tableBoxSize === 'large'}
+                            className="p-1.5 rounded-md text-blue-600 hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            title="Larger tables"
+                        >
+                            <Plus className="w-3.5 h-3.5" />
+                        </button>
                     </div>
                     <button
                         type="button"
-                        onClick={() => fetchOrders(true)}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            fetchOrders(true);
+                        }}
                         disabled={refreshing}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-60 transition-colors text-sm"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-orange-500 text-white border border-orange-500 hover:bg-orange-600 hover:border-orange-600 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                         title="Refresh"
                     >
-                        <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                        <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
                         Refresh
                     </button>
                 </div>
-            </div>
-
-            {/* Legend - compact */}
-            <div className="flex flex-wrap gap-4 justify-center md:justify-start mb-6">
-                {Object.entries(STATUS_CONFIG).map(([key, config]) => (
-                    <div key={key} className="flex items-center gap-2">
-                        <div className={`w-3 h-3 rounded-full ${config.legendColor}`} />
-                        <span className="text-sm text-gray-600">{config.label}</span>
-                    </div>
-                ))}
             </div>
 
             {/* Floor plan by location */}
@@ -260,7 +310,7 @@ const FloorPlanView = ({ searchTerm, onViewOrders }) => {
                             {location}
                         </h3>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
+                        <div className={`grid ${sizeConfig.gridClass}`}>
                             {locTables.map(table => {
                                 const statusKey = getTableStatus(table.tableNumber);
                                 const style = STATUS_CONFIG[statusKey];
@@ -272,26 +322,26 @@ const FloorPlanView = ({ searchTerm, onViewOrders }) => {
                                         key={table.id}
                                         onClick={() => setSelectedTable({ table, orders })}
                                         className={`
-                                            relative aspect-square rounded-xl border-2 flex flex-col items-center justify-center p-3
+                                            relative aspect-square rounded-xl border-2 flex flex-col items-center justify-center ${sizeConfig.boxClass}
                                             transition-all duration-200 hover:shadow-md cursor-pointer group
                                             ${style.color}
                                             ${statusKey === 'empty' ? 'border-dashed' : 'border-solid shadow-sm'}
                                         `}
                                     >
                                         {orderCount > 0 && (
-                                            <span className="absolute top-2 right-2 min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full bg-white/90 text-xs font-semibold text-gray-700 shadow-sm">
+                                            <span className={`absolute top-1 right-1 min-w-[18px] h-4 px-1 flex items-center justify-center rounded-full bg-white/90 ${sizeConfig.metaClass} font-semibold text-gray-700 shadow-sm`}>
                                                 {orderCount}
                                             </span>
                                         )}
-                                        <span className="text-lg font-bold">
+                                        <span className={`${sizeConfig.numberClass} font-bold`}>
                                             {table.tableNumber}
                                         </span>
                                         {table.capacity && (
-                                            <span className="text-xs text-gray-500 mt-0.5">
+                                            <span className={`${sizeConfig.metaClass} text-gray-500 mt-0.5`}>
                                                 {table.capacity} seats
                                             </span>
                                         )}
-                                        <span className={`text-xs font-medium mt-1 opacity-90 ${statusKey === 'empty' ? 'text-gray-400' : ''}`}>
+                                        <span className={`${sizeConfig.metaClass} font-medium mt-1 opacity-90 ${statusKey === 'empty' ? 'text-gray-400' : ''}`}>
                                             {style.shortLabel}
                                         </span>
                                         <div className="flex gap-1.5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">

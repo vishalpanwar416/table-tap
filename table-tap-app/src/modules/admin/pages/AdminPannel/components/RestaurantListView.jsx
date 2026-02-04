@@ -13,6 +13,7 @@ import {
   ExternalLink,
   Brain,
   ShoppingBag,
+  FileText,
   Loader2,
   ChevronUp
 } from 'lucide-react';
@@ -23,8 +24,7 @@ const RestaurantListView = ({
   onToggleStatus,
   onToggleAI,
   onToggleAggregators,
-  onToggleEmailBill,
-  onToggleWhatsAppBill,
+  onToggleOnlineBill,
   onEdit,
   onDelete,
   onClick,
@@ -144,6 +144,11 @@ const RestaurantListView = ({
   const handleToggleAggregators = (e, restaurant) => {
     e.stopPropagation();
     onToggleAggregators(restaurant.id);
+  };
+
+  const handleToggleOnlineBill = (e, restaurant) => {
+    e.stopPropagation();
+    onToggleOnlineBill(restaurant.id);
   };
 
   const handleEdit = (e, restaurant) => {
@@ -340,8 +345,36 @@ const RestaurantListView = ({
             </div>
           </div>
 
+          {/* Online Bill Status */}
+          <div className="col-span-1">
+            <div className="flex items-center justify-center">
+              {/* Online Bill Toggle */}
+              <button
+                onClick={(e) => handleToggleOnlineBill(e, restaurant)}
+                className={`relative w-16 h-8 rounded-full focus:outline-none transition-all duration-300 shadow-lg group/btn overflow-hidden ${(restaurant.billing_features_enabled !== false || restaurant.online_bill_enabled !== false)
+                  ? 'bg-gradient-to-r from-blue-500 to-indigo-500 shadow-blue-200'
+                  : 'bg-gradient-to-r from-gray-300 to-gray-400 shadow-gray-200'
+                  }`}
+                aria-label={(restaurant.billing_features_enabled !== false || restaurant.online_bill_enabled !== false) ? 'Disable Online Billing' : 'Enable Online Billing'}
+              >
+                <div
+                  className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ease-out ${(restaurant.billing_features_enabled !== false || restaurant.online_bill_enabled !== false)
+                    ? 'translate-x-8 shadow-blue-100'
+                    : 'translate-x-1 shadow-gray-100'
+                    }`}
+                >
+                  {(restaurant.billing_features_enabled !== false || restaurant.online_bill_enabled !== false) ? (
+                    <FileText className="w-3 h-3 text-blue-500" />
+                  ) : (
+                    <FileText className="w-3 h-3 text-gray-400" />
+                  )}
+                </div>
+              </button>
+            </div>
+          </div>
+
           {/* Actions */}
-          <div className="col-span-2">
+          <div className="col-span-1">
             <div className="flex items-center space-x-2">
               <button
                 onClick={(e) => handleEdit(e, restaurant)}
@@ -432,7 +465,8 @@ const RestaurantListView = ({
             <div className="col-span-1 text-center">Status</div>
             <div className="col-span-1 text-center">AI</div>
             <div className="col-span-1 text-center">Aggregators</div>
-            <div className="col-span-2 text-center">Actions</div>
+            <div className="col-span-1 text-center">Online Bill</div>
+            <div className="col-span-1 text-center">Actions</div>
           </div>
         </div>
 

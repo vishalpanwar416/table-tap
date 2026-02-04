@@ -311,41 +311,6 @@ const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab, restaur
 
   return (
     <div className="space-y-6">
-      {/* Restaurant Header */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-orange-100/50 flex flex-col md:flex-row items-center md:items-start gap-6">
-        <div className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center overflow-hidden shadow-md border border-gray-100 p-2 shrink-0">
-          <img
-            src={restaurant?.logo_url || "/favicon.ico"}
-            alt={restaurant?.name}
-            className="w-full h-full object-contain"
-          />
-        </div>
-        <div className="text-center md:text-left">
-          <h2 className="text-2xl font-bold text-gray-900 font-spartan">
-            {restaurant?.name || 'Welcome back!'}
-          </h2>
-          <p className="text-gray-500 font-spartan mt-1">
-            {restaurant?.cuisine_type ? `${restaurant.cuisine_type} • ` : ''}
-            Manage your restaurant operations effectively
-          </p>
-          <div className="mt-4 flex flex-wrap justify-center md:justify-start gap-2">
-            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${restaurant?.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-              {restaurant?.is_active ? '● Active' : '● Inactive'}
-            </span>
-            {restaurant?.ai_enabled && (
-              <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">
-                ✨ AI Insights Enabled
-              </span>
-            )}
-            {restaurant?.aggregators_enabled && (
-              <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
-                🥡 Aggregators Active
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-
       {ordersLoading && (
         <div className="text-center py-8 text-gray-500">Loading orders...</div>
       )}
