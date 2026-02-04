@@ -285,7 +285,7 @@ export const AdminRestaurantProvider = ({ children }) => {
       return false;
     }
 
-    if (!['admin', 'manager'].includes(userRole)) {
+    if (!['admin', 'manager', 'owner'].includes(userRole)) {
       return false;
     }
 

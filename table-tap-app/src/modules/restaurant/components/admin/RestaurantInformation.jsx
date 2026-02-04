@@ -54,6 +54,17 @@ const RestaurantInformation = () => {
   const [showZomatoKey, setShowZomatoKey] = useState(false);
   const [showBillingPanel, setShowBillingPanel] = useState(false);
 
+  // Local state for optimistic toggles in View Mode
+  const [localOnlineBill, setLocalOnlineBill] = useState(true);
+  const [localAutoEmail, setLocalAutoEmail] = useState(false);
+
+  useEffect(() => {
+    if (restaurant) {
+      setLocalOnlineBill(restaurant.online_bill_enabled !== false);
+      setLocalAutoEmail(restaurant.auto_email_billing_enabled === true);
+    }
+  }, [restaurant]);
+
   // Check if user is owner or admin (can see API keys)
   const canSeeApiKeys = () => {
     return userRole === 'owner' || userRole === 'admin';
@@ -789,7 +800,7 @@ const RestaurantInformation = () => {
                   <>
                     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100 flex items-center justify-between shadow-sm">
                       <div className="flex items-center gap-4">
-                        <div className={`p-4 rounded-2xl ${(restaurant?.online_bill_enabled !== false) ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                        <div className={`p-4 rounded-2xl ${localOnlineBill ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
                           <Send className="w-6 h-6" />
                         </div>
                         <div>
@@ -800,17 +811,24 @@ const RestaurantInformation = () => {
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
                           type="checkbox"
-                          checked={restaurant?.online_bill_enabled !== false}
+                          checked={localOnlineBill}
                           onChange={async (e) => {
                             const val = e.target.checked;
+                            // Optimistic update
+                            setLocalOnlineBill(val);
+
                             const success = await updateRestaurant({
-                              ...restaurant,
                               online_bill_enabled: val
-                              // DO NOT toggle billing_features_enabled here, it's the master lock controlled by admin
                             });
+
                             if (success) {
                               setSaveSuccess(true);
                               setTimeout(() => setSaveSuccess(false), 2000);
+                            } else {
+                              // Revert if failed
+                              setLocalOnlineBill(!val);
+                              setSaveError('Failed to update setting');
+                              setTimeout(() => setSaveError(null), 3000);
                             }
                           }}
                           className="sr-only peer"
@@ -822,35 +840,43 @@ const RestaurantInformation = () => {
 
                     {/* Auto email billing */}
                     <div className="mt-4 bg-gradient-to-br from-slate-50 to-gray-50 rounded-2xl p-6 border border-slate-100 flex items-center justify-between shadow-sm">
-                    <div className="flex items-center gap-4">
-                      <div className={`p-4 rounded-2xl ${restaurant?.auto_email_billing_enabled ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
-                        <Mail className="w-6 h-6" />
+                      <div className="flex items-center gap-4">
+                        <div className={`p-4 rounded-2xl ${localAutoEmail ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                          <Mail className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-bold text-gray-800 mb-0.5">Auto email billing</h4>
+                          <p className="text-sm text-gray-500">Automatically send bill by email when order is completed</p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="text-lg font-bold text-gray-800 mb-0.5">Auto email billing</h4>
-                        <p className="text-sm text-gray-500">Automatically send bill by email when order is completed</p>
-                      </div>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={restaurant?.auto_email_billing_enabled === true}
-                        onChange={async (e) => {
-                          const val = e.target.checked;
-                          const success = await updateRestaurant({
-                            ...restaurant,
-                            auto_email_billing_enabled: val
-                          });
-                          if (success) {
-                            setSaveSuccess(true);
-                            setTimeout(() => setSaveSuccess(false), 2000);
-                          }
-                        }}
-                        className="sr-only peer"
-                        disabled={!canEdit()}
-                      />
-                      <div className={`w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-600 ${!canEdit() ? 'opacity-50 cursor-not-allowed' : ''}`}></div>
-                    </label>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={localAutoEmail}
+                          onChange={async (e) => {
+                            const val = e.target.checked;
+                            // Optimistic update
+                            setLocalAutoEmail(val);
+
+                            const success = await updateRestaurant({
+                              auto_email_billing_enabled: val
+                            });
+
+                            if (success) {
+                              setSaveSuccess(true);
+                              setTimeout(() => setSaveSuccess(false), 2000);
+                            } else {
+                              // Revert if failed
+                              setLocalAutoEmail(!val);
+                              setSaveError('Failed to update setting');
+                              setTimeout(() => setSaveError(null), 3000);
+                            }
+                          }}
+                          className="sr-only peer"
+                          disabled={!canEdit()}
+                        />
+                        <div className={`w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-600 ${!canEdit() ? 'opacity-50 cursor-not-allowed' : ''}`}></div>
+                      </label>
                     </div>
                   </>
                 ) : (
