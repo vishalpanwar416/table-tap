@@ -455,16 +455,16 @@ export const sendBillEmail = async (order, restaurant, recipientEmail, options =
 
         if (response.ok) {
             const result = await response.json();
-            // Log successful email
+            // Log successful email to admin_activity_logs
             await logEmailActivity(emailLogData, 'success');
-            // Log to restaurant activity_logs when sent by a user (for Activity tab)
-            const triggeredBy = options.triggeredBy;
-            if (triggeredBy && restaurant?.id) {
+            // Log to restaurant activity_logs (Activity tab) for every bill email sent
+            if (restaurant?.id) {
+                const triggeredBy = options.triggeredBy;
                 await logActivity({
                     restaurant_id: restaurant.id,
-                    user_id: triggeredBy.user_id || null,
-                    user_name: triggeredBy.user_name || 'Staff',
-                    user_role: triggeredBy.user_role || 'staff',
+                    user_id: triggeredBy?.user_id ?? null,
+                    user_name: triggeredBy?.user_name || 'System (Automated)',
+                    user_role: triggeredBy?.user_role || 'system',
                     action_type: 'email',
                     action_name: 'bill_sent',
                     target_id: order.id,
@@ -577,14 +577,32 @@ export const sendOrderStatusEmail = async (order, restaurant, status) => {
         });
         if (response.ok) {
             await logEmailActivity(emailLogData, 'success');
+            // Log to restaurant activity_logs (Activity tab) for every order status email sent
+            if (restaurant?.id) {
+                const orderLabel = `Order #${order.order_number || order.id?.slice(0, 8) || 'N/A'}`;
+                await logActivity({
+                    restaurant_id: restaurant.id,
+                    user_id: null,
+                    user_name: 'System (Auto)',
+                    user_role: 'system',
+                    action_type: 'email',
+                    action_name: 'auto_email_sent',
+                    target_id: order.id,
+                    target_name: orderLabel,
+                    details: { email_kind: status, recipient_email: email },
+                    description: `Auto email (order ${status === 'rejected' ? 'rejected' : 'accepted'}) sent to ${email}`
+                });
+            }
             return { success: true };
         }
         const errData = await response.json().catch(() => ({}));
         const errMsg = errData.error || errData.message || 'Email failed';
         await logEmailActivity(emailLogData, 'failed', errMsg);
+        return { success: false, error: errMsg };
     } catch (error) {
         console.warn('[Auto email] Order status email failed:', error);
         await logEmailActivity(emailLogData, 'failed', error.message || 'Network error');
+        return { success: false, error: error.message || 'Network error' };
     }
 };
 

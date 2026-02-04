@@ -126,7 +126,7 @@ export const updateOrderStatus = async (orderId, status, cancelReason = null, us
     .from('orders')
     .update(updates)
     .eq('id', orderId)
-    .select();
+    .select('*');
 
   if (error) throw error;
   const updatedOrder = data[0];
@@ -192,7 +192,14 @@ export const updateOrderStatus = async (orderId, status, cancelReason = null, us
 
   // Auto email billing: send emails on acceptance, rejection, or completion when restaurant has it enabled
   const customerEmail = updatedOrder.customer_email;
-  if (customerEmail) {
+  const autoEmailResult = { sent: false, to: null, error: null, skippedReason: null };
+
+  if (!customerEmail) {
+    autoEmailResult.skippedReason = 'no_customer_email';
+    if (['preparing', 'rejected', 'completed'].includes(status)) {
+      console.log('[Auto email] Skipped: order has no customer_email. Add email in order details for auto emails.');
+    }
+  } else {
     let restaurant = null;
     try {
       const { data: restData } = await supabase
@@ -203,61 +210,57 @@ export const updateOrderStatus = async (orderId, status, cancelReason = null, us
       restaurant = restData;
     } catch (e) {
       console.warn('[Auto email] Could not fetch restaurant:', e);
+      autoEmailResult.skippedReason = 'restaurant_fetch_error';
     }
-    // Require online billing enabled from admin (billing_features_enabled + online_bill_enabled) and auto email billing on
+
     const onlineBillingEnabled = restaurant?.billing_features_enabled !== false && restaurant?.online_bill_enabled !== false;
-    if (restaurant?.auto_email_billing_enabled && onlineBillingEnabled) {
-      const orderLabel = `Order #${updatedOrder.order_number || updatedOrder.id?.slice(0, 8) || 'N/A'}`;
+    if (!restaurant) {
+      autoEmailResult.skippedReason = 'restaurant_not_found';
+    } else if (!restaurant.auto_email_billing_enabled) {
+      autoEmailResult.skippedReason = 'auto_email_disabled';
+      if (['preparing', 'rejected', 'completed'].includes(status)) {
+        console.log('[Auto email] Skipped: enable "Auto email billing" in Settings → Online Bill Delivery.');
+      }
+    } else if (!onlineBillingEnabled) {
+      autoEmailResult.skippedReason = 'online_billing_disabled';
+      if (['preparing', 'rejected', 'completed'].includes(status)) {
+        console.log('[Auto email] Skipped: enable "Online Bill" and ensure admin has billing enabled for this restaurant.');
+      }
+    } else if (['preparing', 'rejected', 'completed'].includes(status)) {
       try {
         if (status === 'preparing') {
-          await sendOrderStatusEmail(updatedOrder, restaurant, 'accepted');
-          await logActivity({
-            restaurant_id: restaurant.id,
-            user_id: null,
-            user_name: 'System (Auto)',
-            user_role: 'system',
-            action_type: 'email',
-            action_name: 'auto_email_sent',
-            target_id: updatedOrder.id,
-            target_name: orderLabel,
-            details: { email_kind: 'accepted', recipient_email: customerEmail },
-            description: `Auto email (order accepted) sent to ${customerEmail}`
-          });
+          const emailResult = await sendOrderStatusEmail(updatedOrder, restaurant, 'accepted');
+          if (emailResult?.success) {
+            autoEmailResult.sent = true;
+            autoEmailResult.to = customerEmail;
+          } else if (emailResult?.error) {
+            autoEmailResult.error = emailResult.error;
+          }
         } else if (status === 'rejected') {
-          await sendOrderStatusEmail(updatedOrder, restaurant, 'rejected');
-          await logActivity({
-            restaurant_id: restaurant.id,
-            user_id: null,
-            user_name: 'System (Auto)',
-            user_role: 'system',
-            action_type: 'email',
-            action_name: 'auto_email_sent',
-            target_id: updatedOrder.id,
-            target_name: orderLabel,
-            details: { email_kind: 'rejected', recipient_email: customerEmail },
-            description: `Auto email (order rejected) sent to ${customerEmail}`
-          });
+          const emailResult = await sendOrderStatusEmail(updatedOrder, restaurant, 'rejected');
+          if (emailResult?.success) {
+            autoEmailResult.sent = true;
+            autoEmailResult.to = customerEmail;
+          } else if (emailResult?.error) {
+            autoEmailResult.error = emailResult.error;
+          }
         } else if (status === 'completed') {
-          await sendBillToCustomer(updatedOrder, restaurant);
-          await logActivity({
-            restaurant_id: restaurant.id,
-            user_id: null,
-            user_name: 'System (Auto)',
-            user_role: 'system',
-            action_type: 'email',
-            action_name: 'auto_email_sent',
-            target_id: updatedOrder.id,
-            target_name: orderLabel,
-            details: { email_kind: 'bill', recipient_email: customerEmail, amount: updatedOrder.total },
-            description: `Auto email (bill on completion) sent to ${customerEmail}`
-          });
+          try {
+            await sendBillToCustomer(updatedOrder, restaurant);
+            autoEmailResult.sent = true;
+            autoEmailResult.to = customerEmail;
+          } catch (billErr) {
+            autoEmailResult.error = billErr.message || String(billErr);
+          }
         }
       } catch (emailErr) {
         console.warn('[Auto email] Failed to send:', emailErr);
+        autoEmailResult.error = emailErr.message || String(emailErr);
       }
     }
   }
 
+  updatedOrder._autoEmailResult = autoEmailResult;
   return updatedOrder;
 };
 

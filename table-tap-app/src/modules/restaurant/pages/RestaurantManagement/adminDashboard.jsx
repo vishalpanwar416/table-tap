@@ -477,9 +477,22 @@ const AdminDashboard = () => {
 
       // Show success notification
       setOrderToastTitle('✅ Status Updated');
-      setOrderToastMessage(
-        `Order #${updatedOrder.order_number || updatedOrder.id.slice(0, 8)} marked as ${newStatus}`
-      );
+      let toastMsg = `Order #${updatedOrder.order_number || updatedOrder.id.slice(0, 8)} marked as ${newStatus}`;
+      const autoEmail = updatedOrder._autoEmailResult;
+      if (autoEmail) {
+        if (autoEmail.sent && autoEmail.to) {
+          toastMsg += `. Acceptance email sent to ${autoEmail.to}`;
+        } else if (autoEmail.skippedReason === 'no_customer_email' && ['preparing', 'rejected', 'completed'].includes(newStatus)) {
+          toastMsg += `. No auto email: add customer email on the order to receive status emails.`;
+        } else if (autoEmail.skippedReason === 'auto_email_disabled' && ['preparing', 'rejected', 'completed'].includes(newStatus)) {
+          toastMsg += `. Enable "Auto email billing" in Settings → Online Bill Delivery to send emails.`;
+        } else if (autoEmail.skippedReason === 'online_billing_disabled' && ['preparing', 'rejected', 'completed'].includes(newStatus)) {
+          toastMsg += `. Enable "Online Bill" in Settings and ensure admin has online billing enabled for this restaurant.`;
+        } else if (autoEmail.error) {
+          toastMsg += `. Auto email failed: ${autoEmail.error}`;
+        }
+      }
+      setOrderToastMessage(toastMsg);
       setShowOrderToast(true);
       setOrderSoundType('success');
       setPlayOrderSound(true);

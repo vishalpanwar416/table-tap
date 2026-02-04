@@ -265,7 +265,6 @@ const ConfirmOrderModal = forwardRef(function ConfirmOrderModal({ onConfirm, onS
       close();
     } catch (err) {
       console.error(err);
-    } finally {
       setState(s => ({ ...s, loading: false }));
     }
   };
@@ -325,6 +324,68 @@ const ConfirmOrderModal = forwardRef(function ConfirmOrderModal({ onConfirm, onS
 
   return createPortal(content, document.body);
 });
+
+// Helper: Render action buttons for each order status
+const actionBtnClass = 'flex items-center justify-center w-11 h-11 sm:w-9 sm:h-9 rounded-full touch-manipulation active:bg-gray-100 transition-colors duration-200 flex-shrink-0 shadow-sm border border-transparent';
+
+const ActionButtons = ({ order, isCard = false, confirmOrderModalRef, handlePrintKOT, handlePrintBill, onlineBillModalRef, restaurant }) => {
+  if (order.status === 'pending') {
+    return (
+      <>
+        <button onClick={(e) => { e.stopPropagation(); confirmOrderModalRef.current?.open(order, 'accept'); }} className={`${actionBtnClass} bg-green-100 text-green-600 hover:bg-green-600 hover:text-white`} title="Accept Order"><Check size={18} /></button>
+        <button onClick={(e) => { e.stopPropagation(); confirmOrderModalRef.current?.open(order, 'rejected'); }} className={`${actionBtnClass} bg-red-100 text-red-600 hover:bg-red-600 hover:text-white`} title="Reject Order"><X size={18} /></button>
+      </>
+    );
+  }
+  if (order.status === 'preparing') {
+    return (
+      <>
+        <button onClick={(e) => { e.stopPropagation(); handlePrintKOT(order); }} className={`${actionBtnClass} bg-orange-100 text-orange-600 hover:bg-orange-600 hover:text-white`} title="Print KOT"><Printer size={18} /></button>
+        <button onClick={(e) => { e.stopPropagation(); confirmOrderModalRef.current?.open(order, 'ready'); }} className="min-h-[44px] sm:min-h-0 px-3 py-2.5 sm:px-4 sm:py-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-600 hover:text-white flex items-center gap-2 transition-colors touch-manipulation flex-shrink-0 border border-transparent" title="Mark as Ready">
+          <CheckCircle size={18} />
+          <span className="hidden sm:inline">Ready</span>
+        </button>
+      </>
+    );
+  }
+  if (order.status === 'ready') {
+    return (
+      <button onClick={(e) => { e.stopPropagation(); confirmOrderModalRef.current?.open(order, 'complete'); }} className="min-h-[44px] sm:min-h-0 px-3 py-2.5 sm:px-4 sm:py-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center gap-2 transition-colors touch-manipulation flex-shrink-0 border border-transparent" title="Complete">
+        <Check size={18} />
+        <span className="hidden sm:inline">Complete</span>
+      </button>
+    );
+  }
+  if (order.status === 'completed') {
+    const onlineBillEnabled = (restaurant?.billing_features_enabled !== false && restaurant?.online_bill_enabled !== false);
+
+    return (
+      <>
+        <button onClick={(e) => { e.stopPropagation(); handlePrintBill(order); }} className={`${actionBtnClass} bg-orange-100 text-orange-600 hover:bg-orange-600 hover:text-white`} title="Print Bill"><Printer size={18} /></button>
+
+        {onlineBillEnabled && (
+          <div className="flex gap-2">
+            <button
+              onClick={(e) => { e.stopPropagation(); onlineBillModalRef.current?.open(order, 'whatsapp'); }}
+              className={`${actionBtnClass} bg-green-100 text-green-600 hover:bg-green-600 hover:text-white`}
+              title="WhatsApp Bill"
+            >
+              <MessageCircle size={18} />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onlineBillModalRef.current?.open(order, 'email'); }}
+              className={`${actionBtnClass} bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white`}
+              title="Email Bill"
+            >
+              <Mail size={18} />
+            </button>
+          </div>
+        )}
+      </>
+    );
+  }
+  return null;
+};
 
 const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSearchTerm }) => {
   const { notifications, markAllAsRead } = useManagerNotifications();
@@ -653,12 +714,18 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
       rejected: 'Order was rejected',
       completed: 'Order has been completed'
     };
-    await notifications.createNotification({
-      orderId,
-      type: `order_${newStatus}`,
-      userId,
-      message: `Order #${orderId.slice(0, 8)} ${notificationMessages[newStatus] || `status updated to ${newStatus}`}`
-    });
+
+    try {
+      await notifications.createNotification({
+        orderId,
+        type: `order_${newStatus}`,
+        userId,
+        message: `Order #${orderId.slice(0, 8)} ${notificationMessages[newStatus] || `status updated to ${newStatus}`}`
+      });
+    } catch (notifErr) {
+      console.warn('Failed to create notification:', notifErr);
+    }
+
     return updatedOrder;
   };
 
@@ -700,66 +767,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
     </span>
   );
 
-  // Helper: Render action buttons for each order status
-  const actionBtnClass = 'flex items-center justify-center w-11 h-11 sm:w-9 sm:h-9 rounded-full touch-manipulation active:scale-95 transition-colors transition-transform duration-200 flex-shrink-0 shadow-sm border border-transparent';
-  const ActionButtons = ({ order, isCard = false }) => {
-    if (order.status === 'pending') {
-      return (
-        <>
-          <button onClick={(e) => { e.stopPropagation(); confirmOrderModalRef.current?.open(order, 'accept'); }} className={`${actionBtnClass} bg-green-100 text-green-600 hover:bg-green-600 hover:text-white`} title="Accept Order"><Check size={18} /></button>
-          <button onClick={(e) => { e.stopPropagation(); confirmOrderModalRef.current?.open(order, 'rejected'); }} className={`${actionBtnClass} bg-red-100 text-red-600 hover:bg-red-600 hover:text-white`} title="Reject Order"><X size={18} /></button>
-        </>
-      );
-    }
-    if (order.status === 'preparing') {
-      return (
-        <>
-          <button onClick={(e) => { e.stopPropagation(); handlePrintKOT(order); }} className={`${actionBtnClass} bg-orange-100 text-orange-600 hover:bg-orange-600 hover:text-white`} title="Print KOT"><Printer size={18} /></button>
-          <button onClick={(e) => { e.stopPropagation(); confirmOrderModalRef.current?.open(order, 'ready'); }} className="min-h-[44px] sm:min-h-0 px-3 py-2.5 sm:px-4 sm:py-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-600 hover:text-white flex items-center gap-2 transition-colors touch-manipulation flex-shrink-0" title="Mark as Ready">
-            <CheckCircle size={18} />
-            <span className="hidden sm:inline">Ready</span>
-          </button>
-        </>
-      );
-    }
-    if (order.status === 'ready') {
-      return (
-        <button onClick={(e) => { e.stopPropagation(); confirmOrderModalRef.current?.open(order, 'complete'); }} className="min-h-[44px] sm:min-h-0 px-3 py-2.5 sm:px-4 sm:py-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center gap-2 transition-colors touch-manipulation flex-shrink-0" title="Complete">
-          <Check size={18} />
-          <span className="hidden sm:inline">Complete</span>
-        </button>
-      );
-    }
-    if (order.status === 'completed') {
-      const onlineBillEnabled = (restaurant?.billing_features_enabled !== false && restaurant?.online_bill_enabled !== false);
 
-      return (
-        <>
-          <button onClick={(e) => { e.stopPropagation(); handlePrintBill(order); }} className={`${actionBtnClass} bg-orange-100 text-orange-600 hover:bg-orange-600 hover:text-white`} title="Print Bill"><Printer size={18} /></button>
-
-          {onlineBillEnabled && (
-            <div className="flex gap-2">
-              <button
-                onClick={(e) => { e.stopPropagation(); onlineBillModalRef.current?.open(order, 'whatsapp'); }}
-                className={`${actionBtnClass} bg-green-100 text-green-600 hover:bg-green-600 hover:text-white`}
-                title="WhatsApp Bill"
-              >
-                <MessageCircle size={18} />
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); onlineBillModalRef.current?.open(order, 'email'); }}
-                className={`${actionBtnClass} bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white`}
-                title="Email Bill"
-              >
-                <Mail size={18} />
-              </button>
-            </div>
-          )}
-        </>
-      );
-    }
-    return null;
-  };
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
@@ -1307,7 +1315,15 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2 min-h-[44px] sm:min-h-0 items-center">
-                    <ActionButtons order={order} isCard={true} />
+                    <ActionButtons
+                      order={order}
+                      isCard={true}
+                      confirmOrderModalRef={confirmOrderModalRef}
+                      handlePrintKOT={handlePrintKOT}
+                      handlePrintBill={handlePrintBill}
+                      onlineBillModalRef={onlineBillModalRef}
+                      restaurant={restaurant}
+                    />
                   </div>
                 </div>
               </div>
@@ -1409,7 +1425,14 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                                 <ChevronRight size={18} />
                               )}
                             </button>
-                            <ActionButtons order={order} />
+                            <ActionButtons
+                              order={order}
+                              confirmOrderModalRef={confirmOrderModalRef}
+                              handlePrintKOT={handlePrintKOT}
+                              handlePrintBill={handlePrintBill}
+                              onlineBillModalRef={onlineBillModalRef}
+                              restaurant={restaurant}
+                            />
                           </div>
                         </td>
                       </tr>
