@@ -150,6 +150,18 @@ export default function RootLayout({ children }) {
         <meta name="geo.position" content="17.385044;78.486671" />
         <meta name="ICBM" content="17.385044, 78.486671" />
         <StructuredData />
+        {/* Google tag (gtag.js) */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-9D6YVYRTQN"></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-9D6YVYRTQN');
+            `,
+          }}
+        />
       </head>
       <body
         className={`${geist.variable} ${geistMono.variable} font-sans antialiased bg-white text-gray-900`}
