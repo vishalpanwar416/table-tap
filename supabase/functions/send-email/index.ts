@@ -28,6 +28,19 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    // 1. Verify Authentication
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+    );
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+
+    if (authError || !user) {
+      throw new Error('Unauthorized: You must be logged in to send emails.');
+    }
+
     // Initialize Supabase Admin Client to fetch secrets from DB
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
