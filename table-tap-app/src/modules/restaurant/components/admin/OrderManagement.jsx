@@ -1,18 +1,167 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, forwardRef, useImperativeHandle, useCallback, startTransition } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Check, X, Truck, CheckCircle, ChevronDown, ChevronRight, User,
   Clock, Calendar, MapPin, Phone, Filter, AlertCircle,
   Printer, Download, AlertTriangle, ShoppingBag, Info, Grid, List, Package, Plus, RefreshCw, Mail, Send, MessageCircle, Copy
 } from 'lucide-react';
 import { useManagerNotifications } from '../../../shared/context/ManagerNotificationContext';
-import { format, isToday, isYesterday } from 'date-fns';
+import { format } from 'date-fns';
 import { useAdminRestaurant } from '../../../shared/context/AdminRestaurantContext';
+import { useAuth } from '../../../shared/config/AuthContext';
 import ReactDOMServer from "react-dom/server";
 import PrintBill from "./PrintBill";
 import PrintKOT from "./PrintKOT";
 import { sendBillEmail } from '../../../shared/api/emailService';
 import { sendWhatsAppBill, openWhatsAppBill } from '../../../shared/api/whatsappService';
 import toast from 'react-hot-toast';
+
+// Ref-based modal: opening it does not re-render OrderManagement (only this small tree re-renders).
+const OnlineBillModal = forwardRef(function OnlineBillModal({ restaurant, triggeredBy }, ref) {
+  const [state, setState] = useState({
+    open: false,
+    order: null,
+    type: 'whatsapp',
+    email: '',
+    phone: ''
+  });
+  const [sendingBill, setSendingBill] = useState(false);
+
+  useImperativeHandle(ref, () => ({
+    open(order, type = 'whatsapp') {
+      setState({
+        open: true,
+        order,
+        type,
+        email: order.customer_email || '',
+        phone: (order.customer_phone || '').replace(/[^0-9]/g, '')
+      });
+    }
+  }), []);
+
+  const close = () => {
+    setState({ open: false, order: null, type: 'whatsapp', email: '', phone: '' });
+    setSendingBill(false);
+  };
+
+  const handleSend = async () => {
+    const { order, type, email, phone } = state;
+    if (!order || !restaurant) return;
+    if (type === 'email') {
+      if (!email || !email.includes('@')) {
+        toast.error('Please enter a valid email address');
+        return;
+      }
+      setSendingBill(true);
+      try {
+        await sendBillEmail(order, restaurant, email, { triggeredBy: triggeredBy || undefined });
+        toast.success(`Bill sent to ${email}`);
+        close();
+      } catch (error) {
+        toast.error(error.message || 'Failed to send email');
+      } finally {
+        setSendingBill(false);
+      }
+    } else {
+      if (!phone || phone.length < 10) {
+        toast.error('Please enter a valid phone number');
+        return;
+      }
+      try {
+        const result = await sendWhatsAppBill(order, restaurant, phone);
+        if (result.success) {
+          toast.success('Bill sent via WhatsApp!');
+        } else if (result.fallback && result.shareURL) {
+          window.open(result.shareURL, '_blank');
+          toast.success('Opening WhatsApp...');
+        } else {
+          openWhatsAppBill(order, restaurant, phone);
+          toast.success('Opening WhatsApp...');
+        }
+        close();
+      } catch (error) {
+        try {
+          openWhatsAppBill(order, restaurant, phone);
+          toast.success('Opening WhatsApp...');
+          close();
+        } catch (fallbackError) {
+          toast.error(error.message || 'Failed to send WhatsApp bill');
+        }
+      }
+    }
+  };
+
+  if (!state.open || !state.order) return null;
+
+  const { order, type, email, phone } = state;
+  const modalContent = (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-3 sm:p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden max-h-[95vh] flex flex-col">
+        <div className={`px-4 sm:px-6 py-4 flex-shrink-0 bg-gradient-to-r ${type === 'email' ? 'from-blue-500 to-blue-600' : 'from-green-500 to-green-600'}`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                {type === 'email' ? <Mail className="text-white" size={20} /> : <MessageCircle className="text-white" size={20} />}
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-lg font-bold text-white">Send Online Bill</h3>
+                <p className={`${type === 'email' ? 'text-blue-100' : 'text-green-100'} text-sm truncate`}>Order #{order.id?.slice(0, 8)}</p>
+              </div>
+            </div>
+            <button type="button" onClick={close} className="min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0 text-white/80 hover:text-white transition-colors touch-manipulation rounded-lg">
+              <X size={24} />
+            </button>
+          </div>
+        </div>
+        <div className="p-4 sm:p-6 overflow-auto flex-1">
+          <div className="flex gap-2 mb-6 p-1 bg-gray-100 rounded-xl">
+            <button type="button" onClick={() => setState(s => ({ ...s, type: 'whatsapp' }))} className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-semibold transition-all ${type === 'whatsapp' ? 'bg-white text-green-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+              <MessageCircle size={18} /> WhatsApp
+            </button>
+            <button type="button" onClick={() => setState(s => ({ ...s, type: 'email' }))} className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-semibold transition-all ${type === 'email' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+              <Mail size={18} /> Email
+            </button>
+          </div>
+          <div className="bg-gray-50 rounded-xl p-4 mb-6">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-gray-600 text-sm">Customer</span>
+              <span className="font-semibold text-gray-900">{order.customer_name || 'Guest'}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-800 font-medium">Amount Due</span>
+              <span className={`font-bold text-lg ${type === 'email' ? 'text-blue-600' : 'text-green-600'}`}>₹{order.total?.toFixed(2)}</span>
+            </div>
+          </div>
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">{type === 'email' ? 'Email Address' : 'WhatsApp Number'}</label>
+            <div className="relative">
+              {type === 'email' ? (
+                <>
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <input type="email" value={email} onChange={(e) => setState(s => ({ ...s, email: e.target.value }))} placeholder="customer@email.com" className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
+                </>
+              ) : (
+                <>
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <input type="tel" value={phone} onChange={(e) => setState(s => ({ ...s, phone: e.target.value.replace(/[^0-9]/g, '') }))} placeholder="9876543210" className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500" />
+                </>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-col-reverse sm:flex-row gap-3">
+            <button type="button" onClick={close} disabled={sendingBill} className="flex-1 min-h-[44px] px-4 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50">Cancel</button>
+            <button type="button" onClick={handleSend} disabled={sendingBill || (type === 'email' ? !email : !phone)} className={`flex-1 min-h-[44px] px-4 py-3 text-white rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 ${type === 'email' ? 'bg-blue-500 hover:bg-blue-600' : 'bg-green-500 hover:bg-green-600'}`}>
+              {sendingBill ? <RefreshCw className="animate-spin" size={18} /> : (type === 'email' ? <Send size={18} /> : <MessageCircle size={18} />)}
+              {sendingBill ? 'Sending...' : (type === 'email' ? 'Send Email' : 'Open WhatsApp')}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return createPortal(modalContent, document.body);
+});
 
 import {
   fetchAllOrders,
@@ -66,18 +215,190 @@ const STATUS_META = {
   },
 };
 
+// Ref-based confirm modal: opening/confirming does not re-render the order list (no flicker).
+const ConfirmOrderModal = forwardRef(function ConfirmOrderModal({ onConfirm, onSuccess }, ref) {
+  const [state, setState] = useState({
+    show: false,
+    type: null,
+    order: null,
+    rejectionReason: '',
+    loading: false
+  });
+
+  useImperativeHandle(ref, () => ({
+    open(order, type) {
+      setState({
+        show: true,
+        type,
+        order,
+        rejectionReason: '',
+        loading: false
+      });
+    }
+  }), []);
+
+  const close = () => setState({ show: false, type: null, order: null, rejectionReason: '', loading: false });
+
+  const handleConfirm = async () => {
+    const { order, type, rejectionReason } = state;
+    if (!order || !onConfirm) return;
+    const normalizedType = type?.toLowerCase();
+    const statusMap = {
+      accept: 'preparing',
+      rejected: 'rejected',
+      ready: 'ready',
+      complete: 'completed'
+    };
+    const newStatus = statusMap[normalizedType];
+    if (!newStatus) return;
+    if (normalizedType === 'rejected' && !rejectionReason.trim()) return;
+
+    setState(s => ({ ...s, loading: true }));
+    try {
+      await onConfirm(
+        order.id,
+        order.userId,
+        newStatus,
+        normalizedType === 'rejected' ? rejectionReason : undefined
+      );
+      onSuccess?.(order.id, newStatus);
+      close();
+    } catch (err) {
+      console.error(err);
+      setState(s => ({ ...s, loading: false }));
+    }
+  };
+
+  if (!state.show || !state.order) return null;
+
+  const { type, order, rejectionReason, loading } = state;
+  const typeLabel = type === 'accept' ? 'Accept' : type === 'rejected' ? 'Reject' : type === 'ready' ? 'Mark Ready' : 'Complete';
+  const actionLabel = type === 'accept' ? 'accept' : type === 'rejected' ? 'reject' : type === 'ready' ? 'mark as ready' : 'complete';
+
+  const content = (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 p-4">
+      <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 max-w-sm w-full">
+        <div className="flex items-center mb-4">
+          <AlertTriangle className="text-yellow-500 mr-2 flex-shrink-0" />
+          <h3 className="text-lg font-semibold text-gray-800">
+            Confirm {typeLabel} Order
+          </h3>
+        </div>
+        <p className="text-gray-600 mb-6">
+          Are you sure you want to {actionLabel} order <span className="font-semibold">{order.order_number || order.id?.slice(0, 8)}</span>?
+        </p>
+        {type === 'rejected' && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Reason for rejection <span className="text-red-500">*</span></label>
+            <textarea
+              className="w-full border border-gray-300 rounded p-2 min-h-[88px]"
+              rows={3}
+              value={rejectionReason}
+              onChange={e => setState(s => ({ ...s, rejectionReason: e.target.value }))}
+              placeholder="Enter reason for rejection"
+              required
+            />
+          </div>
+        )}
+        <div className="flex flex-wrap justify-end gap-2">
+          <button
+            type="button"
+            onClick={close}
+            className="min-h-[44px] px-4 py-3 rounded bg-gray-100 text-gray-700 hover:bg-gray-200 touch-manipulation"
+            disabled={loading}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirm}
+            disabled={loading || (type === 'rejected' && !rejectionReason.trim())}
+            className={`min-h-[44px] px-4 py-3 rounded text-white touch-manipulation ${type === 'rejected' ? 'bg-red-500 hover:bg-red-600' : 'bg-orange-500 hover:bg-orange-600'}`}
+          >
+            {loading ? 'Processing...' : 'Confirm'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return createPortal(content, document.body);
+});
+
+// Helper: Render action buttons for each order status
+const actionBtnClass = 'flex items-center justify-center w-11 h-11 sm:w-9 sm:h-9 rounded-full touch-manipulation active:bg-gray-100 transition-colors duration-200 flex-shrink-0 shadow-sm border border-transparent';
+
+const ActionButtons = ({ order, isCard = false, confirmOrderModalRef, handlePrintKOT, handlePrintBill, onlineBillModalRef, restaurant }) => {
+  if (order.status === 'pending') {
+    return (
+      <>
+        <button onClick={(e) => { e.stopPropagation(); confirmOrderModalRef.current?.open(order, 'accept'); }} className={`${actionBtnClass} bg-green-100 text-green-600 hover:bg-green-600 hover:text-white`} title="Accept Order"><Check size={18} /></button>
+        <button onClick={(e) => { e.stopPropagation(); confirmOrderModalRef.current?.open(order, 'rejected'); }} className={`${actionBtnClass} bg-red-100 text-red-600 hover:bg-red-600 hover:text-white`} title="Reject Order"><X size={18} /></button>
+      </>
+    );
+  }
+  if (order.status === 'preparing') {
+    return (
+      <>
+        <button onClick={(e) => { e.stopPropagation(); handlePrintKOT(order); }} className={`${actionBtnClass} bg-orange-100 text-orange-600 hover:bg-orange-600 hover:text-white`} title="Print KOT"><Printer size={18} /></button>
+        <button onClick={(e) => { e.stopPropagation(); confirmOrderModalRef.current?.open(order, 'ready'); }} className="min-h-[44px] sm:min-h-0 px-3 py-2.5 sm:px-4 sm:py-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-600 hover:text-white flex items-center gap-2 transition-colors touch-manipulation flex-shrink-0 border border-transparent" title="Mark as Ready">
+          <CheckCircle size={18} />
+          <span className="hidden sm:inline">Ready</span>
+        </button>
+      </>
+    );
+  }
+  if (order.status === 'ready') {
+    return (
+      <button onClick={(e) => { e.stopPropagation(); confirmOrderModalRef.current?.open(order, 'complete'); }} className="min-h-[44px] sm:min-h-0 px-3 py-2.5 sm:px-4 sm:py-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center gap-2 transition-colors touch-manipulation flex-shrink-0 border border-transparent" title="Complete">
+        <Check size={18} />
+        <span className="hidden sm:inline">Complete</span>
+      </button>
+    );
+  }
+  if (order.status === 'completed') {
+    const onlineBillEnabled = (restaurant?.billing_features_enabled !== false && restaurant?.online_bill_enabled !== false);
+
+    return (
+      <>
+        <button onClick={(e) => { e.stopPropagation(); handlePrintBill(order); }} className={`${actionBtnClass} bg-orange-100 text-orange-600 hover:bg-orange-600 hover:text-white`} title="Print Bill"><Printer size={18} /></button>
+
+        {onlineBillEnabled && (
+          <div className="flex gap-2">
+            <button
+              onClick={(e) => { e.stopPropagation(); onlineBillModalRef.current?.open(order, 'whatsapp'); }}
+              className={`${actionBtnClass} bg-green-100 text-green-600 hover:bg-green-600 hover:text-white`}
+              title="WhatsApp Bill"
+            >
+              <MessageCircle size={18} />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onlineBillModalRef.current?.open(order, 'email'); }}
+              className={`${actionBtnClass} bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white`}
+              title="Email Bill"
+            >
+              <Mail size={18} />
+            </button>
+          </div>
+        )}
+      </>
+    );
+  }
+  return null;
+};
+
 const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSearchTerm }) => {
   const { notifications, markAllAsRead } = useManagerNotifications();
-  const { restaurant } = useAdminRestaurant();
+  const { restaurant, userRole } = useAdminRestaurant();
+  const { user } = useAuth();
+  const triggeredBy = user && userRole ? { user_id: user.id, user_name: user.user_metadata?.full_name || user.email, user_role: userRole } : null;
   const [viewType, setViewType] = useState('tiles');
   const [statusFilter, setStatusFilter] = useState('all');
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [sortBy, setSortBy] = useState('created_at');
   const [sortDirection, setSortDirection] = useState('desc');
-  const [isLoading, setIsLoading] = useState(false);
-  const [confirmModal, setConfirmModal] = useState({ show: false, type: null, order: null });
+  const confirmOrderModalRef = useRef(null);
   const [dropdownOpenOrderId, setDropdownOpenOrderId] = useState(null);
-  const [rejectionReason, setRejectionReason] = useState('');
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
@@ -105,16 +426,9 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
   const [availableTables, setAvailableTables] = useState([]);
   const [tableSearch, setTableSearch] = useState('');
 
-  // Email Bill Modal State
-  const [showEmailBillModal, setShowEmailBillModal] = useState(false);
-  const [emailBillOrder, setEmailBillOrder] = useState(null);
-  const [emailBillAddress, setEmailBillAddress] = useState('');
-  const [sendingEmail, setSendingEmail] = useState(false);
-
-  // WhatsApp Bill Modal State
-  const [showWhatsAppBillModal, setShowWhatsAppBillModal] = useState(false);
-  const [whatsAppBillOrder, setWhatsAppBillOrder] = useState(null);
-  const [whatsAppPhoneNumber, setWhatsAppPhoneNumber] = useState('');
+  const onlineBillModalRef = useRef(null);
+  // Legacy: keep for HMR/cache compatibility (modal is now ref-based; this is unused)
+  const showOnlineBillModal = false;
   const [coStep, setCoStep] = useState(1); // 1: Select Items, 2: Customer Info
 
   // Use the prop if provided, otherwise fallback to local state (for safety)
@@ -347,27 +661,24 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
     console.log('Setting up real-time subscription for restaurant:', restaurantId);
 
     const channel = subscribeToAllOrderChanges(restaurantId, (payload) => {
-      console.log('Received real-time update:', payload);
-
       const { eventType, new: newRecord, old: oldRecord } = payload;
 
-      setOrders((prevOrders) => {
-        let updatedOrders = [...prevOrders];
+      startTransition(() => {
+        setOrders((prevOrders) => {
+          let updatedOrders = [...prevOrders];
 
-        if (eventType === 'INSERT') {
-          console.log('New order received:', newRecord);
-          updatedOrders = [newRecord, ...updatedOrders];
-        } else if (eventType === 'UPDATE') {
-          console.log('Order updated:', newRecord);
-          updatedOrders = updatedOrders.map(order =>
-            order.id === newRecord.id ? { ...order, ...newRecord } : order
-          );
-        } else if (eventType === 'DELETE') {
-          console.log('Order deleted:', oldRecord);
-          updatedOrders = updatedOrders.filter(order => order.id !== oldRecord.id);
-        }
+          if (eventType === 'INSERT') {
+            updatedOrders = [newRecord, ...updatedOrders];
+          } else if (eventType === 'UPDATE') {
+            updatedOrders = updatedOrders.map(order =>
+              order.id === newRecord.id ? { ...order, ...newRecord } : order
+            );
+          } else if (eventType === 'DELETE') {
+            updatedOrders = updatedOrders.filter(order => order.id !== oldRecord.id);
+          }
 
-        return updatedOrders;
+          return updatedOrders;
+        });
       });
     });
 
@@ -384,45 +695,38 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
     };
   }, [restaurantId]);
 
-  // Handle order status updates with confirmation
+  // Optimistic update: apply new status to list immediately so UI doesn't flicker waiting for realtime
+  const applyOptimisticStatus = useCallback((orderId, newStatus) => {
+    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+  }, []);
+
+  // Handle order status updates (called by ConfirmOrderModal; onSuccess runs before close for optimistic UI)
   const handleStatusUpdate = async (orderId, userId, newStatus, cancelReason) => {
-    setIsLoading(true);
-    setConfirmModal({ show: false, type: null, order: null });
+    let updatedOrder;
+    if (typeof updateOrderStatus === 'function') {
+      updatedOrder = await updateOrderStatus(orderId, newStatus, cancelReason);
+    } else {
+      updatedOrder = await updateOrderStatusService(orderId, newStatus, cancelReason);
+    }
+    const notificationMessages = {
+      preparing: 'Order is being prepared',
+      ready: 'Order is ready for serving',
+      rejected: 'Order was rejected',
+      completed: 'Order has been completed'
+    };
+
     try {
-      // Prefer the parent-provided updater (same flow as DashboardOverview)
-      let updatedOrder;
-      if (typeof updateOrderStatus === 'function') {
-        updatedOrder = await updateOrderStatus(orderId, newStatus, cancelReason);
-      } else {
-        updatedOrder = await updateOrderStatusService(orderId, newStatus, cancelReason);
-      }
-
-      // Create appropriate notification
-      const notificationMessages = {
-        preparing: 'Order is being prepared',
-        ready: 'Order is ready for serving',
-        rejected: 'Order was rejected',
-        completed: 'Order has been completed'
-      };
-
       await notifications.createNotification({
         orderId,
         type: `order_${newStatus}`,
         userId,
         message: `Order #${orderId.slice(0, 8)} ${notificationMessages[newStatus] || `status updated to ${newStatus}`}`
       });
-      return updatedOrder;
-    } catch (error) {
-      console.error('Error updating order status:', error);
-    } finally {
-      setIsLoading(false);
-      setRejectionReason('');
+    } catch (notifErr) {
+      console.warn('Failed to create notification:', notifErr);
     }
-  };
 
-  // Open confirmation modal
-  const openConfirmModal = (order, type) => {
-    setConfirmModal({ show: true, type, order });
+    return updatedOrder;
   };
 
   // Helper: Render status dashboard card (explicit Tailwind classes for status colors)
@@ -463,62 +767,19 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
     </span>
   );
 
-  // Helper: Render action buttons for each order status
-  const actionBtnClass = 'flex items-center justify-center min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 p-2.5 sm:p-1.5 rounded-full touch-manipulation active:opacity-90 transition-colors';
-  const ActionButtons = ({ order }) => {
-    if (order.status === 'pending') {
-      return (
-        <>
-          <button onClick={() => openConfirmModal(order, 'accept')} className={`${actionBtnClass} bg-green-100 text-green-600 hover:bg-green-200`} title="Accept Order" disabled={isLoading}><Check size={18} className="sm:w-4 sm:h-4" /></button>
-          <button onClick={() => openConfirmModal(order, 'rejected')} className={`${actionBtnClass} bg-red-100 text-red-600 hover:bg-red-200`} title="Reject Order" disabled={isLoading}><X size={18} className="sm:w-4 sm:h-4" /></button>
-        </>
-      );
-    }
-    if (order.status === 'preparing') {
-      return (
-        <>
-          <button onClick={() => handlePrintKOT(order)} className={`${actionBtnClass} bg-orange-100 text-orange-600 hover:bg-orange-200`} title="Print KOT"><Printer size={18} className="sm:w-4 sm:h-4" /></button>
-          <button onClick={() => openConfirmModal(order, 'ready')} className="min-h-[44px] sm:min-h-0 px-3 py-2.5 sm:px-4 sm:py-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 flex items-center transition-colors touch-manipulation" disabled={isLoading} title="Mark as Ready">
-            <CheckCircle size={18} className="mr-0 sm:mr-1 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">Ready</span>
-          </button>
-        </>
-      );
-    }
-    if (order.status === 'ready') {
-      return (
-        <button onClick={() => openConfirmModal(order, 'complete')} className="min-h-[44px] sm:min-h-0 px-3 py-2.5 sm:px-4 sm:py-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 flex items-center transition-colors touch-manipulation" disabled={isLoading} title="Complete">
-          <Check size={18} className="mr-0 sm:mr-1 sm:w-4 sm:h-4" />
-          <span className="hidden sm:inline">Complete</span>
-        </button>
-      );
-    }
-    if (order.status === 'completed') {
-      const emailEnabled = restaurant?.email_bill_enabled !== false;
-      const whatsappEnabled = restaurant?.whatsapp_bill_enabled !== false;
 
-      return (
-        <>
-          <button onClick={() => handlePrintBill(order)} className={`${actionBtnClass} bg-orange-100 text-orange-600 hover:bg-orange-200`} title="Print Bill"><Printer size={18} className="sm:w-4 sm:h-4" /></button>
-          {emailEnabled && (
-            <button onClick={() => openEmailBillModal(order)} className={`${actionBtnClass} bg-blue-100 text-blue-600 hover:bg-blue-200`} title="Email Bill"><Mail size={18} className="sm:w-4 sm:h-4" /></button>
-          )}
-          {whatsappEnabled && (
-            <button onClick={() => openWhatsAppBillModal(order)} className={`${actionBtnClass} bg-green-100 text-green-600 hover:bg-green-200`} title="WhatsApp Bill"><MessageCircle size={18} className="sm:w-4 sm:h-4" /></button>
-          )}
-        </>
-      );
-    }
-    return null;
-  };
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
-
-    if (isToday(date)) {
+    const today = new Date();
+    const isTodayDate = date.getFullYear() === today.getFullYear() && date.getMonth() === today.getMonth() && date.getDate() === today.getDate();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const isYesterdayDate = date.getFullYear() === yesterday.getFullYear() && date.getMonth() === yesterday.getMonth() && date.getDate() === yesterday.getDate();
+    if (isTodayDate) {
       return `Today, ${format(date, 'h:mm a')}`;
-    } else if (isYesterday(date)) {
+    } else if (isYesterdayDate) {
       return `Yesterday, ${format(date, 'h:mm a')}`;
     } else {
       return format(date, 'MMM d, h:mm a');
@@ -615,98 +876,6 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
     };
 
     // Fallback: If onload doesn't fire (rare), let the user close the window manually
-  };
-
-  // Email Bill Handlers
-  const openEmailBillModal = (order) => {
-    setEmailBillOrder(order);
-    setEmailBillAddress(order.customer_email || '');
-    setShowEmailBillModal(true);
-  };
-
-  const closeEmailBillModal = () => {
-    setShowEmailBillModal(false);
-    setEmailBillOrder(null);
-    setEmailBillAddress('');
-    setSendingEmail(false);
-  };
-
-  const handleSendEmailBill = async () => {
-    if (!emailBillAddress || !emailBillAddress.includes('@')) {
-      toast.error('Please enter a valid email address');
-      return;
-    }
-
-    if (!emailBillOrder || !restaurant) {
-      toast.error('Order or restaurant data missing');
-      return;
-    }
-
-    setSendingEmail(true);
-    try {
-      await sendBillEmail(emailBillOrder, restaurant, emailBillAddress);
-      toast.success(`Bill sent to ${emailBillAddress}`);
-      closeEmailBillModal();
-    } catch (error) {
-      console.error('Email send error:', error);
-      toast.error(error.message || 'Failed to send email');
-    } finally {
-      setSendingEmail(false);
-    }
-  };
-
-  // WhatsApp Bill Handlers
-  const openWhatsAppBillModal = (order) => {
-    setWhatsAppBillOrder(order);
-    setWhatsAppPhoneNumber(order.customer_phone || '');
-    setShowWhatsAppBillModal(true);
-  };
-
-  const closeWhatsAppBillModal = () => {
-    setShowWhatsAppBillModal(false);
-    setWhatsAppBillOrder(null);
-    setWhatsAppPhoneNumber('');
-  };
-
-  const handleSendWhatsAppBill = async () => {
-    if (!whatsAppPhoneNumber || whatsAppPhoneNumber.length < 10) {
-      toast.error('Please enter a valid phone number');
-      return;
-    }
-
-    if (!whatsAppBillOrder || !restaurant) {
-      toast.error('Order or restaurant data missing');
-      return;
-    }
-
-    try {
-      // Try API first, fallback to opening WhatsApp app
-      const result = await sendWhatsAppBill(whatsAppBillOrder, restaurant, whatsAppPhoneNumber);
-
-      if (result.success) {
-        toast.success('Bill sent via WhatsApp!');
-      } else if (result.fallback && result.shareURL) {
-        // API failed, open WhatsApp manually
-        window.open(result.shareURL, '_blank');
-        toast.success('Opening WhatsApp...');
-      } else {
-        // Complete fallback
-        openWhatsAppBill(whatsAppBillOrder, restaurant, whatsAppPhoneNumber);
-        toast.success('Opening WhatsApp...');
-      }
-
-      closeWhatsAppBillModal();
-    } catch (error) {
-      console.error('WhatsApp error:', error);
-      // Fallback to manual share
-      try {
-        openWhatsAppBill(whatsAppBillOrder, restaurant, whatsAppPhoneNumber);
-        toast.success('Opening WhatsApp...');
-        closeWhatsAppBillModal();
-      } catch (fallbackError) {
-        toast.error(error.message || 'Failed to send WhatsApp bill');
-      }
-    }
   };
 
   // Download handler - lazy loads XLSX
@@ -854,9 +1023,6 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
         <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-2 w-full">
           {/* Row 1 on mobile: View + filters; Create Order on the right */}
           <div className="flex flex-wrap items-center gap-3 sm:gap-3 flex-1 min-w-0">
-            {isLoading && (
-              <RefreshCw size={18} className="text-orange-500 animate-spin flex-shrink-0" aria-hidden />
-            )}
             <div className="flex items-center bg-gray-100 rounded-lg p-0.5 flex-shrink-0">
               <button
                 onClick={() => setViewType('tiles')}
@@ -1008,7 +1174,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
               <div
                 key={order.id}
                 className={`
-                    group relative rounded-2xl border border-gray-100 shadow-lg hover:shadow-2xl transition-shadow duration-300 overflow-hidden
+                    group relative rounded-2xl border border-gray-100 shadow-md hover:shadow-lg transition-shadow duration-150 ease-out overflow-hidden
                     ${order.status === 'pending'
                     ? 'bg-yellow-50'
                     : order.status === 'preparing'
@@ -1096,8 +1262,8 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                   <div className="flex items-center gap-2 mb-2">
                     <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
                       {(order.items || []).slice(0, 4).map((item, idx) => (
-                        <div key={idx} className="flex-shrink-0 relative group">
-                          <div className="w-14 h-14 rounded-lg overflow-hidden border border-gray-200 bg-gray-50 transition-transform duration-200 group-hover:scale-105">
+                        <div key={idx} className="flex-shrink-0 relative">
+                          <div className="w-14 h-14 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
                             <img
                               src={item.image || `/api/placeholder/56/56`}
                               alt={item.name || `Item ${idx + 1}`}
@@ -1149,7 +1315,15 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2 min-h-[44px] sm:min-h-0 items-center">
-                    <ActionButtons order={order} />
+                    <ActionButtons
+                      order={order}
+                      isCard={true}
+                      confirmOrderModalRef={confirmOrderModalRef}
+                      handlePrintKOT={handlePrintKOT}
+                      handlePrintBill={handlePrintBill}
+                      onlineBillModalRef={onlineBillModalRef}
+                      restaurant={restaurant}
+                    />
                   </div>
                 </div>
               </div>
@@ -1251,7 +1425,14 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                                 <ChevronRight size={18} />
                               )}
                             </button>
-                            <ActionButtons order={order} />
+                            <ActionButtons
+                              order={order}
+                              confirmOrderModalRef={confirmOrderModalRef}
+                              handlePrintKOT={handlePrintKOT}
+                              handlePrintBill={handlePrintBill}
+                              onlineBillModalRef={onlineBillModalRef}
+                              restaurant={restaurant}
+                            />
                           </div>
                         </td>
                       </tr>
@@ -1749,274 +1930,8 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
           </div>
         </div>
       )}
-      {/* Confirmation Modal */}
-      {confirmModal.show && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 p-4">
-          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 max-w-sm w-full">
-            <div className="flex items-center mb-4">
-              <AlertTriangle className="text-yellow-500 mr-2 flex-shrink-0" />
-              <h3 className="text-lg font-semibold text-gray-800">
-                Confirm {confirmModal.type === 'accept' ? 'Accept' : confirmModal.type === 'rejected' ? 'Reject' : confirmModal.type === 'ready' ? 'Mark Ready' : 'Complete'} Order
-              </h3>
-            </div>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to {confirmModal.type === 'accept' ? 'accept' : confirmModal.type === 'rejected' ? 'reject' : confirmModal.type === 'ready' ? 'mark as ready' : 'complete'} order <span className="font-semibold">{confirmModal.order.order_number || confirmModal.order.id.slice(0, 8)}</span>?
-            </p>
-            {confirmModal.type === 'rejected' && (
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Reason for rejection <span className="text-red-500">*</span></label>
-                <textarea
-                  className="w-full border border-gray-300 rounded p-2 min-h-[88px]"
-                  rows={3}
-                  value={rejectionReason}
-                  onChange={e => setRejectionReason(e.target.value)}
-                  placeholder="Enter reason for rejection"
-                  required
-                />
-              </div>
-            )}
-            <div className="flex flex-wrap justify-end gap-2">
-              <button
-                onClick={() => {
-                  setConfirmModal({ show: false, type: null, order: null });
-                  setRejectionReason('');
-                }}
-                className="min-h-[44px] px-4 py-3 rounded bg-gray-100 text-gray-700 hover:bg-gray-200 touch-manipulation"
-                disabled={isLoading}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  const normalizedType = confirmModal.type?.toLowerCase();
-                  const statusMap = {
-                    accept: 'preparing',
-                    rejected: 'rejected',
-                    ready: 'ready',
-                    complete: 'completed'
-                  };
-                  handleStatusUpdate(
-                    confirmModal.order.id,
-                    confirmModal.order.userId,
-                    statusMap[normalizedType],
-                    normalizedType === 'rejected' ? rejectionReason : undefined
-                  );
-                }}
-                className={`min-h-[44px] px-4 py-3 rounded text-white touch-manipulation ${confirmModal.type === 'rejected' ? 'bg-red-500 hover:bg-red-600' : 'bg-orange-500 hover:bg-orange-600'}`}
-                disabled={isLoading || (confirmModal.type === 'rejected' && !rejectionReason.trim())}
-              >
-                {isLoading ? 'Processing...' : 'Confirm'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Email Bill Modal */}
-      {showEmailBillModal && emailBillOrder && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden max-h-[95vh] flex flex-col">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-4 sm:px-6 py-4 flex-shrink-0">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Mail className="text-white" size={20} />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="text-lg font-bold text-white">Email Bill</h3>
-                    <p className="text-blue-100 text-sm truncate">Order #{emailBillOrder.id?.slice(0, 8)}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={closeEmailBillModal}
-                  className="min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0 text-white/80 hover:text-white transition-colors touch-manipulation rounded-lg"
-                  aria-label="Close"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="p-4 sm:p-6 overflow-auto flex-1">
-              {/* Order Summary */}
-              <div className="bg-gray-50 rounded-xl p-4 mb-6">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-gray-600 text-sm">Customer</span>
-                  <span className="font-semibold text-gray-900">{emailBillOrder.customer_name || 'Guest'}</span>
-                </div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-gray-600 text-sm">Table</span>
-                  <span className="font-semibold text-gray-900">T{emailBillOrder.table_number}</span>
-                </div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-gray-600 text-sm">Items</span>
-                  <span className="font-semibold text-gray-900">{emailBillOrder.items?.length || 0} items</span>
-                </div>
-                <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                  <span className="text-gray-800 font-medium">Total</span>
-                  <span className="font-bold text-lg text-blue-600">₹{emailBillOrder.total?.toFixed(2)}</span>
-                </div>
-              </div>
-
-              {/* Email Input */}
-              <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Send bill to email address
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                  <input
-                    type="email"
-                    value={emailBillAddress}
-                    onChange={(e) => setEmailBillAddress(e.target.value)}
-                    placeholder="customer@email.com"
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-gray-900"
-                    autoFocus
-                  />
-                </div>
-                {emailBillOrder.customer_email && emailBillAddress !== emailBillOrder.customer_email && (
-                  <button
-                    onClick={() => setEmailBillAddress(emailBillOrder.customer_email)}
-                    className="mt-2 text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
-                  >
-                    <User size={14} />
-                    Use customer's email: {emailBillOrder.customer_email}
-                  </button>
-                )}
-              </div>
-
-              {/* Actions */}
-              <div className="flex flex-col-reverse sm:flex-row gap-3">
-                <button
-                  onClick={closeEmailBillModal}
-                  className="flex-1 min-h-[44px] px-4 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors touch-manipulation"
-                  disabled={sendingEmail}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSendEmailBill}
-                  disabled={sendingEmail || !emailBillAddress}
-                  className="flex-1 min-h-[44px] px-4 py-3 bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
-                >
-                  {sendingEmail ? (
-                    <>
-                      <RefreshCw className="animate-spin" size={18} />
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      <Send size={18} />
-                      Send Bill
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* WhatsApp Bill Modal */}
-      {showWhatsAppBillModal && whatsAppBillOrder && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden max-h-[95vh] flex flex-col">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-green-500 to-green-600 px-4 sm:px-6 py-4 flex-shrink-0">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-                    <MessageCircle className="text-white" size={20} />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="text-lg font-bold text-white">WhatsApp Bill</h3>
-                    <p className="text-green-100 text-sm truncate">Order #{whatsAppBillOrder.id?.slice(0, 8)}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={closeWhatsAppBillModal}
-                  className="min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0 text-white/80 hover:text-white transition-colors touch-manipulation rounded-lg"
-                  aria-label="Close"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="p-4 sm:p-6 overflow-auto flex-1">
-              {/* Order Summary */}
-              <div className="bg-gray-50 rounded-xl p-4 mb-6">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-gray-600 text-sm">Customer</span>
-                  <span className="font-semibold text-gray-900">{whatsAppBillOrder.customer_name || 'Guest'}</span>
-                </div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-gray-600 text-sm">Table</span>
-                  <span className="font-semibold text-gray-900">T{whatsAppBillOrder.table_number}</span>
-                </div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-gray-600 text-sm">Items</span>
-                  <span className="font-semibold text-gray-900">{whatsAppBillOrder.items?.length || 0} items</span>
-                </div>
-                <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                  <span className="text-gray-800 font-medium">Total</span>
-                  <span className="font-bold text-lg text-green-600">₹{whatsAppBillOrder.total?.toFixed(2)}</span>
-                </div>
-              </div>
-
-              {/* Phone Input */}
-              <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Send bill to WhatsApp number
-                </label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                  <input
-                    type="tel"
-                    value={whatsAppPhoneNumber}
-                    onChange={(e) => setWhatsAppPhoneNumber(e.target.value.replace(/[^0-9]/g, ''))}
-                    placeholder="9876543210"
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-gray-900"
-                    maxLength={12}
-                    autoFocus
-                  />
-                </div>
-                <p className="mt-2 text-xs text-gray-500">Enter number without country code (India +91 will be added automatically)</p>
-                {whatsAppBillOrder.customer_phone && whatsAppPhoneNumber !== whatsAppBillOrder.customer_phone && (
-                  <button
-                    onClick={() => setWhatsAppPhoneNumber(whatsAppBillOrder.customer_phone.replace(/[^0-9]/g, ''))}
-                    className="mt-2 text-sm text-green-600 hover:text-green-700 flex items-center gap-1"
-                  >
-                    <User size={14} />
-                    Use customer's phone: {whatsAppBillOrder.customer_phone}
-                  </button>
-                )}
-              </div>
-
-              {/* Actions */}
-              <div className="flex flex-col-reverse sm:flex-row gap-3">
-                <button
-                  onClick={closeWhatsAppBillModal}
-                  className="flex-1 min-h-[44px] px-4 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors touch-manipulation"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSendWhatsAppBill}
-                  disabled={!whatsAppPhoneNumber || whatsAppPhoneNumber.length < 10}
-                  className="flex-1 min-h-[44px] px-4 py-3 bg-green-500 text-white rounded-xl font-semibold hover:bg-green-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
-                >
-                  <MessageCircle size={18} />
-                  Open WhatsApp
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmOrderModal ref={confirmOrderModalRef} onConfirm={handleStatusUpdate} onSuccess={applyOptimisticStatus} />
+      <OnlineBillModal ref={onlineBillModalRef} restaurant={restaurant} triggeredBy={triggeredBy} />
     </div>
   );
 };

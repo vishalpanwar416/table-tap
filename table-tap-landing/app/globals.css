@@ -12,6 +12,10 @@
 
     --background: #FFFFFF;
     --foreground: #0F172A;
+
+    /* Local fallbacks for fonts when remote downloads are unavailable */
+    --font-geist: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-geist-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   }
 }
 

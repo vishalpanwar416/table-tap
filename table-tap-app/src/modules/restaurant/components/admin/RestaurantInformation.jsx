@@ -29,7 +29,8 @@ import {
   ShoppingBag,
   Eye,
   EyeOff,
-  Key
+  Key,
+  Send
 } from 'lucide-react';
 import { useAdminRestaurant } from '../../../shared/context/AdminRestaurantContext';
 import SubscriptionSection from './SubscriptionSection';
@@ -52,6 +53,17 @@ const RestaurantInformation = () => {
   const [showSwiggyKey, setShowSwiggyKey] = useState(false);
   const [showZomatoKey, setShowZomatoKey] = useState(false);
   const [showBillingPanel, setShowBillingPanel] = useState(false);
+
+  // Local state for optimistic toggles in View Mode
+  const [localOnlineBill, setLocalOnlineBill] = useState(true);
+  const [localAutoEmail, setLocalAutoEmail] = useState(false);
+
+  useEffect(() => {
+    if (restaurant) {
+      setLocalOnlineBill(restaurant.online_bill_enabled !== false);
+      setLocalAutoEmail(restaurant.auto_email_billing_enabled === true);
+    }
+  }, [restaurant]);
 
   // Check if user is owner or admin (can see API keys)
   const canSeeApiKeys = () => {
@@ -372,61 +384,72 @@ const RestaurantInformation = () => {
                   </div>
                 </div>
 
-                {/* Bill Sharing Options */}
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                      <Receipt className="w-5 h-5 text-white" />
-                    </div>
-                    Bill Sharing Options
-                  </h3>
-                  <p className="text-sm text-gray-500 mb-4">Allow customers to receive their bills via email or WhatsApp</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 p-5 rounded-xl flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                          <Mail className="w-5 h-5 text-blue-600" />
+                {/* Online Bill Toggle */}
+                {(restaurant?.billing_features_enabled !== false) && (
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                        <Receipt className="w-5 h-5 text-white" />
+                      </div>
+                      Online Bill Delivery
+                    </h3>
+                    <p className="text-sm text-gray-500 mb-4">Enable or disable digital bill delivery options (WhatsApp & Email)</p>
+                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 p-6 rounded-2xl flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                          <Send className="w-6 h-6 text-blue-600" />
                         </div>
                         <div>
-                          <span className="block text-sm font-bold text-gray-800">Email Bill</span>
-                          <span className="text-xs text-gray-500">Send bills via email</span>
+                          <span className="block text-base font-bold text-gray-800">Online Bill</span>
+                          <span className="text-sm text-gray-500">Send bills to customers via WhatsApp & Email</span>
                         </div>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
                           type="checkbox"
-                          name="email_bill_enabled"
-                          checked={formData.email_bill_enabled !== false}
-                          onChange={handleChange}
+                          name="online_bill_enabled"
+                          checked={formData.online_bill_enabled !== false}
+                          onChange={(e) => {
+                            const val = e.target.checked;
+                            setFormData(prev => ({
+                              ...prev,
+                              online_bill_enabled: val
+                            }));
+                          }}
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                        <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600"></div>
                       </label>
                     </div>
-
-                    <div className="bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-100 p-5 rounded-xl flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
-                          <MessageCircle className="w-5 h-5 text-emerald-600" />
+                    <div className="mt-4 bg-gradient-to-br from-slate-50 to-gray-50 border border-slate-100 p-6 rounded-2xl flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                          <Mail className="w-6 h-6 text-emerald-600" />
                         </div>
                         <div>
-                          <span className="block text-sm font-bold text-gray-800">WhatsApp Bill</span>
-                          <span className="text-xs text-gray-500">Send bills via WhatsApp</span>
+                          <span className="block text-base font-bold text-gray-800">Auto email billing</span>
+                          <span className="text-sm text-gray-500">Automatically send bill by email when order is completed</span>
                         </div>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
                           type="checkbox"
-                          name="whatsapp_bill_enabled"
-                          checked={formData.whatsapp_bill_enabled !== false}
-                          onChange={handleChange}
+                          name="auto_email_billing_enabled"
+                          checked={formData.auto_email_billing_enabled === true}
+                          onChange={(e) => {
+                            const val = e.target.checked;
+                            setFormData(prev => ({
+                              ...prev,
+                              auto_email_billing_enabled: val
+                            }));
+                          }}
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                        <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-600"></div>
                       </label>
                     </div>
                   </div>
-                </div>
+                )}
 
                 {/* Location & Online Presence */}
                 <div>
@@ -764,88 +787,123 @@ const RestaurantInformation = () => {
                 </div>
               </div>
 
-              {/* Bill Sharing Status Display with Toggles */}
+              {/* Online Bill Delivery Status Display with Toggles */}
               <div className="mt-8">
                 <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
                     <Receipt className="w-5 h-5 text-white" />
                   </div>
-                  Bill Sharing Options
+                  Online Bill Delivery
                 </h3>
-                <p className="text-sm text-gray-500 mb-4">Toggle to enable/disable bill sharing options</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-3 rounded-xl ${restaurant?.email_bill_enabled !== false ? 'bg-blue-100' : 'bg-gray-100'}`}>
-                        <Mail className={`w-6 h-6 ${restaurant?.email_bill_enabled !== false ? 'text-blue-600' : 'text-gray-400'}`} />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-bold text-gray-800 mb-1">Email Bill</h4>
-                        <p className="text-xs text-gray-500">Send bills via email</p>
-                      </div>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={restaurant?.email_bill_enabled !== false}
-                        onChange={async (e) => {
-                          const newValue = e.target.checked;
-                          const success = await updateRestaurant({ ...restaurant, email_bill_enabled: newValue });
-                          if (success) {
-                            setSaveSuccess(true);
-                            setTimeout(() => setSaveSuccess(false), 2000);
-                          }
-                        }}
-                        className="sr-only peer"
-                        disabled={!canEdit()}
-                      />
-                      <div className={`w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600 ${!canEdit() ? 'opacity-50 cursor-not-allowed' : ''}`}></div>
-                    </label>
-                  </div>
 
-                  <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl p-6 border border-emerald-100 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-3 rounded-xl ${restaurant?.whatsapp_bill_enabled !== false ? 'bg-emerald-100' : 'bg-gray-100'}`}>
-                        <MessageCircle className={`w-6 h-6 ${restaurant?.whatsapp_bill_enabled !== false ? 'text-emerald-600' : 'text-gray-400'}`} />
+                {(restaurant?.billing_features_enabled !== false) ? (
+                  <>
+                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100 flex items-center justify-between shadow-sm">
+                      <div className="flex items-center gap-4">
+                        <div className={`p-4 rounded-2xl ${localOnlineBill ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                          <Send className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-bold text-gray-800 mb-0.5">Online Bill</h4>
+                          <p className="text-sm text-gray-500">Enable WhatsApp & Email delivery options</p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="text-sm font-bold text-gray-800 mb-1">WhatsApp Bill</h4>
-                        <p className="text-xs text-gray-500">Send bills via WhatsApp</p>
-                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={localOnlineBill}
+                          onChange={async (e) => {
+                            const val = e.target.checked;
+                            // Optimistic update
+                            setLocalOnlineBill(val);
+
+                            const success = await updateRestaurant({
+                              online_bill_enabled: val
+                            });
+
+                            if (success) {
+                              setSaveSuccess(true);
+                              setTimeout(() => setSaveSuccess(false), 2000);
+                            } else {
+                              // Revert if failed
+                              setLocalOnlineBill(!val);
+                              setSaveError('Failed to update setting');
+                              setTimeout(() => setSaveError(null), 3000);
+                            }
+                          }}
+                          className="sr-only peer"
+                          disabled={!canEdit()}
+                        />
+                        <div className={`w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600 ${!canEdit() ? 'opacity-50 cursor-not-allowed' : ''}`}></div>
+                      </label>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={restaurant?.whatsapp_bill_enabled !== false}
-                        onChange={async (e) => {
-                          const newValue = e.target.checked;
-                          const success = await updateRestaurant({ ...restaurant, whatsapp_bill_enabled: newValue });
-                          if (success) {
-                            setSaveSuccess(true);
-                            setTimeout(() => setSaveSuccess(false), 2000);
-                          }
-                        }}
-                        className="sr-only peer"
-                        disabled={!canEdit()}
-                      />
-                      <div className={`w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 ${!canEdit() ? 'opacity-50 cursor-not-allowed' : ''}`}></div>
-                    </label>
+
+                    {/* Auto email billing */}
+                    <div className="mt-4 bg-gradient-to-br from-slate-50 to-gray-50 rounded-2xl p-6 border border-slate-100 flex items-center justify-between shadow-sm">
+                      <div className="flex items-center gap-4">
+                        <div className={`p-4 rounded-2xl ${localAutoEmail ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                          <Mail className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-bold text-gray-800 mb-0.5">Auto email billing</h4>
+                          <p className="text-sm text-gray-500">Automatically send bill by email when order is completed</p>
+                        </div>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={localAutoEmail}
+                          onChange={async (e) => {
+                            const val = e.target.checked;
+                            // Optimistic update
+                            setLocalAutoEmail(val);
+
+                            const success = await updateRestaurant({
+                              auto_email_billing_enabled: val
+                            });
+
+                            if (success) {
+                              setSaveSuccess(true);
+                              setTimeout(() => setSaveSuccess(false), 2000);
+                            } else {
+                              // Revert if failed
+                              setLocalAutoEmail(!val);
+                              setSaveError('Failed to update setting');
+                              setTimeout(() => setSaveError(null), 3000);
+                            }
+                          }}
+                          className="sr-only peer"
+                          disabled={!canEdit()}
+                        />
+                        <div className={`w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-600 ${!canEdit() ? 'opacity-50 cursor-not-allowed' : ''}`}></div>
+                      </label>
+                    </div>
+                  </>
+                ) : (
+                  <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 flex items-start gap-4 shadow-sm">
+                    <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center shrink-0">
+                      <Lock className="w-6 h-6 text-amber-600" />
+                    </div>
+                    <div>
+                      <h4 className="text-base font-bold text-amber-900 mb-1">Online Bill Module Locked</h4>
+                      <p className="text-sm text-amber-700 leading-relaxed">
+                        Digital billing (WhatsApp/Email) is an advanced feature.
+                        Please upgrade your subscription or contact help to unlock this feature.
+                      </p>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
-              {/* Aggregator Integration Status - Only visible to Owner and Admin */}
               {canSeeApiKeys() && (
                 <div className="mt-8">
                   <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
                     <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
                       <ShoppingBag className="w-5 h-5 text-white" />
                     </div>
-                    Aggregator Integration
+                    Aggregator Integration Status
                   </h3>
-
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Swiggy Status */}
                     <div className={`rounded-2xl p-6 border flex items-center justify-between ${restaurant?.swiggy_api_key ? 'bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200' : 'bg-gray-50 border-gray-200'}`}>
                       <div className="flex items-center gap-3">
                         <div className={`p-3 rounded-xl ${restaurant?.swiggy_api_key ? 'bg-orange-100' : 'bg-gray-100'}`}>
@@ -856,25 +914,9 @@ const RestaurantInformation = () => {
                           <p className={`text-sm font-bold ${restaurant?.swiggy_api_key ? 'text-orange-600' : 'text-gray-500'}`}>
                             {restaurant?.swiggy_api_key ? 'Connected' : 'Not Connected'}
                           </p>
-                          {restaurant?.swiggy_api_key && (
-                            <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                              <Key className="w-3 h-3" />
-                              API Key: ••••••{restaurant.swiggy_api_key.slice(-4)}
-                            </p>
-                          )}
                         </div>
                       </div>
-                      {canEdit() && (
-                        <button
-                          onClick={() => setIsEditing(true)}
-                          className="px-4 py-2 text-sm font-bold text-orange-600 hover:bg-orange-100 rounded-xl transition-colors"
-                        >
-                          {restaurant?.swiggy_api_key ? 'Edit' : 'Add Key'}
-                        </button>
-                      )}
                     </div>
-
-                    {/* Zomato Status */}
                     <div className={`rounded-2xl p-6 border flex items-center justify-between ${restaurant?.zomato_api_key ? 'bg-gradient-to-br from-red-50 to-rose-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
                       <div className="flex items-center gap-3">
                         <div className={`p-3 rounded-xl ${restaurant?.zomato_api_key ? 'bg-red-100' : 'bg-gray-100'}`}>
@@ -885,22 +927,8 @@ const RestaurantInformation = () => {
                           <p className={`text-sm font-bold ${restaurant?.zomato_api_key ? 'text-red-600' : 'text-gray-500'}`}>
                             {restaurant?.zomato_api_key ? 'Connected' : 'Not Connected'}
                           </p>
-                          {restaurant?.zomato_api_key && (
-                            <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                              <Key className="w-3 h-3" />
-                              API Key: ••••••{restaurant.zomato_api_key.slice(-4)}
-                            </p>
-                          )}
                         </div>
                       </div>
-                      {canEdit() && (
-                        <button
-                          onClick={() => setIsEditing(true)}
-                          className="px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-100 rounded-xl transition-colors"
-                        >
-                          {restaurant?.zomato_api_key ? 'Edit' : 'Add Key'}
-                        </button>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -912,7 +940,10 @@ const RestaurantInformation = () => {
                     <Edit3 className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" /> Edit Information
                   </button>
                 ) : (
-                  <div className="flex items-center text-purple-600 bg-purple-50 px-6 py-3 rounded-xl border border-purple-200"><Lock className="w-4 h-4 mr-2" /> <span className="font-semibold">View only access</span></div>
+                  <div className="flex items-center text-purple-600 bg-purple-50 px-6 py-3 rounded-xl border border-purple-200">
+                    <Lock className="w-4 h-4 mr-2" />
+                    <span className="font-semibold">View only access</span>
+                  </div>
                 )}
               </div>
             </div>
@@ -946,16 +977,16 @@ const RestaurantInformation = () => {
           </div>
         </div>
 
-      </div>
+      </div >
 
       {/* Billing Invoice Panel */}
-      <BillingInvoice
+      < BillingInvoice
         isOpen={showBillingPanel}
         onClose={() => setShowBillingPanel(false)}
         restaurantId={restaurant?.id}
         restaurant={restaurant}
       />
-    </div>
+    </div >
   );
 };
 

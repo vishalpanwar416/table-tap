@@ -1,6 +1,7 @@
-import { supabase } from '../../../shared/supabase';
+import { supabase, SUPABASE_URL } from '../../../shared/supabase';
 import { createNotification } from '../../../shared/api/notificationService';
 import { logActivity } from '../../../shared/api/activityLogService';
+import { sendOrderStatusEmail, sendBillToCustomer } from '../../../shared/api/emailService';
 import axios from 'axios';
 
 // Note: Order creation has been moved to paymentService.js
@@ -28,7 +29,7 @@ export const processRefund = async (order) => {
 
     // Call the Supabase edge function to process refund
     const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-refund`,
+      `${SUPABASE_URL}/functions/v1/process-refund`,
       {
         method: 'POST',
         headers: {
@@ -125,7 +126,7 @@ export const updateOrderStatus = async (orderId, status, cancelReason = null, us
     .from('orders')
     .update(updates)
     .eq('id', orderId)
-    .select();
+    .select('*');
 
   if (error) throw error;
   const updatedOrder = data[0];
@@ -189,6 +190,77 @@ export const updateOrderStatus = async (orderId, status, cancelReason = null, us
   // Helper function call to notify user (with refund info if applicable)
   await createOrderStatusNotification(updatedOrder, refundResult);
 
+  // Auto email billing: send emails on acceptance, rejection, or completion when restaurant has it enabled
+  const customerEmail = updatedOrder.customer_email;
+  const autoEmailResult = { sent: false, to: null, error: null, skippedReason: null };
+
+  if (!customerEmail) {
+    autoEmailResult.skippedReason = 'no_customer_email';
+    if (['preparing', 'rejected', 'completed'].includes(status)) {
+      console.log('[Auto email] Skipped: order has no customer_email. Add email in order details for auto emails.');
+    }
+  } else {
+    let restaurant = null;
+    try {
+      const { data: restData } = await supabase
+        .from('restaurants')
+        .select('*')
+        .eq('id', updatedOrder.restaurant_id)
+        .maybeSingle();
+      restaurant = restData;
+    } catch (e) {
+      console.warn('[Auto email] Could not fetch restaurant:', e);
+      autoEmailResult.skippedReason = 'restaurant_fetch_error';
+    }
+
+    const onlineBillingEnabled = restaurant?.billing_features_enabled !== false && restaurant?.online_bill_enabled !== false;
+    if (!restaurant) {
+      autoEmailResult.skippedReason = 'restaurant_not_found';
+    } else if (!restaurant.auto_email_billing_enabled) {
+      autoEmailResult.skippedReason = 'auto_email_disabled';
+      if (['preparing', 'rejected', 'completed'].includes(status)) {
+        console.log('[Auto email] Skipped: enable "Auto email billing" in Settings → Online Bill Delivery.');
+      }
+    } else if (!onlineBillingEnabled) {
+      autoEmailResult.skippedReason = 'online_billing_disabled';
+      if (['preparing', 'rejected', 'completed'].includes(status)) {
+        console.log('[Auto email] Skipped: enable "Online Bill" and ensure admin has billing enabled for this restaurant.');
+      }
+    } else if (['preparing', 'rejected', 'completed'].includes(status)) {
+      try {
+        if (status === 'preparing') {
+          const emailResult = await sendOrderStatusEmail(updatedOrder, restaurant, 'accepted');
+          if (emailResult?.success) {
+            autoEmailResult.sent = true;
+            autoEmailResult.to = customerEmail;
+          } else if (emailResult?.error) {
+            autoEmailResult.error = emailResult.error;
+          }
+        } else if (status === 'rejected') {
+          const emailResult = await sendOrderStatusEmail(updatedOrder, restaurant, 'rejected');
+          if (emailResult?.success) {
+            autoEmailResult.sent = true;
+            autoEmailResult.to = customerEmail;
+          } else if (emailResult?.error) {
+            autoEmailResult.error = emailResult.error;
+          }
+        } else if (status === 'completed') {
+          try {
+            await sendBillToCustomer(updatedOrder, restaurant);
+            autoEmailResult.sent = true;
+            autoEmailResult.to = customerEmail;
+          } catch (billErr) {
+            autoEmailResult.error = billErr.message || String(billErr);
+          }
+        }
+      } catch (emailErr) {
+        console.warn('[Auto email] Failed to send:', emailErr);
+        autoEmailResult.error = emailErr.message || String(emailErr);
+      }
+    }
+  }
+
+  updatedOrder._autoEmailResult = autoEmailResult;
   return updatedOrder;
 };
 

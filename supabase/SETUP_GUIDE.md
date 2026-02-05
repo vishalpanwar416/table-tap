@@ -64,13 +64,14 @@ UPDATE public.system_settings
 SET value = jsonb_set(value, '{key_secret}', '"YOUR_KEY_SECRET"')
 WHERE key = 'razorpay_keys';
 
--- Update Resend email
+-- Update Resend: API key and from_email (see docs/RESEND_DOMAIN_VERIFICATION.md to verify table-tap.in)
 UPDATE public.system_settings
 SET value = jsonb_set(value, '{api_key}', '"re_YOUR_RESEND_API_KEY"')
 WHERE key = 'resend_config';
 
+-- Use your verified Resend domain (add/verify at https://resend.com/domains, e.g. table-tap.in)
 UPDATE public.system_settings
-SET value = jsonb_set(value, '{from_email}', '"noreply@yourdomain.com"')
+SET value = jsonb_set(value, '{from_email}', '"TableTap <noreply@table-tap.in>"')
 WHERE key = 'resend_config';
 ```
 

@@ -22,7 +22,8 @@ export function BasePathProvider({ children, basePathSegment = '' }) {
         navigate(to, options);
         return;
       }
-      const path = to === '/' ? basePath : `${basePath}${to.startsWith('/') ? to : `/${to}`}`;
+      const pathname = typeof to === 'string' ? to : (typeof to === 'number' ? String(to) : '/');
+      const path = pathname === '/' ? basePath : `${basePath}${pathname.startsWith('/') ? pathname : `/${pathname}`}`;
       navigate(path, options);
     },
     [navigate, basePath]

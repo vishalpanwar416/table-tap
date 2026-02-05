@@ -9,11 +9,15 @@ const Hero = () => {
     const { openModal } = useModal();
 
     return (
-        <section id="home" aria-label="Hero section - Introduction to Table Tap" className="relative min-h-[100dvh] sm:min-h-[100vh] flex items-center pt-24 sm:pt-32 md:pt-40 pb-12 sm:pb-16 md:pb-20 overflow-hidden bg-white">
+        <section
+            id="home"
+            aria-label="Hero section - Introduction to Table Tap"
+            className="relative min-h-[90dvh] sm:min-h-[100vh] flex items-center pt-16 sm:pt-28 md:pt-36 pb-10 sm:pb-14 md:pb-18 overflow-hidden bg-white"
+        >
             {/* Background Aesthetic Elements - CSS only (smaller on mobile) */}
-            <div className="blob top-[-100px] left-[-100px] bg-[#2A9D8F]/20 opacity-40 sm:opacity-60 w-[300px] h-[300px] sm:w-[600px] sm:h-[600px]" />
-            <div className="blob blob-secondary bottom-[-100px] right-[-100px] opacity-30 sm:opacity-40 w-[250px] h-[250px] sm:w-[500px] sm:h-[500px]" />
-            <div className="blob top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#E76F51]/5 w-[400px] h-[400px] sm:w-[800px] sm:h-[800px] opacity-20 sm:opacity-30" />
+            <div className="blob top-[-80px] left-[-80px] bg-[#2A9D8F]/20 opacity-40 sm:opacity-60 w-[220px] h-[220px] sm:w-[480px] sm:h-[480px]" />
+            <div className="blob blob-secondary bottom-[-80px] right-[-80px] opacity-30 sm:opacity-40 w-[200px] h-[200px] sm:w-[420px] sm:h-[420px]" />
+            <div className="blob top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#E76F51]/5 w-[320px] h-[320px] sm:w-[700px] sm:h-[700px] opacity-20 sm:opacity-30" />
 
             {/* Floating Decorative Objects - CSS animations */}
             <div className="absolute top-[20%] left-[10%] opacity-[0.05] hidden lg:block pointer-events-none animate-float">
@@ -27,39 +31,39 @@ const Hero = () => {
                 <div className="flex flex-col items-center text-center">
                     {/* Main Title */}
                     <div className="overflow-hidden mb-4 sm:mb-6 md:mb-8 pb-2 sm:pb-4">
-                        <h1 className="text-[2.5rem] sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl font-black tracking-tighter leading-[0.95] animate-slide-up px-1">
+                        <h1 className="text-[clamp(2rem,6vw+0.5rem,3.8rem)] sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl font-black tracking-tighter leading-[0.98] animate-slide-up px-1">
                             <span className="text-gray-900">{hero.titlePrefix} </span>
                             <span className="gradient-text drop-shadow-sm">{hero.titleMain}</span>
                         </h1>
                     </div>
 
                     {/* Subtitle */}
-                    <p className="text-gray-500 text-base sm:text-lg md:text-xl lg:text-2xl max-w-3xl mb-8 sm:mb-10 md:mb-12 leading-relaxed font-medium animate-fade-in-up px-2">
+                    <p className="text-gray-500 text-[0.95rem] sm:text-lg md:text-xl lg:text-2xl max-w-2xl sm:max-w-3xl mb-7 sm:mb-10 md:mb-12 leading-relaxed font-medium animate-fade-in-up px-3 sm:px-2">
                         {hero.subtitle}
                     </p>
 
                     {/* CTA Section - stack on very small, side-by-side on sm+ */}
-                    <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-4 sm:gap-6 mb-12 sm:mb-16 md:mb-24 animate-fade-in-up-delay w-full sm:w-auto max-w-sm sm:max-w-none px-2">
+                    <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-5 mb-10 sm:mb-16 md:mb-20 animate-fade-in-up-delay w-full sm:w-auto max-w-sm sm:max-w-none px-2">
                         <button
                             onClick={() => openModal('starter')}
                             aria-label="Start your free trial of Table Tap"
-                            className="btn-premium flex items-center justify-center gap-2 sm:gap-3 text-base sm:text-lg px-6 sm:px-8 md:px-12 py-4 sm:py-5 md:py-6 shadow-2xl shadow-[#2A9D8F]/20 hover:scale-105 active:scale-95 transition-transform min-h-[48px]"
+                            className="btn-premium flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-lg px-5 sm:px-8 md:px-12 py-3.5 sm:py-5 md:py-6 shadow-2xl shadow-[#2A9D8F]/20 hover:scale-105 active:scale-95 transition-transform min-h-[44px]"
                         >
                             {hero.ctaPrimary.text} <ArrowRight size={20} className="sm:w-[22px] sm:h-[22px]" aria-hidden="true" />
                         </button>
                         <a
                             href={hero.ctaSecondary.href}
                             aria-label="Watch a demo of Table Tap in action"
-                            className="btn-outline flex items-center justify-center gap-2 sm:gap-3 text-base sm:text-lg px-6 sm:px-8 md:px-12 py-4 sm:py-5 md:py-6 backdrop-blur-md hover:scale-105 active:scale-95 transition-transform min-h-[48px]"
+                            className="btn-outline flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-lg px-5 sm:px-8 md:px-12 py-3.5 sm:py-5 md:py-6 backdrop-blur-md hover:scale-105 active:scale-95 transition-transform min-h-[44px]"
                         >
                             {hero.ctaSecondary.text}
                         </a>
                     </div>
 
                     {/* Phone Showcase - smaller on mobile */}
-                    <div className="relative w-full max-w-5xl mx-auto min-h-[320px] sm:min-h-[450px] md:min-h-[600px] mt-6 sm:mt-12 flex justify-center px-2">
+                    <div className="relative w-full max-w-4xl mx-auto min-h-[280px] sm:min-h-[430px] md:min-h-[560px] mt-4 sm:mt-10 flex justify-center px-2">
                         {/* Main Phone View */}
-                        <div className="relative w-[240px] h-[420px] sm:w-[280px] sm:h-[500px] md:w-[300px] md:h-[550px] bg-[#0F172A] rounded-[40px] sm:rounded-[48px] md:rounded-[56px] p-3 sm:p-4 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.15)] sm:shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] z-20 border-[6px] sm:border-[8px] border-white ring-1 ring-gray-200 animate-phone-appear">
+                        <div className="relative w-[210px] h-[380px] sm:w-[270px] sm:h-[480px] md:w-[300px] md:h-[550px] bg-[#0F172A] rounded-[34px] sm:rounded-[46px] md:rounded-[56px] p-3 sm:p-4 shadow-[0_24px_50px_-15px_rgba(0,0,0,0.15)] sm:shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] z-20 border-[5px] sm:border-[8px] border-white ring-1 ring-gray-200 animate-phone-appear">
                             <div className="bg-white w-full h-full rounded-[44px] overflow-hidden relative flex flex-col">
                                 {/* Status Bar */}
                                 <div className="h-8 w-full bg-white flex justify-between px-8 items-center pt-4">

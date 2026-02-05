@@ -39,6 +39,16 @@ export default function RestaurantDashboardWrapper({ children }) {
   const hasRestaurant = Boolean(userRestaurantId) || isAdmin();
   const allowed = typeof canView === 'function' ? canView() : ['admin', 'manager', 'captain'].includes(userRole);
 
+  // Don't redirect to /home while context is still initializing (userRole not set yet)
+  const stillInitializing = userRole == null;
+  if (stillInitializing) {
+    return (
+      <AuthWrapper>
+        <LoadingScreen message="Checking permissions..." variant="inline" size="lg" />
+      </AuthWrapper>
+    );
+  }
+
   if (!allowed || !hasRestaurant) {
     return (
       <AuthWrapper>

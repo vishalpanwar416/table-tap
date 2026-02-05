@@ -43,6 +43,30 @@ const MOCK_DATA = {
         status_url: typeof window !== 'undefined' ? window.location.origin + '/application-status' : 'https://tabletap.in/status',
         payment_row: '<tr><td style="padding: 8px 0; color: #777; font-size: 14px;">Payment:</td><td style="padding: 8px 0; font-size: 14px; text-align: right;"><span style="background-color: #D1FAE5; color: #065F46; padding: 4px 12px; border-radius: 20px; font-weight: 600; font-size: 12px;">✓ Paid (Test)</span></td></tr>',
         year: new Date().getFullYear()
+    },
+    email_template_bill: {
+        restaurant_name: 'Test Restaurant',
+        restaurant_address: '123 Main St',
+        order_id: 'ABC12345',
+        date: new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        table_number: 'T5',
+        payment_method: 'COD',
+        customer_name: 'Test Customer',
+        customer_email: 'customer@example.com',
+        customer_phone: '+91 98765 43210',
+        items_rows: '<tr><td style="padding: 12px 0;">Burger x 2</td><td style="text-align: center;">2</td><td style="text-align: center;">₹150</td><td style="text-align: right;">₹300</td></tr>',
+        subtotal: '₹280.00',
+        discount: '₹0.00',
+        sgst: '₹35.00',
+        cgst: '₹35.00',
+        discount_row: '',
+        delivery_row: '',
+        special_instructions_block: '',
+        total: '₹350.00',
+        special_instructions: '',
+        restaurant_contact: 'Call us at +91 1234567890',
+        restaurant_gst: '<p style="margin: 0; color: #999;">GST: 29XXXXX1234X1ZX</p>',
+        year: new Date().getFullYear()
     }
 };
 
@@ -390,15 +414,23 @@ const SettingCard = ({ setting, onSave, isSaving, onTestEmail, onTestTemplate })
                     </div>
                 </div>
 
-                {/* Test Action for Email */}
+                {/* Resend: show config used for test email and send test */}
                 {setting.key === 'resend_config' && !isEditing && (
-                    <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end">
-                        <button
-                            onClick={onTestEmail}
-                            className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
-                        >
-                            <Send size={16} /> Send Test Email
-                        </button>
+                    <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
+                        <p className="text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                            API key and sender are read from here. To send from your domain, set <code className="text-xs bg-white px-1 py-0.5 rounded">from_email</code> to e.g. <code className="text-xs bg-white px-1 py-0.5 rounded">TableTap &lt;noreply@table-tap.in&gt;</code> (domain must be verified at <a href="https://resend.com/domains" target="_blank" rel="noopener noreferrer" className="underline font-medium">resend.com/domains</a>).
+                        </p>
+                        <p className="text-sm text-gray-500">
+                            Test email will be sent using: <strong className="font-mono text-gray-700">{setting.value?.from_email || 'TableTap &lt;onboarding@resend.dev&gt; (default)'}</strong>
+                        </p>
+                        <div className="flex justify-end">
+                            <button
+                                onClick={onTestEmail}
+                                className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
+                            >
+                                <Send size={16} /> Send Test Email
+                            </button>
+                        </div>
                     </div>
                 )}
 

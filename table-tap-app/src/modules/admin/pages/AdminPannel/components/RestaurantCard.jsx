@@ -31,8 +31,7 @@ const RestaurantCard = ({
   onToggleStatus,
   onToggleAI,
   onToggleAggregators,
-  onToggleEmailBill,
-  onToggleWhatsAppBill,
+  onToggleOnlineBill,
   onEdit,
   onDelete,
   onClick
@@ -171,13 +170,12 @@ const RestaurantCard = ({
 
         {/* Active Plan Badge */}
         {restaurant.subscription ? (
-          <div className={`mb-3 flex items-center justify-between p-2.5 rounded-xl border ${
-            restaurant.subscription.plan_name === 'enterprise' 
-              ? 'bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200' 
-              : restaurant.subscription.plan_name === 'professional'
-                ? 'bg-gradient-to-r from-purple-50 to-violet-50 border-purple-200'
-                : 'bg-gradient-to-r from-blue-50 to-sky-50 border-blue-200'
-          }`}>
+          <div className={`mb-3 flex items-center justify-between p-2.5 rounded-xl border ${restaurant.subscription.plan_name === 'enterprise'
+            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200'
+            : restaurant.subscription.plan_name === 'professional'
+              ? 'bg-gradient-to-r from-purple-50 to-violet-50 border-purple-200'
+              : 'bg-gradient-to-r from-blue-50 to-sky-50 border-blue-200'
+            }`}>
             <div className="flex items-center gap-2">
               {restaurant.subscription.plan_name === 'enterprise' ? (
                 <Crown className="w-4 h-4 text-amber-600" />
@@ -187,13 +185,12 @@ const RestaurantCard = ({
                 <Package className="w-4 h-4 text-blue-600" />
               )}
               <div>
-                <span className={`text-xs font-bold capitalize ${
-                  restaurant.subscription.plan_name === 'enterprise' 
-                    ? 'text-amber-700' 
-                    : restaurant.subscription.plan_name === 'professional'
-                      ? 'text-purple-700'
-                      : 'text-blue-700'
-                }`}>
+                <span className={`text-xs font-bold capitalize ${restaurant.subscription.plan_name === 'enterprise'
+                  ? 'text-amber-700'
+                  : restaurant.subscription.plan_name === 'professional'
+                    ? 'text-purple-700'
+                    : 'text-blue-700'
+                  }`}>
                   {restaurant.subscription.plan_name} Plan
                 </span>
                 {restaurant.subscription.billing_cycle && (
@@ -271,22 +268,13 @@ const RestaurantCard = ({
             activeText="text-orange-700"
           />
           <FeatureToggle
-            icon={Mail}
-            label="Email Bill"
-            active={restaurant.email_bill_enabled !== false}
-            onClick={onToggleEmailBill}
+            icon={FileText}
+            label="Online Bill"
+            active={restaurant.billing_features_enabled !== false || restaurant.online_bill_enabled !== false}
+            onClick={onToggleOnlineBill}
             colorClass="blue"
             activeBg="bg-blue-50"
             activeText="text-blue-700"
-          />
-          <FeatureToggle
-            icon={MessageCircle}
-            label="WhatsApp"
-            active={restaurant.whatsapp_bill_enabled !== false}
-            onClick={onToggleWhatsAppBill}
-            colorClass="green"
-            activeBg="bg-green-50"
-            activeText="text-green-700"
           />
         </div>
       </div>

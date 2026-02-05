@@ -153,7 +153,7 @@ const RecommendationItem = memo(({ item, onImageClick, index = 0 }) => {
               {quantity > 0 ? (
                 <motion.div
                   key="quantity-controls"
-                  className="flex items-center bg-gradient-to-r from-black to-gray-800 text-white rounded-full px-4 py-2 shadow-lg"
+                  className="flex items-center bg-gradient-to-r from-black to-gray-800 text-white rounded-full px-3 py-1.5 shadow-lg"
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.8, opacity: 0 }}
@@ -189,7 +189,7 @@ const RecommendationItem = memo(({ item, onImageClick, index = 0 }) => {
                 <motion.button
                   key="add-button"
                   onClick={handleAddClick}
-                  className="bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white rounded-full px-4 py-2 flex items-center space-x-2 text-base shadow-lg transition-all duration-200"
+                  className="bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white rounded-full px-3 py-1.5 flex items-center space-x-2 text-sm shadow-lg transition-all duration-200"
                   whileHover={{
                     scale: 1.05,
                     boxShadow: "0 10px 25px rgba(0,0,0,0.2)"
@@ -200,8 +200,8 @@ const RecommendationItem = memo(({ item, onImageClick, index = 0 }) => {
                   exit={{ scale: 0.8, opacity: 0 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <ShoppingBag className="h-5 w-5" />
-                  <span>Add</span>
+                  <ShoppingBag className="h-5 w-5 flex-shrink-0" />
+                  <span className="leading-none pt-0.5">Add</span>
                 </motion.button>
               )}
             </AnimatePresence>

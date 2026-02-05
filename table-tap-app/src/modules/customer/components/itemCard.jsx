@@ -183,16 +183,16 @@ const OrderCard = ({ isOpen, onClose, item }) => {
             </div>
             
             {/* Content */}
-            <div className="p-6 pb-28 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 320px)' }}>
+            <div className="p-4 pb-24 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 320px)' }}>
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.5 }}
-                className="flex justify-between items-start mb-3"
+                className="flex justify-between items-start mb-2"
               >
-                <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-1 leading-tight">{item.name}</h2>
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-xl font-bold text-gray-900 mb-0.5 leading-tight">{item.name}</h2>
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
                     {item.preparationTime && (
                       <div className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
@@ -200,7 +200,7 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                       </div>
                     )}
                     {item.category && (
-                      <span className="px-2 py-0.5 bg-gray-100 rounded-full text-xs capitalize">
+                      <span className="px-1.5 py-0.5 bg-gray-100 rounded-full text-xs capitalize">
                         {item.category}
                       </span>
                     )}
@@ -210,52 +210,53 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 0.3, duration: 0.4 }}
+                  className="flex-shrink-0 ml-2"
                 >
-                  <PriceDisplay item={item} className="text-2xl font-bold text-black" />
+                  <PriceDisplay item={item} className="text-xl font-bold text-black" />
                 </motion.div>
               </motion.div>
               
-              {/* Order Details Section */}
+              {/* Order Details Section - compact */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.5 }}
-                className="bg-white/40 backdrop-blur-md rounded-2xl p-5 mb-6 border border-gray-200/50"
+                className="bg-white/40 backdrop-blur-md rounded-xl p-3 mb-4 border border-gray-200/50"
               >
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                  <div className="w-1 h-5 bg-gradient-to-b from-orange-500 to-red-500 rounded-full"></div>
+                <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-1.5">
+                  <div className="w-0.5 h-4 bg-gradient-to-b from-orange-500 to-red-500 rounded-full flex-shrink-0"></div>
                   Order Details
                 </h3>
                 
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {/* Preparation Time */}
                   {item.preparationTime && (
-                    <div className="flex justify-between items-center p-3 bg-white/70 rounded-xl">
-                      <span className="flex items-center gap-2 text-gray-700 font-medium">
-                        <Clock className="h-4 w-4 text-orange-500" /> Preparation Time
+                    <div className="flex justify-between items-center px-2.5 py-2 bg-white/70 rounded-lg">
+                      <span className="flex items-center gap-1.5 text-gray-700 text-sm font-medium">
+                        <Clock className="h-3 w-3 text-orange-500 flex-shrink-0" /> Preparation Time
                       </span>
-                      <span className="text-gray-900 font-semibold">{item.preparationTime}</span>
+                      <span className="text-gray-900 text-sm font-semibold">{item.preparationTime}</span>
                     </div>
                   )}
                   {/* Description (no label) */}
                   {item.description && (
-                    <div className="p-3 bg-white/70 rounded-xl text-gray-600 text-sm mb-2">
+                    <div className="px-2.5 py-2 bg-white/70 rounded-lg text-gray-600 text-xs leading-snug">
                       {item.description}
                     </div>
                   )}
                   {/* Category */}
                   {item.category && (
-                    <div className="flex justify-between items-center p-3 bg-white/70 rounded-xl">
-                      <span className="flex items-center gap-2 text-gray-700 font-medium">
-                        <Tag className="h-4 w-4 text-purple-500" /> Category
+                    <div className="flex justify-between items-center px-2.5 py-2 bg-white/70 rounded-lg">
+                      <span className="flex items-center gap-1.5 text-gray-700 text-sm font-medium">
+                        <Tag className="h-3 w-3 text-purple-500 flex-shrink-0" /> Category
                       </span>
-                      <span className="text-gray-900 font-semibold capitalize">{item.category}</span>
+                      <span className="text-gray-900 text-sm font-semibold capitalize">{item.category}</span>
                     </div>
                   )}
                   {/* Tags */}
                   {item.tags && item.tags.length > 0 && (
-                    <div className="p-3 bg-white/40 backdrop-blur-md rounded-xl">
-                      <div className="flex flex-wrap gap-2">
+                    <div className="px-2.5 py-2 bg-white/40 backdrop-blur-md rounded-lg">
+                      <div className="flex flex-wrap gap-1.5">
                         {item.tags.map((tag, idx) => {
                           const tagLower = tag.toLowerCase();
                           let tagClass = "bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800";
@@ -267,7 +268,7 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                           return (
                             <span
                               key={tag}
-                              className={`text-xs font-medium px-3 py-1.5 rounded-full border shadow-sm ${tagClass}`}
+                              className={`text-[11px] font-medium px-2 py-1 rounded-full border ${tagClass}`}
                             >
                               {tag}
                             </span>
@@ -285,22 +286,22 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5, duration: 0.5 }}
-                  className="mb-6"
+                  className="mb-4"
                 >
-                  <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                    <div className="w-1 h-5 bg-gradient-to-b from-green-500 to-blue-500 rounded-full"></div>
+                  <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-1.5">
+                    <div className="w-0.5 h-4 bg-gradient-to-b from-green-500 to-blue-500 rounded-full flex-shrink-0"></div>
                     Nutrition Facts
                   </h3>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-2">
                     {Object.entries(item.nutritionFacts).map(([key, value]) => (
                       <motion.div 
                         key={key} 
-                        className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl px-4 py-3 border border-green-200/50"
+                        className="bg-gradient-to-br from-green-50 to-blue-50 rounded-lg px-2.5 py-2 border border-green-200/50"
                         whileHover={{ scale: 1.02 }}
                         transition={{ duration: 0.2 }}
                       >
-                        <span className="text-gray-600 text-sm capitalize font-medium">{key}:</span>
-                        <span className="text-gray-800 text-sm ml-1 font-semibold">{value}</span>
+                        <span className="text-gray-600 text-xs capitalize font-medium">{key}:</span>
+                        <span className="text-gray-800 text-xs ml-1 font-semibold">{value}</span>
                       </motion.div>
                     ))}
                   </div>
@@ -313,7 +314,7 @@ const OrderCard = ({ isOpen, onClose, item }) => {
             
             {/* Add to cart button (fixed at bottom) */}
             <motion.div 
-              className="absolute bottom-0 left-0 right-0 p-6"
+              className="absolute bottom-0 left-0 right-0 p-4"
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.7, duration: 0.5 }}
@@ -322,7 +323,7 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                 {quantity > 0 ? (
                   <motion.div 
                     key="quantity-controls"
-                    className="flex items-center bg-gradient-to-r from-black via-gray-900 to-black text-white rounded-2xl w-full justify-between px-8 py-4 shadow-2xl"
+                    className="flex items-center bg-gradient-to-r from-black via-gray-900 to-black text-white rounded-2xl w-full justify-between px-6 py-2.5 shadow-2xl"
                     initial={{ scale: 0.8, opacity: 0, y: 20 }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
                     exit={{ scale: 0.8, opacity: 0, y: -20 }}
@@ -330,15 +331,15 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                   >
                     <motion.button
                       onClick={handleDecrementQuantity}
-                      className="bg-white/20 backdrop-blur-sm rounded-full h-10 w-10 flex items-center justify-center text-white border border-white/30"
+                      className="bg-white/20 backdrop-blur-sm rounded-full h-8 w-8 flex items-center justify-center text-white border border-white/30"
                       whileHover={{ scale: 1.15, backgroundColor: "rgba(255,255,255,0.3)" }}
                       whileTap={{ scale: 0.9 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <Minus className="h-5 w-5" />
+                      <Minus className="h-4 w-4" />
                     </motion.button>
                     <motion.span 
-                      className="text-white text-xl font-bold"
+                      className="text-white text-lg font-bold"
                       key={quantity}
                       initial={{ scale: 1.3, y: -10 }}
                       animate={{ scale: 1, y: 0 }}
@@ -348,19 +349,19 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                     </motion.span>
                     <motion.button
                       onClick={handleAddToCart}
-                      className="bg-white/20 backdrop-blur-sm rounded-full h-10 w-10 flex items-center justify-center text-white border border-white/30"
+                      className="bg-white/20 backdrop-blur-sm rounded-full h-8 w-8 flex items-center justify-center text-white border border-white/30"
                       whileHover={{ scale: 1.15, backgroundColor: "rgba(255,255,255,0.3)" }}
                       whileTap={{ scale: 0.9 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <Plus className="h-5 w-5" />
+                      <Plus className="h-4 w-4" />
                     </motion.button>
                   </motion.div>
                 ) : (
                   <motion.button
                     key="add-button"
                     onClick={handleAddToCart}
-                    className="bg-gradient-to-r from-black via-gray-900 to-black hover:from-gray-900 hover:via-black hover:to-gray-900 text-white rounded-2xl w-full py-4 flex items-center justify-center gap-3 text-lg font-semibold shadow-2xl transition-all duration-300 group"
+                    className="bg-gradient-to-r from-black via-gray-900 to-black hover:from-gray-900 hover:via-black hover:to-gray-900 text-white rounded-2xl w-full py-2.5 flex items-center justify-center gap-2 text-base font-semibold shadow-2xl transition-all duration-300 group"
                     whileHover={{ 
                       scale: 1.02,
                       boxShadow: "0 20px 40px rgba(0,0,0,0.3)"
@@ -372,12 +373,13 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                     transition={{ duration: 0.3, type: "spring" }}
                   >
                     <motion.div
+                      className="flex-shrink-0"
                       whileHover={{ rotate: 360 }}
                       transition={{ duration: 0.6 }}
                     >
-                      <ShoppingBag className="h-6 w-6" />
+                      <ShoppingBag className="h-5 w-5" />
                     </motion.div>
-                    <span>Add to Cart</span>
+                    <span className="leading-none pt-0.5">Add to Cart</span>
                     <motion.div
                       className="w-2 h-2 bg-white rounded-full opacity-0 group-hover:opacity-100"
                       initial={{ scale: 0 }}

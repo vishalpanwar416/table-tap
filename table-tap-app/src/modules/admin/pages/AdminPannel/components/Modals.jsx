@@ -748,18 +748,48 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
               </div>
             </div>
 
-            {/* AI Enabled Toggle */}
-            <div className="flex items-center space-x-3 mt-4">
-              <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <Globe className="w-4 h-4 text-indigo-400" />
-                AI Enabled
-              </label>
-              <input
-                type="checkbox"
-                checked={!!data.ai_enabled}
-                onChange={(e) => setData({ ...data, ai_enabled: e.target.checked })}
-                className="form-checkbox h-5 w-5 text-indigo-600 transition duration-150"
-              />
+            {/* Advanced Toggle Section */}
+            <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200">
+              <h4 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                <Crown className="w-4 h-4 text-amber-500" />
+                Advanced Features
+              </h4>
+              <div className="flex flex-wrap gap-8">
+                {/* AI Enabled Toggle */}
+                <div className="flex items-center space-x-3">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={!!data.ai_enabled}
+                      onChange={(e) => setData({ ...data, ai_enabled: e.target.checked })}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                  </label>
+                  <span className="text-sm font-medium text-gray-700">AI Analytics</span>
+                </div>
+
+                {/* Billing Features Toggle */}
+                <div className="flex items-center space-x-3">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={data.billing_features_enabled !== false || data.online_bill_enabled !== false}
+                      onChange={(e) => {
+                        const val = e.target.checked;
+                        setData({
+                          ...data,
+                          billing_features_enabled: val,
+                          online_bill_enabled: val
+                        });
+                      }}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                  <span className="text-sm font-medium text-gray-700">Online Bill (WhatsApp/Email)</span>
+                </div>
+              </div>
             </div>
 
             {/* Action Buttons */}

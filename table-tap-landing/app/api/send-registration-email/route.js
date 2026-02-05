@@ -6,7 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 // For now, we'll use Resend as it's simple and has a generous free tier
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const FROM_EMAIL = process.env.FROM_EMAIL || 'Table Tap <noreply@tabletap.in>';
+const FROM_EMAIL = process.env.FROM_EMAIL || 'Table Tap <noreply@table-tap.in>';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://tabletap.in';
 
 export async function POST(request) {

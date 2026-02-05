@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom';
 import Sidebar from '../../components/admin/Sidebar';
 import MobileNav from '../../components/admin/MobileNav';
 import DashboardOverview from '../../components/admin/DashboardOverviewComponents/DashboardOverview';
@@ -28,8 +28,22 @@ import { useAdminRestaurant } from '../../../shared/context/AdminRestaurantConte
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { restaurantId } = useParams();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTabState] = useState('dashboard');
+  const tabFromUrlInitialized = useRef(false);
+
+  // Keep URL in sync with active tab and provide a single setter for tab changes
+  const setActiveTab = (tab) => {
+    setActiveTabState(tab);
+    setSearchParams(params => {
+      const next = new URLSearchParams(params);
+      if (tab && tab !== 'dashboard') next.set('tab', tab);
+      else next.delete('tab');
+      return next;
+    }, { replace: true });
+  };
   const [foodItems, setFoodItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showMobileNav, setShowMobileNav] = useState(false);
@@ -167,7 +181,6 @@ const AdminDashboard = () => {
       const { data, error } = await supabase
         .from('restaurants')
         .select('id, name, is_active')
-        .eq('is_active', true)
         .order('name', { ascending: true });
 
       if (error) throw error;
@@ -302,14 +315,15 @@ const AdminDashboard = () => {
           // Allowed roles
           const allowedRoles = ['manager', 'admin', 'captain', 'owner', 'chef', 'waiter', 'cashier'];
 
-          // If user is not in allowed roles, redirect
+          // If user is not in allowed roles, redirect to restaurant login (stay in restaurant app)
           if (!allowedRoles.includes(role)) {
-            navigate('/home');
+            navigate('/login');
             return;
           }
         }
       } catch (error) {
-        navigate('/home');
+        // On profile fetch error, don't redirect to customer home; stay on dashboard and let user retry
+        console.error('Dashboard: failed to load profile', error);
       }
     };
     fetchUserProfile();
@@ -332,6 +346,17 @@ const AdminDashboard = () => {
       return [];
     }
   };
+
+  // Restore active tab from URL on load (e.g. after refresh) so user stays on the same page
+  useEffect(() => {
+    if (menuItems.length === 0 || tabFromUrlInitialized.current) return;
+    const allowedIds = menuItems.map(item => item.id);
+    const tabFromUrl = searchParams.get('tab');
+    if (tabFromUrl && allowedIds.includes(tabFromUrl)) {
+      setActiveTab(tabFromUrl);
+    }
+    tabFromUrlInitialized.current = true;
+  }, [menuItems, searchParams]);
 
   // Redirect to first allowed tab if current activeTab is restricted
   useEffect(() => {
@@ -452,9 +477,22 @@ const AdminDashboard = () => {
 
       // Show success notification
       setOrderToastTitle('✅ Status Updated');
-      setOrderToastMessage(
-        `Order #${updatedOrder.order_number || updatedOrder.id.slice(0, 8)} marked as ${newStatus}`
-      );
+      let toastMsg = `Order #${updatedOrder.order_number || updatedOrder.id.slice(0, 8)} marked as ${newStatus}`;
+      const autoEmail = updatedOrder._autoEmailResult;
+      if (autoEmail) {
+        if (autoEmail.sent && autoEmail.to) {
+          toastMsg += `. Acceptance email sent to ${autoEmail.to}`;
+        } else if (autoEmail.skippedReason === 'no_customer_email' && ['preparing', 'rejected', 'completed'].includes(newStatus)) {
+          toastMsg += `. No auto email: add customer email on the order to receive status emails.`;
+        } else if (autoEmail.skippedReason === 'auto_email_disabled' && ['preparing', 'rejected', 'completed'].includes(newStatus)) {
+          toastMsg += `. Enable "Auto email billing" in Settings → Online Bill Delivery to send emails.`;
+        } else if (autoEmail.skippedReason === 'online_billing_disabled' && ['preparing', 'rejected', 'completed'].includes(newStatus)) {
+          toastMsg += `. Enable "Online Bill" in Settings and ensure admin has online billing enabled for this restaurant.`;
+        } else if (autoEmail.error) {
+          toastMsg += `. Auto email failed: ${autoEmail.error}`;
+        }
+      }
+      setOrderToastMessage(toastMsg);
       setShowOrderToast(true);
       setOrderSoundType('success');
       setPlayOrderSound(true);
@@ -886,7 +924,10 @@ const AdminDashboard = () => {
               )}
 
               {activeTab === 'floor-plan' && (
-                <FloorPlanView searchTerm={searchTerm} />
+                <FloorPlanView
+                  searchTerm={searchTerm}
+                  onViewOrders={() => setActiveTab('orders')}
+                />
               )}
 
               {activeTab === 'menu' && (

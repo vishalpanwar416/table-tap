@@ -22,7 +22,8 @@ import {
   RefreshCw,
   ShoppingCart,
   Utensils,
-  ClipboardList
+  ClipboardList,
+  Mail
 } from 'lucide-react';
 import { useAuth } from '../../../shared/config/AuthContext';
 import { useAdminRestaurant } from '../../../shared/context/AdminRestaurantContext';
@@ -93,6 +94,7 @@ const ActivityLogs = ({ setLoading, setErrorMsg, setSuccessMsg, searchTerm }) =>
       case 'inventory': return <Package className="w-4 h-4 text-blue-500" />;
       case 'order': return <ShoppingCart className="w-4 h-4 text-orange-500" />;
       case 'menu': return <Utensils className="w-4 h-4 text-green-500" />;
+      case 'email': return <Mail className="w-4 h-4 text-indigo-500" />;
       default: return <Activity className="w-4 h-4 text-gray-500" />;
     }
   };
@@ -101,6 +103,7 @@ const ActivityLogs = ({ setLoading, setErrorMsg, setSuccessMsg, searchTerm }) =>
     if (action.includes('added')) return <Plus className="w-3 h-3 text-green-600" />;
     if (action.includes('updated') || action.includes('edit') || action.includes('status')) return <Edit3 className="w-3 h-3 text-blue-600" />;
     if (action.includes('deleted') || action.includes('rejected') || action.includes('cancelled')) return <Trash2 className="w-3 h-3 text-red-600" />;
+    if (action.includes('bill_sent') || action.includes('auto_email')) return <Mail className="w-3 h-3 text-indigo-600" />;
     return <Clock className="w-3 h-3 text-gray-600" />;
   };
 
@@ -173,6 +176,7 @@ const ActivityLogs = ({ setLoading, setErrorMsg, setSuccessMsg, searchTerm }) =>
               <option value="order">Orders</option>
               <option value="menu">Menu Items</option>
               <option value="inventory">Inventory</option>
+              <option value="email">Email / Billing</option>
             </select>
           </div>
           <div>
@@ -216,6 +220,7 @@ const ActivityLogs = ({ setLoading, setErrorMsg, setSuccessMsg, searchTerm }) =>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${log.action_type === 'order' ? 'bg-orange-50 text-orange-700' :
                         log.action_type === 'menu' ? 'bg-green-50 text-green-700' :
+                          log.action_type === 'email' ? 'bg-indigo-50 text-indigo-700' :
                           'bg-blue-50 text-blue-700'
                         }`}>
                         {getTypeIcon(log.action_type)}
@@ -258,6 +263,16 @@ const ActivityLogs = ({ setLoading, setErrorMsg, setSuccessMsg, searchTerm }) =>
                             {log.action_type === 'menu' && log.details.price && (
                               <span className="px-1.5 py-0.5 bg-green-50 text-green-600 rounded font-bold">
                                 ₹{log.details.price} ({log.details.category})
+                              </span>
+                            )}
+                            {log.action_type === 'email' && log.details.recipient_email && (
+                              <span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded font-bold">
+                                → {log.details.recipient_email}
+                              </span>
+                            )}
+                            {log.action_type === 'email' && log.details.email_kind && (
+                              <span className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded font-bold capitalize">
+                                {log.details.email_kind}
                               </span>
                             )}
                             {log.details.reason && (

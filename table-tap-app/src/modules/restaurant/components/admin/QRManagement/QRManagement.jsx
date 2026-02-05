@@ -83,21 +83,56 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
     },
   };
 
-  // Load tables from restaurant data on component mount
+  // Normalize table objects so each has restaurantId for QR URLs
+  const normalizeTables = (rawTables, restaurantId) => {
+    if (!Array.isArray(rawTables)) return [];
+    return rawTables.map((t) => ({
+      ...t,
+      restaurantId: t.restaurantId || t.restaurant_id || restaurantId
+    }));
+  };
+
+  // Load tables: prefer explicit fetch so we always have latest; fallback to restaurant.tables
   useEffect(() => {
-    if (restaurant?.tables) {
-      try {
-        const parsedTables = typeof restaurant.tables === 'string'
-          ? JSON.parse(restaurant.tables)
-          : restaurant.tables;
-        setTables(Array.isArray(parsedTables) ? parsedTables : []);
-      } catch (error) {
-        setTables([]);
-      }
-    } else {
+    if (!restaurant?.id) {
       setTables([]);
+      return;
     }
-  }, [restaurant]);
+
+    let mounted = true;
+
+    const loadTables = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('restaurants')
+          .select('tables')
+          .eq('id', restaurant.id)
+          .maybeSingle();
+
+        if (!mounted) return;
+        if (error) {
+          setTables([]);
+          return;
+        }
+
+        let raw = [];
+        if (data?.tables != null) {
+          try {
+            raw = typeof data.tables === 'string' ? JSON.parse(data.tables) : data.tables;
+          } catch (_) {
+            raw = [];
+          }
+        }
+        if (!Array.isArray(raw)) raw = [];
+        setTables(normalizeTables(raw, restaurant.id));
+      } catch (_) {
+        if (mounted) setTables([]);
+      }
+    };
+
+    loadTables();
+    return () => { mounted = false; };
+  }, [restaurant?.id]);
 
   // Fetch orders for all tables
   useEffect(() => {
@@ -372,11 +407,7 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          {/* Removed redundant title */}
-          <p className="text-gray-600">Generate QR codes for restaurant tables</p>
-          <p className="text-sm text-gray-500">Restaurant: {restaurant.name}</p>
-        </div>
+        <div />
         {canEdit() && (
           <button
             onClick={() => {

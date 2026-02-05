@@ -94,6 +94,26 @@ create policy restaurants_staff_read_own
 on public.restaurants for select
 using (id = public.current_restaurant_id());
 
+-- Staff/manager/admin can browse ALL active restaurants on the selection page (not just their own)
+drop policy if exists restaurants_staff_browse_all_active on public.restaurants;
+create policy restaurants_staff_browse_all_active
+on public.restaurants for select
+using (
+  is_active = true
+  and exists (
+    select 1
+    from public.subscriptions s
+    where s.restaurant_id = restaurants.id
+      and s.status in ('active', 'grace_period')
+  )
+  and exists (
+    select 1
+    from public.restaurant_staff rs
+    where rs.user_id = auth.uid()
+      and rs.connected = true
+  )
+);
+
 drop policy if exists restaurants_manage_update on public.restaurants;
 create policy restaurants_manage_update
 on public.restaurants for update
@@ -131,6 +151,20 @@ drop policy if exists subscriptions_staff_read_own on public.subscriptions;
 create policy subscriptions_staff_read_own
 on public.subscriptions for select
 using (restaurant_id = public.current_restaurant_id());
+
+-- Staff/manager/admin can read subscription status for all active/grace_period (for selection page join)
+drop policy if exists subscriptions_staff_browse_active on public.subscriptions;
+create policy subscriptions_staff_browse_active
+on public.subscriptions for select
+using (
+  status in ('active', 'grace_period')
+  and exists (
+    select 1
+    from public.restaurant_staff rs
+    where rs.user_id = auth.uid()
+      and rs.connected = true
+  )
+);
 
 -- -----------------------------
 -- restaurant_staff

@@ -272,7 +272,12 @@ export const getAllRestaurants = async () => {
         ai_enabled: restaurant.ai_enabled,
         aggregators_enabled: restaurant.aggregators_enabled,
         swiggy_api_key: restaurant.swiggy_api_key,
-        zomato_api_key: restaurant.zomato_api_key
+        zomato_api_key: restaurant.zomato_api_key,
+        billing_features_enabled: restaurant.billing_features_enabled,
+        online_bill_enabled: restaurant.online_bill_enabled,
+        auto_email_billing_enabled: restaurant.auto_email_billing_enabled,
+        created_at: restaurant.created_at,
+        updated_at: restaurant.updated_at
       };
 
       return transformed;
@@ -453,6 +458,9 @@ export const createRestaurant = async (restaurantData) => {
         swiggy_api_key: restaurantData.swiggy_api_key || null,
         zomato_api_key: restaurantData.zomato_api_key || null,
         aggregators_enabled: restaurantData.aggregators_enabled || false,
+        online_bill_enabled: restaurantData.online_bill_enabled !== false,
+        billing_features_enabled: restaurantData.billing_features_enabled !== false,
+        auto_email_billing_enabled: restaurantData.auto_email_billing_enabled === true,
         is_active: true
       })
       .select()
@@ -577,6 +585,9 @@ export const updateRestaurant = async (restaurantId, updateData) => {
         swiggy_api_key: updateData.swiggy_api_key || null,
         zomato_api_key: updateData.zomato_api_key || null,
         aggregators_enabled: updateData.aggregators_enabled || false,
+        online_bill_enabled: updateData.online_bill_enabled !== false,
+        billing_features_enabled: updateData.billing_features_enabled !== false,
+        auto_email_billing_enabled: updateData.auto_email_billing_enabled === true,
         updated_at: new Date().toISOString()
       })
       .eq('id', restaurantId)
