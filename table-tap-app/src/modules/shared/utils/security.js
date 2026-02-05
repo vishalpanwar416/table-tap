@@ -10,7 +10,9 @@ const SECURITY_CONFIG = {
   SESSION_TIMEOUT: 30 * 60 * 1000, // 30 minutes
   MAX_LOGIN_ATTEMPTS: 5,
   LOCKOUT_DURATION: 15 * 60 * 1000, // 15 minutes
-  ENCRYPTION_KEY: process.env.REACT_APP_ENCRYPTION_KEY
+  // NOTE: This key is used for client-side obfuscation (e.g. local storage) and is NOT a security primitive.
+  // It is visible in the browser bundle. Do not use for sensitive data.
+  ENCRYPTION_KEY: process.env.REACT_APP_ENCRYPTION_KEY || 'default-obfuscation-key'
 };
 
 // Input sanitization
