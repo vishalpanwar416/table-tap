@@ -27,6 +27,53 @@ export async function POST(request) {
             );
         }
 
+        // 1. Security: Origin Check
+        const origin = request.headers.get('origin');
+        const allowedOrigin = process.env.NEXT_PUBLIC_APP_URL || 'https://table-tap.in';
+        // Allow localhost for dev
+        const isLocalhost = origin?.includes('localhost');
+
+        if (origin && !origin.includes(allowedOrigin) && !isLocalhost) {
+            console.error(`Blocked request from unauthorized origin: ${origin}`);
+            return NextResponse.json({ error: 'Unauthorized origin' }, { status: 403 });
+        }
+
+        // 2. Security: Verify Registration Exists in DB
+        // This prevents the API from being used as an open mail relay
+        try {
+            const supabaseAdmin = createClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL,
+                process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+            );
+
+            const { data: registration } = await supabaseAdmin
+                .from('restaurant_registrations')
+                .select('id, created_at')
+                .eq('owner_email', ownerEmail)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single();
+
+            if (!registration) {
+                console.error(`Security blocked: No registration found for ${ownerEmail}`);
+                return NextResponse.json({ error: 'Invalid request: No registration found' }, { status: 403 });
+            }
+
+            // Check if registration is recent (e.g. within last 15 minutes)
+            const created = new Date(registration.created_at);
+            const now = new Date();
+            const diffMinutes = (now - created) / 1000 / 60;
+
+            if (diffMinutes > 15) {
+                console.error(`Security blocked: Registration too old (${diffMinutes}m) for ${ownerEmail}`);
+                return NextResponse.json({ error: 'Request expired' }, { status: 403 });
+            }
+        } catch (dbError) {
+            console.error('Database verification failed:', dbError);
+            // Fail open or closed? Closed is safer.
+            return NextResponse.json({ error: 'Security verification failed' }, { status: 500 });
+        }
+
         // Status tracking URL
         const statusUrl = `${APP_URL}/application-status?email=${encodeURIComponent(ownerEmail)}`;
 
