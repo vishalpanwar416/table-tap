@@ -1,4 +1,5 @@
 import dynamic from "next/dynamic";
+import Script from "next/script";
 import "./globals.css";
 import { ModalProvider } from "./context/ModalContext";
 import StructuredData from "./components/StructuredData";
@@ -134,18 +135,7 @@ export default function RootLayout({ children }) {
         <meta name="geo.position" content="17.385044;78.486671" />
         <meta name="ICBM" content="17.385044, 78.486671" />
         <StructuredData />
-        {/* Google tag (gtag.js) */}
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-9D6YVYRTQN"></script>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-9D6YVYRTQN');
-            `,
-          }}
-        />
+
       </head>
       <body className="font-sans antialiased bg-white text-gray-900">
         <ModalProvider>
@@ -153,6 +143,16 @@ export default function RootLayout({ children }) {
           <LeadModal />
         </ModalProvider>
       </body>
+      <Script src="https://www.googletagmanager.com/gtag/js?id=G-9D6YVYRTQN" strategy="afterInteractive" />
+      <Script id="google-analytics" strategy="afterInteractive">
+        {`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'G-9D6YVYRTQN');
+        `}
+      </Script>
     </html>
   );
 }
