@@ -1,5 +1,4 @@
-// @ts-ignore
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,13 +20,26 @@ interface WhatsAppResponse {
   error?: string;
 }
 
-serve(async (req: Request): Promise<Response> => {
+Deno.serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
+    // 1. Verify Authentication
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+    );
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+
+    if (authError || !user) {
+      throw new Error('Unauthorized: You must be logged in to send WhatsApp messages.');
+    }
+
     const WHATSAPP_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
     const WHATSAPP_PHONE_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
 
@@ -68,7 +80,7 @@ serve(async (req: Request): Promise<Response> => {
       if (!requestData.message) {
         throw new Error("Missing required field: 'message' for text type");
       }
-      
+
       messagePayload = {
         messaging_product: "whatsapp",
         to: phoneNumber,
@@ -115,13 +127,13 @@ serve(async (req: Request): Promise<Response> => {
 
   } catch (error) {
     console.error("WhatsApp sending failed:", error);
-    
+
     const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
     const response: WhatsAppResponse = {
       success: false,
       error: errorMessage,
     };
-    
+
     return new Response(JSON.stringify(response), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 400,
