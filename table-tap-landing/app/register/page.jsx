@@ -30,21 +30,33 @@ import {
 import { supabase } from '../lib/supabase';
 import LocationPicker from '../components/LocationPicker';
 
-const plans = {
-    starter: {
-        name: 'Starter',
-        price: 999,
-        features: ['Unlimited Tables', 'QR Menu & Ordering', 'Order Management', 'Basic Analytics', 'Email Support']
+// Local/default plans (demo kept intact)
+const demoPlan = {
+    name: 'Demo',
+    price: 0,
+    features: ['Limited access', 'For testing only', 'Non-billable']
+};
+
+const planOverrides = {
+    lite: {
+        name: 'Lite',
+        price: 899,
+        features: ['QR ordering & menu', 'Email billing included', 'Basic analytics', '10 staff seats', 'Pay-go WhatsApp billing']
     },
-    professional: {
-        name: 'Professional',
-        price: 1999,
-        features: ['Unlimited Tables', 'Swiggy & Zomato Sync', 'Staff Management', 'Inventory Tracking', 'AI Analytics', 'Offers & Promotions', 'Priority Support']
+    standard: {
+        name: 'Standard',
+        price: 1199,
+        features: ['Inventory & costing', 'Product/daypart analytics', '300 WhatsApp msgs included', '25 staff seats', 'Basic aggregator toggle']
+    },
+    pro: {
+        name: 'Pro',
+        price: 1699,
+        features: ['AI insights & alerts', '800 WhatsApp msgs included', 'Full aggregator sync', 'Floor plan & KDS', 'Mini-site + custom domain']
     },
     enterprise: {
-        name: 'Enterprise',
+        name: 'Custom',
         price: null,
-        features: ['Multi-Location Support', 'Custom Integrations', 'Dedicated Account Manager', 'SLA Guarantee', 'On-Site Training', 'White-Label Options']
+        features: ['Custom bundles', 'Dedicated CSM & SLA', 'Bulk WhatsApp pricing', 'Advanced integrations', 'Security & compliance options']
     }
 };
 

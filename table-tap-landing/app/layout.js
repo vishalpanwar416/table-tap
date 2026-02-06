@@ -127,7 +127,7 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en-IN" className="scroll-smooth" dir="ltr">
+    <html lang="en-IN" className="scroll-smooth" dir="ltr" suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="geo.region" content="IN-TG" />
