@@ -660,35 +660,41 @@ const createOrderWithRetry = async (orderData, maxRetries = 3) => {
   }
 };
 
-// Helper: Notify backend about payment-order mismatch
-const notifyPaymentOrderMismatch = async (failedOrderData) => {
-  const response = await fetch('/api/payment-order-mismatch', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      type: 'payment_success_order_failed',
-      data: failedOrderData,
-      urgency: 'high'
-    })
+// Helper: Notify backend and customer about payment-order mismatch (Client-side logging fallback)
+const notifyPaymentOrderMismatch = async (failedOrderData, restaurantName) => {
+  // Log locally for now to prevent UI errors if backend function is missing
+  console.warn('PAYMENT MISMATCH ALERT:', {
+    message: 'Payment succeeded but order creation failed',
+    data: failedOrderData,
+    restaurant: restaurantName
   });
-  if (!response.ok) throw new Error('Failed to notify backend');
+
+  // Try to invoke the function, but catch safely
+  try {
+    const { data, error } = await supabase.functions.invoke('payment-alert', {
+      body: {
+        type: 'payment_success_order_failed',
+        data: failedOrderData,
+        urgency: 'high',
+        customerEmail: failedOrderData.customerEmail,
+        customerName: failedOrderData.customerName,
+        restaurantName: restaurantName,
+        paymentId: failedOrderData.paymentId,
+        amount: failedOrderData.amount,
+        tableNumber: failedOrderData.tableNumber
+      }
+    });
+    if (error) console.error('Alert function error:', error);
+  } catch (e) {
+    // Ignore alert failures to keep the UI recovery flow active
+    console.log('Could not send remote alert, local recovery active.');
+  }
 };
 
-// Helper: Send order failure notification to customer
+// Deprecated: Consolidated into notifyPaymentOrderMismatch
 const sendOrderFailureNotification = async (failedOrderData, restaurant) => {
-  const response = await fetch('/api/send-order-failure-notification', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      customerEmail: failedOrderData.customerEmail,
-      customerName: failedOrderData.customerName,
-      paymentId: failedOrderData.paymentId,
-      amount: failedOrderData.amount,
-      restaurantName: restaurant.name,
-      tableNumber: failedOrderData.tableNumber
-    })
-  });
-  if (!response.ok) throw new Error('Failed to send notification email');
+  // This is now handled by the payment-alert edge function
+  return Promise.resolve();
 };
 
 // Helper: Show recovery options to user
@@ -915,7 +921,7 @@ const handlePaymentSuccessOrderFailure = async ({
     localStorage.setItem(`failed_order_${paymentResponse.razorpay_payment_id}`, JSON.stringify(failedOrderData));
     // 2. Try to notify the backend about the failure
     try {
-      await notifyPaymentOrderMismatch(failedOrderData);
+      await notifyPaymentOrderMismatch(failedOrderData, restaurant.name);
     } catch (notifyError) {
       // log error
     }

@@ -122,7 +122,7 @@ const RestaurantGrid = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2 md:space-y-3">
       {/* Header with stats */}
       <div className="flex items-center justify-between">
         <div>
@@ -139,7 +139,7 @@ const RestaurantGrid = ({
       </div>
 
       {/* Virtualized Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" ref={gridRef}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4" ref={gridRef}>
         {displayedRestaurants.map((restaurant, index) => (
           <div
             key={restaurant.id}

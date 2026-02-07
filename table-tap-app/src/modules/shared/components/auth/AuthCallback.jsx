@@ -24,6 +24,7 @@ const AuthCallback = () => {
   const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
+    let mounted = true;
     if (loading) return;
 
     if (!user) {
@@ -39,10 +40,14 @@ const AuthCallback = () => {
         const refreshToken = params.get('refresh_token');
 
         if (accessToken && refreshToken && !checkStarted.current) {
+          checkStarted.current = true;
           supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken
-          }).catch(e => console.warn('Manual session failed', e));
+          }).catch(e => {
+            console.warn('Manual session failed', e);
+            checkStarted.current = false; // Allow retry if it failed
+          });
         }
 
         const timer = setTimeout(() => {
@@ -105,20 +110,32 @@ const AuthCallback = () => {
           }
         }
       } catch (error) {
+        // Ignore AbortError and stop flow (likely component unmounted or navigated)
         if (error.name === 'AbortError' || error.message?.includes('aborted')) {
+          console.log('[AuthCallback] Fetch aborted');
           checkStarted.current = false;
-          setRedirecting(false);
-          setTimeout(() => setRetryCount(c => c + 1), 500);
+          // Only retry if we haven't hit a reasonable limit to avoid loops
+          if (retryCount < 3) {
+            const retryTimer = setTimeout(() => {
+              if (mounted) setRetryCount(c => c + 1);
+            }, 1000);
+            return () => clearTimeout(retryTimer);
+          }
           return;
         }
 
         console.error('[AuthCallback] Login flow failed:', error);
         clearTimeout(timeout);
-        navigate(defaultPath, { replace: true });
+        // Fallback to default path instead of sticking on loading screen
+        if (mounted) navigate(defaultPath, { replace: true });
       }
     };
 
     runFlow();
+
+    return () => {
+      mounted = false;
+    };
   }, [user, loading, navigate, redirecting, retryCount]);
 
   return (

@@ -406,7 +406,7 @@ const validateStaffData = (data) => {
     errors.push('Restaurant assignment is required');
   }
 
-  if (!['captain', 'manager', 'chef', 'waiter', 'cashier'].includes(data.role)) {
+  if (!['owner', 'manager', 'captain', 'chef', 'waiter', 'cashier'].includes(data.role)) {
     errors.push('Invalid role selected');
   }
 
@@ -472,6 +472,38 @@ export const createRestaurant = async (restaurantData) => {
 
     // Create owner staff record
     if (restaurantData.owner_email) {
+      let createdUserId = null;
+      let isConnected = false;
+
+      // 1. If password is provided, create the Auth User using Edge Function
+      if (restaurantData.owner_password) {
+        try {
+          const { data: funcData, error: funcError } = await supabase.functions.invoke('create-user', {
+            body: {
+              email: restaurantData.owner_email,
+              password: restaurantData.owner_password,
+              email_confirm: true,
+              user_metadata: {
+                full_name: restaurantData.owner_name || 'Owner',
+                profile_role: 'owner', // owner role
+                phone_number: restaurantData.owner_phone
+              }
+            }
+          });
+
+          if (funcError) {
+            console.error("Failed to create owner auth user:", funcError);
+            // We continue to create the staff record even if Auth creation fails (placeholder)
+          } else if (funcData?.user) {
+            createdUserId = funcData.user.id;
+            isConnected = true;
+          }
+        } catch (err) {
+          console.error("Error invoking create-user:", err);
+        }
+      }
+
+      // 2. Insert into restaurant_staff
       const { error: staffError } = await supabase
         .from('restaurant_staff')
         .insert({
@@ -480,7 +512,8 @@ export const createRestaurant = async (restaurantData) => {
           staff_name: restaurantData.owner_name || 'Owner',
           staff_email: restaurantData.owner_email,
           staff_phone_number: restaurantData.owner_phone,
-          connected: false
+          connected: isConnected,
+          user_id: createdUserId
         });
 
       if (staffError) {
@@ -493,7 +526,8 @@ export const createRestaurant = async (restaurantData) => {
             staff_name: (restaurantData.owner_name || 'Owner') + ' (Owner)',
             staff_email: restaurantData.owner_email,
             staff_phone_number: restaurantData.owner_phone,
-            connected: false
+            connected: isConnected,
+            user_id: createdUserId
           });
         } else {
           throw staffError;
@@ -695,6 +729,41 @@ export const createStaff = async (staffData) => {
       throw new Error(validationErrors.join(', '));
     }
 
+    let createdUserId = null;
+    let isConnected = false;
+
+    // 1. If password provided, create Auth User
+    if (staffData.password) {
+      try {
+        const { data: funcData, error: funcError } = await supabase.functions.invoke('create-user', {
+          body: {
+            email: staffData.email,
+            password: staffData.password,
+            email_confirm: true,
+            user_metadata: {
+              full_name: staffData.name,
+              profile_role: staffData.role, // use selected role
+              phone_number: staffData.phone_number
+            }
+          }
+        });
+
+        if (funcError) {
+          console.error("Failed to create staff auth user:", funcError);
+          if (funcError.message) {
+            throw new Error("User creation failed: " + funcError.message);
+          }
+        } else if (funcData?.user) {
+          createdUserId = funcData.user.id;
+          isConnected = true;
+        }
+      } catch (err) {
+        console.error("Error invoking create-user:", err);
+        throw new Error("Failed to create user account: " + err.message);
+      }
+    }
+
+    // 2. Insert into restaurant_staff
     const { data, error } = await supabase
       .from('restaurant_staff')
       .insert({
@@ -703,7 +772,8 @@ export const createStaff = async (staffData) => {
         staff_name: staffData.name,
         staff_email: staffData.email,
         staff_phone_number: staffData.phone_number,
-        connected: false
+        connected: isConnected,
+        user_id: createdUserId
       })
       .select()
       .maybeSingle();

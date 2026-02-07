@@ -192,55 +192,7 @@
         "badge": "Simple Pricing",
         "title": "No Hidden",
         "titleHighlight": "Surprises.",
-        "plans": [
-            {
-                "id": "starter",
-                "name": "Starter",
-                "description": "Perfect for cafes and small restaurants just getting started.",
-                "price": 999,
-                "features": [
-                    "Unlimited Tables",
-                    "QR Menu & Ordering",
-                    "Order Management",
-                    "Basic Analytics",
-                    "Email Support"
-                ],
-                "popular": false
-            },
-            {
-                "id": "professional",
-                "name": "Professional",
-                "description": "For growing restaurants that want the complete experience.",
-                "price": 1999,
-                "features": [
-                    "Unlimited Tables",
-                    "Swiggy & Zomato Sync",
-                    "Staff Management",
-                    "Inventory Tracking",
-                    "AI Analytics",
-                    "Offers & Promotions",
-                    "Priority Support"
-                ],
-                "popular": true
-            },
-            {
-                "id": "enterprise",
-                "name": "Enterprise",
-                "description": "Custom solutions for restaurant chains and franchises.",
-                "price": null,
-                "features": [
-                    "Multi-Location Support",
-                    "Unified Analytics Dashboard",
-                    "Cross-Restaurant Insights",
-                    "Custom Integrations",
-                    "Dedicated Account Manager",
-                    "SLA Guarantee",
-                    "On-Site Training",
-                    "White-Label Options"
-                ],
-                "popular": false
-            }
-        ]
+        "plans": []
     },
     "contact": {
         "badge": "Get in Touch",

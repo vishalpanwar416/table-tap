@@ -111,13 +111,7 @@ const AdminSidebar = ({
 
   return (
     <>
-      {/* Mobile menu button */}
-      <button
-        onClick={() => setShowMobileNav(!showMobileNav)}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-      >
-        {showMobileNav ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-      </button>
+      {/* Mobile menu button removed - handled by MobileAdminHeader */}
 
       {/* Sidebar - Fixed position */}
       <div className={`
@@ -130,8 +124,10 @@ const AdminSidebar = ({
         <div className="flex flex-col h-full">
           {/* Logo & Collapse Toggle */}
           <div className="p-4 border-b border-slate-700/50">
+
+
             {/* Collapse toggle button (desktop only) */}
-            <div className={`flex items-center ${collapsed ? 'justify-center' : 'justify-end'} mb-3`}>
+            <div className={`flex items-center ${collapsed ? 'justify-center' : 'justify-end'} mb-3 hidden md:flex`}>
               <button
                 type="button"
                 onClick={() => onToggleCollapsed?.()}
@@ -163,25 +159,25 @@ const AdminSidebar = ({
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto py-6">
-            <ul className="space-y-2 px-3">
+          <nav className="flex-1 overflow-y-auto py-4 md:py-6">
+            <ul className="space-y-1 md:space-y-2 px-3">
               {menuItems.map((item) => (
                 <li key={item.id}>
                   <button
                     onClick={() => handleTabChange(item.id)}
                     title={collapsed ? item.label : undefined}
-                    className={`flex items-center w-full ${collapsed ? 'justify-center p-3' : 'p-4'} rounded-xl transition-all duration-200 group font-spartan ${activeTab === item.id
+                    className={`flex items-center w-full ${collapsed ? 'justify-center p-3' : 'p-3 md:p-4'} rounded-xl transition-all duration-200 group font-spartan ${activeTab === item.id
                       ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
                       : 'hover:bg-slate-700/50 text-slate-300 hover:text-white'
                       }`}
                   >
-                    <div className={`p-2 rounded-lg transition-all duration-200 ${activeTab === item.id
+                    <div className={`p-1.5 md:p-2 rounded-lg transition-all duration-200 ${activeTab === item.id
                       ? 'bg-white/20'
                       : 'group-hover:bg-slate-600/50'
                       }`}>
                       {getIcon(item.icon)}
                     </div>
-                    {!collapsed && <span className="ml-3 font-medium font-spartan">{item.label}</span>}
+                    {!collapsed && <span className="ml-2 md:ml-3 text-sm md:text-base font-medium font-spartan">{item.label}</span>}
                   </button>
                 </li>
               ))}

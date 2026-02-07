@@ -43,19 +43,22 @@ export const addRestaurant = async (restaurantData) => {
       throw new Error('Manager email already registered. Please use a different email.');
     }
 
-    // Create manager user account
-    const { data: userData, error: userError } = await supabase.auth.signUp({
-      email: restaurantData.manager_email,
-      password: restaurantData.manager_password,
-      options: {
-        data: {
+    // Create manager user account via Edge Function (preserves Admin session)
+    const { data: funcData, error: funcError } = await supabase.functions.invoke('create-user', {
+      body: {
+        email: restaurantData.manager_email,
+        password: restaurantData.manager_password,
+        email_confirm: true,
+        user_metadata: {
           full_name: restaurantData.manager_name,
           profile_role: 'manager'
         }
       }
     });
 
-    if (userError) throw userError;
+    if (funcError) throw funcError;
+    const userData = funcData.data; // Wrapped in data by the function
+    if (!userData || !userData.user) throw new Error('Failed to create user via edge function');
 
     // Create manager profile
     const { error: profileError } = await supabase
@@ -211,19 +214,22 @@ export const getStaff = async () => {
  */
 export const addStaff = async (staffData) => {
   try {
-    // Create user account
-    const { data: userData, error: userError } = await supabase.auth.signUp({
-      email: staffData.email,
-      password: staffData.password,
-      options: {
-        data: {
+    // Create user account via Edge Function (preserves Admin session)
+    const { data: funcData, error: funcError } = await supabase.functions.invoke('create-user', {
+      body: {
+        email: staffData.email,
+        password: staffData.password,
+        email_confirm: true,
+        user_metadata: {
           full_name: staffData.name,
           profile_role: staffData.role
         }
       }
     });
 
-    if (userError) throw userError;
+    if (funcError) throw funcError;
+    const userData = funcData.data; // Wrapped in data by the function
+    if (!userData || !userData.user) throw new Error('Failed to create user via edge function');
 
     // Create profile
     const { error: profileError } = await supabase

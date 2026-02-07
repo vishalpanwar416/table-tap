@@ -618,7 +618,7 @@ const AdminPanel = () => {
           </Suspense>
         );
       case 'registrations':
-        return <RegistrationRequests />;
+        return <RegistrationRequests searchTerm={searchTerm} />;
       case 'inquiries':
         return <InquiryManagement />;
       case 'notifications':
@@ -711,7 +711,7 @@ const AdminPanel = () => {
             </div>
 
             {/* Main Content Area */}
-            <div className="p-4 md:p-6">
+            <div className="p-2 md:p-6">
               {loading ? (
                 <LoadingSpinner />
               ) : (

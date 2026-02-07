@@ -13,26 +13,26 @@ import Opening from '../shared/components/pages/opening';
 
 /** On "/": show Opening (splash) only when not logged in; if logged in, redirect to /home or /restaurant-selection. */
 function OpeningOrRedirect() {
-  const location = useLocation();
-  const { user, loading: authLoading } = useAuth();
-  const pathname = (location.pathname || '/').replace(/\/$/, '') || '/';
-  const search = location.search || '';
+    const location = useLocation();
+    const { user, loading: authLoading } = useAuth();
+    const pathname = (location.pathname || '/').replace(/\/$/, '') || '/';
+    const search = location.search || '';
 
-  // Only run redirect on customer app root (not admin/restaurant subdomain)
-  const isCustomerOrigin = () => {
-    if (typeof window === 'undefined') return true;
-    const h = (window.location.hostname || '').toLowerCase();
-    return !h.startsWith('admin.') && !h.startsWith('restaurant.') && !h.startsWith('manager.');
-  };
+    // Only run redirect on customer app root (not admin/restaurant subdomain)
+    const isCustomerOrigin = () => {
+        if (typeof window === 'undefined') return true;
+        const h = (window.location.hostname || '').toLowerCase();
+        return !h.startsWith('admin.') && !h.startsWith('restaurant.') && !h.startsWith('manager.');
+    };
 
-  if (pathname !== '/') return <Opening />;
-  if (!isCustomerOrigin()) return <Opening />;
-  if (authLoading) return <Opening />;
-  if (user) {
-    const to = hasValidRestaurantSelection() ? '/home' : '/restaurant-selection';
-    return <Navigate to={to + search} replace />;
-  }
-  return <Opening />;
+    if (pathname !== '/') return <Opening />;
+    if (!isCustomerOrigin()) return <Opening />;
+    if (authLoading) return <Opening />;
+    if (user) {
+        const to = hasValidRestaurantSelection() ? '/home' : '/restaurant-selection';
+        return <Navigate to={to + search} replace />;
+    }
+    return <Opening />;
 }
 // Lazy load other pages for better performance
 const OnboardingScreen = lazy(() => import('../shared/components/pages/onboardingScreen'));
@@ -56,6 +56,7 @@ const OrderTracking = lazy(() => import('./pages/OrderTracking'));
 const OrderConfirmationPage = lazy(() => import('./pages/OrderConfirmationPage'));
 const ContactUsPage = lazy(() => import('./pages/ContactUsPage'));
 const HelpFAQPage = lazy(() => import('./pages/HelpFAQPage'));
+const RequireAuth = lazy(() => import('../shared/components/auth/RequireAuth'));
 
 // Use unified loading component
 import LoadingScreen from '../shared/components/LoadingScreen';
@@ -124,9 +125,11 @@ const CustomerApp = () => {
                                     </RestaurantSelectionWrapper>
                                 } />
                                 <Route path="/my-orders" element={
-                                    <RestaurantSelectionWrapper>
-                                        <MyOrders />
-                                    </RestaurantSelectionWrapper>
+                                    <RequireAuth>
+                                        <RestaurantSelectionWrapper>
+                                            <MyOrders />
+                                        </RestaurantSelectionWrapper>
+                                    </RequireAuth>
                                 } />
                                 <Route path="/order-confirmation" element={
                                     <RestaurantSelectionWrapper>
@@ -139,9 +142,11 @@ const CustomerApp = () => {
                                     </RestaurantSelectionWrapper>
                                 } />
                                 <Route path="/profile" element={
-                                    <RestaurantSelectionWrapper>
-                                        <ProfilePage />
-                                    </RestaurantSelectionWrapper>
+                                    <RequireAuth>
+                                        <RestaurantSelectionWrapper>
+                                            <ProfilePage />
+                                        </RestaurantSelectionWrapper>
+                                    </RequireAuth>
                                 } />
                                 <Route path="/order-tracking" element={
                                     <RestaurantSelectionWrapper>
