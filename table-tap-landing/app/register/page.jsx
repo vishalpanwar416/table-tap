@@ -342,15 +342,21 @@ function RegisterForm() {
     useEffect(() => {
         const fetchPaymentConfig = async () => {
             try {
+                console.log('Fetching payment config from Edge Function...');
                 const { data, error } = await supabase.functions.invoke('get-payment-config');
-                if (error) throw error;
+                if (error) {
+                    console.error('Edge Function error:', error);
+                    throw error;
+                }
                 if (data?.key_id) {
+                    console.log('Payment config received');
                     setRazorpayKeyId(data.key_id);
                 }
             } catch (err) {
-                console.error('Failed to load payment config:', err);
+                console.error('Failed to load payment config from Edge Function:', err);
                 // Fallback only for dev/testing if function fails
                 if (process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
+                    console.log('Falling back to local Razorpay key ID');
                     setRazorpayKeyId(process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID);
                 }
             }

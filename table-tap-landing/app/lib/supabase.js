@@ -9,11 +9,14 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env
 const isMissingCredentials = !supabaseUrl || !supabaseAnonKey;
 
 if (isMissingCredentials) {
-    console.warn('⚠️ SUPABASE ERROR: Credentials missing during build! Using placeholders.');
-    console.warn('Action required: Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel settings.');
+    console.warn('⚠️ SUPABASE ERROR: Credentials missing!');
+    console.warn('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? 'Set' : 'MISSING');
+    console.warn('NEXT_PUBLIC_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Set' : 'MISSING');
+    console.warn('Action required: Set these variables in Vercel Project Settings > Environment Variables.');
 }
 
 // createClient throws if url is an empty string. A valid-ish URL is required to avoid build exit.
+console.log('Initializing Supabase client with URL:', supabaseUrl || 'placeholder');
 export const supabase = createClient(
     supabaseUrl || 'https://lib-placeholder.supabase.co',
     supabaseAnonKey || 'lib-placeholder-key'

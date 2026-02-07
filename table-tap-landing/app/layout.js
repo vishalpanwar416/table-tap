@@ -127,15 +127,17 @@ export const viewport = {
   viewportFit: "cover", // safe area for notched devices
 };
 
-export default function RootLayout({ children }) {
+import { getLandingSettings } from "./lib/settings";
+
+export default async function RootLayout({ children }) {
+  const initialSettings = await getLandingSettings();
+
   return (
     <html lang="en-IN" className="scroll-smooth" dir="ltr" suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
-        <meta name="geo.region" content="IN-TG" />
-        <meta name="geo.placename" content="Hyderabad" />
-        <meta name="geo.position" content="17.385044;78.486671" />
-        <meta name="ICBM" content="17.385044, 78.486671" />
+        <meta name="geo.region" content="IN" />
+        <meta name="geo.placename" content={initialSettings?.company_details?.city || "India"} />
         <StructuredData />
 
       </head>
@@ -143,7 +145,7 @@ export default function RootLayout({ children }) {
         className="font-sans antialiased bg-white text-gray-900"
         suppressHydrationWarning
       >
-        <SettingsProvider>
+        <SettingsProvider initialSettings={initialSettings}>
           <ModalProvider>
             {children}
             <LeadModal />
