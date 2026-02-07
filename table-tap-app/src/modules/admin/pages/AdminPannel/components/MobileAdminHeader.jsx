@@ -125,7 +125,8 @@ const MobileAdminHeader = ({
                 staff: 'Staff Management',
                 inquiries: 'Lead Inquiries',
                 subscriptions: 'Subscriptions',
-                notifications: 'Notifications'
+                notifications: 'Notifications',
+                activity: 'Activity Logs'
               }[activeTab] || 'Admin Panel'}
             </h2>
             <p className="text-xs text-gray-600 font-spartan">
@@ -134,6 +135,7 @@ const MobileAdminHeader = ({
               {activeTab === 'registrations' && 'Manage registration requests'}
               {activeTab === 'inquiries' && 'View lead inquiries'}
               {activeTab === 'subscriptions' && 'Manage subscriptions'}
+              {activeTab === 'activity' && 'Track automated activities'}
             </p>
           </div>
         </div>
@@ -141,8 +143,8 @@ const MobileAdminHeader = ({
         {/* Right: Action Buttons */}
         <div className="flex items-center space-x-2">
           {/* Search Button */}
-          {/* Search Button - Only for Restaurants, Staff, Registrations, Inquiries and Notifications */}
-          {(activeTab === 'restaurants' || activeTab === 'staff' || activeTab === 'registrations' || activeTab === 'inquiries' || activeTab === 'notifications') && (
+          {/* Search Button - Only for Restaurants, Staff, Registrations, Inquiries, Notifications and Activity */}
+          {(activeTab === 'restaurants' || activeTab === 'staff' || activeTab === 'registrations' || activeTab === 'inquiries' || activeTab === 'notifications' || activeTab === 'activity') && (
             <button
               onClick={() => setShowFilters(!showFilters)}
               className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
@@ -156,13 +158,20 @@ const MobileAdminHeader = ({
         </div>
       </div>
 
-      {/* Search and Filter Section - Only for Restaurants, Staff, Registrations, Inquiries and Notifications */}
-      {showFilters && (activeTab === 'restaurants' || activeTab === 'staff' || activeTab === 'registrations' || activeTab === 'inquiries' || activeTab === 'notifications') && (
+      {/* Search and Filter Section - Only for Restaurants, Staff, Registrations, Inquiries, Notifications and Activity */}
+      {showFilters && (activeTab === 'restaurants' || activeTab === 'staff' || activeTab === 'registrations' || activeTab === 'inquiries' || activeTab === 'notifications' || activeTab === 'activity') && (
         <div className="px-4 pb-4 border-t border-gray-200">
           <div className="pt-4 space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="font-semibold text-gray-900 font-spartan">
-                {activeTab === 'registrations' ? 'Search Registrations' : activeTab === 'inquiries' ? 'Search Leads' : `Filter ${activeTab === 'restaurants' ? 'Restaurants' : 'Staff'}`}
+                {{
+                  registrations: 'Search Registrations',
+                  inquiries: 'Search Leads',
+                  restaurants: 'Filter Restaurants',
+                  staff: 'Filter Staff',
+                  notifications: 'Filter Notifications',
+                  activity: 'Filter Activities'
+                }[activeTab] || 'Filters'}
               </h3>
               {hasFilters && (
                 <button
@@ -182,7 +191,7 @@ const MobileAdminHeader = ({
                 </div>
                 <input
                   type="search"
-                  placeholder={`Search ${activeTab === 'restaurants' ? 'restaurants' : activeTab === 'staff' ? 'staff' : activeTab === 'registrations' ? 'registrations' : activeTab === 'notifications' ? 'notifications' : 'leads'}...`}
+                  placeholder={`Search ${activeTab === 'restaurants' ? 'restaurants' : activeTab === 'staff' ? 'staff' : activeTab === 'registrations' ? 'registrations' : activeTab === 'notifications' ? 'notifications' : activeTab === 'activity' ? 'activities' : 'leads'}...`}
                   className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50 backdrop-blur-sm transition-all duration-200 hover:bg-white/70 font-spartan"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}

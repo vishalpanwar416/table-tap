@@ -630,7 +630,7 @@ const AdminPanel = () => {
       case 'activity':
         return (
           <Suspense fallback={<LoadingSpinner />}>
-            <AdminActivityLogs />
+            <AdminActivityLogs searchTerm={searchTerm} />
           </Suspense>
         );
       case 'settings':
