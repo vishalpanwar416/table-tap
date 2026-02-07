@@ -48,7 +48,7 @@ const AdminActivityLogs = ({ searchTerm }) => {
   // searchTerm is now a prop
   const [activityTypeFilter, setActivityTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [dateFilter, setDateFilter] = useState('7days');
+  const [dateFilter, setDateFilter] = useState('30days');
   const [showFilters, setShowFilters] = useState(false);
 
   // Pagination
@@ -104,7 +104,7 @@ const AdminActivityLogs = ({ searchTerm }) => {
   useEffect(() => {
     fetchLogs(true);
     fetchStats();
-  }, [activityTypeFilter, statusFilter, dateFilter]);
+  }, [activityTypeFilter, statusFilter, dateFilter, searchTerm]);
 
   const fetchLogs = async (reset = false) => {
     try {

@@ -174,7 +174,14 @@ const AdminHeader = ({
                     <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50 p-4 font-spartan">
                       <div className="flex justify-between items-center mb-4">
                         <h3 className="font-semibold text-gray-900 font-spartan">
-                          Filter {activeTab === 'restaurants' ? 'Restaurants' : 'Staff'}
+                          {{
+                            restaurants: 'Filter Restaurants',
+                            staff: 'Filter Staff',
+                            registrations: 'Search Registrations',
+                            inquiries: 'Search Leads',
+                            notifications: 'Filter Notifications',
+                            activity: 'Filter Activities'
+                          }[activeTab] || 'Filters'}
                         </h3>
                         {hasFilters && (
                           <button
