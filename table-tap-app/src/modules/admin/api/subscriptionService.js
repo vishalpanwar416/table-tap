@@ -114,6 +114,7 @@ export const getRestaurantSubscriptions = async () => {
           name,
           contact_email,
           contact_phone,
+          logo_url,
           is_active
         )
       `)
@@ -146,6 +147,7 @@ export const getRestaurantSubscription = async (restaurantId) => {
           name,
           contact_email,
           contact_phone,
+          logo_url,
           is_active
         )
       `)
@@ -564,7 +566,8 @@ export const getUpcomingRenewals = async (days = 7) => {
           id,
           name,
           contact_email,
-          contact_phone
+          contact_phone,
+          logo_url
         )
       `)
       .in('status', ['active', 'grace_period'])

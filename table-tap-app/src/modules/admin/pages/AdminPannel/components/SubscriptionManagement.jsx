@@ -1183,9 +1183,17 @@ const SubscriptionManagementV2 = () => {
                         <tr key={subscription.id} className="hover:bg-gray-50/80 transition-colors group">
                           <td className="px-8 py-5">
                             <div className="flex items-center gap-4">
-                              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md shadow-blue-200 text-sm">
-                                {subscription.restaurant?.name?.charAt(0) || 'R'}
-                              </div>
+                              {subscription.restaurant?.logo_url ? (
+                                <img
+                                  src={subscription.restaurant.logo_url}
+                                  alt={subscription.restaurant.name}
+                                  className="w-10 h-10 rounded-xl object-cover shadow-md border border-gray-100"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md shadow-blue-200 text-sm">
+                                  {subscription.restaurant?.name?.charAt(0) || 'R'}
+                                </div>
+                              )}
                               <div>
                                 <div className="text-sm font-bold text-gray-900 leading-tight">
                                   {subscription.restaurant?.name || 'Unknown Restaurant'}
@@ -1290,9 +1298,17 @@ const SubscriptionManagementV2 = () => {
                     {/* Header: Restaurant & Status */}
                     <div className="flex justify-between items-start">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-sm shadow-blue-200 text-xs">
-                          {subscription.restaurant?.name?.charAt(0) || 'R'}
-                        </div>
+                        {subscription.restaurant?.logo_url ? (
+                          <img
+                            src={subscription.restaurant.logo_url}
+                            alt={subscription.restaurant.name}
+                            className="w-8 h-8 rounded-lg object-cover shadow-sm border border-gray-100"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-sm shadow-blue-200 text-xs">
+                            {subscription.restaurant?.name?.charAt(0) || 'R'}
+                          </div>
+                        )}
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-bold text-gray-900 leading-tight truncate">
                             {subscription.restaurant?.name || 'Unknown'}
@@ -1449,9 +1465,17 @@ const SubscriptionManagementV2 = () => {
                     <tr key={sub.id} className="hover:bg-gray-50/50 transition-colors group">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-200">
-                            {sub.restaurant?.name?.charAt(0) || 'R'}
-                          </div>
+                          {sub.restaurant?.logo_url ? (
+                            <img
+                              src={sub.restaurant.logo_url}
+                              alt={sub.restaurant.name}
+                              className="w-10 h-10 rounded-xl object-cover shadow-lg border border-gray-100"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-200">
+                              {sub.restaurant?.name?.charAt(0) || 'R'}
+                            </div>
+                          )}
                           <div>
                             <p className="font-bold text-gray-900">{sub.restaurant?.name}</p>
                             <p className="text-xs text-gray-500 font-medium">{sub.restaurant?.contact_email || 'No email'}</p>
@@ -1514,9 +1538,17 @@ const SubscriptionManagementV2 = () => {
                 <div key={sub.id} className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm flex flex-col gap-2 relative">
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-sm shadow-indigo-200 text-xs">
-                        {sub.restaurant?.name?.charAt(0) || 'R'}
-                      </div>
+                      {sub.restaurant?.logo_url ? (
+                        <img
+                          src={sub.restaurant.logo_url}
+                          alt={sub.restaurant.name}
+                          className="w-8 h-8 rounded-lg object-cover shadow-sm border border-gray-100"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-sm shadow-indigo-200 text-xs">
+                          {sub.restaurant?.name?.charAt(0) || 'R'}
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-bold text-gray-900 leading-tight truncate">
                           {sub.restaurant?.name || 'Unknown'}
@@ -2096,14 +2128,22 @@ const SubscriptionManagementV2 = () => {
       {showBillingModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+            <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-100">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
-                  <IndianRupee size={20} />
-                </div>
+                {selectedBillingRestaurant?.logo_url ? (
+                  <img
+                    src={selectedBillingRestaurant.logo_url}
+                    alt={selectedBillingRestaurant.name}
+                    className="w-10 h-10 rounded-xl object-cover shadow-sm border border-gray-100"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                    <IndianRupee size={20} />
+                  </div>
+                )}
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900">Billing History</h3>
-                  <p className="text-sm text-gray-500">{selectedBillingRestaurant?.name}</p>
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900">Billing History</h3>
+                  <p className="text-xs md:text-sm text-gray-500">{selectedBillingRestaurant?.name}</p>
                 </div>
               </div>
               <button
@@ -2114,7 +2154,7 @@ const SubscriptionManagementV2 = () => {
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto custom-scrollbar">
+            <div className="p-4 md:p-6 overflow-y-auto custom-scrollbar">
               {billingHistory.length === 0 ? (
                 <div className="text-center py-10 text-gray-400 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
                   <CreditCard size={48} className="mx-auto mb-3 opacity-20" />
@@ -2124,61 +2164,68 @@ const SubscriptionManagementV2 = () => {
               ) : (
                 <div className="space-y-4">
                   {billingHistory.map((txn, idx) => (
-                    <div key={txn.id} className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-2xl hover:shadow-md transition-all group">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${txn.action === 'created' ? 'bg-green-100 text-green-700' :
-                          txn.action === 'renewed' ? 'bg-blue-100 text-blue-700' :
-                            'bg-gray-100 text-gray-700'
-                          }`}>
-                          {idx + 1}
+                    <div key={txn.id} className="bg-white border border-gray-100 rounded-xl p-3 shadow-sm hover:shadow-md transition-all group flex flex-col gap-3">
+                      {/* Top Row: Info & Amount */}
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0 ${txn.action === 'created' ? 'bg-green-100 text-green-700' :
+                            txn.action === 'renewed' ? 'bg-blue-100 text-blue-700' :
+                              'bg-gray-100 text-gray-700'
+                            }`}>
+                            {idx + 1}
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900 text-sm leading-tight">
+                              {txn.plan_name} <span className="hidden sm:inline text-[10px] font-normal text-gray-500 px-1.5 bg-gray-100 rounded-full align-middle">{txn.billing_cycle}</span>
+                            </p>
+                            <p className="text-[10px] text-gray-400 font-medium mt-0.5">
+                              {new Date(txn.created_at).toLocaleDateString()} • <span className="sm:hidden uppercase">{txn.billing_cycle}</span>
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-bold text-gray-900">{txn.plan_name} Plan <span className="text-xs font-normal text-gray-500 px-2 bg-gray-100 rounded-full">{txn.billing_cycle}</span></p>
-                          <p className="text-xs text-gray-500 mt-0.5">{new Date(txn.created_at).toLocaleDateString()}</p>
+
+                        <div className="text-right">
+                          <p className="font-black text-gray-900 text-sm">₹{txn.amount_paid}</p>
+                          <span className="text-[9px] font-bold uppercase text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full block w-fit ml-auto mt-0.5">Paid</span>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-6">
-                        <div className="flex flex-col items-end gap-1">
-                          <div className="text-right">
-                            <p className="font-black text-gray-900">₹{txn.amount_paid}</p>
-                            <span className="text-[10px] font-bold uppercase text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Paid</span>
-                          </div>
-
-                          {/* Email Status Indicator */}
-                          <div className="flex items-center gap-1.5 mt-1">
-                            {txn.email_sent ? (
-                              <span className="flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                                <CheckCircle size={10} /> Email Sent
-                              </span>
-                            ) : (
-                              <button
-                                onClick={() => handleResendEmail(txn)}
-                                disabled={processingId === `email-${txn.id}`}
-                                className="flex items-center gap-1 text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full hover:bg-orange-100 transition-colors"
-                              >
-                                {processingId === `email-${txn.id}` ? (
-                                  <RefreshCw size={10} className="animate-spin" />
-                                ) : (
-                                  <AlertCircle size={10} />
-                                )}
-                                {processingId === `email-${txn.id}` ? 'Sending...' : 'Email Not Sent'}
-                              </button>
-                            )}
-                          </div>
+                      {/* Bottom Row: Actions */}
+                      <div className="flex items-center justify-between pt-2 border-t border-gray-50/50">
+                        {/* Email Status */}
+                        <div>
+                          {txn.email_sent ? (
+                            <span className="flex items-center gap-1 text-[9px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg">
+                              <CheckCircle size={10} /> Email Sent
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => handleResendEmail(txn)}
+                              disabled={processingId === `email-${txn.id}`}
+                              className="flex items-center gap-1 text-[9px] font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-lg hover:bg-orange-100 transition-colors"
+                            >
+                              {processingId === `email-${txn.id}` ? (
+                                <RefreshCw size={10} className="animate-spin" />
+                              ) : (
+                                <AlertCircle size={10} />
+                              )}
+                              {processingId === `email-${txn.id}` ? 'Sending...' : 'Resend Email'}
+                            </button>
+                          )}
                         </div>
 
+                        {/* Invoice Button */}
                         <button
                           onClick={() => generateInvoice(txn)}
                           disabled={downloadingInvoice === txn.id}
-                          className="flex items-center gap-2 px-3 py-2 bg-gray-900 text-white rounded-xl text-xs font-bold hover:bg-gray-800 transition-colors disabled:opacity-70"
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white rounded-lg text-[10px] font-bold hover:bg-gray-800 transition-colors disabled:opacity-70 shadow-sm"
                         >
                           {downloadingInvoice === txn.id ? (
-                            <RefreshCw size={14} className="animate-spin" />
+                            <RefreshCw size={10} className="animate-spin" />
                           ) : (
-                            <Package size={14} />
+                            <Package size={10} />
                           )}
-                          Invoice
+                          Download
                         </button>
                       </div>
                     </div>
