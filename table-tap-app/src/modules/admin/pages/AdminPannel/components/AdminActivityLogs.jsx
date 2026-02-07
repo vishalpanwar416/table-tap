@@ -76,7 +76,14 @@ const AdminActivityLogs = ({ searchTerm }) => {
     'Restaurants': [
       { type: ACTIVITY_TYPES.RESTAURANT_CREATED, label: 'Created', icon: Building2, color: 'text-purple-500' },
       { type: ACTIVITY_TYPES.RESTAURANT_ACTIVATED, label: 'Activated', icon: CheckCircle, color: 'text-green-500' },
-      { type: ACTIVITY_TYPES.RESTAURANT_DEACTIVATED, label: 'Deactivated', icon: XCircle, color: 'text-gray-500' }
+      { type: ACTIVITY_TYPES.RESTAURANT_DEACTIVATED, label: 'Deactivated', icon: XCircle, color: 'text-gray-500' },
+      { type: ACTIVITY_TYPES.RESTAURANT_UPDATED, label: 'Updated', icon: Settings, color: 'text-blue-500' },
+      { type: ACTIVITY_TYPES.RESTAURANT_DELETED, label: 'Deleted', icon: XCircle, color: 'text-red-500' }
+    ],
+    'Staff': [
+      { type: ACTIVITY_TYPES.STAFF_CREATED, label: 'Staff Added', icon: UserPlus, color: 'text-blue-500' },
+      { type: ACTIVITY_TYPES.STAFF_UPDATED, label: 'Staff Updated', icon: User, color: 'text-amber-500' },
+      { type: ACTIVITY_TYPES.STAFF_DELETED, label: 'Staff Removed', icon: XCircle, color: 'text-red-500' }
     ],
     'System': [
       { type: ACTIVITY_TYPES.SYSTEM_ALERT, label: 'Alert', icon: Bell, color: 'text-red-500' },

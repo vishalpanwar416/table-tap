@@ -1,4 +1,5 @@
 import { supabase } from '../../../shared/supabase';
+import { logAdminActivity, ACTIVITY_TYPES } from '../../api/adminActivityLogService';
 import { validateImageFile, optimizeImageForUpload } from '../../../shared/utils/imageOptimization';
 
 // Use the regular supabase client since you have admin permissions via RLS
@@ -535,6 +536,16 @@ export const createRestaurant = async (restaurantData) => {
       }
     }
 
+    await logAdminActivity({
+      activity_type: ACTIVITY_TYPES.RESTAURANT_CREATED,
+      activity_name: 'Restaurant Created',
+      restaurant_id: restaurant.id,
+      target_type: 'restaurant',
+      target_id: restaurant.id,
+      target_name: restaurant.name,
+      description: `New restaurant ${restaurant.name} created.`
+    });
+
     return { data: restaurant, error: null };
   } catch (error) {
     return { data: null, error: error.message };
@@ -629,6 +640,17 @@ export const updateRestaurant = async (restaurantId, updateData) => {
       .maybeSingle();
 
     if (error) throw error;
+
+    await logAdminActivity({
+      activity_type: ACTIVITY_TYPES.RESTAURANT_UPDATED,
+      activity_name: 'Restaurant Updated',
+      restaurant_id: restaurantId,
+      target_type: 'restaurant',
+      target_id: restaurantId,
+      target_name: updateData.name || 'Restaurant',
+      description: `Restaurant ${updateData.name || ''} updated.`
+    });
+
     return { data, error: null };
   } catch (error) {
     return { data: null, error: error.message };
@@ -658,6 +680,18 @@ export const deleteRestaurant = async (restaurantId) => {
       .eq('id', restaurantId);
 
     if (error) throw error;
+    if (error) throw error;
+
+    await logAdminActivity({
+      activity_type: ACTIVITY_TYPES.RESTAURANT_DELETED,
+      activity_name: 'Restaurant Deleted',
+      restaurant_id: restaurantId, // ID might be gone/referenced, but good to log
+      target_type: 'restaurant',
+      target_id: restaurantId,
+      target_name: 'Deleted Restaurant',
+      description: `Restaurant ${restaurantId} deleted.`
+    });
+
     return { success: true, error: null };
   } catch (error) {
     return { success: false, error: error.message };
@@ -779,6 +813,17 @@ export const createStaff = async (staffData) => {
       .maybeSingle();
 
     if (error) throw error;
+
+    await logAdminActivity({
+      activity_type: ACTIVITY_TYPES.STAFF_CREATED,
+      activity_name: 'Staff Created',
+      restaurant_id: staffData.restaurant_id,
+      target_type: 'staff',
+      target_id: data?.id,
+      target_name: staffData.name,
+      description: `Staff member ${staffData.name} (${staffData.role}) added.`
+    });
+
     return { data, error: null };
   } catch (error) {
     if (error.message?.includes('violates check constraint "restaurant_staff_staff_role_check"')) {
@@ -825,6 +870,17 @@ export const updateStaff = async (id, updates) => {
     }
 
     console.log('✅ Staff updated successfully in database');
+
+    await logAdminActivity({
+      activity_type: ACTIVITY_TYPES.STAFF_UPDATED,
+      activity_name: 'Staff Updated',
+      restaurant_id: updates.restaurant_id,
+      target_type: 'staff',
+      target_id: id,
+      target_name: updates.name || 'Staff',
+      description: `Staff member ${updates.name || id} ${updates.role ? `role changed to ${updates.role}` : 'details updated'}.`
+    });
+
     return result;
   } catch (error) {
     console.error('❌ Error in updateStaff:', error);
@@ -843,6 +899,17 @@ export const deleteStaff = async (staffId) => {
       .eq('id', staffId);
 
     if (error) throw error;
+
+    await logAdminActivity({
+      activity_type: ACTIVITY_TYPES.STAFF_DELETED,
+      activity_name: 'Staff Deleted',
+      restaurant_id: null, // We might not know the restaurant ID here unless passsed?
+      target_type: 'staff',
+      target_id: staffId,
+      target_name: 'Deleted Staff',
+      description: `Staff member ${staffId} deleted.`
+    });
+
     return { success: true, error: null };
   } catch (error) {
     return { success: false, error: error.message };

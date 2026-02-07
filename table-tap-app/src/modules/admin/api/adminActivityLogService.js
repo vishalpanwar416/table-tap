@@ -11,18 +11,25 @@ export const ACTIVITY_TYPES = {
   EMAIL_SENT: 'email_sent',
   EMAIL_FAILED: 'email_failed',
   EMAIL_QUEUED: 'email_queued',
-  
+
   // Subscription activities
   SUBSCRIPTION_CREATED: 'subscription_created',
   SUBSCRIPTION_RENEWED: 'subscription_renewed',
   SUBSCRIPTION_CANCELLED: 'subscription_cancelled',
   SUBSCRIPTION_EXPIRED: 'subscription_expired',
-  
+
   // Restaurant activities
   RESTAURANT_CREATED: 'restaurant_created',
+  RESTAURANT_UPDATED: 'restaurant_updated',
+  RESTAURANT_DELETED: 'restaurant_deleted',
   RESTAURANT_ACTIVATED: 'restaurant_activated',
   RESTAURANT_DEACTIVATED: 'restaurant_deactivated',
-  
+
+  // Staff activities
+  STAFF_CREATED: 'staff_created',
+  STAFF_UPDATED: 'staff_updated',
+  STAFF_DELETED: 'staff_deleted',
+
   // System activities
   SYSTEM_ALERT: 'system_alert',
   CRON_JOB: 'cron_job',
@@ -86,9 +93,9 @@ export const logEmailActivity = async (emailData) => {
     const { error } = await supabase
       .from('admin_activity_logs')
       .insert([{
-        activity_type: emailData.status === 'failed' ? ACTIVITY_TYPES.EMAIL_FAILED : 
-                       emailData.status === 'queued' ? ACTIVITY_TYPES.EMAIL_QUEUED : 
-                       ACTIVITY_TYPES.EMAIL_SENT,
+        activity_type: emailData.status === 'failed' ? ACTIVITY_TYPES.EMAIL_FAILED :
+          emailData.status === 'queued' ? ACTIVITY_TYPES.EMAIL_QUEUED :
+            ACTIVITY_TYPES.EMAIL_SENT,
         activity_name: `Email: ${emailData.email_type}`,
         restaurant_id: emailData.restaurant_id || null,
         user_id: emailData.triggered_by || null,
