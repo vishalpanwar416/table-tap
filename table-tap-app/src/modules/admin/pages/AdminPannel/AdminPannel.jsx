@@ -624,7 +624,7 @@ const AdminPanel = () => {
       case 'notifications':
         return (
           <Suspense fallback={<LoadingSpinner />}>
-            <AdminNotificationsPage onTabChange={setActiveTab} />
+            <AdminNotificationsPage onTabChange={setActiveTab} searchTerm={searchTerm} />
           </Suspense>
         );
       case 'activity':

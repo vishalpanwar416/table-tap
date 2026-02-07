@@ -104,7 +104,8 @@ const AdminHeader = ({
                 registrations: 'Registrations',
                 staff: 'Staff Management',
                 inquiries: 'Lead Inquiries',
-                subscriptions: 'Subscriptions'
+                subscriptions: 'Subscriptions',
+                notifications: 'Notifications'
               }[activeTab] || 'Admin Panel'}
             </h2>
             <p className="text-sm text-gray-600 mt-1 font-spartan">
@@ -119,8 +120,8 @@ const AdminHeader = ({
 
         <div className="flex items-center space-x-4">
           {/* Unified Search and Filter Section */}
-          {/* Unified Search and Filter Section - Only for Restaurants, Staff, Registrations and Inquiries */}
-          {(activeTab === 'restaurants' || activeTab === 'staff' || activeTab === 'registrations' || activeTab === 'inquiries') && (
+          {/* Unified Search and Filter Section - Only for Restaurants, Staff, Registrations, Inquiries and Notifications */}
+          {(activeTab === 'restaurants' || activeTab === 'staff' || activeTab === 'registrations' || activeTab === 'inquiries' || activeTab === 'notifications') && (
             <div className="flex items-center space-x-3">
               {/* Search Bar */}
               <div className="relative">
@@ -129,7 +130,7 @@ const AdminHeader = ({
                 </div>
                 <input
                   type="search"
-                  placeholder={`Search ${activeTab === 'restaurants' ? 'restaurants' : activeTab === 'staff' ? 'staff' : activeTab === 'registrations' ? 'registrations' : 'leads'}...`}
+                  placeholder={`Search ${activeTab === 'restaurants' ? 'restaurants' : activeTab === 'staff' ? 'staff' : activeTab === 'registrations' ? 'registrations' : activeTab === 'notifications' ? 'notifications' : 'leads'}...`}
                   className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50 backdrop-blur-sm transition-all duration-200 hover:bg-white/70 font-spartan"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
