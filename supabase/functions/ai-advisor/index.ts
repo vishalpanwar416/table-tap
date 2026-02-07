@@ -4,22 +4,22 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.0.0"
 
 // Tighten CORS and allow dev/prod via env
 const getAllowedOrigin = (requestOrigin: string | null): string => {
-  const allowedOrigins = Deno.env.get("ALLOWED_ORIGINS")?.split(",") || [
-    "https://table-tap-app.vercel.app",
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:3001",
-  ]
+    const allowedOrigins = Deno.env.get("ALLOWED_ORIGINS")?.split(",") || [
+        "https://table-tap-app.vercel.app",
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+    ]
 
-  if (requestOrigin && allowedOrigins.includes(requestOrigin)) return requestOrigin
-  return allowedOrigins[0]
+    if (requestOrigin && allowedOrigins.includes(requestOrigin)) return requestOrigin
+    return allowedOrigins[0]
 }
 
 const getCorsHeaders = (requestOrigin: string | null) => ({
-  "Access-Control-Allow-Origin": getAllowedOrigin(requestOrigin),
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Origin": getAllowedOrigin(requestOrigin),
+    "Access-Control-Allow-Headers":
+        "authorization, x-client-info, apikey, content-type",
 })
 
 serve(async (req) => {
@@ -33,23 +33,37 @@ serve(async (req) => {
     try {
         // Require authenticated caller so the function can't be abused publicly.
         const supabaseClient = createClient(
-          Deno.env.get('SUPABASE_URL') ?? '',
-          Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-          { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+            Deno.env.get('SUPABASE_URL') ?? '',
+            Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+            { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
         )
         const { data: { user } } = await supabaseClient.auth.getUser()
         if (!user) {
-          return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 401,
-          })
+            return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 401,
+            })
         }
 
         const { messages, systemContext, userQuestion } = await req.json()
-        const apiKey = Deno.env.get('OPENAI_API_KEY')
+        // Initialize admin client to fetch secure settings
+        const adminClient = createClient(
+            Deno.env.get('SUPABASE_URL') ?? '',
+            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        )
 
-        if (!apiKey) {
-            throw new Error('Server configuration error: OpenAI API key missing')
+        // Fetch OpenAI key from system_settings
+        const { data: settings, error: configError } = await adminClient
+            .from('system_settings')
+            .select('value')
+            .eq('key', 'openai_keys')
+            .single()
+
+        const apiKey = settings?.value?.api_key
+
+        if (configError || !apiKey) {
+            console.error('AI Advisor failed: Missing OpenAI config', configError);
+            throw new Error('Server configuration error: OpenAI API key missing. Please configure it in System Settings.')
         }
 
         // Prepare messages for OpenAI

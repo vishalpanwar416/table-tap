@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   MapPin,
   Phone,
@@ -62,6 +62,18 @@ const RestaurantCard = ({
     return getTimeAgo(timestamp);
   };
 
+  const handleClick = (e) => {
+    // On mobile, toggle expansion
+    if (window.innerWidth < 768) {
+      setExpanded(!expanded);
+    } else {
+      // On desktop, navigate
+      onClick(restaurant);
+    }
+  };
+
+  const [expanded, setExpanded] = useState(false);
+
   // Get restaurant age
   const getRestaurantAge = () => {
     if (!restaurant.created_at) return 'Recently added';
@@ -124,15 +136,15 @@ const RestaurantCard = ({
 
   return (
     <div
-      className={`group relative rounded-2xl shadow-lg overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-2xl hover:scale-[1.01] flex flex-col h-full ${isInactive ? 'bg-red-50/80 border-2 border-red-200' : 'bg-white border border-gray-100'}`}
-      onClick={() => onClick(restaurant)}
+      className={`group relative rounded-2xl shadow-lg overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-2xl hover:scale-[1.01] flex flex-col h-full ${isInactive ? 'bg-red-50/80 border-2 border-red-200' : 'bg-white border border-gray-100'} ${expanded ? 'bg-white z-10' : ''}`}
+      onClick={handleClick}
     >
       {/* Status Bar (Top) */}
       <div className={`h-1.5 w-full ${restaurant.is_active ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 'bg-gradient-to-r from-red-500 to-red-600'}`} />
 
-      <div className="p-5 flex-1 flex flex-col">
+      <div className="p-2 md:p-5 flex-1 flex flex-col">
         {/* Header content */}
-        <div className="flex justify-between items-start mb-4">
+        <div className="flex justify-between items-start mb-1.5 md:mb-4">
           <div className="flex items-center gap-3">
             {restaurant.logo_url ? (
               <img
@@ -168,51 +180,57 @@ const RestaurantCard = ({
           </button>
         </div>
 
-        {/* Active Plan Badge */}
+      </div>
+
+      {/* Expandable Content (Mobile: Hidden unless expanded, Desktop: Always visible) */}
+      <div className={`${expanded ? 'block' : 'hidden'} md:block px-3 pb-3 md:px-5 md:pb-5`}>
+        {/* Active Plan Badge - Dynamic */}
         {restaurant.subscription ? (
-          <div className={`mb-3 flex items-center justify-between p-2.5 rounded-xl border ${restaurant.subscription.plan_name === 'enterprise'
-            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200'
-            : restaurant.subscription.plan_name === 'professional'
-              ? 'bg-gradient-to-r from-purple-50 to-violet-50 border-purple-200'
-              : 'bg-gradient-to-r from-blue-50 to-sky-50 border-blue-200'
+          <div className={`mb-3 flex items-center justify-between p-2.5 rounded-xl border ${restaurant.subscription.plan_name?.toLowerCase().includes('enterprise')
+              ? 'bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200'
+              : restaurant.subscription.plan_name?.toLowerCase().includes('pro')
+                ? 'bg-gradient-to-r from-purple-50 to-violet-50 border-purple-200'
+                : 'bg-gradient-to-r from-blue-50 to-sky-50 border-blue-200'
             }`}>
             <div className="flex items-center gap-2">
-              {restaurant.subscription.plan_name === 'enterprise' ? (
+              {restaurant.subscription.plan_name?.toLowerCase().includes('enterprise') ? (
                 <Crown className="w-4 h-4 text-amber-600" />
-              ) : restaurant.subscription.plan_name === 'professional' ? (
+              ) : restaurant.subscription.plan_name?.toLowerCase().includes('pro') ? (
                 <Zap className="w-4 h-4 text-purple-600" />
               ) : (
                 <Package className="w-4 h-4 text-blue-600" />
               )}
-              <div>
-                <span className={`text-xs font-bold capitalize ${restaurant.subscription.plan_name === 'enterprise'
-                  ? 'text-amber-700'
-                  : restaurant.subscription.plan_name === 'professional'
-                    ? 'text-purple-700'
-                    : 'text-blue-700'
-                  }`}>
-                  {restaurant.subscription.plan_name} Plan
-                </span>
-                {restaurant.subscription.billing_cycle && (
-                  <span className="text-[10px] text-gray-500 ml-1.5">
-                    ({restaurant.subscription.billing_cycle})
+              <div className="flex flex-col">
+                <div className="flex items-center gap-1.5">
+                  <span className={`text-xs font-bold capitalize ${restaurant.subscription.plan_name?.toLowerCase().includes('enterprise')
+                      ? 'text-amber-700'
+                      : restaurant.subscription.plan_name?.toLowerCase().includes('pro')
+                        ? 'text-purple-700'
+                        : 'text-blue-700'
+                    }`}>
+                    {restaurant.subscription.plan_name} Plan
                   </span>
-                )}
+                  {restaurant.subscription.billing_cycle && (
+                    <span className="text-[10px] text-gray-500">
+                      ({restaurant.subscription.billing_cycle})
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  {restaurant.subscription.status === 'grace_period' && (
+                    <span className="flex items-center gap-1 text-[9px] font-medium text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded">
+                      <AlertTriangle className="w-2.5 h-2.5" />
+                      Grace
+                    </span>
+                  )}
+                  {restaurant.subscription.end_date && (
+                    <span className="text-[9px] text-gray-400 flex items-center gap-1">
+                      <Calendar className="w-2.5 h-2.5" />
+                      {new Date(restaurant.subscription.end_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-1.5">
-              {restaurant.subscription.status === 'grace_period' && (
-                <span className="flex items-center gap-1 text-[10px] font-medium text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded">
-                  <AlertTriangle className="w-3 h-3" />
-                  Grace
-                </span>
-              )}
-              {restaurant.subscription.end_date && (
-                <span className="text-[10px] text-gray-500 flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
-                  {new Date(restaurant.subscription.end_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                </span>
-              )}
             </div>
           </div>
         ) : (
@@ -280,9 +298,13 @@ const RestaurantCard = ({
       </div>
 
       {/* Footer Actions */}
-      <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex justify-between items-center text-xs">
+      <div className={`${expanded ? 'flex' : 'hidden'} md:flex px-3 py-2 md:px-5 md:py-3 bg-gray-50 border-t border-gray-100 justify-between items-center text-xs`}>
         <span className="text-gray-400">{getLastUpdated()}</span>
         <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+          {/* Add explicit navigate button for mobile expanded view */}
+          <button onClick={() => onClick(restaurant)} className="md:hidden p-1.5 hover:bg-white hover:text-blue-600 rounded-md transition-colors border border-transparent hover:border-gray-200" title="Open Dashboard">
+            <ExternalLink className="w-3.5 h-3.5" />
+          </button>
           <button onClick={handleEdit} className="p-1.5 hover:bg-white hover:text-blue-600 rounded-md transition-colors border border-transparent hover:border-gray-200">
             <Edit className="w-3.5 h-3.5" />
           </button>
@@ -296,7 +318,7 @@ const RestaurantCard = ({
           </button>
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 

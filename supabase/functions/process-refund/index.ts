@@ -55,16 +55,29 @@ serve(async (req) => {
       })
     }
 
-    const keyId = Deno.env.get('RAZORPAY_KEY_ID')
-    const keySecret = Deno.env.get('RAZORPAY_KEY_SECRET')
+    // Fetch credentials from DB using Service Role
+    const adminClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
 
-    if (!keyId || !keySecret) {
-      throw new Error('Server configuration error: Razorpay credentials missing')
+    const { data: settings, error: configError } = await adminClient
+      .from('system_settings')
+      .select('value')
+      .eq('key', 'razorpay_keys')
+      .single()
+
+    if (configError || !settings?.value?.key_id || !settings?.value?.key_secret) {
+      console.error('Process refund failed: Missing config', configError);
+      throw new Error('Server configuration error: Payment keys missing')
     }
+
+    const keyId = settings.value.key_id
+    const keySecret = settings.value.key_secret
 
     // Build refund request body
     const refundBody: Record<string, unknown> = {}
-    
+
     // Amount is optional - if not provided, full refund is issued
     if (amount) {
       // Amount should be in paise (smallest currency unit)
@@ -99,10 +112,10 @@ serve(async (req) => {
 
     if (!razorpayResponse.ok) {
       console.error('Razorpay refund error:', razorpayData)
-      return new Response(JSON.stringify({ 
-        success: false, 
+      return new Response(JSON.stringify({
+        success: false,
         error: razorpayData.error?.description || 'Refund failed',
-        razorpay_error: razorpayData.error 
+        razorpay_error: razorpayData.error
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: razorpayResponse.status,
@@ -129,8 +142,8 @@ serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ 
-      success: true, 
+    return new Response(JSON.stringify({
+      success: true,
       refund: {
         id: razorpayData.id,
         amount: razorpayData.amount / 100, // Convert paise to rupees for response

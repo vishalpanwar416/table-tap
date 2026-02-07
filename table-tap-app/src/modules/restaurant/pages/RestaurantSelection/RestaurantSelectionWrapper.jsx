@@ -68,12 +68,21 @@ const RestaurantSelectionWrapper = ({ children }) => {
     }
   }, [user, authLoading, loading, location.pathname, navigate, urlRestaurant, urlTable]);
 
-  // If there's an authentication error, redirect to login
+  // If there's an authentication error, redirect correctly
   useEffect(() => {
     if (error === 'AUTH_ERROR') {
-      // Clear session and redirect to login
+      // Clear session data
       clearSession();
+
+      // If we are on a protected route (profile/orders), RequireAuth will handle it.
+      // If we are on a public route (home/menu), we should just refresh/clear state
+      // so the user can continue as a guest or re-login.
+      // We'll redirect to login with a return URL just in case, but avoid the loop.
       const returnUrl = location.pathname + location.search;
+
+      // Only redirect to login if we assume the user *must* be logged in.
+      // Otherwise, just reloading the page or going to restaurant selection might be safer
+      // to clear the bad state.
       navigate(`/login?redirect=${encodeURIComponent(returnUrl)}`, { replace: true });
     }
   }, [error, navigate, clearSession, location.pathname, location.search]);
@@ -87,11 +96,9 @@ const RestaurantSelectionWrapper = ({ children }) => {
     if (location.pathname !== '/restaurant-selection') {
       return <Navigate to="/restaurant-selection" replace />;
     }
-    // If we are somehow on /restaurant-selection (even if wrapped), allow it to render
-    // note: typically /restaurant-selection should NOT be wrapped by this component
   }
 
-  // If there's an error (and it's not an auth error), show error state
+  // If there's an error (and it's not an auth error/handled above), show error state
   if (error && error !== 'AUTH_ERROR') {
     const handleBackToSelection = () => {
       clearSession();

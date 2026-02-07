@@ -30,21 +30,39 @@ import {
 import { supabase } from '../lib/supabase';
 import LocationPicker from '../components/LocationPicker';
 
-const plans = {
-    starter: {
-        name: 'Starter',
-        price: 999,
-        features: ['Unlimited Tables', 'QR Menu & Ordering', 'Order Management', 'Basic Analytics', 'Email Support']
+// Demo plan (fallback if needed)
+const demoPlan = {
+    name: 'Demo',
+    price: 0,
+    features: ['Limited access', 'For testing only', 'Non-billable']
+};
+
+// Default plans (fallbacks while loading or if DB fails)
+const defaultPlans = {
+    lite: {
+        name: 'Lite',
+        price: 899,
+        features: ['QR ordering & menu', 'Email billing included', 'Basic analytics', '10 staff seats', 'Pay-go WhatsApp billing']
+    },
+    standard: {
+        name: 'Standard',
+        price: 1199,
+        features: ['Inventory & costing', 'Product/daypart analytics', '300 WhatsApp msgs included', '25 staff seats', 'Basic aggregator toggle']
     },
     professional: {
-        name: 'Professional',
-        price: 1999,
-        features: ['Unlimited Tables', 'Swiggy & Zomato Sync', 'Staff Management', 'Inventory Tracking', 'AI Analytics', 'Offers & Promotions', 'Priority Support']
+        name: 'Pro',
+        price: 1699,
+        features: ['AI insights & alerts', '800 WhatsApp msgs included', 'Full aggregator sync', 'Floor plan & KDS', 'Mini-site + custom domain']
+    },
+    pro: {
+        name: 'Pro',
+        price: 1699,
+        features: ['AI insights & alerts', '800 WhatsApp msgs included', 'Full aggregator sync', 'Floor plan & KDS', 'Mini-site + custom domain']
     },
     enterprise: {
-        name: 'Enterprise',
+        name: 'Custom',
         price: null,
-        features: ['Multi-Location Support', 'Custom Integrations', 'Dedicated Account Manager', 'SLA Guarantee', 'On-Site Training', 'White-Label Options']
+        features: ['Custom bundles', 'Dedicated CSM & SLA', 'Bulk WhatsApp pricing', 'Advanced integrations', 'Security & compliance options']
     }
 };
 
@@ -89,6 +107,16 @@ const indianStates = [
     'Puducherry'
 ];
 
+const CUSTOM_SERVICES = {
+    'multi-outlet': 'Multi-Outlet Sync',
+    'whatsapp-bundle': 'WhatsApp Pro Bundle',
+    'ai-analytics': 'AI Smart Insights',
+    'custom-domain': 'White-Label Domain',
+    'audit-trails': 'Security Audit Trails',
+    'dedicated-csm': 'Dedicated Support',
+    'kds-floor': 'Digital KDS & Floor Plan'
+};
+
 function RegisterForm() {
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -96,6 +124,7 @@ function RegisterForm() {
     const billingCycle = searchParams.get('billing') || 'monthly';
 
     const [dbPlans, setDbPlans] = useState(null);
+    const [billingCycles, setBillingCycles] = useState([]);
     const [currentStep, setCurrentStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
@@ -127,39 +156,61 @@ function RegisterForm() {
         checkGoogleSession();
     }, []);
 
+    // Sync URL parameters with formData
     useEffect(() => {
-        const fetchPlans = async () => {
+        const planParam = searchParams.get('plan');
+        const billingParam = searchParams.get('billing');
+        if (planParam) setFormData(prev => ({ ...prev, plan: planParam }));
+        if (billingParam) setFormData(prev => ({ ...prev, billingCycle: billingParam }));
+    }, [searchParams]);
+
+    useEffect(() => {
+        const fetchData = async () => {
             try {
-                const { data, error } = await supabase
+                // Fetch Plans
+                const { data: planData, error: planError } = await supabase
                     .from('subscription_plans')
                     .select('*')
                     .eq('is_active', true);
 
-                if (error) throw error;
+                if (planError) throw planError;
 
-                if (data && data.length > 0) {
+                // Fetch Billing Cycles
+                const { data: cycleData, error: cycleError } = await supabase
+                    .from('billing_cycles')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('duration_months', { ascending: true });
+
+                if (cycleError) throw cycleError;
+
+                if (planData && planData.length > 0) {
                     const formattedPlans = {};
-                    data.forEach(p => {
+                    planData.forEach(p => {
                         formattedPlans[p.key] = {
                             name: p.name,
                             price: p.base_price,
-                            features: p.features
+                            features: p.features,
+                            plan_discount_percentage: p.plan_discount_percentage || 0
                         };
                     });
-
-                    // Ensure enterprise is present (fallback if not in DB)
-                    if (!formattedPlans.enterprise) {
-                        formattedPlans.enterprise = plans.enterprise;
-                    }
-
                     setDbPlans(formattedPlans);
                 }
+
+                if (cycleData && cycleData.length > 0) {
+                    setBillingCycles(cycleData);
+                    // Ensure current billing cycle exists in the fetched list, otherwise default to first
+                    const currentCycle = searchParams.get('billing') || formData.billingCycle;
+                    if (!cycleData.find(c => c.key === currentCycle)) {
+                        setFormData(prev => ({ ...prev, billingCycle: cycleData[0].key }));
+                    }
+                }
             } catch (err) {
-                console.error('Error fetching plans in register page:', err);
+                console.error('Error fetching data in register page:', err);
             }
         };
 
-        fetchPlans();
+        fetchData();
     }, []);
 
     const handleGoogleSignIn = async () => {
@@ -237,7 +288,7 @@ function RegisterForm() {
         }
     };
 
-    const activePlans = dbPlans || plans;
+    const activePlans = dbPlans || defaultPlans;
 
     const [formData, setFormData] = useState({
         // Owner Details
@@ -280,11 +331,73 @@ function RegisterForm() {
 
     const [paymentStatus, setPaymentStatus] = useState(null);
     const [paymentId, setPaymentId] = useState(null);
+    const [razorpayKeyId, setRazorpayKeyId] = useState(null);
 
-    const plan = activePlans[formData.plan] || activePlans.professional;
-    const price = plan.price ? (formData.billingCycle === 'yearly' ? Math.floor(plan.price * 12 * 0.75) : plan.price) : 'Custom';
-    const gst = plan.price && typeof price === 'number' ? Math.round(price * 0.18) : 0;
-    const total = plan.price && typeof price === 'number' ? price + gst : 'Custom';
+    // Fetch Razorpay Key ID from secure backend function
+    useEffect(() => {
+        const fetchPaymentConfig = async () => {
+            try {
+                const { data, error } = await supabase.functions.invoke('get-payment-config');
+                if (error) throw error;
+                if (data?.key_id) {
+                    setRazorpayKeyId(data.key_id);
+                }
+            } catch (err) {
+                console.error('Failed to load payment config:', err);
+                // Fallback only for dev/testing if function fails
+                if (process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
+                    setRazorpayKeyId(process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID);
+                }
+            }
+        };
+        fetchPaymentConfig();
+    }, []);
+
+    // Dynamic Plan Calculation
+    const getActivePlan = () => {
+        const currentPlanId = formData.plan || selectedPlanId;
+        const basePlan = activePlans[currentPlanId] || activePlans.custom || activePlans.enterprise || activePlans.professional;
+        const customPriceParam = searchParams.get('price');
+        const customServicesParam = searchParams.get('services');
+        const isEnterprise = currentPlanId === 'enterprise' || currentPlanId === 'custom' || currentPlanId === 'enterprise-custom';
+
+        // Override if this is a custom plan request from Custom Plan Builder or URL params exist
+        if (isEnterprise && (customPriceParam || customServicesParam)) {
+            return {
+                ...basePlan,
+                name: 'Custom Enterprise Plan',
+                price: customPriceParam ? parseInt(customPriceParam) : (basePlan.price || 29999),
+                features: customServicesParam
+                    ? customServicesParam.split(',').map(id => CUSTOM_SERVICES[id] || id)
+                    : basePlan.features
+            };
+        }
+        return basePlan;
+    };
+
+    const plan = getActivePlan();
+    const calculatePrice = () => {
+        if (!plan || !plan.price) return 'Custom';
+        const currentCycle = billingCycles.find(c => c.key === formData.billingCycle) || { duration_months: 1, discount_percentage: 0 };
+        const planDiscount = plan.plan_discount_percentage || 0;
+
+        let cycleDiscount = 0;
+        if (plan.cycle_discounts && plan.cycle_discounts[formData.billingCycle] !== undefined && plan.cycle_discounts[formData.billingCycle] !== null) {
+            cycleDiscount = plan.cycle_discounts[formData.billingCycle];
+        } else {
+            cycleDiscount = currentCycle.discount_percentage || 0;
+        }
+
+        // Calculate the discounted month price (stacking discounts)
+        const priceAfterPlanDiscount = plan.price * (1 - (planDiscount / 100));
+        const discountedMonthPrice = Math.floor(priceAfterPlanDiscount * (1 - (cycleDiscount / 100)));
+
+        return (discountedMonthPrice * currentCycle.duration_months);
+    };
+
+    const price = calculatePrice();
+    const gst = plan && plan.price && typeof price === 'number' ? Math.round(price * 0.18) : 0;
+    const total = plan && plan.price && typeof price === 'number' ? price + gst : 'Custom';
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -377,7 +490,7 @@ function RegisterForm() {
         const amountInPaise = total * 100; // Convert to paise
 
         const options = {
-            key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_yourkeyhere',
+            key: razorpayKeyId || 'rzp_test_yourkeyhere',
             amount: amountInPaise,
             currency: 'INR',
             name: 'Table Tap',
@@ -1316,8 +1429,8 @@ function RegisterForm() {
                                 <div className="flex items-baseline gap-2 mb-6">
                                     {plan.price ? (
                                         <>
-                                            <span className="text-5xl font-black text-gray-900">₹{price}</span>
-                                            <span className="text-gray-400 font-bold">/{formData.billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
+                                            <span className="text-5xl font-black text-gray-900">₹{price.toLocaleString()}</span>
+                                            <span className="text-gray-400 font-bold">/{billingCycles.find(c => c.key === formData.billingCycle)?.label || formData.billingCycle}</span>
                                         </>
                                     ) : (
                                         <span className="text-4xl font-black text-gray-900">Custom Pricing</span>
@@ -1354,25 +1467,19 @@ function RegisterForm() {
 
                                 <div className="mt-8 pt-6 border-t border-gray-100">
                                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">Billing Cycle</p>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => setFormData(prev => ({ ...prev, billingCycle: 'monthly' }))}
-                                            className={`flex-1 py-3 rounded-xl font-black text-sm transition-all ${formData.billingCycle === 'monthly'
-                                                ? 'bg-[#2A9D8F] text-white'
-                                                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                                                }`}
-                                        >
-                                            Monthly
-                                        </button>
-                                        <button
-                                            onClick={() => setFormData(prev => ({ ...prev, billingCycle: 'yearly' }))}
-                                            className={`flex-1 py-3 rounded-xl font-black text-sm transition-all ${formData.billingCycle === 'yearly'
-                                                ? 'bg-[#2A9D8F] text-white'
-                                                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                                                }`}
-                                        >
-                                            Yearly (25% off)
-                                        </button>
+                                    <div className="flex gap-2 flex-wrap">
+                                        {billingCycles.map((cycle) => (
+                                            <button
+                                                key={cycle.key}
+                                                onClick={() => setFormData(prev => ({ ...prev, billingCycle: cycle.key }))}
+                                                className={`flex-1 min-w-[100px] py-3 rounded-xl font-black text-[10px] uppercase tracking-wider transition-all ${formData.billingCycle === cycle.key
+                                                    ? 'bg-[#2A9D8F] text-white shadow-lg'
+                                                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                                                    }`}
+                                            >
+                                                {cycle.label} {cycle.discount_percentage > 0 ? `(-${cycle.discount_percentage}%)` : ''}
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
                             </div>

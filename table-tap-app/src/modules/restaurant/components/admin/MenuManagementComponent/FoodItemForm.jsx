@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
-import { Edit, Plus, X, Upload, Image as ImageIcon, Save, RotateCcw, Tag, IndianRupee, FileText, Hash } from 'lucide-react';
+import { Edit, Plus, X, Upload, Image as ImageIcon, Save, RotateCcw, Tag, IndianRupee, FileText, Hash, ArrowLeft } from 'lucide-react';
 import { categories } from '../../../../customer/api/foodData';
 import { createFoodItem, updateFoodItem, uploadFoodImage } from '../../../../customer/api/foodService';
 import { useAdminRestaurant } from '../../../../shared/context/AdminRestaurantContext';
 import { validateImageFile, optimizeImageForUpload } from '../../../../shared/utils/imageOptimization';
 
-const FoodItemForm = ({ 
-  formData, 
-  setFormData, 
-  editItem, 
-  showForm, 
-  setShowForm, 
-  resetForm, 
-  setLoading, 
-  setErrorMsg, 
-  setSuccessMsg, 
-  fetchFoodItems 
+const FoodItemForm = ({
+  formData,
+  setFormData,
+  editItem,
+  showForm,
+  setShowForm,
+  resetForm,
+  setLoading,
+  setErrorMsg,
+  setSuccessMsg,
+  fetchFoodItems
 }) => {
   const { userRestaurantId } = useAdminRestaurant();
   const [imageProcessing, setImageProcessing] = useState(false);
@@ -76,14 +76,14 @@ const FoodItemForm = ({
     setLoading(true);
     setErrorMsg('');
     setSuccessMsg('');
-    
+
     try {
       if (!formData.name || !formData.price || !formData.description) {
         throw new Error('Please fill all required fields');
       }
-  
+
       let imageUrl = formData.image;
-      
+
       // If we have a new image file to upload
       if (formData.imageFile) {
         // Upload the optimized image
@@ -92,7 +92,7 @@ const FoodItemForm = ({
         // If editing and image was removed
         imageUrl = null;
       }
-  
+
       // Prepare the data for Supabase
       const { imageFile, tags, price, discountvalue, ...rest } = formData;
       const foodItemData = {
@@ -103,14 +103,14 @@ const FoodItemForm = ({
         image: imageUrl,
         restaurant_id: userRestaurantId
       };
-  
+
       // Remove any undefined or null values that might cause issues
       Object.keys(foodItemData).forEach(key => {
         if (foodItemData[key] === undefined || foodItemData[key] === '') {
           delete foodItemData[key];
         }
       });
-  
+
       if (editItem) {
         await updateFoodItem(editItem.id, foodItemData);
         setSuccessMsg('Food item updated successfully!');
@@ -118,10 +118,10 @@ const FoodItemForm = ({
         await createFoodItem(foodItemData);
         setSuccessMsg('Food item added successfully!');
       }
-  
+
       await fetchFoodItems();
       resetForm();
-      
+
     } catch (error) {
       setErrorMsg(error.message || 'Failed to save food item');
     } finally {
@@ -135,8 +135,16 @@ const FoodItemForm = ({
   return (
     <div className="min-h-[80vh] flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 pb-3 flex-shrink-0 border-b border-gray-100">
-        <div className="flex items-center">
+      <div className="flex items-center gap-3 p-4 pb-3 flex-shrink-0 border-b border-gray-100">
+        <button
+          type="button"
+          onClick={() => setShowForm(!showForm)}
+          className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors -ml-2"
+        >
+          <ArrowLeft size={20} className="text-gray-900" />
+        </button>
+
+        <div className="flex items-center flex-1">
           <div className={`p-2 rounded-lg mr-3 ${editItem ? 'bg-blue-100' : 'bg-green-100'}`}>
             {editItem ? (
               <Edit className="w-5 h-5 text-blue-600" />
@@ -153,15 +161,8 @@ const FoodItemForm = ({
             </p>
           </div>
         </div>
-        <button 
-          type="button"
-          onClick={() => setShowForm(!showForm)}
-          className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
-        >
-          <X size={20} className="text-gray-500" />
-        </button>
       </div>
-      
+
       {/* Form */}
       <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
         <div className="flex-1 space-y-6 overflow-y-auto p-4 pb-0">

@@ -9,6 +9,8 @@ export const categories = [
   { name: 'Beverages', icon: 'CupSoda' },
   { name: 'Dessert', icon: 'IceCream' },
   { name: 'Offers', icon: 'Tag' },
+  { name: 'Recommended', icon: 'ThumbsUp' },
+  { name: 'Bestseller', icon: 'Award' },
 ];
 
 /**
@@ -22,9 +24,9 @@ export const fetchFoodItems = async (restaurantId) => {
       .select('*')
       .eq('restaurant_id', restaurantId)
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
-    
+
     // Process items to ensure they have valid images
     const processedItems = processFoodItems(data || []);
     return processedItems;
@@ -38,10 +40,10 @@ export const fetchFoodItems = async (restaurantId) => {
  */
 const hasTag = (item, targetTags) => {
   if (!item.tags || !Array.isArray(item.tags)) return false;
-  
+
   // Convert target tags to lowercase for comparison
   const targetTagsLower = targetTags.map(tag => tag.toLowerCase());
-  
+
   // Check if any of the item's tags match any of the target tags (case-insensitive)
   return item.tags.some(itemTag => {
     const itemTagLower = itemTag.toLowerCase();
@@ -63,7 +65,7 @@ export const fetchBestSellerItems = async (restaurantId) => {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    
+
     // Define all possible variations of bestseller tags
     const bestSellerTags = [
       'bestseller',
@@ -76,13 +78,13 @@ export const fetchBestSellerItems = async (restaurantId) => {
       'trending',
       'hot'
     ];
-    
+
     // Filter items with case-insensitive tag matching
     const bestSellerItems = (data || []).filter(item => {
       return hasTag(item, bestSellerTags);
     });
-    
-    
+
+
     // Process items to ensure they have valid images
     const processedItems = processFoodItems(bestSellerItems);
     return processedItems;
@@ -105,7 +107,7 @@ export const fetchRecommendedItems = async (restaurantId) => {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    
+
     // Define all possible variations of recommended tags
     const recommendedTags = [
       'recommended',
@@ -119,13 +121,13 @@ export const fetchRecommendedItems = async (restaurantId) => {
       'chef choice',
       'chef\'s choice'
     ];
-    
+
     // Filter items with case-insensitive tag matching
     const recommendedItems = (data || []).filter(item => {
       return hasTag(item, recommendedTags);
     });
-    
-    
+
+
     // Process items to ensure they have valid images
     const processedItems = processFoodItems(recommendedItems);
     return processedItems;
@@ -144,12 +146,12 @@ export const fetchMaincaroselData = async (restaurantId = null) => {
       .select('*')
       .eq('is_carousel', true)
       .eq('is_active', true);
-    
+
     // Filter by restaurant if restaurantId is provided
     if (restaurantId) {
       query = query.eq('restaurant_id', restaurantId);
     }
-    
+
     const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
@@ -181,12 +183,12 @@ const formatMessage = (item) => {
   if (item.description && item.description.trim().length > 0) {
     return item.description;
   }
-  
+
   // If no description, create an enticing message based on the item
   if (item.category) {
     return `Delicious ${item.category} Special!`;
   }
-  
+
   return item.name || 'Special Offer!';
 };
 
@@ -200,37 +202,37 @@ const formatDiscount = (item) => {
     if (item.price && item.discounted_price && item.price > item.discounted_price) {
       const savings = item.price - item.discounted_price;
       const savingsPercent = Math.round((savings / item.price) * 100);
-      
+
       // If savings percentage is significant, show it
       if (savingsPercent >= 10) {
         return `${savingsPercent}% OFF`;
       }
-      
+
       // Otherwise show the absolute savings
       return `SAVE ₹${savings.toFixed(0)}`;
     }
-    
+
     // Check for tags to create a personalized message
     if (item.tags && item.tags.length > 0) {
       // Look for specific tags that might indicate a special offer
-      if (item.tags.some(tag => 
+      if (item.tags.some(tag =>
         ['new', 'featured', 'bestseller', 'popular', 'trending', 'hot'].includes(tag.toLowerCase()))) {
-        const specialTag = item.tags.find(tag => 
+        const specialTag = item.tags.find(tag =>
           ['new', 'featured', 'bestseller', 'popular', 'trending', 'hot'].includes(tag.toLowerCase()));
-        
+
         return specialTag.toUpperCase();
       }
     }
-    
+
     // Create enticing offers based on category or random selection
     const specialOffers = [
-      'HOT DEAL!', 
-      'TODAY\'S SPECIAL', 
-      'MUST TRY!', 
-      'TOP PICK', 
+      'HOT DEAL!',
+      'TODAY\'S SPECIAL',
+      'MUST TRY!',
+      'TOP PICK',
       'CHEF\'S CHOICE'
     ];
-    
+
     // Use category if available to personalize the offer
     if (item.category) {
       if (item.category.toLowerCase().includes('dessert')) {
@@ -243,7 +245,7 @@ const formatDiscount = (item) => {
         return 'LUNCH SPECIAL';
       }
     }
-    
+
     // If no specific information available, use a random special offer
     const randomIndex = Math.floor(Math.random() * specialOffers.length);
     return specialOffers[randomIndex];
@@ -291,36 +293,36 @@ export const fallbackMaincaroselData = [
 // This is what you should use in your components
 export const fetchFoodItemsWithContext = () => {
   const { restaurantId, loading: restaurantLoading } = useRestaurant();
-  
+
   const fetchItems = async () => {
-    
+
     if (!restaurantId || restaurantLoading) {
       return [];
     }
-    
+
     return await fetchFoodItems(restaurantId);
   };
-  
-  return { 
-    fetchItems, 
-    restaurantId, 
-    isReady: !restaurantLoading && !!restaurantId 
+
+  return {
+    fetchItems,
+    restaurantId,
+    isReady: !restaurantLoading && !!restaurantId
   };
 };
 
 // Hook to fetch food items for current restaurant
 export const useFoodItems = () => {
   const { restaurantId, loading: restaurantLoading } = useRestaurant();
-  
+
   const getFoodItems = async () => {
-    
+
     if (!restaurantId) {
       return [];
     }
-    
+
     return await fetchFoodItems(restaurantId);
   };
-  
+
   return { getFoodItems, restaurantId, isRestaurantReady: !restaurantLoading && !!restaurantId };
 };
 
@@ -332,7 +334,7 @@ export const useFoodItemsData = () => {
   const [error, setError] = useState(null);
 
   const loadFoodItems = async () => {
-    
+
     if (!restaurantId) {
       setFoodItems([]);
       return;
@@ -357,10 +359,10 @@ export const useFoodItemsData = () => {
     }
   }, [restaurantId, restaurantLoading]);
 
-  return { 
-    foodItems, 
-    loading: loading || restaurantLoading, 
-    error, 
+  return {
+    foodItems,
+    loading: loading || restaurantLoading,
+    error,
     refetch: loadFoodItems,
     restaurantId,
     isReady: !restaurantLoading && !!restaurantId

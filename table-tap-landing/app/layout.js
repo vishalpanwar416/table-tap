@@ -2,6 +2,7 @@ import dynamic from "next/dynamic";
 import Script from "next/script";
 import "./globals.css";
 import { ModalProvider } from "./context/ModalContext";
+import { SettingsProvider } from "./context/SettingsContext";
 import StructuredData from "./components/StructuredData";
 
 // Lazy load modal - it's hidden initially and interaction-only
@@ -127,7 +128,7 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en-IN" className="scroll-smooth" dir="ltr">
+    <html lang="en-IN" className="scroll-smooth" dir="ltr" suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="geo.region" content="IN-TG" />
@@ -137,11 +138,16 @@ export default function RootLayout({ children }) {
         <StructuredData />
 
       </head>
-      <body className="font-sans antialiased bg-white text-gray-900">
-        <ModalProvider>
-          {children}
-          <LeadModal />
-        </ModalProvider>
+      <body
+        className="font-sans antialiased bg-white text-gray-900"
+        suppressHydrationWarning
+      >
+        <SettingsProvider>
+          <ModalProvider>
+            {children}
+            <LeadModal />
+          </ModalProvider>
+        </SettingsProvider>
       </body>
       <Script src="https://www.googletagmanager.com/gtag/js?id=G-9D6YVYRTQN" strategy="afterInteractive" />
       <Script id="google-analytics" strategy="afterInteractive">

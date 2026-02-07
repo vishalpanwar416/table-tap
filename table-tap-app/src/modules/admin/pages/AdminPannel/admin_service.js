@@ -1,4 +1,5 @@
 import { supabase } from '../../../shared/supabase';
+import { logAdminActivity, ACTIVITY_TYPES } from '../../api/adminActivityLogService';
 import { validateImageFile, optimizeImageForUpload } from '../../../shared/utils/imageOptimization';
 
 // Use the regular supabase client since you have admin permissions via RLS
@@ -406,7 +407,7 @@ const validateStaffData = (data) => {
     errors.push('Restaurant assignment is required');
   }
 
-  if (!['captain', 'manager', 'chef', 'waiter', 'cashier'].includes(data.role)) {
+  if (!['owner', 'manager', 'captain', 'chef', 'waiter', 'cashier'].includes(data.role)) {
     errors.push('Invalid role selected');
   }
 
@@ -472,6 +473,38 @@ export const createRestaurant = async (restaurantData) => {
 
     // Create owner staff record
     if (restaurantData.owner_email) {
+      let createdUserId = null;
+      let isConnected = false;
+
+      // 1. If password is provided, create the Auth User using Edge Function
+      if (restaurantData.owner_password) {
+        try {
+          const { data: funcData, error: funcError } = await supabase.functions.invoke('create-user', {
+            body: {
+              email: restaurantData.owner_email,
+              password: restaurantData.owner_password,
+              email_confirm: true,
+              user_metadata: {
+                full_name: restaurantData.owner_name || 'Owner',
+                profile_role: 'owner', // owner role
+                phone_number: restaurantData.owner_phone
+              }
+            }
+          });
+
+          if (funcError) {
+            console.error("Failed to create owner auth user:", funcError);
+            // We continue to create the staff record even if Auth creation fails (placeholder)
+          } else if (funcData?.user) {
+            createdUserId = funcData.user.id;
+            isConnected = true;
+          }
+        } catch (err) {
+          console.error("Error invoking create-user:", err);
+        }
+      }
+
+      // 2. Insert into restaurant_staff
       const { error: staffError } = await supabase
         .from('restaurant_staff')
         .insert({
@@ -480,7 +513,8 @@ export const createRestaurant = async (restaurantData) => {
           staff_name: restaurantData.owner_name || 'Owner',
           staff_email: restaurantData.owner_email,
           staff_phone_number: restaurantData.owner_phone,
-          connected: false
+          connected: isConnected,
+          user_id: createdUserId
         });
 
       if (staffError) {
@@ -493,13 +527,24 @@ export const createRestaurant = async (restaurantData) => {
             staff_name: (restaurantData.owner_name || 'Owner') + ' (Owner)',
             staff_email: restaurantData.owner_email,
             staff_phone_number: restaurantData.owner_phone,
-            connected: false
+            connected: isConnected,
+            user_id: createdUserId
           });
         } else {
           throw staffError;
         }
       }
     }
+
+    await logAdminActivity({
+      activity_type: ACTIVITY_TYPES.RESTAURANT_CREATED,
+      activity_name: 'Restaurant Created',
+      restaurant_id: restaurant.id,
+      target_type: 'restaurant',
+      target_id: restaurant.id,
+      target_name: restaurant.name,
+      description: `New restaurant ${restaurant.name} created.`
+    });
 
     return { data: restaurant, error: null };
   } catch (error) {
@@ -595,6 +640,17 @@ export const updateRestaurant = async (restaurantId, updateData) => {
       .maybeSingle();
 
     if (error) throw error;
+
+    await logAdminActivity({
+      activity_type: ACTIVITY_TYPES.RESTAURANT_UPDATED,
+      activity_name: 'Restaurant Updated',
+      restaurant_id: restaurantId,
+      target_type: 'restaurant',
+      target_id: restaurantId,
+      target_name: updateData.name || 'Restaurant',
+      description: `Restaurant ${updateData.name || ''} updated.`
+    });
+
     return { data, error: null };
   } catch (error) {
     return { data: null, error: error.message };
@@ -624,6 +680,18 @@ export const deleteRestaurant = async (restaurantId) => {
       .eq('id', restaurantId);
 
     if (error) throw error;
+    if (error) throw error;
+
+    await logAdminActivity({
+      activity_type: ACTIVITY_TYPES.RESTAURANT_DELETED,
+      activity_name: 'Restaurant Deleted',
+      restaurant_id: null,
+      target_type: 'restaurant',
+      target_id: restaurantId,
+      target_name: 'Deleted Restaurant',
+      description: `Restaurant ${restaurantId} deleted.`
+    });
+
     return { success: true, error: null };
   } catch (error) {
     return { success: false, error: error.message };
@@ -695,6 +763,41 @@ export const createStaff = async (staffData) => {
       throw new Error(validationErrors.join(', '));
     }
 
+    let createdUserId = null;
+    let isConnected = false;
+
+    // 1. If password provided, create Auth User
+    if (staffData.password) {
+      try {
+        const { data: funcData, error: funcError } = await supabase.functions.invoke('create-user', {
+          body: {
+            email: staffData.email,
+            password: staffData.password,
+            email_confirm: true,
+            user_metadata: {
+              full_name: staffData.name,
+              profile_role: staffData.role, // use selected role
+              phone_number: staffData.phone_number
+            }
+          }
+        });
+
+        if (funcError) {
+          console.error("Failed to create staff auth user:", funcError);
+          if (funcError.message) {
+            throw new Error("User creation failed: " + funcError.message);
+          }
+        } else if (funcData?.user) {
+          createdUserId = funcData.user.id;
+          isConnected = true;
+        }
+      } catch (err) {
+        console.error("Error invoking create-user:", err);
+        throw new Error("Failed to create user account: " + err.message);
+      }
+    }
+
+    // 2. Insert into restaurant_staff
     const { data, error } = await supabase
       .from('restaurant_staff')
       .insert({
@@ -703,12 +806,24 @@ export const createStaff = async (staffData) => {
         staff_name: staffData.name,
         staff_email: staffData.email,
         staff_phone_number: staffData.phone_number,
-        connected: false
+        connected: isConnected,
+        user_id: createdUserId
       })
       .select()
       .maybeSingle();
 
     if (error) throw error;
+
+    await logAdminActivity({
+      activity_type: ACTIVITY_TYPES.STAFF_CREATED,
+      activity_name: 'Staff Created',
+      restaurant_id: staffData.restaurant_id,
+      target_type: 'staff',
+      target_id: data?.id,
+      target_name: staffData.name,
+      description: `Staff member ${staffData.name} (${staffData.role}) added.`
+    });
+
     return { data, error: null };
   } catch (error) {
     if (error.message?.includes('violates check constraint "restaurant_staff_staff_role_check"')) {
@@ -755,6 +870,17 @@ export const updateStaff = async (id, updates) => {
     }
 
     console.log('✅ Staff updated successfully in database');
+
+    await logAdminActivity({
+      activity_type: ACTIVITY_TYPES.STAFF_UPDATED,
+      activity_name: 'Staff Updated',
+      restaurant_id: updates.restaurant_id,
+      target_type: 'staff',
+      target_id: id,
+      target_name: updates.name || 'Staff',
+      description: `Staff member ${updates.name || id} ${updates.role ? `role changed to ${updates.role}` : 'details updated'}.`
+    });
+
     return result;
   } catch (error) {
     console.error('❌ Error in updateStaff:', error);
@@ -773,6 +899,17 @@ export const deleteStaff = async (staffId) => {
       .eq('id', staffId);
 
     if (error) throw error;
+
+    await logAdminActivity({
+      activity_type: ACTIVITY_TYPES.STAFF_DELETED,
+      activity_name: 'Staff Deleted',
+      restaurant_id: null, // We might not know the restaurant ID here unless passsed?
+      target_type: 'staff',
+      target_id: staffId,
+      target_name: 'Deleted Staff',
+      description: `Staff member ${staffId} deleted.`
+    });
+
     return { success: true, error: null };
   } catch (error) {
     return { success: false, error: error.message };
@@ -1114,6 +1251,25 @@ export const getSystemSetting = async (key) => {
     return data.value;
   } catch (error) {
     console.error(`Error fetching setting ${key}:`, error);
+    return null;
+  }
+};
+
+/**
+ * Get an email template by key
+ */
+export const getEmailTemplate = async (key) => {
+  try {
+    const { data, error } = await supabase
+      .from('email_templates')
+      .select('subject, html')
+      .eq('key', key)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error(`Error fetching email template ${key}:`, error);
     return null;
   }
 };

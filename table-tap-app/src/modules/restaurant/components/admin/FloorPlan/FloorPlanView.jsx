@@ -16,13 +16,14 @@ import {
 import PrintBill from '../PrintBill';
 
 const FloorPlanView = ({ searchTerm, onViewOrders }) => {
-    const { restaurant } = useAdminRestaurant();
+    const { restaurant, updateRestaurant } = useAdminRestaurant();
     const [tables, setTables] = useState([]);
     const [tableOrders, setTableOrders] = useState({});
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [selectedTable, setSelectedTable] = useState(null);
     const [orderToPrint, setOrderToPrint] = useState(null);
+    const [updatingStatus, setUpdatingStatus] = useState(false);
     const printRef = useRef(null);
 
     // Table box size: 'compact' | 'medium' | 'large' — default compact to fit more tables
@@ -30,7 +31,7 @@ const FloorPlanView = ({ searchTerm, onViewOrders }) => {
         try {
             const saved = localStorage.getItem('floor_plan_table_box_size');
             if (['compact', 'medium', 'large'].includes(saved)) return saved;
-        } catch (_) {}
+        } catch (_) { }
         return 'compact';
     });
 
@@ -67,7 +68,7 @@ const FloorPlanView = ({ searchTerm, onViewOrders }) => {
         setTableBoxSize(nextSize);
         try {
             localStorage.setItem('floor_plan_table_box_size', nextSize);
-        } catch (_) {}
+        } catch (_) { }
     };
 
     // Status definitions mapping to the visual style requested
@@ -101,6 +102,18 @@ const FloorPlanView = ({ searchTerm, onViewOrders }) => {
             color: "bg-orange-100 border-orange-300 text-orange-800",
             legendColor: "bg-orange-400",
             shortLabel: "Paid"
+        },
+        reserved: {
+            label: "Reserved",
+            color: "bg-purple-100 border-purple-300 text-purple-800",
+            legendColor: "bg-purple-400",
+            shortLabel: "Reserved"
+        },
+        cleaning: {
+            label: "Cleaning",
+            color: "bg-red-50 border-red-200 text-red-600",
+            legendColor: "bg-red-400",
+            shortLabel: "Cleaning"
         }
     };
 
@@ -173,7 +186,13 @@ const FloorPlanView = ({ searchTerm, onViewOrders }) => {
     }, [restaurant?.id]);
 
     // Determine status based on orders (with bill_printed = completed but payment pending)
-    const getTableStatus = (tableNum) => {
+    const getTableStatus = (table) => {
+        // 1. Manual overrides
+        if (table.manualStatus && table.manualStatus !== 'auto') {
+            return table.manualStatus;
+        }
+
+        const tableNum = table.tableNumber;
         const orders = tableOrders[tableNum] || [];
         if (orders.length === 0) return 'empty';
 
@@ -190,6 +209,43 @@ const FloorPlanView = ({ searchTerm, onViewOrders }) => {
             return allPaid ? 'paid' : 'bill_printed';
         }
         return 'occupied';
+    };
+
+    const handleUpdateTableStatus = async (newStatus) => {
+        if (!selectedTable?.table || !restaurant) return;
+
+        setUpdatingStatus(true);
+        try {
+            const updatedTables = tables.map(t => {
+                if (t.id === selectedTable.table.id) {
+                    // If 'auto', we delete manualStatus or set undefined
+                    const updatedT = { ...t };
+                    if (newStatus === 'auto') {
+                        delete updatedT.manualStatus;
+                    } else {
+                        updatedT.manualStatus = newStatus;
+                    }
+                    return updatedT;
+                }
+                return t;
+            });
+
+            // Optimistic update
+            const updatedSelectedTable = updatedTables.find(t => t.id === selectedTable.table.id);
+            if (updatedSelectedTable) {
+                setSelectedTable(prev => ({ ...prev, table: updatedSelectedTable }));
+            }
+            setTables(updatedTables);
+
+            await updateRestaurant({
+                tables: JSON.stringify(updatedTables)
+            });
+        } catch (error) {
+            console.error("Failed to update table status:", error);
+            // Revert would be nice here but keeping it simple for now
+        } finally {
+            setUpdatingStatus(false);
+        }
     };
 
     // Group tables by location
@@ -212,7 +268,7 @@ const FloorPlanView = ({ searchTerm, onViewOrders }) => {
 
     // Status counts for summary bar
     const statusCounts = tables.reduce((acc, t) => {
-        const status = getTableStatus(t.tableNumber);
+        const status = getTableStatus(t);
         acc[status] = (acc[status] || 0) + 1;
         return acc;
     }, {});
@@ -247,43 +303,56 @@ const FloorPlanView = ({ searchTerm, onViewOrders }) => {
 
     return (
         <div className="p-4 md:p-6 bg-white rounded-xl shadow-sm min-h-[calc(100vh-140px)]">
-            {/* Single-line bar: left = tables + legend; right = size + Refresh */}
-            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-6 pb-4 border-b border-gray-200 text-sm">
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                    <span className="text-gray-600 whitespace-nowrap">
-                        {tables.length} table{tables.length !== 1 ? 's' : ''} · Live status
-                    </span>
-                    {Object.entries(STATUS_CONFIG).map(([key, config]) => {
-                        const count = statusCounts[key] || 0;
-                        return (
-                            <span key={key} className="flex items-center gap-1.5 text-gray-600 whitespace-nowrap">
-                                <span className={`w-2 h-2 rounded-full shrink-0 ${config.legendColor}`} />
-                                <span>{config.label}: {count}</span>
-                            </span>
-                        );
-                    })}
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                    <div className="flex items-center gap-0.5 rounded-lg border border-blue-200 bg-blue-50 p-1">
-                        <button
-                            type="button"
-                            onClick={() => handleTableSizeChange('down')}
-                            disabled={tableBoxSize === 'compact'}
-                            className="p-1.5 rounded-md text-blue-600 hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                            title="Smaller tables"
-                        >
-                            <Minus className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => handleTableSizeChange('up')}
-                            disabled={tableBoxSize === 'large'}
-                            className="p-1.5 rounded-md text-blue-600 hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                            title="Larger tables"
-                        >
-                            <Plus className="w-3.5 h-3.5" />
-                        </button>
+            {/* Header / Controls */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-200 text-sm">
+
+                {/* Stats & Legend - Scrollable on mobile */}
+                <div className="w-full md:w-auto overflow-x-auto pb-2 md:pb-0 hide-scrollbar">
+                    <div className="flex items-center gap-4 min-w-max">
+                        <span className="text-gray-900 font-semibold whitespace-nowrap">
+                            {tables.length} {tables.length === 1 ? 'Table' : 'Tables'}
+                        </span>
+                        <div className="h-4 w-px bg-gray-300 hidden md:block" />
+
+                        <div className="flex items-center gap-3">
+                            {Object.entries(STATUS_CONFIG).map(([key, config]) => {
+                                const count = statusCounts[key] || 0;
+                                return (
+                                    <span key={key} className="flex items-center gap-1.5 text-gray-600 whitespace-nowrap text-xs md:text-sm">
+                                        <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${config.legendColor}`} />
+                                        <span>{config.label} <span className="text-gray-400 font-medium ml-0.5">({count})</span></span>
+                                    </span>
+                                );
+                            })}
+                        </div>
                     </div>
+                </div>
+
+                {/* Actions: Size + Refresh */}
+                <div className="flex items-center justify-between md:justify-end gap-3 shrink-0">
+                    <div className="flex items-center gap-1 text-xs text-gray-500 font-medium">
+                        <span className="hidden sm:inline">Size:</span>
+                        <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-50 p-1">
+                            <button
+                                type="button"
+                                onClick={() => handleTableSizeChange('down')}
+                                disabled={tableBoxSize === 'compact'}
+                                className="p-1.5 rounded-md text-gray-600 hover:bg-white hover:shadow-sm disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                            >
+                                <Minus className="w-3.5 h-3.5" />
+                            </button>
+                            <span className="px-1 min-w-[3rem] text-center capitalize">{tableBoxSize}</span>
+                            <button
+                                type="button"
+                                onClick={() => handleTableSizeChange('up')}
+                                disabled={tableBoxSize === 'large'}
+                                className="p-1.5 rounded-md text-gray-600 hover:bg-white hover:shadow-sm disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                            >
+                                <Plus className="w-3.5 h-3.5" />
+                            </button>
+                        </div>
+                    </div>
+
                     <button
                         type="button"
                         onClick={(e) => {
@@ -292,8 +361,7 @@ const FloorPlanView = ({ searchTerm, onViewOrders }) => {
                             fetchOrders(true);
                         }}
                         disabled={refreshing}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-orange-500 text-white border border-orange-500 hover:bg-orange-600 hover:border-orange-600 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-                        title="Refresh"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-600 text-white shadow-sm hover:bg-orange-700 disabled:opacity-70 disabled:cursor-not-allowed transition-colors text-xs font-semibold"
                     >
                         <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
                         Refresh
@@ -305,14 +373,14 @@ const FloorPlanView = ({ searchTerm, onViewOrders }) => {
             <div className="space-y-8">
                 {Object.entries(filteredLocations).map(([location, locTables]) => (
                     <div key={location}>
-                        <h3 className="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                            <span className="w-1 h-5 bg-orange-500 rounded-full" />
+                        <h3 className="text-sm md:text-base font-bold text-gray-800 mb-3 flex items-center gap-2 uppercase tracking-wide">
+                            <span className="w-1.5 h-1.5 bg-orange-500 rounded-full" />
                             {location}
                         </h3>
 
                         <div className={`grid ${sizeConfig.gridClass}`}>
                             {locTables.map(table => {
-                                const statusKey = getTableStatus(table.tableNumber);
+                                const statusKey = getTableStatus(table);
                                 const style = STATUS_CONFIG[statusKey];
                                 const orders = tableOrders[table.tableNumber] || [];
                                 const orderCount = orders.length;
@@ -323,41 +391,32 @@ const FloorPlanView = ({ searchTerm, onViewOrders }) => {
                                         onClick={() => setSelectedTable({ table, orders })}
                                         className={`
                                             relative aspect-square rounded-xl border-2 flex flex-col items-center justify-center ${sizeConfig.boxClass}
-                                            transition-all duration-200 hover:shadow-md cursor-pointer group
+                                            transition-all duration-200 active:scale-95 hover:shadow-md cursor-pointer
                                             ${style.color}
                                             ${statusKey === 'empty' ? 'border-dashed' : 'border-solid shadow-sm'}
                                         `}
                                     >
+                                        {/* Status Badge - Top Right */}
                                         {orderCount > 0 && (
-                                            <span className={`absolute top-1 right-1 min-w-[18px] h-4 px-1 flex items-center justify-center rounded-full bg-white/90 ${sizeConfig.metaClass} font-semibold text-gray-700 shadow-sm`}>
+                                            <span className={`absolute top-2 right-2 min-w-[20px] h-5 px-1 flex items-center justify-center rounded-full bg-white text-orange-600 text-[10px] font-bold shadow-sm z-10`}>
                                                 {orderCount}
                                             </span>
                                         )}
-                                        <span className={`${sizeConfig.numberClass} font-bold`}>
-                                            {table.tableNumber}
-                                        </span>
-                                        {table.capacity && (
-                                            <span className={`${sizeConfig.metaClass} text-gray-500 mt-0.5`}>
-                                                {table.capacity} seats
+
+                                        <div className="flex flex-col items-center justify-center text-center w-full h-full">
+                                            <span className={`${sizeConfig.numberClass} font-bold leading-none mb-1`}>
+                                                {table.tableNumber}
                                             </span>
-                                        )}
-                                        <span className={`${sizeConfig.metaClass} font-medium mt-1 opacity-90 ${statusKey === 'empty' ? 'text-gray-400' : ''}`}>
-                                            {style.shortLabel}
-                                        </span>
-                                        <div className="flex gap-1.5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            {statusKey !== 'empty' && (
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setSelectedTable({ table, orders });
-                                                    }}
-                                                    className="p-1.5 rounded-lg bg-white/80 shadow hover:bg-white text-gray-700"
-                                                    title="View orders"
-                                                >
-                                                    <Eye className="w-3.5 h-3.5" />
-                                                </button>
+
+                                            {table.capacity && (
+                                                <span className={`${sizeConfig.metaClass} text-current opacity-70`}>
+                                                    {table.capacity} <span className="hidden sm:inline">seats</span><span className="sm:hidden">p</span>
+                                                </span>
                                             )}
+
+                                            <span className={`mt-2 px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/50 backdrop-blur-sm`}>
+                                                {style.shortLabel}
+                                            </span>
                                         </div>
                                     </div>
                                 );
@@ -367,81 +426,162 @@ const FloorPlanView = ({ searchTerm, onViewOrders }) => {
                 ))}
 
                 {Object.keys(filteredLocations).length === 0 && (
-                    <div className="text-center py-16 px-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                        <LayoutGrid className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                        <p className="text-gray-600 font-medium">No tables match your search</p>
-                        <p className="text-sm text-gray-500 mt-1">
-                            Try a different search or add tables in QR Management.
+                    <div className="flex flex-col items-center justify-center text-center py-20 px-4">
+                        <div className="bg-gray-50 p-4 rounded-full mb-4">
+                            <LayoutGrid className="w-8 h-8 text-gray-400" />
+                        </div>
+                        <h3 className="text-gray-900 font-medium mb-1">No tables found</h3>
+                        <p className="text-sm text-gray-500 max-w-xs mx-auto">
+                            Try adjusting your search filters or check your connection.
                         </p>
                     </div>
                 )}
             </div>
 
-            {/* Table orders modal */}
+            {/* Table orders modal - Centered & Responsive */}
             {selectedTable && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setSelectedTable(null)}>
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedTable(null)}>
                     <div
-                        className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[85vh] overflow-hidden flex flex-col"
+                        className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl max-h-[90vh] flex flex-col animate-in slide-in-from-bottom-5 fade-in duration-200"
                         onClick={e => e.stopPropagation()}
                     >
-                        <div className="flex items-center justify-between p-4 border-b border-gray-100">
-                            <h3 className="text-lg font-semibold text-gray-900">
-                                Table {selectedTable.table.tableNumber}
-                                {selectedTable.table.location && (
-                                    <span className="text-gray-500 font-normal"> · {selectedTable.table.location}</span>
-                                )}
-                            </h3>
+                        <div className="flex items-center justify-between p-4 border-b border-gray-100 sticky top-0 bg-white rounded-t-2xl z-10">
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    Table {selectedTable.table.tableNumber}
+                                    {selectedTable.orders.length > 0 && (
+                                        <span className="bg-orange-100 text-orange-700 text-xs px-2 py-0.5 rounded-full">
+                                            {selectedTable.orders.length} orders
+                                        </span>
+                                    )}
+                                </h3>
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                    {selectedTable.table.location || 'General Area'} • {selectedTable.table.capacity || '-'} Seats
+                                </p>
+                            </div>
                             <button
                                 type="button"
                                 onClick={() => setSelectedTable(null)}
-                                className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"
+                                className="p-2 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
                             >
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
+
                         <div className="overflow-y-auto p-4 space-y-3">
+                            <div className="mb-4">
+                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">
+                                    Table Status
+                                </label>
+                                <div className="grid grid-cols-4 gap-2">
+                                    <button
+                                        onClick={() => handleUpdateTableStatus('auto')}
+                                        disabled={updatingStatus}
+                                        className={`px-1 py-2 rounded-lg text-[10px] sm:text-xs font-medium border transition-all ${(!selectedTable.table.manualStatus || selectedTable.table.manualStatus === 'auto')
+                                            ? 'bg-gray-800 text-white border-gray-800'
+                                            : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                                            }`}
+                                    >
+                                        Auto
+                                    </button>
+                                    <button
+                                        onClick={() => handleUpdateTableStatus('reserved')}
+                                        disabled={updatingStatus}
+                                        className={`px-1 py-2 rounded-lg text-[10px] sm:text-xs font-medium border transition-all ${selectedTable.table.manualStatus === 'reserved'
+                                            ? 'bg-purple-600 text-white border-purple-600'
+                                            : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                                            }`}
+                                    >
+                                        Reserved
+                                    </button>
+                                    <button
+                                        onClick={() => handleUpdateTableStatus('cleaning')}
+                                        disabled={updatingStatus}
+                                        className={`px-1 py-2 rounded-lg text-[10px] sm:text-xs font-medium border transition-all ${selectedTable.table.manualStatus === 'cleaning'
+                                            ? 'bg-red-600 text-white border-red-600'
+                                            : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                                            }`}
+                                    >
+                                        Cleaning
+                                    </button>
+                                    <button
+                                        onClick={() => handleUpdateTableStatus('empty')}
+                                        disabled={updatingStatus}
+                                        className={`px-1 py-2 rounded-lg text-[10px] sm:text-xs font-medium border transition-all ${selectedTable.table.manualStatus === 'empty'
+                                            ? 'bg-green-600 text-white border-green-600'
+                                            : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                                            }`}
+                                    >
+                                        Free
+                                    </button>
+                                </div>
+                            </div>
                             {selectedTable.orders.length === 0 ? (
-                                <p className="text-gray-500 text-sm">No active orders for this table.</p>
+                                <div className="text-center py-8 text-gray-500">
+                                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-3">
+                                        <Eye className="w-6 h-6 text-gray-400" />
+                                    </div>
+                                    <p className="text-sm font-medium">This table is currently empty</p>
+                                    <p className="text-xs text-gray-400 mt-1">No active orders placed yet.</p>
+                                </div>
                             ) : (
                                 selectedTable.orders.map(order => (
                                     <div
                                         key={order.id}
-                                        className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-100 bg-gray-50/50"
+                                        className="p-3 rounded-xl border border-gray-100 bg-white shadow-sm flex flex-col gap-2"
                                     >
-                                        <div className="min-w-0">
-                                            <p className="font-medium text-gray-900 truncate">
-                                                #{order.order_number || order.id?.slice(0, 8)}
-                                            </p>
-                                            <p className="text-sm text-gray-500">
-                                                {order.status} · ₹{order.total?.toFixed(2)}
-                                            </p>
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-bold text-gray-900">
+                                                        #{order.order_number || order.id?.slice(0, 6)}
+                                                    </span>
+                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase
+                                                        ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                                                            order.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                                                'bg-blue-100 text-blue-700'
+                                                        }
+                                                    `}>
+                                                        {order.status}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="font-bold text-gray-900">₹{order.total?.toFixed(2)}</p>
+                                                <p className="text-xs text-gray-500">Total</p>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-1 shrink-0">
+
+                                        <div className="flex items-center gap-2 pt-2 border-t border-gray-50 mt-1">
                                             <button
                                                 type="button"
                                                 onClick={() => handlePrintBill(order)}
-                                                className="p-2 rounded-lg bg-orange-100 text-orange-600 hover:bg-orange-200"
-                                                title="Print bill"
+                                                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-gray-50 text-gray-700 text-xs font-medium hover:bg-gray-100"
                                             >
-                                                <Printer className="w-4 h-4" />
+                                                <Printer className="w-3.5 h-3.5" />
+                                                Print Bill
                                             </button>
                                         </div>
                                     </div>
                                 ))
                             )}
                         </div>
+
                         {onViewOrders && selectedTable.orders.length > 0 && (
-                            <div className="p-4 border-t border-gray-100">
+                            <div className="p-4 border-t border-gray-100 bg-gray-50/50 rounded-b-2xl">
                                 <button
                                     type="button"
                                     onClick={() => {
                                         setSelectedTable(null);
                                         onViewOrders();
                                     }}
-                                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-orange-500 text-white font-medium hover:bg-orange-600 transition-colors"
+                                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-orange-600 text-white font-bold text-sm shadow-md hover:bg-orange-700 active:scale-95 transition-all"
                                 >
                                     <ExternalLink className="w-4 h-4" />
-                                    Open in Orders
+                                    Manage Orders
                                 </button>
                             </div>
                         )}
@@ -449,12 +589,14 @@ const FloorPlanView = ({ searchTerm, onViewOrders }) => {
                 </div>
             )}
 
-            {/* Hidden print area */}
-            {orderToPrint && restaurant && (
-                <div ref={printRef} className="hidden">
-                    <PrintBill order={orderToPrint} restaurant={restaurant} />
-                </div>
-            )}
+            {/* Print Component (Hidden) */}
+            <div className="hidden">
+                {orderToPrint && restaurant && (
+                    <div ref={printRef}>
+                        <PrintBill order={orderToPrint} restaurant={restaurant} />
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

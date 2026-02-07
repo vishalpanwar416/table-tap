@@ -32,13 +32,13 @@ import { useAdminNotifications, NOTIFICATION_TYPES } from '../../../context/Admi
 const AdminNotificationBell = ({ onTabChange }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const { 
-    notifications, 
-    unreadCount, 
+  const {
+    notifications,
+    unreadCount,
     loading,
-    markAsRead, 
+    markAsRead,
     markAllAsRead,
-    refreshNotifications 
+    refreshNotifications
   } = useAdminNotifications();
 
   // Close dropdown when clicking outside
@@ -60,7 +60,7 @@ const AdminNotificationBell = ({ onTabChange }) => {
         return <MessageSquare className="w-4 h-4 text-pink-500" />;
       case NOTIFICATION_TYPES.INQUIRY_CONVERTED:
         return <CheckCircle className="w-4 h-4 text-emerald-500" />;
-      
+
       // Registration notifications
       case NOTIFICATION_TYPES.NEW_REGISTRATION:
         return <ClipboardList className="w-4 h-4 text-amber-500" />;
@@ -68,7 +68,7 @@ const AdminNotificationBell = ({ onTabChange }) => {
         return <Check className="w-4 h-4 text-green-500" />;
       case NOTIFICATION_TYPES.REGISTRATION_REJECTED:
         return <XCircle className="w-4 h-4 text-red-500" />;
-      
+
       // Subscription notifications
       case NOTIFICATION_TYPES.NEW_SUBSCRIPTION:
         return <CreditCard className="w-4 h-4 text-green-500" />;
@@ -84,7 +84,7 @@ const AdminNotificationBell = ({ onTabChange }) => {
         return <TrendingUp className="w-4 h-4 text-purple-500" />;
       case NOTIFICATION_TYPES.SUBSCRIPTION_DOWNGRADED:
         return <TrendingDown className="w-4 h-4 text-gray-500" />;
-      
+
       // Restaurant notifications
       case NOTIFICATION_TYPES.NEW_RESTAURANT:
         return <Building2 className="w-4 h-4 text-purple-500" />;
@@ -92,13 +92,13 @@ const AdminNotificationBell = ({ onTabChange }) => {
         return <Power className="w-4 h-4 text-green-500" />;
       case NOTIFICATION_TYPES.RESTAURANT_DEACTIVATED:
         return <PowerOff className="w-4 h-4 text-gray-500" />;
-      
+
       // Staff notifications
       case NOTIFICATION_TYPES.NEW_STAFF:
         return <UserPlus className="w-4 h-4 text-blue-500" />;
       case NOTIFICATION_TYPES.STAFF_CONNECTED:
         return <UserCheck className="w-4 h-4 text-teal-500" />;
-      
+
       // Feature notifications
       case NOTIFICATION_TYPES.AI_ENABLED:
         return <Brain className="w-4 h-4 text-indigo-500" />;
@@ -108,19 +108,19 @@ const AdminNotificationBell = ({ onTabChange }) => {
         return <ShoppingBag className="w-4 h-4 text-orange-500" />;
       case NOTIFICATION_TYPES.AGGREGATORS_DISABLED:
         return <ShoppingBag className="w-4 h-4 text-gray-400" />;
-      
+
       // Payment notifications
       case NOTIFICATION_TYPES.PAYMENT_RECEIVED:
         return <IndianRupee className="w-4 h-4 text-emerald-500" />;
       case NOTIFICATION_TYPES.PAYMENT_FAILED:
         return <IndianRupee className="w-4 h-4 text-red-500" />;
-      
+
       // Email notifications
       case NOTIFICATION_TYPES.EMAIL_SENT:
         return <MailCheck className="w-4 h-4 text-green-500" />;
       case NOTIFICATION_TYPES.EMAIL_FAILED:
         return <MailX className="w-4 h-4 text-red-500" />;
-      
+
       default:
         return <Bell className="w-4 h-4 text-gray-500" />;
     }
@@ -133,7 +133,7 @@ const AdminNotificationBell = ({ onTabChange }) => {
         return 'bg-pink-50 border-pink-200';
       case NOTIFICATION_TYPES.INQUIRY_CONVERTED:
         return 'bg-emerald-50 border-emerald-200';
-      
+
       // Registration
       case NOTIFICATION_TYPES.NEW_REGISTRATION:
         return 'bg-amber-50 border-amber-200';
@@ -141,7 +141,7 @@ const AdminNotificationBell = ({ onTabChange }) => {
         return 'bg-green-50 border-green-200';
       case NOTIFICATION_TYPES.REGISTRATION_REJECTED:
         return 'bg-red-50 border-red-200';
-      
+
       // Subscription
       case NOTIFICATION_TYPES.NEW_SUBSCRIPTION:
         return 'bg-green-50 border-green-200';
@@ -155,7 +155,7 @@ const AdminNotificationBell = ({ onTabChange }) => {
         return 'bg-purple-50 border-purple-200';
       case NOTIFICATION_TYPES.SUBSCRIPTION_DOWNGRADED:
         return 'bg-gray-50 border-gray-200';
-      
+
       // Restaurant
       case NOTIFICATION_TYPES.NEW_RESTAURANT:
         return 'bg-purple-50 border-purple-200';
@@ -163,13 +163,13 @@ const AdminNotificationBell = ({ onTabChange }) => {
         return 'bg-green-50 border-green-200';
       case NOTIFICATION_TYPES.RESTAURANT_DEACTIVATED:
         return 'bg-gray-100 border-gray-200';
-      
+
       // Staff
       case NOTIFICATION_TYPES.NEW_STAFF:
         return 'bg-blue-50 border-blue-200';
       case NOTIFICATION_TYPES.STAFF_CONNECTED:
         return 'bg-teal-50 border-teal-200';
-      
+
       // Features
       case NOTIFICATION_TYPES.AI_ENABLED:
         return 'bg-indigo-50 border-indigo-200';
@@ -179,19 +179,19 @@ const AdminNotificationBell = ({ onTabChange }) => {
         return 'bg-orange-50 border-orange-200';
       case NOTIFICATION_TYPES.AGGREGATORS_DISABLED:
         return 'bg-gray-50 border-gray-200';
-      
+
       // Payment
       case NOTIFICATION_TYPES.PAYMENT_RECEIVED:
         return 'bg-emerald-50 border-emerald-200';
       case NOTIFICATION_TYPES.PAYMENT_FAILED:
         return 'bg-red-50 border-red-200';
-      
+
       // Email
       case NOTIFICATION_TYPES.EMAIL_SENT:
         return 'bg-green-50 border-green-200';
       case NOTIFICATION_TYPES.EMAIL_FAILED:
         return 'bg-red-50 border-red-200';
-      
+
       default:
         return 'bg-gray-50 border-gray-200';
     }
@@ -199,7 +199,7 @@ const AdminNotificationBell = ({ onTabChange }) => {
 
   const handleNotificationClick = (notification) => {
     markAsRead(notification.id);
-    
+
     // Navigate to relevant tab based on notification type
     if (onTabChange) {
       switch (notification.type) {
@@ -208,14 +208,14 @@ const AdminNotificationBell = ({ onTabChange }) => {
         case NOTIFICATION_TYPES.INQUIRY_CONVERTED:
           onTabChange('inquiries');
           break;
-        
+
         // Registration notifications -> Registrations tab
         case NOTIFICATION_TYPES.NEW_REGISTRATION:
         case NOTIFICATION_TYPES.REGISTRATION_APPROVED:
         case NOTIFICATION_TYPES.REGISTRATION_REJECTED:
           onTabChange('registrations');
           break;
-        
+
         // Subscription/Payment notifications -> Subscriptions tab
         case NOTIFICATION_TYPES.NEW_SUBSCRIPTION:
         case NOTIFICATION_TYPES.SUBSCRIPTION_RENEWED:
@@ -228,7 +228,7 @@ const AdminNotificationBell = ({ onTabChange }) => {
         case NOTIFICATION_TYPES.PAYMENT_FAILED:
           onTabChange('subscriptions');
           break;
-        
+
         // Restaurant/Feature notifications -> Restaurants tab
         case NOTIFICATION_TYPES.NEW_RESTAURANT:
         case NOTIFICATION_TYPES.RESTAURANT_ACTIVATED:
@@ -239,24 +239,24 @@ const AdminNotificationBell = ({ onTabChange }) => {
         case NOTIFICATION_TYPES.AGGREGATORS_DISABLED:
           onTabChange('restaurants');
           break;
-        
+
         // Staff notifications -> Staff tab
         case NOTIFICATION_TYPES.NEW_STAFF:
         case NOTIFICATION_TYPES.STAFF_CONNECTED:
           onTabChange('staff');
           break;
-        
+
         // Email notifications -> Activity Logs tab
         case NOTIFICATION_TYPES.EMAIL_SENT:
         case NOTIFICATION_TYPES.EMAIL_FAILED:
           onTabChange('activity');
           break;
-        
+
         default:
           break;
       }
     }
-    
+
     setIsOpen(false);
   };
 
@@ -284,7 +284,7 @@ const AdminNotificationBell = ({ onTabChange }) => {
         title="Notifications"
       >
         <Bell className="w-5 h-5 text-gray-600 group-hover:text-gray-800 transition-colors" />
-        
+
         {/* Unread Badge */}
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 min-w-[20px] h-5 flex items-center justify-center px-1.5 text-[10px] font-bold text-white bg-red-500 rounded-full shadow-lg animate-pulse">
@@ -295,7 +295,7 @@ const AdminNotificationBell = ({ onTabChange }) => {
 
       {/* Dropdown Panel */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute right-0 mt-2 w-80 md:w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
           {/* Header */}
           <div className="px-4 py-3 bg-gradient-to-r from-slate-900 to-slate-800 text-white">
             <div className="flex items-center justify-between">
@@ -353,9 +353,8 @@ const AdminNotificationBell = ({ onTabChange }) => {
                   <div
                     key={notification.id}
                     onClick={() => handleNotificationClick(notification)}
-                    className={`px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors ${
-                      !notification.read ? 'bg-blue-50/50' : ''
-                    }`}
+                    className={`px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors ${!notification.read ? 'bg-blue-50/50' : ''
+                      }`}
                   >
                     <div className="flex items-start gap-3">
                       {/* Icon */}
@@ -366,9 +365,8 @@ const AdminNotificationBell = ({ onTabChange }) => {
                       {/* Content */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <p className={`text-sm font-semibold text-gray-900 truncate ${
-                            !notification.read ? 'text-blue-900' : ''
-                          }`}>
+                          <p className={`text-sm font-semibold text-gray-900 truncate ${!notification.read ? 'text-blue-900' : ''
+                            }`}>
                             {notification.title}
                           </p>
                           {!notification.read && (

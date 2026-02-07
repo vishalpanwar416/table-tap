@@ -36,6 +36,8 @@ import {
     sendInvoiceEmail,
     getCompanyDetails
 } from '../../../shared/api/invoiceService';
+import { applyTemplate } from '../../../shared/api/emailService';
+import { getEmailTemplate } from '../../../admin/pages/AdminPannel/admin_service.js';
 
 const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
     const [subscription, setSubscription] = useState(null);
@@ -176,9 +178,9 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
 
     // Create invoice data from payment/history record
     const getInvoiceDataFromPayment = (payment) => {
-        const invoiceNumber = payment.invoice_number || 
+        const invoiceNumber = payment.invoice_number ||
             `INV-${payment.id?.slice(0, 8).toUpperCase() || generateInvoiceNumber()}`;
-        
+
         return createInvoiceData({
             transaction: {
                 id: payment.id,
@@ -242,9 +244,9 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
 
         try {
             setProcessingId(`email-${payment.id}`);
-            
+
             // Try to find existing invoice record
-            const existingInvoice = invoices.find(inv => 
+            const existingInvoice = invoices.find(inv =>
                 inv.subscription_history_id === payment.id
             );
 
@@ -254,13 +256,45 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
             } else {
                 // Send email directly using edge function
                 const invoiceData = getInvoiceDataFromPayment(payment);
-                const html = generateProfessionalInvoiceHTML(invoiceData);
-                
+
+                // Fetch template
+                const template = await getEmailTemplate('email_template_invoice');
+                let subject = `Invoice ${invoiceData.invoiceNumber} from TableTap`;
+                let html = `<p>Please find your invoice attached.</p><p>Invoice Number: ${invoiceData.invoiceNumber}</p><p>Amount: ₹${payment.amount_paid}</p>`;
+
+                if (template) {
+                    const amount = Number(payment.amount_paid);
+                    let subtotal, gst;
+                    if (payment.gst_amount) {
+                        gst = Number(payment.gst_amount).toFixed(2);
+                        subtotal = (amount - Number(gst)).toFixed(2);
+                    } else {
+                        subtotal = (amount / 1.18).toFixed(2);
+                        gst = (amount - Number(subtotal)).toFixed(2);
+                    }
+
+                    const vars = {
+                        invoice_number: invoiceData.invoiceNumber,
+                        date: formatDate(payment.created_at),
+                        restaurant_name: restaurant.name,
+                        plan_name: payment.new_plan || subscription?.plan_name || 'Professional',
+                        billing_cycle: subscription?.billing_cycle || 'Monthly',
+                        subtotal: subtotal,
+                        gst: gst,
+                        total_paid: amount.toFixed(2),
+                        year: new Date().getFullYear()
+                    };
+
+                    const applied = applyTemplate(template.subject, template.html, vars);
+                    subject = applied.subject;
+                    html = applied.html;
+                }
+
                 const { error } = await supabase.functions.invoke('send-email', {
                     body: {
                         to: restaurant.contact_email,
-                        subject: `Invoice ${invoiceData.invoiceNumber} from TableTap`,
-                        html: `<p>Please find your invoice attached.</p><p>Invoice Number: ${invoiceData.invoiceNumber}</p><p>Amount: ₹${payment.amount_paid}</p>`,
+                        subject: subject,
+                        html: html,
                         text: `Invoice ${invoiceData.invoiceNumber} for ₹${payment.amount_paid}`
                     }
                 });
@@ -279,7 +313,7 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
 
     const filteredHistory = paymentHistory.filter(item => {
         if (filterStatus !== 'all' && item.action !== filterStatus) return false;
-        if (searchTerm && !item.notes?.toLowerCase().includes(searchTerm.toLowerCase()) && 
+        if (searchTerm && !item.notes?.toLowerCase().includes(searchTerm.toLowerCase()) &&
             !item.payment_reference?.toLowerCase().includes(searchTerm.toLowerCase())) return false;
         return true;
     });
@@ -289,11 +323,11 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
     return (
         <div className="fixed inset-0 z-50 overflow-hidden">
             {/* Backdrop */}
-            <div 
+            <div
                 className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
                 onClick={onClose}
             />
-            
+
             {/* Slide Panel */}
             <div className="absolute inset-y-0 right-0 w-full max-w-3xl bg-white shadow-2xl transform transition-transform">
                 {/* Header */}
@@ -326,11 +360,10 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-                                    activeTab === tab.id
-                                        ? 'bg-white text-purple-600'
-                                        : 'bg-white/20 text-white hover:bg-white/30'
-                                }`}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${activeTab === tab.id
+                                    ? 'bg-white text-purple-600'
+                                    : 'bg-white/20 text-white hover:bg-white/30'
+                                    }`}
                             >
                                 <tab.icon className="w-4 h-4" />
                                 {tab.label}
@@ -559,12 +592,12 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                                             {paymentHistory
                                                 .filter(p => p.amount_paid > 0)
                                                 .map((payment, index) => {
-                                                    const existingInvoice = invoices.find(inv => 
+                                                    const existingInvoice = invoices.find(inv =>
                                                         inv.subscription_history_id === payment.id
                                                     );
-                                                    const invoiceNumber = existingInvoice?.invoice_number || 
+                                                    const invoiceNumber = existingInvoice?.invoice_number ||
                                                         `INV-${payment.id?.slice(0, 8).toUpperCase() || `${index + 1}`.padStart(4, '0')}`;
-                                                    
+
                                                     return (
                                                         <div
                                                             key={payment.id || index}
@@ -635,7 +668,7 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                            
+
                                                             {/* GST Breakdown Row */}
                                                             <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-4 gap-4 text-xs">
                                                                 <div>
@@ -678,7 +711,7 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
             {/* Invoice Preview Modal */}
             {previewInvoice && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-                    <div 
+                    <div
                         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
                         onClick={() => setPreviewInvoice(null)}
                     />
@@ -723,13 +756,13 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                                 </button>
                             </div>
                         </div>
-                        
+
                         {/* Invoice Content */}
                         <div className="flex-1 overflow-auto bg-gray-100 p-6">
-                            <div 
+                            <div
                                 className="bg-white shadow-lg mx-auto"
                                 style={{ maxWidth: '800px' }}
-                                dangerouslySetInnerHTML={{ 
+                                dangerouslySetInnerHTML={{
                                     __html: generateProfessionalInvoiceHTML(previewInvoice)
                                         .replace(/<html[^>]*>|<\/html>|<head>[\s\S]*?<\/head>|<body[^>]*>|<\/body>|<!DOCTYPE[^>]*>/gi, '')
                                 }}

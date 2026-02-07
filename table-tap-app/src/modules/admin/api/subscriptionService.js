@@ -52,8 +52,11 @@ export const createSubscriptionPlan = async (planData) => {
       .maybeSingle();
 
     if (error) throw error;
+    if (!data) throw new Error('Creation failed - no data returned. Check admin permissions.');
+
     return { data, error: null };
   } catch (error) {
+    console.error('Create Plan Error:', error);
     return { data: null, error: error.message };
   }
 };
@@ -71,8 +74,11 @@ export const updateSubscriptionPlan = async (id, planData) => {
       .maybeSingle();
 
     if (error) throw error;
+    if (!data) throw new Error('Update failed - no data returned. Check admin permissions or if plan exists.');
+
     return { data, error: null };
   } catch (error) {
+    console.error('Update Plan Error:', error);
     return { data: null, error: error.message };
   }
 };
@@ -108,6 +114,7 @@ export const getRestaurantSubscriptions = async () => {
           name,
           contact_email,
           contact_phone,
+          logo_url,
           is_active
         )
       `)
@@ -140,6 +147,7 @@ export const getRestaurantSubscription = async (restaurantId) => {
           name,
           contact_email,
           contact_phone,
+          logo_url,
           is_active
         )
       `)
@@ -558,7 +566,8 @@ export const getUpcomingRenewals = async (days = 7) => {
           id,
           name,
           contact_email,
-          contact_phone
+          contact_phone,
+          logo_url
         )
       `)
       .in('status', ['active', 'grace_period'])

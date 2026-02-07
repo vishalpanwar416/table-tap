@@ -17,13 +17,12 @@ import {
     RefreshCw,
     Eye
 } from 'lucide-react';
-import { getAllInquiries, updateInquiryStatus, deleteInquiry } from '../admin_service';
+import { getAllInquiries, updateInquiryStatus, deleteInquiry } from '../admin_service.js';
 
-const InquiryManagement = () => {
+const InquiryManagement = ({ searchTerm = '' }) => {
     const [inquiries, setInquiries] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [updatingId, setUpdatingId] = useState(null);
     const [selectedInquiry, setSelectedInquiry] = useState(null);
@@ -108,104 +107,154 @@ const InquiryManagement = () => {
     }
 
     return (
-        <div className="space-y-8 font-spartan">
-            {/* Header & Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                {/* Header removed as it is handled by AdminHeader */}
+        <div className="space-y-6 md:space-y-8 font-spartan">
+            {/* Toolbar - Stats & Filters in a single line on Desktop */}
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+                {/* Stats Toolbar */}
+                <div className="grid grid-cols-4 gap-1.5 md:flex md:items-center md:gap-3">
+                    {/* Total Leads */}
+                    <div className="flex flex-col md:flex-row items-center justify-center md:justify-start md:gap-2 px-1 py-2 md:px-4 md:py-3 bg-white rounded-xl border border-gray-100 shadow-sm">
+                        <span className="text-[9px] md:text-xs text-gray-500 font-bold uppercase tracking-wider text-center">Total</span>
+                        <span className="text-xs md:text-lg font-bold text-gray-900 leading-tight">{inquiries.length}</span>
+                    </div>
 
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-blue-50 rounded-xl text-blue-600">
-                            <MessageSquare size={24} />
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-500">Total Leads</p>
-                            <p className="text-2xl font-bold text-gray-900">{inquiries.length}</p>
-                        </div>
+                    {/* New Leads */}
+                    <div className="flex flex-col md:flex-row items-center justify-center md:justify-start md:gap-2 px-1 py-2 md:px-4 md:py-3 bg-amber-50 rounded-xl border border-amber-100">
+                        <span className="text-[9px] md:text-xs text-amber-600 font-bold uppercase tracking-wider text-center">New</span>
+                        <span className="text-xs md:text-lg font-bold text-amber-700 leading-tight">
+                            {inquiries.filter(i => i.status === 'new' || !i.status).length}
+                        </span>
+                    </div>
+
+                    {/* Converted */}
+                    <div className="flex flex-col md:flex-row items-center justify-center md:justify-start md:gap-2 px-1 py-2 md:px-4 md:py-3 bg-green-50 rounded-xl border border-green-100">
+                        <span className="text-[9px] md:text-xs text-green-600 font-bold uppercase tracking-wider text-center">Won</span>
+                        <span className="text-xs md:text-lg font-bold text-green-700 leading-tight">
+                            {inquiries.filter(i => i.status === 'converted').length}
+                        </span>
+                    </div>
+
+                    {/* Restaurants */}
+                    <div className="flex flex-col md:flex-row items-center justify-center md:justify-start md:gap-2 px-1 py-2 md:px-4 md:py-3 bg-purple-50 rounded-xl border border-purple-100">
+                        <span className="text-[9px] md:text-xs text-purple-600 font-bold uppercase tracking-wider text-center">Rest.</span>
+                        <span className="text-xs md:text-lg font-bold text-purple-700 leading-tight">
+                            {new Set(inquiries.map(i => i.restaurant_name).filter(Boolean)).size}
+                        </span>
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-amber-50 rounded-xl text-amber-600">
-                            <Clock size={24} />
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-500">New Leads</p>
-                            <p className="text-2xl font-bold text-gray-900">
-                                {inquiries.filter(i => i.status === 'new' || !i.status).length}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-green-50 rounded-xl text-green-600">
-                            <CheckCircle2 size={24} />
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-500">Converted</p>
-                            <p className="text-2xl font-bold text-gray-900">
-                                {inquiries.filter(i => i.status === 'converted').length}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-purple-50 rounded-xl text-purple-600">
-                            <Building2 size={24} />
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-500">Restaurants</p>
-                            <p className="text-2xl font-bold text-gray-900">
-                                {new Set(inquiries.map(i => i.restaurant_name).filter(Boolean)).size}
-                            </p>
-                        </div>
+                {/* Filters & Refresh */}
+                <div className="bg-white p-2.5 md:p-3 rounded-2xl border border-gray-100 shadow-sm flex flex-row gap-3 items-center justify-end">
+                    <div className="flex items-center gap-3 w-full md:w-auto">
+                        <Filter size={18} className="text-gray-400" />
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-sm flex-1 md:flex-none font-bold"
+                        >
+                            <option value="all">All Status</option>
+                            <option value="new">New</option>
+                            <option value="contacted">Contacted</option>
+                            <option value="converted">Converted</option>
+                            <option value="ignored">Ignored</option>
+                        </select>
+                        <button
+                            onClick={fetchInquiries}
+                            className="p-2 hover:bg-gray-100 rounded-xl text-gray-500 transition-colors shrink-0"
+                        >
+                            <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+                        </button>
                     </div>
                 </div>
             </div>
 
-            {/* Filters & Search */}
-            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
-                <div className="relative w-full md:w-96">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <input
-                        type="text"
-                        placeholder="Search by name, email or restaurant..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all"
-                    />
-                </div>
-
-                <div className="flex items-center gap-3 w-full md:w-auto">
-                    <Filter size={18} className="text-gray-400" />
-                    <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                    >
-                        <option value="all">All Status</option>
-                        <option value="new">New</option>
-                        <option value="contacted">Contacted</option>
-                        <option value="converted">Converted</option>
-                        <option value="ignored">Ignored</option>
-                    </select>
-                    <button
-                        onClick={fetchInquiries}
-                        className="p-2 hover:bg-gray-100 rounded-xl text-gray-500 transition-colors"
-                    >
-                        <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
-                    </button>
-                </div>
-            </div>
-
-            {/* Leads Table */}
+            {/* Leads List - Responsive */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
+                {/* Mobile View: Cards */}
+                <div className="md:hidden">
+                    {filteredInquiries.length === 0 ? (
+                        <div className="p-8 text-center text-gray-400">
+                            <div className="flex flex-col items-center">
+                                <AlertCircle size={40} className="mb-2 opacity-20" />
+                                <p>No inquiries found</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-gray-100">
+                            {filteredInquiries.map((item) => (
+                                <div key={item.id} className="p-4 space-y-3">
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">
+                                                {item.name?.charAt(0) || 'U'}
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-gray-900 text-sm">{item.name}</p>
+                                                <p className="text-xs text-gray-500">{item.restaurant_name || 'N/A'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-1">
+                                            <button
+                                                onClick={() => setSelectedInquiry(item)}
+                                                className="p-1.5 text-blue-600 bg-blue-50 rounded-lg"
+                                            >
+                                                <Eye size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(item.id)}
+                                                className="p-1.5 text-red-500 bg-red-50 rounded-lg"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                                        <div className="flex items-center gap-1.5 overflow-hidden">
+                                            <Mail size={12} className="shrink-0 text-gray-400" />
+                                            <span className="truncate">{item.email}</span>
+                                        </div>
+                                        {item.phone && (
+                                            <div className="flex items-center gap-1.5">
+                                                <Phone size={12} className="shrink-0 text-gray-400" />
+                                                <span>{item.phone}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex items-center gap-1.5">
+                                            <Building2 size={12} className="shrink-0 text-gray-400" />
+                                            <span className="truncate">{item.interested_plan || 'Standard'} Plan</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            <Calendar size={12} className="shrink-0 text-gray-400" />
+                                            <span>{item.created_at ? new Date(item.created_at).toLocaleDateString() : 'N/A'}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between pt-2 border-t border-gray-50">
+                                        <span className="text-xs font-medium text-gray-400">Status</span>
+                                        <div className="relative">
+                                            <select
+                                                value={item.status || 'new'}
+                                                onChange={(e) => handleStatusUpdate(item.id, e.target.value)}
+                                                disabled={updatingId === item.id}
+                                                className={`appearance-none pl-2 pr-6 py-1 rounded-full text-[10px] font-bold border cursor-pointer focus:outline-none ${getStatusColor(item.status || 'new')}`}
+                                            >
+                                                <option value="new">New</option>
+                                                <option value="contacted">Contacted</option>
+                                                <option value="converted">Converted</option>
+                                                <option value="ignored">Ignored</option>
+                                            </select>
+                                            <ChevronDown size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-50" />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Desktop View: Table */}
+                <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-gray-50/50 border-b border-gray-100">

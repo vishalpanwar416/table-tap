@@ -34,23 +34,13 @@ const Sidebar = ({
   onProfilePhotoClick,
   restaurantLogoUrl,
   collapsed = false,
-  onToggleCollapsed
+  onToggleCollapsed,
+  handleLogout // Accepted from props
 }) => {
   const navigate = useNavigate();
-  const [showMobileNav, setShowMobileNav] = React.useState(false);
-
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      navigate('/login');
-    } catch (error) {
-      // Error handling without console
-    }
-  };
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
-    setShowMobileNav(false);
   };
 
   const getIcon = (iconName) => {
@@ -110,20 +100,11 @@ const Sidebar = ({
 
   return (
     <>
-      {/* Mobile menu button */}
-      <button
-        onClick={() => setShowMobileNav(!showMobileNav)}
-        className="md:hidden fixed top-4 left-4 z-20 p-2 rounded-lg bg-gray-800 text-white"
-      >
-        {showMobileNav ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-      </button>
-
       {/* Sidebar */}
       <div className={`
-        fixed md:static inset-y-0 left-0 z-10
-        ${collapsed ? 'md:w-20' : 'md:w-64'} w-64 bg-gray-900 text-white
-        transform transition-transform duration-200 ease-in-out
-        ${showMobileNav ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        hidden md:flex flex-col h-full
+        ${collapsed ? 'w-20' : 'w-64'} bg-gray-900 text-white
+        transition-all duration-200 ease-in-out
       `}>
         <div className="flex flex-col h-full">
           {/* Logo */}
@@ -133,7 +114,7 @@ const Sidebar = ({
               <button
                 type="button"
                 onClick={() => onToggleCollapsed?.()}
-                className="hidden md:inline-flex items-center justify-center w-9 h-9 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 transition-colors"
+                className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 transition-colors"
                 aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                 title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               >
@@ -244,14 +225,6 @@ const Sidebar = ({
           </div>
         </div>
       </div>
-
-      {/* Mobile overlay */}
-      {showMobileNav && (
-        <div
-          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-0"
-          onClick={() => setShowMobileNav(false)}
-        />
-      )}
     </>
   );
 };

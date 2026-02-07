@@ -30,27 +30,27 @@ import {
   X,
   Download
 } from 'lucide-react';
-import { 
-  getAdminActivityLogs, 
+import {
+  getAdminActivityLogs,
   getActivityStats,
   ACTIVITY_TYPES,
-  EMAIL_TYPES 
+  EMAIL_TYPES
 } from '../../../api/adminActivityLogService';
 
-const AdminActivityLogs = () => {
+const AdminActivityLogs = ({ searchTerm }) => {
   const [logs, setLogs] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
-  
+
   // Filters
-  const [searchTerm, setSearchTerm] = useState('');
+  // searchTerm is now a prop
   const [activityTypeFilter, setActivityTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [dateFilter, setDateFilter] = useState('7days');
+  const [dateFilter, setDateFilter] = useState('30days');
   const [showFilters, setShowFilters] = useState(false);
-  
+
   // Pagination
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -76,7 +76,14 @@ const AdminActivityLogs = () => {
     'Restaurants': [
       { type: ACTIVITY_TYPES.RESTAURANT_CREATED, label: 'Created', icon: Building2, color: 'text-purple-500' },
       { type: ACTIVITY_TYPES.RESTAURANT_ACTIVATED, label: 'Activated', icon: CheckCircle, color: 'text-green-500' },
-      { type: ACTIVITY_TYPES.RESTAURANT_DEACTIVATED, label: 'Deactivated', icon: XCircle, color: 'text-gray-500' }
+      { type: ACTIVITY_TYPES.RESTAURANT_DEACTIVATED, label: 'Deactivated', icon: XCircle, color: 'text-gray-500' },
+      { type: ACTIVITY_TYPES.RESTAURANT_UPDATED, label: 'Updated', icon: Settings, color: 'text-blue-500' },
+      { type: ACTIVITY_TYPES.RESTAURANT_DELETED, label: 'Deleted', icon: XCircle, color: 'text-red-500' }
+    ],
+    'Staff': [
+      { type: ACTIVITY_TYPES.STAFF_CREATED, label: 'Staff Added', icon: UserPlus, color: 'text-blue-500' },
+      { type: ACTIVITY_TYPES.STAFF_UPDATED, label: 'Staff Updated', icon: User, color: 'text-amber-500' },
+      { type: ACTIVITY_TYPES.STAFF_DELETED, label: 'Staff Removed', icon: XCircle, color: 'text-red-500' }
     ],
     'System': [
       { type: ACTIVITY_TYPES.SYSTEM_ALERT, label: 'Alert', icon: Bell, color: 'text-red-500' },
@@ -104,7 +111,7 @@ const AdminActivityLogs = () => {
   useEffect(() => {
     fetchLogs(true);
     fetchStats();
-  }, [activityTypeFilter, statusFilter, dateFilter]);
+  }, [activityTypeFilter, statusFilter, dateFilter, searchTerm]);
 
   const fetchLogs = async (reset = false) => {
     try {
@@ -116,7 +123,7 @@ const AdminActivityLogs = () => {
       }
 
       const currentPage = reset ? 1 : page;
-      
+
       // Build filters
       const filters = {};
       if (activityTypeFilter !== 'all') {
@@ -266,198 +273,84 @@ const AdminActivityLogs = () => {
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl text-white">
-                <Activity className="w-6 h-6" />
-              </div>
-              Activity Logs
-            </h1>
-            <p className="text-gray-500 mt-1">
-              Track all automated emails, system events, and admin activities
-            </p>
+      {/* Header Actions - Moved to Filters */}
+
+      {/* Stats Cards */}
+      {stats && (
+        <div className="flex items-center gap-2 mt-2 overflow-x-auto pb-2 no-scrollbar px-1">
+          {/* Total */}
+          <div className="bg-white rounded-lg border border-gray-100 p-2 min-w-[70px] flex flex-col items-center justify-center flex-shrink-0 shadow-sm">
+            <Activity className="w-3.5 h-3.5 text-blue-600 mb-1" />
+            <p className="text-sm font-bold text-gray-900 leading-tight">{stats.total}</p>
+            <p className="text-[9px] text-gray-400">Total</p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => { fetchLogs(true); fetchStats(); }}
-              disabled={loading}
-              className="p-2.5 rounded-xl bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50"
-              title="Refresh"
-            >
-              <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-            </button>
-            <button
-              className="px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center gap-2 text-sm font-medium"
-              title="Export logs"
-            >
-              <Download className="w-4 h-4" />
-              Export
-            </button>
+          {/* Sent */}
+          <div className="bg-white rounded-lg border border-gray-100 p-2 min-w-[70px] flex flex-col items-center justify-center flex-shrink-0 shadow-sm">
+            <MailCheck className="w-3.5 h-3.5 text-green-600 mb-1" />
+            <p className="text-sm font-bold text-gray-900 leading-tight">{stats.emails.sent}</p>
+            <p className="text-[9px] text-gray-400">Sent</p>
+          </div>
+
+          {/* Failed */}
+          <div className="bg-white rounded-lg border border-gray-100 p-2 min-w-[70px] flex flex-col items-center justify-center flex-shrink-0 shadow-sm">
+            <MailX className="w-3.5 h-3.5 text-red-600 mb-1" />
+            <p className="text-sm font-bold text-gray-900 leading-tight">{stats.emails.failed}</p>
+            <p className="text-[9px] text-gray-400">Failed</p>
+          </div>
+
+          {/* Successful */}
+          <div className="bg-white rounded-lg border border-gray-100 p-2 min-w-[70px] flex flex-col items-center justify-center flex-shrink-0 shadow-sm">
+            <CheckCircle className="w-3.5 h-3.5 text-emerald-600 mb-1" />
+            <p className="text-sm font-bold text-gray-900 leading-tight">{stats.byStatus.success}</p>
+            <p className="text-[9px] text-gray-400">Success</p>
+          </div>
+
+          {/* Pending */}
+          <div className="bg-white rounded-lg border border-gray-100 p-2 min-w-[70px] flex flex-col items-center justify-center flex-shrink-0 shadow-sm">
+            <Clock className="w-3.5 h-3.5 text-amber-600 mb-1" />
+            <p className="text-sm font-bold text-gray-900 leading-tight">{stats.byStatus.pending}</p>
+            <p className="text-[9px] text-gray-400">Pending</p>
           </div>
         </div>
-
-        {/* Stats Cards */}
-        {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-6">
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Activity className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-                  <p className="text-xs text-gray-500">Total Activities</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <MailCheck className="w-5 h-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">{stats.emails.sent}</p>
-                  <p className="text-xs text-gray-500">Emails Sent</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-100 rounded-lg">
-                  <MailX className="w-5 h-5 text-red-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">{stats.emails.failed}</p>
-                  <p className="text-xs text-gray-500">Emails Failed</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-emerald-100 rounded-lg">
-                  <CheckCircle className="w-5 h-5 text-emerald-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">{stats.byStatus.success}</p>
-                  <p className="text-xs text-gray-500">Successful</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-100 rounded-lg">
-                  <Clock className="w-5 h-5 text-amber-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">{stats.byStatus.pending}</p>
-                  <p className="text-xs text-gray-500">Pending</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Filters & Search */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm mb-6">
         <div className="p-4 border-b border-gray-100">
-          <div className="flex flex-col lg:flex-row gap-3">
-            {/* Search */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search activities..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm"
-              />
-            </div>
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+            {/* Refresh & Export */}
+            <div className="flex items-center gap-2 flex-shrink-0">
 
-            {/* Activity Type Filter */}
-            <div className="relative">
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-all text-sm font-medium text-gray-700 min-w-[160px] justify-between"
-              >
-                <div className="flex items-center gap-2">
-                  <Filter className="w-4 h-4 text-gray-400" />
-                  <span>
-                    {activityTypeFilter === 'all' ? 'All Types' : 
-                      Object.values(activityCategories).flat().find(a => a.type === activityTypeFilter)?.label || activityTypeFilter}
-                  </span>
-                </div>
-                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+              <button className="flex items-center gap-1.5 px-2 py-2 md:px-3 bg-white border border-gray-200 rounded-lg shadow-sm text-xs font-medium whitespace-nowrap active:bg-gray-50">
+                <Download className="w-4 h-4" />
+                <span className="hidden md:inline">Export</span>
               </button>
-
-              {showFilters && (
-                <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-xl border border-gray-200 shadow-xl z-50 max-h-96 overflow-y-auto">
-                  <div className="p-2">
-                    <button
-                      onClick={() => { setActivityTypeFilter('all'); setShowFilters(false); }}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                        activityTypeFilter === 'all' ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-50 text-gray-700'
-                      }`}
-                    >
-                      All Types
-                    </button>
-                  </div>
-                  {Object.entries(activityCategories).map(([category, types]) => (
-                    <div key={category} className="border-t border-gray-100">
-                      <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50">
-                        {category}
-                      </div>
-                      <div className="p-2">
-                        {types.map(({ type, label, icon: Icon, color }) => (
-                          <button
-                            key={type}
-                            onClick={() => { setActivityTypeFilter(type); setShowFilters(false); }}
-                            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${
-                              activityTypeFilter === type ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-50 text-gray-700'
-                            }`}
-                          >
-                            <Icon className={`w-4 h-4 ${color}`} />
-                            <span>{label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
+            {/* Search removed - available in header */}
 
-            {/* Status Filter */}
-            <div className="flex rounded-xl border border-gray-200 overflow-hidden">
-              {[
-                { value: 'all', label: 'All' },
-                { value: 'success', label: 'Success' },
-                { value: 'failed', label: 'Failed' },
-                { value: 'pending', label: 'Pending' }
-              ].map(({ value, label }) => (
-                <button
-                  key={value}
-                  onClick={() => setStatusFilter(value)}
-                  className={`px-4 py-2.5 text-sm font-medium transition-colors ${
-                    statusFilter === value
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
+
+
+            {/* Status Filter (Dropdown) */}
+            <div className="relative">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="appearance-none pl-3 pr-8 py-2 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-700 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none shadow-sm flex-shrink-0 min-w-[110px]"
+              >
+                <option value="all">All Status</option>
+                <option value="success">Success</option>
+                <option value="failed">Failed</option>
+                <option value="pending">Pending</option>
+              </select>
+              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
             </div>
 
             {/* Date Filter */}
             <select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none"
+              className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-700 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none shadow-sm flex-shrink-0"
             >
               <option value="24hours">Last 24 Hours</option>
               <option value="7days">Last 7 Days</option>
@@ -493,56 +386,49 @@ const AdminActivityLogs = () => {
             filteredLogs.map((log) => (
               <div
                 key={log.id}
-                className="flex items-start gap-4 p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                className="flex items-start gap-3 p-3 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-50 last:border-0"
                 onClick={() => setSelectedLog(log)}
               >
                 {/* Icon */}
-                <div className={`flex-shrink-0 p-2.5 rounded-xl ${
-                  log.status === 'failed' ? 'bg-red-50' : 
-                  log.status === 'pending' ? 'bg-amber-50' : 
-                  'bg-gray-50'
-                }`}>
-                  {getActivityIcon(log.activity_type)}
+                <div className={`flex-shrink-0 p-1.5 rounded-lg mt-0.5 ${log.status === 'failed' ? 'bg-red-50' :
+                  log.status === 'pending' ? 'bg-amber-50' :
+                    'bg-gray-50'
+                  }`}>
+                  {React.cloneElement(getActivityIcon(log.activity_type), { className: "w-4 h-4" })}
                 </div>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h4 className="font-semibold text-gray-900">
-                        {log.activity_name}
-                      </h4>
-                      <p className="text-sm text-gray-600 mt-0.5">
-                        {log.description}
-                      </p>
-                      {log.target_name && (
-                        <p className="text-xs text-gray-400 mt-1">
-                          To: {log.target_name}
-                        </p>
-                      )}
-                    </div>
-                    {getStatusBadge(log.status)}
-                  </div>
-                  <div className="flex items-center gap-3 mt-2">
-                    <span className="text-xs text-gray-400 flex items-center gap-1">
-                      <User className="w-3 h-3" />
-                      {log.user_name}
-                    </span>
-                    <span className="text-xs text-gray-400 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
+                    <h4 className="text-sm font-medium text-gray-900 truncate pr-2">
+                      {log.activity_name}
+                      {log.target_name && <span className="text-gray-400 font-normal ml-1">· {log.target_name}</span>}
+                    </h4>
+                    <span className="text-[10px] text-gray-400 flex-shrink-0 whitespace-nowrap mt-0.5">
                       {formatTimeAgo(log.created_at)}
                     </span>
+                  </div>
+
+                  <p className="text-xs text-gray-500 truncate mt-0.5">
+                    {log.description}
+                  </p>
+
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <div className="scale-75 origin-left -ml-1">
+                      {getStatusBadge(log.status)}
+                    </div>
+                    <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                      <User className="w-3 h-3 opacity-70" />
+                      {log.user_name}
+                    </span>
                     {log.details?.amount && (
-                      <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
-                        <IndianRupee className="w-3 h-3" />
+                      <span className="text-[10px] text-emerald-600 font-medium flex items-center gap-0.5 border-l border-gray-200 pl-2">
+                        <IndianRupee className="w-2.5 h-2.5" />
                         {log.details.amount.toLocaleString()}
                       </span>
                     )}
                   </div>
                 </div>
-
-                {/* Arrow */}
-                <ChevronRight className="w-5 h-5 text-gray-300 flex-shrink-0" />
               </div>
             ))
           )}
@@ -570,104 +456,108 @@ const AdminActivityLogs = () => {
       </div>
 
       {/* Click outside handler for dropdown */}
-      {showFilters && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setShowFilters(false)}
-        />
-      )}
+      {
+        showFilters && (
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setShowFilters(false)}
+          />
+        )
+      }
 
       {/* Detail Modal */}
-      {selectedLog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-auto">
-            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-gray-900">Activity Details</h3>
-              <button
-                onClick={() => setSelectedLog(null)}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
-            <div className="p-4 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-xl bg-gray-50">
-                  {getActivityIcon(selectedLog.activity_type)}
-                </div>
-                <div>
-                  <h4 className="font-bold text-gray-900">{selectedLog.activity_name}</h4>
-                  {getStatusBadge(selectedLog.status)}
-                </div>
+      {
+        selectedLog && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-auto">
+              <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                <h3 className="text-lg font-bold text-gray-900">Activity Details</h3>
+                <button
+                  onClick={() => setSelectedLog(null)}
+                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
               </div>
+              <div className="p-4 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-xl bg-gray-50">
+                    {getActivityIcon(selectedLog.activity_type)}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-900">{selectedLog.activity_name}</h4>
+                    {getStatusBadge(selectedLog.status)}
+                  </div>
+                </div>
 
-              <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                <p className="text-sm text-gray-700">{selectedLog.description}</p>
-                
-                {selectedLog.target_name && (
+                <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                  <p className="text-sm text-gray-700">{selectedLog.description}</p>
+
+                  {selectedLog.target_name && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-500">Recipient:</span>
+                      <span className="font-medium text-gray-900">{selectedLog.target_name}</span>
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="text-gray-500">Recipient:</span>
-                    <span className="font-medium text-gray-900">{selectedLog.target_name}</span>
+                    <span className="text-gray-500">Triggered by:</span>
+                    <span className="font-medium text-gray-900">{selectedLog.user_name}</span>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-gray-500">Time:</span>
+                    <span className="font-medium text-gray-900">{formatDate(selectedLog.created_at)}</span>
+                  </div>
+                </div>
+
+                {selectedLog.details && Object.keys(selectedLog.details).length > 0 && (
+                  <div>
+                    <h5 className="text-sm font-semibold text-gray-700 mb-2">Additional Details</h5>
+                    <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                      {selectedLog.details.email_type && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="text-gray-500">Email Type:</span>
+                          <span className="font-medium text-gray-900">
+                            {getEmailTypeInfo(selectedLog.details.email_type).label}
+                          </span>
+                        </div>
+                      )}
+                      {selectedLog.details.subject && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="text-gray-500">Subject:</span>
+                          <span className="font-medium text-gray-900">{selectedLog.details.subject}</span>
+                        </div>
+                      )}
+                      {selectedLog.details.amount && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="text-gray-500">Amount:</span>
+                          <span className="font-medium text-emerald-600">₹{selectedLog.details.amount.toLocaleString()}</span>
+                        </div>
+                      )}
+                      {selectedLog.details.order_id && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="text-gray-500">Order ID:</span>
+                          <span className="font-mono text-gray-900">{selectedLog.details.order_id}</span>
+                        </div>
+                      )}
+                      {selectedLog.details.error_message && (
+                        <div className="text-sm">
+                          <span className="text-gray-500">Error:</span>
+                          <p className="mt-1 text-red-600 bg-red-50 rounded-lg p-2 text-xs font-mono">
+                            {selectedLog.details.error_message}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
-
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-gray-500">Triggered by:</span>
-                  <span className="font-medium text-gray-900">{selectedLog.user_name}</span>
-                </div>
-
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-gray-500">Time:</span>
-                  <span className="font-medium text-gray-900">{formatDate(selectedLog.created_at)}</span>
-                </div>
               </div>
-
-              {selectedLog.details && Object.keys(selectedLog.details).length > 0 && (
-                <div>
-                  <h5 className="text-sm font-semibold text-gray-700 mb-2">Additional Details</h5>
-                  <div className="bg-gray-50 rounded-xl p-4 space-y-2">
-                    {selectedLog.details.email_type && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="text-gray-500">Email Type:</span>
-                        <span className="font-medium text-gray-900">
-                          {getEmailTypeInfo(selectedLog.details.email_type).label}
-                        </span>
-                      </div>
-                    )}
-                    {selectedLog.details.subject && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="text-gray-500">Subject:</span>
-                        <span className="font-medium text-gray-900">{selectedLog.details.subject}</span>
-                      </div>
-                    )}
-                    {selectedLog.details.amount && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="text-gray-500">Amount:</span>
-                        <span className="font-medium text-emerald-600">₹{selectedLog.details.amount.toLocaleString()}</span>
-                      </div>
-                    )}
-                    {selectedLog.details.order_id && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="text-gray-500">Order ID:</span>
-                        <span className="font-mono text-gray-900">{selectedLog.details.order_id}</span>
-                      </div>
-                    )}
-                    {selectedLog.details.error_message && (
-                      <div className="text-sm">
-                        <span className="text-gray-500">Error:</span>
-                        <p className="mt-1 text-red-600 bg-red-50 rounded-lg p-2 text-xs font-mono">
-                          {selectedLog.details.error_message}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 };
 

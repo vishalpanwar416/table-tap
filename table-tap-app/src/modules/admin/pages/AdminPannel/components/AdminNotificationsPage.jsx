@@ -42,7 +42,7 @@ import {
 } from 'lucide-react';
 import { useAdminNotifications, NOTIFICATION_TYPES } from '../../../context/AdminNotificationContext';
 
-const AdminNotificationsPage = ({ onTabChange }) => {
+const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
   const {
     notifications,
     unreadCount,
@@ -54,7 +54,6 @@ const AdminNotificationsPage = ({ onTabChange }) => {
   } = useAdminNotifications();
 
   // State for filters and sorting
-  const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all'); // all, read, unread
   const [sortBy, setSortBy] = useState('date'); // date, type
@@ -168,7 +167,7 @@ const AdminNotificationsPage = ({ onTabChange }) => {
   // Get background color for notification type
   const getNotificationBg = (type, read) => {
     if (read) return 'bg-white hover:bg-gray-50';
-    
+
     switch (type) {
       case NOTIFICATION_TYPES.NEW_INQUIRY:
         return 'bg-pink-50 hover:bg-pink-100';
@@ -242,7 +241,7 @@ const AdminNotificationsPage = ({ onTabChange }) => {
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
     if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-    
+
     return date.toLocaleDateString('en-IN', {
       day: 'numeric',
       month: 'short',
@@ -296,8 +295,8 @@ const AdminNotificationsPage = ({ onTabChange }) => {
       } else if (sortBy === 'type') {
         const typeA = getTypeLabel(a.type);
         const typeB = getTypeLabel(b.type);
-        return sortOrder === 'desc' 
-          ? typeB.localeCompare(typeA) 
+        return sortOrder === 'desc'
+          ? typeB.localeCompare(typeA)
           : typeA.localeCompare(typeB);
       }
       return 0;
@@ -393,7 +392,7 @@ const AdminNotificationsPage = ({ onTabChange }) => {
   const stats = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const thisWeek = new Date();
     thisWeek.setDate(thisWeek.getDate() - 7);
 
@@ -406,135 +405,97 @@ const AdminNotificationsPage = ({ onTabChange }) => {
   }, [notifications, unreadCount]);
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl text-white">
-                <Bell className="w-6 h-6" />
-              </div>
-              Notifications
-            </h1>
-            <p className="text-gray-500 mt-1">
-              Stay updated with all activities across the platform
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
+    <div className="p-2 md:p-6 max-w-7xl mx-auto">
+      {/* Header Actions Only - Desktop Only */}
+      <div className="mb-6 hidden md:flex justify-end">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="p-2.5 rounded-xl bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50"
+            title="Refresh"
+          >
+            <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </button>
+          {unreadCount > 0 && (
             <button
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="p-2.5 rounded-xl bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50"
-              title="Refresh"
-            >
-              <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
-            </button>
-            {unreadCount > 0 && (
-              <button
-                onClick={markAllAsRead}
-                className="px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center gap-2 text-sm font-medium"
-              >
-                <CheckCheck className="w-4 h-4" />
-                Mark all read
-              </button>
-            )}
-            <button
-              onClick={clearOldNotifications}
+              onClick={markAllAsRead}
               className="px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center gap-2 text-sm font-medium"
-              title="Clear notifications older than 30 days"
             >
-              <Trash2 className="w-4 h-4" />
-              Clear old
+              <CheckCheck className="w-4 h-4" />
+              Mark all read
             </button>
+          )}
+          <button
+            onClick={clearOldNotifications}
+            className="px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center gap-2 text-sm font-medium"
+            title="Clear notifications older than 30 days"
+          >
+            <Trash2 className="w-4 h-4" />
+            Clear old
+          </button>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      {/* Stats Cards - Compact on Mobile */}
+      <div className="grid grid-cols-4 gap-1 md:gap-3 mt-2 md:mt-6 pb-2 md:pb-0">
+        <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
+          <div className="p-1 md:p-2 bg-blue-100 rounded-lg mb-1">
+            <Inbox className="w-3.5 h-3.5 md:w-5 md:h-5 text-blue-600" />
+          </div>
+          <div>
+            <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">{stats.total}</p>
+            <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate w-full">Total</p>
           </div>
         </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Inbox className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-                <p className="text-xs text-gray-500">Total</p>
-              </div>
-            </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
+          <div className="p-1 md:p-2 bg-red-100 rounded-lg mb-1">
+            <Bell className="w-3.5 h-3.5 md:w-5 md:h-5 text-red-600" />
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-100 rounded-lg">
-                <Bell className="w-5 h-5 text-red-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{stats.unread}</p>
-                <p className="text-xs text-gray-500">Unread</p>
-              </div>
-            </div>
+          <div>
+            <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">{stats.unread}</p>
+            <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate w-full">Unread</p>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Clock className="w-5 h-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{stats.today}</p>
-                <p className="text-xs text-gray-500">Today</p>
-              </div>
-            </div>
+        </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
+          <div className="p-1 md:p-2 bg-green-100 rounded-lg mb-1">
+            <Clock className="w-3.5 h-3.5 md:w-5 md:h-5 text-green-600" />
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Calendar className="w-5 h-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{stats.thisWeek}</p>
-                <p className="text-xs text-gray-500">This Week</p>
-              </div>
-            </div>
+          <div>
+            <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">{stats.today}</p>
+            <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate w-full">Today</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
+          <div className="p-1 md:p-2 bg-purple-100 rounded-lg mb-1">
+            <Calendar className="w-3.5 h-3.5 md:w-5 md:h-5 text-purple-600" />
+          </div>
+          <div>
+            <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">{stats.thisWeek}</p>
+            <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate w-full">Week</p>
           </div>
         </div>
       </div>
 
+
       {/* Filters & Search */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm mb-6">
-        <div className="p-4 border-b border-gray-100">
-          <div className="flex flex-col lg:flex-row gap-3">
-            {/* Search */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search notifications..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm"
-              />
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
+      <div className="md:bg-white md:rounded-2xl md:border md:border-gray-200 md:shadow-sm mb-2 md:mb-6">
+        <div className="md:p-4 md:border-b md:border-gray-100">
+          <div className="flex items-center justify-between gap-1 pb-1">
+
 
             {/* Type Filter */}
-            <div className="relative">
+            <div className="relative shrink-0">
               <button
                 onClick={() => setShowTypeDropdown(!showTypeDropdown)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-all text-sm font-medium text-gray-700 min-w-[160px] justify-between"
+                className="flex items-center justify-center gap-2 w-9 h-9 md:w-auto md:h-auto md:px-4 md:py-2.5 rounded-lg md:rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-all text-xs md:text-sm font-medium text-gray-700 whitespace-nowrap"
               >
                 <div className="flex items-center gap-2">
                   <Filter className="w-4 h-4 text-gray-400" />
-                  <span>{typeFilter === 'all' ? 'All Types' : getTypeLabel(typeFilter)}</span>
+                  <span className="hidden md:inline">{typeFilter === 'all' ? 'All Types' : getTypeLabel(typeFilter)}</span>
                 </div>
-                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showTypeDropdown ? 'rotate-180' : ''}`} />
+                <ChevronDown className="hidden md:block w-4 h-4 text-gray-400 transition-transform" />
               </button>
 
               {showTypeDropdown && (
@@ -542,9 +503,8 @@ const AdminNotificationsPage = ({ onTabChange }) => {
                   <div className="p-2">
                     <button
                       onClick={() => { setTypeFilter('all'); setShowTypeDropdown(false); }}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                        typeFilter === 'all' ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-50 text-gray-700'
-                      }`}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${typeFilter === 'all' ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-50 text-gray-700'
+                        }`}
                     >
                       All Types
                     </button>
@@ -559,9 +519,8 @@ const AdminNotificationsPage = ({ onTabChange }) => {
                           <button
                             key={type}
                             onClick={() => { setTypeFilter(type); setShowTypeDropdown(false); }}
-                            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${
-                              typeFilter === type ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-50 text-gray-700'
-                            }`}
+                            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${typeFilter === type ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-50 text-gray-700'
+                              }`}
                           >
                             {getNotificationIcon(type)}
                             <span>{label}</span>
@@ -575,7 +534,7 @@ const AdminNotificationsPage = ({ onTabChange }) => {
             </div>
 
             {/* Status Filter */}
-            <div className="flex rounded-xl border border-gray-200 overflow-hidden">
+            <div className="flex flex-1 rounded-lg border border-gray-200 overflow-hidden shrink-0">
               {[
                 { value: 'all', label: 'All' },
                 { value: 'unread', label: 'Unread' },
@@ -584,45 +543,51 @@ const AdminNotificationsPage = ({ onTabChange }) => {
                 <button
                   key={value}
                   onClick={() => setStatusFilter(value)}
-                  className={`px-4 py-2.5 text-sm font-medium transition-colors ${
-                    statusFilter === value
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-gray-600 hover:bg-gray-50'
-                  }`}
+                  className={`flex-1 px-1 py-1.5 md:px-4 md:py-2.5 text-[10px] md:text-sm font-medium transition-colors whitespace-nowrap text-center ${statusFilter === value
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-gray-600 hover:bg-gray-50'
+                    }`}
                 >
                   {label}
                 </button>
               ))}
             </div>
 
+            {/* Clear Old - Mobile Only */}
+            <button
+              onClick={clearOldNotifications}
+              className="md:hidden flex items-center justify-center shrink-0 w-9 h-9 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition-colors"
+              title="Clear old"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+
             {/* Sort */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={() => toggleSort('date')}
-                className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all ${
-                  sortBy === 'date' 
-                    ? 'border-blue-200 bg-blue-50 text-blue-700' 
-                    : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
-                }`}
+                className={`flex items-center justify-center gap-1.5 w-9 h-9 md:w-auto md:h-auto md:px-3 md:py-2.5 rounded-lg md:rounded-xl border text-xs md:text-sm font-medium transition-all whitespace-nowrap ${sortBy === 'date'
+                  ? 'border-blue-200 bg-blue-50 text-blue-700'
+                  : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                  }`}
               >
                 <Clock className="w-4 h-4" />
-                Date
+                <span className="hidden md:inline">Date</span>
                 {sortBy === 'date' && (
-                  sortOrder === 'desc' ? <SortDesc className="w-3 h-3" /> : <SortAsc className="w-3 h-3" />
+                  sortOrder === 'desc' ? <SortDesc className="w-3 h-3 absolute md:static top-0.5 right-0.5" /> : <SortAsc className="w-3 h-3 absolute md:static top-0.5 right-0.5" />
                 )}
               </button>
               <button
                 onClick={() => toggleSort('type')}
-                className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all ${
-                  sortBy === 'type' 
-                    ? 'border-blue-200 bg-blue-50 text-blue-700' 
-                    : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
-                }`}
+                className={`flex items-center justify-center gap-1.5 w-9 h-9 md:w-auto md:h-auto md:px-3 md:py-2.5 rounded-lg md:rounded-xl border text-xs md:text-sm font-medium transition-all whitespace-nowrap ${sortBy === 'type'
+                  ? 'border-blue-200 bg-blue-50 text-blue-700'
+                  : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                  }`}
               >
                 <ArrowUpDown className="w-4 h-4" />
-                Type
+                <span className="hidden md:inline">Type</span>
                 {sortBy === 'type' && (
-                  sortOrder === 'desc' ? <SortDesc className="w-3 h-3" /> : <SortAsc className="w-3 h-3" />
+                  sortOrder === 'desc' ? <SortDesc className="w-3 h-3 absolute md:static top-0.5 right-0.5" /> : <SortAsc className="w-3 h-3 absolute md:static top-0.5 right-0.5" />
                 )}
               </button>
             </div>
@@ -654,7 +619,7 @@ const AdminNotificationsPage = ({ onTabChange }) => {
         )}
 
         {/* Results count */}
-        <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between text-sm text-gray-500">
+        <div className="px-2 py-2 md:px-4 md:py-3 border-b border-gray-100 flex items-center justify-between text-sm text-gray-500">
           <div className="flex items-center gap-4">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -692,11 +657,11 @@ const AdminNotificationsPage = ({ onTabChange }) => {
             filteredNotifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`flex items-start gap-4 p-4 transition-all cursor-pointer ${getNotificationBg(notification.type, notification.read)}`}
+                className={`flex items-start gap-2 md:gap-4 p-2 md:p-4 transition-all cursor-pointer border-b border-gray-50 last:border-0 ${getNotificationBg(notification.type, notification.read)}`}
                 onClick={() => handleNotificationClick(notification)}
               >
-                {/* Checkbox */}
-                <div className="pt-1">
+                {/* Checkbox - Compact */}
+                <div className="pt-0.5 md:pt-1">
                   <input
                     type="checkbox"
                     checked={selectedNotifications.includes(notification.id)}
@@ -708,57 +673,59 @@ const AdminNotificationsPage = ({ onTabChange }) => {
                           : [...prev, notification.id]
                       );
                     }}
-                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="w-3.5 h-3.5 md:w-4 md:h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                 </div>
 
-                {/* Icon */}
-                <div className={`flex-shrink-0 p-2.5 rounded-xl ${notification.read ? 'bg-gray-100' : 'bg-white shadow-sm'}`}>
-                  {getNotificationIcon(notification.type)}
+                {/* Icon - Smaller on Mobile */}
+                <div className={`flex-shrink-0 p-1.5 md:p-2.5 rounded-xl ${notification.read ? 'bg-gray-100' : 'bg-white shadow-sm'}`}>
+                  {React.cloneElement(getNotificationIcon(notification.type), {
+                    className: "w-4 h-4 md:w-5 md:h-5 " + getNotificationIcon(notification.type).props.className.split(' ').filter(c => !c.startsWith('w-') && !c.startsWith('h-')).join(' ')
+                  })}
                 </div>
 
-                {/* Content */}
+                {/* Content - Compact Typography */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h4 className={`font-semibold ${notification.read ? 'text-gray-600' : 'text-gray-900'}`}>
+                    <div className="flex-1 min-w-0">
+                      <h4 className={`text-sm md:text-base font-semibold leading-tight mb-0.5 ${notification.read ? 'text-gray-600' : 'text-gray-900'} truncate`}>
                         {notification.title}
                       </h4>
-                      <p className={`text-sm mt-0.5 ${notification.read ? 'text-gray-400' : 'text-gray-600'}`}>
+                      <p className={`text-xs md:text-sm leading-relaxed ${notification.read ? 'text-gray-400' : 'text-gray-600'} line-clamp-2`}>
                         {notification.message}
                       </p>
                     </div>
                     {!notification.read && (
-                      <span className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-blue-500 mt-2" />
+                      <span className="flex-shrink-0 w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-blue-500 mt-1.5" />
                     )}
                   </div>
-                  <div className="flex items-center gap-3 mt-2">
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                      notification.read ? 'bg-gray-100 text-gray-500' : 'bg-white/80 text-gray-600'
-                    }`}>
+                  <div className="flex items-center gap-2 md:gap-3 mt-1.5 md:mt-2 flex-wrap">
+                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] md:text-xs font-medium whitespace-nowrap ${notification.read ? 'bg-gray-100 text-gray-500' : 'bg-white/80 text-gray-600 border border-gray-100'
+                      }`}>
                       {getCategoryForType(notification.type)}
                     </span>
-                    <span className="text-xs text-gray-400" title={formatFullDate(notification.created_at)}>
+                    <span className="text-[10px] md:text-xs text-gray-400 whitespace-nowrap flex items-center gap-1" title={formatFullDate(notification.created_at)}>
+                      <Clock className="w-3 h-3" />
                       {formatTimeAgo(notification.created_at)}
                     </span>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex-shrink-0 flex items-center gap-1">
+                <div className="flex-shrink-0 flex items-center gap-0.5 md:gap-1">
                   {!notification.read && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         markAsRead(notification.id);
                       }}
-                      className="p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                      className="p-1.5 md:p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                       title="Mark as read"
                     >
-                      <Eye className="w-4 h-4" />
+                      <Eye className="w-3.5 h-3.5 md:w-4 md:h-4" />
                     </button>
                   )}
-                  <ChevronRight className="w-5 h-5 text-gray-300" />
+                  <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-gray-300" />
                 </div>
               </div>
             ))
@@ -767,13 +734,15 @@ const AdminNotificationsPage = ({ onTabChange }) => {
       </div>
 
       {/* Click outside handler for dropdown */}
-      {showTypeDropdown && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setShowTypeDropdown(false)}
-        />
-      )}
-    </div>
+      {
+        showTypeDropdown && (
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setShowTypeDropdown(false)}
+          />
+        )
+      }
+    </div >
   );
 };
 

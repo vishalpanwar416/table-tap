@@ -48,7 +48,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
             profileImg: profile?.avatar_url || user.user_metadata?.avatar_url || '',
             userName: profile?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User',
             userEmail: user.email || '',
-            profile_role: profile?.profile_role || 'customer'
+            profile_role: (profile?.profile_role || user.app_metadata?.role || user.user_metadata?.role || 'customer').toLowerCase()
           });
         }
       } catch (error) {

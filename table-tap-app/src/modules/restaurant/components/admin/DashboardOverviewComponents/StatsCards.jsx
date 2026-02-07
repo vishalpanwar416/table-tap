@@ -39,92 +39,79 @@ const StatsCards = ({ revenueData, orderStats, activeUsers, menuStats, isCollaps
       </div>
 
       {!isCollapsed && (
-        <div className={`grid grid-cols-1 sm:grid-cols-2 ${isManagement ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-4 p-4`}>
+        <div className={`grid grid-cols-2 sm:grid-cols-2 ${isManagement ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-3 md:gap-4 p-3 md:p-4`}>
           {isManagement && (
-            <div className="bg-gradient-to-br from-orange-50 to-white p-4 rounded-lg border border-orange-100 shadow-sm hover:shadow transition-shadow">
-              <div className="flex justify-between">
+            <div className="bg-gradient-to-br from-orange-50 to-white p-3 md:p-4 rounded-lg border border-orange-100 shadow-sm hover:shadow transition-shadow">
+              <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm text-gray-500">Today's Revenue</p>
-                  <p className="text-2xl font-bold mt-1">₹{revenueData.daily.toFixed(2)}</p>
+                  <p className="text-xs md:text-sm text-gray-500 font-medium">Revenue</p>
+                  <p className="text-lg md:text-2xl font-bold mt-0.5 md:mt-1 text-gray-800">₹{revenueData.daily.toFixed(0)}</p>
                 </div>
-                <div className="bg-orange-500/10 p-2 rounded-lg">
-                  <TrendingUp className="h-6 w-6 text-orange-500" />
+                <div className="bg-orange-500/10 p-1.5 md:p-2 rounded-lg flex-shrink-0">
+                  <TrendingUp className="h-4 w-4 md:h-6 md:w-6 text-orange-500" />
                 </div>
               </div>
-              <div className="mt-2 text-xs text-green-600 flex items-center">
-                <ChevronUp size={14} />
-                <span>{((revenueData.daily / ((revenueData.weekly / 7) || 1) - 1) * 100).toFixed(1)}% from yesterday</span>
+              <div className="mt-2 text-[10px] md:text-xs text-green-600 flex items-center">
+                <ChevronUp size={12} className="mr-0.5" />
+                <span className="truncate">{((revenueData.daily / ((revenueData.weekly / 7) || 1) - 1) * 100).toFixed(0)}% vs last wk</span>
               </div>
             </div>
           )}
 
-          <div className="bg-gradient-to-br from-blue-50 to-white p-4 rounded-lg border border-blue-100 shadow-sm hover:shadow transition-shadow">
-            <div className="flex justify-between">
+          <div className="bg-gradient-to-br from-blue-50 to-white p-3 md:p-4 rounded-lg border border-blue-100 shadow-sm hover:shadow transition-shadow">
+            <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm text-gray-500">Total Orders</p>
-                <p className="text-2xl font-bold mt-1">{orderStats.total}</p>
+                <p className="text-xs md:text-sm text-gray-500 font-medium">Orders</p>
+                <p className="text-lg md:text-2xl font-bold mt-0.5 md:mt-1 text-gray-800">{orderStats.total}</p>
               </div>
-              <div className="bg-blue-500/10 p-2 rounded-lg">
-                <ShoppingCart className="h-6 w-6 text-blue-500" />
+              <div className="bg-blue-500/10 p-1.5 md:p-2 rounded-lg flex-shrink-0">
+                <ShoppingCart className="h-4 w-4 md:h-6 md:w-6 text-blue-500" />
               </div>
             </div>
-            <div className="flex mt-2 justify-between text-xs">
+            <div className="flex mt-2 justify-between text-[10px] md:text-xs gap-1">
               <span className="text-purple-600 flex items-center">
-                <Truck size={12} className="mr-1" /> {orderStats.preparing || 0} preparing
+                <Truck size={10} className="mr-0.5" /> {orderStats.preparing || 0}
               </span>
               <span className="text-green-600 flex items-center">
-                <CheckCircle size={12} className="mr-1" /> {orderStats.ready} ready
-              </span>
-              <span className="text-blue-600 flex items-center">
-                <CheckCircle size={12} className="mr-1" /> {orderStats.completed} completed
-              </span>
-            </div>
-            <div className="mt-2 text-xs text-gray-600">
-              <span className="font-medium">AOV:</span> ₹{((revenueData.daily + revenueData.weekly + revenueData.monthly) && orderStats.total
-                ? (period === 'daily' && orderStats.total ? (revenueData.daily / (orderStats.completed || 1))
-                  : period === 'weekly' && orderStats.total ? (revenueData.weekly / ((orderStats.completed) || 1))
-                    : period === 'monthly' && orderStats.total ? (revenueData.monthly / ((orderStats.completed) || 1))
-                      : 0) : 0).toFixed(2)}
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-green-50 to-white p-4 rounded-lg border border-green-100 shadow-sm hover:shadow transition-shadow">
-            <div className="flex justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Total Customers</p>
-                <p className="text-2xl font-bold mt-1">{userStats.total}</p>
-              </div>
-              <div className="bg-green-500/10 p-2 rounded-lg">
-                <User className="h-6 w-6 text-green-500" />
-              </div>
-            </div>
-            <div className="flex mt-2 justify-between text-xs">
-              <span className="text-green-600 flex items-center">
-                <RefreshCw size={12} className="mr-1" /> {userStats.returning} returning
-              </span>
-              <span className="text-blue-600 flex items-center">
-                <User size={12} className="mr-1" /> {userStats.monthly_active} monthly active
-              </span>
-              <span className="text-green-600 flex items-center">
-                <ChevronUp size={14} className="mr-1" />
-                <span>{returningPercentage}% loyal</span>
+                <CheckCircle size={10} className="mr-0.5" /> {orderStats.ready}
               </span>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-50 to-white p-4 rounded-lg border border-purple-100 shadow-sm hover:shadow transition-shadow">
-            <div className="flex justify-between">
+          <div className="bg-gradient-to-br from-green-50 to-white p-3 md:p-4 rounded-lg border border-green-100 shadow-sm hover:shadow transition-shadow">
+            <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm text-gray-500">Menu Items</p>
-                <p className="text-2xl font-bold mt-1">{menuStats.total}</p>
+                <p className="text-xs md:text-sm text-gray-500 font-medium whitespace-nowrap">Customers</p>
+                <p className="text-lg md:text-2xl font-bold mt-0.5 md:mt-1 text-gray-800">{userStats.total}</p>
               </div>
-              <div className="bg-purple-500/10 p-2 rounded-lg">
-                <Utensils className="h-6 w-6 text-purple-500" />
+              <div className="bg-green-500/10 p-1.5 md:p-2 rounded-lg flex-shrink-0">
+                <User className="h-4 w-4 md:h-6 md:w-6 text-green-500" />
               </div>
             </div>
-            <div className="mt-2 text-xs text-purple-600 flex items-center">
-              <PieChart size={14} className="mr-1" />
-              <span>Categories available</span>
+            <div className="flex mt-2 justify-between text-[10px] md:text-xs">
+              <span className="text-green-600 flex items-center truncate">
+                <RefreshCw size={10} className="mr-0.5" /> {userStats.returning}
+              </span>
+              <span className="text-green-600 flex items-center truncate ml-1">
+                <ChevronUp size={10} className="mr-0.5" />
+                <span>{returningPercentage}%</span>
+              </span>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-purple-50 to-white p-3 md:p-4 rounded-lg border border-purple-100 shadow-sm hover:shadow transition-shadow">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-xs md:text-sm text-gray-500 font-medium">Menu</p>
+                <p className="text-lg md:text-2xl font-bold mt-0.5 md:mt-1 text-gray-800">{menuStats.total}</p>
+              </div>
+              <div className="bg-purple-500/10 p-1.5 md:p-2 rounded-lg flex-shrink-0">
+                <Utensils className="h-4 w-4 md:h-6 md:w-6 text-purple-500" />
+              </div>
+            </div>
+            <div className="mt-2 text-[10px] md:text-xs text-purple-600 flex items-center truncate">
+              <PieChart size={12} className="mr-1" />
+              <span>Active Items</span>
             </div>
           </div>
         </div>

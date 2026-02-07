@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../shared/supabase';
-import { createRestaurant, getSystemSetting } from '../../../admin/pages/AdminPannel/admin_service';
+import { createRestaurant, getEmailTemplate } from '../../../admin/pages/AdminPannel/admin_service.js';
+import { applyTemplate } from '../../../shared/api/emailService';
 import {
     Building2,
     User,
@@ -25,48 +26,9 @@ import {
     Loader2
 } from 'lucide-react';
 
-const generateWelcomeHTML = (ownerName, restaurantName, email, password) => {
-    return `
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<title>Welcome to Table Tap</title>
-</head>
-<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5; margin: 0; padding: 0;">
-<div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-    <div style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); padding: 40px 20px; text-align: center;">
-        <h1 style="color: white; margin: 0; font-size: 28px;">Table Tap</h1>
-        <p style="color: rgba(255,255,255,0.9); margin-top: 10px;">Restaurant Management Simplified</p>
-    </div>
-    <div style="padding: 40px;">
-        <h2 style="color: #1f2937; margin-top: 0;">Welcome, ${ownerName}!</h2>
-        <p style="color: #4b5563; line-height: 1.6;">
-            We are excited to inform you that your registration for <strong>${restaurantName}</strong> has been approved.
-        </p>
-        <div style="background-color: #eff6ff; border-radius: 8px; padding: 20px; margin: 30px 0; border: 1px solid #dbeafe;">
-            <h3 style="color: #1e40af; margin-top: 0; font-size: 16px;">Your Login Credentials</h3>
-            <p style="margin: 10px 0 5px; color: #6b7280; font-size: 14px;">Email:</p>
-            <p style="margin: 0 0 15px; color: #111827; font-weight: 600;">${email}</p>
-            <p style="margin: 0 0 5px; color: #6b7280; font-size: 14px;">Temporary Password:</p>
-            <p style="margin: 0; color: #111827; font-weight: 600; font-family: monospace; background: white; padding: 4px 8px; border-radius: 4px; display: inline-block;">${password}</p>
-        </div>
-        <div style="text-align: center; margin-top: 40px;">
-            <a href="${window.location.origin}/admin/login" style="background-color: #2563eb; color: white; padding: 14px 30px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">Access Admin Dashboard</a>
-        </div>
-        <p style="color: #6b7280; font-size: 14px; margin-top: 30px; text-align: center;">
-            Please change your password after your first login for security.
-        </p>
-    </div>
-    <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
-        <p style="color: #9ca3af; font-size: 12px; margin: 0;">&copy; ${new Date().getFullYear()} Table Tap. All rights reserved.</p>
-    </div>
-</div>
-</body>
-</html>`;
-};
 
-const RegistrationRequests = () => {
+
+const RegistrationRequests = ({ searchTerm = '' }) => {
     const [registrations, setRegistrations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -74,7 +36,6 @@ const RegistrationRequests = () => {
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [processingId, setProcessingId] = useState(null);
     const [statusFilter, setStatusFilter] = useState('all');
-    const [searchTerm, setSearchTerm] = useState('');
 
     // Status colors
     const statusColors = {
@@ -270,10 +231,10 @@ const RegistrationRequests = () => {
 
             // Send Welcome Email
             try {
-                // Fetch template from settings
-                const template = await getSystemSetting('email_template_welcome');
+                // Fetch template from email_templates
+                const template = await getEmailTemplate('email_template_welcome');
                 let subject = 'Welcome to Table Tap - Your Account is Approved!';
-                let html = generateWelcomeHTML(registration.owner_name, registration.restaurant_name, registration.owner_email, 'TempPass@123');
+                let html = `<h2>Welcome, ${registration.owner_name}!</h2><p>Your registration for ${registration.restaurant_name} has been approved.</p><p>Credentials: ${registration.owner_email} / TempPass@123</p>`;
 
                 if (template) {
                     subject = template.subject;
@@ -289,11 +250,9 @@ const RegistrationRequests = () => {
                         year: new Date().getFullYear()
                     };
 
-                    Object.keys(vars).forEach(key => {
-                        const regex = new RegExp(`{{${key}}}`, 'g');
-                        subject = subject.replace(regex, vars[key] || '');
-                        html = html.replace(regex, vars[key] || '');
-                    });
+                    const applied = applyTemplate(template.subject, template.html, vars);
+                    subject = applied.subject;
+                    html = applied.html;
                 }
 
                 await supabase.functions.invoke('send-email', {
@@ -381,68 +340,49 @@ const RegistrationRequests = () => {
             {/* Header removed as it is handled by AdminHeader */}
 
             {/* Filters */}
-            <div className="flex flex-col md:flex-row gap-4 mb-6">
-                {/* Search */}
-                <div className="relative flex-1">
-                    <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input
-                        type="text"
-                        placeholder="Search by restaurant, owner, email, or city..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
-                    />
-                </div>
+            {/* Filters - Single Line Compact Layout */}
+            {/* Filters & Stats Toolbar - Single Line Layout */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
 
-                {/* Status Filter */}
-                <div className="relative">
+                {/* Left Side: Status Filter */}
+                <div className="relative min-w-[160px]">
                     <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="appearance-none pl-4 pr-10 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 bg-white"
+                        className="w-full appearance-none pl-4 pr-10 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 bg-white text-sm font-medium text-gray-700"
                     >
                         <option value="all">All Status</option>
-                        <option value="pending_review">Pending Review</option>
+                        <option value="pending_review">Pending</option>
                         <option value="approved">Approved</option>
                         <option value="rejected">Rejected</option>
                     </select>
-                    <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 </div>
 
-                {/* Refresh Button */}
-                <button
-                    onClick={fetchRegistrations}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-gray-700"
-                    title="Refresh List"
-                >
-                    <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
-                    <span className="hidden md:inline">Refresh</span>
-                </button>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                    <p className="text-gray-500 text-sm">Total</p>
-                    <p className="text-2xl font-bold text-gray-900">{registrations.length}</p>
-                </div>
-                <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-100">
-                    <p className="text-yellow-600 text-sm">Pending</p>
-                    <p className="text-2xl font-bold text-yellow-700">
-                        {registrations.filter(r => r.status === 'pending_review').length}
-                    </p>
-                </div>
-                <div className="bg-green-50 p-4 rounded-xl border border-green-100">
-                    <p className="text-green-600 text-sm">Approved</p>
-                    <p className="text-2xl font-bold text-green-700">
-                        {registrations.filter(r => r.status === 'approved').length}
-                    </p>
-                </div>
-                <div className="bg-red-50 p-4 rounded-xl border border-red-100">
-                    <p className="text-red-600 text-sm">Rejected</p>
-                    <p className="text-2xl font-bold text-red-700">
-                        {registrations.filter(r => r.status === 'rejected').length}
-                    </p>
+                {/* Right Side: Quick Stats Row */}
+                <div className="grid grid-cols-4 gap-1.5 md:flex md:items-center md:gap-4 w-full md:w-auto">
+                    <div className="flex flex-col md:flex-row items-center md:gap-2 px-1.5 py-1 md:px-3 md:py-1.5 bg-white rounded-lg border border-gray-100 shadow-sm">
+                        <span className="text-[9px] md:text-xs text-gray-500 font-bold uppercase tracking-wider text-center">Total</span>
+                        <span className="text-xs md:text-sm font-bold text-gray-900">{registrations.length}</span>
+                    </div>
+                    <div className="flex flex-col md:flex-row items-center md:gap-2 px-1.5 py-1 md:px-3 md:py-1.5 bg-yellow-50 rounded-lg border border-yellow-100">
+                        <span className="text-[9px] md:text-xs text-yellow-600 font-bold uppercase tracking-wider text-center">Pending</span>
+                        <span className="text-xs md:text-sm font-bold text-yellow-700">
+                            {registrations.filter(r => r.status === 'pending_review').length}
+                        </span>
+                    </div>
+                    <div className="flex flex-col md:flex-row items-center md:gap-2 px-1.5 py-1 md:px-3 md:py-1.5 bg-green-50 rounded-lg border border-green-100">
+                        <span className="text-[9px] md:text-xs text-green-600 font-bold uppercase tracking-wider text-center">Approved</span>
+                        <span className="text-xs md:text-sm font-bold text-green-700">
+                            {registrations.filter(r => r.status === 'approved').length}
+                        </span>
+                    </div>
+                    <div className="flex flex-col md:flex-row items-center md:gap-2 px-1.5 py-1 md:px-3 md:py-1.5 bg-red-50 rounded-lg border border-red-100">
+                        <span className="text-[9px] md:text-xs text-red-600 font-bold uppercase tracking-wider text-center">Rejected</span>
+                        <span className="text-xs md:text-sm font-bold text-red-700">
+                            {registrations.filter(r => r.status === 'rejected').length}
+                        </span>
+                    </div>
                 </div>
             </div>
 
@@ -467,89 +407,167 @@ const RegistrationRequests = () => {
                 </div>
             ) : (
                 /* Registrations Table */
-                <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-gray-50 border-b border-gray-100">
-                                <tr>
-                                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Restaurant</th>
-                                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Owner</th>
-                                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Plan</th>
-                                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
-                                    <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {filteredRegistrations.map((registration) => (
-                                    <tr key={registration.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                                                    <Building2 size={20} className="text-orange-600" />
-                                                </div>
-                                                <div>
-                                                    <p className="font-semibold text-gray-900">{registration.restaurant_name}</p>
-                                                    <p className="text-sm text-gray-500 capitalize">{registration.restaurant_type?.replace('-', ' ')}</p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <p className="font-medium text-gray-900">{registration.owner_name}</p>
-                                            <p className="text-sm text-gray-500">{registration.owner_email}</p>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold capitalize">
-                                                {registration.selected_plan}
+                /* Responsive List View */
+                <div className="space-y-4">
+                    {/* Mobile Card View */}
+                    <div className="md:hidden space-y-4">
+                        {filteredRegistrations.map((registration) => (
+                            <div key={registration.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col gap-3">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center shrink-0">
+                                            <Building2 size={20} className="text-orange-600" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-semibold text-gray-900 line-clamp-1">{registration.restaurant_name}</h3>
+                                            <p className="text-xs text-gray-500 capitalize">{registration.restaurant_type?.replace('-', ' ')}</p>
+                                        </div>
+                                    </div>
+                                    <div className="shrink-0">
+                                        <StatusBadge status={registration.status} />
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-between items-center text-sm border-t border-gray-50 pt-3 mt-1">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Owner</span>
+                                        <div className="flex items-center gap-1">
+                                            <User size={12} className="text-gray-400" />
+                                            <span className="font-medium text-gray-900 text-xs">{registration.owner_name}</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col text-right">
+                                        <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Date</span>
+                                        <div className="flex items-center gap-1 justify-end">
+                                            <Calendar size={12} className="text-gray-400" />
+                                            <span className="font-medium text-gray-900 text-xs">
+                                                {new Date(registration.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                                             </span>
-                                            {registration.total_amount && (
-                                                <p className="text-sm text-gray-500 mt-1">₹{registration.total_amount}/{registration.billing_cycle === 'monthly' ? 'mo' : 'yr'}</p>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <StatusBadge status={registration.status} />
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <p className="text-sm text-gray-600">{formatDate(registration.created_at)}</p>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <button
-                                                    onClick={() => {
-                                                        setSelectedRegistration(registration);
-                                                        setShowDetailModal(true);
-                                                    }}
-                                                    className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                                                    title="View Details"
-                                                >
-                                                    <Eye size={18} />
-                                                </button>
-                                                {registration.status === 'pending_review' && (
-                                                    <>
-                                                        <button
-                                                            onClick={() => handleApprove(registration)}
-                                                            disabled={processingId === registration.id}
-                                                            className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
-                                                            title="Approve"
-                                                        >
-                                                            <Check size={18} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleReject(registration)}
-                                                            disabled={processingId === registration.id}
-                                                            className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                                                            title="Reject"
-                                                        >
-                                                            <X size={18} />
-                                                        </button>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </td>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-2 mt-1">
+                                    <button
+                                        onClick={() => {
+                                            setSelectedRegistration(registration);
+                                            setShowDetailModal(true);
+                                        }}
+                                        className="flex-1 py-2.5 text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <Eye size={16} />
+                                        Details
+                                    </button>
+                                    {registration.status === 'pending_review' && (
+                                        <>
+                                            <button
+                                                onClick={() => handleApprove(registration)}
+                                                disabled={processingId === registration.id}
+                                                className="px-4 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors flex items-center justify-center disabled:opacity-50"
+                                                title="Approve"
+                                            >
+                                                <Check size={20} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleReject(registration)}
+                                                disabled={processingId === registration.id}
+                                                className="px-4 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors flex items-center justify-center disabled:opacity-50"
+                                                title="Reject"
+                                            >
+                                                <X size={20} />
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-gray-50 border-b border-gray-100">
+                                    <tr>
+                                        <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Restaurant</th>
+                                        <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Owner</th>
+                                        <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Plan</th>
+                                        <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {filteredRegistrations.map((registration) => (
+                                        <tr key={registration.id} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                                                        <Building2 size={20} className="text-orange-600" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-semibold text-gray-900">{registration.restaurant_name}</p>
+                                                        <p className="text-sm text-gray-500 capitalize">{registration.restaurant_type?.replace('-', ' ')}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <p className="font-medium text-gray-900">{registration.owner_name}</p>
+                                                <p className="text-sm text-gray-500">{registration.owner_email}</p>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold capitalize">
+                                                    {registration.selected_plan}
+                                                </span>
+                                                {registration.total_amount && (
+                                                    <p className="text-sm text-gray-500 mt-1">₹{registration.total_amount}/{registration.billing_cycle === 'monthly' ? 'mo' : 'yr'}</p>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <StatusBadge status={registration.status} />
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <p className="text-sm text-gray-600">{formatDate(registration.created_at)}</p>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedRegistration(registration);
+                                                            setShowDetailModal(true);
+                                                        }}
+                                                        className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                                        title="View Details"
+                                                    >
+                                                        <Eye size={18} />
+                                                    </button>
+                                                    {registration.status === 'pending_review' && (
+                                                        <>
+                                                            <button
+                                                                onClick={() => handleApprove(registration)}
+                                                                disabled={processingId === registration.id}
+                                                                className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
+                                                                title="Approve"
+                                                            >
+                                                                <Check size={18} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleReject(registration)}
+                                                                disabled={processingId === registration.id}
+                                                                className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                                                                title="Reject"
+                                                            >
+                                                                <X size={18} />
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             )}
@@ -570,7 +588,7 @@ const RegistrationRequests = () => {
                         </div>
 
                         {/* Modal Content */}
-                        <div className="p-6 space-y-6">
+                        <div className="p-4 md:p-6 space-y-4 md:space-y-6">
                             {/* Status */}
                             <div className="flex items-center justify-between">
                                 <StatusBadge status={selectedRegistration.status} />
@@ -585,7 +603,7 @@ const RegistrationRequests = () => {
                                     <User size={18} className="text-orange-500" />
                                     Owner Information
                                 </h3>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                     <div>
                                         <p className="text-xs text-gray-500 uppercase tracking-wider">Name</p>
                                         <p className="font-medium text-gray-900">{selectedRegistration.owner_name}</p>
@@ -671,7 +689,7 @@ const RegistrationRequests = () => {
                                     <CreditCard size={18} className="text-blue-500" />
                                     Selected Plan
                                 </h3>
-                                <div className="grid grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                                     <div>
                                         <p className="text-xs text-gray-500 uppercase tracking-wider">Plan</p>
                                         <p className="font-semibold text-blue-700 capitalize">{selectedRegistration.selected_plan}</p>

@@ -104,7 +104,10 @@ const AdminHeader = ({
                 registrations: 'Registrations',
                 staff: 'Staff Management',
                 inquiries: 'Lead Inquiries',
-                subscriptions: 'Subscriptions'
+                subscriptions: 'Subscriptions',
+                notifications: 'Notifications',
+                activity: 'Activity Logs',
+                settings: 'System Settings'
               }[activeTab] || 'Admin Panel'}
             </h2>
             <p className="text-sm text-gray-600 mt-1 font-spartan">
@@ -113,14 +116,16 @@ const AdminHeader = ({
               {activeTab === 'registrations' && 'Manage incoming restaurant registration requests'}
               {activeTab === 'inquiries' && 'View and manage lead inquiries'}
               {activeTab === 'subscriptions' && 'Manage subscription plans and features'}
+              {activeTab === 'activity' && 'Track all automated emails, system events, and admin activities'}
+              {activeTab === 'settings' && 'Manage API keys, content, and global configuration'}
             </p>
           </div>
         </div>
 
         <div className="flex items-center space-x-4">
           {/* Unified Search and Filter Section */}
-          {/* Unified Search and Filter Section - Only for Restaurants and Staff */}
-          {(activeTab === 'restaurants' || activeTab === 'staff') && (
+          {/* Unified Search and Filter Section - Only for Restaurants, Staff, Registrations, Inquiries, Notifications and Activity */}
+          {(activeTab === 'restaurants' || activeTab === 'staff' || activeTab === 'registrations' || activeTab === 'inquiries' || activeTab === 'notifications' || activeTab === 'activity') && (
             <div className="flex items-center space-x-3">
               {/* Search Bar */}
               <div className="relative">
@@ -129,7 +134,7 @@ const AdminHeader = ({
                 </div>
                 <input
                   type="search"
-                  placeholder={`Search ${activeTab === 'restaurants' ? 'restaurants' : 'staff'}...`}
+                  placeholder={`Search ${activeTab === 'restaurants' ? 'restaurants' : activeTab === 'staff' ? 'staff' : activeTab === 'registrations' ? 'registrations' : activeTab === 'notifications' ? 'notifications' : activeTab === 'activity' ? 'activities' : 'leads'}...`}
                   className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50 backdrop-blur-sm transition-all duration-200 hover:bg-white/70 font-spartan"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -171,7 +176,14 @@ const AdminHeader = ({
                     <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50 p-4 font-spartan">
                       <div className="flex justify-between items-center mb-4">
                         <h3 className="font-semibold text-gray-900 font-spartan">
-                          Filter {activeTab === 'restaurants' ? 'Restaurants' : 'Staff'}
+                          {{
+                            restaurants: 'Filter Restaurants',
+                            staff: 'Filter Staff',
+                            registrations: 'Search Registrations',
+                            inquiries: 'Search Leads',
+                            notifications: 'Filter Notifications',
+                            activity: 'Filter Activities'
+                          }[activeTab] || 'Filters'}
                         </h3>
                         {hasFilters && (
                           <button

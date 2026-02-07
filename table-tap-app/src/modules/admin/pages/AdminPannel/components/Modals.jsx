@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Upload, Trash2, MapPin, Phone, Mail, Clock, Globe, Building2, Users, ChevronDown, Check, UserCog, Star, Award, ChefHat, UtensilsCrossed, Coins, Crown } from 'lucide-react';
-import { uploadRestaurantPhotoForAdmin, uploadRestaurantLogo, getRestaurantOwners, updateOwnerDetails } from '../admin_service';
+import { uploadRestaurantPhotoForAdmin, uploadRestaurantLogo, getRestaurantOwners, updateOwnerDetails } from '../admin_service.js';
 // Remove the supabase import since we're moving all calls to the service
 // import { supabase } from '../../../../shared/supabase'; 
 
@@ -470,6 +470,19 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                       onChange={(e) => setData({ ...data, owner_email: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="Enter owner's email address"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Owner Password (Optional)
+                    </label>
+                    <input
+                      type="password"
+                      value={data.owner_password || ''}
+                      onChange={(e) => setData({ ...data, owner_password: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder={isEditing ? "Leave blank to keep current" : "Enter to create account, leave blank to invite"}
+                      minLength={6}
                     />
                   </div>
                 </div>
@@ -949,12 +962,7 @@ export const StaffModal = ({ show, onClose, onSubmit, data, setData, restaurants
     };
   }, []);
 
-  // Add this useEffect to track data changes
-  useEffect(() => {
-    if (isEditing) {
-      console.log('🔍 StaffModal data changed:', data);
-    }
-  }, [data, isEditing]);
+
 
   if (!show) return null;
 
@@ -1018,6 +1026,21 @@ export const StaffModal = ({ show, onClose, onSubmit, data, setData, restaurants
                   onChange={(e) => setData({ ...data, email: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
                   placeholder="Enter email address"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <UserCog className="w-4 h-4 text-gray-500" />
+                  Password (Optional)
+                </label>
+                <input
+                  type="password"
+                  value={data.password || ''}
+                  onChange={(e) => setData({ ...data, password: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
+                  placeholder={isEditing ? "Leave blank to keep current" : "Enter to create account, leave blank to invite"}
+                  minLength={6}
                 />
               </div>
             </div>

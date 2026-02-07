@@ -311,9 +311,7 @@ const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab, restaur
 
   return (
     <div className="space-y-6">
-      {ordersLoading && (
-        <div className="text-center py-8 text-gray-500">Loading orders...</div>
-      )}
+
       {ordersError && (
         <div className="text-center py-8 text-red-500">{ordersError}</div>
       )}

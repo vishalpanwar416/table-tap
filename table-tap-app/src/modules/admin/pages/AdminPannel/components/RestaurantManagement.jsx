@@ -19,7 +19,8 @@ const RestaurantManagement = ({
   onLoadMore
 }) => {
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
-  const [planCounts, setPlanCounts] = useState({ starter: 0, professional: 0, enterprise: 0 });
+  const [planCounts, setPlanCounts] = useState({});
+  const [availablePlans, setAvailablePlans] = useState([]);
 
   // Fetch plan counts from subscriptions
   useEffect(() => {
@@ -31,12 +32,22 @@ const RestaurantManagement = ({
           .in('status', ['active', 'grace_period']);
 
         if (subscriptions) {
-          const counts = {
-            starter: subscriptions.filter(s => s.plan_name === 'starter').length,
-            professional: subscriptions.filter(s => s.plan_name === 'professional').length,
-            enterprise: subscriptions.filter(s => s.plan_name === 'enterprise').length
-          };
+          const counts = {};
+          subscriptions.forEach(s => {
+            counts[s.plan_name] = (counts[s.plan_name] || 0) + 1;
+          });
           setPlanCounts(counts);
+        }
+
+        // Also fetch the list of available plans
+        const { data: plansList } = await supabase
+          .from('subscription_plans')
+          .select('*')
+          .eq('is_active', true)
+          .order('base_price', { ascending: true });
+
+        if (plansList) {
+          setAvailablePlans(plansList);
         }
       } catch (error) {
         console.error('Error fetching plan counts:', error);
@@ -113,62 +124,65 @@ const RestaurantManagement = ({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-2 md:space-y-4">
 
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-2 md:gap-3">
         {/* Total */}
-        <div className="text-center p-4 bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl border border-gray-200">
-          <div className="text-2xl font-bold text-gray-900 font-spartan">{stats.total}</div>
+        <div className="text-center p-2 md:p-4 bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl border border-gray-200">
+          <div className="text-lg md:text-2xl font-bold text-gray-900 font-spartan">{stats.total}</div>
           <div className="text-xs text-gray-600 font-spartan">Total</div>
         </div>
 
         {/* Active */}
-        <div className="text-center p-4 bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl border border-green-200">
-          <div className="text-2xl font-bold text-green-700 font-spartan">{stats.active}</div>
+        <div className="text-center p-2 md:p-4 bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl border border-green-200">
+          <div className="text-lg md:text-2xl font-bold text-green-700 font-spartan">{stats.active}</div>
           <div className="text-xs text-green-600 font-spartan">Active</div>
         </div>
 
         {/* Inactive */}
-        <div className="text-center p-4 bg-gradient-to-br from-red-50 to-rose-100 rounded-xl border border-red-200">
-          <div className="text-2xl font-bold text-red-600 font-spartan">{stats.inactive}</div>
+        <div className="text-center p-2 md:p-4 bg-gradient-to-br from-red-50 to-rose-100 rounded-xl border border-red-200">
+          <div className="text-lg md:text-2xl font-bold text-red-600 font-spartan">{stats.inactive}</div>
           <div className="text-xs text-red-500 font-spartan">Inactive</div>
         </div>
 
-        {/* Starter Plan */}
-        <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-sky-100 rounded-xl border border-blue-200">
-          <div className="text-2xl font-bold text-blue-700 font-spartan">{planCounts.starter}</div>
-          <div className="text-xs text-blue-600 font-spartan">Starter</div>
-        </div>
+        {/* Dynamic Plans */}
+        {availablePlans.slice(0, 3).map((plan, idx) => {
+          const colors = [
+            'from-blue-50 to-sky-100 border-blue-200 text-blue-700 text-blue-600',
+            'from-purple-50 to-violet-100 border-purple-200 text-purple-700 text-purple-600',
+            'from-amber-50 to-yellow-100 border-amber-200 text-amber-700 text-amber-600'
+          ];
+          const [bg, border, text, subtext] = colors[idx % colors.length].split(' border-');
+          const [borderClass, textClasses] = border.split(' text-');
+          const [primaryText, secondaryText] = textClasses.split(' ');
 
-        {/* Professional Plan */}
-        <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-violet-100 rounded-xl border border-purple-200">
-          <div className="text-2xl font-bold text-purple-700 font-spartan">{planCounts.professional}</div>
-          <div className="text-xs text-purple-600 font-spartan">Professional</div>
-        </div>
-
-        {/* Enterprise Plan */}
-        <div className="text-center p-4 bg-gradient-to-br from-amber-50 to-yellow-100 rounded-xl border border-amber-200">
-          <div className="text-2xl font-bold text-amber-700 font-spartan">{planCounts.enterprise}</div>
-          <div className="text-xs text-amber-600 font-spartan">Enterprise</div>
-        </div>
+          return (
+            <div key={plan.key} className={`text-center p-2 md:p-4 bg-gradient-to-br ${bg} rounded-xl border border-${borderClass}`}>
+              <div className={`text-lg md:text-2xl font-bold ${primaryText} font-spartan`}>
+                {planCounts[plan.key] || 0}
+              </div>
+              <div className={`text-xs ${secondaryText} font-spartan`}>{plan.name}</div>
+            </div>
+          );
+        })}
 
         {/* Add Restaurant Action Card - Restored */}
         <button
           onClick={onAddRestaurant}
-          className="bg-white p-4 rounded-xl border-dashed border-2 border-blue-300 shadow-sm flex flex-col items-center justify-center hover:bg-blue-50 transition-all group min-h-[100px]"
+          className="col-span-3 sm:col-span-1 bg-white p-2 md:p-4 rounded-xl border-dashed border-2 border-blue-300 shadow-sm flex flex-row md:flex-col items-center justify-center gap-2 hover:bg-blue-50 transition-all group min-h-[48px] md:min-h-[100px]"
         >
-          <div className="p-2 bg-blue-100 rounded-full group-hover:bg-blue-200 transition-colors mb-2">
-            <Plus className="w-5 h-5 text-blue-600" />
+          <div className="hidden md:block p-1.5 md:p-2 bg-blue-100 rounded-full group-hover:bg-blue-200 transition-colors md:mb-2">
+            <Plus className="w-4 h-4 md:w-5 md:h-5 text-blue-600" />
           </div>
           <p className="text-xs font-bold text-blue-600 uppercase tracking-wider">Add Restaurant (+)</p>
         </button>
       </div>
 
       {/* Restaurant View */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <div className="flex items-center justify-between mb-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-1.5 md:p-4">
+        <div className="flex items-center justify-between mb-2 md:mb-4">
           <h3 className="text-lg font-semibold text-gray-900 font-spartan">Restaurants</h3>
           <div className="flex items-center space-x-4">
             <div className="text-sm text-gray-500 font-spartan">
@@ -187,7 +201,7 @@ const RestaurantManagement = ({
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 rounded-lg transition-all duration-200 ${viewMode === 'list'
+                className={`hidden md:block p-2 rounded-lg transition-all duration-200 ${viewMode === 'list'
                   ? 'bg-blue-100 text-blue-700'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}

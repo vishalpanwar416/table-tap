@@ -9,6 +9,7 @@ import {
     generateProfessionalInvoiceHTML,
     calculateGST
 } from '../utils/invoiceGenerator';
+import { applyTemplate } from './emailService';
 
 /**
  * Get all invoices for a restaurant
@@ -320,8 +321,8 @@ export const generateInvoiceFromHistory = async (historyRecord, restaurant, subs
             restaurant_id: restaurant.id,
             subscription_id: subscription?.id,
             subscription_history_id: historyRecord.id,
-            invoice_type: historyRecord.action === 'renewed' ? 'renewal' : 
-                          historyRecord.action === 'upgraded' ? 'upgrade' : 'subscription',
+            invoice_type: historyRecord.action === 'renewed' ? 'renewal' :
+                historyRecord.action === 'upgraded' ? 'upgrade' : 'subscription',
             subtotal: subtotal,
             taxable_amount: subtotal,
             cgst_amount: gstAmount / 2,
@@ -381,14 +382,12 @@ export const sendInvoiceEmail = async (invoiceId, recipientEmail = null) => {
         }
 
         // Get email template
-        const { data: templateData } = await supabase
-            .from('system_settings')
-            .select('value')
-            .eq('key', 'email_template_invoice_v2')
-            .single();
+        const { data: template } = await supabase
+            .from('email_templates')
+            .select('subject, html')
+            .eq('key', 'email_template_invoice')
+            .maybeSingle();
 
-        const template = templateData?.value || {};
-        
         // Prepare invoice data for email
         const invoiceData = createInvoiceData({
             transaction: {
@@ -425,14 +424,12 @@ export const sendInvoiceEmail = async (invoiceId, recipientEmail = null) => {
         };
 
         // Replace template variables
-        let subject = template.subject || `Invoice ${invoice.invoice_number} from TableTap`;
-        let html = template.html || `<p>Your invoice is attached.</p>`;
+        let subject = template?.subject || `Invoice ${invoice.invoice_number} from TableTap`;
+        let html = template?.html || `<p>Your invoice is attached.</p>`;
 
-        Object.keys(vars).forEach(key => {
-            const regex = new RegExp(`{{${key}}}`, 'g');
-            subject = subject.replace(regex, vars[key] || '');
-            html = html.replace(regex, vars[key] || '');
-        });
+        const applied = applyTemplate(subject, html, vars);
+        subject = applied.subject;
+        html = applied.html;
 
         // Send email via edge function
         const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-email', {

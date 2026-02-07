@@ -48,8 +48,12 @@ export default function AdminOnlyWrapper({ children }) {
         return;
       }
 
-      const metadataRole = user.user_metadata?.profile_role || user.app_metadata?.profile_role;
-      if (metadataRole === 'admin') {
+      const metadataRole = user.user_metadata?.profile_role ||
+        user.app_metadata?.profile_role ||
+        user.app_metadata?.role ||
+        user.user_metadata?.role;
+
+      if (metadataRole && metadataRole.toLowerCase() === 'admin') {
         finishChecking(true, false);
         return;
       }
@@ -88,7 +92,10 @@ export default function AdminOnlyWrapper({ children }) {
         if (mounted) setDebugInfo({ exception: err.message });
         finishChecking(false, true);
       } finally {
-        clearTimeout(timeoutId);
+        if (mounted) clearTimeout(timeoutId);
+        // We don't reset checkInProgressRef here because we want to block until unmount/remount
+        // actually we should reset it if we want to allow re-checks? 
+        // But the robust fix is in cleanup.
       }
     };
 
@@ -97,6 +104,7 @@ export default function AdminOnlyWrapper({ children }) {
     return () => {
       mounted = false;
       clearTimeout(timeoutId);
+      checkInProgressRef.current = false;
     };
   }, [authLoading, user?.id]);
 
