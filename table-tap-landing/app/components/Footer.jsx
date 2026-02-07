@@ -15,7 +15,7 @@ const IconMap = {
 
 const Footer = () => {
     const { footer: localFooter, contact: localContact } = data;
-    const { company, social, loading } = useSettings();
+    const { company, social, logo, loading } = useSettings();
 
     // Override with database settings if available
     const contact = {

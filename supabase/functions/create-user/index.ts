@@ -4,22 +4,22 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.0.0"
 
 // Tighten CORS and allow dev/prod via env
 const getAllowedOrigin = (requestOrigin: string | null): string => {
-  const allowedOrigins = Deno.env.get("ALLOWED_ORIGINS")?.split(",") || [
-    "https://table-tap-app.vercel.app",
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:3001",
-  ]
+    const allowedOrigins = Deno.env.get("ALLOWED_ORIGINS")?.split(",") || [
+        "https://table-tap-app.vercel.app",
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+    ]
 
-  if (requestOrigin && allowedOrigins.includes(requestOrigin)) return requestOrigin
-  return allowedOrigins[0]
+    if (requestOrigin && allowedOrigins.includes(requestOrigin)) return requestOrigin
+    return allowedOrigins[0]
 }
 
 const getCorsHeaders = (requestOrigin: string | null) => ({
-  "Access-Control-Allow-Origin": getAllowedOrigin(requestOrigin),
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Origin": getAllowedOrigin(requestOrigin),
+    "Access-Control-Allow-Headers":
+        "authorization, x-client-info, apikey, content-type, x-supabase-client-platform",
 })
 
 serve(async (req) => {
@@ -59,16 +59,16 @@ serve(async (req) => {
 
         // 3. Authorize caller: only allow platform admins to create users
         const { data: profile } = await supabaseAdmin
-          .from('profiles')
-          .select('profile_role')
-          .eq('id', user.id)
-          .single()
+            .from('profiles')
+            .select('profile_role')
+            .eq('id', user.id)
+            .single()
 
         if (!profile || profile.profile_role !== 'admin') {
-          return new Response(JSON.stringify({ error: 'Forbidden: Admin access required' }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 403,
-          })
+            return new Response(JSON.stringify({ error: 'Forbidden: Admin access required' }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 403,
+            })
         }
 
         const { email, password, user_metadata, email_confirm } = await req.json()

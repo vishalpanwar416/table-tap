@@ -19,7 +19,7 @@ const getAllowedOrigin = (requestOrigin: string | null): string => {
 const getCorsHeaders = (requestOrigin: string | null) => ({
     "Access-Control-Allow-Origin": getAllowedOrigin(requestOrigin),
     "Access-Control-Allow-Headers":
-        "authorization, x-client-info, apikey, content-type",
+        "authorization, x-client-info, apikey, content-type, x-supabase-client-platform",
 })
 
 serve(async (req) => {
