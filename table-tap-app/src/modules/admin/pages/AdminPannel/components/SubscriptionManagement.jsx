@@ -841,14 +841,24 @@ const SubscriptionManagementV2 = () => {
           >
             <ArrowLeft size={20} />
           </button>
+
+          {selectedBillingRestaurant?.logo_url && (
+            <img
+              src={selectedBillingRestaurant.logo_url}
+              alt={selectedBillingRestaurant.name}
+              className="w-12 h-12 rounded-xl object-cover shadow-sm border border-gray-100 hidden sm:block"
+            />
+          )}
+
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Invoices: {selectedBillingRestaurant.name}</h1>
+            <h1 className="text-xl md:text-2xl font-bold text-gray-900">Invoices: {selectedBillingRestaurant.name}</h1>
             <p className="text-gray-500 text-sm">Sorted by date and time • {billingHistory.length} Records</p>
           </div>
         </div>
 
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
+          {/* Desktop Table - Hidden on Mobile */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
@@ -946,6 +956,61 @@ const SubscriptionManagementV2 = () => {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Cards View - Hidden on Desktop */}
+          <div className="md:hidden p-4 space-y-4">
+            {billingHistory.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">
+                <CreditCard className="w-8 h-8 mx-auto mb-2 opacity-20" />
+                <p className="text-sm">No invoices found.</p>
+              </div>
+            ) : (
+              billingHistory.map((txn, idx) => (
+                <div key={txn.id} className="bg-white border border-gray-100 rounded-xl p-3 shadow-sm hover:shadow-md transition-all group flex flex-col gap-3">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-xs font-bold text-gray-500">{new Date(txn.created_at).toLocaleDateString()}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-bold uppercase text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full">Paid</span>
+                      <span className="font-black text-gray-900 text-sm">₹{txn.amount_paid}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 mb-2">
+                    <h4 className="font-bold text-gray-900 text-sm">{txn.plan_name} Plan <span className="text-gray-400 font-normal text-xs">({txn.billing_cycle})</span></h4>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-50">
+                    {/* Email Button */}
+                    <button
+                      onClick={() => !txn.email_sent && handleResendEmail(txn)}
+                      disabled={processingId === `email-${txn.id}` || txn.email_sent}
+                      className={`flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold transition-colors ${txn.email_sent
+                        ? 'bg-green-50 text-green-600 cursor-default'
+                        : 'bg-orange-50 text-orange-600 hover:bg-orange-100'
+                        }`}
+                    >
+                      {txn.email_sent ? <CheckCircle size={10} /> : (processingId === `email-${txn.id}` ? <RefreshCw size={10} className="animate-spin" /> : <AlertCircle size={10} />)}
+                      {txn.email_sent ? 'Sent' : (processingId === `email-${txn.id}` ? 'Sending...' : 'Resend')}
+                    </button>
+
+                    {/* Download Button */}
+                    <button
+                      onClick={() => generateInvoice(txn)}
+                      disabled={downloadingInvoice === txn.id}
+                      className="flex items-center justify-center gap-1.5 py-2 bg-gray-900 text-white rounded-lg text-[10px] font-bold hover:bg-gray-800 transition-colors disabled:opacity-70 shadow-sm"
+                    >
+                      {downloadingInvoice === txn.id ? (
+                        <RefreshCw size={10} className="animate-spin" />
+                      ) : (
+                        <Download size={10} />
+                      )}
+                      Invoice
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -2234,7 +2299,7 @@ const SubscriptionManagementV2 = () => {
               )}
             </div>
 
-            <div className="p-6 bg-gray-50 rounded-b-3xl border-t border-gray-100 text-center">
+            <div className="p-4 md:p-6 bg-gray-50 rounded-b-3xl border-t border-gray-100 text-center">
               <p className="text-xs text-gray-500">Invoices are automatically generated for each successful payment.</p>
             </div>
           </div>
