@@ -1426,7 +1426,7 @@ const SubscriptionManagementV2 = () => {
       {/* Billing & Invoices Tab */}
       {activeTab === 'billing' && (
         <div className="space-y-6 animate-in fade-in duration-300">
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="hidden md:block bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
               <div>
                 <h3 className="text-lg font-bold text-gray-900">Billing & Invoices</h3>
@@ -1500,6 +1500,55 @@ const SubscriptionManagementV2 = () => {
                 </tbody>
               </table>
             </div>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-3">
+            {subscriptions.length === 0 ? (
+              <div className="text-center text-gray-400 flex flex-col items-center gap-2 py-8 bg-white/50 rounded-2xl border border-gray-100">
+                <IndianRupee className="w-8 h-8 text-gray-200" />
+                <p className="text-sm">No billing records found.</p>
+              </div>
+            ) : (
+              subscriptions.map(sub => (
+                <div key={sub.id} className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm flex flex-col gap-2 relative">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-sm shadow-indigo-200 text-xs">
+                        {sub.restaurant?.name?.charAt(0) || 'R'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-bold text-gray-900 leading-tight truncate">
+                          {sub.restaurant?.name || 'Unknown'}
+                        </div>
+                        <div className="text-[10px] text-gray-400 font-medium truncate max-w-[140px]">
+                          {sub.restaurant?.contact_email}
+                        </div>
+                      </div>
+                    </div>
+                    <div className={`rounded-full p-1 ${getStatusColor(sub.status)}/10 flex-shrink-0`}>
+                      {React.cloneElement(getStatusIcon(sub.status), { size: 14 })}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center bg-gray-50/50 rounded-lg p-2 border border-gray-50/50">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-xs font-bold text-gray-900 capitalize">{sub.plan_name}</p>
+                      <span className="text-[9px] text-gray-400 capitalize bg-white px-1.5 py-0.5 rounded border border-gray-100 shadow-sm">{sub.billing_cycle}</span>
+                    </div>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{sub.payment_method || 'Manual'}</span>
+                  </div>
+
+                  <button
+                    onClick={() => handleViewBilling(sub)}
+                    className="w-full py-2 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:bg-indigo-100 transition-colors"
+                  >
+                    <IndianRupee size={14} />
+                    View Invoices
+                  </button>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
