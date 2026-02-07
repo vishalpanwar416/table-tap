@@ -962,12 +962,7 @@ export const StaffModal = ({ show, onClose, onSubmit, data, setData, restaurants
     };
   }, []);
 
-  // Add this useEffect to track data changes
-  useEffect(() => {
-    if (isEditing) {
-      console.log('🔍 StaffModal data changed:', data);
-    }
-  }, [data, isEditing]);
+
 
   if (!show) return null;
 
