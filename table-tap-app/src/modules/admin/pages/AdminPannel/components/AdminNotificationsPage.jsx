@@ -405,9 +405,9 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
   }, [notifications, unreadCount]);
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto">
-      {/* Header Actions Only */}
-      <div className="mb-6 flex justify-end">
+    <div className="p-2 md:p-6 max-w-7xl mx-auto">
+      {/* Header Actions Only - Desktop Only */}
+      <div className="mb-6 hidden md:flex justify-end">
         <div className="flex items-center gap-2">
           <button
             onClick={handleRefresh}
@@ -439,7 +439,7 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
 
       {/* Stats Cards */}
       {/* Stats Cards - Compact on Mobile */}
-      <div className="grid grid-cols-4 gap-1 md:gap-3 mt-4 md:mt-6 pb-2 md:pb-0">
+      <div className="grid grid-cols-4 gap-1 md:gap-3 mt-2 md:mt-6 pb-2 md:pb-0">
         <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
           <div className="p-1 md:p-2 bg-blue-100 rounded-lg mb-1">
             <Inbox className="w-3.5 h-3.5 md:w-5 md:h-5 text-blue-600" />
@@ -480,7 +480,7 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
 
 
       {/* Filters & Search */}
-      <div className="md:bg-white md:rounded-2xl md:border md:border-gray-200 md:shadow-sm mb-4 md:mb-6">
+      <div className="md:bg-white md:rounded-2xl md:border md:border-gray-200 md:shadow-sm mb-2 md:mb-6">
         <div className="md:p-4 md:border-b md:border-gray-100">
           <div className="flex items-center justify-between gap-1 pb-1">
 
@@ -553,6 +553,15 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
               ))}
             </div>
 
+            {/* Clear Old - Mobile Only */}
+            <button
+              onClick={clearOldNotifications}
+              className="md:hidden flex items-center justify-center shrink-0 w-9 h-9 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition-colors"
+              title="Clear old"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+
             {/* Sort */}
             <div className="flex items-center gap-2 shrink-0">
               <button
@@ -610,7 +619,7 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
         )}
 
         {/* Results count */}
-        <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between text-sm text-gray-500">
+        <div className="px-2 py-2 md:px-4 md:py-3 border-b border-gray-100 flex items-center justify-between text-sm text-gray-500">
           <div className="flex items-center gap-4">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -648,7 +657,7 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
             filteredNotifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`flex items-start gap-3 md:gap-4 p-3 md:p-4 transition-all cursor-pointer border-b border-gray-50 last:border-0 ${getNotificationBg(notification.type, notification.read)}`}
+                className={`flex items-start gap-2 md:gap-4 p-2 md:p-4 transition-all cursor-pointer border-b border-gray-50 last:border-0 ${getNotificationBg(notification.type, notification.read)}`}
                 onClick={() => handleNotificationClick(notification)}
               >
                 {/* Checkbox - Compact */}
@@ -669,7 +678,7 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
                 </div>
 
                 {/* Icon - Smaller on Mobile */}
-                <div className={`flex-shrink-0 p-2 md:p-2.5 rounded-xl ${notification.read ? 'bg-gray-100' : 'bg-white shadow-sm'}`}>
+                <div className={`flex-shrink-0 p-1.5 md:p-2.5 rounded-xl ${notification.read ? 'bg-gray-100' : 'bg-white shadow-sm'}`}>
                   {React.cloneElement(getNotificationIcon(notification.type), {
                     className: "w-4 h-4 md:w-5 md:h-5 " + getNotificationIcon(notification.type).props.className.split(' ').filter(c => !c.startsWith('w-') && !c.startsWith('h-')).join(' ')
                   })}
