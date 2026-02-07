@@ -14,6 +14,7 @@ if (isMissingCredentials) {
 }
 
 // createClient throws if url is an empty string. A valid-ish URL is required to avoid build exit.
+console.log('Initializing Supabase client with URL:', supabaseUrl || 'placeholder');
 export const supabase = createClient(
     supabaseUrl || 'https://lib-placeholder.supabase.co',
     supabaseAnonKey || 'lib-placeholder-key'
