@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { MapPin, Search, X, Navigation, Check } from 'lucide-react';
+import { useSettings } from '../context/SettingsContext';
 
 export default function LocationPicker({ onLocationSelect, onClose, initialLocation }) {
+    const { mapsKey } = useSettings();
     const mapRef = useRef(null);
     const mapInstanceRef = useRef(null);
     const markerRef = useRef(null);
@@ -85,9 +87,9 @@ export default function LocationPicker({ onLocationSelect, onClose, initialLocat
             return;
         }
 
-        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+        const apiKey = mapsKey || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
         if (!apiKey) {
-            setTimeout(() => setError('Google Maps API key not configured'), 0);
+            setTimeout(() => setError('Google Maps API key not configured. Please contact support or set it in Admin Settings.'), 0);
             return;
         }
 
@@ -96,7 +98,7 @@ export default function LocationPicker({ onLocationSelect, onClose, initialLocat
         script.async = true;
         script.defer = true;
         script.onload = () => setIsLoaded(true);
-        script.onerror = () => setError('Failed to load Google Maps');
+        script.onerror = () => setError('Failed to load Google Maps. Please check your API key and restrictions.');
         document.head.appendChild(script);
 
         return () => {

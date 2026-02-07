@@ -142,6 +142,8 @@ const RegistrationRequests = ({ searchTerm = '' }) => {
                 gst_number: registration.gst_number,
                 fssai_license: registration.fssai_license,
                 google_maps_link: registration.google_maps_link,
+                latitude: registration.latitude,
+                longitude: registration.longitude,
                 // Manager details for staff creation
                 manager_name: registration.owner_name,
                 manager_email: registration.owner_email,
@@ -658,6 +660,44 @@ const RegistrationRequests = ({ searchTerm = '' }) => {
                                     )}
                                 </div>
                             </div>
+
+                            {/* Location Info */}
+                            {(selectedRegistration.latitude || selectedRegistration.longitude || selectedRegistration.google_maps_link) && (
+                                <div className="bg-gray-50 rounded-xl p-4">
+                                    <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                        <MapPin size={18} className="text-orange-500" />
+                                        Precise Location
+                                    </h3>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {selectedRegistration.latitude && (
+                                            <div>
+                                                <p className="text-xs text-gray-500 uppercase tracking-wider">Latitude</p>
+                                                <p className="font-medium text-gray-900">{selectedRegistration.latitude}</p>
+                                            </div>
+                                        )}
+                                        {selectedRegistration.longitude && (
+                                            <div>
+                                                <p className="text-xs text-gray-500 uppercase tracking-wider">Longitude</p>
+                                                <p className="font-medium text-gray-900">{selectedRegistration.longitude}</p>
+                                            </div>
+                                        )}
+                                        {selectedRegistration.google_maps_link && (
+                                            <div className="col-span-2">
+                                                <p className="text-xs text-gray-500 uppercase tracking-wider">Google Maps Link</p>
+                                                <a
+                                                    href={selectedRegistration.google_maps_link}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium mt-1 group"
+                                                >
+                                                    View on Google Maps
+                                                    <Check size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                </a>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Legal Info */}
                             {(selectedRegistration.gst_number || selectedRegistration.fssai_license) && (

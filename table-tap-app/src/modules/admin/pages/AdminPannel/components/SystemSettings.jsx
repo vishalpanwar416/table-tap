@@ -345,6 +345,14 @@ const SystemSettings = () => {
                     is_active: true
                 },
                 {
+                    key: 'google_maps_key',
+                    value: { key: '' },
+                    category: 'api',
+                    description: 'Google Maps API Key for location services',
+                    is_secret: true,
+                    is_active: true
+                },
+                {
                     key: 'email_template_onboarding_menu',
                     value: {
                         subject: "Step 1: Setting up your Menu at {{restaurant_name}}",

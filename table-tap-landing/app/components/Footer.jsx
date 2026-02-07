@@ -56,11 +56,11 @@ const Footer = () => {
                         <a href="#home" className="inline-flex items-center gap-3 mb-4 group min-h-[44px]">
                             <div className="h-10 sm:h-12 rounded-xl overflow-hidden group-hover:scale-105 transition-transform bg-white/10 p-1">
                                 <Image
-                                    src="/logo.png"
+                                    src={logo?.url || "/logo.png"}
                                     alt="Table Tap Logo"
                                     width={120}
                                     height={48}
-                                    className="h-full w-auto object-contain brightness-0 invert"
+                                    className={`h-full w-auto object-contain ${!logo?.url ? 'brightness-0 invert' : ''}`}
                                 />
                             </div>
                         </a>

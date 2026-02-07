@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { useModal } from '../context/ModalContext';
+import { useSettings } from '../context/SettingsContext';
 import data from '../data/landing-data.json';
 
 const Header = () => {
@@ -12,6 +13,9 @@ const Header = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const { header } = data;
     const { openModal } = useModal();
+    const { logo } = useSettings();
+
+    const logoUrl = logo?.url || '/logo.png';
 
     useEffect(() => {
         const handleScroll = () => {
@@ -30,7 +34,7 @@ const Header = () => {
                 {/* Logo */}
                 <Link href="#home" className="flex items-center gap-2 group min-h-[44px] min-w-[44px] shrink-0">
                     <Image
-                        src="/logo.png"
+                        src={logoUrl}
                         alt="Table Tap"
                         width={180}
                         height={72}

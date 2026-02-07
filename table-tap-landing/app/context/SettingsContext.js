@@ -5,11 +5,14 @@ import { supabase } from '../lib/supabase';
 
 const SettingsContext = createContext();
 
-export const SettingsProvider = ({ children }) => {
+export const SettingsProvider = ({ children, initialSettings = null }) => {
     const [settings, setSettings] = useState({
-        company: null,
-        social: null,
-        loading: true
+        company: initialSettings?.company_details || null,
+        social: initialSettings?.social_links || null,
+        hero: initialSettings?.landing_hero || null,
+        logo: initialSettings?.system_logo || null,
+        mapsKey: initialSettings?.google_maps_key?.key || null,
+        loading: !initialSettings
     });
 
     useEffect(() => {
@@ -18,7 +21,7 @@ export const SettingsProvider = ({ children }) => {
                 const { data, error } = await supabase
                     .from('system_settings')
                     .select('key, value')
-                    .in('key', ['company_details', 'social_links']);
+                    .in('key', ['company_details', 'social_links', 'landing_hero', 'system_logo', 'google_maps_key']);
 
                 if (error) throw error;
 
@@ -27,11 +30,14 @@ export const SettingsProvider = ({ children }) => {
                     return acc;
                 }, {});
 
-                setSettings({
-                    company: settingsMap['company_details'] || null,
-                    social: settingsMap['social_links'] || null,
+                setSettings(prev => ({
+                    company: settingsMap['company_details'] || prev.company,
+                    social: settingsMap['social_links'] || prev.social,
+                    hero: settingsMap['landing_hero'] || prev.hero,
+                    logo: settingsMap['system_logo'] || prev.logo,
+                    mapsKey: settingsMap['google_maps_key']?.key || prev.mapsKey,
                     loading: false
-                });
+                }));
             } catch (err) {
                 console.error('Error fetching landing settings:', err);
                 setSettings(prev => ({ ...prev, loading: false }));

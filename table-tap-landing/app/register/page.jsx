@@ -249,6 +249,8 @@ function RegisterForm() {
             city: location.city || prev.city,
             state: location.state || prev.state,
             pincode: location.pincode || prev.pincode,
+            latitude: location.lat || prev.latitude,
+            longitude: location.lng || prev.longitude,
             googleMapsLink: location.googleMapsLink || prev.googleMapsLink
         }));
         setShowLocationPicker(false);
@@ -316,6 +318,8 @@ function RegisterForm() {
 
         // Optional
         googleMapsLink: '',
+        latitude: null,
+        longitude: null,
 
         // Plan
         plan: selectedPlanId,
@@ -571,6 +575,8 @@ function RegisterForm() {
                     gst_number: formData.gstNumber || null,
                     fssai_license: formData.fssaiLicense || null,
                     google_maps_link: formData.googleMapsLink || null,
+                    latitude: formData.latitude,
+                    longitude: formData.longitude,
 
                     // Plan Info
                     selected_plan: formData.plan,

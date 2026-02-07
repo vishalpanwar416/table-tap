@@ -1,10 +1,13 @@
-export default function StructuredData() {
+export default function StructuredData({ settings }) {
+  const company = settings?.company_details || {};
+  const social = settings?.social_links || {};
+
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": "Table Tap",
-    "url": "https://table-tap.in",
-    "logo": "https://table-tap.in/logo.png",
+    "name": company.name || "Table Tap",
+    "url": company.website || "https://table-tap.in",
+    "logo": settings?.system_logo?.url || "https://table-tap.in/logo.png",
     "description": "Table Tap helps restaurants deliver exceptional guest experiences through seamless QR-based digital ordering.",
     "foundingDate": "2024",
     "founders": [
@@ -15,20 +18,21 @@ export default function StructuredData() {
     ],
     "address": {
       "@type": "PostalAddress",
-      "addressLocality": "Hyderabad",
+      "addressLocality": company.city || "Hyderabad",
+      "addressRegion": company.state || "Telangana",
       "addressCountry": "IN"
     },
     "contactPoint": {
       "@type": "ContactPoint",
-      "telephone": "+91-75009-88212",
+      "telephone": company.phone || "+91-75009-88212",
       "contactType": "sales",
-      "email": "vishalpanwar416@gmail.com",
+      "email": company.email || "vishalpanwar416@gmail.com",
       "availableLanguage": ["English", "Hindi"]
     },
     "sameAs": [
-      "https://twitter.com/tabletap",
-      "https://www.linkedin.com/company/tabletap",
-      "https://www.instagram.com/tabletap"
+      social.twitter || "https://twitter.com/tabletap",
+      social.linkedin || "https://www.linkedin.com/company/tabletap",
+      social.instagram || "https://www.instagram.com/tabletap"
     ]
   };
 
@@ -76,7 +80,7 @@ export default function StructuredData() {
     "softwareVersion": "1.0",
     "author": {
       "@type": "Organization",
-      "name": "Table Tap"
+      "name": company.name || "Table Tap"
     }
   };
 
@@ -138,15 +142,15 @@ export default function StructuredData() {
   const localBusinessSchema = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    "name": "Table Tap",
-    "@id": "https://table-tap.in",
-    "url": "https://table-tap.in",
-    "telephone": "+91-75009-88212",
-    "email": "vishalpanwar416@gmail.com",
+    "name": company.name || "Table Tap",
+    "@id": company.website || "https://table-tap.in",
+    "url": company.website || "https://table-tap.in",
+    "telephone": company.phone || "+91-75009-88212",
+    "email": company.email || "vishalpanwar416@gmail.com",
     "address": {
       "@type": "PostalAddress",
-      "addressLocality": "Hyderabad",
-      "addressRegion": "Telangana",
+      "addressLocality": company.city || "Hyderabad",
+      "addressRegion": company.state || "Telangana",
       "addressCountry": "IN"
     },
     "geo": {
