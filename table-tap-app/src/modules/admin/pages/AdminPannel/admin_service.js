@@ -685,7 +685,7 @@ export const deleteRestaurant = async (restaurantId) => {
     await logAdminActivity({
       activity_type: ACTIVITY_TYPES.RESTAURANT_DELETED,
       activity_name: 'Restaurant Deleted',
-      restaurant_id: restaurantId, // ID might be gone/referenced, but good to log
+      restaurant_id: null,
       target_type: 'restaurant',
       target_id: restaurantId,
       target_name: 'Deleted Restaurant',
