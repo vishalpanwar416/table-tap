@@ -1,12 +1,12 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { Users, Building2, Mail, Phone, Edit, Trash2, Loader2, ChevronUp } from 'lucide-react';
 
-const StaffGrid = ({ 
-  staff, 
-  restaurants, 
-  onEdit, 
-  onDelete, 
-  onLoadMore 
+const StaffGrid = ({
+  staff,
+  restaurants,
+  onEdit,
+  onDelete,
+  onLoadMore
 }) => {
   // Infinite scroll state
   const [displayedStaff, setDisplayedStaff] = useState([]);
@@ -14,7 +14,7 @@ const StaffGrid = ({
   const [itemsPerPage] = useState(12); // Show 12 staff per page
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  
+
   const gridRef = useRef(null);
   const observerRef = useRef(null);
 
@@ -31,12 +31,12 @@ const StaffGrid = ({
     if (isLoading || !hasMore) return;
 
     setIsLoading(true);
-    
+
     try {
       const nextPage = currentPage + 1;
       const startIndex = (nextPage - 1) * itemsPerPage;
       const endIndex = startIndex + itemsPerPage;
-      
+
       // If we have local data, use it
       if (staff.length >= endIndex) {
         const newStaff = staff.slice(startIndex, endIndex);
@@ -122,7 +122,7 @@ const StaffGrid = ({
   // Staff Card Component
   const StaffCard = useCallback(({ member, index }) => (
     <div
-      className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300 group"
+      className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 hover:shadow-md transition-all duration-300 group"
       data-staff-index={index}
       ref={(el) => {
         if (el && index === displayedStaff.length - 1) {
@@ -131,48 +131,50 @@ const StaffGrid = ({
       }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3 md:mb-4">
         <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-400 to-purple-400 flex items-center justify-center shadow-sm">
+          <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-tr from-blue-400 to-purple-400 flex items-center justify-center shadow-sm">
             {member.name ? (
-              <span className="text-white font-bold text-lg">
-                {member.name.split(' ').map(n => n[0]).join('').slice(0,2)}
+              <span className="text-white font-bold text-sm md:text-lg">
+                {member.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
               </span>
             ) : (
-              <Users className="w-6 h-6 text-white" />
+              <Users className="w-5 h-5 md:w-6 md:h-6 text-white" />
             )}
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 font-spartan">
+            <h3 className="text-base md:text-lg font-semibold text-gray-900 font-spartan leading-tight">
               {member.name || 'Unnamed Staff'}
             </h3>
-            <p className="text-sm text-gray-500 font-spartan">
+            <p className="text-xs md:text-sm text-gray-500 font-spartan">
               {member.email}
             </p>
           </div>
         </div>
-        {getConnectionStatus(member.connected)}
+        <div className="scale-90 md:scale-100 origin-right">
+          {getConnectionStatus(member.connected)}
+        </div>
       </div>
 
       {/* Details */}
-      <div className="space-y-3">
+      <div className="space-y-2 md:space-y-3">
         <div className="flex items-center space-x-2">
-          <Building2 className="w-4 h-4 text-gray-400" />
-          <span className="text-sm text-gray-600 font-spartan">
+          <Building2 className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-400" />
+          <span className="text-xs md:text-sm text-gray-600 font-spartan truncate">
             {getRestaurantName(member.restaurant_id)}
           </span>
         </div>
 
         <div className="flex items-center space-x-2">
-          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border shadow-sm ${getRoleColor(member.role)}`}>
+          <span className={`inline-flex items-center px-2.5 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-semibold border shadow-sm ${getRoleColor(member.role)}`}>
             {member.role ? member.role.charAt(0).toUpperCase() + member.role.slice(1) : 'Unknown'}
           </span>
         </div>
 
         {member.phone_number && (
           <div className="flex items-center space-x-2">
-            <Phone className="w-4 h-4 text-gray-400" />
-            <span className="text-sm text-gray-600 font-spartan">
+            <Phone className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-400" />
+            <span className="text-xs md:text-sm text-gray-600 font-spartan">
               {member.phone_number}
             </span>
           </div>
@@ -180,20 +182,20 @@ const StaffGrid = ({
       </div>
 
       {/* Actions */}
-      <div className="flex items-center justify-end space-x-2 mt-4 pt-4 border-t border-gray-100">
+      <div className="flex items-center justify-end space-x-2 mt-3 pt-3 md:mt-4 md:pt-4 border-t border-gray-100">
         <button
           onClick={() => onEdit(member)}
-          className="p-2 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-800 transition-colors"
+          className="p-1.5 md:p-2 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-800 transition-colors"
           title="Edit staff member"
         >
-          <Edit className="w-4 h-4" />
+          <Edit className="w-3.5 h-3.5 md:w-4 md:h-4" />
         </button>
         <button
           onClick={() => onDelete(member.id)}
-          className="p-2 rounded-full bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-800 transition-colors"
+          className="p-1.5 md:p-2 rounded-full bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-800 transition-colors"
           title="Delete staff member"
         >
-          <Trash2 className="w-4 h-4" />
+          <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
         </button>
       </div>
     </div>
@@ -201,28 +203,16 @@ const StaffGrid = ({
 
   // Loading indicator component
   const LoadingIndicator = useCallback(() => (
-    <div className="col-span-full flex items-center justify-center py-12">
+    <div className="col-span-full flex items-center justify-center py-6 md:py-12">
       <div className="flex items-center space-x-3 text-gray-600">
-        <Loader2 className="w-6 h-6 animate-spin" />
-        <span className="text-sm font-spartan">Loading more staff members...</span>
+        <Loader2 className="w-5 h-5 md:w-6 md:h-6 animate-spin" />
+        <span className="text-xs md:text-sm font-spartan">Loading...</span>
       </div>
     </div>
   ), []);
 
-  // End of list indicator
-  const EndOfListIndicator = useCallback(() => (
-    <div className="col-span-full flex items-center justify-center py-12">
-      <div className="text-center">
-        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Users className="w-8 h-8 text-gray-400" />
-        </div>
-        <p className="text-sm text-gray-600 font-spartan">All staff members loaded</p>
-        <p className="text-xs text-gray-500 font-spartan mt-1">
-          Showing {displayedStaff.length} of {staff.length} total members
-        </p>
-      </div>
-    </div>
-  ), [displayedStaff.length, staff.length]);
+  // End of list indicator - HIDDEN/REMOVED AS REQUESTED
+  const EndOfListIndicator = useCallback(() => null, []);
 
   if (staff.length === 0) {
     return (

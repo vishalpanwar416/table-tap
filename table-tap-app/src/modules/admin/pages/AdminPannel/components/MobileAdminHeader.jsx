@@ -140,8 +140,8 @@ const MobileAdminHeader = ({
         {/* Right: Action Buttons */}
         <div className="flex items-center space-x-2">
           {/* Search Button */}
-          {/* Search Button - Only for Restaurants, Staff, and Registrations */}
-          {(activeTab === 'restaurants' || activeTab === 'staff' || activeTab === 'registrations') && (
+          {/* Search Button - Only for Restaurants, Staff, Registrations and Inquiries */}
+          {(activeTab === 'restaurants' || activeTab === 'staff' || activeTab === 'registrations' || activeTab === 'inquiries') && (
             <button
               onClick={() => setShowFilters(!showFilters)}
               className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
@@ -155,13 +155,13 @@ const MobileAdminHeader = ({
         </div>
       </div>
 
-      {/* Search and Filter Section - Only for Restaurants, Staff, and Registrations */}
-      {showFilters && (activeTab === 'restaurants' || activeTab === 'staff' || activeTab === 'registrations') && (
+      {/* Search and Filter Section - Only for Restaurants, Staff, Registrations and Inquiries */}
+      {showFilters && (activeTab === 'restaurants' || activeTab === 'staff' || activeTab === 'registrations' || activeTab === 'inquiries') && (
         <div className="px-4 pb-4 border-t border-gray-200">
           <div className="pt-4 space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="font-semibold text-gray-900 font-spartan">
-                {activeTab === 'registrations' ? 'Search Registrations' : `Filter ${activeTab === 'restaurants' ? 'Restaurants' : 'Staff'}`}
+                {activeTab === 'registrations' ? 'Search Registrations' : activeTab === 'inquiries' ? 'Search Leads' : `Filter ${activeTab === 'restaurants' ? 'Restaurants' : 'Staff'}`}
               </h3>
               {hasFilters && (
                 <button
@@ -181,7 +181,7 @@ const MobileAdminHeader = ({
                 </div>
                 <input
                   type="search"
-                  placeholder={`Search ${activeTab === 'restaurants' ? 'restaurants' : activeTab === 'staff' ? 'staff' : 'registrations'}...`}
+                  placeholder={`Search ${activeTab === 'restaurants' ? 'restaurants' : activeTab === 'staff' ? 'staff' : activeTab === 'registrations' ? 'registrations' : 'leads'}...`}
                   className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50 backdrop-blur-sm transition-all duration-200 hover:bg-white/70 font-spartan"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}

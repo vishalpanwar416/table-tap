@@ -119,8 +119,8 @@ const AdminHeader = ({
 
         <div className="flex items-center space-x-4">
           {/* Unified Search and Filter Section */}
-          {/* Unified Search and Filter Section - Only for Restaurants, Staff, and Registrations */}
-          {(activeTab === 'restaurants' || activeTab === 'staff' || activeTab === 'registrations') && (
+          {/* Unified Search and Filter Section - Only for Restaurants, Staff, Registrations and Inquiries */}
+          {(activeTab === 'restaurants' || activeTab === 'staff' || activeTab === 'registrations' || activeTab === 'inquiries') && (
             <div className="flex items-center space-x-3">
               {/* Search Bar */}
               <div className="relative">
@@ -129,7 +129,7 @@ const AdminHeader = ({
                 </div>
                 <input
                   type="search"
-                  placeholder={`Search ${activeTab === 'restaurants' ? 'restaurants' : activeTab === 'staff' ? 'staff' : 'registrations'}...`}
+                  placeholder={`Search ${activeTab === 'restaurants' ? 'restaurants' : activeTab === 'staff' ? 'staff' : activeTab === 'registrations' ? 'registrations' : 'leads'}...`}
                   className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50 backdrop-blur-sm transition-all duration-200 hover:bg-white/70 font-spartan"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}

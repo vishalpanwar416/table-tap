@@ -620,7 +620,7 @@ const AdminPanel = () => {
       case 'registrations':
         return <RegistrationRequests searchTerm={searchTerm} />;
       case 'inquiries':
-        return <InquiryManagement />;
+        return <InquiryManagement searchTerm={searchTerm} />;
       case 'notifications':
         return (
           <Suspense fallback={<LoadingSpinner />}>

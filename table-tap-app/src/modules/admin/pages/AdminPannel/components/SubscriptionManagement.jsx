@@ -987,7 +987,7 @@ const SubscriptionManagementV2 = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`group flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${isActive
+                className={`group flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 whitespace-nowrap flex-shrink-0 ${isActive
                   ? 'bg-black text-white shadow-lg shadow-gray-900/20'
                   : 'text-gray-500 hover:bg-white hover:text-gray-900 hover:shadow-sm'
                   }`}
@@ -1011,111 +1011,116 @@ const SubscriptionManagementV2 = () => {
         <div className="space-y-6 animate-in fade-in duration-300">
 
           {/* Quick Actions Toolbar */}
-          <div className="flex flex-wrap items-center justify-between gap-4 bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
-            <div>
-              <h3 className="text-lg font-bold text-gray-900">Dashboard Overview</h3>
-              <p className="text-sm text-gray-500">Real-time subscription metrics</p>
-            </div>
-            <div className="flex gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-4 bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
+            <div className="flex gap-2 w-full md:w-auto overflow-x-auto no-scrollbar md:gap-3">
               <button
                 onClick={handleProcessExpired}
-                className="flex items-center gap-2 px-4 py-2.5 bg-white border border-orange-200 text-orange-700 rounded-xl hover:bg-orange-50 transition-all shadow-sm text-sm font-medium"
+                className="flex items-center justify-center gap-2 px-3 py-2 md:px-4 md:py-2.5 bg-white border border-orange-200 text-orange-700 rounded-xl hover:bg-orange-50 transition-all shadow-sm text-xs md:text-sm font-medium flex-1 md:flex-initial whitespace-nowrap"
+                title="Process Expirations"
               >
-                <CalendarClock className="w-4 h-4" />
-                Process Expirations
-              </button>
-              <button
-                onClick={fetchData}
-                className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-all shadow-sm text-sm font-medium"
-              >
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                Refresh Data
+                <CalendarClock className="w-4 h-4 flex-shrink-0" />
+                <span className="hidden md:inline">Process Expirations</span>
+                <span className="md:hidden">Expiry</span>
               </button>
               <button
                 onClick={() => openAssignModal()}
-                className="flex items-center gap-2 px-5 py-2.5 bg-black text-white rounded-xl hover:bg-gray-800 transition-all shadow-lg shadow-gray-200 text-sm font-medium"
+                className="flex items-center justify-center gap-2 px-3 py-2 md:px-5 md:py-2.5 bg-black text-white rounded-xl hover:bg-gray-800 transition-all shadow-lg shadow-gray-200 text-xs md:text-sm font-medium flex-1 md:flex-initial whitespace-nowrap"
+                title="Assign Subscription"
               >
-                <Package className="w-4 h-4" />
-                Assign Subscription
+                <Package className="w-4 h-4 flex-shrink-0" />
+                <span className="hidden md:inline">Assign Subscription</span>
+                <span className="md:hidden">Assign</span>
               </button>
             </div>
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100/50">
-              <div className="flex items-center">
-                <div className="p-3 bg-blue-50 rounded-xl">
-                  <CreditCard className="w-6 h-6 text-blue-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Subscriptions</p>
-                  <p className="text-3xl font-black text-gray-900 mt-1">{stats.totalSubscriptions}</p>
-                </div>
+          {/* Stats Cards - Compact Single Line on Mobile */}
+          <div className="grid grid-cols-4 gap-1.5 md:gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {/* Total Subscriptions */}
+            <div className="bg-white p-2 md:p-6 rounded-xl md:rounded-2xl shadow-sm border border-gray-100/50 flex flex-col md:flex-row items-center justify-center md:justify-start">
+              <div className="hidden md:block p-3 bg-blue-50 rounded-xl mr-4">
+                <CreditCard className="w-6 h-6 text-blue-600" />
+              </div>
+              <div className="text-center md:text-left">
+                <p className="text-[9px] md:text-xs font-bold text-gray-400 uppercase tracking-wider md:hidden">Total</p>
+                <p className="hidden md:block text-xs font-bold text-gray-400 uppercase tracking-wider">Total Subscriptions</p>
+                <p className="text-sm md:text-3xl font-black text-gray-900 mt-0.5 md:mt-1">{stats.totalSubscriptions}</p>
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100/50">
-              <div className="flex items-center">
-                <div className="p-3 bg-green-50 rounded-xl">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Active</p>
-                  <p className="text-3xl font-black text-gray-900 mt-1">{stats.activeSubscriptions}</p>
-                </div>
+            {/* Active */}
+            <div className="bg-white p-2 md:p-6 rounded-xl md:rounded-2xl shadow-sm border border-gray-100/50 flex flex-col md:flex-row items-center justify-center md:justify-start">
+              <div className="hidden md:block p-3 bg-green-50 rounded-xl mr-4">
+                <CheckCircle className="w-6 h-6 text-green-600" />
+              </div>
+              <div className="text-center md:text-left">
+                <p className="text-[9px] md:text-xs font-bold text-gray-400 uppercase tracking-wider md:hidden">Active</p>
+                <p className="hidden md:block text-xs font-bold text-gray-400 uppercase tracking-wider">Active</p>
+                <p className="text-sm md:text-3xl font-black text-gray-900 mt-0.5 md:mt-1">{stats.activeSubscriptions}</p>
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100/50">
-              <div className="flex items-center">
-                <div className="p-3 bg-orange-50 rounded-xl">
-                  <AlertTriangle className="w-6 h-6 text-orange-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Grace Period</p>
-                  <p className="text-3xl font-black text-gray-900 mt-1">{stats.gracePeriodSubscriptions || 0}</p>
-                </div>
+            {/* Grace Period */}
+            <div className="bg-white p-2 md:p-6 rounded-xl md:rounded-2xl shadow-sm border border-gray-100/50 flex flex-col md:flex-row items-center justify-center md:justify-start">
+              <div className="hidden md:block p-3 bg-orange-50 rounded-xl mr-4">
+                <AlertTriangle className="w-6 h-6 text-orange-600" />
+              </div>
+              <div className="text-center md:text-left">
+                <p className="text-[9px] md:text-xs font-bold text-gray-400 uppercase tracking-wider md:hidden">Grace</p>
+                <p className="hidden md:block text-xs font-bold text-gray-400 uppercase tracking-wider">Grace Period</p>
+                <p className="text-sm md:text-3xl font-black text-gray-900 mt-0.5 md:mt-1">{stats.gracePeriodSubscriptions || 0}</p>
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100/50">
-              <div className="flex items-center">
-                <div className="p-3 bg-yellow-50 rounded-xl">
-                  <IndianRupee className="w-6 h-6 text-yellow-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Monthly Revenue</p>
-                  <p className="text-3xl font-black text-gray-900 mt-1">₹{(stats.monthlyRecurringRevenue || 0).toLocaleString()}</p>
-                </div>
+            {/* Monthly Revenue */}
+            <div className="bg-white p-2 md:p-6 rounded-xl md:rounded-2xl shadow-sm border border-gray-100/50 flex flex-col md:flex-row items-center justify-center md:justify-start">
+              <div className="hidden md:block p-3 bg-yellow-50 rounded-xl mr-4">
+                <IndianRupee className="w-6 h-6 text-yellow-600" />
+              </div>
+              <div className="text-center md:text-left">
+                <p className="text-[9px] md:text-xs font-bold text-gray-400 uppercase tracking-wider md:hidden">Revenue</p>
+                <p className="hidden md:block text-xs font-bold text-gray-400 uppercase tracking-wider">Monthly Revenue</p>
+                <p className="text-sm md:text-3xl font-black text-gray-900 mt-0.5 md:mt-1 truncate w-full">₹{(stats.monthlyRecurringRevenue || 0).toLocaleString()}</p>
               </div>
             </div>
           </div>
 
           {/* Plan Breakdown */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Plan Breakdown */}
+          <div className="grid grid-cols-2 gap-2 md:grid md:grid-cols-3 md:gap-6">
             {plans.map(plan => {
               const count = stats.planCounts?.[plan.key] || 0;
-              // Map icon name to component or fallback
-              const Icon = plan.key === 'starter' ? Zap : plan.key === 'professional' ? Brain : Building2;
-              const colorClass = plan.key === 'starter' ? 'text-blue-600' : plan.key === 'professional' ? 'text-purple-600' : 'text-indigo-600';
-              const iconColor = plan.key === 'starter' ? 'text-blue-500' : plan.key === 'professional' ? 'text-purple-500' : 'text-indigo-500';
+
+              // Dynamic Styling based on plan key
+              let Icon = Building2;
+              let colorText = 'text-gray-900';
+              let colorBg = 'bg-gray-50';
+
+              if (plan.key === 'lite') { Icon = Zap; colorText = 'text-blue-600'; colorBg = 'bg-blue-50'; }
+              else if (plan.key === 'standard') { Icon = Stars; colorText = 'text-purple-600'; colorBg = 'bg-purple-50'; }
+              else if (plan.key === 'pro') { Icon = Brain; colorText = 'text-slate-700'; colorBg = 'bg-slate-50'; }
+              else if (plan.key === 'custom') { Icon = Building2; colorText = 'text-amber-600'; colorBg = 'bg-amber-50'; }
+              else if (plan.key === 'starter') { Icon = Zap; colorText = 'text-blue-600'; colorBg = 'bg-blue-50'; } // Fallback
 
               return (
-                <div key={plan.id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100/50">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-bold text-gray-900 capitalize text-lg">{plan.name}</h3>
-                    <div className="p-2 bg-gray-50 rounded-lg">
-                      <Icon className={`w-5 h-5 ${iconColor}`} />
+                <div key={plan.id} className="bg-white p-2 md:p-6 rounded-xl md:rounded-2xl shadow-sm border border-gray-100/50 flex flex-col items-center md:items-stretch justify-between">
+                  <div className="flex items-center justify-between w-full mb-1 md:mb-4">
+                    <h3 className="font-bold text-gray-900 capitalize text-[10px] md:text-lg truncate w-full text-center md:text-left">{plan.name}</h3>
+                    <div className={`hidden md:block p-2 rounded-lg ${colorBg}`}>
+                      <Icon className={`w-5 h-5 ${colorText}`} />
                     </div>
                   </div>
-                  <p className={`text-4xl font-black ${colorClass} mb-1`}>{count}</p>
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                    active users
-                  </p>
-                  <div className="mt-4 pt-4 border-t border-dashed">
-                    <p className="text-sm font-medium text-gray-500">
-                      ₹{plan.base_price?.toLocaleString()}<span className="text-xs">/mo</span>
+
+                  <div className="text-center md:text-left mb-1 md:mb-0">
+                    <p className={`text-sm md:text-4xl font-black ${colorText} mb-0 md:mb-1 leading-tight`}>{count}</p>
+                    <p className="text-[8px] md:text-xs font-bold text-gray-400 uppercase tracking-wider leading-tight">
+                      active users
+                    </p>
+                  </div>
+
+                  <div className="mt-1 md:mt-4 pt-1 md:pt-4 border-t border-dashed w-full border-gray-100 text-center md:text-left">
+                    <p className="text-[10px] md:text-sm font-medium text-gray-500">
+                      ₹{plan.base_price?.toLocaleString()}<span className="text-[8px] md:text-xs">/mo</span>
                     </p>
                   </div>
                 </div>
@@ -1149,125 +1154,222 @@ const SubscriptionManagementV2 = () => {
       {/* Subscriptions Tab */}
       {/* Subscriptions Tab - Premium Table */}
       {activeTab === 'subscriptions' && (
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden animate-in fade-in duration-300">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-50/50 border-b border-gray-100 text-[10px] uppercase font-bold tracking-widest text-gray-400">
-                  <th className="px-8 py-4">Restaurant</th>
-                  <th className="px-6 py-4">Plan & Cycle</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4">Period</th>
-                  <th className="px-6 py-4">Amount</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {subscriptions.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" className="px-6 py-16 text-center text-gray-400 flex flex-col items-center gap-2">
-                      <Package className="w-12 h-12 text-gray-200" />
-                      <p>No subscriptions found. Assign one to get started.</p>
-                    </td>
+        <>
+          <div className="hidden md:block bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden animate-in fade-in duration-300">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gray-50/50 border-b border-gray-100 text-[10px] uppercase font-bold tracking-widest text-gray-400">
+                    <th className="px-8 py-4">Restaurant</th>
+                    <th className="px-6 py-4">Plan & Cycle</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4">Period</th>
+                    <th className="px-6 py-4">Amount</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
-                ) : (
-                  subscriptions.map((subscription) => {
-                    const daysLeft = getDaysRemaining(subscription.end_date);
-                    return (
-                      <tr key={subscription.id} className="hover:bg-gray-50/80 transition-colors group">
-                        <td className="px-8 py-5">
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md shadow-blue-200 text-sm">
-                              {subscription.restaurant?.name?.charAt(0) || 'R'}
-                            </div>
-                            <div>
-                              <div className="text-sm font-bold text-gray-900 leading-tight">
-                                {subscription.restaurant?.name || 'Unknown Restaurant'}
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {subscriptions.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className="px-6 py-16 text-center text-gray-400 flex flex-col items-center gap-2">
+                        <Package className="w-12 h-12 text-gray-200" />
+                        <p>No subscriptions found. Assign one to get started.</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    subscriptions.map((subscription) => {
+                      const daysLeft = getDaysRemaining(subscription.end_date);
+                      return (
+                        <tr key={subscription.id} className="hover:bg-gray-50/80 transition-colors group">
+                          <td className="px-8 py-5">
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md shadow-blue-200 text-sm">
+                                {subscription.restaurant?.name?.charAt(0) || 'R'}
                               </div>
-                              <div className="text-xs text-gray-400 font-medium mt-0.5">
-                                {subscription.restaurant?.contact_email}
+                              <div>
+                                <div className="text-sm font-bold text-gray-900 leading-tight">
+                                  {subscription.restaurant?.name || 'Unknown Restaurant'}
+                                </div>
+                                <div className="text-xs text-gray-400 font-medium mt-0.5">
+                                  {subscription.restaurant?.contact_email}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-5">
-                          <div className="flex flex-col items-start gap-1">
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-700 border border-gray-200 uppercase tracking-wide">
-                              {subscription.plan_name}
-                            </span>
-                            <span className="text-xs text-gray-400 font-medium ml-1 capitalize">
-                              {subscription.billing_cycle}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-5">
-                          <div className="flex flex-col gap-1">
-                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold w-fit ${getStatusColor(subscription.status)}`}>
-                              {getStatusIcon(subscription.status)}
-                              <span className="capitalize">{subscription.status.replace('_', ' ')}</span>
-                            </span>
-                            {subscription.status === 'active' && daysLeft !== null && daysLeft <= 14 && (
-                              <span className="text-[10px] font-bold text-orange-600 pl-1 animation-pulse">
-                                Expires in {daysLeft} days
+                          </td>
+                          <td className="px-6 py-5">
+                            <div className="flex flex-col items-start gap-1">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-700 border border-gray-200 uppercase tracking-wide">
+                                {subscription.plan_name}
                               </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-5">
-                          <div className="text-xs font-medium text-gray-900">{formatDate(subscription.start_date)}</div>
-                          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mt-0.5">to {formatDate(subscription.end_date)}</div>
-                        </td>
-                        <td className="px-6 py-5 text-sm font-black text-gray-900 font-mono">
-                          ₹{subscription.total_amount?.toLocaleString() || 0}
-                        </td>
-                        <td className="px-6 py-5 text-right">
-                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={() => openAssignModal(subscription)}
-                              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                              title="Edit Subscription"
-                              disabled={processingId === subscription.id}
-                            >
-                              <Edit size={16} />
-                            </button>
-                            <button
-                              onClick={() => handleViewBilling(subscription)}
-                              className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
-                              title="View Billing & Invoices"
-                              disabled={processingId === subscription.id}
-                            >
-                              {processingId === subscription.id ? <RefreshCw size={16} className="animate-spin" /> : <IndianRupee size={16} />}
-                            </button>
-                            {subscription.status === 'active' && (
+                              <span className="text-xs text-gray-400 font-medium ml-1 capitalize">
+                                {subscription.billing_cycle}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-5">
+                            <div className="flex flex-col gap-1">
+                              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold w-fit ${getStatusColor(subscription.status)}`}>
+                                {getStatusIcon(subscription.status)}
+                                <span className="capitalize">{subscription.status.replace('_', ' ')}</span>
+                              </span>
+                              {subscription.status === 'active' && daysLeft !== null && daysLeft <= 14 && (
+                                <span className="text-[10px] font-bold text-orange-600 pl-1 animation-pulse">
+                                  Expires in {daysLeft} days
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-5">
+                            <div className="text-xs font-medium text-gray-900">{formatDate(subscription.start_date)}</div>
+                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mt-0.5">to {formatDate(subscription.end_date)}</div>
+                          </td>
+                          <td className="px-6 py-5 text-sm font-black text-gray-900 font-mono">
+                            ₹{subscription.total_amount?.toLocaleString() || 0}
+                          </td>
+                          <td className="px-6 py-5 text-right">
+                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                               <button
-                                onClick={() => handleCancelSubscription(subscription)}
-                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                                title="Cancel Subscription"
+                                onClick={() => openAssignModal(subscription)}
+                                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                title="Edit Subscription"
                                 disabled={processingId === subscription.id}
                               >
-                                <XCircle size={16} />
+                                <Edit size={16} />
                               </button>
-                            )}
-                            {['cancelled', 'expired'].includes(subscription.status) && (
                               <button
-                                onClick={() => handleReactivate(subscription)}
-                                className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all"
-                                title="Reactivate Subscription"
+                                onClick={() => handleViewBilling(subscription)}
+                                className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                                title="View Billing & Invoices"
                                 disabled={processingId === subscription.id}
                               >
-                                <RotateCcw size={16} />
+                                {processingId === subscription.id ? <RefreshCw size={16} className="animate-spin" /> : <IndianRupee size={16} />}
                               </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                              {subscription.status === 'active' && (
+                                <button
+                                  onClick={() => handleCancelSubscription(subscription)}
+                                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                  title="Cancel Subscription"
+                                  disabled={processingId === subscription.id}
+                                >
+                                  <XCircle size={16} />
+                                </button>
+                              )}
+                              {['cancelled', 'expired'].includes(subscription.status) && (
+                                <button
+                                  onClick={() => handleReactivate(subscription)}
+                                  className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all"
+                                  title="Reactivate Subscription"
+                                  disabled={processingId === subscription.id}
+                                >
+                                  <RotateCcw size={16} />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-4 animate-in fade-in duration-300">
+            {subscriptions.length === 0 ? (
+              <div className="text-center text-gray-400 flex flex-col items-center gap-2 py-12">
+                <Package className="w-12 h-12 text-gray-200" />
+                <p>No subscriptions found.</p>
+              </div>
+            ) : (
+              subscriptions.map((subscription) => {
+                const daysLeft = getDaysRemaining(subscription.end_date);
+                return (
+                  <div key={subscription.id} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-col gap-3 relative">
+                    {/* Header: Restaurant & Status */}
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md shadow-blue-200 text-sm">
+                          {subscription.restaurant?.name?.charAt(0) || 'R'}
+                        </div>
+                        <div>
+                          <div className="text-sm font-bold text-gray-900 leading-tight">
+                            {subscription.restaurant?.name || 'Unknown'}
+                          </div>
+                          <div className="text-xs text-gray-400 font-medium mt-0.5 max-w-[150px] truncate">
+                            {subscription.restaurant?.contact_email}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className={`rounded-full p-1.5 ${getStatusColor(subscription.status)}/10`}>
+                        {getStatusIcon(subscription.status)}
+                      </div>
+                    </div>
+
+                    {/* Plan Details & Date */}
+                    <div className="grid grid-cols-2 gap-4 border-t border-b border-gray-50 py-3">
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Plan</p>
+                        <p className="text-sm font-bold text-gray-900 capitalize">{subscription.plan_name}</p>
+                        <span className="text-[10px] text-gray-400 capitalize bg-gray-50 px-1.5 py-0.5 rounded">{subscription.billing_cycle}</span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Expires</p>
+                        <p className="text-sm font-bold text-gray-900">{formatDate(subscription.end_date)}</p>
+                        {subscription.status === 'active' && daysLeft !== null && daysLeft <= 14 && (
+                          <span className="text-[10px] font-bold text-orange-600 block animate-pulse">
+                            {daysLeft} days left
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Footer: Amount & Actions */}
+                    <div className="flex items-center justify-between pt-1">
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Total</p>
+                        <p className="text-lg font-black text-gray-900 font-mono">₹{subscription.total_amount?.toLocaleString() || 0}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => openAssignModal(subscription)}
+                          className="p-2 bg-gray-50 text-blue-600 rounded-lg"
+                          title="Edit"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleViewBilling(subscription)}
+                          className="p-2 bg-gray-50 text-indigo-600 rounded-lg"
+                        >
+                          <IndianRupee size={16} />
+                        </button>
+                        {subscription.status === 'active' && (
+                          <button
+                            onClick={() => handleCancelSubscription(subscription)}
+                            className="p-2 bg-red-50 text-red-600 rounded-lg"
+                          >
+                            <XCircle size={16} />
+                          </button>
+                        )}
+                        {['cancelled', 'expired'].includes(subscription.status) && (
+                          <button
+                            onClick={() => handleReactivate(subscription)}
+                            className="p-2 bg-green-50 text-green-600 rounded-lg"
+                          >
+                            <RotateCcw size={16} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </>
       )}
 
       {/* Expiring Soon Tab */}
