@@ -1276,50 +1276,50 @@ const SubscriptionManagementV2 = () => {
           </div>
 
           {/* Mobile Card View */}
-          <div className="md:hidden space-y-4 animate-in fade-in duration-300">
+          <div className="md:hidden space-y-3 animate-in fade-in duration-300">
             {subscriptions.length === 0 ? (
-              <div className="text-center text-gray-400 flex flex-col items-center gap-2 py-12">
-                <Package className="w-12 h-12 text-gray-200" />
-                <p>No subscriptions found.</p>
+              <div className="text-center text-gray-400 flex flex-col items-center gap-2 py-8 bg-white/50 rounded-2xl border border-gray-100">
+                <Package className="w-8 h-8 text-gray-200" />
+                <p className="text-sm">No subscriptions found.</p>
               </div>
             ) : (
               subscriptions.map((subscription) => {
                 const daysLeft = getDaysRemaining(subscription.end_date);
                 return (
-                  <div key={subscription.id} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-col gap-3 relative">
+                  <div key={subscription.id} className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm flex flex-col gap-2 relative">
                     {/* Header: Restaurant & Status */}
                     <div className="flex justify-between items-start">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md shadow-blue-200 text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-sm shadow-blue-200 text-xs">
                           {subscription.restaurant?.name?.charAt(0) || 'R'}
                         </div>
-                        <div>
-                          <div className="text-sm font-bold text-gray-900 leading-tight">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-bold text-gray-900 leading-tight truncate">
                             {subscription.restaurant?.name || 'Unknown'}
                           </div>
-                          <div className="text-xs text-gray-400 font-medium mt-0.5 max-w-[150px] truncate">
+                          <div className="text-[10px] text-gray-400 font-medium truncate max-w-[140px]">
                             {subscription.restaurant?.contact_email}
                           </div>
                         </div>
                       </div>
 
-                      <div className={`rounded-full p-1.5 ${getStatusColor(subscription.status)}/10`}>
-                        {getStatusIcon(subscription.status)}
+                      <div className={`rounded-full p-1 ${getStatusColor(subscription.status)}/10 flex-shrink-0`}>
+                        {React.cloneElement(getStatusIcon(subscription.status), { size: 14 })}
                       </div>
                     </div>
 
                     {/* Plan Details & Date */}
-                    <div className="grid grid-cols-2 gap-4 border-t border-b border-gray-50 py-3">
+                    <div className="flex justify-between items-center bg-gray-50/50 rounded-lg p-2 border border-gray-50/50">
                       <div>
-                        <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Plan</p>
-                        <p className="text-sm font-bold text-gray-900 capitalize">{subscription.plan_name}</p>
-                        <span className="text-[10px] text-gray-400 capitalize bg-gray-50 px-1.5 py-0.5 rounded">{subscription.billing_cycle}</span>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs font-bold text-gray-900 capitalize">{subscription.plan_name}</p>
+                          <span className="text-[9px] text-gray-400 capitalize bg-white px-1.5 py-0.5 rounded border border-gray-100 shadow-sm">{subscription.billing_cycle}</span>
+                        </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Expires</p>
-                        <p className="text-sm font-bold text-gray-900">{formatDate(subscription.end_date)}</p>
+                        <p className="text-[10px] font-bold text-gray-900">Expires: {formatDate(subscription.end_date)}</p>
                         {subscription.status === 'active' && daysLeft !== null && daysLeft <= 14 && (
-                          <span className="text-[10px] font-bold text-orange-600 block animate-pulse">
+                          <span className="text-[9px] font-bold text-orange-600 block animate-pulse">
                             {daysLeft} days left
                           </span>
                         )}
@@ -1327,39 +1327,41 @@ const SubscriptionManagementV2 = () => {
                     </div>
 
                     {/* Footer: Amount & Actions */}
-                    <div className="flex items-center justify-between pt-1">
+                    <div className="flex items-center justify-between pt-0.5">
                       <div>
-                        <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Total</p>
-                        <p className="text-lg font-black text-gray-900 font-mono">₹{subscription.total_amount?.toLocaleString() || 0}</p>
+                        <p className="text-base font-black text-gray-900 font-mono leading-none">₹{subscription.total_amount?.toLocaleString() || 0}</p>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-1.5">
                         <button
                           onClick={() => openAssignModal(subscription)}
-                          className="p-2 bg-gray-50 text-blue-600 rounded-lg"
+                          className="p-1.5 bg-gray-50 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
                           title="Edit"
                         >
-                          <Edit size={16} />
+                          <Edit size={14} />
                         </button>
                         <button
                           onClick={() => handleViewBilling(subscription)}
-                          className="p-2 bg-gray-50 text-indigo-600 rounded-lg"
+                          className="p-1.5 bg-gray-50 text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors"
+                          title="Billing"
                         >
-                          <IndianRupee size={16} />
+                          <IndianRupee size={14} />
                         </button>
                         {subscription.status === 'active' && (
                           <button
                             onClick={() => handleCancelSubscription(subscription)}
-                            className="p-2 bg-red-50 text-red-600 rounded-lg"
+                            className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                            title="Cancel"
                           >
-                            <XCircle size={16} />
+                            <XCircle size={14} />
                           </button>
                         )}
                         {['cancelled', 'expired'].includes(subscription.status) && (
                           <button
                             onClick={() => handleReactivate(subscription)}
-                            className="p-2 bg-green-50 text-green-600 rounded-lg"
+                            className="p-1.5 bg-green-50 text-green-600 rounded-lg hover:bg-green-50 transition-colors"
+                            title="Reactivate"
                           >
-                            <RotateCcw size={16} />
+                            <RotateCcw size={14} />
                           </button>
                         )}
                       </div>
