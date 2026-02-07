@@ -1457,50 +1457,97 @@ const SubscriptionManagementV2 = () => {
 
       {/* Expiring Soon Tab */}
       {activeTab === 'expiring' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
-          {upcomingRenewals.length === 0 ? (
-            <div className="col-span-full bg-white rounded-3xl shadow-sm border border-gray-100 p-12 text-center flex flex-col items-center">
-              <div className="bg-green-100 p-4 rounded-full mb-4">
-                <CheckCircle className="w-8 h-8 text-green-600" />
+        <>
+          {/* Desktop Grid - Hidden on Mobile */}
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
+            {upcomingRenewals.length === 0 ? (
+              <div className="col-span-full bg-white rounded-3xl shadow-sm border border-gray-100 p-12 text-center flex flex-col items-center">
+                <div className="bg-green-100 p-4 rounded-full mb-4">
+                  <CheckCircle className="w-8 h-8 text-green-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">All Good!</h3>
+                <p className="text-gray-500 mt-2">No subscriptions expiring in the next 14 days</p>
               </div>
-              <h3 className="text-xl font-bold text-gray-900">All Good!</h3>
-              <p className="text-gray-500 mt-2">No subscriptions expiring in the next 14 days</p>
-            </div>
-          ) : (
-            upcomingRenewals.map((sub) => (
-              <div key={sub.id} className="bg-white rounded-3xl shadow-sm border border-orange-200 p-6 flex flex-col relative overflow-hidden group hover:shadow-md transition-all">
-                <div className={`absolute top-0 right-0 p-3 rounded-bl-2xl ${sub.daysUntilExpiry <= 3 ? 'bg-red-500 text-white' : 'bg-orange-100 text-orange-700'}`}>
-                  <p className="text-xs font-bold uppercase tracking-wider">
-                    {sub.daysUntilExpiry <= 0 ? 'Expired' : `${sub.daysUntilExpiry} days left`}
-                  </p>
-                </div>
+            ) : (
+              upcomingRenewals.map((sub) => (
+                <div key={sub.id} className="bg-white rounded-3xl shadow-sm border border-orange-200 p-6 flex flex-col relative overflow-hidden group hover:shadow-md transition-all">
+                  <div className={`absolute top-0 right-0 p-3 rounded-bl-2xl ${sub.daysUntilExpiry <= 3 ? 'bg-red-500 text-white' : 'bg-orange-100 text-orange-700'}`}>
+                    <p className="text-xs font-bold uppercase tracking-wider">
+                      {sub.daysUntilExpiry <= 0 ? 'Expired' : `${sub.daysUntilExpiry} days left`}
+                    </p>
+                  </div>
 
-                <div className="flex items-start gap-4 mb-4">
-                  <div className={`p-3 rounded-2xl ${sub.daysUntilExpiry <= 3 ? 'bg-red-50' : 'bg-orange-50'}`}>
-                    <AlertTriangle className={`w-6 h-6 ${sub.daysUntilExpiry <= 3 ? 'text-red-500' : 'text-orange-500'}`} />
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className={`p-3 rounded-2xl ${sub.daysUntilExpiry <= 3 ? 'bg-red-50' : 'bg-orange-50'}`}>
+                      <AlertTriangle className={`w-6 h-6 ${sub.daysUntilExpiry <= 3 ? 'text-red-500' : 'text-orange-500'}`} />
+                    </div>
+                    <div className="pt-1">
+                      <h3 className="font-bold text-gray-900 text-lg leading-tight">{sub.restaurant?.name}</h3>
+                      <p className="text-sm text-gray-500 font-medium">{sub.plan?.name}</p>
+                    </div>
                   </div>
-                  <div className="pt-1">
-                    <h3 className="font-bold text-gray-900 text-lg leading-tight">{sub.restaurant?.name}</h3>
-                    <p className="text-sm text-gray-500 font-medium">{sub.plan?.name}</p>
-                  </div>
-                </div>
 
-                <div className="mt-auto pt-4 border-t border-dashed border-gray-200">
-                  <div className="flex justify-between items-center mb-4 text-xs font-medium text-gray-500">
-                    <span>Expires: {formatDate(sub.end_date)}</span>
-                    <span className="font-bold text-gray-900">₹{sub.total_amount?.toLocaleString()}</span>
+                  <div className="mt-auto pt-4 border-t border-dashed border-gray-200">
+                    <div className="flex justify-between items-center mb-4 text-xs font-medium text-gray-500">
+                      <span>Expires: {formatDate(sub.end_date)}</span>
+                      <span className="font-bold text-gray-900">₹{sub.total_amount?.toLocaleString()}</span>
+                    </div>
+                    <button
+                      onClick={() => openAssignModal(sub)}
+                      className="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-orange-500/20 hover:to-red-600 transition-all"
+                    >
+                      Renew Subscription
+                    </button>
                   </div>
-                  <button
-                    onClick={() => openAssignModal(sub)}
-                    className="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-orange-500/20 hover:to-red-600 transition-all"
-                  >
-                    Renew Subscription
-                  </button>
                 </div>
+              ))
+            )}
+          </div>
+
+          {/* Mobile Compact List - Hidden on Desktop */}
+          <div className="md:hidden space-y-3 animate-in fade-in duration-300">
+            {upcomingRenewals.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-100 p-6 text-center">
+                <div className="bg-green-100 p-3 rounded-full mb-3 mx-auto w-fit">
+                  <CheckCircle className="w-6 h-6 text-green-600" />
+                </div>
+                <p className="text-sm font-bold text-gray-900">All Good!</p>
+                <p className="text-xs text-gray-500 mt-1">No subscriptions expiring soon.</p>
               </div>
-            ))
-          )}
-        </div>
+            ) : (
+              upcomingRenewals.map((sub) => (
+                <div key={sub.id} className="bg-white border border-gray-100 rounded-xl p-3 shadow-sm flex flex-col gap-3">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${sub.daysUntilExpiry <= 3 ? 'bg-red-50 text-red-500' : 'bg-orange-50 text-orange-500'}`}>
+                        <AlertTriangle size={18} />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-gray-900 text-sm">{sub.restaurant?.name}</h4>
+                        <p className="text-xs text-gray-500">{sub.plan?.name || 'Plan'}</p>
+                      </div>
+                    </div>
+                    <div className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${sub.daysUntilExpiry <= 3 ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}`}>
+                      {sub.daysUntilExpiry <= 0 ? 'Expired' : `${sub.daysUntilExpiry} days`}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center border-t border-gray-50 pt-2">
+                    <div className="text-xs text-gray-500">
+                      Expires: <span className="text-gray-900 font-bold">{formatDate(sub.end_date)}</span>
+                    </div>
+                    <button
+                      onClick={() => openAssignModal(sub)}
+                      className="px-4 py-1.5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg text-xs font-bold shadow-sm hover:to-red-600 transition-all"
+                    >
+                      Renew
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </>
       )}
 
       {/* Plans Tab */}
