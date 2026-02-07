@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Upload, Trash2, MapPin, Phone, Mail, Clock, Globe, Building2, Users, ChevronDown, Check, UserCog, Star, Award, ChefHat, UtensilsCrossed, Coins, Crown } from 'lucide-react';
-import { uploadRestaurantPhotoForAdmin, uploadRestaurantLogo, getRestaurantOwners, updateOwnerDetails } from '../admin_service';
+import { uploadRestaurantPhotoForAdmin, uploadRestaurantLogo, getRestaurantOwners, updateOwnerDetails } from '../admin_service.js';
 // Remove the supabase import since we're moving all calls to the service
 // import { supabase } from '../../../../shared/supabase'; 
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../shared/supabase';
-import { createRestaurant, getSystemSetting } from '../../../admin/pages/AdminPannel/admin_service';
+import { createRestaurant, getEmailTemplate } from '../../../admin/pages/AdminPannel/admin_service.js';
+import { applyTemplate } from '../../../shared/api/emailService';
 import {
     Building2,
     User,
@@ -25,46 +26,7 @@ import {
     Loader2
 } from 'lucide-react';
 
-const generateWelcomeHTML = (ownerName, restaurantName, email, password) => {
-    return `
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<title>Welcome to Table Tap</title>
-</head>
-<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5; margin: 0; padding: 0;">
-<div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-    <div style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); padding: 40px 20px; text-align: center;">
-        <h1 style="color: white; margin: 0; font-size: 28px;">Table Tap</h1>
-        <p style="color: rgba(255,255,255,0.9); margin-top: 10px;">Restaurant Management Simplified</p>
-    </div>
-    <div style="padding: 40px;">
-        <h2 style="color: #1f2937; margin-top: 0;">Welcome, ${ownerName}!</h2>
-        <p style="color: #4b5563; line-height: 1.6;">
-            We are excited to inform you that your registration for <strong>${restaurantName}</strong> has been approved.
-        </p>
-        <div style="background-color: #eff6ff; border-radius: 8px; padding: 20px; margin: 30px 0; border: 1px solid #dbeafe;">
-            <h3 style="color: #1e40af; margin-top: 0; font-size: 16px;">Your Login Credentials</h3>
-            <p style="margin: 10px 0 5px; color: #6b7280; font-size: 14px;">Email:</p>
-            <p style="margin: 0 0 15px; color: #111827; font-weight: 600;">${email}</p>
-            <p style="margin: 0 0 5px; color: #6b7280; font-size: 14px;">Temporary Password:</p>
-            <p style="margin: 0; color: #111827; font-weight: 600; font-family: monospace; background: white; padding: 4px 8px; border-radius: 4px; display: inline-block;">${password}</p>
-        </div>
-        <div style="text-align: center; margin-top: 40px;">
-            <a href="${window.location.origin}/admin/login" style="background-color: #2563eb; color: white; padding: 14px 30px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">Access Admin Dashboard</a>
-        </div>
-        <p style="color: #6b7280; font-size: 14px; margin-top: 30px; text-align: center;">
-            Please change your password after your first login for security.
-        </p>
-    </div>
-    <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
-        <p style="color: #9ca3af; font-size: 12px; margin: 0;">&copy; ${new Date().getFullYear()} Table Tap. All rights reserved.</p>
-    </div>
-</div>
-</body>
-</html>`;
-};
+
 
 const RegistrationRequests = ({ searchTerm = '' }) => {
     const [registrations, setRegistrations] = useState([]);
@@ -269,10 +231,10 @@ const RegistrationRequests = ({ searchTerm = '' }) => {
 
             // Send Welcome Email
             try {
-                // Fetch template from settings
-                const template = await getSystemSetting('email_template_welcome');
+                // Fetch template from email_templates
+                const template = await getEmailTemplate('email_template_welcome');
                 let subject = 'Welcome to Table Tap - Your Account is Approved!';
-                let html = generateWelcomeHTML(registration.owner_name, registration.restaurant_name, registration.owner_email, 'TempPass@123');
+                let html = `<h2>Welcome, ${registration.owner_name}!</h2><p>Your registration for ${registration.restaurant_name} has been approved.</p><p>Credentials: ${registration.owner_email} / TempPass@123</p>`;
 
                 if (template) {
                     subject = template.subject;
@@ -288,11 +250,9 @@ const RegistrationRequests = ({ searchTerm = '' }) => {
                         year: new Date().getFullYear()
                     };
 
-                    Object.keys(vars).forEach(key => {
-                        const regex = new RegExp(`{{${key}}}`, 'g');
-                        subject = subject.replace(regex, vars[key] || '');
-                        html = html.replace(regex, vars[key] || '');
-                    });
+                    const applied = applyTemplate(template.subject, template.html, vars);
+                    subject = applied.subject;
+                    html = applied.html;
                 }
 
                 await supabase.functions.invoke('send-email', {

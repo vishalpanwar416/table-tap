@@ -331,6 +331,27 @@ function RegisterForm() {
 
     const [paymentStatus, setPaymentStatus] = useState(null);
     const [paymentId, setPaymentId] = useState(null);
+    const [razorpayKeyId, setRazorpayKeyId] = useState(null);
+
+    // Fetch Razorpay Key ID from secure backend function
+    useEffect(() => {
+        const fetchPaymentConfig = async () => {
+            try {
+                const { data, error } = await supabase.functions.invoke('get-payment-config');
+                if (error) throw error;
+                if (data?.key_id) {
+                    setRazorpayKeyId(data.key_id);
+                }
+            } catch (err) {
+                console.error('Failed to load payment config:', err);
+                // Fallback only for dev/testing if function fails
+                if (process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
+                    setRazorpayKeyId(process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID);
+                }
+            }
+        };
+        fetchPaymentConfig();
+    }, []);
 
     // Dynamic Plan Calculation
     const getActivePlan = () => {
@@ -469,7 +490,7 @@ function RegisterForm() {
         const amountInPaise = total * 100; // Convert to paise
 
         const options = {
-            key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_yourkeyhere',
+            key: razorpayKeyId || 'rzp_test_yourkeyhere',
             amount: amountInPaise,
             currency: 'INR',
             name: 'Table Tap',

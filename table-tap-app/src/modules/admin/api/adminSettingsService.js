@@ -5,15 +5,14 @@ import { supabase } from '../../shared/supabase';
  * Manages API keys, configuration, and system settings
  */
 
-// Setting categories
+// Setting Categories
 export const SETTING_CATEGORIES = {
   PAYMENT: 'payment',
   EMAIL: 'email',
-  SMS: 'sms',
-  WHATSAPP: 'whatsapp',
+  GENERAL: 'general',
+  LANDING_PAGE: 'landing_page',
   ANALYTICS: 'analytics',
-  AI: 'ai',
-  GENERAL: 'general'
+  AI: 'ai'
 };
 
 /**
@@ -110,7 +109,7 @@ export const updateSetting = async (settingKey, value) => {
   try {
     const { data, error } = await supabase
       .from('admin_settings')
-      .update({ 
+      .update({
         setting_value: String(value),
         updated_at: new Date().toISOString()
       })
@@ -133,7 +132,7 @@ export const updateMultipleSettings = async (settings) => {
     const updates = Object.entries(settings).map(async ([key, value]) => {
       return supabase
         .from('admin_settings')
-        .update({ 
+        .update({
           setting_value: String(value),
           updated_at: new Date().toISOString()
         })

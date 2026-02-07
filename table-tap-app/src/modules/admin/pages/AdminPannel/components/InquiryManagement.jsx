@@ -17,7 +17,7 @@ import {
     RefreshCw,
     Eye
 } from 'lucide-react';
-import { getAllInquiries, updateInquiryStatus, deleteInquiry } from '../admin_service';
+import { getAllInquiries, updateInquiryStatus, deleteInquiry } from '../admin_service.js';
 
 const InquiryManagement = ({ searchTerm = '' }) => {
     const [inquiries, setInquiries] = useState([]);
@@ -107,61 +107,64 @@ const InquiryManagement = ({ searchTerm = '' }) => {
     }
 
     return (
-        <div className="space-y-8 font-spartan">
-            {/* Stats Toolbar - Compact Single Line */}
-            <div className="grid grid-cols-4 gap-1.5 md:flex md:items-center md:gap-4 mb-6">
-                {/* Total Leads */}
-                <div className="flex flex-col md:flex-row items-center justify-center md:justify-start md:gap-2 px-1 py-2 md:px-4 md:py-3 bg-white rounded-xl border border-gray-100 shadow-sm">
-                    <span className="text-[9px] md:text-xs text-gray-500 font-bold uppercase tracking-wider text-center">Total</span>
-                    <span className="text-xs md:text-lg font-bold text-gray-900 leading-tight">{inquiries.length}</span>
+        <div className="space-y-6 md:space-y-8 font-spartan">
+            {/* Toolbar - Stats & Filters in a single line on Desktop */}
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+                {/* Stats Toolbar */}
+                <div className="grid grid-cols-4 gap-1.5 md:flex md:items-center md:gap-3">
+                    {/* Total Leads */}
+                    <div className="flex flex-col md:flex-row items-center justify-center md:justify-start md:gap-2 px-1 py-2 md:px-4 md:py-3 bg-white rounded-xl border border-gray-100 shadow-sm">
+                        <span className="text-[9px] md:text-xs text-gray-500 font-bold uppercase tracking-wider text-center">Total</span>
+                        <span className="text-xs md:text-lg font-bold text-gray-900 leading-tight">{inquiries.length}</span>
+                    </div>
+
+                    {/* New Leads */}
+                    <div className="flex flex-col md:flex-row items-center justify-center md:justify-start md:gap-2 px-1 py-2 md:px-4 md:py-3 bg-amber-50 rounded-xl border border-amber-100">
+                        <span className="text-[9px] md:text-xs text-amber-600 font-bold uppercase tracking-wider text-center">New</span>
+                        <span className="text-xs md:text-lg font-bold text-amber-700 leading-tight">
+                            {inquiries.filter(i => i.status === 'new' || !i.status).length}
+                        </span>
+                    </div>
+
+                    {/* Converted */}
+                    <div className="flex flex-col md:flex-row items-center justify-center md:justify-start md:gap-2 px-1 py-2 md:px-4 md:py-3 bg-green-50 rounded-xl border border-green-100">
+                        <span className="text-[9px] md:text-xs text-green-600 font-bold uppercase tracking-wider text-center">Won</span>
+                        <span className="text-xs md:text-lg font-bold text-green-700 leading-tight">
+                            {inquiries.filter(i => i.status === 'converted').length}
+                        </span>
+                    </div>
+
+                    {/* Restaurants */}
+                    <div className="flex flex-col md:flex-row items-center justify-center md:justify-start md:gap-2 px-1 py-2 md:px-4 md:py-3 bg-purple-50 rounded-xl border border-purple-100">
+                        <span className="text-[9px] md:text-xs text-purple-600 font-bold uppercase tracking-wider text-center">Rest.</span>
+                        <span className="text-xs md:text-lg font-bold text-purple-700 leading-tight">
+                            {new Set(inquiries.map(i => i.restaurant_name).filter(Boolean)).size}
+                        </span>
+                    </div>
                 </div>
 
-                {/* New Leads */}
-                <div className="flex flex-col md:flex-row items-center justify-center md:justify-start md:gap-2 px-1 py-2 md:px-4 md:py-3 bg-amber-50 rounded-xl border border-amber-100">
-                    <span className="text-[9px] md:text-xs text-amber-600 font-bold uppercase tracking-wider text-center">New</span>
-                    <span className="text-xs md:text-lg font-bold text-amber-700 leading-tight">
-                        {inquiries.filter(i => i.status === 'new' || !i.status).length}
-                    </span>
-                </div>
-
-                {/* Converted */}
-                <div className="flex flex-col md:flex-row items-center justify-center md:justify-start md:gap-2 px-1 py-2 md:px-4 md:py-3 bg-green-50 rounded-xl border border-green-100">
-                    <span className="text-[9px] md:text-xs text-green-600 font-bold uppercase tracking-wider text-center">Won</span>
-                    <span className="text-xs md:text-lg font-bold text-green-700 leading-tight">
-                        {inquiries.filter(i => i.status === 'converted').length}
-                    </span>
-                </div>
-
-                {/* Restaurants */}
-                <div className="flex flex-col md:flex-row items-center justify-center md:justify-start md:gap-2 px-1 py-2 md:px-4 md:py-3 bg-purple-50 rounded-xl border border-purple-100">
-                    <span className="text-[9px] md:text-xs text-purple-600 font-bold uppercase tracking-wider text-center">Rest.</span>
-                    <span className="text-xs md:text-lg font-bold text-purple-700 leading-tight">
-                        {new Set(inquiries.map(i => i.restaurant_name).filter(Boolean)).size}
-                    </span>
-                </div>
-            </div>
-
-            {/* Filters & Refresh */}
-            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-row gap-4 items-center justify-end">
-                <div className="flex items-center gap-3 w-full md:w-auto">
-                    <Filter size={18} className="text-gray-400" />
-                    <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-sm flex-1 md:flex-none"
-                    >
-                        <option value="all">All Status</option>
-                        <option value="new">New</option>
-                        <option value="contacted">Contacted</option>
-                        <option value="converted">Converted</option>
-                        <option value="ignored">Ignored</option>
-                    </select>
-                    <button
-                        onClick={fetchInquiries}
-                        className="p-2 hover:bg-gray-100 rounded-xl text-gray-500 transition-colors shrink-0"
-                    >
-                        <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
-                    </button>
+                {/* Filters & Refresh */}
+                <div className="bg-white p-2.5 md:p-3 rounded-2xl border border-gray-100 shadow-sm flex flex-row gap-3 items-center justify-end">
+                    <div className="flex items-center gap-3 w-full md:w-auto">
+                        <Filter size={18} className="text-gray-400" />
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-sm flex-1 md:flex-none font-bold"
+                        >
+                            <option value="all">All Status</option>
+                            <option value="new">New</option>
+                            <option value="contacted">Contacted</option>
+                            <option value="converted">Converted</option>
+                            <option value="ignored">Ignored</option>
+                        </select>
+                        <button
+                            onClick={fetchInquiries}
+                            className="p-2 hover:bg-gray-100 rounded-xl text-gray-500 transition-colors shrink-0"
+                        >
+                            <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+                        </button>
+                    </div>
                 </div>
             </div>
 

@@ -106,7 +106,8 @@ const AdminHeader = ({
                 inquiries: 'Lead Inquiries',
                 subscriptions: 'Subscriptions',
                 notifications: 'Notifications',
-                activity: 'Activity Logs'
+                activity: 'Activity Logs',
+                settings: 'System Settings'
               }[activeTab] || 'Admin Panel'}
             </h2>
             <p className="text-sm text-gray-600 mt-1 font-spartan">
@@ -116,6 +117,7 @@ const AdminHeader = ({
               {activeTab === 'inquiries' && 'View and manage lead inquiries'}
               {activeTab === 'subscriptions' && 'Manage subscription plans and features'}
               {activeTab === 'activity' && 'Track all automated emails, system events, and admin activities'}
+              {activeTab === 'settings' && 'Manage API keys, content, and global configuration'}
             </p>
           </div>
         </div>

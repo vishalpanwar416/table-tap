@@ -85,11 +85,11 @@ export async function POST(request) {
                 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
             );
             const { data } = await supabase
-                .from('system_settings')
-                .select('value')
+                .from('email_templates')
+                .select('subject, html')
                 .eq('key', 'email_template_application_received')
-                .single();
-            if (data?.value) customTemplate = data.value;
+                .maybeSingle();
+            if (data) customTemplate = data;
         } catch (e) {
             console.error('Failed to fetch template:', e);
         }
@@ -109,7 +109,17 @@ export async function POST(request) {
                         ✓ Paid
                     </span>
                 </td>
-            </tr>` : '';
+            </tr>` : `
+            <tr>
+                <td style="padding: 8px 0; color: #777; font-size: 14px;">Payment:</td>
+                <td style="padding: 8px 0; font-size: 14px; text-align: right;">
+                    <span style="background-color: #EEF2FF; color: #4338CA; padding: 4px 12px; border-radius: 20px; font-weight: 600; font-size: 12px;">
+                        Due
+                    </span>
+                </td>
+            </tr>`;
+
+            const ctaText = paymentId ? 'Track Application Status' : 'Complete Payment & Track Status';
 
             const vars = {
                 owner_name: ownerName,
@@ -117,7 +127,8 @@ export async function POST(request) {
                 plan: selectedPlan,
                 status_url: statusUrl,
                 year: new Date().getFullYear(),
-                payment_row: paymentRowHtml
+                payment_row: paymentRowHtml,
+                cta_text: ctaText
             };
 
             Object.keys(vars).forEach(key => {
@@ -206,7 +217,7 @@ export async function POST(request) {
                                 <tr>
                                     <td style="text-align: center;">
                                         <a href="${statusUrl}" style="display: inline-block; background: linear-gradient(135deg, #2A9D8F 0%, #238b7e 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 12px; font-weight: 700; font-size: 16px;">
-                                            Track Application Status
+                                            ${paymentId ? 'Track Application Status' : 'Complete Payment & Track Status'}
                                         </a>
                                     </td>
                                 </tr>
@@ -284,17 +295,43 @@ Best regards,
 The Table Tap Team
         `;
 
+        // Initialize Admin Client for fetching sensitive config
+        const supabaseAdminClient = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL,
+            process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+        );
+
+        // Fetch Resend Config from DB
+        let dbResendKey = null;
+        let dbFromEmail = null;
+        try {
+            const { data: resendConfig } = await supabaseAdminClient
+                .from('system_settings')
+                .select('value')
+                .eq('key', 'resend_config')
+                .single();
+
+            if (resendConfig?.value?.api_key) {
+                dbResendKey = resendConfig.value.api_key;
+                dbFromEmail = resendConfig.value.from_email;
+            }
+        } catch (e) {
+            console.error('Failed to fetch Resend config:', e);
+        }
+
+        const FINAL_API_KEY = dbResendKey || process.env.RESEND_API_KEY;
+        const FINAL_FROM_EMAIL = dbFromEmail || process.env.FROM_EMAIL || 'Table Tap <noreply@table-tap.in>';
+
         // If Resend API key is configured, send email
-        if (RESEND_API_KEY) {
+        if (FINAL_API_KEY) {
             const response = await fetch('https://api.resend.com/emails', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${RESEND_API_KEY}`,
+                    'Authorization': `Bearer ${FINAL_API_KEY}`,
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    from: FROM_EMAIL,
-                    to: ownerEmail,
+                    from: FINAL_FROM_EMAIL,
                     to: ownerEmail,
                     subject: subject,
                     html: emailHtml,
@@ -321,8 +358,7 @@ The Table Tap Team
             });
         } else {
             // No email service configured, just return success
-            console.log('Email service not configured. Would have sent email to:', ownerEmail);
-            console.log('Status URL:', statusUrl);
+            console.log('Email service not configured (Missing Key). Would have sent email to:', ownerEmail);
             return NextResponse.json({
                 success: true,
                 emailSent: false,

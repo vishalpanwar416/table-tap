@@ -1,4 +1,4 @@
-
+'use client';
 
 import { QrCode, Smartphone, ChefHat, Sparkles } from 'lucide-react';
 import data from '../data/landing-data.json';

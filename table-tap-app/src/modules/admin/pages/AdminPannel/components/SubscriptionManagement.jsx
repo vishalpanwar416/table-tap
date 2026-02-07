@@ -61,7 +61,8 @@ import {
   getSubscriptionHistory
 } from '../../../../admin/api/subscriptionService';
 import { supabase } from '../../../../shared/supabase';
-import { getAllRestaurants, getSystemSetting } from '../admin_service';
+import { getAllRestaurants, getSystemSetting, getEmailTemplate } from '../admin_service.js';
+import { applyTemplate } from '../../../../shared/api/emailService';
 
 const SubscriptionManagementV2 = () => {
 
@@ -674,72 +675,7 @@ const SubscriptionManagementV2 = () => {
   };
 
   // Helper to generate Invoice HTML
-  const generateInvoiceHTML = (txn, restaurant) => {
-    const date = new Date(txn.created_at).toLocaleDateString('en-IN', {
-      year: 'numeric', month: 'long', day: 'numeric'
-    });
 
-    // Calculate subtotal and tax (assuming inclusive 18% GST)
-    // Calculate tax (Use stored GST if available)
-    const amount = Number(txn.amount_paid);
-    let subtotal, gst;
-
-    if (txn.gst_amount) {
-      gst = Number(txn.gst_amount).toFixed(2);
-      subtotal = (amount - Number(gst)).toFixed(2);
-    } else {
-      // Fallback for legacy records
-      subtotal = (amount / 1.18).toFixed(2);
-      gst = (amount - Number(subtotal)).toFixed(2);
-    }
-
-    return `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
-        <div style="background-color: #f8fafc; padding: 24px; text-align: center; border-bottom: 2px solid #e2e8f0;">
-          <h1 style="color: #0f172a; margin: 0; font-size: 24px;">Invoice</h1>
-          <p style="color: #64748b; margin: 8px 0 0;">#${txn.id.slice(0, 8).toUpperCase()}</p>
-        </div>
-        
-        <div style="padding: 32px 24px;">
-          <p>Hello <strong>${restaurant.name}</strong>,</p>
-          <p>Thank you for your business. Here is the receipt for your recent subscription payment.</p>
-          
-          <div style="background-color: #f1f5f9; padding: 20px; border-radius: 12px; margin: 24px 0;">
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr style="border-bottom: 1px solid #cbd5e1;">
-                <td style="padding-bottom: 12px; color: #64748b;">Date</td>
-                <td style="padding-bottom: 12px; text-align: right; font-weight: bold;">${date}</td>
-              </tr>
-              <tr style="border-bottom: 1px solid #cbd5e1;">
-                <td style="padding: 12px 0; color: #64748b;">Plan</td>
-                <td style="padding: 12px 0; text-align: right; font-weight: bold;">${txn.plan_name} (${txn.billing_cycle})</td>
-              </tr>
-              <tr style="border-bottom: 1px solid #cbd5e1;">
-                <td style="padding: 12px 0; color: #64748b;">Subtotal</td>
-                <td style="padding: 12px 0; text-align: right; font-weight: bold;">₹${subtotal}</td>
-              </tr>
-              <tr style="border-bottom: 1px solid #cbd5e1;">
-                <td style="padding: 12px 0; color: #64748b;">GST (18%)</td>
-                <td style="padding: 12px 0; text-align: right; font-weight: bold;">₹${gst}</td>
-              </tr>
-              <tr>
-                <td style="padding-top: 12px; font-size: 18px; font-weight: bold;">Total Paid</td>
-                <td style="padding-top: 12px; text-align: right; font-size: 18px; font-weight: bold; color: #16a34a;">₹${amount.toFixed(2)}</td>
-              </tr>
-            </table>
-          </div>
-
-          <p style="font-size: 14px; color: #64748b; text-align: center;">
-            This is an automated email. If you have any questions, please contact support.
-          </p>
-        </div>
-        
-        <div style="background-color: #0f172a; color: white; padding: 20px; text-align: center; font-size: 12px;">
-          &copy; ${new Date().getFullYear()} TableTap. All rights reserved.
-        </div>
-      </div>
-    `;
-  };
 
   const handleResendEmail = async (transaction) => {
     if (!selectedBillingRestaurant?.contact_email) {
@@ -751,10 +687,10 @@ const SubscriptionManagementV2 = () => {
 
     try {
       // Fetch template
-      const template = await getSystemSetting('email_template_invoice');
+      const template = await getEmailTemplate('email_template_invoice');
 
       let subject = `Invoice #${transaction.id.slice(0, 8).toUpperCase()} - TableTap`;
-      let html = generateInvoiceHTML(transaction, selectedBillingRestaurant);
+      let html = `<p>Thank you for your business. Your invoice #${transaction.id.slice(0, 8).toUpperCase()} for ₹${transaction.amount_paid} is ready.</p>`;
 
       if (template) {
         subject = template.subject;
@@ -786,11 +722,9 @@ const SubscriptionManagementV2 = () => {
           year: new Date().getFullYear()
         };
 
-        Object.keys(vars).forEach(key => {
-          const regex = new RegExp(`{{${key}}}`, 'g');
-          subject = subject.replace(regex, vars[key] || '');
-          html = html.replace(regex, vars[key] || '');
-        });
+        const applied = applyTemplate(template.subject, template.html, vars);
+        subject = applied.subject;
+        html = applied.html;
       }
 
       const { data, error } = await supabase.functions.invoke('send-email', {

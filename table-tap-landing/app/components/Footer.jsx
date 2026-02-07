@@ -1,8 +1,9 @@
-
+'use client';
 
 import { Globe, Instagram, Twitter, Linkedin, Facebook, Mail, Phone, MapPin } from 'lucide-react';
 import Image from 'next/image';
 import data from '../data/landing-data.json';
+import { useSettings } from '../context/SettingsContext';
 
 const IconMap = {
     instagram: Instagram,
@@ -13,7 +14,34 @@ const IconMap = {
 };
 
 const Footer = () => {
-    const { footer, contact } = data;
+    const { footer: localFooter, contact: localContact } = data;
+    const { company, social, loading } = useSettings();
+
+    // Override with database settings if available
+    const contact = {
+        ...localContact,
+        info: localContact.info.map(item => {
+            if (!company) return item;
+            if (item.type === 'mail' && company.email) return { ...item, value: company.email };
+            if (item.type === 'phone' && company.phone) return { ...item, value: company.phone };
+            if (item.type === 'map-pin' && company.address) {
+                const fullAddress = `${company.address}, ${company.city}, ${company.state} - ${company.pincode}`;
+                return { ...item, value: fullAddress };
+            }
+            return item;
+        })
+    };
+
+    const footer = {
+        ...localFooter,
+        socialLinks: localFooter.socialLinks.map(link => {
+            if (!social) return link;
+            if (social[link.platform.toLowerCase()]) {
+                return { ...link, href: social[link.platform.toLowerCase()] };
+            }
+            return link;
+        })
+    };
 
     return (
         <footer className="bg-[#0F172A] pt-10 sm:pt-14 md:pt-16 pb-6 sm:pb-8 relative overflow-hidden" role="contentinfo" aria-label="Site footer">

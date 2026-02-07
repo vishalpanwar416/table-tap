@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Mail, Phone, MapPin, Send, CheckCircle, AlertCircle, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import data from '../data/landing-data.json';
+import { useSettings } from '../context/SettingsContext';
 
 const IconMap = {
     mail: Mail,
@@ -12,7 +13,23 @@ const IconMap = {
 };
 
 const Contact = () => {
-    const { contact } = data;
+    const { contact: localContact } = data;
+    const { company, loading } = useSettings();
+
+    // Override with database settings if available
+    const contact = {
+        ...localContact,
+        info: localContact.info.map(item => {
+            if (!company) return item;
+            if (item.type === 'mail' && company.email) return { ...item, value: company.email };
+            if (item.type === 'phone' && company.phone) return { ...item, value: company.phone };
+            if (item.type === 'map-pin' && company.address) {
+                const fullAddress = `${company.address}, ${company.city}, ${company.state} - ${company.pincode}`;
+                return { ...item, value: fullAddress };
+            }
+            return item;
+        })
+    };
     const [formData, setFormData] = useState({ name: '', email: '', phone: '', restaurant: '', message: '', plan: 'professional' });
     const [formStatus, setFormStatus] = useState('idle');
     const [error, setError] = useState(null);
@@ -72,7 +89,7 @@ const Contact = () => {
                         <div className="space-y-6 sm:space-y-8">
                             {contact.info.map((info, index) => {
                                 const Icon = IconMap[info.type];
-                                
+
                                 const getHref = () => {
                                     if (info.type === 'mail') return `mailto:${info.value}`;
                                     if (info.type === 'phone') return `tel:${info.value.replace(/\s/g, '')}`;

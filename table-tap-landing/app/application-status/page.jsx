@@ -17,7 +17,8 @@ import {
     Calendar,
     FileText,
     RefreshCw,
-    Search
+    Search,
+    CreditCard
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -84,6 +85,108 @@ function StatusContent() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [searched, setSearched] = useState(false);
+    const [processingPayment, setProcessingPayment] = useState(false);
+    const [paymentError, setPaymentError] = useState(null);
+    const [razorpayKeyId, setRazorpayKeyId] = useState(null);
+
+    // Fetch Razorpay Key
+    useEffect(() => {
+        const fetchPaymentConfig = async () => {
+            try {
+                const { data, error } = await supabase.functions.invoke('get-payment-config');
+                if (data?.key_id) setRazorpayKeyId(data.key_id);
+            } catch (err) {
+                console.error('Failed to load payment config:', err);
+                if (process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
+                    setRazorpayKeyId(process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID);
+                }
+            }
+        };
+        fetchPaymentConfig();
+    }, []);
+
+    const loadRazorpayScript = () => {
+        return new Promise((resolve) => {
+            if (window.Razorpay) {
+                resolve(true);
+                return;
+            }
+            const script = document.createElement('script');
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.onload = () => resolve(true);
+            script.onerror = () => resolve(false);
+            document.body.appendChild(script);
+        });
+    };
+
+    const handlePayment = async (app) => {
+        setProcessingPayment(true);
+        setPaymentError(null);
+
+        const scriptLoaded = await loadRazorpayScript();
+        if (!scriptLoaded) {
+            setPaymentError('Failed to load payment gateway');
+            setProcessingPayment(false);
+            return;
+        }
+
+        const amount = app.total_amount || app.plan_price;
+        const amountInPaise = Math.round(parseFloat(amount) * 100);
+
+        const options = {
+            key: razorpayKeyId,
+            amount: amountInPaise,
+            currency: 'INR',
+            name: 'Table Tap',
+            description: `Payment for ${app.restaurant_name}`,
+            image: '/logo.png',
+            prefill: {
+                name: app.owner_name,
+                email: app.owner_email,
+                contact: app.owner_phone
+            },
+            notes: {
+                registration_id: app.id
+            },
+            theme: { color: '#2A9D8F' },
+            handler: async function (response) {
+                try {
+                    // Update Registration in DB
+                    const { error } = await supabase
+                        .from('restaurant_registrations')
+                        .update({
+                            payment_id: response.razorpay_payment_id,
+                            payment_status: 'success',
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('id', app.id);
+
+                    if (error) throw error;
+
+                    // Refresh data
+                    handleSearch(app.owner_email);
+                    alert('Payment Successful!');
+                } catch (err) {
+                    console.error('Payment update failed:', err);
+                    setPaymentError('Payment successful but failed to update status. Please contact support.');
+                } finally {
+                    setProcessingPayment(false);
+                }
+            },
+            modal: {
+                ondismiss: function () {
+                    setProcessingPayment(false);
+                }
+            }
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.on('payment.failed', function (response) {
+            setPaymentError(response.error.description);
+            setProcessingPayment(false);
+        });
+        rzp.open();
+    };
 
     // Auto-search if email is in URL
     useEffect(() => {
@@ -278,11 +381,41 @@ function StatusContent() {
                                         </div>
                                     </div>
 
-                                    {application.payment_id && (
+                                    {application.payment_id ? (
                                         <div className="bg-green-50 rounded-2xl p-4">
                                             <p className="text-[11px] font-black uppercase tracking-wider text-green-600 mb-1">Payment Status</p>
                                             <p className="font-black text-green-700">Paid ✓</p>
                                             <p className="text-xs text-green-600 mt-1">ID: {application.payment_id}</p>
+                                        </div>
+                                    ) : (application.plan_price > 0 || (application.total_amount && application.total_amount !== 'Custom')) && (
+                                        <div className="bg-indigo-50 rounded-2xl p-6 border border-indigo-100">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div>
+                                                    <p className="text-[11px] font-black uppercase tracking-wider text-indigo-600 mb-1">Payment Status</p>
+                                                    <p className="font-black text-indigo-900 text-lg">Pending Payment</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-sm font-bold text-indigo-600">Amount Due</p>
+                                                    <p className="font-black text-2xl text-indigo-900">₹{application.total_amount || application.plan_price}</p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => handlePayment(application)}
+                                                disabled={processingPayment}
+                                                className="w-full py-4 bg-indigo-600 text-white rounded-xl font-black shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                                            >
+                                                {processingPayment ? (
+                                                    <RefreshCw className="animate-spin" size={20} />
+                                                ) : (
+                                                    <CreditCard size={20} />
+                                                )}
+                                                {processingPayment ? 'Processing...' : 'Complete Payment Now'}
+                                            </button>
+                                            {paymentError && (
+                                                <p className="mt-3 text-red-500 text-sm font-bold text-center bg-white p-2 rounded-lg border border-red-100">
+                                                    {paymentError}
+                                                </p>
+                                            )}
                                         </div>
                                     )}
                                 </div>

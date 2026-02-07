@@ -126,7 +126,8 @@ const MobileAdminHeader = ({
                 inquiries: 'Lead Inquiries',
                 subscriptions: 'Subscriptions',
                 notifications: 'Notifications',
-                activity: 'Activity Logs'
+                activity: 'Activity Logs',
+                settings: 'System Settings'
               }[activeTab] || 'Admin Panel'}
             </h2>
             <p className="text-xs text-gray-600 font-spartan">
@@ -136,6 +137,7 @@ const MobileAdminHeader = ({
               {activeTab === 'inquiries' && 'View lead inquiries'}
               {activeTab === 'subscriptions' && 'Manage subscriptions'}
               {activeTab === 'activity' && 'Track automated activities'}
+              {activeTab === 'settings' && 'Manage API keys & global config'}
             </p>
           </div>
         </div>

@@ -194,40 +194,51 @@ const App = () => {
                 <Toaster
                   position="top-center"
                   toastOptions={{
+                    duration: 4000,
                     style: {
-                      background: 'rgba(0, 0, 0, 0.65)',
-                      backdropFilter: 'blur(12px)',
-                      color: '#fff',
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
-                      borderRadius: '50px',
-                      padding: '10px 20px',
-                      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+                      background: '#fff',
+                      color: '#111827', // text-gray-900
+                      border: '1px solid #E5E7EB', // border-gray-200 default
+                      padding: '12px 16px', // p-3 equivalent
+                      borderRadius: '12px', // rounded-lg +
+                      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.12)', // Exact shadow from location toast
                       fontSize: '14px',
-                      fontWeight: '500',
-                      letterSpacing: '0.02em',
-                      maxWidth: '350px',
+                      fontWeight: '600', // font-semibold
+                      maxWidth: '90vw', // Mobile responsive width
+                      width: 'fit-content',
                     },
                     success: {
                       iconTheme: {
-                        primary: '#4ADE80', // Green accent
+                        primary: '#22c55e', // Green-500
                         secondary: '#fff',
                       },
                       style: {
-                        border: '1px solid rgba(74, 222, 128, 0.3)', // Subtle green border
+                        border: '1px solid #BBF7D0', // border-green-200
                       }
                     },
                     error: {
                       iconTheme: {
-                        primary: '#EF4444', // Red accent
+                        primary: '#EF4444', // Red-500
                         secondary: '#fff',
                       },
                       style: {
-                        border: '1px solid rgba(239, 68, 68, 0.3)', // Subtle red border
+                        border: '1px solid #FECACA', // border-red-200
                       }
                     },
+                    loading: {
+                      iconTheme: {
+                        primary: '#F97316', // Orange-500 (Brand color)
+                        secondary: '#fff',
+                      },
+                      style: {
+                        border: '1px solid #FED7AA', // border-orange-200 warning/loading type
+                      }
+                    }
                   }}
                   containerStyle={{
-                    top: 20,
+                    top: 20, // Standard spacing
+                    left: 20,
+                    right: 20,
                   }}
                 />
 

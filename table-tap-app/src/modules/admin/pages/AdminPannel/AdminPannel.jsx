@@ -1,15 +1,15 @@
 import React, { useState, useEffect, lazy, Suspense, useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader, X, Bell } from 'lucide-react';
-import AdminSidebar from './components/AdminSidebar';
-import AdminHeader from './components/AdminHeader';
-import MobileAdminHeader from './components/MobileAdminHeader';
-import ToastNotifications from './components/ToastNotifications';
-import LoadingSpinner from './components/LoadingSpinner';
-import RestaurantManagement from './components/RestaurantManagement';
-import StaffManagement from './components/StaffManagement';
-import { RestaurantModal, StaffModal } from './components/Modals';
-import InquiryManagement from './components/InquiryManagement';
+import AdminSidebar from './components/AdminSidebar.jsx';
+import AdminHeader from './components/AdminHeader.jsx';
+import MobileAdminHeader from './components/MobileAdminHeader.jsx';
+import ToastNotifications from './components/ToastNotifications.jsx';
+import LoadingSpinner from './components/LoadingSpinner.jsx';
+import RestaurantManagement from './components/RestaurantManagement.jsx';
+import StaffManagement from './components/StaffManagement.jsx';
+import { RestaurantModal, StaffModal } from './components/Modals.jsx';
+import InquiryManagement from './components/InquiryManagement.jsx';
 import { useAuth } from '../../../shared/config/AuthContext';
 import { supabase } from '../../../shared/supabase';
 import { getSubdomainUrl, isDevelopment } from '../../../shared/utils/subdomainRouter';
@@ -24,7 +24,7 @@ import {
   createStaff,
   updateStaff,
   deleteStaff,
-} from './admin_service';
+} from './admin_service.js';
 import ProfilePhotoModal from './components/ProfilePhotoModal';
 import { ManagerNotificationProvider } from '../../../shared/context/ManagerNotificationContext';
 import { AdminNotificationProvider } from '../../context/AdminNotificationContext';
@@ -33,10 +33,10 @@ import RegistrationRequests from '../../../restaurant/components/admin/Registrat
 import AdminDashboard from './components/AdminDashboard';
 
 // Lazy load pages to avoid HMR issues
-const AdminNotificationsPage = lazy(() => import('./components/AdminNotificationsPage'));
-const AdminActivityLogs = lazy(() => import('./components/AdminActivityLogs'));
-const SubscriptionManagement = lazy(() => import('./components/SubscriptionManagement'));
-const SystemSettings = lazy(() => import('./components/SystemSettings'));
+const AdminNotificationsPage = lazy(() => import('./components/AdminNotificationsPage.jsx'));
+const AdminActivityLogs = lazy(() => import('./components/AdminActivityLogs.jsx'));
+const SubscriptionManagement = lazy(() => import('./components/SubscriptionManagement.jsx'));
+const SystemSettings = lazy(() => import('./components/SystemSettings.jsx'));
 
 const menuItems = [
   { id: 'dashboard', icon: 'LayoutDashboard', label: 'Dashboard' },

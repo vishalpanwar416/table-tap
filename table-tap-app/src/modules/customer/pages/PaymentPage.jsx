@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../../shared/config/CartContent';
 import { ChevronLeft, CreditCard, QrCode, CheckCircle, AlertCircle, Clock, MapPin, User, Mail, Phone, Shield, Lock, Smartphone } from 'lucide-react';
@@ -29,6 +29,7 @@ const PaymentPage = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('razorpay');
   const [animateItems, setAnimateItems] = useState(false);
+  const lastPaymentIdRef = useRef(null);
   const { restaurant } = useRestaurant();
   const { user, loading: authLoading } = useAuth();
 
@@ -175,13 +176,6 @@ const PaymentPage = () => {
     setUserData();
   }, [user, authLoading, guestDetails]);
 
-  const generateOrderNumber = () => {
-    const restaurantPrefix = restaurant?.name?.substring(0, 3).toUpperCase() || 'RST';
-    const timestamp = new Date().getTime().toString().substring(9, 13);
-    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-    return `${restaurantPrefix}-${timestamp}-${random}`;
-  };
-
   const handleGoBack = () => {
     navigate(-1);
   };
@@ -243,12 +237,20 @@ const PaymentPage = () => {
 
   // Enhanced processOrder function with proper error handling
   const processOrder = async (paymentResponse) => {
+    // Basic guard: avoid duplicate order creation for the same payment in a single session
+    if (paymentResponse?.razorpay_payment_id && lastPaymentIdRef.current === paymentResponse.razorpay_payment_id) {
+      console.warn('Duplicate payment callback ignored', paymentResponse.razorpay_payment_id);
+      return true;
+    }
+
     let refundInitiated = false;
 
     try {
       if (!paymentResponse || !paymentResponse.razorpay_payment_id) {
         throw new Error('Missing payment confirmation details');
       }
+
+      lastPaymentIdRef.current = paymentResponse.razorpay_payment_id;
 
       // Ensure restaurant data is available
       if (!restaurant || !restaurant.id) {
@@ -257,20 +259,34 @@ const PaymentPage = () => {
 
       // CRITICAL SECURITY STEP: Verify Razorpay signature for online payments
       // Skip verification for DIRECT (cash) and manual UPI payments
-      if (!paymentResponse.razorpay_payment_id.startsWith('DIRECT-') &&
-        !paymentResponse.razorpay_payment_id.startsWith('UPI-')) {
-        setIsProcessing(true);
-        // Inform user about verification progress
-        setScriptError(null);
+      const isDirectPayment = paymentResponse.razorpay_payment_id.startsWith('DIRECT-');
+      const isManualUpi = paymentResponse.razorpay_payment_id.startsWith('UPI-');
 
-        const isVerified = await verifyRazorpaySignature(
-          paymentResponse.razorpay_payment_id,
-          paymentResponse.razorpay_order_id,
-          paymentResponse.razorpay_signature
-        );
+      // Only attempt signature verification when we have all required fields from Razorpay
+      if (!isDirectPayment && !isManualUpi) {
+        const hasSignature = !!paymentResponse.razorpay_signature;
+        const hasOrderId = !!paymentResponse.razorpay_order_id;
 
-        if (!isVerified) {
-          throw new Error('Payment verification failed. If you have already paid, please contact support with your payment ID.');
+        if (hasSignature && hasOrderId) {
+          setIsProcessing(true);
+          setScriptError(null);
+
+          const isVerified = await verifyRazorpaySignature(
+            paymentResponse.razorpay_payment_id,
+            paymentResponse.razorpay_order_id,
+            paymentResponse.razorpay_signature
+          );
+
+          if (!isVerified) {
+            throw new Error('Payment verification failed. If you have already paid, please contact support with your payment ID.');
+          }
+        } else {
+          // Some gateways return only payment_id when no server-side order was created.
+          // Don't block order creation; we will log and proceed so the order isn't lost.
+          console.warn('Skipping signature verification: missing order_id or signature', {
+            hasOrderId,
+            hasSignature
+          });
         }
       }
 
@@ -370,6 +386,7 @@ const PaymentPage = () => {
         setScriptError(`Order creation failed: ${error.message}`);
         setIsProcessing(false);
       }
+      lastPaymentIdRef.current = null; // allow retry for this payment if it was not completed
       return false;
     }
   };

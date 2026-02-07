@@ -719,6 +719,8 @@ const AdminDashboard = () => {
           restaurantName={restaurant?.name}
           restaurantLogoUrl={restaurant?.logo_url}
           userRole={contextUserRole}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
         />
         <LogoutPopup
           isOpen={showLogoutPopup}
@@ -726,12 +728,12 @@ const AdminDashboard = () => {
         />
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
           {/* Main Content Header */}
-          <div className="bg-white shadow-sm z-10 p-4 md:p-6">
+          <div className="hidden md:block bg-white shadow-sm z-10 p-4 md:p-6">
             <div className="w-full px-4 md:px-8 flex justify-between items-center">
               {/* Back Button - Top Left */}
-              <div className="flex items-center">
+              <div className="hidden md:flex items-center">
                 <button
                   onClick={() => navigate(-1)}
                   className="mr-4 p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
@@ -883,21 +885,7 @@ const AdminDashboard = () => {
                   </div>
                 )}
 
-                <div className="relative text-gray-600">
-                  <input
-                    type="search"
-                    name="search"
-                    placeholder="Search..."
-                    className="bg-gray-100 w-full h-10 px-4 pr-10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                  <span className="absolute right-0 top-0 mt-3 mr-3">
-                    <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                      <path d="M12.9 14.32a8 8 0 1 1 1.41-1.41l5.35 5.33-1.42 1.42-5.33-5.34zM8 14A6 6 0 1 0 8 2a6 6 0 0 0 0 12z"></path>
-                    </svg>
-                  </span>
-                </div>
+
               </div>
 
               {/* Content Components - Removed redundant padding */}
@@ -1175,8 +1163,9 @@ const AdminDashboard = () => {
             </form>
           </div>
         </div>
-      )}
-    </div>
+      )
+      }
+    </div >
   )
 }
 

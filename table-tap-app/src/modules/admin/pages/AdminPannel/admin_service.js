@@ -1254,3 +1254,22 @@ export const getSystemSetting = async (key) => {
     return null;
   }
 };
+
+/**
+ * Get an email template by key
+ */
+export const getEmailTemplate = async (key) => {
+  try {
+    const { data, error } = await supabase
+      .from('email_templates')
+      .select('subject, html')
+      .eq('key', key)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error(`Error fetching email template ${key}:`, error);
+    return null;
+  }
+};

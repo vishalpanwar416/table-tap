@@ -274,10 +274,10 @@ const generateBillHTML = (order, restaurant) => {
 const generateBillText = (order, restaurant) => {
     const formatCurrency = (amount) => `₹${(amount || 0).toFixed(2)}`;
     const orderItems = Array.isArray(order.items) ? order.items : [];
-    const items = orderItems.map(item => 
+    const items = orderItems.map(item =>
         `${item.name} x${item.quantity} - ${formatCurrency(item.price * item.quantity)}`
     ).join('\n');
-    
+
     return `
 ${restaurant.name}
 ${restaurant.address || ''}
@@ -368,7 +368,7 @@ const buildBillTemplateVars = (order, restaurant) => {
 /**
  * Apply template variables to subject and html (replace {{key}} with value)
  */
-const applyTemplate = (subject, html, vars) => {
+export const applyTemplate = (subject, html, vars) => {
     let outSubject = subject;
     let outHtml = html;
     Object.keys(vars).forEach(key => {
@@ -399,12 +399,12 @@ export const sendBillEmail = async (order, restaurant, recipientEmail, options =
 
     try {
         const { data: templateData } = await supabase
-            .from('system_settings')
-            .select('value')
+            .from('email_templates')
+            .select('subject, html')
             .eq('key', 'email_template_bill')
             .maybeSingle();
 
-        const template = templateData?.value || null;
+        const template = templateData || null;
         if (template && template.subject && template.html) {
             const vars = buildBillTemplateVars(order, restaurant);
             const applied = applyTemplate(template.subject, template.html, vars);
@@ -443,44 +443,36 @@ export const sendBillEmail = async (order, restaurant, recipientEmail, options =
     };
 
     try {
-        // Try Supabase Edge Function first
-        const response = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/send-email`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`
-            },
-            body: JSON.stringify(emailData)
+        // Use supabase.functions.invoke to automatically handle auth headers with the current user's session
+        const { data, error } = await supabase.functions.invoke('send-email', {
+            body: emailData
         });
 
-        if (response.ok) {
-            const result = await response.json();
-            // Log successful email to admin_activity_logs
-            await logEmailActivity(emailLogData, 'success');
-            // Log to restaurant activity_logs (Activity tab) for every bill email sent
-            if (restaurant?.id) {
-                const triggeredBy = options.triggeredBy;
-                await logActivity({
-                    restaurant_id: restaurant.id,
-                    user_id: triggeredBy?.user_id ?? null,
-                    user_name: triggeredBy?.user_name || 'System (Automated)',
-                    user_role: triggeredBy?.user_role || 'system',
-                    action_type: 'email',
-                    action_name: 'bill_sent',
-                    target_id: order.id,
-                    target_name: `Order #${order.order_number || order.id?.slice(0, 8) || 'N/A'}`,
-                    details: { recipient_email: recipientEmail, amount: order.total },
-                    description: `Bill email sent to ${recipientEmail}`
-                });
-            }
-            return { success: true, ...result };
+        if (error) {
+            const errMsg = error.message || 'Supabase email function unavailable';
+            await logEmailActivity(emailLogData, 'failed', errMsg);
+            throw new Error(errMsg);
         }
-        
-        // If Supabase function fails, try alternative
-        const errorData = await response.json().catch(() => ({}));
-        const errMsg = errorData.error || errorData.message || 'Supabase email function unavailable';
-        await logEmailActivity(emailLogData, 'failed', errMsg);
-        throw new Error(errMsg);
+
+        // Log successful email to admin_activity_logs
+        await logEmailActivity(emailLogData, 'success');
+        // Log to restaurant activity_logs (Activity tab) for every bill email sent
+        if (restaurant?.id) {
+            const triggeredBy = options.triggeredBy;
+            await logActivity({
+                restaurant_id: restaurant.id,
+                user_id: triggeredBy?.user_id ?? null,
+                user_name: triggeredBy?.user_name || 'System (Automated)',
+                user_role: triggeredBy?.user_role || 'system',
+                action_type: 'email',
+                action_name: 'bill_sent',
+                target_id: order.id,
+                target_name: `Order #${order.order_number || order.id?.slice(0, 8) || 'N/A'}`,
+                details: { recipient_email: recipientEmail, amount: order.total },
+                description: `Bill email sent to ${recipientEmail}`
+            });
+        }
+        return { success: true, ...data };
     } catch (error) {
         console.warn('Primary email service failed:', error);
         const message = error.message || 'Email failed to send';
@@ -562,43 +554,88 @@ export const sendOrderStatusEmail = async (order, restaurant, status) => {
     if (status !== 'accepted' && status !== 'rejected') return;
 
     const orderNum = order.order_number || order.id?.slice(0, 8) || 'N/A';
-    const subject = status === 'rejected'
+    const templateKey = status === 'rejected' ? 'order_rejected' : 'order_accepted';
+
+    let subject = status === 'rejected'
         ? `Order #${orderNum} has been rejected - ${restaurant.name}`
         : `Order #${orderNum} accepted - ${restaurant.name}`;
-    const html = generateOrderStatusEmailHTML(order, restaurant, status);
+    let html;
+
+    try {
+        const { data: template } = await supabase
+            .from('email_templates')
+            .select('subject, html')
+            .eq('key', templateKey)
+            .maybeSingle();
+
+        if (template) {
+            const formatCurrency = (amount) => `₹${(amount || 0).toFixed(2)}`;
+            const orderItems = Array.isArray(order.items) ? order.items : [];
+            const itemsRows = orderItems.map(item => `
+                <tr>
+                    <td style="padding: 12px 0; border-bottom: 1px solid #edf2f7;">
+                        <span style="font-weight: 600; color: #0f172a;">${item.name || item.title || 'Item'}</span>
+                        ${item.variant ? `<br><small style="color: #64748b;">${item.variant}</small>` : ''}
+                    </td>
+                    <td style="padding: 12px 0; border-bottom: 1px solid #edf2f7; text-align: center; color: #64748b;">x${item.quantity || 1}</td>
+                    <td style="padding: 12px 0; border-bottom: 1px solid #edf2f7; text-align: right; color: #0f172a; font-weight: 600;">${formatCurrency((item.price || 0) * (item.quantity || 1))}</td>
+                </tr>
+            `).join('');
+
+            const vars = {
+                order_number: orderNum,
+                restaurant_name: restaurant.name,
+                reason: order.cancel_reason || 'N/A',
+                customer_name: order.customer_name || 'Guest',
+                table_number: order.table_number ? `T${order.table_number}` : 'N/A',
+                items_rows: itemsRows,
+                total_amount: formatCurrency(order.total),
+                payment_method: (order.payment_method || 'N/A').toUpperCase(),
+                year: new Date().getFullYear().toString()
+            };
+            const applied = applyTemplate(template.subject, template.html, vars);
+            subject = applied.subject;
+            html = applied.html;
+        } else {
+            html = generateOrderStatusEmailHTML(order, restaurant, status);
+        }
+    } catch (e) {
+        console.warn('Failed to fetch order status template:', e);
+        html = generateOrderStatusEmailHTML(order, restaurant, status);
+    }
+
     const emailData = { to: email, subject, html, text: subject };
     const emailLogData = { to: email, subject, email_type: `order_${status}`, restaurant_id: restaurant.id, order_id: order.id };
 
     try {
-        const response = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/send-email`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}` },
-            body: JSON.stringify(emailData)
+        const { data, error } = await supabase.functions.invoke('send-email', {
+            body: emailData
         });
-        if (response.ok) {
-            await logEmailActivity(emailLogData, 'success');
-            // Log to restaurant activity_logs (Activity tab) for every order status email sent
-            if (restaurant?.id) {
-                const orderLabel = `Order #${order.order_number || order.id?.slice(0, 8) || 'N/A'}`;
-                await logActivity({
-                    restaurant_id: restaurant.id,
-                    user_id: null,
-                    user_name: 'System (Auto)',
-                    user_role: 'system',
-                    action_type: 'email',
-                    action_name: 'auto_email_sent',
-                    target_id: order.id,
-                    target_name: orderLabel,
-                    details: { email_kind: status, recipient_email: email },
-                    description: `Auto email (order ${status === 'rejected' ? 'rejected' : 'accepted'}) sent to ${email}`
-                });
-            }
-            return { success: true };
+
+        if (error) {
+            const errMsg = error.message || 'Email failed';
+            await logEmailActivity(emailLogData, 'failed', errMsg);
+            return { success: false, error: errMsg };
         }
-        const errData = await response.json().catch(() => ({}));
-        const errMsg = errData.error || errData.message || 'Email failed';
-        await logEmailActivity(emailLogData, 'failed', errMsg);
-        return { success: false, error: errMsg };
+
+        await logEmailActivity(emailLogData, 'success');
+        // Log to restaurant activity_logs (Activity tab) for every order status email sent
+        if (restaurant?.id) {
+            const orderLabel = `Order #${order.order_number || order.id?.slice(0, 8) || 'N/A'}`;
+            await logActivity({
+                restaurant_id: restaurant.id,
+                user_id: null,
+                user_name: 'System (Auto)',
+                user_role: 'system',
+                action_type: 'email',
+                action_name: 'auto_email_sent',
+                target_id: order.id,
+                target_name: orderLabel,
+                details: { email_kind: status, recipient_email: email },
+                description: `Auto email (order ${status === 'rejected' ? 'rejected' : 'accepted'}) sent to ${email}`
+            });
+        }
+        return { success: true };
     } catch (error) {
         console.warn('[Auto email] Order status email failed:', error);
         await logEmailActivity(emailLogData, 'failed', error.message || 'Network error');
@@ -626,10 +663,10 @@ const generateWhatsAppBillMessage = (order, restaurant) => {
         minute: '2-digit'
     });
 
-    const items = order.items.map(item => 
+    const items = order.items.map(item =>
         `• ${item.name} x${item.quantity} - ${formatCurrency(item.price * item.quantity)}`
     ).join('\n');
-    
+
     const message = `
 🧾 *BILL FROM ${restaurant.name?.toUpperCase()}*
 ━━━━━━━━━━━━━━━━━━━━
@@ -678,13 +715,13 @@ _Powered by Table Tap_
 export const generateWhatsAppURL = (phoneNumber, message) => {
     // Clean the phone number - remove spaces, dashes, and +
     const cleanPhone = phoneNumber.replace(/[\s\-\+]/g, '');
-    
+
     // Add country code if not present (default to India +91)
     const phoneWithCode = cleanPhone.startsWith('91') ? cleanPhone : `91${cleanPhone}`;
-    
+
     // Encode the message for URL
     const encodedMessage = encodeURIComponent(message);
-    
+
     return `https://wa.me/${phoneWithCode}?text=${encodedMessage}`;
 };
 
@@ -703,12 +740,12 @@ export const sendWhatsAppBill = (order, restaurant, phoneNumber) => {
 
     const message = generateWhatsAppBillMessage(order, restaurant);
     const whatsappURL = generateWhatsAppURL(phoneNumber, message);
-    
+
     // Open WhatsApp in new tab
     window.open(whatsappURL, '_blank');
-    
-    return { 
-        success: true, 
+
+    return {
+        success: true,
         url: whatsappURL,
         message: 'WhatsApp opened with bill'
     };
@@ -726,7 +763,7 @@ export const getWhatsAppBillMessage = (order, restaurant) => {
  */
 export const copyBillToClipboard = async (order, restaurant) => {
     const message = generateWhatsAppBillMessage(order, restaurant);
-    
+
     try {
         await navigator.clipboard.writeText(message);
         return { success: true, message: 'Bill copied to clipboard' };

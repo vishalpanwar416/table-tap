@@ -277,70 +277,40 @@ const AdminActivityLogs = ({ searchTerm }) => {
 
       {/* Stats Cards */}
       {stats && (
-        <div className="flex items-center gap-3 mt-4 overflow-x-auto pb-2 no-scrollbar md:grid md:grid-cols-5 md:overflow-visible px-0.5">
-          {/* Total Activities */}
-          <div className="bg-white rounded-xl border border-gray-200 p-3 min-w-[140px] md:min-w-0 flex-shrink-0 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg shrink-0">
-                <Activity className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">{stats.total}</p>
-                <p className="text-[10px] md:text-xs text-gray-500 whitespace-nowrap">Total Activities</p>
-              </div>
-            </div>
+        <div className="flex items-center gap-2 mt-2 overflow-x-auto pb-2 no-scrollbar px-1">
+          {/* Total */}
+          <div className="bg-white rounded-lg border border-gray-100 p-2 min-w-[70px] flex flex-col items-center justify-center flex-shrink-0 shadow-sm">
+            <Activity className="w-3.5 h-3.5 text-blue-600 mb-1" />
+            <p className="text-sm font-bold text-gray-900 leading-tight">{stats.total}</p>
+            <p className="text-[9px] text-gray-400">Total</p>
           </div>
 
-          {/* Emails Sent */}
-          <div className="bg-white rounded-xl border border-gray-200 p-3 min-w-[140px] md:min-w-0 flex-shrink-0 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg shrink-0">
-                <MailCheck className="w-5 h-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">{stats.emails.sent}</p>
-                <p className="text-[10px] md:text-xs text-gray-500 whitespace-nowrap">Emails Sent</p>
-              </div>
-            </div>
+          {/* Sent */}
+          <div className="bg-white rounded-lg border border-gray-100 p-2 min-w-[70px] flex flex-col items-center justify-center flex-shrink-0 shadow-sm">
+            <MailCheck className="w-3.5 h-3.5 text-green-600 mb-1" />
+            <p className="text-sm font-bold text-gray-900 leading-tight">{stats.emails.sent}</p>
+            <p className="text-[9px] text-gray-400">Sent</p>
           </div>
 
-          {/* Emails Failed */}
-          <div className="bg-white rounded-xl border border-gray-200 p-3 min-w-[140px] md:min-w-0 flex-shrink-0 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-100 rounded-lg shrink-0">
-                <MailX className="w-5 h-5 text-red-600" />
-              </div>
-              <div>
-                <p className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">{stats.emails.failed}</p>
-                <p className="text-[10px] md:text-xs text-gray-500 whitespace-nowrap">Emails Failed</p>
-              </div>
-            </div>
+          {/* Failed */}
+          <div className="bg-white rounded-lg border border-gray-100 p-2 min-w-[70px] flex flex-col items-center justify-center flex-shrink-0 shadow-sm">
+            <MailX className="w-3.5 h-3.5 text-red-600 mb-1" />
+            <p className="text-sm font-bold text-gray-900 leading-tight">{stats.emails.failed}</p>
+            <p className="text-[9px] text-gray-400">Failed</p>
           </div>
 
           {/* Successful */}
-          <div className="bg-white rounded-xl border border-gray-200 p-3 min-w-[140px] md:min-w-0 flex-shrink-0 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-100 rounded-lg shrink-0">
-                <CheckCircle className="w-5 h-5 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">{stats.byStatus.success}</p>
-                <p className="text-[10px] md:text-xs text-gray-500 whitespace-nowrap">Successful</p>
-              </div>
-            </div>
+          <div className="bg-white rounded-lg border border-gray-100 p-2 min-w-[70px] flex flex-col items-center justify-center flex-shrink-0 shadow-sm">
+            <CheckCircle className="w-3.5 h-3.5 text-emerald-600 mb-1" />
+            <p className="text-sm font-bold text-gray-900 leading-tight">{stats.byStatus.success}</p>
+            <p className="text-[9px] text-gray-400">Success</p>
           </div>
 
           {/* Pending */}
-          <div className="bg-white rounded-xl border border-gray-200 p-3 min-w-[140px] md:min-w-0 flex-shrink-0 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-100 rounded-lg shrink-0">
-                <Clock className="w-5 h-5 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">{stats.byStatus.pending}</p>
-                <p className="text-[10px] md:text-xs text-gray-500 whitespace-nowrap">Pending</p>
-              </div>
-            </div>
+          <div className="bg-white rounded-lg border border-gray-100 p-2 min-w-[70px] flex flex-col items-center justify-center flex-shrink-0 shadow-sm">
+            <Clock className="w-3.5 h-3.5 text-amber-600 mb-1" />
+            <p className="text-sm font-bold text-gray-900 leading-tight">{stats.byStatus.pending}</p>
+            <p className="text-[9px] text-gray-400">Pending</p>
           </div>
         </div>
       )}
@@ -359,86 +329,21 @@ const AdminActivityLogs = ({ searchTerm }) => {
             </div>
             {/* Search removed - available in header */}
 
-            {/* Activity Type Filter */}
+
+
+            {/* Status Filter (Dropdown) */}
             <div className="relative">
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-1.5 px-2 py-2 md:px-3 md:gap-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-all text-xs font-medium text-gray-700 min-w-0 md:min-w-[120px] justify-between whitespace-nowrap shadow-sm"
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="appearance-none pl-3 pr-8 py-2 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-700 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none shadow-sm flex-shrink-0 min-w-[110px]"
               >
-                <div className="flex items-center gap-1.5">
-                  <Filter className="w-3.5 h-3.5 text-gray-400" />
-                  <span className="hidden md:inline">
-                    {activityTypeFilter === 'all' ? 'All Types' :
-                      Object.values(activityCategories).flat().find(a => a.type === activityTypeFilter)?.label || activityTypeFilter}
-                  </span>
-                  <span className="md:hidden">
-                    {activityTypeFilter === 'all' ? 'Type' : 'Filt.'}
-                  </span>
-                </div>
-                <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-              </button>
-
-              {showFilters && (
-                <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-xl border border-gray-200 shadow-xl z-50 max-h-96 overflow-y-auto">
-                  <div className="p-2">
-                    <button
-                      onClick={() => { setActivityTypeFilter('all'); setShowFilters(false); }}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${activityTypeFilter === 'all' ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-50 text-gray-700'
-                        }`}
-                    >
-                      All Types
-                    </button>
-                  </div>
-                  {Object.entries(activityCategories).map(([category, types]) => (
-                    <div key={category} className="border-t border-gray-100">
-                      <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50">
-                        {category}
-                      </div>
-                      <div className="p-2">
-                        {types.map(({ type, label, icon: Icon, color }) => (
-                          <button
-                            key={type}
-                            onClick={() => { setActivityTypeFilter(type); setShowFilters(false); }}
-                            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${activityTypeFilter === type ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-50 text-gray-700'
-                              }`}
-                          >
-                            <Icon className={`w-4 h-4 ${color}`} />
-                            <span>{label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="flex rounded-lg border border-gray-200 overflow-hidden flex-shrink-0">
-              {[
-                { value: 'all', label: 'All', icon: null },
-                { value: 'success', label: 'Success', icon: CheckCircle },
-                { value: 'failed', label: 'Failed', icon: XCircle },
-                { value: 'pending', label: 'Pending', icon: Clock }
-              ].map(({ value, label, icon: Icon }) => (
-                <button
-                  key={value}
-                  onClick={() => setStatusFilter(value)}
-                  className={`px-2.5 py-1.5 md:px-3 md:py-2 text-xs font-medium transition-colors whitespace-nowrap flex items-center justify-center gap-1.5 ${statusFilter === value
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-600 hover:bg-gray-50'
-                    }`}
-                  title={label}
-                >
-                  {Icon ? (
-                    <>
-                      <Icon className="w-3.5 h-3.5 md:hidden" />
-                      <span className="hidden md:inline">{label}</span>
-                    </>
-                  ) : (
-                    label
-                  )}
-                </button>
-              ))}
+                <option value="all">All Status</option>
+                <option value="success">Success</option>
+                <option value="failed">Failed</option>
+                <option value="pending">Pending</option>
+              </select>
+              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
             </div>
 
             {/* Date Filter */}
@@ -481,55 +386,49 @@ const AdminActivityLogs = ({ searchTerm }) => {
             filteredLogs.map((log) => (
               <div
                 key={log.id}
-                className="flex items-start gap-4 p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                className="flex items-start gap-3 p-3 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-50 last:border-0"
                 onClick={() => setSelectedLog(log)}
               >
                 {/* Icon */}
-                <div className={`flex-shrink-0 p-2.5 rounded-xl ${log.status === 'failed' ? 'bg-red-50' :
+                <div className={`flex-shrink-0 p-1.5 rounded-lg mt-0.5 ${log.status === 'failed' ? 'bg-red-50' :
                   log.status === 'pending' ? 'bg-amber-50' :
                     'bg-gray-50'
                   }`}>
-                  {getActivityIcon(log.activity_type)}
+                  {React.cloneElement(getActivityIcon(log.activity_type), { className: "w-4 h-4" })}
                 </div>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h4 className="font-semibold text-gray-900">
-                        {log.activity_name}
-                      </h4>
-                      <p className="text-sm text-gray-600 mt-0.5">
-                        {log.description}
-                      </p>
-                      {log.target_name && (
-                        <p className="text-xs text-gray-400 mt-1">
-                          To: {log.target_name}
-                        </p>
-                      )}
-                    </div>
-                    {getStatusBadge(log.status)}
-                  </div>
-                  <div className="flex items-center gap-3 mt-2">
-                    <span className="text-xs text-gray-400 flex items-center gap-1">
-                      <User className="w-3 h-3" />
-                      {log.user_name}
-                    </span>
-                    <span className="text-xs text-gray-400 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
+                    <h4 className="text-sm font-medium text-gray-900 truncate pr-2">
+                      {log.activity_name}
+                      {log.target_name && <span className="text-gray-400 font-normal ml-1">· {log.target_name}</span>}
+                    </h4>
+                    <span className="text-[10px] text-gray-400 flex-shrink-0 whitespace-nowrap mt-0.5">
                       {formatTimeAgo(log.created_at)}
                     </span>
+                  </div>
+
+                  <p className="text-xs text-gray-500 truncate mt-0.5">
+                    {log.description}
+                  </p>
+
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <div className="scale-75 origin-left -ml-1">
+                      {getStatusBadge(log.status)}
+                    </div>
+                    <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                      <User className="w-3 h-3 opacity-70" />
+                      {log.user_name}
+                    </span>
                     {log.details?.amount && (
-                      <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
-                        <IndianRupee className="w-3 h-3" />
+                      <span className="text-[10px] text-emerald-600 font-medium flex items-center gap-0.5 border-l border-gray-200 pl-2">
+                        <IndianRupee className="w-2.5 h-2.5" />
                         {log.details.amount.toLocaleString()}
                       </span>
                     )}
                   </div>
                 </div>
-
-                {/* Arrow */}
-                <ChevronRight className="w-5 h-5 text-gray-300 flex-shrink-0" />
               </div>
             ))
           )}
