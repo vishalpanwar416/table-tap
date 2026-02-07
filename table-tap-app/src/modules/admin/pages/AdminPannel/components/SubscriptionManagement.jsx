@@ -1703,7 +1703,8 @@ const SubscriptionManagementV2 = () => {
           {/* Plan Stats */}
           {/* Plan Stats */}
           {/* Plan Stats - One Line Scrollable */}
-          <div className="flex flex-row gap-4 overflow-x-auto pb-4 items-stretch no-scrollbar">
+          {/* Desktop Stats - Scrollable Row */}
+          <div className="hidden md:flex flex-row gap-4 overflow-x-auto pb-4 items-stretch no-scrollbar">
             <div className="bg-white p-5 rounded-xl border shadow-sm min-w-[200px] flex-shrink-0 flex flex-col justify-center">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Plans</p>
               <p className="text-3xl font-black text-gray-900 mt-2">{plans.length}</p>
@@ -1741,7 +1742,45 @@ const SubscriptionManagementV2 = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Mobile Stats - Compact Grid */}
+          <div className="md:hidden grid grid-cols-4 gap-2 pb-4">
+            <div className="bg-white p-2 rounded-xl border shadow-sm flex flex-col justify-center text-center">
+              <p className="text-[8px] font-bold text-gray-500 uppercase tracking-wider leading-tight">Total</p>
+              <p className="text-lg font-black text-gray-900 mt-0.5 leading-none">{plans.length}</p>
+            </div>
+            <div className="bg-white p-2 rounded-xl border shadow-sm flex flex-col justify-center text-center">
+              <p className="text-[8px] font-bold text-green-600 uppercase tracking-wider leading-tight">Active</p>
+              <p className="text-lg font-black text-green-700 mt-0.5 leading-none">{plans.filter(p => p.is_active).length}</p>
+            </div>
+            <div className="bg-white p-2 rounded-xl border shadow-sm flex flex-col justify-center text-center">
+              <p className="text-[8px] font-bold text-gray-500 uppercase tracking-wider leading-tight">Inactive</p>
+              <p className="text-lg font-black text-gray-400 mt-0.5 leading-none">{plans.filter(p => !p.is_active).length}</p>
+            </div>
+
+            {plans.map(plan => (
+              <div key={`mob-stat-${plan.id}`} className="bg-white p-2 rounded-xl border shadow-sm flex flex-col justify-center text-center">
+                <p className="text-[8px] font-bold text-indigo-600 uppercase tracking-wider truncate leading-tight">
+                  {plan.name}
+                </p>
+                <p className="text-lg font-black text-indigo-700 mt-0.5 leading-none">
+                  {stats?.planCounts?.[plan.key] || 0}
+                </p>
+              </div>
+            ))}
+
+            <button
+              onClick={() => openPlanModal()}
+              className="col-span-4 bg-white p-2 rounded-xl border-dashed border-2 border-blue-300 shadow-sm flex flex-row items-center justify-center gap-1.5 hover:bg-blue-50 transition-all cursor-pointer"
+            >
+              <div className="p-0.5 bg-blue-100 rounded-full">
+                <Plus className="w-3 h-3 text-blue-600" />
+              </div>
+              <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Add New Plan</p>
+            </button>
+          </div>
+
+          {/* Desktop Plans Grid - Hidden on Mobile */}
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
             {plans.length === 0 ? (
               <div className="col-span-full p-12 text-center bg-gray-50 rounded-3xl border border-dashed border-gray-300 flex flex-col items-center gap-4">
                 <p className="text-gray-500 font-medium">No subscription plans found in the system.</p>
@@ -1797,15 +1836,72 @@ const SubscriptionManagementV2 = () => {
               ))
             )}
           </div>
+
+          {/* Mobile Compact Plans List - Hidden on Desktop */}
+          <div className="md:hidden space-y-3 animate-in fade-in duration-300">
+            {plans.length === 0 ? (
+              <div className="bg-gray-50 rounded-2xl border border-dashed border-gray-300 p-8 text-center flex flex-col items-center gap-3">
+                <p className="text-gray-500 text-sm font-medium">No subscription plans found.</p>
+                <button
+                  onClick={handleInitializeDefaults}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold shadow-sm"
+                >
+                  Initialize Default Plans
+                </button>
+              </div>
+            ) : (
+              plans.map((plan) => (
+                <div
+                  key={plan.id}
+                  onClick={() => openPlanModal(plan)}
+                  className={`bg-white border border-gray-100 rounded-xl p-4 shadow-sm relative overflow-hidden flex flex-col gap-2 cursor-pointer active:scale-95 transition-transform ${!plan.is_active ? 'opacity-75 grayscale' : ''}`}
+                >
+                  <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${plan.color || 'from-gray-400 to-gray-500'}`} />
+
+                  <div className="flex justify-between items-start mt-1">
+                    <div>
+                      <h3 className="text-lg font-black text-gray-900">{plan.name}</h3>
+                      <div className="flex items-baseline gap-1 mt-0.5">
+                        <span className="text-xl font-black text-gray-900">₹{plan.base_price?.toLocaleString()}</span>
+                        <span className="text-xs text-gray-400 font-bold">/mo</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      {/* Drop Edit button as the entire card is clickable, keep Delete only */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDeletePlan(plan.id); }}
+                        className="p-2 bg-gray-50 text-red-600 rounded-lg border border-gray-200 hover:bg-red-50 transition-colors z-10"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
+                    {plan.description}
+                  </p>
+
+                  <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-50">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${plan.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                      {plan.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                    <span className="text-[10px] text-gray-400 font-medium bg-gray-50 px-1.5 py-0.5 rounded">
+                      {plan.features?.length || 0} Features
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       )}
 
       {/* Plan Modal - Redesigned Premium Version */}
       {showPlanModal && (
         <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-md flex items-center justify-center z-[100] p-4 font-sans animate-in fade-in duration-300">
-          <div className="bg-white rounded-[40px] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.2)] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border border-white/20">
+          <div className="bg-white rounded-2xl md:rounded-[40px] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.2)] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border border-white/20">
             {/* Modal Header */}
-            <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-gray-50 to-white">
+            <div className="px-5 py-4 md:px-8 md:py-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-gray-50 to-white">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-200">
                   {editingPlan ? <Edit size={24} /> : <Zap size={24} />}
@@ -1825,7 +1921,7 @@ const SubscriptionManagementV2 = () => {
               </button>
             </div>
 
-            <form onSubmit={handlePlanSubmit} className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar">
+            <form onSubmit={handlePlanSubmit} className="flex-1 overflow-y-auto p-5 space-y-6 md:p-8 md:space-y-10 custom-scrollbar">
 
               {/* SECTION: BASIC INFO */}
               <div className="space-y-6">
@@ -1834,7 +1930,7 @@ const SubscriptionManagementV2 = () => {
                   <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">Plan Identity</h3>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Internal Key</label>
                     <input
@@ -1877,7 +1973,7 @@ const SubscriptionManagementV2 = () => {
                   <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">Economics</h3>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Base Price /Month</label>
                     <div className="relative group">
@@ -1945,7 +2041,7 @@ const SubscriptionManagementV2 = () => {
                   <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">Style & Logic</h3>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Visual Icon</label>
                     <select
@@ -1982,7 +2078,7 @@ const SubscriptionManagementV2 = () => {
                   <p className="text-[10px] text-gray-400 font-bold ml-1 italic italic">Separate each feature with a comma</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 bg-gray-50 p-6 rounded-[32px]">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-6 rounded-[32px]">
                   <div className="flex flex-col gap-4">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-bold text-gray-700">Display Publicly</span>
