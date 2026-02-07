@@ -2,10 +2,12 @@
 
 import { QrCode, ArrowRight, Zap, CreditCard } from 'lucide-react';
 import { useModal } from '../context/ModalContext';
+import { useSettings } from '../context/SettingsContext';
 import data from '../data/landing-data.json';
 
 const Hero = () => {
-    const hero = data.hero;
+    const { hero: dbHero } = useSettings();
+    const hero = dbHero || data.hero;
     const { openModal } = useModal();
 
     return (

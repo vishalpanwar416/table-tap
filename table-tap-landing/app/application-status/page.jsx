@@ -21,6 +21,7 @@ import {
     CreditCard
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useSettings } from '../context/SettingsContext';
 
 const statusConfig = {
     pending_review: {
@@ -88,6 +89,12 @@ function StatusContent() {
     const [processingPayment, setProcessingPayment] = useState(false);
     const [paymentError, setPaymentError] = useState(null);
     const [razorpayKeyId, setRazorpayKeyId] = useState(null);
+    const { company, logo } = useSettings();
+
+    const logoUrl = logo?.url || "/logo.png";
+    const companyName = company?.name || "Table Tap";
+    const supportEmail = company?.email || "support@tabletap.in";
+    const supportPhone = company?.phone || "+91 98765 43210";
 
     // Fetch Razorpay Key
     useEffect(() => {
@@ -139,7 +146,7 @@ function StatusContent() {
             currency: 'INR',
             name: 'Table Tap',
             description: `Payment for ${app.restaurant_name}`,
-            image: '/logo.png',
+            image: logoUrl,
             prefill: {
                 name: app.owner_name,
                 email: app.owner_email,
@@ -253,7 +260,7 @@ function StatusContent() {
             <header className="bg-white/80 backdrop-blur-xl border-b border-gray-100 sticky top-0 z-50">
                 <div className="container mx-auto px-6 py-4 flex items-center justify-between">
                     <Link href="/" className="flex items-center gap-2">
-                        <Image src="/logo.png" alt="Table Tap" width={140} height={56} className="h-12 w-auto" />
+                        <Image src={logoUrl} alt={companyName} width={140} height={56} className="h-12 w-auto" />
                     </Link>
                     <Link href="/" className="flex items-center gap-2 text-gray-500 hover:text-gray-900 font-bold transition-colors">
                         <ArrowLeft size={18} /> Back to Home
@@ -429,18 +436,18 @@ function StatusContent() {
                                 </p>
                                 <div className="flex flex-wrap gap-4">
                                     <a
-                                        href="mailto:support@tabletap.in"
+                                        href={`mailto:${supportEmail}`}
                                         className="flex items-center gap-2 text-blue-600 font-bold text-sm hover:underline"
                                     >
                                         <Mail size={16} />
-                                        support@tabletap.in
+                                        {supportEmail}
                                     </a>
                                     <a
-                                        href="tel:+919876543210"
+                                        href={`tel:${supportPhone.replace(/\s/g, '')}`}
                                         className="flex items-center gap-2 text-blue-600 font-bold text-sm hover:underline"
                                     >
                                         <Phone size={16} />
-                                        +91 98765 43210
+                                        {supportPhone}
                                     </a>
                                 </div>
                             </div>

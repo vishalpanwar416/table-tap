@@ -1,5 +1,6 @@
 import dynamic from "next/dynamic";
 import Script from "next/script";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { ModalProvider } from "./context/ModalContext";
 import { SettingsProvider } from "./context/SettingsContext";
@@ -146,6 +147,7 @@ export default function RootLayout({ children }) {
           <ModalProvider>
             {children}
             <LeadModal />
+            <Analytics />
           </ModalProvider>
         </SettingsProvider>
       </body>

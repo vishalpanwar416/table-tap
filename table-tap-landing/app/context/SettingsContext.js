@@ -9,18 +9,26 @@ export const SettingsProvider = ({ children }) => {
     const [settings, setSettings] = useState({
         company: null,
         social: null,
+        hero: null,
+        logo: null,
         loading: true
     });
 
     useEffect(() => {
         const fetchSettings = async () => {
             try {
+                console.log('Fetching landing settings...');
                 const { data, error } = await supabase
                     .from('system_settings')
                     .select('key, value')
-                    .in('key', ['company_details', 'social_links']);
+                    .in('key', ['company_details', 'social_links', 'landing_hero', 'system_logo']);
 
-                if (error) throw error;
+                if (error) {
+                    console.error('Supabase error fetching settings:', error);
+                    throw error;
+                }
+
+                console.log('Fetched settings data:', data);
 
                 const settingsMap = data.reduce((acc, curr) => {
                     acc[curr.key] = curr.value;
@@ -30,8 +38,11 @@ export const SettingsProvider = ({ children }) => {
                 setSettings({
                     company: settingsMap['company_details'] || null,
                     social: settingsMap['social_links'] || null,
+                    hero: settingsMap['landing_hero'] || null,
+                    logo: settingsMap['system_logo'] || null,
                     loading: false
                 });
+                console.log('Settings updated in context');
             } catch (err) {
                 console.error('Error fetching landing settings:', err);
                 setSettings(prev => ({ ...prev, loading: false }));

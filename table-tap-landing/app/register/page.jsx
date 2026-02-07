@@ -28,6 +28,7 @@ import {
     FileText
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useSettings } from '../context/SettingsContext';
 import LocationPicker from '../components/LocationPicker';
 
 // Demo plan (fallback if needed)
@@ -135,6 +136,10 @@ function RegisterForm() {
     const [isPincodeLookup, setIsPincodeLookup] = useState(false);
     const [pincodeError, setPincodeError] = useState(null);
     const [showLocationPicker, setShowLocationPicker] = useState(false);
+    const { company, logo } = useSettings();
+
+    const logoUrl = logo?.url || "/logo.png";
+    const companyName = company?.name || "Table Tap";
 
     // Check for existing Google session on mount
     useEffect(() => {
@@ -495,7 +500,7 @@ function RegisterForm() {
             currency: 'INR',
             name: 'Table Tap',
             description: `${plan.name} Plan - ${formData.billingCycle === 'monthly' ? 'Monthly' : 'Yearly'} Subscription`,
-            image: '/logo.png',
+            image: logoUrl,
             handler: function (response) {
                 // Payment successful
                 setPaymentId(response.razorpay_payment_id);
@@ -666,7 +671,7 @@ function RegisterForm() {
             <header className="bg-white/80 backdrop-blur-xl border-b border-gray-100 sticky top-0 z-50">
                 <div className="container mx-auto px-6 py-4 flex items-center justify-between">
                     <Link href="/" className="flex items-center gap-2">
-                        <Image src="/logo.png" alt="Table Tap" width={140} height={56} className="h-12 w-auto" />
+                        <Image src={logoUrl} alt={companyName} width={140} height={56} className="h-12 w-auto" />
                     </Link>
                     <Link href="/" className="flex items-center gap-2 text-gray-500 hover:text-gray-900 font-bold transition-colors">
                         <ArrowLeft size={18} /> Back to Home
