@@ -270,6 +270,18 @@
                         "href": "/services/kds"
                     },
                     {
+                        "label": "AI Business Insights",
+                        "href": "/services/ai-insights"
+                    },
+                    {
+                        "label": "AI Guest Feedback",
+                        "href": "/services/ai-feedback"
+                    },
+                    {
+                        "label": "AI Inventory Control",
+                        "href": "/services/ai-inventory"
+                    },
+                    {
                         "label": "WhatsApp Ordering",
                         "href": "/solutions/whatsapp-ordering"
                     }
@@ -298,6 +310,14 @@
                     {
                         "label": "Restaurant Management",
                         "href": "/solutions/restaurant-management"
+                    },
+                    {
+                        "label": "AI Restaurant Suite",
+                        "href": "/solutions/ai-restaurant"
+                    },
+                    {
+                        "label": "AI Virtual Server",
+                        "href": "/solutions/ai-ordering"
                     },
                     {
                         "label": "Partner With Us",

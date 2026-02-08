@@ -11,12 +11,12 @@ export default function sitemap() {
   ];
 
   const solutions = [
-    'qr-menu', 'restaurant-management', 'whatsapp-ordering'
+    'qr-menu', 'restaurant-management', 'whatsapp-ordering', 'ai-restaurant', 'ai-ordering'
   ];
 
   const services = [
     'payments', 'menu-management', 'analytics',
-    'pos-dashboard', 'kds', 'restaurant-services'
+    'pos-dashboard', 'kds', 'restaurant-services', 'ai-insights', 'ai-feedback', 'ai-inventory'
   ];
 
   const staticPages = [
