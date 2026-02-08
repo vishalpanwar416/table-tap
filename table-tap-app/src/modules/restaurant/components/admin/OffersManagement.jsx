@@ -388,11 +388,11 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
             </div>
           </div>
 
-          <div className="bg-purple-50 p-4 rounded-lg">
+          <div className="bg-orange-50 p-4 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-purple-600">Avg. Discount</p>
-                <p className="text-2xl font-bold text-purple-800">
+                <p className="text-sm text-orange-600">Avg. Discount</p>
+                <p className="text-2xl font-bold text-orange-800">
                   {offers.length > 0
                     ? Math.round(offers.reduce((sum, offer) => {
                       const savings = calculateSavings(offer.price, offer.discounted_price);
@@ -401,7 +401,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                     : 0}%
                 </p>
               </div>
-              <Percent className="text-purple-500" size={24} />
+              <Percent className="text-orange-500" size={24} />
             </div>
           </div>
 

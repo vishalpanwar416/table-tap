@@ -20,7 +20,10 @@ import {
     Filter,
     Search,
     Send,
-    Eye
+    Eye,
+    Zap,
+    Star,
+    Crown
 } from 'lucide-react';
 import { supabase } from '../../../shared/supabase';
 import {
@@ -51,6 +54,14 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
     const [companyDetails, setCompanyDetails] = useState(COMPANY_DETAILS);
     const [processingId, setProcessingId] = useState(null);
     const [previewInvoice, setPreviewInvoice] = useState(null);
+
+    // Mock plans if not provided by parent, though SubscriptionSection usually has them
+    // For icon consistency in BillingInvoice
+    const plans = {
+        'Basic': { icon: Zap },
+        'Professional': { icon: Star },
+        'Premium': { icon: Crown }
+    };
 
     useEffect(() => {
         if (isOpen && restaurantId) {
@@ -151,7 +162,7 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
     const getStatusColor = (status) => {
         switch (status) {
             case 'active': return 'bg-green-100 text-green-700 border-green-200';
-            case 'grace_period': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+            case 'grace_period': return 'bg-orange-100 text-orange-700 border-orange-200';
             case 'expired': return 'bg-red-100 text-red-700 border-red-200';
             case 'cancelled': return 'bg-gray-100 text-gray-700 border-gray-200';
             default: return 'bg-blue-100 text-blue-700 border-blue-200';
@@ -162,7 +173,7 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
         switch (action) {
             case 'purchased': return 'bg-green-100 text-green-700';
             case 'renewed': return 'bg-blue-100 text-blue-700';
-            case 'upgraded': return 'bg-purple-100 text-purple-700';
+            case 'upgraded': return 'bg-orange-100 text-orange-700';
             case 'downgraded': return 'bg-orange-100 text-orange-700';
             case 'cancelled': return 'bg-red-100 text-red-700';
             case 'expired': return 'bg-gray-100 text-gray-700';
@@ -171,9 +182,9 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
     };
 
     const getDaysRemaining = () => {
-        if (!subscription?.end_date) return null;
+        if (!subscription?.end_date) return 0;
         const days = Math.ceil((new Date(subscription.end_date) - new Date()) / (1000 * 60 * 60 * 24));
-        return days;
+        return Math.max(0, days);
     };
 
     // Create invoice data from payment/history record
@@ -331,41 +342,41 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
             {/* Slide Panel */}
             <div className="absolute inset-y-0 right-0 w-full max-w-3xl bg-white shadow-2xl transform transition-transform">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-5">
+                <div className="bg-gradient-to-r from-orange-600 to-amber-600 px-4 md:px-6 py-3 md:py-5">
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-                                <Receipt className="w-6 h-6 text-white" />
+                        <div className="flex items-center gap-2 md:gap-4">
+                            <div className="w-8 h-8 md:w-12 md:h-12 bg-white/20 rounded-lg md:rounded-xl flex items-center justify-center shrink-0">
+                                <Receipt className="w-4 h-4 md:w-6 md:h-6 text-white" />
                             </div>
                             <div>
-                                <h2 className="text-xl font-bold text-white">Billing & Invoices</h2>
-                                <p className="text-purple-200 text-sm">{restaurant?.name || 'Restaurant'}</p>
+                                <h2 className="text-base md:text-xl font-bold text-white leading-tight">Billing & Invoices</h2>
+                                <p className="text-orange-100 text-[10px] md:text-sm truncate max-w-[150px] md:max-w-none">{restaurant?.name || 'Restaurant'}</p>
                             </div>
                         </div>
                         <button
                             onClick={onClose}
-                            className="p-2 hover:bg-white/20 rounded-xl transition-colors"
+                            className="p-1.5 md:p-2 hover:bg-white/20 rounded-lg md:rounded-xl transition-colors"
                         >
-                            <X className="w-6 h-6 text-white" />
+                            <X className="w-4 h-4 md:w-6 md:h-6 text-white" />
                         </button>
                     </div>
 
                     {/* Tabs */}
-                    <div className="flex gap-2 mt-6">
+                    <div className="flex gap-1 md:gap-2 mt-4 md:mt-6 overflow-x-auto no-scrollbar pb-1">
                         {[
                             { id: 'overview', label: 'Overview', icon: CreditCard },
-                            { id: 'history', label: 'Payment History', icon: Clock },
+                            { id: 'history', label: 'History', icon: Clock },
                             { id: 'invoices', label: 'Invoices', icon: FileText }
                         ].map(tab => (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${activeTab === tab.id
-                                    ? 'bg-white text-purple-600'
+                                className={`flex items-center gap-1 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === tab.id
+                                    ? 'bg-white text-orange-600'
                                     : 'bg-white/20 text-white hover:bg-white/30'
                                     }`}
                             >
-                                <tab.icon className="w-4 h-4" />
+                                <tab.icon className="w-3 h-3 md:w-4 md:h-4" />
                                 {tab.label}
                             </button>
                         ))}
@@ -376,7 +387,7 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                 <div className="overflow-y-auto h-[calc(100vh-180px)] p-6">
                     {loading ? (
                         <div className="flex items-center justify-center h-64">
-                            <RefreshCw className="w-8 h-8 text-purple-600 animate-spin" />
+                            <RefreshCw className="w-8 h-8 text-orange-600 animate-spin" />
                         </div>
                     ) : (
                         <>
@@ -384,112 +395,115 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                             {activeTab === 'overview' && (
                                 <div className="space-y-6">
                                     {/* Current Plan Card */}
-                                    <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-6 border border-purple-100">
-                                        <div className="flex items-start justify-between mb-6">
+                                    <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-orange-100 shadow-sm">
+                                        <div className="flex flex-row items-center justify-between mb-3 md:mb-6 gap-2">
                                             <div>
-                                                <p className="text-sm text-purple-600 font-semibold mb-1">Current Plan</p>
-                                                <h3 className="text-2xl font-bold text-gray-900 capitalize">
+                                                <p className="text-[9px] md:text-sm text-orange-600 font-black mb-0.5 md:mb-1 uppercase tracking-widest">Plan</p>
+                                                <h3 className="text-base md:text-2xl font-black text-gray-900 capitalize leading-none">
                                                     {subscription?.plan_name || 'No Active Plan'}
                                                 </h3>
                                             </div>
                                             {subscription && (
-                                                <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(subscription.status)}`}>
-                                                    {subscription.status?.replace('_', ' ').toUpperCase()}
+                                                <span className={`px-2 py-0.5 rounded-lg text-[8px] md:text-xs font-black border uppercase tracking-tighter ${getStatusColor(subscription.status)}`}>
+                                                    {subscription.status?.replace('_', ' ')}
                                                 </span>
                                             )}
                                         </div>
 
                                         {subscription ? (
-                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                                <div className="bg-white rounded-xl p-4">
-                                                    <p className="text-xs text-gray-500 mb-1">Billing Cycle</p>
-                                                    <p className="font-bold text-gray-900 capitalize">{subscription.billing_cycle}</p>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+                                                <div className="bg-white rounded-lg md:rounded-xl p-2 md:p-4 border border-orange-50/50 shadow-sm">
+                                                    <p className="text-[8px] md:text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5 md:mb-1 text-center sm:text-left">Billing</p>
+                                                    <p className="text-[11px] md:text-base font-black text-gray-900 capitalize text-center sm:text-left truncate">{subscription.billing_cycle}</p>
                                                 </div>
-                                                <div className="bg-white rounded-xl p-4">
-                                                    <p className="text-xs text-gray-500 mb-1">Amount</p>
-                                                    <p className="font-bold text-gray-900">{formatCurrency(subscription.total_amount)}</p>
+                                                <div className="bg-white rounded-lg md:rounded-xl p-2 md:p-4 border border-orange-50/50 shadow-sm">
+                                                    <p className="text-[8px] md:text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5 md:mb-1 text-center sm:text-left">Amount</p>
+                                                    <p className="text-[11px] md:text-base font-black text-gray-900 text-center sm:text-left truncate">{formatCurrency(subscription.total_amount)}</p>
                                                 </div>
-                                                <div className="bg-white rounded-xl p-4">
-                                                    <p className="text-xs text-gray-500 mb-1">Valid Until</p>
-                                                    <p className="font-bold text-gray-900">{formatDate(subscription.end_date)}</p>
+                                                <div className="bg-white rounded-lg md:rounded-xl p-2 md:p-4 border border-orange-50/50 shadow-sm">
+                                                    <p className="text-[8px] md:text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5 md:mb-1 text-center sm:text-left">Until</p>
+                                                    <p className="text-[11px] md:text-base font-black text-gray-900 text-center sm:text-left truncate">{formatDate(subscription.end_date)}</p>
                                                 </div>
-                                                <div className="bg-white rounded-xl p-4">
-                                                    <p className="text-xs text-gray-500 mb-1">Days Remaining</p>
-                                                    <p className={`font-bold ${getDaysRemaining() < 7 ? 'text-red-600' : 'text-green-600'}`}>
-                                                        {getDaysRemaining()} days
+                                                <div className="bg-white rounded-lg md:rounded-xl p-2 md:p-4 border border-orange-50/50 shadow-sm">
+                                                    <p className="text-[8px] md:text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5 md:mb-1 text-center sm:text-left">Days</p>
+                                                    <p className={`text-[11px] md:text-base font-black text-center sm:text-left truncate ${getDaysRemaining() < 7 ? 'text-red-500' : 'text-green-500'}`}>
+                                                        {getDaysRemaining()}
                                                     </p>
                                                 </div>
                                             </div>
                                         ) : (
-                                            <p className="text-gray-500">No active subscription found.</p>
+                                            <p className="text-[10px] md:text-sm text-gray-500 italic">No active subscription found.</p>
                                         )}
                                     </div>
 
                                     {/* Quick Stats */}
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div className="bg-white rounded-xl p-5 border border-gray-200">
-                                            <div className="flex items-center gap-3 mb-3">
-                                                <div className="p-2 bg-green-100 rounded-lg">
-                                                    <IndianRupee className="w-5 h-5 text-green-600" />
+                                    <div className="grid grid-cols-3 md:grid-cols-3 gap-2 md:gap-4">
+                                        <div className="bg-white rounded-lg md:rounded-xl p-2.5 md:p-5 border border-gray-100 shadow-sm flex flex-col items-center sm:items-start text-center sm:text-left">
+                                            <div className="flex items-center gap-1.5 md:gap-3 mb-1 md:mb-3">
+                                                <div className="p-1 md:p-2 bg-green-50 rounded-lg">
+                                                    <IndianRupee className="w-3 h-3 md:w-5 md:h-5 text-green-600" />
                                                 </div>
-                                                <p className="text-sm text-gray-600">Total Paid</p>
+                                                <p className="hidden sm:block text-[10px] md:text-sm text-gray-500 font-bold">Paid</p>
                                             </div>
-                                            <p className="text-2xl font-bold text-gray-900">
+                                            <p className="text-[11px] md:text-2xl font-black text-gray-900 truncate w-full">
                                                 {formatCurrency(paymentHistory.reduce((sum, p) => sum + (p.amount_paid || 0), 0))}
                                             </p>
+                                            <p className="sm:hidden text-[8px] text-gray-400 font-bold uppercase mt-0.5">Total Paid</p>
                                         </div>
 
-                                        <div className="bg-white rounded-xl p-5 border border-gray-200">
-                                            <div className="flex items-center gap-3 mb-3">
-                                                <div className="p-2 bg-blue-100 rounded-lg">
-                                                    <Receipt className="w-5 h-5 text-blue-600" />
+                                        <div className="bg-white rounded-lg md:rounded-xl p-2.5 md:p-5 border border-gray-100 shadow-sm flex flex-col items-center sm:items-start text-center sm:text-left">
+                                            <div className="flex items-center gap-1.5 md:gap-3 mb-1 md:mb-3">
+                                                <div className="p-1 md:p-2 bg-blue-50 rounded-lg">
+                                                    <Receipt className="w-3 h-3 md:w-5 md:h-5 text-blue-600" />
                                                 </div>
-                                                <p className="text-sm text-gray-600">Total Invoices</p>
+                                                <p className="hidden sm:block text-[10px] md:text-sm text-gray-500 font-bold">Invoices</p>
                                             </div>
-                                            <p className="text-2xl font-bold text-gray-900">
+                                            <p className="text-[11px] md:text-2xl font-black text-gray-900 truncate w-full">
                                                 {paymentHistory.filter(p => p.amount_paid > 0).length}
                                             </p>
+                                            <p className="sm:hidden text-[8px] text-gray-400 font-bold uppercase mt-0.5">Invoices</p>
                                         </div>
 
-                                        <div className="bg-white rounded-xl p-5 border border-gray-200">
-                                            <div className="flex items-center gap-3 mb-3">
-                                                <div className="p-2 bg-purple-100 rounded-lg">
-                                                    <Calendar className="w-5 h-5 text-purple-600" />
+                                        <div className="bg-white rounded-lg md:rounded-xl p-2.5 md:p-5 border border-gray-100 shadow-sm flex flex-col items-center sm:items-start text-center sm:text-left">
+                                            <div className="flex items-center gap-1.5 md:gap-3 mb-1 md:mb-3">
+                                                <div className="p-1 md:p-2 bg-orange-50 rounded-lg">
+                                                    <Calendar className="w-3 h-3 md:w-5 md:h-5 text-orange-600" />
                                                 </div>
-                                                <p className="text-sm text-gray-600">Member Since</p>
+                                                <p className="hidden sm:block text-[10px] md:text-sm text-gray-500 font-bold">Joined</p>
                                             </div>
-                                            <p className="text-2xl font-bold text-gray-900">
+                                            <p className="text-[10px] md:text-xl font-black text-gray-900 truncate w-full">
                                                 {formatDate(paymentHistory[paymentHistory.length - 1]?.created_at || subscription?.start_date)}
                                             </p>
+                                            <p className="sm:hidden text-[8px] text-gray-400 font-bold uppercase mt-0.5">Member Since</p>
                                         </div>
                                     </div>
 
                                     {/* Billing Details */}
-                                    {subscription && (
-                                        <div className="bg-white rounded-xl p-6 border border-gray-200">
-                                            <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                                <Building className="w-5 h-5 text-gray-400" />
+                                    {restaurant && (
+                                        <div className="bg-white rounded-xl p-4 md:p-6 border border-gray-200">
+                                            <h4 className="text-sm md:text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                                <Building className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
                                                 Billing Information
                                             </h4>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs md:text-sm">
                                                 <div>
-                                                    <p className="text-gray-500 mb-1">Business Name</p>
+                                                    <p className="text-gray-500 mb-0.5 md:mb-1">Business Name</p>
                                                     <p className="font-semibold text-gray-900">{restaurant?.name || 'N/A'}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-gray-500 mb-1">Email</p>
+                                                    <p className="text-gray-500 mb-0.5 md:mb-1">Email</p>
                                                     <p className="font-semibold text-gray-900">{restaurant?.contact_email || 'N/A'}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-gray-500 mb-1">Phone</p>
+                                                    <p className="text-gray-500 mb-0.5 md:mb-1">Phone</p>
                                                     <p className="font-semibold text-gray-900">{restaurant?.contact_phone || 'N/A'}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-gray-500 mb-1">GST Number</p>
+                                                    <p className="text-gray-500 mb-0.5 md:mb-1">GST Number</p>
                                                     <p className="font-semibold text-gray-900">{restaurant?.gst_number || 'N/A'}</p>
                                                 </div>
-                                                <div className="md:col-span-2">
-                                                    <p className="text-gray-500 mb-1">Address</p>
+                                                <div className="sm:col-span-2">
+                                                    <p className="text-gray-500 mb-0.5 md:mb-1">Address</p>
                                                     <p className="font-semibold text-gray-900">{restaurant?.address || 'N/A'}</p>
                                                 </div>
                                             </div>
@@ -501,22 +515,21 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                             {/* History Tab */}
                             {activeTab === 'history' && (
                                 <div className="space-y-4">
-                                    {/* Filters */}
-                                    <div className="flex flex-wrap gap-3">
-                                        <div className="relative flex-1 min-w-[200px]">
+                                    <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
+                                        <div className="relative flex-1">
                                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                             <input
                                                 type="text"
-                                                placeholder="Search by payment ID or description..."
+                                                placeholder="Search payments..."
                                                 value={searchTerm}
                                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                                                className="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
                                             />
                                         </div>
                                         <select
                                             value={filterStatus}
                                             onChange={(e) => setFilterStatus(e.target.value)}
-                                            className="px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                                            className="px-4 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 bg-white"
                                         >
                                             <option value="all">All Actions</option>
                                             <option value="purchased">Purchased</option>
@@ -529,7 +542,7 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                                     {/* History List */}
                                     {historyLoading ? (
                                         <div className="flex items-center justify-center h-32">
-                                            <RefreshCw className="w-6 h-6 text-purple-600 animate-spin" />
+                                            <RefreshCw className="w-6 h-6 text-orange-600 animate-spin" />
                                         </div>
                                     ) : filteredHistory.length === 0 ? (
                                         <div className="text-center py-12 bg-gray-50 rounded-xl">
@@ -537,33 +550,33 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                                             <p className="text-gray-500">No payment history found</p>
                                         </div>
                                     ) : (
-                                        <div className="space-y-3">
+                                        <div className="space-y-2 md:space-y-3">
                                             {filteredHistory.map((item, index) => (
                                                 <div
                                                     key={item.id || index}
-                                                    className="bg-white rounded-xl p-4 border border-gray-200 hover:border-purple-200 transition-colors"
+                                                    className="bg-white rounded-xl p-3 md:p-4 border border-gray-200 hover:border-orange-200 transition-colors"
                                                 >
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex items-center gap-4">
-                                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${getActionColor(item.action)}`}>
-                                                                {item.action === 'purchased' && <CheckCircle className="w-5 h-5" />}
-                                                                {item.action === 'renewed' && <RefreshCw className="w-5 h-5" />}
-                                                                {item.action === 'cancelled' && <AlertTriangle className="w-5 h-5" />}
-                                                                {!['purchased', 'renewed', 'cancelled'].includes(item.action) && <CreditCard className="w-5 h-5" />}
+                                                    <div className="flex items-center justify-between gap-3">
+                                                        <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
+                                                            <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl flex items-center justify-center shrink-0 ${getActionColor(item.action)}`}>
+                                                                {item.action === 'purchased' && <CheckCircle className="w-4 h-4 md:w-5 md:h-5" />}
+                                                                {item.action === 'renewed' && <RefreshCw className="w-4 h-4 md:w-5 md:h-5" />}
+                                                                {item.action === 'cancelled' && <AlertTriangle className="w-4 h-4 md:w-5 md:h-5" />}
+                                                                {!['purchased', 'renewed', 'cancelled'].includes(item.action) && <CreditCard className="w-4 h-4 md:w-5 md:h-5" />}
                                                             </div>
-                                                            <div>
-                                                                <p className="font-semibold text-gray-900 capitalize">{item.action}</p>
-                                                                <p className="text-sm text-gray-500">{item.notes || 'No description'}</p>
-                                                                <p className="text-xs text-gray-400 mt-1">{formatDateTime(item.created_at)}</p>
+                                                            <div className="min-w-0">
+                                                                <p className="text-sm md:text-base font-semibold text-gray-900 capitalize truncate">{item.action}</p>
+                                                                <p className="text-xs text-gray-500 truncate">{item.notes || 'No description'}</p>
+                                                                <p className="text-[10px] md:text-xs text-gray-400 mt-0.5">{formatDateTime(item.created_at)}</p>
                                                             </div>
                                                         </div>
-                                                        <div className="text-right">
+                                                        <div className="text-right shrink-0">
                                                             {item.amount_paid > 0 && (
-                                                                <p className="font-bold text-green-600">{formatCurrency(item.amount_paid)}</p>
+                                                                <p className="text-sm md:text-base font-bold text-green-600">{formatCurrency(item.amount_paid)}</p>
                                                             )}
                                                             {item.payment_reference && (
-                                                                <p className="text-xs text-gray-400 mt-1">
-                                                                    ID: {item.payment_reference.slice(0, 12)}...
+                                                                <p className="text-[10px] text-gray-400 mt-0.5">
+                                                                    ID: {item.payment_reference.slice(-8)}
                                                                 </p>
                                                             )}
                                                         </div>
@@ -580,7 +593,7 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                                 <div className="space-y-4">
                                     {historyLoading ? (
                                         <div className="flex items-center justify-center h-32">
-                                            <RefreshCw className="w-6 h-6 text-purple-600 animate-spin" />
+                                            <RefreshCw className="w-6 h-6 text-orange-600 animate-spin" />
                                         </div>
                                     ) : paymentHistory.filter(p => p.amount_paid > 0).length === 0 ? (
                                         <div className="text-center py-12 bg-gray-50 rounded-xl">
@@ -601,68 +614,60 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                                                     return (
                                                         <div
                                                             key={payment.id || index}
-                                                            className="bg-white rounded-xl p-5 border border-gray-200 hover:shadow-md transition-all group"
+                                                            className="bg-white rounded-xl p-3 md:p-5 border border-gray-200 hover:shadow-md transition-all group"
                                                         >
-                                                            <div className="flex items-center justify-between">
-                                                                <div className="flex items-center gap-4">
-                                                                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-200">
-                                                                        <FileText className="w-6 h-6 text-white" />
+                                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                                                <div className="flex items-center gap-2 md:gap-4">
+                                                                    <div className="w-9 h-9 md:w-12 md:h-12 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-100 shrink-0">
+                                                                        <FileText className="w-4 h-4 md:w-6 md:h-6 text-white" />
                                                                     </div>
-                                                                    <div>
-                                                                        <p className="font-bold text-gray-900">
+                                                                    <div className="min-w-0">
+                                                                        <p className="text-xs md:text-base font-black text-gray-900 truncate">
                                                                             {invoiceNumber}
                                                                         </p>
-                                                                        <p className="text-sm text-gray-500">
-                                                                            {payment.notes || `${subscription?.plan_name || 'Professional'} Plan - ${subscription?.billing_cycle || 'Monthly'}`}
+                                                                        <p className="text-[10px] md:text-sm text-gray-400 font-medium truncate">
+                                                                            {formatDate(payment.created_at)}
                                                                         </p>
-                                                                        <p className="text-xs text-gray-400 mt-1">{formatDate(payment.created_at)}</p>
                                                                     </div>
                                                                 </div>
-                                                                <div className="flex items-center gap-4">
+                                                                <div className="flex items-center justify-between sm:justify-end gap-2 md:gap-4">
                                                                     <div className="text-right">
-                                                                        <p className="font-bold text-gray-900 text-lg">{formatCurrency(payment.amount_paid)}</p>
-                                                                        <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full font-semibold inline-flex items-center gap-1">
-                                                                            <CheckCircle className="w-3 h-3" />
+                                                                        <p className="font-black text-gray-900 text-[13px] md:text-lg">{formatCurrency(payment.amount_paid)}</p>
+                                                                        <span className="text-[8px] px-1.5 py-0.5 bg-green-50 text-green-700 rounded-lg font-black inline-flex items-center gap-1 uppercase tracking-tighter">
+                                                                            <CheckCircle className="w-2.5 h-2.5" />
                                                                             PAID
                                                                         </span>
                                                                     </div>
-                                                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                    <div className="flex gap-0.5 md:gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                                                                         <button
                                                                             onClick={() => handlePreviewInvoice(payment)}
-                                                                            className="p-2.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                                            title="Preview Invoice"
+                                                                            className="p-1.5 md:p-2.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                                            title="Preview"
                                                                         >
-                                                                            <Eye className="w-5 h-5" />
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => handlePrintInvoice(payment)}
-                                                                            className="p-2.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                                                                            title="Print Invoice"
-                                                                        >
-                                                                            <Printer className="w-5 h-5" />
+                                                                            <Eye className="w-3.5 h-3.5 md:w-5 md:h-5" />
                                                                         </button>
                                                                         <button
                                                                             onClick={() => handleDownloadInvoice(payment)}
                                                                             disabled={processingId === `download-${payment.id}`}
-                                                                            className="p-2.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
-                                                                            title="Download PDF"
+                                                                            className="p-1.5 md:p-2.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
+                                                                            title="Download"
                                                                         >
                                                                             {processingId === `download-${payment.id}` ? (
-                                                                                <RefreshCw className="w-5 h-5 animate-spin" />
+                                                                                <RefreshCw className="w-3.5 h-3.5 md:w-5 md:h-5 animate-spin" />
                                                                             ) : (
-                                                                                <Download className="w-5 h-5" />
+                                                                                <Download className="w-3.5 h-3.5 md:w-5 md:h-5" />
                                                                             )}
                                                                         </button>
                                                                         <button
                                                                             onClick={() => handleSendInvoiceEmail(payment)}
                                                                             disabled={processingId === `email-${payment.id}`}
-                                                                            className="p-2.5 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors disabled:opacity-50"
-                                                                            title="Send via Email"
+                                                                            className="p-1.5 md:p-2.5 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors disabled:opacity-50"
+                                                                            title="Email"
                                                                         >
                                                                             {processingId === `email-${payment.id}` ? (
-                                                                                <RefreshCw className="w-5 h-5 animate-spin" />
+                                                                                <RefreshCw className="w-3.5 h-3.5 md:w-5 md:h-5 animate-spin" />
                                                                             ) : (
-                                                                                <Send className="w-5 h-5" />
+                                                                                <Send className="w-3.5 h-3.5 md:w-5 md:h-5" />
                                                                             )}
                                                                         </button>
                                                                     </div>
@@ -670,30 +675,18 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                                                             </div>
 
                                                             {/* GST Breakdown Row */}
-                                                            <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-4 gap-4 text-xs">
+                                                            <div className="mt-3 md:mt-4 pt-3 md:pt-4 border-t border-gray-100 flex flex-wrap gap-x-4 gap-y-2 text-[10px] md:text-xs">
                                                                 <div>
-                                                                    <span className="text-gray-400">Subtotal</span>
-                                                                    <p className="font-semibold text-gray-700">
+                                                                    <span className="text-gray-400">Subtotal:</span>
+                                                                    <span className="ml-1 font-semibold text-gray-700">
                                                                         {formatCurrency(payment.amount_paid / 1.18)}
-                                                                    </p>
+                                                                    </span>
                                                                 </div>
                                                                 <div>
-                                                                    <span className="text-gray-400">CGST (9%)</span>
-                                                                    <p className="font-semibold text-gray-700">
-                                                                        {formatCurrency((payment.gst_amount || payment.amount_paid - payment.amount_paid / 1.18) / 2)}
-                                                                    </p>
-                                                                </div>
-                                                                <div>
-                                                                    <span className="text-gray-400">SGST (9%)</span>
-                                                                    <p className="font-semibold text-gray-700">
-                                                                        {formatCurrency((payment.gst_amount || payment.amount_paid - payment.amount_paid / 1.18) / 2)}
-                                                                    </p>
-                                                                </div>
-                                                                <div>
-                                                                    <span className="text-gray-400">Total GST</span>
-                                                                    <p className="font-semibold text-gray-700">
+                                                                    <span className="text-gray-400">GST (18%):</span>
+                                                                    <span className="ml-1 font-semibold text-gray-700">
                                                                         {formatCurrency(payment.gst_amount || payment.amount_paid - payment.amount_paid / 1.18)}
-                                                                    </p>
+                                                                    </span>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -715,24 +708,30 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
                         onClick={() => setPreviewInvoice(null)}
                     />
-                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+                    <div className="relative bg-white rounded-t-2xl md:rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] md:max-h-[90vh] overflow-hidden flex flex-col">
                         {/* Modal Header */}
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                                    <FileText className="w-5 h-5 text-purple-600" />
+                        <div className="flex flex-col sm:flex-row items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-gray-200 bg-gray-50 gap-3">
+                            <div className="flex items-center gap-3 w-full sm:w-auto">
+                                <div className="w-9 h-9 md:w-10 md:h-10 bg-orange-100 rounded-xl flex items-center justify-center shrink-0">
+                                    <FileText className="w-5 h-5 text-orange-600" />
                                 </div>
-                                <div>
-                                    <h3 className="font-bold text-gray-900">Invoice Preview</h3>
-                                    <p className="text-sm text-gray-500">{previewInvoice.invoiceNumber}</p>
+                                <div className="min-w-0">
+                                    <h3 className="font-bold text-gray-900 text-sm md:text-base truncate">Invoice Preview</h3>
+                                    <p className="text-[10px] md:text-sm text-gray-500 truncate">{previewInvoice.invoiceNumber}</p>
                                 </div>
+                                <button
+                                    onClick={() => setPreviewInvoice(null)}
+                                    className="sm:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors ml-auto"
+                                >
+                                    <X className="w-5 h-5 text-gray-400" />
+                                </button>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 w-full sm:w-auto">
                                 <button
                                     onClick={() => printInvoice(previewInvoice)}
-                                    className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors border sm:border-0"
                                 >
-                                    <Printer className="w-4 h-4" />
+                                    <Printer className="w-3.5 h-3.5 md:w-4 md:h-4" />
                                     Print
                                 </button>
                                 <button
@@ -743,14 +742,14 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                                             // Fallback handled in function
                                         }
                                     }}
-                                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 md:px-4 py-2 text-xs md:text-sm bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors shadow-sm"
                                 >
-                                    <Download className="w-4 h-4" />
-                                    Download PDF
+                                    <Download className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                                    PDF
                                 </button>
                                 <button
                                     onClick={() => setPreviewInvoice(null)}
-                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors ml-2"
+                                    className="hidden sm:block p-2 hover:bg-gray-100 rounded-lg transition-colors ml-2"
                                 >
                                     <X className="w-5 h-5 text-gray-500" />
                                 </button>
@@ -758,9 +757,9 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                         </div>
 
                         {/* Invoice Content */}
-                        <div className="flex-1 overflow-auto bg-gray-100 p-6">
+                        <div className="flex-1 overflow-auto bg-gray-100 p-2 md:p-6">
                             <div
-                                className="bg-white shadow-lg mx-auto"
+                                className="bg-white shadow-lg mx-auto overflow-x-auto w-full md:w-auto"
                                 style={{ maxWidth: '800px' }}
                                 dangerouslySetInnerHTML={{
                                     __html: generateProfessionalInvoiceHTML(previewInvoice)

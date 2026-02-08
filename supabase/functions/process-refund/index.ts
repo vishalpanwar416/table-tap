@@ -21,7 +21,7 @@ const getCorsHeaders = (requestOrigin: string | null) => ({
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform",
 })
 
-serve(async (req) => {
+serve(async (req: Request) => {
   const requestOrigin = req.headers.get("Origin")
   const corsHeaders = getCorsHeaders(requestOrigin)
 
@@ -158,7 +158,7 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Process refund error:', error)
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: (error as Error).message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
     })

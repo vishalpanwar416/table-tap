@@ -657,7 +657,7 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
             filteredNotifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`flex items-start gap-2 md:gap-4 p-2 md:p-4 transition-all cursor-pointer border-b border-gray-50 last:border-0 ${getNotificationBg(notification.type, notification.read)}`}
+                className={`flex items-start gap-2 md:gap-3 p-1.5 md:p-3 transition-all cursor-pointer border-b border-gray-50 last:border-0 ${getNotificationBg(notification.type, notification.read)}`}
                 onClick={() => handleNotificationClick(notification)}
               >
                 {/* Checkbox - Compact */}
@@ -673,39 +673,39 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
                           : [...prev, notification.id]
                       );
                     }}
-                    className="w-3.5 h-3.5 md:w-4 md:h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="w-3 md:w-3.5 h-3 md:h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                 </div>
 
-                {/* Icon - Smaller on Mobile */}
-                <div className={`flex-shrink-0 p-1.5 md:p-2.5 rounded-xl ${notification.read ? 'bg-gray-100' : 'bg-white shadow-sm'}`}>
+                {/* Icon - Smaller */}
+                <div className={`flex-shrink-0 p-1 md:p-2 rounded-xl ${notification.read ? 'bg-gray-100' : 'bg-white shadow-sm'}`}>
                   {React.cloneElement(getNotificationIcon(notification.type), {
-                    className: "w-4 h-4 md:w-5 md:h-5 " + getNotificationIcon(notification.type).props.className.split(' ').filter(c => !c.startsWith('w-') && !c.startsWith('h-')).join(' ')
+                    className: "w-3.5 h-3.5 md:w-4 md:h-4 " + getNotificationIcon(notification.type).props.className.split(' ').filter(c => !c.startsWith('w-') && !c.startsWith('h-')).join(' ')
                   })}
                 </div>
 
                 {/* Content - Compact Typography */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start justify-between gap-1.5">
                     <div className="flex-1 min-w-0">
-                      <h4 className={`text-sm md:text-base font-semibold leading-tight mb-0.5 ${notification.read ? 'text-gray-600' : 'text-gray-900'} truncate`}>
+                      <h4 className={`text-xs md:text-sm font-semibold leading-tight mb-0 ${notification.read ? 'text-gray-600' : 'text-gray-900'} truncate`}>
                         {notification.title}
                       </h4>
-                      <p className={`text-xs md:text-sm leading-relaxed ${notification.read ? 'text-gray-400' : 'text-gray-600'} line-clamp-2`}>
+                      <p className={`text-[11px] md:text-xs leading-relaxed ${notification.read ? 'text-gray-400' : 'text-gray-600'} line-clamp-2`}>
                         {notification.message}
                       </p>
                     </div>
                     {!notification.read && (
-                      <span className="flex-shrink-0 w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-blue-500 mt-1.5" />
+                      <span className="flex-shrink-0 w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-blue-500 mt-1" />
                     )}
                   </div>
-                  <div className="flex items-center gap-2 md:gap-3 mt-1.5 md:mt-2 flex-wrap">
-                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] md:text-xs font-medium whitespace-nowrap ${notification.read ? 'bg-gray-100 text-gray-500' : 'bg-white/80 text-gray-600 border border-gray-100'
+                  <div className="flex items-center gap-2 md:gap-3 mt-1 flex-wrap">
+                    <span className={`inline-flex items-center gap-1 px-1 py-0.5 rounded-full text-[9px] md:text-[10px] font-medium whitespace-nowrap ${notification.read ? 'bg-gray-100 text-gray-500' : 'bg-white/80 text-gray-600 border border-gray-100'
                       }`}>
                       {getCategoryForType(notification.type)}
                     </span>
-                    <span className="text-[10px] md:text-xs text-gray-400 whitespace-nowrap flex items-center gap-1" title={formatFullDate(notification.created_at)}>
-                      <Clock className="w-3 h-3" />
+                    <span className="text-[9px] md:text-[10px] text-gray-400 whitespace-nowrap flex items-center gap-1" title={formatFullDate(notification.created_at)}>
+                      <Clock className="w-2.5 h-2.5" />
                       {formatTimeAgo(notification.created_at)}
                     </span>
                   </div>

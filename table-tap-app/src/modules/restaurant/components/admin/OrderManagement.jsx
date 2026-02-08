@@ -191,9 +191,9 @@ const STATUS_META = {
   },
   preparing: {
     label: "Preparing",
-    color: "purple",
-    icon: <Truck className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />,
-    badge: "bg-purple-100 text-purple-800 border border-purple-200",
+    color: "orange",
+    icon: <Truck className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" />,
+    badge: "bg-orange-100 text-orange-800 border border-orange-200",
   },
   ready: {
     label: "Ready",
@@ -1212,13 +1212,13 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                 const styles = {
                   daily: 'bg-blue-500 text-white',
                   weekly: 'bg-green-500 text-white',
-                  monthly: 'bg-purple-500 text-white',
+                  monthly: 'bg-orange-500 text-white',
                   all: 'bg-gray-500 text-white',
                 };
                 const inactive = {
                   daily: 'bg-blue-50 text-blue-600',
                   weekly: 'bg-green-50 text-green-600',
-                  monthly: 'bg-purple-50 text-purple-600',
+                  monthly: 'bg-orange-50 text-orange-600',
                   all: 'bg-gray-50 text-gray-600',
                 };
                 return (
@@ -1382,7 +1382,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                       ${order.status === 'pending'
                         ? 'bg-yellow-50'
                         : order.status === 'preparing'
-                          ? 'bg-purple-50'
+                          ? 'bg-orange-50'
                           : order.status === 'ready'
                             ? 'bg-green-50'
                             : order.status === 'completed'
@@ -1402,7 +1402,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                         ${order.status === 'pending'
                           ? 'bg-yellow-200 text-yellow-900'
                           : order.status === 'preparing'
-                            ? 'bg-purple-200 text-purple-900'
+                            ? 'bg-orange-200 text-orange-900'
                             : order.status === 'ready'
                               ? 'bg-green-200 text-green-900'
                               : order.status === 'completed'

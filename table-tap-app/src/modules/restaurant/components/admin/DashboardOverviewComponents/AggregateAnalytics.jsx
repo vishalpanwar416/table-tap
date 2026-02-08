@@ -278,8 +278,8 @@ const AggregateAnalytics = ({ onSelectRestaurant }) => {
 
         <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-3">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <BarChart3 size={20} className="text-purple-600" />
+            <div className="p-2 bg-orange-100 rounded-lg">
+              <BarChart3 size={20} className="text-orange-600" />
             </div>
           </div>
           <p className="text-2xl font-bold text-gray-900">{formatCurrency(aggregateData?.avgOrderValue || 0)}</p>

@@ -105,8 +105,8 @@ const FloorPlanView = ({ searchTerm, onViewOrders }) => {
         },
         reserved: {
             label: "Reserved",
-            color: "bg-purple-100 border-purple-300 text-purple-800",
-            legendColor: "bg-purple-400",
+            color: "bg-orange-100 border-orange-300 text-orange-800",
+            legendColor: "bg-orange-400",
             shortLabel: "Reserved"
         },
         cleaning: {
@@ -488,7 +488,7 @@ const FloorPlanView = ({ searchTerm, onViewOrders }) => {
                                         onClick={() => handleUpdateTableStatus('reserved')}
                                         disabled={updatingStatus}
                                         className={`px-1 py-2 rounded-lg text-[10px] sm:text-xs font-medium border transition-all ${selectedTable.table.manualStatus === 'reserved'
-                                            ? 'bg-purple-600 text-white border-purple-600'
+                                            ? 'bg-orange-600 text-white border-orange-600'
                                             : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                                             }`}
                                     >

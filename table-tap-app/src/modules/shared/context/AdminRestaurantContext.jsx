@@ -296,10 +296,18 @@ export const AdminRestaurantProvider = ({ children }) => {
         return false;
       }
 
+      // SECURITY: Filter out protected fields for non-admins
+      const filteredUpdates = { ...updates };
+      if (userRole !== 'admin') {
+        delete filteredUpdates.swiggy_api_key;
+        delete filteredUpdates.zomato_api_key;
+        // You can add other sensitive fields here like razorpay_key_id if needed
+      }
+
       const { data, error } = await supabase
         .from('restaurants')
         .update({
-          ...updates,
+          ...filteredUpdates,
           updated_at: new Date().toISOString()
         })
         .eq('id', restaurantId)

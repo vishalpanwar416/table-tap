@@ -9,9 +9,11 @@ import { supabase } from '../../shared/supabase';
 const PLATFORM_STATUS_KEY = 'aggregator_platform_status';
 
 /**
- * Get platform status from localStorage (online/offline state per restaurant)
+ * Get platform status 
  */
-export const getPlatformStatus = (restaurantId) => {
+export const getPlatformStatus = (restaurantId, dbStatus = null) => {
+  if (dbStatus) return dbStatus;
+
   try {
     const stored = localStorage.getItem(`${PLATFORM_STATUS_KEY}_${restaurantId}`);
     if (stored) {
@@ -27,17 +29,27 @@ export const getPlatformStatus = (restaurantId) => {
 /**
  * Toggle platform status (online/offline)
  */
-export const togglePlatformStatus = (restaurantId, platform) => {
+export const togglePlatformStatus = async (restaurantId, platform) => {
   const current = getPlatformStatus(restaurantId);
   const newStatus = current[platform] === 'online' ? 'offline' : 'online';
   const updated = { ...current, [platform]: newStatus };
-  
+
   try {
+    // 1. Update Supabase
+    const { error } = await supabase
+      .from('restaurants')
+      .update({ [`${platform}_status`]: newStatus })
+      .eq('id', restaurantId);
+
+    if (error) throw error;
+
+    // 2. Update localStorage
     localStorage.setItem(`${PLATFORM_STATUS_KEY}_${restaurantId}`, JSON.stringify(updated));
   } catch (e) {
-    console.error('Error saving platform status:', e);
+    console.error('Error saving platform status to DB:', e);
+    localStorage.setItem(`${PLATFORM_STATUS_KEY}_${restaurantId}`, JSON.stringify(updated));
   }
-  
+
   return updated;
 };
 
@@ -48,13 +60,17 @@ export const getAggregatorStatus = async (restaurantId) => {
   try {
     const { data: restaurant, error } = await supabase
       .from('restaurants')
-      .select('swiggy_api_key, zomato_api_key, aggregators_enabled')
+      .select('swiggy_api_key, zomato_api_key, aggregators_enabled, surge_prep_time, aggregator_notifications_enabled, swiggy_status, zomato_status')
       .eq('id', restaurantId)
       .single();
 
     if (error) throw error;
 
-    const platformStatus = getPlatformStatus(restaurantId);
+    const dbPlatformStatus = {
+      swiggy: restaurant.swiggy_status || 'offline',
+      zomato: restaurant.zomato_status || 'offline'
+    };
+    const platformStatus = getPlatformStatus(restaurantId, dbPlatformStatus);
 
     return {
       swiggy: {
@@ -67,7 +83,9 @@ export const getAggregatorStatus = async (restaurantId) => {
         status: restaurant.zomato_api_key ? platformStatus.zomato : 'offline',
         hasApiKey: !!restaurant.zomato_api_key
       },
-      aggregators_enabled: restaurant.aggregators_enabled
+      aggregators_enabled: restaurant.aggregators_enabled,
+      surge_prep_time: restaurant.surge_prep_time || 0,
+      notifications_enabled: restaurant.aggregator_notifications_enabled !== false
     };
   } catch (error) {
     console.error('Error fetching aggregator status:', error);
@@ -127,7 +145,7 @@ export const getAggregatorOrders = async (restaurantId, platform = 'all', limit 
           .eq('restaurant_id', restaurantId)
           .order('created_at', { ascending: false })
           .limit(limit);
-        
+
         if (fallbackError) throw fallbackError;
         return formatOrders(fallbackOrders || [], platform);
       }
@@ -148,7 +166,7 @@ const formatOrders = (orders, filterPlatform = 'all') => {
   return orders.map(order => {
     // Determine platform - use source field if available, otherwise simulate based on order properties
     let platform = order.source || 'table';
-    
+
     // If no source field, simulate platform based on some order characteristics
     // This can be removed once source field is properly populated
     if (!order.source) {
@@ -228,7 +246,7 @@ export const getAggregatorStats = async (restaurantId) => {
       if (stats[platform]) {
         stats[platform].ordersCount++;
         stats[platform].revenue += parseFloat(order.total) || 0;
-        
+
         if (order.status === 'completed' || order.status === 'delivered') {
           stats[platform].completedOrders++;
         }
@@ -239,10 +257,10 @@ export const getAggregatorStats = async (restaurantId) => {
     });
 
     // Calculate cancel rates
-    stats.swiggy.cancelRate = stats.swiggy.ordersCount > 0 
+    stats.swiggy.cancelRate = stats.swiggy.ordersCount > 0
       ? ((stats.swiggy.cancelledOrders / stats.swiggy.ordersCount) * 100).toFixed(1) + '%'
       : '0%';
-    stats.zomato.cancelRate = stats.zomato.ordersCount > 0 
+    stats.zomato.cancelRate = stats.zomato.ordersCount > 0
       ? ((stats.zomato.cancelledOrders / stats.zomato.ordersCount) * 100).toFixed(1) + '%'
       : '0%';
 
@@ -287,9 +305,9 @@ export const getMenuItemsWithAggregatorStatus = async (restaurantId) => {
           .select('id, name, category, price, is_available')
           .eq('restaurant_id', restaurantId)
           .order('category', { ascending: true });
-        
+
         if (fallbackError) throw fallbackError;
-        
+
         // Default both platforms to enabled for available items
         return (fallbackItems || []).map(item => ({
           ...item,
@@ -320,7 +338,7 @@ export const getMenuItemsWithAggregatorStatus = async (restaurantId) => {
 export const toggleMenuItemPlatform = async (itemId, platform) => {
   try {
     const field = platform === 'swiggy' ? 'swiggy_enabled' : 'zomato_enabled';
-    
+
     // First, get current status
     const { data: currentItem, error: fetchError } = await supabase
       .from('food_items')
@@ -338,7 +356,7 @@ export const toggleMenuItemPlatform = async (itemId, platform) => {
     }
 
     const newValue = !currentItem[field];
-    
+
     const { error: updateError } = await supabase
       .from('food_items')
       .update({ [field]: newValue })
@@ -391,7 +409,7 @@ export const getAggregatorPerformance = async (restaurantId) => {
       if (metrics[platform]) {
         metrics[platform].orders.push(order);
         metrics[platform].totalRevenue += parseFloat(order.total) || 0;
-        
+
         if (order.status === 'completed' || order.status === 'delivered') {
           metrics[platform].completedCount++;
         }
@@ -408,11 +426,11 @@ export const getAggregatorPerformance = async (restaurantId) => {
         totalOrders,
         totalRevenue: data.totalRevenue,
         avgOrderValue: totalOrders > 0 ? (data.totalRevenue / totalOrders).toFixed(0) : 0,
-        cancelRate: totalOrders > 0 
-          ? ((data.cancelledCount / totalOrders) * 100).toFixed(1) + '%' 
+        cancelRate: totalOrders > 0
+          ? ((data.cancelledCount / totalOrders) * 100).toFixed(1) + '%'
           : '0%',
-        completionRate: totalOrders > 0 
-          ? ((data.completedCount / totalOrders) * 100).toFixed(1) + '%' 
+        completionRate: totalOrders > 0
+          ? ((data.completedCount / totalOrders) * 100).toFixed(1) + '%'
           : '0%'
       };
     };
@@ -460,22 +478,34 @@ export const subscribeToAggregatorOrders = (restaurantId, callback) => {
 };
 
 /**
- * Update surge prep time (stored locally for now)
+ * Update surge prep time
  */
-export const updateSurgePrepTime = (restaurantId, minutes) => {
+export const updateSurgePrepTime = async (restaurantId, minutes) => {
   try {
+    // 1. Update Supabase for cross-device sync
+    const { error } = await supabase
+      .from('restaurants')
+      .update({ surge_prep_time: minutes })
+      .eq('id', restaurantId);
+
+    if (error) throw error;
+
+    // 2. Keep local storage as fallback for instant UI response
     localStorage.setItem(`surge_prep_time_${restaurantId}`, minutes.toString());
     return true;
   } catch (e) {
-    console.error('Error saving surge prep time:', e);
-    return false;
+    console.error('Error saving surge prep time to DB:', e);
+    // Fallback to local storage if DB fails
+    localStorage.setItem(`surge_prep_time_${restaurantId}`, minutes.toString());
+    return true;
   }
 };
 
 /**
  * Get surge prep time
  */
-export const getSurgePrepTime = (restaurantId) => {
+export const getSurgePrepTime = (restaurantId, dbValue = null) => {
+  if (dbValue !== null) return parseInt(dbValue);
   try {
     const stored = localStorage.getItem(`surge_prep_time_${restaurantId}`);
     return stored ? parseInt(stored) : 0;
@@ -487,20 +517,31 @@ export const getSurgePrepTime = (restaurantId) => {
 /**
  * Update notification settings
  */
-export const updateNotificationSettings = (restaurantId, enabled) => {
+export const updateNotificationSettings = async (restaurantId, enabled) => {
   try {
+    // 1. Update Supabase for cross-device sync
+    const { error } = await supabase
+      .from('restaurants')
+      .update({ aggregator_notifications_enabled: enabled })
+      .eq('id', restaurantId);
+
+    if (error) throw error;
+
+    // 2. Local fallback
     localStorage.setItem(`aggregator_notifications_${restaurantId}`, enabled.toString());
     return true;
   } catch (e) {
-    console.error('Error saving notification settings:', e);
-    return false;
+    console.error('Error saving notification settings to DB:', e);
+    localStorage.setItem(`aggregator_notifications_${restaurantId}`, enabled.toString());
+    return true;
   }
 };
 
 /**
  * Get notification settings
  */
-export const getNotificationSettings = (restaurantId) => {
+export const getNotificationSettings = (restaurantId, dbValue = null) => {
+  if (dbValue !== null) return dbValue === true;
   try {
     const stored = localStorage.getItem(`aggregator_notifications_${restaurantId}`);
     return stored !== 'false'; // Default to true

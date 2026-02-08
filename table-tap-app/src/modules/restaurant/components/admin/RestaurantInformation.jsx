@@ -65,9 +65,14 @@ const RestaurantInformation = () => {
     }
   }, [restaurant]);
 
-  // Check if user is owner or admin (can see API keys)
+  // Check if user is admin (can see/edit API keys)
   const canSeeApiKeys = () => {
-    return userRole === 'owner' || userRole === 'admin';
+    return userRole === 'admin';
+  };
+
+  // Check if user can see aggregator connection status
+  const canSeeAggregatorStatus = () => {
+    return userRole === 'admin' || userRole === 'owner' || userRole === 'manager';
   };
 
   useEffect(() => {
@@ -137,9 +142,9 @@ const RestaurantInformation = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50 p-6 flex items-center justify-center">
         <div className="flex items-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-200 border-t-orange-600"></div>
           <span className="ml-4 text-gray-600 font-medium text-lg">Loading restaurant information...</span>
         </div>
       </div>
@@ -165,41 +170,29 @@ const RestaurantInformation = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-indigo-50/50 p-6">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50/30 to-amber-50/50 p-3 md:p-6">
+      <div className="max-w-6xl mx-auto space-y-3 md:space-y-8">
         {/* Removed redundant header */}
 
-        {/* Role Badge */}
-        <div className="flex justify-center">
-          <div className="inline-flex items-center px-6 py-3 bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-purple-100">
-            <span className="text-sm font-medium text-gray-700">
-              Role: <span className="capitalize text-purple-600 font-bold">{userRole}</span>
-            </span>
-            {!canEdit() && (
-              <span className="ml-3 px-3 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">
-                View Only
-              </span>
-            )}
-          </div>
-        </div>
+        {/* Removed redundant header */}
 
         {/* Success Message */}
         {saveSuccess && (
-          <div className="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-2xl p-5 shadow-sm">
+          <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-2xl p-4 shadow-sm">
             <div className="flex items-center">
-              <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center mr-4">
-                <Award className="w-5 h-5 text-emerald-600" />
+              <div className="w-9 h-9 bg-orange-100 rounded-xl flex items-center justify-center mr-4">
+                <Award className="w-5 h-5 text-orange-600" />
               </div>
-              <p className="text-emerald-800 font-semibold">Restaurant information updated successfully!</p>
+              <p className="text-orange-800 font-semibold">Restaurant information updated successfully!</p>
             </div>
           </div>
         )}
 
         {/* Main Content */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl border border-purple-100/50 overflow-hidden">
-          {isEditing && canEdit() ? (
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl md:rounded-3xl shadow-xl border border-orange-100/50 overflow-hidden">
+          {isEditing && (userRole === 'admin' || userRole === 'owner' || userRole === 'manager') ? (
             // --- EDITING FORM ---
-            <form onSubmit={handleSubmit} className="p-8">
+            <form onSubmit={handleSubmit} className="p-4 md:p-8">
               {saveError && (
                 <div className="bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 rounded-2xl p-5 mb-8">
                   <div className="flex items-center">
@@ -211,23 +204,23 @@ const RestaurantInformation = () => {
                 </div>
               )}
 
-              <div className="space-y-10">
+              <div className="space-y-6 md:space-y-10">
                 {/* Basic Information */}
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                      <Building className="w-5 h-5 text-white" />
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-6 flex items-center">
+                    <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-lg md:rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                      <Building className="w-4 h-4 md:w-5 md:h-5 text-white" />
                     </div>
                     Basic Information
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="block text-sm font-semibold text-gray-700">Restaurant Name</label>
-                      <input type="text" name="name" value={formData.name || ''} onChange={handleChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all" required />
+                  <div className="grid grid-cols-2 gap-3 md:gap-6">
+                    <div className="space-y-1 md:space-y-2">
+                      <label className="block text-[10px] md:text-sm font-semibold text-gray-700">Restaurant Name</label>
+                      <input type="text" name="name" value={formData.name || ''} onChange={handleChange} className="w-full px-3 py-2 md:px-4 md:py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all text-xs md:text-base" required />
                     </div>
-                    <div className="space-y-2">
-                      <label className="block text-sm font-semibold text-gray-700">Cuisine Type</label>
-                      <input type="text" name="cuisine_type" value={formData.cuisine_type || ''} onChange={handleChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all" />
+                    <div className="space-y-1 md:space-y-2">
+                      <label className="block text-[10px] md:text-sm font-semibold text-gray-700">Cuisine Type</label>
+                      <input type="text" name="cuisine_type" value={formData.cuisine_type || ''} onChange={handleChange} className="w-full px-3 py-2 md:px-4 md:py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all text-xs md:text-base" />
                     </div>
                   </div>
                 </div>
@@ -235,7 +228,7 @@ const RestaurantInformation = () => {
                 {/* Restaurant Assets */}
                 <div>
                   <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                    <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
                       <ImageIcon className="w-5 h-5 text-white" />
                     </div>
                     Restaurant Assets
@@ -298,39 +291,39 @@ const RestaurantInformation = () => {
                 {/* Contact Information */}
                 <div>
                   <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                    <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-amber-500 rounded-xl flex items-center justify-center mr-3 shadow-lg">
                       <Phone className="w-5 h-5 text-white" />
                     </div>
                     Contact Information
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="block text-sm font-semibold text-gray-700">Contact Phone</label>
-                      <input type="text" name="contact_phone" value={formData.contact_phone || ''} onChange={handleChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    <div className="space-y-1 md:space-y-2">
+                      <label className="block text-xs md:text-sm font-semibold text-gray-700">Contact Phone</label>
+                      <input type="text" name="contact_phone" value={formData.contact_phone || ''} onChange={handleChange} className="w-full px-4 py-2.5 md:py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base" />
                     </div>
-                    <div className="space-y-2">
-                      <label className="block text-sm font-semibold text-gray-700">Contact Email</label>
-                      <input type="email" name="contact_email" value={formData.contact_email || ''} onChange={handleChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all" />
+                    <div className="space-y-1 md:space-y-2">
+                      <label className="block text-xs md:text-sm font-semibold text-gray-700">Contact Email</label>
+                      <input type="email" name="contact_email" value={formData.contact_email || ''} onChange={handleChange} className="w-full px-4 py-2.5 md:py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base" />
                     </div>
                   </div>
                 </div>
 
                 {/* Business Details */}
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                      <Clock className="w-5 h-5 text-white" />
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-4 md:mb-6 flex items-center">
+                    <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg md:rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                      <Clock className="w-4 h-4 md:w-5 md:h-5 text-white" />
                     </div>
                     Business Details
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-gray-700">Opening Hours</label>
-                      <input type="text" name="opening_hours" value={formData.opening_hours || ''} onChange={handleChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all" placeholder="e.g., Mon-Sun: 9:00 AM - 10:00 PM" />
+                      <input type="text" name="opening_hours" value={formData.opening_hours || ''} onChange={handleChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all" placeholder="e.g., Mon-Sun: 9:00 AM - 10:00 PM" />
                     </div>
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-gray-700">Time Zone</label>
-                      <select name="timezone" value={formData.timezone || 'Asia/Kolkata'} onChange={handleChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all">
+                      <select name="timezone" value={formData.timezone || 'Asia/Kolkata'} onChange={handleChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all">
                         <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
                         <option value="UTC">UTC</option>
                         <option value="America/New_York">America/New_York (EST)</option>
@@ -342,16 +335,16 @@ const RestaurantInformation = () => {
                 {/* Features & Settings */}
                 <div>
                   <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                    <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
                       <Zap className="w-5 h-5 text-white" />
                     </div>
                     Features & Settings
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 p-5 rounded-xl flex items-center justify-between">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    <div className="bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-100 p-4 md:p-5 rounded-xl flex items-center justify-between">
                       <div>
                         <span className="block text-sm font-bold text-gray-800">AI Analytics</span>
-                        <span className="text-xs text-gray-500">Enable AI-powered insights</span>
+                        <span className="text-[10px] md:text-xs text-gray-500">Enable AI-powered insights</span>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
@@ -361,14 +354,14 @@ const RestaurantInformation = () => {
                           onChange={handleChange}
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
                       </label>
                     </div>
 
-                    <div className="bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-100 p-5 rounded-xl flex items-center justify-between">
+                    <div className="bg-gradient-to-br from-slate-50 to-gray-50 border border-slate-100 p-4 md:p-5 rounded-xl flex items-center justify-between">
                       <div>
                         <span className="block text-sm font-bold text-gray-800">Restaurant Status</span>
-                        <span className="text-xs text-gray-500">Temporarily open/close restaurant</span>
+                        <span className="text-[10px] md:text-xs text-gray-500">Temporarily open/close restaurant</span>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
@@ -378,7 +371,7 @@ const RestaurantInformation = () => {
                           onChange={handleChange}
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-slate-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
                       </label>
                     </div>
                   </div>
@@ -388,20 +381,20 @@ const RestaurantInformation = () => {
                 {(restaurant?.billing_features_enabled !== false) && (
                   <div>
                     <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                      <div className="w-10 h-10 bg-gradient-to-br from-orange-600 to-amber-700 rounded-xl flex items-center justify-center mr-3 shadow-lg">
                         <Receipt className="w-5 h-5 text-white" />
                       </div>
                       Online Bill Delivery
                     </h3>
                     <p className="text-sm text-gray-500 mb-4">Enable or disable digital bill delivery options (WhatsApp & Email)</p>
-                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 p-6 rounded-2xl flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                          <Send className="w-6 h-6 text-blue-600" />
+                    <div className="bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-100 p-4 md:p-6 rounded-2xl flex items-center justify-between">
+                      <div className="flex items-center gap-3 md:gap-4">
+                        <div className="w-10 h-10 md:w-12 md:h-12 bg-orange-100 rounded-xl flex items-center justify-center shrink-0">
+                          <Send className="w-5 h-5 md:w-6 md:h-6 text-orange-600" />
                         </div>
                         <div>
-                          <span className="block text-base font-bold text-gray-800">Online Bill</span>
-                          <span className="text-sm text-gray-500">Send bills to customers via WhatsApp & Email</span>
+                          <span className="block text-sm md:text-base font-bold text-gray-800">Online Bill</span>
+                          <span className="text-[10px] md:text-sm text-gray-500">Send bills via WhatsApp & Email</span>
                         </div>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
@@ -418,17 +411,17 @@ const RestaurantInformation = () => {
                           }}
                           className="sr-only peer"
                         />
-                        <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600"></div>
+                        <div className="w-11 md:w-14 h-6 md:h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 md:after:h-6 after:w-5 md:after:w-6 after:transition-all peer-checked:bg-orange-600"></div>
                       </label>
                     </div>
-                    <div className="mt-4 bg-gradient-to-br from-slate-50 to-gray-50 border border-slate-100 p-6 rounded-2xl flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-                          <Mail className="w-6 h-6 text-emerald-600" />
+                    <div className="mt-3 md:mt-4 bg-gradient-to-br from-slate-50 to-gray-50 border border-slate-100 p-4 md:p-6 rounded-2xl flex items-center justify-between">
+                      <div className="flex items-center gap-3 md:gap-4">
+                        <div className="w-10 h-10 md:w-12 md:h-12 bg-orange-100 rounded-xl flex items-center justify-center shrink-0">
+                          <Mail className="w-5 h-5 md:w-6 md:h-6 text-orange-600" />
                         </div>
                         <div>
-                          <span className="block text-base font-bold text-gray-800">Auto email billing</span>
-                          <span className="text-sm text-gray-500">Automatically send bill by email when order is completed</span>
+                          <span className="block text-sm md:text-base font-bold text-gray-800">Auto email billing</span>
+                          <span className="text-[10px] md:text-sm text-gray-500">Automatically send bill by email</span>
                         </div>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
@@ -445,7 +438,7 @@ const RestaurantInformation = () => {
                           }}
                           className="sr-only peer"
                         />
-                        <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-600"></div>
+                        <div className="w-11 md:w-14 h-6 md:h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 md:after:h-6 after:w-5 md:after:w-6 after:transition-all peer-checked:bg-orange-600"></div>
                       </label>
                     </div>
                   </div>
@@ -462,20 +455,20 @@ const RestaurantInformation = () => {
                   <div className="space-y-6">
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-gray-700">Address</label>
-                      <input type="text" name="address" value={formData.address || ''} onChange={handleChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all" />
+                      <input type="text" name="address" value={formData.address || ''} onChange={handleChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all" />
                     </div>
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-gray-700">Google Maps Link</label>
-                      <input type="url" name="google_maps_link" value={formData.google_maps_link || ''} onChange={handleChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all" placeholder="https://maps.google.com/..." />
+                      <input type="url" name="google_maps_link" value={formData.google_maps_link || ''} onChange={handleChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all" placeholder="https://maps.google.com/..." />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <label className="block text-sm font-semibold text-gray-700">Instagram Handle</label>
-                        <input type="text" name="instagram" value={formData.social_media?.instagram || ""} onChange={handleSocialMediaChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all" placeholder="@restaurant" />
+                        <input type="text" name="instagram" value={formData.social_media?.instagram || ""} onChange={handleSocialMediaChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all" placeholder="@restaurant" />
                       </div>
                       <div className="space-y-2">
                         <label className="block text-sm font-semibold text-gray-700">Facebook Page</label>
-                        <input type="text" name="facebook" value={formData.social_media?.facebook || ""} onChange={handleSocialMediaChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all" placeholder="RestaurantOfficial" />
+                        <input type="text" name="facebook" value={formData.social_media?.facebook || ""} onChange={handleSocialMediaChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all" placeholder="RestaurantOfficial" />
                       </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -528,80 +521,90 @@ const RestaurantInformation = () => {
                   </div>
                 </div>
 
-                {/* Aggregator Integration - Only visible to Owner and Admin */}
+                {/* Aggregator Integration - Visible to Admin */}
                 {canSeeApiKeys() && (
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-                      <ShoppingBag className="w-5 h-5 mr-2 text-blue-600" /> Aggregator Integration
+                  <div className="bg-gradient-to-br from-slate-50 to-gray-50/50 rounded-2xl p-4 md:p-8 border border-slate-200/60 shadow-inner">
+                    <h3 className="text-base md:text-xl font-black text-gray-900 mb-4 md:mb-8 flex items-center group">
+                      <div className="w-9 h-9 md:w-12 md:h-12 bg-white rounded-xl flex items-center justify-center mr-3 shadow-md group-hover:scale-110 transition-transform">
+                        <ShoppingBag className="w-5 h-5 text-orange-600" />
+                      </div>
+                      Aggregator Integration
                     </h3>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
                       {/* Swiggy API Key */}
-                      <div className="space-y-2">
-                        <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                          <div className="w-6 h-6 bg-orange-500 rounded-lg flex items-center justify-center">
-                            <ShoppingBag className="w-3 h-3 text-white" />
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[11px] md:text-sm font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                            <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+                            Swiggy API Portal
+                          </label>
+                          {formData.swiggy_api_key && (
+                            <span className="text-[9px] font-black text-green-600 bg-green-50 px-2 py-0.5 rounded-md border border-green-100 uppercase tracking-tighter">SECURED</span>
+                          )}
+                        </div>
+                        <div className="relative group">
+                          <div className="absolute inset-y-0 left-0 pl-3 md:pl-4 flex items-center pointer-events-none">
+                            <div className="w-7 h-7 md:w-8 md:h-8 bg-orange-50 rounded-lg flex items-center justify-center">
+                              <ShoppingBag className="w-4 h-4 text-orange-600" />
+                            </div>
                           </div>
-                          Swiggy API Key
-                        </label>
-                        <div className="relative">
                           <input
                             type={showSwiggyKey ? "text" : "password"}
                             name="swiggy_api_key"
                             value={formData.swiggy_api_key || ''}
                             onChange={handleChange}
-                            className="w-full px-4 py-3 pr-12 bg-white/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 transition-all"
-                            placeholder="Enter Swiggy API Key"
+                            className="w-full pl-12 md:pl-16 pr-12 py-3 md:py-4 bg-white border-2 border-slate-100 rounded-xl focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all font-mono text-sm shadow-sm"
+                            placeholder="Add Swiggy Key"
                           />
                           <button
                             type="button"
                             onClick={() => setShowSwiggyKey(!showSwiggyKey)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all"
                           >
-                            {showSwiggyKey ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                            {showSwiggyKey ? <EyeOff className="w-4 h-4 md:w-5 md:h-5" /> : <Eye className="w-4 h-4 md:w-5 md:h-5" />}
                           </button>
                         </div>
-                        {formData.swiggy_api_key && (
-                          <p className="text-xs text-green-600 flex items-center gap-1">
-                            <Key className="w-3 h-3" /> API key configured
-                          </p>
-                        )}
                       </div>
 
                       {/* Zomato API Key */}
-                      <div className="space-y-2">
-                        <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                          <div className="w-6 h-6 bg-red-500 rounded-lg flex items-center justify-center">
-                            <ShoppingBag className="w-3 h-3 text-white" />
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[11px] md:text-sm font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                            <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                            Zomato API Portal
+                          </label>
+                          {formData.zomato_api_key && (
+                            <span className="text-[9px] font-black text-green-600 bg-green-50 px-2 py-0.5 rounded-md border border-green-100 uppercase tracking-tighter">SECURED</span>
+                          )}
+                        </div>
+                        <div className="relative group">
+                          <div className="absolute inset-y-0 left-0 pl-3 md:pl-4 flex items-center pointer-events-none">
+                            <div className="w-7 h-7 md:w-8 md:h-8 bg-red-50 rounded-lg flex items-center justify-center">
+                              <ShoppingBag className="w-4 h-4 text-red-600" />
+                            </div>
                           </div>
-                          Zomato API Key
-                        </label>
-                        <div className="relative">
                           <input
                             type={showZomatoKey ? "text" : "password"}
                             name="zomato_api_key"
                             value={formData.zomato_api_key || ''}
                             onChange={handleChange}
-                            className="w-full px-4 py-3 pr-12 bg-white/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 transition-all"
-                            placeholder="Enter Zomato API Key"
+                            className="w-full pl-12 md:pl-16 pr-12 py-3 md:py-4 bg-white border-2 border-slate-100 rounded-xl focus:ring-4 focus:ring-red-500/10 focus:border-red-500 transition-all font-mono text-sm shadow-sm"
+                            placeholder="Add Zomato Key"
                           />
                           <button
                             type="button"
                             onClick={() => setShowZomatoKey(!showZomatoKey)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                           >
-                            {showZomatoKey ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                            {showZomatoKey ? <EyeOff className="w-4 h-4 md:w-5 md:h-5" /> : <Eye className="w-4 h-4 md:w-5 md:h-5" />}
                           </button>
                         </div>
-                        {formData.zomato_api_key && (
-                          <p className="text-xs text-green-600 flex items-center gap-1">
-                            <Key className="w-3 h-3" /> API key configured
-                          </p>
-                        )}
                       </div>
                     </div>
-                    <p className="mt-4 text-xs text-gray-400 italic">
-                      * API keys are encrypted and stored securely. Contact support if you need help with integration.
+                    <p className="mt-4 md:mt-6 text-[10px] md:text-xs text-slate-400 font-bold flex items-center gap-2 uppercase tracking-wide">
+                      <Shield className="w-3 h-3 text-green-500" />
+                      Encrypted End-to-End Security Protocol
                     </p>
                   </div>
                 )}
@@ -609,21 +612,21 @@ const RestaurantInformation = () => {
                 {/* Description */}
                 <div>
                   <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                    <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-blue-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
                       <FileText className="w-5 h-5 text-white" />
                     </div>
                     Description
                   </h3>
-                  <textarea name="description" value={formData.description || ''} onChange={handleChange} rows="4" className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all resize-none" placeholder="Tell customers about your restaurant..."></textarea>
+                  <textarea name="description" value={formData.description || ''} onChange={handleChange} rows="4" className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all resize-none" placeholder="Tell customers about your restaurant..."></textarea>
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-4 mt-12 pt-8 border-t border-purple-100">
+              <div className="flex justify-end space-x-4 mt-12 pt-8 border-t border-orange-100">
                 <button type="button" onClick={handleReset} className="px-8 py-3.5 bg-white border border-gray-300 rounded-xl text-gray-700 font-semibold hover:bg-gray-50 transition-all shadow-sm flex items-center"><RefreshCw className="w-4 h-4 mr-2" /> Cancel</button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`px-8 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl text-white font-bold hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg flex items-center ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`px-8 py-3.5 bg-gradient-to-r from-orange-600 to-amber-600 rounded-xl text-white font-bold hover:from-orange-700 hover:to-amber-700 transition-all shadow-lg flex items-center ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <Save className="w-4 h-4 mr-2" />
                   {loading ? 'Saving...' : 'Save Changes'}
@@ -632,24 +635,24 @@ const RestaurantInformation = () => {
             </form>
           ) : (
             // --- DISPLAY MODE ---
-            <div className="p-8">
-              <div className="space-y-10">
+            <div className="p-4 md:p-8">
+              <div className="space-y-6 md:space-y-10">
                 {/* Basic Information */}
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                  <h3 className="text-xl font-bold text-gray-900 mb-4 md:mb-6 flex items-center">
+                    <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
                       <Building className="w-5 h-5 text-white" />
                     </div>
                     Basic Information
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-6 border border-purple-100">
-                      <h4 className="text-sm font-semibold text-purple-600 mb-2">Restaurant Name</h4>
-                      <p className="text-lg font-bold text-gray-900">{restaurant?.name || 'N/A'}</p>
+                  <div className="grid grid-cols-2 gap-3 md:gap-6">
+                    <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-orange-100">
+                      <h4 className="text-[10px] md:text-sm font-semibold text-orange-600 mb-0.5 md:mb-2">Restaurant Name</h4>
+                      <p className="text-sm md:text-lg font-bold text-gray-900 truncate">{restaurant?.name || 'N/A'}</p>
                     </div>
-                    <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-2xl p-6 border border-violet-100">
-                      <h4 className="text-sm font-semibold text-violet-600 mb-2">Cuisine Type</h4>
-                      <p className="text-lg font-bold text-gray-900">{restaurant?.cuisine_type || 'N/A'}</p>
+                    <div className="bg-gradient-to-br from-orange-50 to-orange-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-orange-100">
+                      <h4 className="text-[10px] md:text-sm font-semibold text-orange-600 mb-0.5 md:mb-2">Cuisine Type</h4>
+                      <p className="text-sm md:text-lg font-bold text-gray-900 truncate">{restaurant?.cuisine_type || 'N/A'}</p>
                     </div>
                   </div>
                 </div>
@@ -657,40 +660,40 @@ const RestaurantInformation = () => {
                 {/* Restaurant Assets Display */}
                 <div>
                   <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                    <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
                       <ImageIcon className="w-5 h-5 text-white" />
                     </div>
                     Restaurant Assets
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
                     {/* Logo Display */}
-                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center">
-                      <h4 className="text-sm font-semibold text-gray-600 mb-4 self-start">Official Logo</h4>
+                    <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 flex flex-col items-center">
+                      <h4 className="text-xs md:text-sm font-semibold text-gray-600 mb-3 md:mb-4 self-start">Official Logo</h4>
                       {restaurant?.logo_url ? (
                         <img
                           src={restaurant.logo_url}
                           alt="Logo"
-                          className="w-40 h-40 object-contain rounded-2xl bg-white shadow-sm border p-2"
+                          className="w-24 h-24 md:w-40 md:h-40 object-contain rounded-xl md:rounded-2xl bg-white shadow-sm border p-2"
                         />
                       ) : (
-                        <div className="w-40 h-40 bg-gray-50 rounded-2xl flex items-center justify-center border-2 border-dashed border-gray-200">
-                          <ImageIcon className="w-12 h-12 text-gray-300" />
+                        <div className="w-24 h-24 md:w-40 md:h-40 bg-gray-50 rounded-xl md:rounded-2xl flex items-center justify-center border-2 border-dashed border-gray-200">
+                          <ImageIcon className="w-8 h-8 md:w-12 md:h-12 text-gray-300" />
                         </div>
                       )}
                     </div>
 
                     {/* Photo Display */}
-                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center">
-                      <h4 className="text-sm font-semibold text-gray-600 mb-4 self-start">Cover Photo</h4>
+                    <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 flex flex-col items-center">
+                      <h4 className="text-xs md:text-sm font-semibold text-gray-600 mb-3 md:mb-4 self-start">Cover Photo</h4>
                       {restaurant?.restaurant_photo_url ? (
                         <img
                           src={restaurant.restaurant_photo_url}
                           alt="Restaurant"
-                          className="w-full h-40 object-cover rounded-2xl shadow-sm border"
+                          className="w-full h-32 md:h-40 object-cover rounded-xl md:rounded-2xl shadow-sm border"
                         />
                       ) : (
-                        <div className="w-full h-40 bg-gray-50 rounded-2xl flex items-center justify-center border-2 border-dashed border-gray-200">
-                          <ImageIcon className="w-12 h-12 text-gray-300" />
+                        <div className="w-full h-32 md:h-40 bg-gray-50 rounded-xl md:rounded-2xl flex items-center justify-center border-2 border-dashed border-gray-200">
+                          <ImageIcon className="w-8 h-8 md:w-12 md:h-12 text-gray-300" />
                         </div>
                       )}
                     </div>
@@ -699,184 +702,162 @@ const RestaurantInformation = () => {
 
                 {/* Description */}
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                      <FileText className="w-5 h-5 text-white" />
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-6 flex items-center">
+                    <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-amber-500 to-blue-600 rounded-lg md:rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                      <FileText className="w-4 h-4 md:w-5 md:h-5 text-white" />
                     </div>
                     Description
                   </h3>
-                  <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border border-indigo-100">
-                    <p className="text-lg leading-relaxed text-gray-700">{restaurant?.description || 'No description provided.'}</p>
+                  <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl md:rounded-2xl p-4 md:p-6 border border-amber-100">
+                    <p className="text-sm md:text-lg leading-relaxed text-gray-700">{restaurant?.description || 'No description provided.'}</p>
                   </div>
                 </div>
 
-                {/* Contact & Socials */}
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                      <Globe className="w-5 h-5 text-white" />
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-6 flex items-center">
+                    <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-lg md:rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                      <Globe className="w-4 h-4 md:w-5 md:h-5 text-white" />
                     </div>
                     Contact & Social Media
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-6 border border-emerald-100">
-                      <h4 className="text-sm font-semibold text-emerald-600 mb-2 flex items-center"><Phone className="w-4 h-4 mr-2" /> Phone</h4>
-                      <p className="text-lg font-bold text-gray-900">{restaurant?.contact_phone || 'N/A'}</p>
+                  <div className="grid grid-cols-2 gap-3 md:gap-6">
+                    <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-orange-100">
+                      <h4 className="text-[10px] md:text-sm font-semibold text-orange-600 mb-1 md:mb-2 flex items-center"><Phone className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" /> Phone</h4>
+                      <p className="text-xs md:text-lg font-bold text-gray-900 truncate">{restaurant?.contact_phone || 'N/A'}</p>
                     </div>
-                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
-                      <h4 className="text-sm font-semibold text-blue-600 mb-2 flex items-center"><Mail className="w-4 h-4 mr-2" /> Email</h4>
-                      <p className="text-lg font-bold text-gray-900">{restaurant?.contact_email || 'N/A'}</p>
+                    <div className="bg-gradient-to-br from-slate-50 to-gray-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-slate-100">
+                      <h4 className="text-[10px] md:text-sm font-semibold text-slate-600 mb-1 md:mb-2 flex items-center"><Mail className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" /> Email</h4>
+                      <p className="text-xs md:text-lg font-bold text-gray-900 truncate">{restaurant?.contact_email || 'N/A'}</p>
                     </div>
-                    <div className="bg-gradient-to-br from-pink-50 to-rose-50 rounded-2xl p-6 border border-pink-100">
-                      <h4 className="text-sm font-semibold text-pink-600 mb-2 flex items-center"><Instagram className="w-4 h-4 mr-2" /> Instagram</h4>
-                      <p className="text-lg font-bold text-gray-900">{restaurant?.social_media?.instagram || 'N/A'}</p>
+                    <div className="bg-gradient-to-br from-orange-50 to-orange-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-orange-100">
+                      <h4 className="text-[10px] md:text-sm font-semibold text-orange-600 mb-1 md:mb-2 flex items-center"><Instagram className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" /> Instagram</h4>
+                      <p className="text-xs md:text-lg font-bold text-gray-900 truncate">{restaurant?.social_media?.instagram || 'N/A'}</p>
                     </div>
-                    <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-2xl p-6 border border-violet-100">
-                      <h4 className="text-sm font-semibold text-violet-600 mb-2 flex items-center"><Facebook className="w-4 h-4 mr-2" /> Facebook</h4>
-                      <p className="text-lg font-bold text-gray-900">{restaurant?.social_media?.facebook || 'N/A'}</p>
+                    <div className="bg-gradient-to-br from-slate-50 to-gray-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-slate-100">
+                      <h4 className="text-[10px] md:text-sm font-semibold text-slate-600 mb-1 md:mb-2 flex items-center"><Facebook className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" /> Facebook</h4>
+                      <p className="text-xs md:text-lg font-bold text-gray-900 truncate">{restaurant?.social_media?.facebook || 'N/A'}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Location Coordinates */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-2xl p-6 border border-cyan-100">
-                    <h4 className="text-sm font-semibold text-cyan-600 mb-2">Latitude</h4>
-                    <p className="text-lg font-bold text-gray-900">{restaurant?.latitude || 'Not provided'}</p>
+                <div className="grid grid-cols-2 gap-3 md:gap-6">
+                  <div className="bg-gradient-to-br from-slate-50 to-gray-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-slate-100">
+                    <h4 className="text-[10px] md:text-sm font-semibold text-slate-600 mb-1 md:mb-2 flex items-center"><MapPin className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" /> Latitude</h4>
+                    <p className="text-xs md:text-lg font-bold text-gray-900 truncate">{restaurant?.latitude || 'N/A'}</p>
                   </div>
-                  <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-2xl p-6 border border-cyan-100">
-                    <h4 className="text-sm font-semibold text-cyan-600 mb-2">Longitude</h4>
-                    <p className="text-lg font-bold text-gray-900">{restaurant?.longitude || 'Not provided'}</p>
+                  <div className="bg-gradient-to-br from-slate-50 to-gray-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-slate-100">
+                    <h4 className="text-[10px] md:text-sm font-semibold text-slate-600 mb-1 md:mb-2 flex items-center"><MapPin className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" /> Longitude</h4>
+                    <p className="text-xs md:text-lg font-bold text-gray-900 truncate">{restaurant?.longitude || 'N/A'}</p>
                   </div>
                 </div>
 
               </div>
 
               {/* Features Status Display */}
-              <div className="mt-8">
-                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                  <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                    <Zap className="w-5 h-5 text-white" />
+              <div className="mt-5 md:mt-8">
+                <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-6 flex items-center">
+                  <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-lg md:rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                    <Zap className="w-4 h-4 md:w-5 md:h-5 text-white" />
                   </div>
                   Features & Status
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border border-indigo-100 flex items-center justify-between">
+                <div className="grid grid-cols-2 gap-3 md:gap-6">
+                  <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-orange-100 flex items-center justify-between">
                     <div>
-                      <h4 className="text-sm font-semibold text-indigo-600 mb-1">AI Analytics</h4>
-                      <p className={`text-lg font-bold ${restaurant?.ai_enabled ? 'text-emerald-600' : 'text-gray-500'}`}>
+                      <h4 className="text-[10px] md:text-sm font-semibold text-orange-600 mb-0.5 md:mb-1">AI Analytics</h4>
+                      <p className={`text-xs md:text-lg font-bold ${restaurant?.ai_enabled ? 'text-orange-600' : 'text-gray-500'}`}>
                         {restaurant?.ai_enabled ? 'Enabled' : 'Disabled'}
                       </p>
                     </div>
-                    <div className={`p-3 rounded-xl ${restaurant?.ai_enabled ? 'bg-emerald-100' : 'bg-gray-100'}`}>
-                      <Zap className={`w-6 h-6 ${restaurant?.ai_enabled ? 'text-emerald-600' : 'text-gray-400'}`} />
+                    <div className={`p-1.5 md:p-3 rounded-lg md:rounded-xl ${restaurant?.ai_enabled ? 'bg-orange-100' : 'bg-gray-100'}`}>
+                      <Zap className={`w-3.5 h-3.5 md:w-6 md:h-6 ${restaurant?.ai_enabled ? 'text-orange-600' : 'text-gray-400'}`} />
                     </div>
                   </div>
 
-                  <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-6 border border-emerald-100 flex items-center justify-between">
+                  <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-orange-100 flex items-center justify-between">
                     <div>
-                      <h4 className="text-sm font-semibold text-emerald-600 mb-1">Restaurant Status</h4>
-                      <p className={`text-lg font-bold ${restaurant?.is_active ? 'text-emerald-600' : 'text-red-500'}`}>
+                      <h4 className="text-[10px] md:text-sm font-semibold text-orange-600 mb-0.5 md:mb-1">Restaurant Status</h4>
+                      <p className={`text-xs md:text-lg font-bold ${restaurant?.is_active ? 'text-orange-600' : 'text-slate-500'}`}>
                         {restaurant?.is_active ? 'Active' : 'Inactive'}
                       </p>
                     </div>
-                    <div className={`p-3 rounded-xl ${restaurant?.is_active ? 'bg-emerald-100' : 'bg-red-100'}`}>
-                      <Power className={`w-6 h-6 ${restaurant?.is_active ? 'text-emerald-600' : 'text-red-500'}`} />
+                    <div className={`p-1.5 md:p-3 rounded-lg md:rounded-xl ${restaurant?.is_active ? 'bg-orange-100' : 'bg-slate-100'}`}>
+                      <Power className={`w-3.5 h-3.5 md:w-6 md:h-6 ${restaurant?.is_active ? 'text-orange-600' : 'text-slate-500'}`} />
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Online Bill Delivery Status Display with Toggles */}
-              <div className="mt-8">
-                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                    <Receipt className="w-5 h-5 text-white" />
+              <div className="mt-5 md:mt-8">
+                <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-6 flex items-center">
+                  <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-orange-600 to-amber-700 rounded-lg md:rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                    <Receipt className="w-4 h-4 md:w-5 md:h-5 text-white" />
                   </div>
                   Online Bill Delivery
                 </h3>
 
                 {(restaurant?.billing_features_enabled !== false) ? (
                   <>
-                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100 flex items-center justify-between shadow-sm">
-                      <div className="flex items-center gap-4">
-                        <div className={`p-4 rounded-2xl ${localOnlineBill ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
-                          <Send className="w-6 h-6" />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl md:rounded-2xl p-2.5 md:p-6 border border-orange-100 flex flex-col items-center justify-center text-center shadow-sm">
+                        <div className={`w-9 h-9 md:w-16 md:h-16 rounded-xl flex items-center justify-center mb-2 ${localOnlineBill ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                          <Send className="w-4 h-4 md:w-8 md:h-8" />
                         </div>
-                        <div>
-                          <h4 className="text-lg font-bold text-gray-800 mb-0.5">Online Bill</h4>
-                          <p className="text-sm text-gray-500">Enable WhatsApp & Email delivery options</p>
-                        </div>
+                        <h4 className="text-[10px] md:text-lg font-bold text-gray-800 mb-0.5">Online Bill</h4>
+                        <label className="relative inline-flex items-center cursor-pointer mt-1">
+                          <input
+                            type="checkbox"
+                            checked={localOnlineBill}
+                            onChange={async (e) => {
+                              const val = e.target.checked;
+                              setLocalOnlineBill(val);
+                              const success = await updateRestaurant({ online_bill_enabled: val });
+                              if (success) {
+                                setSaveSuccess(true);
+                                setTimeout(() => setSaveSuccess(false), 2000);
+                              } else {
+                                setLocalOnlineBill(!val);
+                                setSaveError('Failed to update setting');
+                                setTimeout(() => setSaveError(null), 3000);
+                              }
+                            }}
+                            className="sr-only peer"
+                            disabled={!canEdit()}
+                          />
+                          <div className={`w-10 h-5 md:w-14 md:h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 md:after:h-6 after:w-4 md:after:w-6 after:transition-all peer-checked:bg-orange-600 ${!canEdit() ? 'opacity-50 cursor-not-allowed' : ''}`}></div>
+                        </label>
                       </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={localOnlineBill}
-                          onChange={async (e) => {
-                            const val = e.target.checked;
-                            // Optimistic update
-                            setLocalOnlineBill(val);
 
-                            const success = await updateRestaurant({
-                              online_bill_enabled: val
-                            });
-
-                            if (success) {
-                              setSaveSuccess(true);
-                              setTimeout(() => setSaveSuccess(false), 2000);
-                            } else {
-                              // Revert if failed
-                              setLocalOnlineBill(!val);
-                              setSaveError('Failed to update setting');
-                              setTimeout(() => setSaveError(null), 3000);
-                            }
-                          }}
-                          className="sr-only peer"
-                          disabled={!canEdit()}
-                        />
-                        <div className={`w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600 ${!canEdit() ? 'opacity-50 cursor-not-allowed' : ''}`}></div>
-                      </label>
-                    </div>
-
-                    {/* Auto email billing */}
-                    <div className="mt-4 bg-gradient-to-br from-slate-50 to-gray-50 rounded-2xl p-6 border border-slate-100 flex items-center justify-between shadow-sm">
-                      <div className="flex items-center gap-4">
-                        <div className={`p-4 rounded-2xl ${localAutoEmail ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
-                          <Mail className="w-6 h-6" />
+                      <div className="bg-gradient-to-br from-slate-50 to-gray-50 rounded-xl md:rounded-2xl p-2.5 md:p-6 border border-slate-100 flex flex-col items-center justify-center text-center shadow-sm">
+                        <div className={`w-9 h-9 md:w-16 md:h-16 rounded-xl flex items-center justify-center mb-2 ${localAutoEmail ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                          <Mail className="w-4 h-4 md:w-8 md:h-8" />
                         </div>
-                        <div>
-                          <h4 className="text-lg font-bold text-gray-800 mb-0.5">Auto email billing</h4>
-                          <p className="text-sm text-gray-500">Automatically send bill by email when order is completed</p>
-                        </div>
+                        <h4 className="text-[10px] md:text-lg font-bold text-gray-800 mb-0.5">Auto Email</h4>
+                        <label className="relative inline-flex items-center cursor-pointer mt-1">
+                          <input
+                            type="checkbox"
+                            checked={localAutoEmail}
+                            onChange={async (e) => {
+                              const val = e.target.checked;
+                              setLocalAutoEmail(val);
+                              const success = await updateRestaurant({ auto_email_billing_enabled: val });
+                              if (success) {
+                                setSaveSuccess(true);
+                                setTimeout(() => setSaveSuccess(false), 2000);
+                              } else {
+                                setLocalAutoEmail(!val);
+                                setSaveError('Failed to update setting');
+                                setTimeout(() => setSaveError(null), 3000);
+                              }
+                            }}
+                            className="sr-only peer"
+                            disabled={!canEdit()}
+                          />
+                          <div className={`w-10 h-5 md:w-14 md:h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 md:after:h-6 after:w-4 md:after:w-6 after:transition-all peer-checked:bg-orange-600 ${!canEdit() ? 'opacity-50 cursor-not-allowed' : ''}`}></div>
+                        </label>
                       </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={localAutoEmail}
-                          onChange={async (e) => {
-                            const val = e.target.checked;
-                            // Optimistic update
-                            setLocalAutoEmail(val);
-
-                            const success = await updateRestaurant({
-                              auto_email_billing_enabled: val
-                            });
-
-                            if (success) {
-                              setSaveSuccess(true);
-                              setTimeout(() => setSaveSuccess(false), 2000);
-                            } else {
-                              // Revert if failed
-                              setLocalAutoEmail(!val);
-                              setSaveError('Failed to update setting');
-                              setTimeout(() => setSaveError(null), 3000);
-                            }
-                          }}
-                          className="sr-only peer"
-                          disabled={!canEdit()}
-                        />
-                        <div className={`w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-600 ${!canEdit() ? 'opacity-50 cursor-not-allowed' : ''}`}></div>
-                      </label>
                     </div>
                   </>
                 ) : (
@@ -895,53 +876,74 @@ const RestaurantInformation = () => {
                 )}
               </div>
 
-              {canSeeApiKeys() && (
-                <div className="mt-8">
-                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                      <ShoppingBag className="w-5 h-5 text-white" />
+              {canSeeAggregatorStatus() && (
+                <div className="mt-5 md:mt-8">
+                  <h3 className="text-lg md:text-xl font-black text-gray-900 mb-4 md:mb-6 flex items-center">
+                    <div className="w-9 h-9 md:w-11 md:h-11 bg-white rounded-xl flex items-center justify-center mr-3 shadow-md border border-slate-50">
+                      <ShoppingBag className="w-5 h-5 text-orange-600" />
                     </div>
-                    Aggregator Integration Status
+                    Marketplace Integration
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className={`rounded-2xl p-6 border flex items-center justify-between ${restaurant?.swiggy_api_key ? 'bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200' : 'bg-gray-50 border-gray-200'}`}>
-                      <div className="flex items-center gap-3">
-                        <div className={`p-3 rounded-xl ${restaurant?.swiggy_api_key ? 'bg-orange-100' : 'bg-gray-100'}`}>
-                          <ShoppingBag className={`w-6 h-6 ${restaurant?.swiggy_api_key ? 'text-orange-600' : 'text-gray-400'}`} />
+                  <div className="grid grid-cols-2 gap-3 md:gap-6">
+                    {/* Swiggy Card */}
+                    <div className={`relative group overflow-hidden rounded-2xl md:rounded-3xl p-3 md:p-6 border transition-all duration-500 ${restaurant?.swiggy_api_key ? 'bg-gradient-to-br from-orange-500/5 to-amber-500/5 border-orange-100 shadow-sm' : 'bg-slate-50 border-slate-100'}`}>
+                      <div className="flex flex-col items-center text-center relative z-10">
+                        <div className={`w-12 h-12 md:w-16 md:h-16 rounded-2xl mb-3 flex items-center justify-center transition-transform group-hover:scale-110 duration-300 ${restaurant?.swiggy_api_key ? 'bg-orange-100 text-orange-600 shadow-lg shadow-orange-100' : 'bg-white text-slate-300 shadow-sm'}`}>
+                          <ShoppingBag className="w-6 h-6 md:w-8 md:h-8" />
                         </div>
-                        <div>
-                          <h4 className="text-sm font-bold text-gray-800 mb-1">Swiggy</h4>
-                          <p className={`text-sm font-bold ${restaurant?.swiggy_api_key ? 'text-orange-600' : 'text-gray-500'}`}>
-                            {restaurant?.swiggy_api_key ? 'Connected' : 'Not Connected'}
+                        <h4 className="text-[10px] md:text-sm font-black text-gray-900 uppercase tracking-widest mb-1">Swiggy</h4>
+                        <div className="flex items-center gap-1.5">
+                          <div className={`w-1.5 h-1.5 rounded-full ${restaurant?.swiggy_api_key ? 'bg-green-500 animate-pulse' : 'bg-slate-300'}`}></div>
+                          <p className={`text-[11px] md:text-sm font-bold ${restaurant?.swiggy_api_key ? 'text-green-600' : 'text-slate-400'}`}>
+                            {restaurant?.swiggy_api_key ? 'ONLINE' : 'OFFLINE'}
                           </p>
                         </div>
                       </div>
+                      {canSeeApiKeys() && (
+                        <button
+                          onClick={() => setIsEditing(true)}
+                          className="mt-4 w-full py-2 bg-white/80 backdrop-blur-md rounded-xl text-[10px] md:text-xs font-black text-orange-600 border border-orange-100 hover:bg-orange-600 hover:text-white transition-all shadow-sm"
+                        >
+                          {restaurant?.swiggy_api_key ? 'CONFIGURE' : 'CONNECT'}
+                        </button>
+                      )}
                     </div>
-                    <div className={`rounded-2xl p-6 border flex items-center justify-between ${restaurant?.zomato_api_key ? 'bg-gradient-to-br from-red-50 to-rose-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
-                      <div className="flex items-center gap-3">
-                        <div className={`p-3 rounded-xl ${restaurant?.zomato_api_key ? 'bg-red-100' : 'bg-gray-100'}`}>
-                          <ShoppingBag className={`w-6 h-6 ${restaurant?.zomato_api_key ? 'text-red-600' : 'text-gray-400'}`} />
+
+                    {/* Zomato Card */}
+                    <div className={`relative group overflow-hidden rounded-2xl md:rounded-3xl p-3 md:p-6 border transition-all duration-500 ${restaurant?.zomato_api_key ? 'bg-gradient-to-br from-red-500/5 to-rose-500/5 border-red-100 shadow-sm' : 'bg-slate-50 border-slate-100'}`}>
+                      <div className="flex flex-col items-center text-center relative z-10">
+                        <div className={`w-12 h-12 md:w-16 md:h-16 rounded-2xl mb-3 flex items-center justify-center transition-transform group-hover:scale-110 duration-300 ${restaurant?.zomato_api_key ? 'bg-red-100 text-red-600 shadow-lg shadow-red-100' : 'bg-white text-slate-300 shadow-sm'}`}>
+                          <ShoppingBag className="w-6 h-6 md:w-8 md:h-8" />
                         </div>
-                        <div>
-                          <h4 className="text-sm font-bold text-gray-800 mb-1">Zomato</h4>
-                          <p className={`text-sm font-bold ${restaurant?.zomato_api_key ? 'text-red-600' : 'text-gray-500'}`}>
-                            {restaurant?.zomato_api_key ? 'Connected' : 'Not Connected'}
+                        <h4 className="text-[10px] md:text-sm font-black text-gray-900 uppercase tracking-widest mb-1">Zomato</h4>
+                        <div className="flex items-center gap-1.5">
+                          <div className={`w-1.5 h-1.5 rounded-full ${restaurant?.zomato_api_key ? 'bg-green-500 animate-pulse' : 'bg-slate-300'}`}></div>
+                          <p className={`text-[11px] md:text-sm font-bold ${restaurant?.zomato_api_key ? 'text-green-600' : 'text-slate-400'}`}>
+                            {restaurant?.zomato_api_key ? 'ONLINE' : 'OFFLINE'}
                           </p>
                         </div>
                       </div>
+                      {canSeeApiKeys() && (
+                        <button
+                          onClick={() => setIsEditing(true)}
+                          className="mt-4 w-full py-2 bg-white/80 backdrop-blur-md rounded-xl text-[10px] md:text-xs font-black text-red-600 border border-red-100 hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                        >
+                          {restaurant?.zomato_api_key ? 'CONFIGURE' : 'CONNECT'}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
               )}
 
-              <div className="flex justify-end mt-12 pt-8 border-t border-purple-100">
-                {canEdit() ? (
-                  <button onClick={() => setIsEditing(true)} className="group px-8 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 flex items-center shadow-lg hover:shadow-xl transform hover:scale-105">
+              <div className="flex flex-col md:flex-row justify-end gap-3 mt-4 md:mt-12 pt-4 md:pt-8 border-t border-orange-100">
+                {(userRole === 'admin' || userRole === 'owner' || userRole === 'manager') ? (
+                  <button onClick={() => setIsEditing(true)} className="group w-full md:w-auto px-6 py-2.5 md:px-8 md:py-3.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-sm md:text-base font-bold rounded-xl hover:from-orange-700 hover:to-amber-700 transition-all duration-200 flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-[1.02] md:hover:scale-105">
                     <Edit3 className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" /> Edit Information
                   </button>
                 ) : (
-                  <div className="flex items-center text-purple-600 bg-purple-50 px-6 py-3 rounded-xl border border-purple-200">
-                    <Lock className="w-4 h-4 mr-2" />
+                  <div className="flex items-center justify-center text-orange-600 bg-orange-50 px-4 py-2 md:px-6 md:py-3 rounded-xl border border-orange-200 text-xs md:text-sm">
+                    <Lock className="w-3 h-3 md:w-4 md:h-4 mr-2" />
                     <span className="font-semibold">View only access</span>
                   </div>
                 )}
@@ -951,27 +953,27 @@ const RestaurantInformation = () => {
         </div>
 
         {/* Subscription Section */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl border border-purple-100/50 overflow-hidden p-8">
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl md:rounded-3xl shadow-xl border border-orange-100/50 overflow-hidden p-3 md:p-8">
           <SubscriptionSection restaurantId={restaurant?.id} />
         </div>
 
         {/* Billing & Invoice Section */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl border border-purple-100/50 overflow-hidden p-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <Receipt className="w-7 h-7 text-white" />
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl md:rounded-3xl shadow-xl border border-orange-100/50 overflow-hidden p-3 md:p-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 md:gap-4">
+            <div className="flex items-center gap-3 md:gap-4 w-full sm:w-auto text-left">
+              <div className="w-10 h-10 md:w-14 md:h-14 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg shrink-0">
+                <Receipt className="w-5 h-5 md:w-7 md:h-7 text-white" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-gray-900">Billing & Invoices</h3>
-                <p className="text-gray-500 text-sm">View payment history, download invoices, and manage billing</p>
+                <h3 className="text-[15px] md:text-xl font-bold text-gray-900 leading-tight">Billing & Invoices</h3>
+                <p className="text-gray-500 text-[10px] md:text-sm">View history and manage billing</p>
               </div>
             </div>
             <button
               onClick={() => setShowBillingPanel(true)}
-              className="flex items-center gap-2 px-6 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 md:py-3.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-xs md:text-sm font-bold rounded-xl hover:from-orange-700 hover:to-amber-700 transition-all shadow-md hover:shadow-lg"
             >
-              <FileText className="w-5 h-5" />
+              <FileText className="w-4 h-4 md:w-5 md:h-5" />
               View Billing
             </button>
           </div>

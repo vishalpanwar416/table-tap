@@ -275,7 +275,7 @@ const FoodItemForm = ({
           {/* Tags Section */}
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm mb-4">
             <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <Tag className="w-5 h-5 text-purple-500" />
+              <Tag className="w-5 h-5 text-orange-500" />
               Tags & Keywords
             </h3>
             <div>

@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAdminRestaurant } from '../../../../shared/context/AdminRestaurantContext';
 import StyledQRCode from './StyledQRCode';
+import QRTableCard from './QRTableCard';
 import { supabase } from '../../../../shared/supabase';
+import { getSystemSetting } from '../../../../admin/pages/AdminPannel/admin_service';
+import BulkQRLayout from './BulkQRLayout';
+import html2canvas from 'html2canvas';
 import {
   Plus,
   Trash2,
@@ -19,13 +23,18 @@ import {
   CheckCircle,
   Check,
   Users,
-  AlertCircle
+  AlertCircle,
+  Grid
 } from 'lucide-react';
 
 const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) => {
   const { restaurant, userRole, isAdmin, canEdit, refreshRestaurant } = useAdminRestaurant();
   const [tables, setTables] = useState([]);
   const qrInstancesRef = useRef({}); // Store QR instances for download
+
+  const handleQRInstanceReady = React.useCallback((tableId, qr) => {
+    qrInstancesRef.current[tableId] = qr;
+  }, []);
 
   const [selectedTable, setSelectedTable] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -38,6 +47,54 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
     capacity: 2,
     restaurantId: restaurant?.id || ''
   });
+  const [platformBranding, setPlatformBranding] = useState(null);
+  const [isPreparingPrint, setIsPreparingPrint] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  useEffect(() => {
+    const fetchBranding = async () => {
+      try {
+        let logoSetting = await getSystemSetting('system_logo');
+
+        // Auto-parse if it's a JSON string
+        if (typeof logoSetting === 'string' && logoSetting.trim().startsWith('{')) {
+          try {
+            logoSetting = JSON.parse(logoSetting);
+          } catch (e) {
+            console.error('Failed to parse system_logo JSON', e);
+          }
+        }
+
+        const url = logoSetting?.url || (typeof logoSetting === 'string' ? logoSetting : null);
+        setPlatformBranding(url);
+      } catch (err) {
+        console.error('Error fetching branding:', err);
+      }
+    };
+    fetchBranding();
+  }, []);
+
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [bulkConfig, setBulkConfig] = useState({
+    startNumber: 1,
+    count: 5,
+    capacity: 4,
+    location: 'Main Hall'
+  });
+
+  // Automatically update suggested start number
+  useEffect(() => {
+    if (tables.length > 0) {
+      // Try to find the highest numeric table number
+      const numbers = tables
+        .map(t => parseInt(t.tableNumber))
+        .filter(n => !isNaN(n));
+      const max = numbers.length > 0 ? Math.max(...numbers) : tables.length;
+      setBulkConfig(prev => ({ ...prev, startNumber: max + 1 }));
+    } else {
+      setBulkConfig(prev => ({ ...prev, startNumber: 1 }));
+    }
+  }, [tables.length]);
 
   // Status metadata for order status colors
   const STATUS_META = {
@@ -51,11 +108,11 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
     },
     preparing: {
       label: "Preparing",
-      color: "purple",
-      icon: <Truck className="h-4 w-4 text-purple-600" />,
-      badge: "bg-purple-100 text-purple-800 border border-purple-200",
-      bgColor: "bg-purple-50",
-      borderColor: "border-purple-200"
+      color: "orange",
+      icon: <Truck className="h-4 w-4 text-orange-600" />,
+      badge: "bg-orange-100 text-orange-800 border border-orange-200",
+      bgColor: "bg-orange-50",
+      borderColor: "border-orange-200"
     },
     ready: {
       label: "Ready",
@@ -224,10 +281,10 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
     });
   };
 
-  const generateQRUrl = (table) => {
+  const generateQRUrl = React.useCallback((table) => {
     const baseUrl = window.location.origin;
     return `${baseUrl}/?restaurant=${table.restaurantId}&table=${table.tableNumber}`;
-  };
+  }, []);
 
   const handleInputChange = (e) => {
     setNewTable({
@@ -272,6 +329,38 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
     } finally {
       setSaving(false);
       setLoading(false);
+    }
+  };
+
+  const handleBulkGenerate = async () => {
+    const { startNumber, count, capacity, location } = bulkConfig;
+
+    if (count <= 0) {
+      setErrorMsg('Number of tables must be greater than 0');
+      return;
+    }
+
+    const nextStart = parseInt(startNumber) || 1;
+
+    const newBatch = Array.from({ length: count }).map((_, index) => {
+      const tableNum = nextStart + index;
+      return {
+        id: `table_${Date.now()}_${tableNum}_${index}`,
+        tableNumber: `${tableNum}`,
+        location: location || 'Main Hall',
+        capacity: parseInt(capacity) || 4,
+        restaurantId: restaurant.id,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+    });
+
+    const updatedTables = [...tables, ...newBatch];
+    const success = await saveTablesData(updatedTables);
+    if (success) {
+      setTables(updatedTables);
+      setSuccessMsg(`Generated ${newBatch.length} new tables successfully!`);
+      setShowBulkModal(false);
     }
   };
 
@@ -357,35 +446,48 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
     });
   };
 
-  const downloadQR = (table) => {
-    const instance = qrInstancesRef.current[table.id];
-    if (instance && typeof instance.download === 'function') {
-      instance.download({
-        name: `QR-Table-${table.tableNumber}`,
-        extension: 'png',
+  const handleDownloadCard = async () => {
+    if (!selectedTable) return;
+    setIsDownloading(true);
+
+    try {
+      // Find the hidden card element
+      const cardElement = document.getElementById('hidden-qr-card-download');
+      if (!cardElement) {
+        throw new Error('Card element not found');
+      }
+
+      // Wait a moment for fonts/images
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const canvas = await html2canvas(cardElement, {
+        scale: 2, // High resolution
+        backgroundColor: null,
+        logging: false,
+        useCORS: true
       });
-      return;
-    }
-    // Fallback when StyledQRCode used qrcode.react (SVG); download via canvas
-    const el = document.getElementById(`qr-${table.id}`);
-    const svg = el?.tagName === 'svg' ? el : el?.querySelector?.('svg');
-    if (!svg) return;
-    const svgData = new XMLSerializer().serializeToString(svg);
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-    canvas.width = 300;
-    canvas.height = 300;
-    img.onload = () => {
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
       const link = document.createElement('a');
-      link.download = `QR-Table-${table.tableNumber}.png`;
+      link.download = `QR-Table-${selectedTable.tableNumber}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
-    };
-    img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+      setSuccessMsg('QR Card downloaded successfully');
+    } catch (error) {
+      console.error('Download failed:', error);
+      setErrorMsg('Failed to download QR card');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+
+  const handleBulkPrint = () => {
+    setIsPreparingPrint(true);
+    // Timeout handled by BulkQRLayout logic or manual timeout here
+    setTimeout(() => {
+      window.print();
+      setIsPreparingPrint(false);
+    }, 2000); // Wait 2s for canvases to render
   };
 
   const filteredTables = tables.filter(table =>
@@ -409,18 +511,36 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div />
         {canEdit() && (
-          <button
-            onClick={() => {
-              resetForm();
-              setEditingTable(null);
-              setShowAddForm(true);
-            }}
-            disabled={saving}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-          >
-            {saving ? <Loader size={20} className="animate-spin" /> : <Plus size={20} />}
-            Add Table
-          </button>
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <button
+              onClick={handleBulkPrint}
+              disabled={saving || tables.length === 0}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-white text-slate-700 font-bold px-2.5 py-2 sm:px-4 sm:py-2 rounded-xl border border-slate-200 hover:bg-slate-50 transition-all disabled:opacity-50 text-xs sm:text-sm"
+            >
+              <Download size={16} className="sm:w-[18px] sm:h-[18px]" />
+              <span className="whitespace-nowrap">Bulk Print</span>
+            </button>
+            <button
+              onClick={() => setShowBulkModal(true)}
+              disabled={saving}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-slate-100 text-slate-700 font-bold px-2.5 py-2 sm:px-4 sm:py-2 rounded-xl border border-slate-200 hover:bg-slate-200 transition-all disabled:opacity-50 text-xs sm:text-sm"
+            >
+              <Grid size={16} className="sm:w-[18px] sm:h-[18px]" />
+              <span className="whitespace-nowrap">Bulk Create</span>
+            </button>
+            <button
+              onClick={() => {
+                resetForm();
+                setEditingTable(null);
+                setShowAddForm(true);
+              }}
+              disabled={saving}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-blue-600 text-white font-bold px-2.5 py-2 sm:px-4 sm:py-2 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 disabled:opacity-50 text-xs sm:text-sm"
+            >
+              {saving ? <Loader size={16} className="animate-spin" /> : <Plus size={16} className="sm:w-[20px] sm:h-[20px]" />}
+              <span className="whitespace-nowrap">Add Table</span>
+            </button>
+          </div>
         )}
       </div>
 
@@ -434,49 +554,60 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
           return (
             <div
               key={table.id}
-              className={`bg-white rounded-lg shadow-md border-2 transition-all duration-200 hover:shadow-lg ${selectedTable?.id === table.id ? 'ring-2 ring-blue-500 shadow-lg' : ''
+              className={`bg-white rounded-2xl shadow-sm border border-slate-200 transition-all duration-300 hover:shadow-xl hover:shadow-slate-200/50 group relative overflow-hidden ${selectedTable?.id === table.id ? 'ring-2 ring-blue-500 shadow-lg' : ''
                 } ${bgColor} ${borderColor}`}
             >
               <div className="p-4">
-                {/* Table Header */}
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
+                {/* Table Header & QR Preview */}
+                <div className="flex justify-between items-start mb-4 gap-4">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-black text-slate-900 tracking-tight">
                       Table {table.tableNumber}
                     </h3>
                     {/* Status Badge */}
                     <div className="flex items-center gap-2 mt-1">
                       {tableStatus.icon}
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${tableStatus.badge}`}>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${tableStatus.badge}`}>
                         {tableStatus.label}
                       </span>
-                      {tableStatus.orderCount > 0 && (
-                        <span className="flex items-center gap-1 text-xs text-gray-600">
-                          <Users size={12} />
-                          {tableStatus.orderCount} order{tableStatus.orderCount > 1 ? 's' : ''}
-                        </span>
-                      )}
                     </div>
+                    {tableStatus.orderCount > 0 && (
+                      <div className="flex items-center gap-1.5 mt-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                        <Users size={12} className="text-blue-500" />
+                        {tableStatus.orderCount} active session{tableStatus.orderCount > 1 ? 's' : ''}
+                      </div>
+                    )}
                   </div>
+
+                  <div className="p-2 bg-white rounded-xl border border-slate-100 shadow-sm shrink-0 group-hover:scale-105 transition-transform">
+                    <StyledQRCode
+                      id={`qr-mini-${table.id}`}
+                      value={generateQRUrl(table)}
+                      size={64}
+                    />
+                  </div>
+                </div>
+
+                <div className="absolute top-2 right-2 flex items-center gap-1 opacity-100 group-hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                   {canEdit() && (
-                    <div className="flex items-center gap-2">
+                    <>
                       <button
-                        onClick={() => handleEditTable(table)}
+                        onClick={(e) => { e.stopPropagation(); handleEditTable(table); }}
                         disabled={saving}
-                        className="p-1 text-blue-600 hover:bg-blue-100 rounded-full transition-colors disabled:opacity-50"
+                        className="p-1.5 bg-white/90 backdrop-blur-sm text-slate-600 hover:text-blue-600 rounded-lg shadow-sm border border-slate-100 transition-all"
                         title="Edit table"
                       >
-                        <Edit3 size={16} />
+                        <Edit3 size={14} />
                       </button>
                       <button
-                        onClick={() => handleDeleteTable(table.id)}
+                        onClick={(e) => { e.stopPropagation(); handleDeleteTable(table.id); }}
                         disabled={saving}
-                        className="p-1 text-red-600 hover:bg-red-100 rounded-full transition-colors disabled:opacity-50"
+                        className="p-1.5 bg-white/90 backdrop-blur-sm text-slate-600 hover:text-red-600 rounded-lg shadow-sm border border-slate-100 transition-all"
                         title="Delete table"
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={14} />
                       </button>
-                    </div>
+                    </>
                   )}
                 </div>
 
@@ -539,29 +670,40 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
 
       {/* Empty State */}
       {filteredTables.length === 0 && (
-        <div className="text-center py-12">
-          <QrCode size={64} className="mx-auto text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {searchTerm ? 'No tables found' : 'No tables added yet'}
+        <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200 shadow-sm col-span-full">
+          <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <QrCode size={40} className="text-slate-300" />
+          </div>
+          <h3 className="text-xl font-black text-slate-900 mb-2">
+            {searchTerm ? 'No tables found' : 'Ready to launch?'}
           </h3>
-          <p className="text-gray-500 mb-4">
+          <p className="text-slate-500 max-w-sm mx-auto mb-8 text-sm font-medium">
             {searchTerm
               ? 'Try adjusting your search terms'
-              : 'Add your first table to generate QR codes'
+              : 'Add your tables to generate unique QR codes for contactless ordering.'
             }
           </p>
           {!searchTerm && canEdit() && (
-            <button
-              onClick={() => {
-                resetForm();
-                setEditingTable(null);
-                setShowAddForm(true);
-              }}
-              disabled={saving}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-            >
-              Add Table
-            </button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <button
+                onClick={() => {
+                  resetForm();
+                  setEditingTable(null);
+                  setShowAddForm(true);
+                }}
+                disabled={saving}
+                className="w-full sm:w-auto bg-blue-600 text-white px-8 py-3 rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 disabled:opacity-50"
+              >
+                Add Table
+              </button>
+              <button
+                onClick={handleBulkGenerate}
+                disabled={saving}
+                className="w-full sm:w-auto bg-slate-100 text-slate-600 px-8 py-3 rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-slate-200 transition-all disabled:opacity-50"
+              >
+                Bulk Generate (5)
+              </button>
+            </div>
           )}
         </div>
       )}
@@ -657,96 +799,172 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
 
       {/* QR Detail Modal */}
       {selectedTable && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg">
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-4">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4 animate-in fade-in duration-300">
+          <div className="bg-white rounded-3xl sm:rounded-[48px] shadow-2xl w-full max-w-sm overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-300 flex flex-col max-h-[96vh] sm:max-h-[92vh]">
+            {/* Modal Header */}
+            <div className="px-5 py-3 sm:px-6 sm:py-4 flex justify-between items-center border-b border-slate-50 bg-white z-10 sticky top-0">
+              <h3 className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-widest">Premium Card Preview</h3>
+              <button
+                onClick={() => setSelectedTable(null)}
+                className="p-1.5 sm:p-2 hover:bg-slate-100 rounded-full transition-colors"
+              >
+                <X size={18} className="text-slate-400" />
+              </button>
+            </div>
+
+            {/* Premium Card Preview */}
+            <div className="flex-1 overflow-y-auto p-3 sm:p-8 bg-slate-50 flex items-center justify-center">
+              <QRTableCard
+                table={selectedTable}
+                restaurant={restaurant}
+                generateQRUrl={generateQRUrl}
+                platformBranding={platformBranding}
+                className="scale-[0.85] sm:scale-95 origin-center"
+              />
+            </div>
+
+            {/* Modal Actions */}
+            <div className="p-4 sm:p-6 bg-white border-t border-slate-100 grid grid-cols-2 gap-2 sm:gap-4">
+              <button
+                onClick={() => copyToClipboard(generateQRUrl(selectedTable))}
+                className="flex items-center justify-center gap-2 bg-slate-100 text-slate-700 font-bold py-3.5 sm:py-4 rounded-xl sm:rounded-2xl hover:bg-slate-100 transition-all text-xs border border-slate-100"
+              >
+                <div className="p-1 px-1.5 bg-white rounded-lg shadow-sm border border-slate-200 hidden sm:block">
+                  <Copy size={16} />
+                </div>
+                Copy Link
+              </button>
+              <button
+                onClick={handleDownloadCard}
+                disabled={isDownloading}
+                className="flex items-center justify-center gap-2 bg-[#0f172a] text-white font-black py-3.5 sm:py-4 rounded-xl sm:rounded-2xl hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/10 text-xs uppercase tracking-widest disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isDownloading ? <Loader size={18} className="animate-spin" /> : <Download size={18} />}
+                {isDownloading ? 'Saving...' : 'Download Card'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden Card for High-Res Download */}
+      {selectedTable && (
+        <div className="fixed top-0 left-[-9999px] invisible">
+          <div id="hidden-qr-card-download" className="bg-white p-0 rounded-[60px] overflow-hidden">
+            <QRTableCard
+              table={selectedTable}
+              restaurant={restaurant}
+              platformBranding={platformBranding}
+              generateQRUrl={generateQRUrl}
+              className="shadow-none" // Remove shadow for clean cutout
+            />
+          </div>
+        </div>
+      )}
+      {/* Bulk Create Modal */}
+      {showBulkModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-in fade-in duration-300">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-300">
+            <div className="p-8">
+              <div className="flex justify-between items-center mb-6">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    Table {selectedTable.tableNumber}
-                  </h3>
-                  {/* Status in modal */}
-                  {(() => {
-                    const tableStatus = getTableStatus(selectedTable.tableNumber);
-                    return (
-                      <div className="flex items-center gap-2 mt-1">
-                        {tableStatus.icon}
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${tableStatus.badge}`}>
-                          {tableStatus.label}
-                        </span>
-                        {tableStatus.orderCount > 0 && (
-                          <span className="text-xs text-gray-600">
-                            ({tableStatus.orderCount} active order{tableStatus.orderCount > 1 ? 's' : ''})
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })()}
+                  <h3 className="text-xl font-black text-slate-900">Bulk Generation</h3>
+                  <p className="text-sm text-slate-500 font-medium">Create multiple tables at once</p>
                 </div>
                 <button
-                  onClick={() => setSelectedTable(null)}
-                  className="text-gray-400 hover:text-gray-600"
+                  onClick={() => setShowBulkModal(false)}
+                  className="p-2 hover:bg-slate-100 rounded-full transition-colors"
                 >
-                  <X size={24} />
+                  <X size={20} className="text-slate-400" />
                 </button>
               </div>
 
-              <div className="text-center mb-6">
-                <div className="p-4 rounded-lg border bg-white inline-block">
-                  <StyledQRCode
-                    id={`qr-${selectedTable.id}`}
-                    value={generateQRUrl(selectedTable)}
-                    size={200}
-                    onInstanceReady={(qr) => { qrInstancesRef.current[selectedTable.id] = qr; }}
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5 ml-1">
+                      Start Number
+                    </label>
+                    <input
+                      type="number"
+                      value={bulkConfig.startNumber}
+                      onChange={(e) => setBulkConfig(prev => ({ ...prev, startNumber: e.target.value }))}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all font-bold text-slate-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5 ml-1">
+                      Total Tables
+                    </label>
+                    <input
+                      type="number"
+                      value={bulkConfig.count}
+                      onChange={(e) => setBulkConfig(prev => ({ ...prev, count: parseInt(e.target.value) || 0 }))}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all font-bold text-slate-900"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5 ml-1">
+                    Default Capacity
+                  </label>
+                  <div className="flex items-center gap-3">
+                    {[2, 4, 6, 8].map(cap => (
+                      <button
+                        key={cap}
+                        onClick={() => setBulkConfig(prev => ({ ...prev, capacity: cap }))}
+                        className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all ${bulkConfig.capacity === cap
+                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-100'
+                          : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-100'
+                          }`}
+                      >
+                        {cap}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5 ml-1">
+                    Location Label
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Main Hall, Terrace"
+                    value={bulkConfig.location}
+                    onChange={(e) => setBulkConfig(prev => ({ ...prev, location: e.target.value }))}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all font-bold text-slate-900"
                   />
                 </div>
               </div>
 
-              <div className="space-y-3 mb-6">
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <p className="text-sm font-medium text-gray-700 mb-1">QR Code URL:</p>
-                  <p className="text-xs text-gray-600 break-all">{generateQRUrl(selectedTable)}</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium text-gray-700">Capacity:</span>
-                    <span className="ml-2 text-gray-600">{selectedTable.capacity} people</span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700">Location:</span>
-                    <span className="ml-2 text-gray-600">{selectedTable.location || 'Not specified'}</span>
-                  </div>
-                </div>
-
-                <div className="text-xs text-gray-500">
-                  Created: {new Date(selectedTable.createdAt).toLocaleString()}
-                  {selectedTable.updatedAt && selectedTable.updatedAt !== selectedTable.createdAt && (
-                    <span className="block">Updated: {new Date(selectedTable.updatedAt).toLocaleString()}</span>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex gap-3">
+              <div className="mt-8 flex flex-col gap-3">
                 <button
-                  onClick={() => copyToClipboard(generateQRUrl(selectedTable))}
-                  className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center gap-2"
+                  onClick={handleBulkGenerate}
+                  disabled={saving}
+                  className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  <Copy size={16} />
-                  Copy URL
+                  {saving ? <Loader size={18} className="animate-spin" /> : <Save size={18} />}
+                  Generate {bulkConfig.count} Tables
                 </button>
-                <button
-                  onClick={() => downloadQR(selectedTable)}
-                  className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                >
-                  <Download size={16} />
-                  Download QR
-                </button>
+                <p className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-tight">
+                  Tables {bulkConfig.startNumber} to {parseInt(bulkConfig.startNumber) + (bulkConfig.count - 1)} will be created
+                </p>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Hidden Print Layout */}
+      <BulkQRLayout
+        tables={tables}
+        restaurant={restaurant}
+        platformBranding={platformBranding}
+        generateQRUrl={generateQRUrl}
+        isPrinting={isPreparingPrint}
+      />
     </div>
   );
 };

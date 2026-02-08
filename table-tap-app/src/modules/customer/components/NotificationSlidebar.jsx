@@ -17,7 +17,7 @@ const typeIcons = {
 // Helper: is Notification API supported?
 const isNotificationSupported = () => typeof window !== 'undefined' && 'Notification' in window;
 
-const NotificationSidebar = ({ 
+const NotificationSidebar = ({
   isOpen,
   onClose,
   headerIcon = <Bell className="w-6 h-6 " />,
@@ -29,7 +29,7 @@ const NotificationSidebar = ({
 
   // Use real notifications
   const { notifications, markAsRead, deleteNotification, unreadCount } = useNotifications();
-  
+
   // Browser notification state
   const [notificationPermission, setNotificationPermission] = useState(isNotificationSupported() ? Notification.permission : 'unsupported');
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
@@ -99,35 +99,35 @@ const NotificationSidebar = ({
 
   const slideVariants = {
     hidden: { x: '100%', opacity: 0 },
-    visible: { 
-      x: 0, 
+    visible: {
+      x: 0,
       opacity: 1,
       transition: { type: 'spring', stiffness: 300, damping: 30 }
     },
-    exit: { 
-      x: '100%', 
-      opacity: 0, 
-      transition: { 
-        type: 'spring', 
-        stiffness: 400, 
+    exit: {
+      x: '100%',
+      opacity: 0,
+      transition: {
+        type: 'spring',
+        stiffness: 400,
         damping: 40,
         duration: 0.4
-      } 
+      }
     }
   };
 
   const overlayVariants = {
     hidden: { opacity: 0 },
-    visible: { 
+    visible: {
       opacity: 1,
       transition: { duration: 0.3 }
     },
-    exit: { 
-      opacity: 0, 
-      transition: { 
+    exit: {
+      opacity: 0,
+      transition: {
         duration: 0.3,
         ease: 'easeOut'
-      } 
+      }
     }
   };
 
@@ -224,46 +224,45 @@ const NotificationSidebar = ({
                   notifications.map((notification) => (
                     <div
                       key={notification.id}
-                      className={`mb-2 px-2`}
+                      className={`mb-1.5 px-2`}
                     >
-                      <div className={`flex items-center relative bg-white/20 backdrop-blur-xl rounded-2xl shadow-lg border border-white/15 px-3 sm:px-6 py-3 sm:py-5 gap-3 sm:gap-5 min-h-[64px] sm:min-h-[88px] transition-all group hover:bg-white/30 hover:shadow-2xl ${!notification.read ? 'ring-2 ring-blue-400/40' : ''}`}
+                      <div className={`flex items-center relative bg-white/20 backdrop-blur-xl rounded-xl shadow-lg border border-white/15 px-2.5 sm:px-3 py-1.5 sm:py-2 gap-2 min-h-[48px] sm:min-h-[60px] transition-all group hover:bg-white/30 hover:shadow-2xl ${!notification.read ? 'ring-2 ring-blue-400/40' : ''}`}
                         style={{ fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif' }}
                       >
                         {/* Vertical accent bar */}
-                        <div className={`absolute left-0 top-2 sm:top-4 bottom-2 sm:bottom-4 w-1 rounded-full sm:w-1.5 ${
-                          notification.type === 'order_received' ? 'bg-blue-400' :
+                        <div className={`absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full sm:w-1 ${notification.type === 'order_received' ? 'bg-blue-400' :
                           notification.type === 'order_accepted' ? 'bg-green-400' :
-                          notification.type === 'order_preparing' ? 'bg-yellow-400' :
-                          notification.type === 'order_ready' ? 'bg-purple-400' :
-                          notification.type === 'order_rejected' ? 'bg-red-400' :
-                          notification.type === 'payment_success' ? 'bg-green-400' :
-                          notification.type === 'payment_failed' ? 'bg-red-400' :
-                          'bg-gray-300'
-                        }`} />
+                            notification.type === 'order_preparing' ? 'bg-yellow-400' :
+                              notification.type === 'order_ready' ? 'bg-purple-400' :
+                                notification.type === 'order_rejected' ? 'bg-red-400' :
+                                  notification.type === 'payment_success' ? 'bg-green-400' :
+                                    notification.type === 'payment_failed' ? 'bg-red-400' :
+                                      'bg-gray-300'
+                          }`} />
                         {/* Icon */}
-                        <div className="bg-white/40 backdrop-blur-md rounded-xl p-3 sm:p-4 border border-white/30 shadow flex-shrink-0 z-10">
+                        <div className="bg-white/40 backdrop-blur-md rounded-lg p-1.5 sm:p-2 border border-white/30 shadow flex-shrink-0 z-10">
                           {typeIcons[notification.type] || typeIcons.default}
                         </div>
                         {/* Content */}
-                        <div 
+                        <div
                           className="flex-1 cursor-pointer min-w-0 z-10"
                           onClick={() => !notification.read && markAsRead(notification.id)}
                         >
-                          <p className="text-white font-bold text-base sm:text-lg leading-snug mb-0.5 whitespace-normal break-words drop-shadow-sm">{notification.title}</p>
+                          <p className="text-white font-bold text-xs sm:text-sm leading-snug mb-0 whitespace-normal break-words drop-shadow-sm">{notification.title}</p>
                           {notification.metadata && notification.metadata.order_number && (
-                            <span className="inline-block bg-gray-900/60 text-blue-200 text-xs font-mono px-2 py-0.5 rounded mb-1 mr-2 tracking-wider">Order #{notification.metadata.order_number}</span>
+                            <span className="inline-block bg-gray-900/60 text-blue-200 text-[9px] font-mono px-1 py-0 rounded mb-0 mr-2 tracking-wider">Order #{notification.metadata.order_number}</span>
                           )}
                           {notification.metadata && notification.metadata.restaurant_name && (
-                            <p className="text-blue-100 text-xs sm:text-sm font-semibold mb-1 whitespace-normal break-words tracking-wide">{notification.metadata.restaurant_name}</p>
+                            <p className="text-blue-100 text-[9px] sm:text-[10px] font-semibold mb-0 whitespace-normal break-words tracking-wide">{notification.metadata.restaurant_name}</p>
                           )}
-                          <p className="text-white/90 text-sm sm:text-base whitespace-normal break-words leading-relaxed">{notification.message}</p>
+                          <p className="text-white/90 text-[11px] sm:text-xs whitespace-normal break-words leading-relaxed">{notification.message}</p>
                         </div>
                         {/* Time & Actions */}
-                        <div className="flex flex-col items-end gap-1 sm:gap-2 ml-2 sm:ml-3 z-10">
-                          <span className="text-[10px] sm:text-xs text-white/60 whitespace-nowrap font-medium">{new Date(notification.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        <div className="flex flex-col items-end gap-0.5 sm:gap-1 ml-2 sm:ml-3 z-10">
+                          <span className="text-[9px] sm:text-[10px] text-white/60 whitespace-nowrap font-medium">{new Date(notification.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                           <div className="flex items-center gap-1 sm:gap-2">
                             {!notification.read && (
-                              <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-blue-400 inline-block shadow-md" />
+                              <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-blue-400 inline-block shadow-md" />
                             )}
                             <button
                               onClick={(e) => {
@@ -272,10 +271,10 @@ const NotificationSidebar = ({
                                   deleteNotification(notification.id);
                                 }
                               }}
-                              className="bg-red-500/20 hover:bg-red-500/40 text-red-300 hover:text-red-100 p-1 sm:p-2 rounded-lg border border-red-500/30 hover:border-red-500/50 transition-all backdrop-blur-md shadow focus:outline-none"
+                              className="bg-red-500/20 hover:bg-red-500/40 text-red-300 hover:text-red-100 p-0.5 sm:p-1 rounded-lg border border-red-500/30 hover:border-red-500/50 transition-all backdrop-blur-md shadow focus:outline-none"
                               title="Delete notification"
                             >
-                              <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                              <X className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                             </button>
                           </div>
                         </div>

@@ -353,30 +353,30 @@ const AdminNotificationBell = ({ onTabChange }) => {
                   <div
                     key={notification.id}
                     onClick={() => handleNotificationClick(notification)}
-                    className={`px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors ${!notification.read ? 'bg-blue-50/50' : ''
+                    className={`px-3 py-2 hover:bg-gray-50 cursor-pointer transition-colors ${!notification.read ? 'bg-blue-50/50' : ''
                       }`}
                   >
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-start gap-2">
                       {/* Icon */}
-                      <div className={`p-2 rounded-xl border ${getNotificationColor(notification.type)}`}>
+                      <div className={`p-1.5 rounded-xl border ${getNotificationColor(notification.type)}`}>
                         {getNotificationIcon(notification.type)}
                       </div>
 
                       {/* Content */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <p className={`text-sm font-semibold text-gray-900 truncate ${!notification.read ? 'text-blue-900' : ''
+                          <p className={`text-[13px] font-semibold text-gray-900 truncate ${!notification.read ? 'text-blue-900' : ''
                             }`}>
                             {notification.title}
                           </p>
                           {!notification.read && (
-                            <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></span>
+                            <span className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0"></span>
                           )}
                         </div>
-                        <p className="text-xs text-gray-600 mt-0.5 line-clamp-2">
+                        <p className="text-[11px] text-gray-600 mt-0 line-clamp-2">
                           {notification.message}
                         </p>
-                        <p className="text-[10px] text-gray-400 mt-1 font-medium">
+                        <p className="text-[9px] text-gray-400 mt-0.5 font-medium">
                           {formatTimeAgo(notification.created_at)}
                         </p>
                       </div>

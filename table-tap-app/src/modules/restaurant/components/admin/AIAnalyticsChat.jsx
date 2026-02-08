@@ -470,7 +470,7 @@ const AIAnalyticsChat = ({ restaurantId: propRestaurantId }) => {
       {/* Floating Top Utility Bar */}
       <div className="bg-white/80 backdrop-blur-md border border-slate-200/50 px-6 py-3 flex items-center justify-between z-20 rounded-2xl mx-1 mt-1">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-700 flex items-center justify-center text-white border border-white/20">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-600 to-orange-700 flex items-center justify-center text-white border border-white/20">
             <Brain className="h-6 w-6" />
           </div>
           <div>
@@ -506,7 +506,7 @@ const AIAnalyticsChat = ({ restaurantId: propRestaurantId }) => {
               <button
                 key={i}
                 onClick={btn.onClick}
-                className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                className="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
                 title={btn.title}
               >
                 {btn.icon}
@@ -526,7 +526,7 @@ const AIAnalyticsChat = ({ restaurantId: propRestaurantId }) => {
               {[
                 { label: 'Revenue', val: `₹${analyticsData.summary.totalRevenue.toLocaleString()}`, color: 'emerald' },
                 { label: 'Orders', val: analyticsData.summary.totalOrders, color: 'blue' },
-                { label: 'Avg Order', val: `₹${analyticsData.summary.avgOrderValue.toFixed(0)}`, color: 'indigo' },
+                { label: 'Avg Order', val: `₹${analyticsData.summary.avgOrderValue.toFixed(0)}`, color: 'amber' },
                 { label: 'Peak Hour', val: analyticsData.summary.peakHour || 'N/A', color: 'orange' }
               ].map((s, i) => (
                 <div key={i} className="px-6 py-3 border-r border-slate-100 last:border-r-0">
@@ -545,7 +545,7 @@ const AIAnalyticsChat = ({ restaurantId: propRestaurantId }) => {
                 className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div className={`flex max-w-[85%] lg:max-w-[80%] ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'} items-start gap-3`}>
-                  <div className={`flex-shrink-0 h-9 w-9 rounded-xl flex items-center justify-center mt-1 ${message.type === 'user' ? 'bg-slate-900 text-white' : 'bg-indigo-600 text-white'
+                  <div className={`flex-shrink-0 h-9 w-9 rounded-xl flex items-center justify-center mt-1 ${message.type === 'user' ? 'bg-slate-900 text-white' : 'bg-amber-600 text-white'
                     }`}>
                     {message.type === 'user' ? <User size={18} /> : <Brain size={18} />}
                   </div>
@@ -574,14 +574,14 @@ const AIAnalyticsChat = ({ restaurantId: propRestaurantId }) => {
             {isLoading && (
               <div className="flex justify-start">
                 <div className="flex items-start gap-4">
-                  <div className="h-9 w-9 rounded-xl bg-indigo-100/50 backdrop-blur-sm flex items-center justify-center shadow-inner">
-                    <Loader className="animate-spin text-indigo-600" size={18} />
+                  <div className="h-9 w-9 rounded-xl bg-amber-100/50 backdrop-blur-sm flex items-center justify-center shadow-inner">
+                    <Loader className="animate-spin text-amber-600" size={18} />
                   </div>
                   <div className="bg-white/80 backdrop-blur-md border border-slate-100/50 rounded-2xl rounded-tl-none px-5 py-3.5">
                     <div className="flex gap-2 h-4 items-center">
-                      <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
-                      <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                      <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                      <div className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                      <div className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      <div className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
                     </div>
                   </div>
                 </div>
@@ -599,7 +599,7 @@ const AIAnalyticsChat = ({ restaurantId: propRestaurantId }) => {
                 <div className="absolute bottom-full left-0 right-0 mb-6 flex overflow-x-auto pb-4 scrollbar-hide px-2">
                   <div className="flex bg-slate-900/90 backdrop-blur-xl border border-white/10 p-2 rounded-[2rem] items-center gap-3 w-max mx-auto min-w-min px-4">
                     <div className="flex items-center gap-2 px-3 border-r border-white/10 mr-2 flex-shrink-0">
-                      <Brain size={14} className="text-indigo-400 animate-pulse" />
+                      <Brain size={14} className="text-amber-400 animate-pulse" />
                       <span className="text-[10px] font-bold text-white uppercase tracking-widest leading-none">Growth Tools</span>
                     </div>
                     <div className="flex items-center gap-2 flex-nowrap">
@@ -616,7 +616,7 @@ const AIAnalyticsChat = ({ restaurantId: propRestaurantId }) => {
                         <button
                           key={i}
                           onClick={() => handleSendMessage(s)}
-                          className="px-4 py-1.5 bg-white/10 text-white hover:bg-indigo-600 rounded-full text-[11px] font-bold transition-all shadow-lg whitespace-nowrap active:scale-95 border border-white/5"
+                          className="px-4 py-1.5 bg-white/10 text-white hover:bg-amber-600 rounded-full text-[11px] font-bold transition-all shadow-lg whitespace-nowrap active:scale-95 border border-white/5"
                         >
                           {s}
                         </button>
@@ -630,7 +630,7 @@ const AIAnalyticsChat = ({ restaurantId: propRestaurantId }) => {
             {/* Standard Container for Input Bar */}
             <div className="max-w-4xl mx-auto">
 
-              <div className={`flex items-center gap-2 p-1 bg-white/80 backdrop-blur-2xl border border-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] rounded-[2.5rem] transition-all duration-300 ${isInputFocused ? 'shadow-[0_25px_60px_-15px_rgba(79,70,229,0.2)] ring-4 ring-indigo-500/5 -translate-y-0.5' : ''}`}>
+              <div className={`flex items-center gap-2 p-1 bg-white/80 backdrop-blur-2xl border border-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] rounded-[2.5rem] transition-all duration-300 ${isInputFocused ? 'shadow-[0_25px_60px_-15px_rgba(79,70,229,0.2)] ring-4 ring-amber-500/5 -translate-y-0.5' : ''}`}>
                 <div className="flex-1 relative ml-2">
                   <textarea
                     ref={textareaRef}
@@ -661,7 +661,7 @@ const AIAnalyticsChat = ({ restaurantId: propRestaurantId }) => {
                     if (textareaRef.current) textareaRef.current.style.height = 'auto';
                   }}
                   disabled={!inputMessage.trim() || isLoading}
-                  className={`flex-shrink-0 p-2.5 rounded-full transition-all shadow-xl active:scale-90 disabled:opacity-0 disabled:scale-75 ${inputMessage.trim() ? 'bg-indigo-600 hover:bg-slate-900 text-white scale-100' : 'bg-slate-100 text-slate-400'
+                  className={`flex-shrink-0 p-2.5 rounded-full transition-all shadow-xl active:scale-90 disabled:opacity-0 disabled:scale-75 ${inputMessage.trim() ? 'bg-amber-600 hover:bg-slate-900 text-white scale-100' : 'bg-slate-100 text-slate-400'
                     }`}
                 >
                   <Send size={16} className={inputMessage.trim() ? 'animate-in fade-in zoom-in duration-300' : ''} />

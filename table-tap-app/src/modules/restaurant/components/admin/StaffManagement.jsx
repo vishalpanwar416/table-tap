@@ -71,7 +71,7 @@ const StaffManagement = ({
   const [viewMode, setViewMode] = useState('table');
 
   const roleConfig = useMemo(() => ({
-    manager: { color: 'bg-purple-100 text-purple-800 border-purple-200', icon: '' },
+    manager: { color: 'bg-orange-100 text-orange-800 border-orange-200', icon: '' },
     captain: { color: 'bg-blue-100 text-blue-800 border-blue-200', icon: '' },
     chef: { color: 'bg-orange-100 text-orange-800 border-orange-200', icon: '' },
     waiter: { color: 'bg-green-100 text-green-800 border-green-200', icon: '' },

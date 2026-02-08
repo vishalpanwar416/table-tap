@@ -538,7 +538,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
 
           <button
             onClick={() => openModal('takeOut')}
-            className="flex items-center gap-2 bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors"
+            className="flex items-center gap-2 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
           >
             <Minus className="w-4 h-4" />
             Take Out
@@ -1629,7 +1629,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                 </button>
                 <button
                   type="submit"
-                  className="flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
                 >
                   <ShoppingCart className="w-4 h-4" />
                   Place Order
