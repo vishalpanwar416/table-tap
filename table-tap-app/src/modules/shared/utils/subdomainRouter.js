@@ -32,12 +32,14 @@ export const getSubdomain = () => {
     if (parts.length >= 3) {
         const first = (parts[0] || '').toLowerCase();
         if (first === 'admin') return 'admin';
+        if (first === 'owner') return 'owner';
         if (first === 'restaurant' || first === 'manager') return 'restaurant';
         if (first === 'app') return 'app';
     }
 
     // Fallback: substring match for Vercel-style hostnames (e.g. table-tap-admin.vercel.app)
     if (hostname.includes('admin')) return 'admin';
+    if (hostname.includes('owner')) return 'owner';
     if (hostname.includes('restaurant') || hostname.includes('manager')) return 'restaurant';
     if (hostname.includes('app')) return 'app';
 

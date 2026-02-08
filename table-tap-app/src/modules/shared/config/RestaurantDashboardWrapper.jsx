@@ -34,12 +34,15 @@ export default function RestaurantDashboardWrapper({ children }) {
     );
   }
 
-  // If user is admin but hasn't selected a restaurant yet, still allow the dashboard
-  // (it will show selector); for non-admin, require assigned restaurant.
-  const hasRestaurant = Boolean(userRestaurantId) || isAdmin();
-  const allowed = typeof canView === 'function' ? canView() : ['admin', 'manager', 'captain'].includes(userRole);
+  // If user is admin or owner but hasn't selected a restaurant yet, still allow the dashboard
+  // (the dashboard component itself handles the selector for these roles).
+  const hasRestaurant = Boolean(userRestaurantId) || isAdmin() || (userRole === 'owner');
 
-  // Don't redirect to /home while context is still initializing (userRole not set yet)
+  // Explicitly allow all portal-specific roles to prevent premature redirects
+  const PORTAL_ROLES = ['admin', 'owner', 'manager', 'captain', 'chef', 'waiter', 'cashier'];
+  const allowed = typeof canView === 'function' ? canView() : PORTAL_ROLES.includes(userRole);
+
+  // Don't redirect while context is still initializing (userRole not set yet)
   const stillInitializing = userRole == null;
   if (stillInitializing) {
     return (
@@ -49,13 +52,60 @@ export default function RestaurantDashboardWrapper({ children }) {
     );
   }
 
-  if (!allowed || !hasRestaurant) {
+  if (!allowed) {
     return (
       <AuthWrapper>
         {(() => {
-          navigate('/home', { replace: true, state: { from: location.pathname } });
+          // If strictly not allowed, go back to login (base path navigate to stay in restaurant app)
+          navigateWithBase('/login', { replace: true, state: { from: location.pathname } });
           return null;
         })()}
+      </AuthWrapper>
+    );
+  }
+
+  // If allowed but no restaurant selected, we stay on children (AdminDashboard) 
+  // because AdminDashboard has its own logic to show a restaurant selector 
+  // for admins/owners. For lower roles with no selection, we show a message.
+  if (!hasRestaurant && !['admin', 'owner'].includes(userRole)) {
+    const handleLogout = async () => {
+      try {
+        const { authService } = await import('../api/authService');
+        await authService.signOut();
+        navigateWithBase('/login');
+      } catch (err) {
+        console.error('Logout failed:', err);
+        window.location.href = '/login';
+      }
+    };
+
+    return (
+      <AuthWrapper>
+        <div className="min-h-screen bg-black flex items-center justify-center p-6 text-center">
+          <div className="max-w-md bg-zinc-900/50 backdrop-blur-xl p-8 rounded-[32px] border border-white/10 shadow-2xl">
+            <div className="w-20 h-20 bg-orange-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-orange-500/20">
+              <span className="text-4xl">🏪</span>
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-4">No Restaurant Assigned</h2>
+            <p className="text-gray-400 mb-8 leading-relaxed">
+              You don't have an active restaurant assignment. Please contact your manager to be added to a restaurant.
+            </p>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => navigateWithBase('/login')}
+                className="w-full bg-orange-600 hover:bg-orange-700 text-white px-6 py-4 rounded-2xl font-semibold transition-all shadow-lg active:scale-[0.98]"
+              >
+                Back to Login
+              </button>
+              <button
+                onClick={handleLogout}
+                className="w-full bg-white/5 hover:bg-white/10 text-white px-6 py-4 rounded-2xl font-semibold transition-all border border-white/10 active:scale-[0.98]"
+              >
+                Log Out
+              </button>
+            </div>
+          </div>
+        </div>
       </AuthWrapper>
     );
   }

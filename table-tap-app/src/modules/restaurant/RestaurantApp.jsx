@@ -35,7 +35,7 @@ const RestaurantFallbackRedirect = () => {
         if (pathname === '/auth-callback' || pathname.startsWith('/auth-callback')) return <AuthCallback />;
         return <Navigate to={pathname} replace />;
     }
-    return <Navigate to="/" replace />;
+    return <Navigate to="/restaurant" replace />;
 };
 
 /**
@@ -53,7 +53,7 @@ const RestaurantAppRoutes = () => {
                     </RestaurantDashboardWrapper>
                 } />
                 <Route path="login/*" element={<RestaurantLoginPage />} />
-                <Route path="signup/*" element={<SignupPage />} />
+                <Route path="signup/*" element={<div dangerouslySetInnerHTML={{ __html: '<script>window.location.href="https://table-tap.in/#pricing"</script>' }} />} />
                 <Route path="forgot-password/*" element={<ForgotPassword />} />
                 <Route path="reset-password/*" element={<ResetPassword />} />
                 <Route path="auth-callback/*" element={<AuthCallback />} />

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import {
   Check, X, Truck, CheckCircle, ChevronDown, ChevronRight, User,
   Clock, Calendar, MapPin, Phone, Filter, AlertCircle,
-  Printer, Download, AlertTriangle, ShoppingBag, Info, Grid, List, Package, Plus, Minus, RefreshCw, Mail, Send, MessageCircle, Copy, Search
+  Printer, Download, AlertTriangle, ShoppingBag, Info, Grid, List, Package, Plus, Minus, RefreshCw, Mail, Send, MessageCircle, Copy, Search, Wifi, WifiOff
 } from 'lucide-react';
 import { useManagerNotifications } from '../../../shared/context/ManagerNotificationContext';
 import { format } from 'date-fns';
@@ -15,6 +15,7 @@ import PrintKOT from "./PrintKOT";
 import { sendBillEmail } from '../../../shared/api/emailService';
 import { sendWhatsAppBill, openWhatsAppBill } from '../../../shared/api/whatsappService';
 import toast from 'react-hot-toast';
+import { useOnlineStatus } from '../../../shared/hooks/useOnlineStatus';
 
 // Ref-based modal: opening it does not re-render OrderManagement (only this small tree re-renders).
 const OnlineBillModal = forwardRef(function OnlineBillModal({ restaurant, triggeredBy }, ref) {
@@ -165,6 +166,7 @@ const OnlineBillModal = forwardRef(function OnlineBillModal({ restaurant, trigge
 
 import {
   fetchAllOrders,
+  syncPendingActions,
   subscribeToAllOrderChanges,
   unsubscribeFromOrderChanges,
   updateOrderStatus as updateOrderStatusService,
@@ -498,6 +500,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
   const [showTableDropdown, setShowTableDropdown] = useState(false);
   const [availableTables, setAvailableTables] = useState([]);
   const [tableSearch, setTableSearch] = useState('');
+  const isOnline = useOnlineStatus();
 
   const onlineBillModalRef = useRef(null);
   // Legacy: keep for HMR/cache compatibility (modal is now ref-based; this is unused)
@@ -542,6 +545,16 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
     };
     fetchMenu();
   }, [showCreateOrderModal, restaurantId]);
+
+  // Refetch orders when coming back online
+  useEffect(() => {
+    if (isOnline) {
+      console.log('Online detected, refreshing orders...');
+      fetchOrders();
+      // Also retry sync just in case App.js missed it or for redundancy
+      syncPendingActions();
+    }
+  }, [isOnline]);
 
   // Reset step to 1 whenever modal is opened
   useEffect(() => {
@@ -1089,6 +1102,21 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
 
   return (
     <div className="space-y-5">
+      {/* Offline Mode Indicator */}
+      {!isOnline && (
+        <div className="bg-amber-100 border-l-4 border-amber-500 text-amber-700 p-4 mb-4 rounded-r shadow-sm animate-pulse">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <WifiOff className="h-5 w-5 text-amber-500" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium">
+                You are currently offline. Actions will be queued and synced when connection is restored.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className={`bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 ${overviewOpen ? 'px-3 sm:px-6 py-4' : 'px-3 sm:px-6 py-1 -my-2 sm:py-2 sm:-my-1'}`}>
         <div className="flex items-center justify-between">

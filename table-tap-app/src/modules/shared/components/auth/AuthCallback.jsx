@@ -10,8 +10,13 @@ import LoadingScreen from '../LoadingScreen';
 function getDefaultRedirectPath() {
   if (typeof window === 'undefined') return '/home';
   const h = (window.location.hostname || '').toLowerCase();
-  if (h.startsWith('admin.')) return '/';
-  if (h.startsWith('restaurant.') || h.startsWith('manager.')) return '/';
+  const p = window.location.pathname || '';
+  if (h.startsWith('admin.') || p.startsWith('/admin')) {
+    return h.startsWith('admin.') ? '/' : '/admin';
+  }
+  if (h.startsWith('restaurant.') || h.startsWith('manager.') || p.startsWith('/restaurant') || p.startsWith('/owner')) {
+    return (h.startsWith('restaurant.') || h.startsWith('owner.') || h.startsWith('manager.')) ? '/' : (p.startsWith('/owner') ? '/owner' : '/restaurant');
+  }
   return '/home';
 }
 
@@ -81,23 +86,29 @@ const AuthCallback = () => {
 
         const [profile] = await Promise.all([profilePromise, syncPromise]);
 
-        const role = profile?.profile_role || 'customer';
+        const role = profile?.profile_role || profile?.role || 'customer';
         clearTimeout(timeout);
 
         // Check environment context
         const h = (typeof window !== 'undefined' && window.location.hostname || '').toLowerCase();
         const path = window.location.pathname;
 
-        // Determine if we are in a specific app context
-        const isAdminContext = h.startsWith('admin.') || path.startsWith('/admin');
-        const isRestaurantContext = h.startsWith('restaurant.') || h.startsWith('manager.') || path.startsWith('/restaurant');
+        // Portal roles (any role that has dashboard access)
+        const PORTAL_ROLES = ['owner', 'manager', 'captain', 'chef', 'staff', 'waiter', 'cashier'];
 
-        if (role === 'admin' && isAdminContext) {
+        // Determine context-specific root redirects
+        const getPortalRedirect = (targetRole) => {
+          if (targetRole === 'admin') return (h.startsWith('admin.') ? '/' : '/admin');
+          if (targetRole === 'owner' && path.startsWith('/owner')) return '/owner';
+          return (h.startsWith('restaurant.') || h.startsWith('manager.') || h.startsWith('owner.')) ? '/' : '/restaurant';
+        };
+
+        if (role === 'admin') {
           setStatus('Welcome back, Admin');
-          navigate(h.startsWith('admin.') ? '/' : '/admin', { replace: true });
-        } else if ((role === 'manager' || role === 'captain') && isRestaurantContext) {
-          setStatus('Welcome back, Manager');
-          navigate((h.startsWith('restaurant.') || h.startsWith('manager.')) ? '/' : '/restaurant', { replace: true });
+          navigate(getPortalRedirect('admin'), { replace: true });
+        } else if (PORTAL_ROLES.includes(role)) {
+          setStatus(`Welcome back, ${role.charAt(0).toUpperCase() + role.slice(1)}`);
+          navigate(getPortalRedirect(role), { replace: true });
         } else {
           setStatus('Checking profile...');
           const isComplete = Boolean(profile?.mobile_number && profile?.date_of_birth);

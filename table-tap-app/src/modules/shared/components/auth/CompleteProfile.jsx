@@ -27,16 +27,30 @@ export default function CompleteProfile() {
         const user = await authService.getCurrentUser();
 
         if (user) {
-          const isComplete = await authService.isProfileComplete(user.id);
+          const profile = await authService.getProfile(user.id);
+          const isComplete = Boolean(profile?.mobile_number && profile?.date_of_birth);
+
           if (isComplete) {
-            navigate('/restaurant-selection');
+            const role = profile?.profile_role || profile?.role || 'customer';
+            const h = (typeof window !== 'undefined' && window.location.hostname || '').toLowerCase();
+            const path = window.location.pathname;
+
+            const isAdminContext = h.startsWith('admin.') || path.startsWith('/admin');
+            const isRestaurantContext = h.startsWith('restaurant.') || h.startsWith('manager.') || path.startsWith('/restaurant') || path.startsWith('/owner');
+            const PORTAL_ROLES = ['admin', 'owner', 'manager', 'captain', 'chef', 'staff', 'waiter', 'cashier'];
+
+            if (role === 'admin' && isAdminContext) {
+              navigate(h.startsWith('admin.') ? '/' : '/admin', { replace: true });
+            } else if (PORTAL_ROLES.includes(role) && isRestaurantContext) {
+              const redirect = (h.startsWith('restaurant.') || h.startsWith('manager.')) ? '/' : (path.startsWith('/owner') ? '/owner' : '/restaurant');
+              navigate(redirect, { replace: true });
+            } else {
+              navigate('/restaurant-selection');
+            }
           }
         }
-        // Don't redirect to login immediately - the user might be in the process of auth
-        // Let them stay on complete-profile page
       } catch (err) {
         console.error('Error checking profile:', err);
-        // Don't redirect to login on error - might be temporary
       } finally {
         setIsCheckingAuth(false);
       }
@@ -188,7 +202,24 @@ export default function CompleteProfile() {
         avatar_url: avatarUrl || 'https://ui-avatars.com/api/?name=User&background=random'
       });
 
-      navigate('/home');
+      const user = await authService.getCurrentUser();
+      const profile = await authService.getProfile(user.id);
+      const role = profile?.profile_role || profile?.role || 'customer';
+      const h = (typeof window !== 'undefined' && window.location.hostname || '').toLowerCase();
+      const path = window.location.pathname;
+
+      const isAdminContext = h.startsWith('admin.') || path.startsWith('/admin');
+      const isRestaurantContext = h.startsWith('restaurant.') || h.startsWith('manager.') || path.startsWith('/restaurant') || path.startsWith('/owner');
+      const PORTAL_ROLES = ['admin', 'owner', 'manager', 'captain', 'chef', 'staff', 'waiter', 'cashier'];
+
+      if (role === 'admin' && isAdminContext) {
+        navigate(h.startsWith('admin.') ? '/' : '/admin', { replace: true });
+      } else if (PORTAL_ROLES.includes(role) && isRestaurantContext) {
+        const redirect = (h.startsWith('restaurant.') || h.startsWith('manager.')) ? '/' : (path.startsWith('/owner') ? '/owner' : '/restaurant');
+        navigate(redirect, { replace: true });
+      } else {
+        navigate('/home');
+      }
     } catch (err) {
       setError(err.message || 'Profile update failed');
     } finally {

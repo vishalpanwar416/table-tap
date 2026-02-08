@@ -12,6 +12,8 @@ import ErrorBoundary from './modules/shared/components/ErrorBoundary';
 import InstallPrompt from './modules/shared/components/InstallPrompt';
 import { register } from './modules/shared/utils/serviceWorkerRegistration';
 import { getSubdomain, isDevelopment } from './modules/shared/utils/subdomainRouter';
+import { syncPendingActions } from './modules/restaurant/api/admin/orderService';
+import toast from 'react-hot-toast';
 
 // Eagerly load CustomerApp for immediate Splash Screen (no initial loading spinner)
 import CustomerApp from './modules/customer/CustomerApp';
@@ -19,6 +21,7 @@ import CustomerApp from './modules/customer/CustomerApp';
 // Lazy load other app modules for better performance
 const RestaurantApp = lazy(() => import('./modules/restaurant/RestaurantApp'));
 const AdminApp = lazy(() => import('./modules/admin/AdminApp'));
+const OwnerApp = lazy(() => import('./modules/owner/OwnerApp'));
 const AuthCallback = lazy(() => import('./modules/shared/components/auth/AuthCallback'));
 
 
@@ -72,6 +75,24 @@ const App = () => {
         }
       });
     }
+
+    // Offline sync listener
+    const handleOnline = async () => {
+      console.log('App is online, syncing pending actions...');
+      try {
+        await syncPendingActions();
+        toast.success('Back online! Synced offline changes.');
+      } catch (error) {
+        console.error('Sync failed:', error);
+        toast.error('Failed to sync offline changes.');
+      }
+    };
+
+    window.addEventListener('online', handleOnline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+    };
   }, []);
 
   // Detect current subdomain
@@ -106,6 +127,13 @@ const App = () => {
           <Route path="/admin/*" element={
             <Suspense fallback={<LoadingSpinner />}>
               <AdminApp />
+            </Suspense>
+          } />
+
+          {/* Owner panel routes */}
+          <Route path="/owner/*" element={
+            <Suspense fallback={<LoadingSpinner />}>
+              <OwnerApp />
             </Suspense>
           } />
 
@@ -166,6 +194,12 @@ const App = () => {
         return (
           <Suspense fallback={<LoadingSpinner />}>
             <RestaurantApp />
+          </Suspense>
+        );
+      case 'owner':
+        return (
+          <Suspense fallback={<LoadingSpinner />}>
+            <OwnerApp />
           </Suspense>
         );
       case 'admin':

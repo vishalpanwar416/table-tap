@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../shared/supabase';
 import { useAuth } from './AuthContext';
 import { hasValidRestaurantSelection } from '../../shared/utils/restaurantCheck';
+import { authService } from '../../shared/api/authService';
 
 const AUTH_CHECK_TIMEOUT_MS = 10000;
 
@@ -11,7 +12,7 @@ const AUTH_CHECK_TIMEOUT_MS = 10000;
 function isAdminOrRestaurantOrigin() {
   if (typeof window === 'undefined') return false;
   const h = (window.location.hostname || '').toLowerCase();
-  return h.startsWith('admin.') || h.startsWith('restaurant.') || h.startsWith('manager.');
+  return h.startsWith('admin.') || h.startsWith('restaurant.') || h.startsWith('manager.') || h.startsWith('owner.');
 }
 
 export default function AuthWrapper({ children, publicOnly = false }) {
@@ -48,21 +49,57 @@ export default function AuthWrapper({ children, publicOnly = false }) {
       if (authLoading) return;
 
       const onAdminOrRestaurant = isAdminOrRestaurantOrigin();
-      const pathIsAdminOrRestaurant = location.pathname.startsWith('/admin') || location.pathname.startsWith('/restaurant');
+      const pathIsAdminOrRestaurant = location.pathname.startsWith('/admin') ||
+        location.pathname.startsWith('/restaurant') ||
+        location.pathname.startsWith('/owner');
 
-      // Admin/restaurant app: don't redirect to /home; don't run customer profile check
+      // Special handling for Admin/Restaurant subdomains/paths.
+      // We skip customer-specific profile checks, but MUST still enforce authentication for private pages.
       if (onAdminOrRestaurant || pathIsAdminOrRestaurant) {
-        stopChecking();
-        return;
+        if (!user && !publicOnly) {
+          const loginPath = onAdminOrRestaurant
+            ? '/login'
+            : (location.pathname.startsWith('/admin') ? '/admin/login' : '/restaurant/login');
+          navigateWithParams(loginPath);
+          stopChecking();
+          return;
+        }
+
+        // If we have a user or it's a public page, we can stop here and avoid customer app logic.
+        if (user || publicOnly) {
+          stopChecking();
+          return;
+        }
       }
 
       // Handle root route redirect (customer app only)
-      if (location.pathname === '/' && user) {
-        if (hasValidRestaurantSelection()) {
-          navigateWithParams('/home');
-        } else {
-          navigateWithParams('/restaurant-selection');
-        }
+      // Only execute if NOT in a portal context (subdomain or portal path)
+      if (location.pathname === '/' && user && !onAdminOrRestaurant && !pathIsAdminOrRestaurant) {
+        const checkRoleAndRedirect = async () => {
+          try {
+            const profile = await authService.getProfile(user.id);
+            const role = profile?.profile_role || profile?.role || 'customer';
+            const PORTAL_ROLES = ['admin', 'owner', 'manager', 'captain', 'chef', 'staff', 'waiter', 'cashier'];
+
+            if (PORTAL_ROLES.includes(role)) {
+              // Redirect to appropriate dashboard instead of customer pages
+              const redirect = (role === 'admin') ? '/admin' : '/restaurant';
+              navigateWithParams(redirect);
+            } else {
+              if (hasValidRestaurantSelection()) {
+                navigateWithParams('/home');
+              } else {
+                navigateWithParams('/restaurant-selection');
+              }
+            }
+          } catch (err) {
+            console.error('[AuthWrapper] Role redirect error:', err);
+            // Fallback to customer default if check fails
+            navigateWithParams('/restaurant-selection');
+          }
+        };
+
+        checkRoleAndRedirect();
         return;
       }
 
@@ -79,11 +116,18 @@ export default function AuthWrapper({ children, publicOnly = false }) {
       }
 
       if (!user) {
+        if (publicOnly) {
+          stopChecking();
+          return;
+        }
+
         const loginPath = onAdminOrRestaurant
           ? '/login'
           : pathIsAdminOrRestaurant
             ? (location.pathname.startsWith('/admin') ? '/admin/login' : '/restaurant/login')
             : '/login';
+
+        console.log('[AuthWrapper] Redirecting to login:', loginPath);
         navigateWithParams(loginPath);
         stopChecking();
         return;

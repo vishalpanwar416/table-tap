@@ -182,6 +182,43 @@ export const authService = {
   },
 
   /**
+   * Send an OTP to a phone number
+   * @param {string} phone - The phone number (e.g. +91XXXXXXXXXX)
+   * @returns {Promise<Object>} The response data
+   */
+  signInWithPhone: async (phone) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOtp({
+        phone: phone.replace(/\s/g, ''),
+      });
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Verify an OTP for a phone number
+   * @param {string} phone - The phone number
+   * @param {string} token - The OTP code
+   * @returns {Promise<Object>} Auth session data
+   */
+  verifyOtp: async (phone, token) => {
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        phone: phone.replace(/\s/g, ''),
+        token,
+        type: 'sms',
+      });
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
    * Sign up with Google
    * @param {string} [redirectTo='/home'] - Redirect URL after auth
    * @returns {Promise<Object>} Auth data

@@ -108,6 +108,12 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
     path: '/admin'
   };
 
+  const ownerOption = {
+    name: 'Owner Dashboard',
+    icon: <Crown className="w-6 h-6" />,
+    path: '/owner'
+  };
+
   // Smooth slide-only animation (right to left), no spring
   const slideVariants = {
     hidden: { x: '100%' },
@@ -133,8 +139,8 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
   };
 
   const handleNavigation = React.useCallback((path) => {
-    // Handle cross-app navigation (Admin or Restaurant dashboard)
-    if (path.startsWith('/admin') || path.startsWith('/restaurant')) {
+    // Handle cross-app navigation (Admin, Restaurant, or Owner dashboard)
+    if (path.startsWith('/admin') || path.startsWith('/restaurant') || path.startsWith('/owner')) {
       // Treat localhost and Vercel preview deployments as "dev" environments for path-based routing
       const isDev = window.location.hostname === 'localhost' ||
         window.location.hostname === '127.0.0.1' ||
@@ -145,7 +151,11 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
         window.location.href = path;
       } else {
         // In production custom domain, switch subdomains
-        const newSubdomain = path.startsWith('/admin') ? 'admin' : 'restaurant';
+        let newSubdomain = 'app';
+        if (path.startsWith('/admin')) newSubdomain = 'admin';
+        else if (path.startsWith('/owner')) newSubdomain = 'owner';
+        else if (path.startsWith('/restaurant')) newSubdomain = 'restaurant';
+
         const hostParts = window.location.hostname.split('.');
 
         // Assuming format [subdomain, domain, tld] e.g., app.table-tap.in
@@ -364,13 +374,13 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
                     {isAuthenticated && userData.profile_role === 'owner' && (
                       <div>
                         <button
-                          onClick={() => handleNavigation(managerOption.path)}
+                          onClick={() => handleNavigation(ownerOption.path)}
                           className="w-full py-3 px-6 flex items-center text-left hover:bg-white/10 transition-all duration-200 group"
                         >
                           <div className="bg-gradient-to-r from-amber-500 to-yellow-600 backdrop-blur-md rounded-full p-3 mr-4 group-hover:from-amber-600 group-hover:to-yellow-700 transition-all border border-amber-400/30 shadow-xl">
                             <Crown className="w-5 h-5 text-white" />
                           </div>
-                          <span className="text-lg text-white font-medium drop-shadow-sm">Owner Dashboard</span>
+                          <span className="text-lg text-white font-medium drop-shadow-sm">{ownerOption.name}</span>
                         </button>
                       </div>
                     )}

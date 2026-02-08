@@ -115,154 +115,7 @@ export const getRestaurantOrders = async (restaurantId) => {
   }
 };
 
-// Update order status
-export const updateOrderStatus = async (orderId, status, cancelReason = null, userData = null) => {
-  const updates = { status };
-  if (cancelReason) {
-    updates.cancel_reason = cancelReason;
-  }
-
-  const { data, error } = await supabase
-    .from('orders')
-    .update(updates)
-    .eq('id', orderId)
-    .select('*');
-
-  if (error) throw error;
-  const updatedOrder = data[0];
-
-  // Auto-process refund when order is rejected and payment was completed
-  let refundResult = null;
-  if (status === 'rejected' && updatedOrder) {
-    if (updatedOrder.payment_status === 'completed' && updatedOrder.razorpay_payment_id) {
-      console.log('Processing automatic refund for rejected order:', updatedOrder.id);
-      refundResult = await processRefund({
-        ...updatedOrder,
-        cancel_reason: cancelReason || 'Order rejected by restaurant',
-      });
-
-      if (refundResult.success) {
-        console.log('Refund processed successfully:', refundResult.refund);
-      } else {
-        console.error('Refund processing failed:', refundResult.error);
-      }
-    } else {
-      console.log('Skipping refund - payment not completed or no payment ID:', {
-        payment_status: updatedOrder.payment_status,
-        has_payment_id: !!updatedOrder.razorpay_payment_id,
-      });
-    }
-  }
-
-  if (userData && updatedOrder) {
-    const activityDetails = {
-      old_status: null,
-      new_status: status,
-      cancel_reason: cancelReason
-    };
-
-    // Add refund info to activity log if refund was processed
-    if (refundResult) {
-      activityDetails.refund_processed = refundResult.success;
-      if (refundResult.refund) {
-        activityDetails.refund_id = refundResult.refund.id;
-        activityDetails.refund_amount = refundResult.refund.amount;
-      }
-      if (refundResult.error) {
-        activityDetails.refund_error = refundResult.error;
-      }
-    }
-
-    await logActivity({
-      restaurant_id: updatedOrder.restaurant_id,
-      user_id: userData.id,
-      user_name: userData.user_name || userData.full_name || 'Staff',
-      user_role: userData.role || userData.profile_role || 'staff',
-      action_type: 'order',
-      action_name: 'status_change',
-      target_id: updatedOrder.id,
-      target_name: `Order #${updatedOrder.order_number || updatedOrder.id.slice(0, 8)}`,
-      details: activityDetails,
-      description: `Order status changed to ${status}${cancelReason ? ' (Reason: ' + cancelReason + ')' : ''}${refundResult?.success ? ' - Refund processed' : ''}`
-    });
-  }
-
-  // Helper function call to notify user (with refund info if applicable)
-  await createOrderStatusNotification(updatedOrder, refundResult);
-
-  // Auto email billing: send emails on acceptance, rejection, or completion when restaurant has it enabled
-  const customerEmail = updatedOrder.customer_email;
-  const autoEmailResult = { sent: false, to: null, error: null, skippedReason: null };
-
-  if (!customerEmail) {
-    autoEmailResult.skippedReason = 'no_customer_email';
-    if (['preparing', 'rejected', 'completed'].includes(status)) {
-      console.log('[Auto email] Skipped: order has no customer_email. Add email in order details for auto emails.');
-    }
-  } else {
-    let restaurant = null;
-    try {
-      const { data: restData } = await supabase
-        .from('restaurants')
-        .select('*')
-        .eq('id', updatedOrder.restaurant_id)
-        .maybeSingle();
-      restaurant = restData;
-    } catch (e) {
-      console.warn('[Auto email] Could not fetch restaurant:', e);
-      autoEmailResult.skippedReason = 'restaurant_fetch_error';
-    }
-
-    const onlineBillingEnabled = restaurant?.billing_features_enabled !== false && restaurant?.online_bill_enabled !== false;
-    if (!restaurant) {
-      autoEmailResult.skippedReason = 'restaurant_not_found';
-    } else if (!restaurant.auto_email_billing_enabled) {
-      autoEmailResult.skippedReason = 'auto_email_disabled';
-      if (['preparing', 'rejected', 'completed'].includes(status)) {
-        console.log('[Auto email] Skipped: enable "Auto email billing" in Settings → Online Bill Delivery.');
-      }
-    } else if (!onlineBillingEnabled) {
-      autoEmailResult.skippedReason = 'online_billing_disabled';
-      if (['preparing', 'rejected', 'completed'].includes(status)) {
-        console.log('[Auto email] Skipped: enable "Online Bill" and ensure admin has billing enabled for this restaurant.');
-      }
-    } else if (['preparing', 'rejected', 'completed'].includes(status)) {
-      try {
-        if (status === 'preparing') {
-          const emailResult = await sendOrderStatusEmail(updatedOrder, restaurant, 'accepted');
-          if (emailResult?.success) {
-            autoEmailResult.sent = true;
-            autoEmailResult.to = customerEmail;
-          } else if (emailResult?.error) {
-            autoEmailResult.error = emailResult.error;
-          }
-        } else if (status === 'rejected') {
-          const emailResult = await sendOrderStatusEmail(updatedOrder, restaurant, 'rejected');
-          if (emailResult?.success) {
-            autoEmailResult.sent = true;
-            autoEmailResult.to = customerEmail;
-          } else if (emailResult?.error) {
-            autoEmailResult.error = emailResult.error;
-          }
-        } else if (status === 'completed') {
-          try {
-            await sendBillToCustomer(updatedOrder, restaurant);
-            autoEmailResult.sent = true;
-            autoEmailResult.to = customerEmail;
-          } catch (billErr) {
-            autoEmailResult.error = billErr.message || String(billErr);
-          }
-        }
-      } catch (emailErr) {
-        console.warn('[Auto email] Failed to send:', emailErr);
-        autoEmailResult.error = emailErr.message || String(emailErr);
-      }
-    }
-  }
-
-  updatedOrder._autoEmailResult = autoEmailResult;
-  return updatedOrder;
-};
+// Update order status implementation moved to bottom of file with offline support
 
 // Helper function to create user notification for order status updates
 const createOrderStatusNotification = async (order, refundResult = null) => {
@@ -553,9 +406,43 @@ export const getStatusCounts = (orders) => {
   return counts;
 };
 
+import { offlineStorage } from '../../../shared/utils/offlineStorage';
+
+// Sync function to replay pending actions when online
+export const syncPendingActions = async () => {
+  if (!navigator.onLine) return;
+
+  const pendingActions = await offlineStorage.getPendingActions();
+  if (pendingActions.length === 0) return;
+
+  console.log(`Syncing ${pendingActions.length} pending offline actions...`);
+
+  const processedIds = [];
+
+  for (const action of pendingActions) {
+    try {
+      if (action.type === 'UPDATE_STATUS') {
+        const { orderId, status, cancelReason, userData } = action.payload;
+        // Pass skipQueue: true to prevent re-queuing if sync fails
+        await updateOrderStatus(orderId, status, cancelReason, userData, { skipQueue: true });
+        processedIds.push(action.id);
+      }
+    } catch (error) {
+      console.error('Failed to sync action:', action, error);
+      // Optional: Logic to retry later or move to 'failed_actions' store
+    }
+  }
+
+  if (processedIds.length > 0) {
+    await offlineStorage.clearPendingActions(processedIds);
+    console.log('Sync complete');
+  }
+};
+
 // Fetch all orders with optional restaurant filter and limit
 export const fetchAllOrders = async (restaurantId = null, limit = 200) => {
   try {
+    // Try network fetch first
     let query = supabase
       .from('orders')
       .select('*');
@@ -569,166 +456,339 @@ export const fetchAllOrders = async (restaurantId = null, limit = 200) => {
       .limit(limit);
 
     if (error) throw error;
+
+    // Cache successful response
+    if (data) {
+      await offlineStorage.saveOrders(data);
+    }
+
     return data || [];
   } catch (error) {
-    console.error('Error fetching all orders:', error);
+    console.warn('Network request failed, falling back to offline cache:', error);
+    // Fallback to IndexedDB
+    try {
+      const cachedOrders = await offlineStorage.getOrders();
+      // Apply client-side filters since we can't query DB
+      let filtered = cachedOrders;
+      if (restaurantId) {
+        filtered = filtered.filter(o => o.restaurant_id === restaurantId);
+      }
+      return filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, limit);
+    } catch (dbError) {
+      console.error('Offline cache fetch failed:', dbError);
+      throw error; // Throw original network error if cache fails too
+    }
+  }
+};
+
+// Enhanced updateOrderStatus with offline support
+export const updateOrderStatus = async (orderId, newStatus, cancelReason = null, userData = null, options = {}) => {
+  const status = newStatus; // Alias for clarity
+  try {
+    const updates = { status };
+    if (cancelReason) {
+      updates.cancel_reason = cancelReason;
+    }
+
+    const { data, error } = await supabase
+      .from('orders')
+      .update(updates)
+      .eq('id', orderId)
+      .select('*');
+
+    if (error) throw error;
+    const updatedOrder = data[0];
+
+    // Update cache with new status
+    await offlineStorage.updateOrder(updatedOrder);
+
+    // Auto-process refund when order is rejected and payment was completed
+    let refundResult = null;
+    if (status === 'rejected' && updatedOrder) {
+      if (updatedOrder.payment_status === 'completed' && updatedOrder.razorpay_payment_id) {
+        console.log('Processing automatic refund for rejected order:', updatedOrder.id);
+        refundResult = await processRefund({
+          ...updatedOrder,
+          cancel_reason: cancelReason || 'Order rejected by restaurant',
+        });
+
+        if (refundResult.success) {
+          console.log('Refund processed successfully:', refundResult.refund);
+        } else {
+          console.error('Refund processing failed:', refundResult.error);
+        }
+      } else {
+        console.log('Skipping refund - payment not completed or no payment ID:', {
+          payment_status: updatedOrder.payment_status,
+          has_payment_id: !!updatedOrder.razorpay_payment_id,
+        });
+      }
+    }
+
+    if (userData && updatedOrder) {
+      const activityDetails = {
+        old_status: null,
+        new_status: status,
+        cancel_reason: cancelReason
+      };
+
+      // Add refund info to activity log if refund was processed
+      if (refundResult) {
+        activityDetails.refund_processed = refundResult.success;
+        if (refundResult.refund) {
+          activityDetails.refund_id = refundResult.refund.id;
+          activityDetails.refund_amount = refundResult.refund.amount;
+        }
+        if (refundResult.error) {
+          activityDetails.refund_error = refundResult.error;
+        }
+      }
+
+      await logActivity({
+        restaurant_id: updatedOrder.restaurant_id,
+        user_id: userData.id,
+        user_name: userData.user_name || userData.full_name || 'Staff',
+        user_role: userData.role || userData.profile_role || 'staff',
+        action_type: 'order',
+        action_name: 'status_change',
+        target_id: updatedOrder.id,
+        target_name: `Order #${updatedOrder.order_number || updatedOrder.id.slice(0, 8)}`,
+        details: activityDetails,
+        description: `Order status changed to ${status}${cancelReason ? ' (Reason: ' + cancelReason + ')' : ''}${refundResult?.success ? ' - Refund processed' : ''}`
+      });
+    }
+
+    // Helper function call to notify user (with refund info if applicable)
+    await createOrderStatusNotification(updatedOrder, refundResult);
+
+    // Auto email billing logic
+    const customerEmail = updatedOrder.customer_email;
+    const autoEmailResult = { sent: false, to: null, error: null, skippedReason: null };
+
+    if (!customerEmail) {
+      autoEmailResult.skippedReason = 'no_customer_email';
+      if (['preparing', 'rejected', 'completed'].includes(status)) {
+        console.log('[Auto email] Skipped: order has no customer_email. Add email in order details for auto emails.');
+      }
+    } else {
+      let restaurant = null;
+      try {
+        const { data: restData } = await supabase
+          .from('restaurants')
+          .select('*')
+          .eq('id', updatedOrder.restaurant_id)
+          .maybeSingle();
+        restaurant = restData;
+      } catch (e) {
+        console.warn('[Auto email] Could not fetch restaurant:', e);
+        autoEmailResult.skippedReason = 'restaurant_fetch_error';
+      }
+
+      const onlineBillingEnabled = restaurant?.billing_features_enabled !== false && restaurant?.online_bill_enabled !== false;
+      if (!restaurant) {
+        autoEmailResult.skippedReason = 'restaurant_not_found';
+      } else if (!restaurant.auto_email_billing_enabled) {
+        autoEmailResult.skippedReason = 'auto_email_disabled';
+        if (['preparing', 'rejected', 'completed'].includes(status)) {
+          console.log('[Auto email] Skipped: enable "Auto email billing" in Settings → Online Bill Delivery.');
+        }
+      } else if (!onlineBillingEnabled) {
+        autoEmailResult.skippedReason = 'online_billing_disabled';
+        if (['preparing', 'rejected', 'completed'].includes(status)) {
+          console.log('[Auto email] Skipped: enable "Online Bill" and ensure admin has billing enabled for this restaurant.');
+        }
+      } else if (['preparing', 'rejected', 'completed'].includes(status)) {
+        try {
+          if (status === 'preparing') {
+            const emailResult = await sendOrderStatusEmail(updatedOrder, restaurant, 'accepted');
+            if (emailResult?.success) {
+              autoEmailResult.sent = true;
+              autoEmailResult.to = customerEmail;
+            } else if (emailResult?.error) {
+              autoEmailResult.error = emailResult.error;
+            }
+          } else if (status === 'rejected') {
+            const emailResult = await sendOrderStatusEmail(updatedOrder, restaurant, 'rejected');
+            if (emailResult?.success) {
+              autoEmailResult.sent = true;
+              autoEmailResult.to = customerEmail;
+            } else if (emailResult?.error) {
+              autoEmailResult.error = emailResult.error;
+            }
+          } else if (status === 'completed') {
+            try {
+              await sendBillToCustomer(updatedOrder, restaurant);
+              autoEmailResult.sent = true;
+              autoEmailResult.to = customerEmail;
+            } catch (billErr) {
+              autoEmailResult.error = billErr.message || String(billErr);
+            }
+          }
+        } catch (emailErr) {
+          console.warn('[Auto email] Failed to send:', emailErr);
+          autoEmailResult.error = emailErr.message || String(emailErr);
+        }
+      }
+    }
+
+    updatedOrder._autoEmailResult = autoEmailResult;
+    return updatedOrder;
+
+  } catch (error) {
+    // OFFLINE HANDLING
+    console.warn('Update failed, checking if offline:', error);
+
+    // Check if it's a network error (Supabase errors vary, but typically connection issues throw specific errors or simple fetch failures)
+    // For simplicity, if we have a robust offline storage, we queue it.
+
+    if (options.skipQueue) {
+      console.warn('Skipping offline queue for sync action');
+      throw error;
+    }
+
+    try {
+      // Fetch the original order from cache to construct the optimistic update
+      const originalOrder = await offlineStorage.getOrder(orderId);
+
+      if (originalOrder) {
+        const optimisticOrder = {
+          ...originalOrder,
+          status: status,
+          cancel_reason: cancelReason || originalOrder.cancel_reason,
+          updated_at: new Date().toISOString()
+        };
+
+        // Save optimistic update to IndexedDB
+        await offlineStorage.updateOrder(optimisticOrder);
+
+        // Queue the action for later sync
+        await offlineStorage.queueAction('UPDATE_STATUS', { orderId, status, cancelReason, userData });
+
+        console.log('Action queued for offline sync');
+        return optimisticOrder; // Return optimistic data to UI
+      }
+    } catch (offlineErr) {
+      console.error('Offline optimistic update failed:', offlineErr);
+    }
+
     throw error;
   }
 };
 
-// Subscribe to all order changes with better error handling
+// --- Missing Helper Functions Restored ---
+
+// Subscribe to all changes (INSERT, UPDATE, DELETE) for orders
 export const subscribeToAllOrderChanges = (restaurantId, callback) => {
-  if (!restaurantId) {
-    console.warn('No restaurantId provided for real-time subscription');
-    return null;
+  return supabase
+    .channel(`all-restaurant-orders-${restaurantId}`)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'orders',
+      filter: `restaurant_id=eq.${restaurantId}`
+    }, payload => {
+      callback(payload);
+    })
+    .subscribe();
+};
+
+// Unsubscribe helper
+export const unsubscribeFromOrderChanges = (subscription) => {
+  if (subscription) {
+    supabase.removeChannel(subscription);
+  }
+};
+
+// Filter orders helper
+export const filterOrders = (orders, { statusFilter, searchQuery }) => {
+  let result = orders;
+
+  // Status Filter
+  if (statusFilter !== 'all') {
+    result = result.filter(o => o.status === statusFilter);
   }
 
-  try {
-    const channel = supabase
-      .channel(`orders-${restaurantId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'orders',
-          filter: `restaurant_id=eq.${restaurantId}`
-        },
-        (payload) => {
-          console.log('Real-time order update:', payload);
-          callback(payload);
-        }
-      )
-      .subscribe((status) => {
-        console.log('Subscription status:', status);
-        if (status === 'SUBSCRIBED') {
-          console.log('Successfully subscribed to order changes');
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('Channel error in real-time subscription');
-        }
-      });
-
-    return channel;
-  } catch (error) {
-    console.error('Error setting up real-time subscription:', error);
-    return null;
+  // Search Filter
+  if (searchQuery) {
+    const query = searchQuery.toLowerCase();
+    result = result.filter(o =>
+      (o.order_number || '').toLowerCase().includes(query) ||
+      (o.customer_name || '').toLowerCase().includes(query) ||
+      (o.customer_phone || '').includes(query) ||
+      (o.id || '').toLowerCase().includes(query) ||
+      (o.table_number && String(o.table_number).toLowerCase().includes(query))
+    );
   }
-}
 
-// Unsubscribe from a channel with better error handling
-export function unsubscribeFromOrderChanges(channel) {
-  if (channel) {
-    try {
-      supabase.removeChannel(channel);
-      console.log('Successfully unsubscribed from order changes');
-    } catch (error) {
-      console.error('Error unsubscribing from order changes:', error);
+  return result;
+};
+
+// Sort orders helper
+export const sortOrders = (orders, sortBy, sortDirection) => {
+  return [...orders].sort((a, b) => { // Create a copy to avoid mutating original
+    let valA, valB;
+
+    if (sortBy === 'total') {
+      valA = parseFloat(a.total || 0);
+      valB = parseFloat(b.total || 0);
+    } else if (sortBy === 'created_at') {
+      valA = new Date(a.created_at || 0).getTime();
+      valB = new Date(b.created_at || 0).getTime();
+    } else {
+      // Default string comparison
+      valA = a[sortBy];
+      valB = b[sortBy];
     }
-  }
-}
 
-// Handle order download with all options
+    if (valA === valB) return 0;
+
+    if (sortDirection === 'asc') {
+      return valA > valB ? 1 : -1;
+    } else {
+      return valA < valB ? 1 : -1;
+    }
+  });
+};
+
+// Get valid next status options
+export const getNextStatusOptions = (currentStatus) => {
+  const flow = {
+    pending: ['preparing', 'rejected'],
+    preparing: ['ready'],
+    ready: ['completed'],
+    completed: [],
+    rejected: [],
+    cancelled: []
+  };
+  return flow[currentStatus] || [];
+};
+
+// Handle download preparation
 export const handleOrderDownload = (orders, period, status = null) => {
-  let filteredOrders = [...orders];
+  let filtered = orders;
 
-  if (status) {
-    filteredOrders = filteredOrders.filter(order => order.status === status);
-  } else if (period) {
-    filteredOrders = getOrdersByPeriod(filteredOrders, period);
+  // Apply period filter if specified
+  if (period && period !== 'all') {
+    filtered = getOrdersByPeriod(orders, period);
   }
 
-  const formattedData = formatOrdersForExcel(filteredOrders);
-  const dataWithTotal = addTotalRow(formattedData);
+  // Apply status filter if specified
+  if (status) {
+    filtered = filtered.filter(o => o.status === status);
+  }
+
+  const formatted = formatOrdersForExcel(filtered);
+  const dataWithTotal = addTotalRow(formatted);
+
+  let sheetName = 'Orders';
+  if (status) {
+    sheetName = status.charAt(0).toUpperCase() + status.slice(1);
+  } else if (period) {
+    sheetName = period.charAt(0).toUpperCase() + period.slice(1);
+  }
 
   return {
     data: dataWithTotal,
-    sheetName: status
-      ? `${status.charAt(0).toUpperCase() + status.slice(1)} Orders`
-      : period
-        ? `${period.charAt(0).toUpperCase() + period.slice(1)} Orders`
-        : 'All Orders'
+    sheetName
   };
-};
-
-// Filter orders by status and search query
-export const filterOrders = (orders, { statusFilter = 'all', searchQuery = '' } = {}) => {
-  const searchLower = (searchQuery || '').toLowerCase();
-  return orders.filter(order => {
-    if (statusFilter !== 'all' && order.status !== statusFilter) return false;
-    if (searchLower) {
-      return (
-        (order.id && order.id.toLowerCase().includes(searchLower)) ||
-        (order.customer_name && order.customer_name.toLowerCase().includes(searchLower)) ||
-        (order.customer_phone && order.customer_phone.toLowerCase().includes(searchLower)) ||
-        (order.customer_email && order.customer_email.toLowerCase().includes(searchLower)) ||
-        (order.table_number && order.table_number.toString().includes(searchLower)) ||
-        (order.items && order.items.some(item => item.name && item.name.toLowerCase().includes(searchLower)))
-      );
-    }
-    return true;
-  });
-};
-
-// Sort orders by a given field and direction
-export const sortOrders = (orders, sortBy = 'created_at', sortDirection = 'desc') => {
-  return [...orders].sort((a, b) => {
-    if (sortBy === 'created_at') {
-      const dateA = new Date(a.created_at || 0);
-      const dateB = new Date(b.created_at || 0);
-      return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
-    }
-    if (sortBy === 'total') {
-      const totalA = a.total || 0;
-      const totalB = b.total || 0;
-      return sortDirection === 'asc' ? totalA - totalB : totalB - totalA;
-    }
-    if (sortBy === 'status') {
-      const statusA = STATUS_ORDER[a.status] ?? 99;
-      const statusB = STATUS_ORDER[b.status] ?? 99;
-      return sortDirection === 'asc' ? statusA - statusB : statusB - statusA;
-    }
-    return 0;
-  });
-};
-
-// Get next status options based on current status
-export const getNextStatusOptions = (currentStatus) => {
-  const statusFlow = {
-    pending: ['preparing', 'rejected'],
-    preparing: ['ready', 'rejected'],
-    ready: ['completed'],
-    // No further actions for rejected or completed
-  };
-  return statusFlow[currentStatus] || [];
-};
-
-export const fetchTopOrderedItemsLastMonth = async () => {
-  // Adjust endpoint as per your backend
-  const now = new Date();
-  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-  const response = await axios.get('/api/orders', {
-    params: {
-      startDate: lastMonth.toISOString(),
-      endDate: now.toISOString(),
-    }
-  });
-
-  const orders = response.data; // Array of orders
-
-  // Aggregate item counts
-  const itemMap = {};
-  orders.forEach(order => {
-    order.items.forEach(item => {
-      if (!itemMap[item.id]) {
-        itemMap[item.id] = { ...item, orderCount: 0 };
-      }
-      itemMap[item.id].orderCount += item.quantity || 1;
-    });
-  });
-
-  // Convert to array and sort
-  const sortedItems = Object.values(itemMap).sort((a, b) => b.orderCount - a.orderCount);
-
-  // Return top 10 (or any number you want)
-  return sortedItems.slice(0, 10);
 };

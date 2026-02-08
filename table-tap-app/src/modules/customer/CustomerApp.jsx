@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { CartProvider } from '../shared/config/CartContent';
 import { LikesProvider } from '../shared/config/LikesContent';
 import { FoodDataProvider } from '../shared/context/FoodDataContext';
@@ -11,8 +11,11 @@ import { hasValidRestaurantSelection } from '../shared/utils/restaurantCheck';
 // Opening loads eagerly so "/" never shows a black loading screen
 import Opening from '../shared/components/pages/opening';
 
+import { authService } from '../shared/api/authService';
+
 /** On "/": show Opening (splash) only when not logged in; if logged in, redirect to /home or /restaurant-selection. */
 function OpeningOrRedirect() {
+    const navigate = useNavigate();
     const location = useLocation();
     const { user, loading: authLoading } = useAuth();
     const pathname = (location.pathname || '/').replace(/\/$/, '') || '/';
@@ -25,13 +28,34 @@ function OpeningOrRedirect() {
         return !h.startsWith('admin.') && !h.startsWith('restaurant.') && !h.startsWith('manager.');
     };
 
+    React.useEffect(() => {
+        if (!authLoading && user && pathname === '/' && isCustomerOrigin()) {
+            const checkRoleAndRedirect = async () => {
+                try {
+                    const profile = await authService.getProfile(user.id);
+                    const role = profile?.profile_role || profile?.role || 'customer';
+                    const PORTAL_ROLES = ['admin', 'owner', 'manager', 'captain', 'chef', 'staff', 'waiter', 'cashier'];
+
+                    if (PORTAL_ROLES.includes(role)) {
+                        const redirect = (role === 'admin') ? '/admin' : '/restaurant';
+                        navigate(redirect + search, { replace: true });
+                    } else {
+                        const to = hasValidRestaurantSelection() ? '/home' : '/restaurant-selection';
+                        navigate(to + search, { replace: true });
+                    }
+                } catch (err) {
+                    console.error('Role check failed:', err);
+                    navigate('/restaurant-selection' + search, { replace: true });
+                }
+            };
+            checkRoleAndRedirect();
+        }
+    }, [user, authLoading, pathname, navigate, search]);
+
     if (pathname !== '/') return <Opening />;
     if (!isCustomerOrigin()) return <Opening />;
-    if (authLoading) return <Opening />;
-    if (user) {
-        const to = hasValidRestaurantSelection() ? '/home' : '/restaurant-selection';
-        return <Navigate to={to + search} replace />;
-    }
+    if (authLoading || (user && pathname === '/')) return <Opening />;
+
     return <Opening />;
 }
 // Lazy load other pages for better performance
@@ -56,6 +80,8 @@ const OrderTracking = lazy(() => import('./pages/OrderTracking'));
 const OrderConfirmationPage = lazy(() => import('./pages/OrderConfirmationPage'));
 const ContactUsPage = lazy(() => import('./pages/ContactUsPage'));
 const HelpFAQPage = lazy(() => import('./pages/HelpFAQPage'));
+const TermsOfService = lazy(() => import('../shared/components/legal/TermsOfService'));
+const PrivacyPolicy = lazy(() => import('../shared/components/legal/PrivacyPolicy'));
 const RequireAuth = lazy(() => import('../shared/components/auth/RequireAuth'));
 
 // Use unified loading component
@@ -63,7 +89,7 @@ import LoadingScreen from '../shared/components/LoadingScreen';
 const LoadingSpinner = () => <LoadingScreen message="Loading..." />;
 
 /** Auth paths that must never be redirected to /. Fallback only sends unknown paths to /. */
-const AUTH_PATHS = ['/login', '/signup', '/complete-profile', '/forgot-password', '/reset-password', '/auth-callback', '/restaurant-selection', '/onboarding'];
+const AUTH_PATHS = ['/login', '/signup', '/complete-profile', '/forgot-password', '/reset-password', '/auth-callback', '/restaurant-selection', '/onboarding', '/terms', '/privacy'];
 
 const FallbackRedirect = () => {
     const location = useLocation();
@@ -79,6 +105,8 @@ const FallbackRedirect = () => {
         if (pathname === '/reset-password' || pathname.startsWith('/reset-password')) return <ResetPassword />;
         if (pathname === '/auth-callback' || pathname.startsWith('/auth-callback')) return <AuthCallback />;
         if (pathname === '/restaurant-selection' || pathname.startsWith('/restaurant-selection')) return <RestaurantSelectionPage />;
+        if (pathname === '/terms' || pathname.startsWith('/terms')) return <TermsOfService />;
+        if (pathname === '/privacy' || pathname.startsWith('/privacy')) return <PrivacyPolicy />;
         return <Navigate to={pathname} replace />;
     }
     return <Navigate to="/" replace />;
@@ -107,6 +135,8 @@ const CustomerApp = () => {
                                 <Route path="/auth-callback/*" element={<AuthCallback />} />
                                 <Route path="/restaurant-selection" element={<RestaurantSelectionPage />} />
                                 <Route path="/restaurant-selection/*" element={<RestaurantSelectionPage />} />
+                                <Route path="/terms" element={<TermsOfService />} />
+                                <Route path="/privacy" element={<PrivacyPolicy />} />
 
                                 {/* Protected Customer Routes */}
                                 <Route path="/home" element={

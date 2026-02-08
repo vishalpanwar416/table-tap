@@ -14,7 +14,8 @@ import {
   ShoppingBag,
   Building2,
   Map,
-  Search
+  Search,
+  DollarSign
 } from 'lucide-react';
 import tableTapLogo from '../../../../assets/icons/logott.png';
 import ManagerNotificationsToast from './ManagerNotificationsToast';
@@ -37,7 +38,8 @@ const MobileNav = ({ showMobileNav, setShowMobileNav, activeTab, setActiveTab, m
       'Settings': Settings,
       'ShoppingBag': ShoppingBag,
       'Building2': Building2,
-      'Map': Map
+      'Map': Map,
+      'DollarSign': DollarSign
     };
 
     const IconComponent = icons[iconName];

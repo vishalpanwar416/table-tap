@@ -93,17 +93,28 @@ export default function LoginPage() {
       sessionManager.updateActivity();
 
       // Check if profile is complete before deciding where to go
-      const isComplete = await authService.isProfileComplete(authUser.id);
+      const profile = await authService.getProfile(authUser.id);
+      const isComplete = Boolean(profile?.mobile_number && profile?.date_of_birth);
+
       if (!isComplete) {
         navigate('/complete-profile');
         return;
       }
 
-      // Check if user has restaurant selection after login
+      // Role-based redirection
+      const role = profile?.profile_role || profile?.role || 'customer';
+      const PORTAL_ROLES = ['admin', 'owner', 'manager', 'captain', 'chef', 'staff', 'waiter', 'cashier'];
+
+      if (PORTAL_ROLES.includes(role)) {
+        const redirect = (role === 'admin') ? '/admin' : '/restaurant';
+        navigate(redirect, { replace: true });
+        return;
+      }
+
+      // Customer redirection
       if (hasValidRestaurantSelection()) {
         navigate('/home');
       } else {
-        // Preserve URL parameters when redirecting to restaurant selection
         const params = urlRestaurant && urlTable ? `?restaurant=${urlRestaurant}&table=${urlTable}` : '';
         navigate(`/restaurant-selection${params}`);
       }

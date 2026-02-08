@@ -19,7 +19,8 @@ import {
   Camera,
   ChevronLeft,
   ChevronRight,
-  Map
+  Map,
+  DollarSign
 } from 'lucide-react';
 import { supabase } from '../../../shared/supabase';
 import tableTapLogo from '../../../../assets/icons/logott.png'; // Adjust path if needed
@@ -71,6 +72,8 @@ const Sidebar = ({
         return <ShoppingBag className="w-5 h-5" />;
       case 'Map':
         return <Map className="w-5 h-5" />;
+      case 'DollarSign':
+        return <DollarSign className="w-5 h-5" />;
       default:
         return null;
     }

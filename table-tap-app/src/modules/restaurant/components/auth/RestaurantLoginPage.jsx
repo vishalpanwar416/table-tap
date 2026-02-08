@@ -26,7 +26,8 @@ export default function RestaurantLoginPage() {
                 if (user) {
                     // Check if user has restaurant role
                     const profile = await authService.getProfile(user.id);
-                    if (profile && ALLOWED_ROLES.includes(profile.role)) {
+                    const role = profile?.profile_role || profile?.role;
+                    if (profile && ALLOWED_ROLES.includes(role)) {
                         navigate('/dashboard');
                     }
                 }
@@ -47,8 +48,9 @@ export default function RestaurantLoginPage() {
 
             // Get user profile to check role
             const profile = await authService.getProfile(authUser.id);
+            const role = profile?.profile_role || profile?.role;
 
-            if (profile && ALLOWED_ROLES.includes(profile.role)) {
+            if (profile && ALLOWED_ROLES.includes(role)) {
                 navigate('/dashboard');
             } else {
                 setError('You do not have access to the restaurant dashboard. Please contact your administrator.');
@@ -310,7 +312,7 @@ export default function RestaurantLoginPage() {
                         <p className="text-gray-600 text-base pb-8">
                             Ready to grow your business?{' '}
                             <a
-                                href="https://tabletap.in/register"
+                                href="https://table-tap.in/#pricing"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-orange-500 font-semibold hover:text-orange-600"
