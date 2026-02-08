@@ -291,7 +291,19 @@ export const callAIService = async (userQuestion, analyticsData, chatHistory = [
       }
     });
 
-    if (aiError) throw aiError;
+    if (aiError) {
+      // Extract the actual error message from the response body if available
+      let detailedError = aiError.message;
+      try {
+        const errorContext = await aiError.context?.json();
+        if (errorContext && errorContext.error) {
+          detailedError = errorContext.error;
+        }
+      } catch (e) {
+        // Fallback to generic message if JSON parsing fails
+      }
+      throw new Error(detailedError);
+    }
 
     // Generate visualization based on the question and data (Client side logic remains)
     const visualization = generateVisualization(userQuestion, analyticsData);
@@ -303,7 +315,8 @@ export const callAIService = async (userQuestion, analyticsData, chatHistory = [
 
   } catch (error) {
     console.error('AI Service Error:', error);
-    throw new Error('Failed to get AI response: ' + error.message);
+    // Keep the error message clean for the UI
+    throw error;
   }
 };
 

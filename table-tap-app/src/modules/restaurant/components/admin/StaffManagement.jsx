@@ -256,7 +256,7 @@ const StaffManagement = ({
       {/* Overview card: title, subtitle, Add Staff, and stat cards */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-amber-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
+          <div className="hidden md:block">
             <h2 className="text-xl font-bold text-gray-900">Staff</h2>
             <p className="text-sm text-gray-500 mt-0.5">Manage your restaurant team</p>
           </div>
@@ -267,7 +267,7 @@ const StaffManagement = ({
                 setIsEditing(false);
                 setFormData({ name: '', email: '', phone_number: '', role: 'captain' });
               }}
-              className="inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl hover:from-orange-600 hover:to-amber-600 shadow-md hover:shadow-lg font-semibold transition-all touch-manipulation shrink-0"
+              className="w-full sm:w-auto inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl hover:from-orange-600 hover:to-amber-600 shadow-md hover:shadow-lg font-semibold transition-all touch-manipulation shrink-0"
             >
               <Plus className="w-5 h-5 mr-2" />
               Add Staff
@@ -275,26 +275,26 @@ const StaffManagement = ({
           )}
         </div>
         <div className="p-4 sm:p-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4 border-l-4 border-l-orange-400">
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Total</p>
-              <p className="text-2xl font-bold text-gray-900 mt-0.5 tabular-nums">{stats.total}</p>
-              <p className="text-xs text-gray-500 mt-0.5">Staff members</p>
+          <div className="grid grid-cols-4 gap-1.5 md:gap-4">
+            <div className="min-w-0 rounded-lg md:rounded-xl border border-gray-100 bg-gray-50/50 p-1.5 md:p-4 border-l-2 md:border-l-4 border-l-orange-400">
+              <p className="text-[9px] md:text-xs font-medium text-gray-500 uppercase tracking-wide truncate">Total</p>
+              <p className="text-lg md:text-2xl font-bold text-gray-900 mt-0.5 tabular-nums leading-none">{stats.total}</p>
+              <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 truncate">Members</p>
             </div>
-            <div className="rounded-xl border border-gray-100 bg-green-50/50 p-4 border-l-4 border-l-green-500">
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Connected</p>
-              <p className="text-2xl font-bold text-gray-900 mt-0.5 tabular-nums">{stats.connected}</p>
-              <p className="text-xs text-gray-500 mt-0.5">Online</p>
+            <div className="min-w-0 rounded-lg md:rounded-xl border border-gray-100 bg-green-50/50 p-1.5 md:p-4 border-l-2 md:border-l-4 border-l-green-500">
+              <p className="text-[9px] md:text-xs font-medium text-gray-500 uppercase tracking-wide truncate">Online</p>
+              <p className="text-lg md:text-2xl font-bold text-gray-900 mt-0.5 tabular-nums leading-none">{stats.connected}</p>
+              <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 truncate">Connected</p>
             </div>
-            <div className="rounded-xl border border-gray-100 bg-amber-50/50 p-4 border-l-4 border-l-amber-500">
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Not connected</p>
-              <p className="text-2xl font-bold text-gray-900 mt-0.5 tabular-nums">{stats.notConnected}</p>
-              <p className="text-xs text-gray-500 mt-0.5">Pending link</p>
+            <div className="min-w-0 rounded-lg md:rounded-xl border border-gray-100 bg-amber-50/50 p-1.5 md:p-4 border-l-2 md:border-l-4 border-l-amber-500">
+              <p className="text-[9px] md:text-xs font-medium text-gray-500 uppercase tracking-wide truncate">Pending</p>
+              <p className="text-lg md:text-2xl font-bold text-gray-900 mt-0.5 tabular-nums leading-none">{stats.notConnected}</p>
+              <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 truncate">Not Linked</p>
             </div>
-            <div className="rounded-xl border border-gray-100 bg-blue-50/50 p-4 border-l-4 border-l-blue-400">
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Roles</p>
-              <p className="text-2xl font-bold text-gray-900 mt-0.5 tabular-nums">{Object.keys(roleConfig).length}</p>
-              <p className="text-xs text-gray-500 mt-0.5">Types</p>
+            <div className="min-w-0 rounded-lg md:rounded-xl border border-gray-100 bg-blue-50/50 p-1.5 md:p-4 border-l-2 md:border-l-4 border-l-blue-400">
+              <p className="text-[9px] md:text-xs font-medium text-gray-500 uppercase tracking-wide truncate">Roles</p>
+              <p className="text-lg md:text-2xl font-bold text-gray-900 mt-0.5 tabular-nums leading-none">{Object.keys(roleConfig).length}</p>
+              <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 truncate">Types</p>
             </div>
           </div>
         </div>
@@ -403,21 +403,19 @@ const StaffManagement = ({
       <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
         <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 bg-gray-50/50 flex flex-wrap items-center justify-between gap-3">
           <h3 className="text-base font-bold text-gray-900">Team members</h3>
-          <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
+          <div className="hidden md:flex items-center bg-gray-100 rounded-lg p-0.5">
             <button
               onClick={() => setViewMode('table')}
-              className={`flex items-center min-h-[40px] px-3 py-2 rounded-md text-sm font-medium transition-all ${
-                viewMode === 'table' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-600 hover:text-orange-600'
-              }`}
+              className={`flex items-center min-h-[40px] px-3 py-2 rounded-md text-sm font-medium transition-all ${viewMode === 'table' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-600 hover:text-orange-600'
+                }`}
             >
               <List className="w-4 h-4 mr-2" />
               Table
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={`flex items-center min-h-[40px] px-3 py-2 rounded-md text-sm font-medium transition-all ${
-                viewMode === 'grid' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-600 hover:text-orange-600'
-              }`}
+              className={`flex items-center min-h-[40px] px-3 py-2 rounded-md text-sm font-medium transition-all ${viewMode === 'grid' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-600 hover:text-orange-600'
+                }`}
             >
               <LayoutGrid className="w-4 h-4 mr-2" />
               Grid
@@ -447,134 +445,193 @@ const StaffManagement = ({
               </button>
             )}
           </div>
-        ) : viewMode === 'table' ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-100 text-sm">
-              <thead className="bg-gray-50/80 sticky top-0 z-10">
-                <tr>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Member</th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact</th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                  {(userRole === 'admin' || userRole === 'manager') && (
-                    <th className="px-4 sm:px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
-                  )}
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-50">
-                {filteredStaff.map((member) => (
-                  <tr key={member.id} className="hover:bg-orange-50/30 transition-colors">
-                    <td className="px-4 sm:px-6 py-3">
-                      <div className="flex items-center gap-3">
-                        <StaffAvatar
-                          src={member.connected && member.profiles?.avatar_url ? member.profiles.avatar_url : ''}
-                          alt={member.staff_name}
-                          size={40}
-                        />
-                        <div>
-                          <div className="font-medium text-gray-900">
-                            {member.connected && member.profiles ? member.profiles.full_name : member.staff_name}
-                            {member.user_id === currentUserId && <span className="ml-1 text-xs text-orange-600 font-medium">(You)</span>}
-                          </div>
-                          <div className="text-xs text-gray-500 flex items-center gap-1">
-                            <Mail className="w-3 h-3" />
-                            {member.staff_email}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 sm:px-6 py-3">
-                      <div className="flex items-center gap-1 text-gray-700">
-                        <Phone className="w-3.5 h-3.5 text-gray-400" />
-                        {member.staff_phone_number || '—'}
-                      </div>
-                    </td>
-                    <td className="px-4 sm:px-6 py-3">
-                      <span className={`inline-flex px-2.5 py-1 text-xs font-semibold rounded-full border ${roleConfig[member.staff_role]?.color || 'bg-gray-100 text-gray-800 border-gray-200'}`}>
-                        {member.staff_role.charAt(0).toUpperCase() + member.staff_role.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-4 sm:px-6 py-3">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full ${
-                        member.connected ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${member.connected ? 'bg-green-500' : 'bg-amber-500'}`} />
-                        {member.connected ? 'Connected' : 'Not connected'}
-                      </span>
-                    </td>
-                    {(userRole === 'admin' || userRole === 'manager') && (
-                      <td className="px-4 sm:px-6 py-3 text-right">
-                        <div className="flex justify-end gap-1">
-                          {canModifyStaff(member) && (
-                            <button onClick={() => handleEditStaff(member)} className="min-w-[36px] min-h-[36px] flex items-center justify-center p-2 text-blue-600 hover:bg-blue-50 rounded-lg" title="Edit">
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                          )}
-                          {!member.connected && (
-                            <button onClick={() => handleConnectUser(member.id, member.staff_email)} className="min-w-[36px] min-h-[36px] flex items-center justify-center p-2 text-blue-600 hover:bg-blue-50 rounded-lg" title="Connect">
-                              <UserPlus className="w-4 h-4" />
-                            </button>
-                          )}
-                          {canModifyStaff(member) && (
-                            <button onClick={() => handleRemoveStaff(member.id)} className="min-w-[36px] min-h-[36px] flex items-center justify-center p-2 text-red-600 hover:bg-red-50 rounded-lg" title="Remove">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         ) : (
-          <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filteredStaff.map((member) => (
-              <div key={member.id} className="rounded-xl border border-gray-100 bg-gray-50/30 hover:bg-orange-50/20 hover:border-orange-100 p-4 transition-all shadow-sm">
-                <div className="flex flex-col items-center text-center">
+          <>
+            {/* Mobile View: Compact Cards */}
+            <div className="md:hidden grid grid-cols-1 gap-3 p-3 bg-gray-50/30">
+              {filteredStaff.map((member) => (
+                <div key={member.id} className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl shadow-sm relative overflow-hidden">
+                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${member.connected ? 'bg-green-500' : 'bg-amber-500'}`} />
                   <StaffAvatar
                     src={member.connected && member.profiles?.avatar_url ? member.profiles.avatar_url : ''}
                     alt={member.staff_name}
-                    size={56}
+                    size={42}
                   />
-                  <div className="mt-3 font-semibold text-gray-900">
-                    {member.connected && member.profiles ? member.profiles.full_name : member.staff_name}
-                    {member.user_id === currentUserId && <span className="ml-1 text-xs text-orange-600">(You)</span>}
+                  <div className="flex-1 min-w-0 ml-1">
+                    <div className="font-semibold text-sm text-gray-900 truncate flex items-center gap-1.5">
+                      {member.connected && member.profiles ? member.profiles.full_name : member.staff_name}
+                      {member.user_id === currentUserId && <span className="text-[10px] text-orange-600 font-medium bg-orange-50 px-1.5 py-0.5 rounded-full">You</span>}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+                      <span className={`inline-flex px-1.5 py-0.5 text-[10px] font-medium rounded-md border ${roleConfig[member.staff_role]?.color || 'bg-gray-100 text-gray-800 border-gray-200'}`}>
+                        {member.staff_role.charAt(0).toUpperCase() + member.staff_role.slice(1)}
+                      </span>
+                      <span className={`text-[10px] font-medium ${member.connected ? 'text-green-600' : 'text-amber-600'}`}>
+                        {member.connected ? 'Online' : 'Pending'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-500 mt-0.5">{member.staff_email}</div>
-                  <div className="text-xs text-gray-500">{member.staff_phone_number || 'No phone'}</div>
-                  <div className="flex flex-wrap justify-center gap-1.5 mt-2">
-                    <span className={`px-2 py-0.5 text-xs font-semibold rounded-full border ${roleConfig[member.staff_role]?.color || 'bg-gray-100 text-gray-800 border-gray-200'}`}>
-                      {member.staff_role.charAt(0).toUpperCase() + member.staff_role.slice(1)}
-                    </span>
-                    <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${member.connected ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
-                      {member.connected ? 'Connected' : 'Not connected'}
-                    </span>
-                  </div>
+
                   {(userRole === 'admin' || userRole === 'manager') && (
-                    <div className="flex gap-2 mt-3">
+                    <div className="flex items-center gap-1 pl-2 border-l border-gray-100">
                       {canModifyStaff(member) && (
-                        <button onClick={() => handleEditStaff(member)} className="min-w-[36px] min-h-[36px] flex items-center justify-center p-2 text-blue-600 hover:bg-blue-50 rounded-lg" title="Edit">
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                      )}
-                      {!member.connected && (
-                        <button onClick={() => handleConnectUser(member.id, member.staff_email)} className="min-w-[36px] min-h-[36px] flex items-center justify-center p-2 text-blue-600 hover:bg-blue-50 rounded-lg" title="Connect">
-                          <UserPlus className="w-4 h-4" />
+                        <button
+                          onClick={() => handleEditStaff(member)}
+                          className="p-2 text-gray-400 hover:text-blue-600 active:bg-blue-50 rounded-lg transition-colors"
+                        >
+                          <Edit2 size={16} />
                         </button>
                       )}
                       {canModifyStaff(member) && (
-                        <button onClick={() => handleRemoveStaff(member.id)} className="min-w-[36px] min-h-[36px] flex items-center justify-center p-2 text-red-600 hover:bg-red-50 rounded-lg" title="Remove">
-                          <Trash2 className="w-4 h-4" />
+                        <button
+                          onClick={() => handleRemoveStaff(member.id)}
+                          className="p-2 text-gray-400 hover:text-red-600 active:bg-red-50 rounded-lg transition-colors"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                      {!member.connected && !canModifyStaff(member) && (
+                        <button onClick={() => handleConnectUser(member.id, member.staff_email)} className="p-2 text-blue-500 bg-blue-50 rounded-lg">
+                          <UserPlus size={16} />
                         </button>
                       )}
                     </div>
                   )}
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+
+            {/* Desktop View: Table or Grid */}
+            <div className="hidden md:block">
+              {viewMode === 'table' ? (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-100 text-sm">
+                    <thead className="bg-gray-50/80 sticky top-0 z-10">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Member</th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact</th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                        {(userRole === 'admin' || userRole === 'manager') && (
+                          <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-50">
+                      {filteredStaff.map((member) => (
+                        <tr key={member.id} className="hover:bg-orange-50/30 transition-colors">
+                          <td className="px-6 py-3">
+                            <div className="flex items-center gap-3">
+                              <StaffAvatar
+                                src={member.connected && member.profiles?.avatar_url ? member.profiles.avatar_url : ''}
+                                alt={member.staff_name}
+                                size={40}
+                              />
+                              <div>
+                                <div className="font-medium text-gray-900">
+                                  {member.connected && member.profiles ? member.profiles.full_name : member.staff_name}
+                                  {member.user_id === currentUserId && <span className="ml-1 text-xs text-orange-600 font-medium">(You)</span>}
+                                </div>
+                                <div className="text-xs text-gray-500 flex items-center gap-1">
+                                  <Mail className="w-3 h-3" />
+                                  {member.staff_email}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-3">
+                            <div className="flex items-center gap-1 text-gray-700">
+                              <Phone className="w-3.5 h-3.5 text-gray-400" />
+                              {member.staff_phone_number || '—'}
+                            </div>
+                          </td>
+                          <td className="px-6 py-3">
+                            <span className={`inline-flex px-2.5 py-1 text-xs font-semibold rounded-full border ${roleConfig[member.staff_role]?.color || 'bg-gray-100 text-gray-800 border-gray-200'}`}>
+                              {member.staff_role.charAt(0).toUpperCase() + member.staff_role.slice(1)}
+                            </span>
+                          </td>
+                          <td className="px-6 py-3">
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full ${member.connected ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${member.connected ? 'bg-green-500' : 'bg-amber-500'}`} />
+                              {member.connected ? 'Connected' : 'Not connected'}
+                            </span>
+                          </td>
+                          {(userRole === 'admin' || userRole === 'manager') && (
+                            <td className="px-6 py-3 text-right">
+                              <div className="flex justify-end gap-1">
+                                {canModifyStaff(member) && (
+                                  <button onClick={() => handleEditStaff(member)} className="min-w-[36px] min-h-[36px] flex items-center justify-center p-2 text-blue-600 hover:bg-blue-50 rounded-lg" title="Edit">
+                                    <Edit2 className="w-4 h-4" />
+                                  </button>
+                                )}
+                                {!member.connected && (
+                                  <button onClick={() => handleConnectUser(member.id, member.staff_email)} className="min-w-[36px] min-h-[36px] flex items-center justify-center p-2 text-blue-600 hover:bg-blue-50 rounded-lg" title="Connect">
+                                    <UserPlus className="w-4 h-4" />
+                                  </button>
+                                )}
+                                {canModifyStaff(member) && (
+                                  <button onClick={() => handleRemoveStaff(member.id)} className="min-w-[36px] min-h-[36px] flex items-center justify-center p-2 text-red-600 hover:bg-red-50 rounded-lg" title="Remove">
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="p-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {filteredStaff.map((member) => (
+                    <div key={member.id} className="rounded-xl border border-gray-100 bg-gray-50/30 hover:bg-orange-50/20 hover:border-orange-100 p-4 transition-all shadow-sm">
+                      <div className="flex flex-col items-center text-center">
+                        <StaffAvatar
+                          src={member.connected && member.profiles?.avatar_url ? member.profiles.avatar_url : ''}
+                          alt={member.staff_name}
+                          size={56}
+                        />
+                        <div className="mt-3 font-semibold text-gray-900">
+                          {member.connected && member.profiles ? member.profiles.full_name : member.staff_name}
+                          {member.user_id === currentUserId && <span className="ml-1 text-xs text-orange-600">(You)</span>}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">{member.staff_email}</div>
+                        <div className="text-xs text-gray-500">{member.staff_phone_number || 'No phone'}</div>
+                        <div className="flex flex-wrap justify-center gap-1.5 mt-2">
+                          <span className={`px-2 py-0.5 text-xs font-semibold rounded-full border ${roleConfig[member.staff_role]?.color || 'bg-gray-100 text-gray-800 border-gray-200'}`}>
+                            {member.staff_role.charAt(0).toUpperCase() + member.staff_role.slice(1)}
+                          </span>
+                          <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${member.connected ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
+                            {member.connected ? 'Connected' : 'Not connected'}
+                          </span>
+                        </div>
+                        {(userRole === 'admin' || userRole === 'manager') && (
+                          <div className="flex gap-2 mt-3">
+                            {canModifyStaff(member) && (
+                              <button onClick={() => handleEditStaff(member)} className="min-w-[36px] min-h-[36px] flex items-center justify-center p-2 text-blue-600 hover:bg-blue-50 rounded-lg" title="Edit">
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                            )}
+                            {!member.connected && (
+                              <button onClick={() => handleConnectUser(member.id, member.staff_email)} className="min-w-[36px] min-h-[36px] flex items-center justify-center p-2 text-blue-600 hover:bg-blue-50 rounded-lg" title="Connect">
+                                <UserPlus className="w-4 h-4" />
+                              </button>
+                            )}
+                            {canModifyStaff(member) && (
+                              <button onClick={() => handleRemoveStaff(member.id)} className="min-w-[36px] min-h-[36px] flex items-center justify-center p-2 text-red-600 hover:bg-red-50 rounded-lg" title="Remove">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
         )}
       </div>
       <NotificationToast

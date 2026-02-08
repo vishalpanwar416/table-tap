@@ -198,21 +198,15 @@ export const createOrder = async (orderData) => {
   try {
     // FIX: Add robust, final validation for guest user data before insertion.
     // This acts as a final guard against invalid data, regardless of frontend state.
-    if (!orderData.userId) { // This logic runs only for guest users
-      console.log('Guest order validation - checking required fields:', {
-        customerName: orderData.customerName,
-        customerEmail: orderData.customerEmail,
-        customerPhone: orderData.customerPhone
-      });
-
+    if (!orderData.userId && !orderData.isAdmin) { // Strict validation only for non-admin guest orders
       if (!orderData.customerName || orderData.customerName.trim() === '') {
-        throw new Error('Customer name is required for guest orders.');
+        throw new Error('Customer name is required.');
       }
       if (!orderData.customerEmail || orderData.customerEmail.trim() === '') {
-        throw new Error('Customer email is required for guest orders.');
+        throw new Error('Customer email is required.');
       }
       if (!orderData.customerPhone || orderData.customerPhone.trim() === '') {
-        throw new Error('Customer phone is required for guest orders.');
+        throw new Error('Customer phone is required.');
       }
     }
 
@@ -226,9 +220,9 @@ export const createOrder = async (orderData) => {
       restaurant_id: orderData.restaurantId,
       user_id: orderData.userId || null, // null for guest users
       // Ensure data is trimmed to prevent whitespace issues with RLS
-      customer_name: orderData.customerName.trim(),
-      customer_email: orderData.customerEmail.trim(),
-      customer_phone: orderData.customerPhone.trim(),
+      customer_name: (orderData.customerName || 'Walk-in Customer').trim(),
+      customer_email: (orderData.customerEmail || 'guest@example.com').trim(),
+      customer_phone: (orderData.customerPhone || '').trim(),
       table_number: orderData.tableNumber || 'Not Specified',
       items: orderData.items.map(item => ({
         food_item_id: item.id,
@@ -249,9 +243,9 @@ export const createOrder = async (orderData) => {
       payment_method: orderData.paymentMethod || 'razorpay',
       payment_status: orderData.paymentStatus || 'pending',
       payment_timestamp: orderData.paymentTimestamp || new Date().toISOString(),
-      status: 'pending',
+      status: orderData.status || 'pending',
       special_instructions: orderData.specialInstructions || null,
-      tracking: {
+      tracking: orderData.tracking || {
         confirmed: { status: true, timestamp: new Date().toISOString() },
         preparing: { status: false, timestamp: null },
         ready: { status: false, timestamp: null },
@@ -795,9 +789,9 @@ export const processOrderWithPayment = async ({
     const order = await createOrderWithRetry({
       restaurantId: restaurant.id,
       userId: user ? user.id : null,
-      customerName: finalCustomerName.trim(),
-      customerEmail: finalCustomerEmail.trim(),
-      customerPhone: finalCustomerPhone.trim(),
+      customerName: (finalCustomerName || 'Guest').trim(),
+      customerEmail: (finalCustomerEmail || 'guest@example.com').trim(),
+      customerPhone: (finalCustomerPhone || '').trim(),
       tableNumber,
       items: cartItems.map(item => ({
         id: item.id,

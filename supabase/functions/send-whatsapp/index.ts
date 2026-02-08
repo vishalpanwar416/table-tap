@@ -40,11 +40,33 @@ Deno.serve(async (req: Request) => {
       throw new Error('Unauthorized: You must be logged in to send WhatsApp messages.');
     }
 
-    const WHATSAPP_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
-    const WHATSAPP_PHONE_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
+    // 4. Get WhatsApp Credentials
+    // First try from environment variables (Supabase Secrets)
+    let WHATSAPP_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
+    let WHATSAPP_PHONE_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
+
+    // Fallback: Try to get from system_settings table if env vars are missing
+    if (!WHATSAPP_TOKEN || !WHATSAPP_PHONE_ID) {
+      console.log('WhatsApp credentials missing in environment, checking system_settings...');
+      const adminClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+
+      const { data: settings } = await adminClient
+        .from('system_settings')
+        .select('value')
+        .eq('key', 'whatsapp_keys')
+        .single();
+
+      if (settings?.value) {
+        WHATSAPP_TOKEN = WHATSAPP_TOKEN || settings.value.access_token;
+        WHATSAPP_PHONE_ID = WHATSAPP_PHONE_ID || settings.value.phone_number_id;
+      }
+    }
 
     if (!WHATSAPP_TOKEN || !WHATSAPP_PHONE_ID) {
-      throw new Error("WhatsApp credentials not configured. Please set WHATSAPP_ACCESS_TOKEN and WHATSAPP_PHONE_NUMBER_ID in Supabase secrets.");
+      throw new Error("WhatsApp credentials not configured. Please set them in Admin Panel -> System Settings or Supabase Secrets.");
     }
 
     const requestData: WhatsAppRequest = await req.json();

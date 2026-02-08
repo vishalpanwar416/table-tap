@@ -17,6 +17,7 @@ import {
   Search
 } from 'lucide-react';
 import tableTapLogo from '../../../../assets/icons/logott.png';
+import ManagerNotificationsToast from './ManagerNotificationsToast';
 
 const MobileNav = ({ showMobileNav, setShowMobileNav, activeTab, setActiveTab, menuItems, handleLogout, currentUser, restaurantName, restaurantLogoUrl, userRole, searchTerm, setSearchTerm }) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -111,6 +112,7 @@ const MobileNav = ({ showMobileNav, setShowMobileNav, activeTab, setActiveTab, m
               </div>
             </h1>
             <div className="flex items-center gap-1">
+              <ManagerNotificationsToast buttonClassName="text-gray-300 hover:text-white hover:bg-gray-800" />
               <button
                 onClick={() => setIsSearchOpen(true)}
                 className="p-2 rounded-md hover:bg-gray-800 text-gray-300 hover:text-white"

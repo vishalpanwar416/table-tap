@@ -353,6 +353,22 @@ const SystemSettings = () => {
                     is_active: true
                 },
                 {
+                    key: 'openai_keys',
+                    value: { api_key: '' },
+                    category: 'api',
+                    description: 'OpenAI Keys for Advisor AI (Admin)',
+                    is_secret: true,
+                    is_active: true
+                },
+                {
+                    key: 'whatsapp_keys',
+                    value: { access_token: '', phone_number_id: '' },
+                    category: 'api',
+                    description: 'WhatsApp Business API Keys (Admin)',
+                    is_secret: true,
+                    is_active: true
+                },
+                {
                     key: 'email_template_onboarding_menu',
                     value: {
                         subject: "Step 1: Setting up your Menu at {{restaurant_name}}",
@@ -663,6 +679,9 @@ const DiagnosticsPanel = ({ onFixPayment }) => {
         storage: { status: 'idle', message: 'Ready to check' },
         email: { status: 'idle', message: 'Ready to check' },
         payment: { status: 'idle', message: 'Ready to check' },
+        ai: { status: 'idle', message: 'Ready to check' },
+        maps: { status: 'idle', message: 'Ready to check' },
+        whatsapp: { status: 'idle', message: 'Ready to check' },
     });
     const [running, setRunning] = useState(false);
 
@@ -674,6 +693,9 @@ const DiagnosticsPanel = ({ onFixPayment }) => {
             storage: { status: 'loading', message: 'Checking buckets...' },
             email: { status: 'loading', message: 'Pinging service...' },
             payment: { status: 'loading', message: 'Checking keys...' },
+            ai: { status: 'loading', message: 'Checking AI config...' },
+            maps: { status: 'loading', message: 'Checking Maps config...' },
+            whatsapp: { status: 'loading', message: 'Checking WhatsApp config...' },
         };
         setChecks(initialLoadingState);
 
@@ -735,50 +757,69 @@ const DiagnosticsPanel = ({ onFixPayment }) => {
             }
         }
 
-        // 5. Payment Gateway Check
+        // 5. API Keys Check (Payment, AI, Maps)
         try {
-            // Check Admin Keys
             const { data: settings } = await supabase.from('system_settings').select('key, value');
 
-            // Check for Razorpay (object or string)
+            // --- Payment Check ---
             const razSetting = settings?.find(s => s.key === 'razorpay_keys' || s.key === 'razorpay_key_id');
             let razConfigured = false;
             if (razSetting) {
-                if (typeof razSetting.value === 'object') {
-                    razConfigured = !!razSetting.value.key_id;
-                } else {
-                    razConfigured = !!razSetting.value;
-                }
+                razConfigured = typeof razSetting.value === 'object' ? !!razSetting.value.key_id : !!razSetting.value;
             }
-
-            // Check for Stripe
             const stripeSetting = settings?.find(s => s.key === 'stripe_keys' || s.key === 'stripe_publishable_key');
             let stripeConfigured = false;
             if (stripeSetting) {
-                if (typeof stripeSetting.value === 'object') {
-                    stripeConfigured = !!stripeSetting.value.publishable_key;
-                } else {
-                    stripeConfigured = !!stripeSetting.value;
-                }
+                stripeConfigured = typeof stripeSetting.value === 'object' ? !!stripeSetting.value.publishable_key : !!stripeSetting.value;
             }
-
             const adminConfigured = razConfigured || stripeConfigured;
-
-            // Check Restaurant Keys
             const { data: restaurants } = await getAllRestaurants();
             const total = restaurants?.length || 0;
             const configured = restaurants?.filter(r => r.razorpay_key_id).length || 0;
-
-            let status = 'success';
-            if (!adminConfigured) status = 'warning';
-
             newChecks.payment = {
-                status,
+                status: adminConfigured ? 'success' : 'warning',
                 message: `Admin: ${adminConfigured ? 'Configured' : 'Missing Key'}. Restaurants: ${configured}/${total} Setup`
             };
 
+            // --- AI Advisor Check ---
+            const aiSetting = settings?.find(s => s.key === 'openai_keys');
+            const aiKeyVal = aiSetting?.value?.api_key || aiSetting?.value?.key;
+            if (!aiSetting) {
+                newChecks.ai = { status: 'error', message: 'Setting openai_keys missing from DB' };
+            } else if (!aiKeyVal) {
+                newChecks.ai = { status: 'warning', message: 'Key initialized but empty' };
+            } else {
+                newChecks.ai = { status: 'success', message: 'OpenAI key configured' };
+            }
+
+            // --- Google Maps Check ---
+            const mapsSetting = settings?.find(s => s.key === 'google_maps_key');
+            const mapsKeyVal = mapsSetting?.value?.key || mapsSetting?.value?.api_key || mapsSetting?.value;
+            if (!mapsSetting) {
+                newChecks.maps = { status: 'error', message: 'Setting google_maps_key missing from DB' };
+            } else if (!mapsKeyVal) {
+                newChecks.maps = { status: 'warning', message: 'Key initialized but empty' };
+            } else {
+                newChecks.maps = { status: 'success', message: 'Google Maps key configured' };
+            }
+
+            // --- WhatsApp Check ---
+            const waSetting = settings?.find(s => s.key === 'whatsapp_keys');
+            const waTokenVal = waSetting?.value?.access_token;
+            const waIdVal = waSetting?.value?.phone_number_id;
+            if (!waSetting) {
+                newChecks.whatsapp = { status: 'error', message: 'Setting whatsapp_keys missing from DB' };
+            } else if (!waTokenVal || !waIdVal) {
+                newChecks.whatsapp = { status: 'warning', message: 'WhatsApp keys incomplete' };
+            } else {
+                newChecks.whatsapp = { status: 'success', message: 'WhatsApp API configured' };
+            }
+
         } catch (error) {
             newChecks.payment = { status: 'error', message: error.message };
+            newChecks.ai = { status: 'error', message: 'Failed to check AI config' };
+            newChecks.maps = { status: 'error', message: 'Failed to check Maps config' };
+            newChecks.whatsapp = { status: 'error', message: 'Failed to check WhatsApp config' };
         }
 
         setChecks(newChecks);
@@ -866,7 +907,7 @@ const DiagnosticsPanel = ({ onFixPayment }) => {
                     </div>
 
                     {/* Payment Gateway Check */}
-                    <div className="p-4 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-between col-span-1 md:col-span-2">
+                    <div className="p-4 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-white rounded-lg shadow-sm text-indigo-600">
                                 <CreditCard size={20} />
@@ -874,18 +915,65 @@ const DiagnosticsPanel = ({ onFixPayment }) => {
                             <div>
                                 <h4 className="font-bold text-gray-900 text-sm">Payment Gateways</h4>
                                 <p className="text-xs text-gray-500 font-mono mt-0.5">{checks.payment.message}</p>
-                                {checks.payment.status === 'warning' && (
-                                    <button
-                                        onClick={onFixPayment}
-                                        className="mt-2 text-[10px] font-bold bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-100 hover:bg-indigo-100 transition-colors"
-                                    >
-                                        Initialize Settings
-                                    </button>
-                                )}
                             </div>
                         </div>
                         <StatusIcon status={checks.payment.status} />
                     </div>
+
+                    {/* AI Advisor Check */}
+                    <div className="p-4 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-white rounded-lg shadow-sm text-indigo-600">
+                                <RefreshCw size={20} />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-gray-900 text-sm">AI Advisor (OpenAI)</h4>
+                                <p className="text-xs text-gray-500 font-mono mt-0.5">{checks.ai.message}</p>
+                            </div>
+                        </div>
+                        <StatusIcon status={checks.ai.status} />
+                    </div>
+
+                    {/* Google Maps Check */}
+                    <div className="p-4 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-white rounded-lg shadow-sm text-orange-600">
+                                <Globe size={20} />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-gray-900 text-sm">Google Maps API</h4>
+                                <p className="text-xs text-gray-500 font-mono mt-0.5">{checks.maps.message}</p>
+                            </div>
+                        </div>
+                        <StatusIcon status={checks.maps.status} />
+                    </div>
+
+                    {/* WhatsApp Check */}
+                    <div className="p-4 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-white rounded-lg shadow-sm text-emerald-600">
+                                <Send size={20} />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-gray-900 text-sm">WhatsApp Business</h4>
+                                <p className="text-xs text-gray-500 font-mono mt-0.5">{checks.whatsapp.message}</p>
+                            </div>
+                        </div>
+                        <StatusIcon status={checks.whatsapp.status} />
+                    </div>
+
+                    {/* Initialize Settings Button - Centered/Bottom */}
+                    {(checks.payment.status === 'warning' || checks.ai.status === 'error' || checks.maps.status === 'error' || checks.whatsapp.status === 'error') && (
+                        <div className="md:col-span-2 flex justify-center py-2">
+                            <button
+                                onClick={onFixPayment}
+                                className="flex items-center gap-2 px-6 py-2 bg-indigo-50 text-indigo-700 font-bold rounded-xl border border-indigo-100 hover:bg-indigo-100 transition-all text-sm shadow-sm"
+                            >
+                                <RefreshCw size={14} />
+                                Initialize Missing Settings
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

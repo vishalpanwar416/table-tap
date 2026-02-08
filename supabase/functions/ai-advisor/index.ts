@@ -31,15 +31,29 @@ serve(async (req) => {
     }
 
     try {
+        const authHeader = req.headers.get('Authorization')
+        console.log('Incoming Authorization header present:', !!authHeader)
+
+        if (!authHeader) {
+            return new Response(JSON.stringify({ error: 'Missing Authorization header' }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 401,
+            })
+        }
+
         // Require authenticated caller so the function can't be abused publicly.
         const supabaseClient = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
             Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-            { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+            { global: { headers: { Authorization: authHeader } } }
         )
-        const { data: { user } } = await supabaseClient.auth.getUser()
-        if (!user) {
-            return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+
+        const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
+
+        if (authError || !user) {
+            console.error('Auth verification failed. Error:', authError?.message || 'No user data')
+            console.log('Supabase URL being used:', Deno.env.get('SUPABASE_URL'))
+            return new Response(JSON.stringify({ error: `Unauthorized: ${authError?.message || 'Invalid or expired session'}. Please log out and back in.` }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
                 status: 401,
             })

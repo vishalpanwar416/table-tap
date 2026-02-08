@@ -7,17 +7,17 @@ export const optimizeImageUrl = (url, width = 300, quality = 80) => {
   if (url.includes('w=') || url.includes('width=')) {
     return url;
   }
-  
+
   // For external image services, add optimization parameters
   if (url.includes('cloudinary.com')) {
     return url.replace('/upload/', `/upload/w_${width},q_${quality}/`);
   }
-  
+
   if (url.includes('imgix.net')) {
     const separator = url.includes('?') ? '&' : '?';
     return `${url}${separator}w=${width}&q=${quality}`;
   }
-  
+
   // For local images, return as is (consider using a CDN)
   return url;
 };
@@ -53,7 +53,7 @@ export const optimizeImageForUpload = async (file, options = {}) => {
       try {
         // Calculate new dimensions while maintaining aspect ratio
         let { width, height } = img;
-        
+
         if (width > maxWidth || height > maxHeight) {
           const ratio = Math.min(maxWidth / width, maxHeight / height);
           width = Math.round(width * ratio);
@@ -124,7 +124,7 @@ export const createImageVariants = async (file) => {
         maxHeight: size.height,
         quality: 0.8
       });
-      
+
       variants[size.suffix] = optimized;
     } catch (error) {
     }
@@ -136,7 +136,7 @@ export const createImageVariants = async (file) => {
 // Validate image file
 export const validateImageFile = (file) => {
   const errors = [];
-  
+
   // Check file type
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
   if (!allowedTypes.includes(file.type)) {
@@ -180,19 +180,19 @@ export const getFallbackImage = (category, itemName = '') => {
     'Offers': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRkY2QjM1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5PZmZlcnM8L3RleHQ+PC9zdmc+',
     'default': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRkY2QjM1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5Gb29kIEl0ZW08L3RleHQ+PC9zdmc+'
   };
-  
+
   return fallbackImages[category] || fallbackImages.default;
 };
 
 // Simple image component with fallback - NO RETRY BUTTON
-export const FoodImageWithFallback = ({ 
-  src, 
-  alt, 
-  className, 
+export const FoodImageWithFallback = ({
+  src,
+  alt,
+  className,
   category = null,
   itemName = '',
   onError = null,
-  ...props 
+  ...props
 }) => {
   const [currentSrc, setCurrentSrc] = useState(src);
   const [hasError, setHasError] = useState(false);
@@ -225,15 +225,15 @@ export const FoodImageWithFallback = ({
 };
 
 // Enhanced LazyImage component with fallback handling - NO RETRY BUTTON
-export const LazyImage = ({ 
-  src, 
-  alt, 
-  className, 
+export const LazyImage = ({
+  src,
+  alt,
+  className,
   placeholder = null,
   fallbackImage = null,
   category = null,
   onError = null,
-  ...props 
+  ...props
 }) => {
   const [imageSrc, setImageSrc] = useState(placeholder || getFallbackImage(category));
   const [imageRef, setImageRef] = useState();
@@ -307,11 +307,14 @@ export const LazyImage = ({
 
 // Process food items to ensure they have valid images
 export const processFoodItems = (items) => {
-  return items.map(item => ({
-    ...item,
-    image: item.image || getFallbackImage(item.category, item.name),
-    hasValidImage: !!item.image
-  }));
+  return items.map(item => {
+    const isInvalid = !item.image || (typeof item.image === 'string' && item.image.startsWith('blob:'));
+    return {
+      ...item,
+      image: isInvalid ? getFallbackImage(item.category, item.name) : item.image,
+      hasValidImage: !isInvalid
+    };
+  });
 };
 
 // Preload critical images
@@ -323,13 +326,13 @@ export const preloadImages = (imageUrls) => {
 };
 
 // Add this new component for progressive loading
-export const ProgressiveImage = ({ 
-  src, 
-  alt, 
-  className, 
+export const ProgressiveImage = ({
+  src,
+  alt,
+  className,
   category = null,
   placeholderColor = '#f3f4f6',
-  ...props 
+  ...props
 }) => {
   const [currentSrc, setCurrentSrc] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -364,20 +367,20 @@ export const ProgressiveImage = ({
     <div className={`${className} relative overflow-hidden`}>
       {/* Loading state */}
       {isLoading && (
-        <div 
+        <div
           className="absolute inset-0 flex items-center justify-center animate-pulse"
           style={{ backgroundColor: placeholderColor }}
         >
           <div className="w-8 h-8 bg-gray-300 rounded"></div>
         </div>
       )}
-      
+
       {/* Image */}
       <img
         src={currentSrc}
         alt={alt}
         className={`${className} transition-opacity duration-300`}
-        style={{ 
+        style={{
           opacity: isLoading ? 0 : 1,
           transform: 'translateZ(0)',
           backfaceVisibility: 'hidden'
@@ -429,7 +432,7 @@ export const useImageUpload = () => {
     isProcessing,
     progress
   };
-}; 
+};
 
 // Optimize an image file for profile avatars (resize and compress)
 // Usage: optimizeProfileImage(file, { maxSize: 256, quality: 0.7 })

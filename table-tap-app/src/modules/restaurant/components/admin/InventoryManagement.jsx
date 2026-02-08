@@ -22,26 +22,26 @@ import {
 } from '../../api/admin/inventoryService';
 
 // Helper component for stats cards
-const StatsCard = ({ icon: Icon, value, label, colorClass }) => (
-  <div className="bg-white p-4 rounded-lg shadow border hover:shadow-md transition-shadow">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm text-gray-600">{label}</p>
-        <p className={`text-2xl font-bold ${colorClass}`}>{value}</p>
+const StatsCard = ({ icon: Icon, value, label, colorClass, className = '' }) => (
+  <div className={`bg-white p-2 md:p-4 rounded-lg shadow border hover:shadow-md transition-shadow ${className}`}>
+    <div className="flex items-center justify-between gap-2 md:gap-3">
+      <div className="min-w-0">
+        <p className="text-[10px] md:text-sm text-gray-500 uppercase tracking-wide truncate">{label}</p>
+        <p className={`text-base md:text-2xl font-bold truncate leading-tight ${colorClass}`}>{value}</p>
       </div>
-      <Icon className="w-8 h-8" />
+      <Icon className="w-5 h-5 md:w-8 md:h-8 flex-shrink-0 opacity-70" />
     </div>
   </div>
 );
 
-const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
+const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTerm = '' }) => {
   const { user } = useAuth();
   const { userRestaurantId, userRole } = useAdminRestaurant();
 
   // State
   const [inventoryItems, setInventoryItems] = useState([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  // const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [activeModal, setActiveModal] = useState(null);
@@ -518,37 +518,33 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <p className="text-gray-600 mt-1">
-            Track and manage your restaurant inventory
-          </p>
-        </div>
 
-        <div className="flex flex-wrap gap-2">
+
+        <div className="flex overflow-x-auto pb-2 gap-2 no-scrollbar md:flex-wrap md:pb-0">
           <button
             onClick={() => openModal('add')}
-            className="flex items-center gap-2 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
+            className="flex items-center gap-1.5 md:gap-2 bg-orange-500 text-white px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm rounded-lg hover:bg-orange-600 transition-colors whitespace-nowrap flex-shrink-0"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5 md:w-4 md:h-4" />
             Add Item
           </button>
 
           <button
             onClick={() => openModal('takeOut')}
-            className="flex items-center gap-2 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
+            className="flex items-center gap-1.5 md:gap-2 bg-orange-500 text-white px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm rounded-lg hover:bg-orange-600 transition-colors whitespace-nowrap flex-shrink-0"
           >
-            <Minus className="w-4 h-4" />
+            <Minus className="w-3.5 h-3.5 md:w-4 md:h-4" />
             Take Out
           </button>
 
           <button
             onClick={() => document.getElementById('import-file').click()}
-            className="flex items-center gap-2 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+            className="flex items-center gap-1.5 md:gap-2 bg-gray-500 text-white px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm rounded-lg hover:bg-gray-600 transition-colors whitespace-nowrap flex-shrink-0"
           >
-            <Upload className="w-4 h-4" />
+            <Upload className="w-3.5 h-3.5 md:w-4 md:h-4" />
             Import
           </button>
 
@@ -562,27 +558,27 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
 
           <button
             onClick={handleExport}
-            className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+            className="flex items-center gap-1.5 md:gap-2 bg-blue-500 text-white px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm rounded-lg hover:bg-blue-600 transition-colors whitespace-nowrap flex-shrink-0"
           >
-            <Download className="w-4 h-4" />
+            <Download className="w-3.5 h-3.5 md:w-4 md:h-4" />
             Export
           </button>
 
           <button
             onClick={loadInventoryData}
             disabled={isLoadingData}
-            className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors disabled:opacity-70"
+            className="hidden md:flex items-center gap-1.5 md:gap-2 bg-green-500 text-white px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm rounded-lg hover:bg-green-600 transition-colors disabled:opacity-70 whitespace-nowrap flex-shrink-0"
           >
-            <RefreshCw className={`w-4 h-4 ${isLoadingData ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 md:w-4 md:h-4 ${isLoadingData ? 'animate-spin' : ''}`} />
             Refresh
           </button>
 
           {selectedItems.length > 0 && (
             <button
               onClick={handleBulkDelete}
-              className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
+              className="flex items-center gap-1.5 md:gap-2 bg-red-500 text-white px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm rounded-lg hover:bg-red-600 transition-colors whitespace-nowrap flex-shrink-0"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
               Delete ({selectedItems.length})
             </button>
           )}
@@ -590,93 +586,77 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatsCard icon={Package} value={stats.total} label="Total Items" colorClass="text-gray-900" />
-        <StatsCard icon={TrendingDown} value={stats.lowStock} label="Low Stock" colorClass="text-yellow-600" />
-        <StatsCard icon={AlertTriangle} value={stats.outOfStock} label="Out of Stock" colorClass="text-red-600" />
-        <StatsCard icon={IndianRupee} value={`₹${stats.totalValue.toFixed(2)}`} label="Total Value" colorClass="text-green-600" />
-        <StatsCard icon={Clock} value={stats.expiringSoon} label="Expiring Soon" colorClass="text-orange-600" />
+      <div className="flex overflow-x-auto pb-2 gap-2 md:gap-4 no-scrollbar snap-x md:grid md:grid-cols-2 lg:grid-cols-5 md:pb-0">
+        <StatsCard className="min-w-[120px] flex-shrink-0 snap-start" icon={Package} value={stats.total} label="Total" colorClass="text-gray-900" />
+        <StatsCard className="min-w-[120px] flex-shrink-0 snap-start" icon={TrendingDown} value={stats.lowStock} label="Low Stock" colorClass="text-yellow-600" />
+        <StatsCard className="min-w-[120px] flex-shrink-0 snap-start" icon={AlertTriangle} value={stats.outOfStock} label="No Stock" colorClass="text-red-600" />
+        <StatsCard className="min-w-[120px] flex-shrink-0 snap-start" icon={IndianRupee} value={`₹${stats.totalValue.toFixed(2)}`} label="Value" colorClass="text-green-600" />
+        <StatsCard className="min-w-[120px] flex-shrink-0 snap-start" icon={Clock} value={stats.expiringSoon} label="Expiring" colorClass="text-orange-600" />
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-white p-4 rounded-lg shadow border">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search items, suppliers, barcodes..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-            />
-            <button
-              onClick={() => handleBarcodeScan(prompt('Enter barcode:'))}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-orange-500"
-              title="Scan barcode"
+      <div className="bg-white p-2 md:p-4 rounded-lg shadow border">
+        <div className="flex flex-col md:flex-row gap-2 md:gap-4 justify-between">
+          <div className="grid grid-cols-3 gap-2 w-full md:w-auto md:flex md:gap-4 md:flex-1">
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className="w-full px-2 py-1.5 md:px-4 md:py-2 text-xs md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
             >
-              <Scan className="w-4 h-4" />
-            </button>
+              <option value="all">All Cats</option>
+              {INVENTORY_CATEGORIES.map(category => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </select>
+
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="w-full px-2 py-1.5 md:px-4 md:py-2 text-xs md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            >
+              <option value="all">All Status</option>
+              <option value={STOCK_STATUS.IN_STOCK}>In Stock</option>
+              <option value={STOCK_STATUS.LOW_STOCK}>Low</option>
+              <option value={STOCK_STATUS.OUT_OF_STOCK}>Out</option>
+            </select>
+
+            <select
+              value={`${sortBy}-${sortOrder}`}
+              onChange={(e) => {
+                const [field, order] = e.target.value.split('-');
+                setSortBy(field);
+                setSortOrder(order);
+              }}
+              className="w-full px-2 py-1.5 md:px-4 md:py-2 text-xs md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            >
+              <option value="name-asc">Name</option>
+              <option value="name-desc">Name (Z-A)</option>
+              <option value="current_stock-asc">Stock (L-H)</option>
+              <option value="current_stock-desc">Stock (H-L)</option>
+              <option value="expiry_date-asc">Expiry</option>
+              <option value="cost_per_unit-desc">Cost</option>
+              <option value="last_updated-desc">Updated</option>
+            </select>
           </div>
 
-          <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-          >
-            <option value="all">All Categories</option>
-            {INVENTORY_CATEGORIES.map(category => (
-              <option key={category} value={category}>{category}</option>
-            ))}
-          </select>
-
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-          >
-            <option value="all">All Status</option>
-            <option value={STOCK_STATUS.IN_STOCK}>In Stock</option>
-            <option value={STOCK_STATUS.LOW_STOCK}>Low Stock</option>
-            <option value={STOCK_STATUS.OUT_OF_STOCK}>Out of Stock</option>
-          </select>
-
-          <select
-            value={`${sortBy}-${sortOrder}`}
-            onChange={(e) => {
-              const [field, order] = e.target.value.split('-');
-              setSortBy(field);
-              setSortOrder(order);
-            }}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-          >
-            <option value="name-asc">Name A-Z</option>
-            <option value="name-desc">Name Z-A</option>
-            <option value="current_stock-asc">Stock Low-High</option>
-            <option value="current_stock-desc">Stock High-Low</option>
-            <option value="expiry_date-asc">Expiry Soon</option>
-            <option value="cost_per_unit-desc">Cost High-Low</option>
-            <option value="last_updated-desc">Recently Updated</option>
-          </select>
-
-          <div className="flex gap-2">
+          <div className="hidden md:flex gap-2 self-end md:self-auto ml-auto">
             <button
               onClick={() => setViewMode('table')}
-              className={`px-3 py-2 rounded-lg border transition-colors ${viewMode === 'table'
-                  ? 'bg-orange-500 text-white border-orange-500'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              className={`px-3 py-1.5 md:px-3 md:py-2 rounded-lg border transition-colors ${viewMode === 'table'
+                ? 'bg-orange-500 text-white border-orange-500'
+                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                 }`}
             >
-              <FileText className="w-4 h-4" />
+              <FileText className="w-3.5 h-3.5 md:w-4 md:h-4" />
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={`px-3 py-2 rounded-lg border transition-colors ${viewMode === 'grid'
-                  ? 'bg-orange-500 text-white border-orange-500'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              className={`px-3 py-1.5 md:px-3 md:py-2 rounded-lg border transition-colors ${viewMode === 'grid'
+                ? 'bg-orange-500 text-white border-orange-500'
+                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                 }`}
             >
-              <BarChart3 className="w-4 h-4" />
+              <BarChart3 className="w-3.5 h-3.5 md:w-4 md:h-4" />
             </button>
           </div>
         </div>
@@ -689,9 +669,64 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
         </div>
       )}
 
-      {/* Inventory Table View */}
+      {/* Mobile Inventory View: Compact Cards */}
+      {!isLoadingData && (
+        <div className="md:hidden space-y-2.5">
+          {filteredItems.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-lg border border-gray-100">
+              <Package className="w-10 h-10 mx-auto text-gray-300 mb-3" />
+              <p className="text-sm font-medium text-gray-500">No items found</p>
+            </div>
+          ) : (
+            filteredItems.map((item) => {
+              const status = getStockStatus(item);
+              const daysUntilExpiry = Math.ceil((new Date(item.expiry_date) - new Date()) / (1000 * 60 * 60 * 24));
+              const isExpiringSoon = daysUntilExpiry <= 15 && daysUntilExpiry > 0;
+
+              return (
+                <div key={item.id} className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm relative overflow-hidden">
+                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${status === STOCK_STATUS.LOW_STOCK ? 'bg-yellow-500' :
+                      status === STOCK_STATUS.OUT_OF_STOCK ? 'bg-red-500' : 'bg-green-500'
+                    }`} />
+
+                  <div className="pl-2 flex justify-between items-start mb-2">
+                    <div className="min-w-0 pr-2">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-semibold text-gray-900 truncate text-sm">{item.name}</h4>
+                        {item.barcode && <span className="text-[10px] bg-gray-100 text-gray-500 px-1 rounded">#{item.barcode}</span>}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-0.5">{item.category}</div>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <div className="font-bold text-gray-900 text-sm">{item.current_stock} <span className="text-[10px] font-normal text-gray-500 uppercase">{item.unit}</span></div>
+                    </div>
+                  </div>
+
+                  <div className="pl-2 flex items-center justify-between border-t border-gray-100 pt-2 mt-2">
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="font-medium text-gray-700">₹{item.cost_per_unit}</span>
+                      {isExpiringSoon && (
+                        <span className="flex items-center gap-1 text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">
+                          <AlertCircle size={10} /> {daysUntilExpiry}d
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <button onClick={() => openModal('stockUpdate', item)} className="text-green-600 p-1 hover:bg-green-50 rounded" title="Update Stock"><Edit3 size={16} /></button>
+                      <button onClick={() => openModal('edit', item)} className="text-gray-500 p-1 hover:bg-gray-100 rounded" title="Edit"><Settings size={16} /></button>
+                      <button onClick={() => handleDelete(item.id)} className="text-red-500 p-1 hover:bg-red-50 rounded" title="Delete"><Trash2 size={16} /></button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+
+      {/* Inventory Table View (Desktop Only) */}
       {!isLoadingData && viewMode === 'table' && (
-        <div className="bg-white rounded-lg shadow border overflow-hidden">
+        <div className="hidden md:block bg-white rounded-lg shadow border overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50">
@@ -852,9 +887,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
         </div>
       )}
 
-      {/* Grid View */}
+      {/* Grid View (Desktop Only) */}
       {!isLoadingData && viewMode === 'grid' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredItems.length === 0 ? (
             <div className="col-span-full text-center py-12">
               <Package className="w-12 h-12 mx-auto text-gray-300 mb-4" />
@@ -871,7 +906,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                 <div
                   key={item.id}
                   className={`bg-white rounded-lg shadow border hover:shadow-md transition-shadow ${status === STOCK_STATUS.LOW_STOCK ? 'border-yellow-200' :
-                      status === STOCK_STATUS.OUT_OF_STOCK ? 'border-red-200' : ''
+                    status === STOCK_STATUS.OUT_OF_STOCK ? 'border-red-200' : ''
                     }`}
                 >
                   <div className="p-4">

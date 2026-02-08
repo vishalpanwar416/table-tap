@@ -12,14 +12,14 @@ export const createNotification = async (notification) => {
     // Validate notification type
     const allowedTypes = [
       'order_received',
-      'order_accepted', 
+      'order_accepted',
       'order_preparing',
       'order_ready',
       'order_rejected',
       'payment_success',
       'payment_failed'
     ];
-    
+
     if (!allowedTypes.includes(notification.type)) {
       throw new Error(`Invalid notification type. Must be one of: ${allowedTypes.join(', ')}`);
     }
@@ -94,13 +94,19 @@ export const getUserNotifications = async (userId) => {
 };
 
 // Get admin notifications
-export const getManagerNotifications = async () => {
+export const getManagerNotifications = async (restaurantId = null) => {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('notifications')
       .select('*')
       .eq('is_admin_notification', true)
       .order('created_at', { ascending: false });
+
+    if (restaurantId) {
+      query = query.eq('restaurant_id', restaurantId);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
     return data;
@@ -209,14 +215,26 @@ export const subscribeToUserNotifications = (userId, callback) => {
 };
 
 // Subscribe to admin notifications
-export const subscribeToManagerNotifications = (callback) => {
+export const subscribeToManagerNotifications = (callback, restaurantId = null) => {
+  let filter = 'is_admin_notification=eq.true';
+  if (restaurantId) {
+    filter += `&restaurant_id=eq.${restaurantId}`;
+  }
+
   return supabase
-    .channel('admin-notifications')
+    .channel(`admin-notifications-${restaurantId || 'all'}`)
     .on('postgres_changes', {
       event: '*',
       schema: 'public',
       table: 'notifications',
-      filter: 'is_admin_notification=eq.true'
-    }, callback)
+      filter: restaurantId ? `restaurant_id=eq.${restaurantId}` : 'is_admin_notification=eq.true'
+      // Note: Supabase realtime filters are simple equality checks usually. 
+      // If restaurantId is provided, filtering just by restaurant_id AND is_admin code-side might be safer or using the filter string carefully.
+      // However, realtime only supports single column filter in the config object usually unless using logical replication slots which is complex.
+      // Standard way: filter by restaurant_id, then check is_admin in callback.
+    }, (payload) => {
+      if (payload.new && !payload.new.is_admin_notification) return; // Client-side filter for admin type if we only filter by restaurant
+      callback(payload);
+    })
     .subscribe();
 };

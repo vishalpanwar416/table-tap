@@ -244,7 +244,7 @@ const AIAnalyticsChat = ({ restaurantId: propRestaurantId }) => {
     try {
       setLoadingAnalytics(true);
       // Pass dateRange and restaurantId if you have it
-      const data = await getRestaurantAnalytics(dateRange /*, restaurantId */);
+      const data = await getRestaurantAnalytics(dateRange, activeRestaurantId);
       setAnalyticsData(data);
       generateProactiveInsights(data);
     } catch (error) {
@@ -316,17 +316,21 @@ const AIAnalyticsChat = ({ restaurantId: propRestaurantId }) => {
 
       // Create specific error messages based on error type
       let errorContent = "I apologize, but I'm having difficulty processing your request right now. Please try again later.";
+      const errorMsg = error.message || "";
 
-      if (error.message.includes('quota exceeded')) {
+      if (errorMsg.includes('quota exceeded')) {
         errorContent = "⚠️ OpenAI quota exceeded. Please check your billing and upgrade your plan at https://platform.openai.com/account/billing";
-      } else if (error.message.includes('Rate limit exceeded')) {
+      } else if (errorMsg.includes('Rate limit exceeded')) {
         errorContent = "⏳ Rate limit exceeded. Please wait a moment and try again.";
-      } else if (error.message.includes('Invalid API key')) {
-        errorContent = "🔑 Invalid API key. Please check your OpenAI API key in the .env file.";
-      } else if (error.message.includes('Access denied')) {
+      } else if (errorMsg.includes('Invalid API key')) {
+        errorContent = "🔑 Invalid API key. Please check your OpenAI API key in the System Settings.";
+      } else if (errorMsg.includes('Access denied')) {
         errorContent = "🚫 Access denied. Please check your OpenAI account status and billing.";
-      } else if (error.message.includes('API key not found')) {
-        errorContent = "🔧 OpenAI API key not found. Please add REACT_APP_OPENAI_API_KEY to your .env file.";
+      } else if (errorMsg.includes('OpenAI API key missing') || errorMsg.includes('configuration error')) {
+        errorContent = "🔧 OpenAI API key missing. Please go to Admin -> System Settings -> Diagnostics and use the 'Initialize AI Settings' fix, then add your key.";
+      } else {
+        // Show raw error if none of the above match, but keep it clean
+        errorContent = `⚠️ AI Error: ${errorMsg.replace('Failed to get AI response: ', '')}`;
       }
 
       const errorMessage = {
@@ -468,27 +472,27 @@ const AIAnalyticsChat = ({ restaurantId: propRestaurantId }) => {
   return (
     <div className="flex flex-col h-full bg-transparent overflow-hidden gap-0">
       {/* Floating Top Utility Bar */}
-      <div className="bg-white/80 backdrop-blur-md border border-slate-200/50 px-6 py-3 flex items-center justify-between z-20 rounded-2xl mx-1 mt-1">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-600 to-orange-700 flex items-center justify-center text-white border border-white/20">
-            <Brain className="h-6 w-6" />
+      <div className="bg-white/80 backdrop-blur-md border border-slate-200/50 px-2 py-2 md:px-6 md:py-3 flex flex-row items-center justify-between z-20 rounded-2xl mx-1 mt-1 gap-2 transition-all duration-300">
+        <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1 md:flex-none">
+          <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-amber-600 to-orange-700 flex items-center justify-center text-white border border-white/20 shadow-sm shrink-0">
+            <Brain className="h-4 w-4 md:h-6 md:w-6" />
           </div>
-          <div>
-            <h2 className="text-sm font-bold text-slate-900 leading-tight">Table-Tap Advisor</h2>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className={`w-1.5 h-1.5 rounded-full ${connectionInfo.dot}`}></span>
-              <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">{connectionInfo.text}</span>
+          <div className="ml-1 md:ml-2 min-w-0 flex-1">
+            <h2 className="text-[10px] sm:text-xs md:text-sm font-bold text-slate-900 leading-tight truncate">Table-Tap Advisor</h2>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className={`w-1.5 h-1.5 rounded-full ${connectionInfo.dot} shrink-0`}></span>
+              <span className="text-[8px] md:text-[10px] font-medium text-slate-500 uppercase tracking-wider truncate">{connectionInfo.text}</span>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200">
-            <Calendar className="h-3.5 w-3.5 ml-2 text-slate-500" />
+        <div className="flex items-center justify-end gap-1 md:gap-3 shrink-0">
+          <div className="flex items-center bg-slate-100 rounded-lg p-0.5 md:p-1 border border-slate-200">
+            <Calendar className="h-3 w-3 md:h-3.5 md:w-3.5 ml-1 text-slate-500 shrink-0" />
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
-              className="bg-transparent border-none text-xs font-bold text-slate-700 focus:ring-0 cursor-pointer py-1 pl-1 pr-7"
+              className="bg-transparent border-none text-[10px] md:text-xs font-bold text-slate-700 focus:ring-0 cursor-pointer py-0.5 pl-1 pr-5 md:pr-7 w-auto max-w-[90px] xs:max-w-none truncate"
             >
               {dateRangeOptions.map(option => (
                 <option key={option.value} value={option.value}>{option.label}</option>
@@ -496,17 +500,16 @@ const AIAnalyticsChat = ({ restaurantId: propRestaurantId }) => {
             </select>
           </div>
 
-          <div className="h-4 w-px bg-slate-200 mx-1"></div>
+          <div className="h-4 w-px bg-slate-200 mx-0.5 hidden md:block"></div>
 
-          <div className="flex gap-1">
+          <div className="flex gap-1 shrink-0">
             {[
-              { icon: <RefreshCw size={14} />, onClick: loadAnalyticsData, title: "Refresh" },
-              { icon: <Download size={14} />, onClick: exportChatHistory, title: "Export" }
+              { icon: <Download size={14} className="w-3 h-3 md:w-4 md:h-4" />, onClick: exportChatHistory, title: "Export" }
             ].map((btn, i) => (
               <button
                 key={i}
                 onClick={btn.onClick}
-                className="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
+                className="p-1 md:p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all border border-slate-100 md:border-transparent bg-white md:bg-transparent"
                 title={btn.title}
               >
                 {btn.icon}
@@ -522,23 +525,31 @@ const AIAnalyticsChat = ({ restaurantId: propRestaurantId }) => {
         <div className="flex-1 flex flex-col bg-transparent relative">
           {/* Quick Stats Strip */}
           {analyticsData && (
-            <div className="grid grid-cols-4 bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-2xl overflow-hidden mb-4 mx-1">
+            <div className="grid grid-cols-4 bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-2xl overflow-hidden mb-4 mx-1 shadow-sm">
               {[
                 { label: 'Revenue', val: `₹${analyticsData.summary.totalRevenue.toLocaleString()}`, color: 'emerald' },
                 { label: 'Orders', val: analyticsData.summary.totalOrders, color: 'blue' },
                 { label: 'Avg Order', val: `₹${analyticsData.summary.avgOrderValue.toFixed(0)}`, color: 'amber' },
                 { label: 'Peak Hour', val: analyticsData.summary.peakHour || 'N/A', color: 'orange' }
               ].map((s, i) => (
-                <div key={i} className="px-6 py-3 border-r border-slate-100 last:border-r-0">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">{s.label}</p>
-                  <p className={`text-sm font-bold text-${s.color}-600`}>{s.val}</p>
+                <div
+                  key={i}
+                  className={`
+                    px-1 py-2 md:px-6 md:py-3 
+                    text-center md:text-left
+                    border-slate-100 
+                    border-r last:border-r-0
+                  `}
+                >
+                  <p className="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1 md:mb-1.5 truncate">{s.label}</p>
+                  <p className={`text-[10px] sm:text-xs md:text-base font-bold text-${s.color}-600 truncate px-0.5`}>{s.val}</p>
                 </div>
               ))}
             </div>
           )}
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-2 space-y-6 scroll-smooth scrollbar-hide">
+          <div className="flex-1 overflow-y-auto px-2 md:px-4 py-2 space-y-4 md:space-y-6 scroll-smooth scrollbar-hide">
             {messages.map((message) => (
               <div
                 key={message.id}
@@ -551,7 +562,7 @@ const AIAnalyticsChat = ({ restaurantId: propRestaurantId }) => {
                   </div>
 
                   <div className={`flex flex-col gap-2 ${message.type === 'user' ? 'items-end' : 'items-start'}`}>
-                    <div className={`rounded-2xl px-5 py-3.5 border ${message.type === 'user'
+                    <div className={`rounded-2xl px-3 py-2.5 md:px-5 md:py-3.5 border ${message.type === 'user'
                       ? 'bg-slate-900 border-slate-800 text-slate-50 rounded-tr-none'
                       : message.isError
                         ? 'bg-red-50 border-red-100 text-red-900'
@@ -591,13 +602,13 @@ const AIAnalyticsChat = ({ restaurantId: propRestaurantId }) => {
           </div>
 
           {/* Floating Ultra-Modern Input Area Wrapper */}
-          <div className="w-full mt-auto relative z-30 px-4 pb-2">
+          <div className="w-full mt-auto relative z-30 px-2 md:px-4 pb-4 md:pb-2">
             {/* Wider Container for Growth Tools */}
             <div className="max-w-6xl mx-auto relative">
               {/* Floating Dynamic Quick Queries */}
               <div className={`relative transition-all duration-300 transform ${(inputMessage.trim() || isInputFocused) ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95 pointer-events-none'}`}>
-                <div className="absolute bottom-full left-0 right-0 mb-6 flex overflow-x-auto pb-4 scrollbar-hide px-2">
-                  <div className="flex bg-slate-900/90 backdrop-blur-xl border border-white/10 p-2 rounded-[2rem] items-center gap-3 w-max mx-auto min-w-min px-4">
+                <div className="absolute bottom-full left-0 right-0 mb-2 md:mb-6 flex overflow-x-auto pb-2 md:pb-4 scrollbar-hide px-2">
+                  <div className="flex bg-slate-900/90 backdrop-blur-xl border border-white/10 p-1.5 md:p-2 rounded-[2rem] items-center gap-2 md:gap-3 w-max mx-auto min-w-min px-3 md:px-4">
                     <div className="flex items-center gap-2 px-3 border-r border-white/10 mr-2 flex-shrink-0">
                       <Brain size={14} className="text-amber-400 animate-pulse" />
                       <span className="text-[10px] font-bold text-white uppercase tracking-widest leading-none">Growth Tools</span>
@@ -630,7 +641,7 @@ const AIAnalyticsChat = ({ restaurantId: propRestaurantId }) => {
             {/* Standard Container for Input Bar */}
             <div className="max-w-4xl mx-auto">
 
-              <div className={`flex items-center gap-2 p-1 bg-white/80 backdrop-blur-2xl border border-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] rounded-[2.5rem] transition-all duration-300 ${isInputFocused ? 'shadow-[0_25px_60px_-15px_rgba(79,70,229,0.2)] ring-4 ring-amber-500/5 -translate-y-0.5' : ''}`}>
+              <div className={`flex items-center gap-1 md:gap-2 p-1 md:p-1.5 bg-white/80 backdrop-blur-2xl border border-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] rounded-[2.5rem] transition-all duration-300 ${isInputFocused ? 'shadow-[0_25px_60px_-15px_rgba(79,70,229,0.2)] ring-4 ring-amber-500/5 -translate-y-0.5' : ''}`}>
                 <div className="flex-1 relative ml-2">
                   <textarea
                     ref={textareaRef}
@@ -644,7 +655,7 @@ const AIAnalyticsChat = ({ restaurantId: propRestaurantId }) => {
                     onBlur={() => setTimeout(() => setIsInputFocused(false), 200)}
                     onKeyPress={handleKeyPress}
                     placeholder="Ask Table-Tap Advisor anything..."
-                    className="w-full bg-transparent pl-4 pr-12 py-2.5 focus:outline-none transition-all text-sm placeholder:text-slate-400 resize-none min-h-[42px] leading-tight"
+                    className="w-full bg-transparent pl-3 md:pl-4 pr-10 md:pr-12 py-2 md:py-2.5 focus:outline-none transition-all text-sm placeholder:text-slate-400 resize-none min-h-[42px] leading-tight"
                     rows="1"
                     disabled={isLoading}
                   />
@@ -661,7 +672,7 @@ const AIAnalyticsChat = ({ restaurantId: propRestaurantId }) => {
                     if (textareaRef.current) textareaRef.current.style.height = 'auto';
                   }}
                   disabled={!inputMessage.trim() || isLoading}
-                  className={`flex-shrink-0 p-2.5 rounded-full transition-all shadow-xl active:scale-90 disabled:opacity-0 disabled:scale-75 ${inputMessage.trim() ? 'bg-amber-600 hover:bg-slate-900 text-white scale-100' : 'bg-slate-100 text-slate-400'
+                  className={`flex-shrink-0 p-2 md:p-2.5 rounded-full transition-all shadow-xl active:scale-90 disabled:opacity-0 disabled:scale-75 ${inputMessage.trim() ? 'bg-amber-600 hover:bg-slate-900 text-white scale-100' : 'bg-slate-100 text-slate-400'
                     }`}
                 >
                   <Send size={16} className={inputMessage.trim() ? 'animate-in fade-in zoom-in duration-300' : ''} />

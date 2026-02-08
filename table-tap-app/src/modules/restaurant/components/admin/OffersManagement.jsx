@@ -148,20 +148,12 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
     }
   }, [selectedItems]);
 
-  const toggleItemSelection = (item) => {
-    setSelectedItems(prev => {
-      const isSelected = prev.some(selected => selected.id === item.id);
-
-      if (isSelected) {
-        return prev.filter(selected => selected.id !== item.id);
-      } else {
-        return [...prev, item];
-      }
-    });
+  const handleAddItem = (item) => {
+    setSelectedItems(prev => [...prev, item]);
   };
 
-  const removeSelectedItem = (itemId) => {
-    setSelectedItems(prev => prev.filter(item => item.id !== itemId));
+  const removeSelectedItem = (index) => {
+    setSelectedItems(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
@@ -348,51 +340,53 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
   return (
     <div className="space-y-6">
       <div className="bg-white p-6 rounded-xl shadow-sm">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-6">
           <div>
-            {/* Removed redundant title */}
-            <p className="text-sm text-gray-600 mt-1">
+            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              Your Offers <span className="bg-orange-100 text-orange-700 text-xs px-2 py-0.5 rounded-full">{offers.length}</span>
+            </h2>
+            <p className="text-sm text-gray-500 mt-1 hidden md:block">
               Manage special offers and promotional deals for your customers
             </p>
           </div>
           {!showForm && (
             <button
               onClick={() => setShowForm(true)}
-              className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors flex items-center gap-2"
+              className="w-full md:w-auto bg-orange-600 text-white px-5 py-2.5 rounded-xl hover:bg-orange-700 transition-all shadow-sm shadow-orange-200 flex items-center justify-center gap-2 font-medium active:scale-95"
             >
-              <Plus size={16} />
+              <Plus size={18} />
               Create New Offer
             </button>
           )}
         </div>
 
         {/* Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <div className="flex items-center justify-between">
+        <div className="flex overflow-x-auto pb-2 gap-2 md:grid md:grid-cols-4 md:gap-4 mb-6 no-scrollbar snap-x">
+          <div className="min-w-[85px] flex-1 bg-blue-50 p-2 md:p-4 rounded-xl border border-blue-100 snap-start">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-1">
               <div>
-                <p className="text-sm text-blue-600">Total Offers</p>
-                <p className="text-2xl font-bold text-blue-800">{offers.length}</p>
+                <p className="text-[10px] md:text-sm text-blue-600 font-medium uppercase tracking-wide">Total Offers</p>
+                <p className="text-lg md:text-2xl font-bold text-blue-800 leading-tight">{offers.length}</p>
               </div>
-              <Package className="text-blue-500" size={24} />
+              <Package className="text-blue-500 w-4 h-4 md:w-6 md:h-6" />
             </div>
           </div>
 
-          <div className="bg-green-50 p-4 rounded-lg">
-            <div className="flex items-center justify-between">
+          <div className="min-w-[85px] flex-1 bg-green-50 p-2 md:p-4 rounded-xl border border-green-100 snap-start">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-1">
               <div>
-                <p className="text-sm text-green-600">Carousel Offers</p>
-                <p className="text-2xl font-bold text-green-800">{carouselOffers.length}/3</p>
+                <p className="text-[10px] md:text-sm text-green-600 font-medium uppercase tracking-wide">Active Ads</p>
+                <p className="text-lg md:text-2xl font-bold text-green-800 leading-tight">{carouselOffers.length}<span className="text-xs text-green-600 font-normal">/3</span></p>
               </div>
-              <ShoppingBag className="text-green-500" size={24} />
+              <ShoppingBag className="text-green-500 w-4 h-4 md:w-6 md:h-6" />
             </div>
           </div>
 
-          <div className="bg-orange-50 p-4 rounded-lg">
-            <div className="flex items-center justify-between">
+          <div className="min-w-[85px] flex-1 bg-orange-50 p-2 md:p-4 rounded-xl border border-orange-100 snap-start">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-1">
               <div>
-                <p className="text-sm text-orange-600">Avg. Discount</p>
-                <p className="text-2xl font-bold text-orange-800">
+                <p className="text-[10px] md:text-sm text-orange-600 font-medium uppercase tracking-wide">Avg. Disc</p>
+                <p className="text-lg md:text-2xl font-bold text-orange-800 leading-tight">
                   {offers.length > 0
                     ? Math.round(offers.reduce((sum, offer) => {
                       const savings = calculateSavings(offer.price, offer.discounted_price);
@@ -401,31 +395,31 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                     : 0}%
                 </p>
               </div>
-              <Percent className="text-orange-500" size={24} />
+              <Percent className="text-orange-500 w-4 h-4 md:w-6 md:h-6" />
             </div>
           </div>
 
-          <div className="bg-orange-50 p-4 rounded-lg">
-            <div className="flex items-center justify-between">
+          <div className="min-w-[85px] flex-1 bg-purple-50 p-2 md:p-4 rounded-xl border border-purple-100 snap-start">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-1">
               <div>
-                <p className="text-sm text-orange-600">Total Savings</p>
-                <p className="text-2xl font-bold text-orange-800">
+                <p className="text-[10px] md:text-sm text-purple-600 font-medium uppercase tracking-wide">Savings</p>
+                <p className="text-lg md:text-2xl font-bold text-purple-800 leading-tight">
                   ₹{offers.reduce((sum, offer) => {
                     const savings = calculateSavings(offer.price, offer.discounted_price);
                     return sum + savings.amount;
                   }, 0).toFixed(0)}
                 </p>
               </div>
-              <IndianRupee className="text-orange-500" size={24} />
+              <IndianRupee className="text-purple-500 w-4 h-4 md:w-6 md:h-6" />
             </div>
           </div>
         </div>
 
         {/* Create/Edit Form */}
         {showForm && (
-          <div className="bg-gray-50 p-6 rounded-lg mb-6 border">
+          <div className="bg-gray-50 p-4 md:p-6 rounded-xl mb-6 border border-gray-100 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-medium text-gray-800">
+              <h3 className="text-lg font-bold text-gray-800">
                 {editingOffer ? 'Edit Offer' : 'Create New Offer'}
               </h3>
               <button
@@ -433,9 +427,9 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   setShowForm(false);
                   resetForm();
                 }}
-                className="text-gray-500 hover:text-gray-700 p-1"
+                className="bg-white text-gray-400 hover:text-gray-700 p-2 rounded-full shadow-sm border border-gray-100"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
@@ -443,7 +437,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
               {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
                     Offer Name <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -451,14 +445,14 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full border-gray-200 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
                     placeholder="E.g., Family Combo, Student Special"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
                     Description <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -466,7 +460,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                     name="description"
                     value={formData.description}
                     onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full border-gray-200 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
                     placeholder="Brief description of the offer"
                     required
                   />
@@ -476,7 +470,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
               {/* Pricing */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
                     Original Price (₹)
                   </label>
                   <div className="relative">
@@ -485,16 +479,17 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                       name="price"
                       value={formData.price}
                       onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-md shadow-sm p-3 bg-gray-100 text-gray-600"
+                      className="w-full border-gray-200 rounded-lg shadow-sm p-3 bg-white focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
                       placeholder="0.00"
-                      readOnly
+                      min="0"
+                      step="0.01"
                     />
-                    <span className="absolute right-3 top-3 text-sm text-gray-500">Auto-calculated</span>
+                    <span className="absolute right-3 top-3 text-xs text-gray-400 font-medium">Value</span>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
                     Discounted Price (₹) <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -502,7 +497,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                     name="discounted_price"
                     value={formData.discounted_price}
                     onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full border-gray-200 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm font-semibold text-gray-800"
                     placeholder="0.00"
                     min="0.01"
                     step="0.01"
@@ -511,21 +506,21 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
                     Your Savings
                   </label>
-                  <div className="w-full border border-gray-200 rounded-md shadow-sm p-3 bg-green-50">
+                  <div className="w-full border border-green-200 rounded-lg shadow-sm p-3 bg-green-50 flex items-center justify-between">
                     {formData.price > 0 && formData.discounted_price > 0 ? (
                       <>
-                        <div className="text-green-700 font-medium">
+                        <div className="text-green-700 font-bold text-sm">
                           ₹{(formData.price - formData.discounted_price).toFixed(2)}
                         </div>
-                        <div className="text-sm text-green-600">
-                          ({(((formData.price - formData.discounted_price) / formData.price) * 100).toFixed(1)}% off)
+                        <div className="text-xs font-medium bg-green-200 text-green-800 px-2 py-0.5 rounded-full">
+                          {(((formData.price - formData.discounted_price) / formData.price) * 100).toFixed(0)}% OFF
                         </div>
                       </>
                     ) : (
-                      <span className="text-gray-500">₹0.00 (0%)</span>
+                      <span className="text-gray-400 text-sm italic">Add items & price</span>
                     )}
                   </div>
                 </div>
@@ -533,136 +528,135 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
 
               {/* Image Upload */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
                   Offer Image
                 </label>
                 <div className="flex items-center space-x-4">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4
-                      file:rounded-md file:border-0
-                      file:text-sm file:font-semibold
-                      file:bg-orange-50 file:text-orange-700
-                      hover:file:bg-orange-100 cursor-pointer"
-                  />
+                  <label className="flex flex-col items-center justify-center w-20 h-20 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <Plus className="w-6 h-6 text-gray-400" />
+                    </div>
+                    <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                  </label>
+
                   {formData.image && (
-                    <div className="relative">
+                    <div className="relative group">
                       <img
                         src={formData.image}
                         alt="Preview"
-                        className="h-16 w-16 object-cover rounded-md border"
+                        className="h-20 w-20 object-cover rounded-lg border border-gray-200 shadow-sm"
                       />
                       <button
                         type="button"
                         onClick={() => setFormData(prev => ({ ...prev, image: '', imageFile: null }))}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                        className="absolute -top-2 -right-2 bg-white text-red-500 rounded-full p-1 shadow-md border border-gray-100 hover:bg-red-50"
                       >
-                        <X size={12} />
+                        <X size={14} />
                       </button>
                     </div>
                   )}
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-500">
+                      Tap the box to upload. Max 5MB.
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Supported formats: JPG, PNG, GIF. Max size: 5MB
-                </p>
               </div>
 
               {/* Items Selection */}
               <div>
                 <div className="flex justify-between items-center mb-3">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Included Items <span className="text-red-500">*</span>
                   </label>
                   <button
                     type="button"
                     onClick={() => setShowItemSelector(!showItemSelector)}
-                    className="text-sm text-orange-600 hover:text-orange-800 font-medium"
+                    className="text-xs font-bold text-orange-600 hover:text-orange-700 bg-orange-50 px-3 py-1.5 rounded-full transition-colors"
                   >
-                    {showItemSelector ? 'Done Selecting' : 'Add/Remove Items'}
+                    {showItemSelector ? 'Finish Selection' : '+ Add Items'}
                   </button>
                 </div>
 
                 {selectedItems.length === 0 ? (
-                  <div className="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <Package className="mx-auto text-gray-400 mb-2" size={24} />
-                    <p className="text-gray-500">No items selected</p>
-                    <p className="text-xs text-gray-400 mt-1">Click "Add/Remove Items" to select products</p>
+                  <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-6 text-center">
+                    <Package className="mx-auto text-gray-300 mb-2" size={24} />
+                    <p className="text-sm text-gray-500 font-medium">No items selected</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    {selectedItems.map(item => (
-                      <div key={item.id} className="flex items-center gap-3 p-3 bg-white border rounded-lg">
-                        {item.image && (
-                          <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded" />
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                    {selectedItems.map((item, index) => (
+                      <div key={index} className="flex items-center gap-3 p-2 bg-white border border-gray-100 rounded-lg shadow-sm">
+                        {item.image ? (
+                          <img src={item.image} alt={item.name} className="w-10 h-10 object-cover rounded-md bg-gray-100" />
+                        ) : (
+                          <div className="w-10 h-10 bg-gray-100 rounded-md flex items-center justify-center text-gray-400">
+                            <Package size={16} />
+                          </div>
                         )}
-                        <div className="flex-1">
-                          <div className="font-medium text-gray-800">{item.name}</div>
-                          <div className="text-sm text-gray-500">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-gray-800 text-sm truncate">{item.name}</div>
+                          <div className="text-xs text-gray-500 truncate">
                             {item.category} • ₹{parseFloat(item.price).toFixed(2)}
                           </div>
                         </div>
                         <button
                           type="button"
-                          onClick={() => removeSelectedItem(item.id)}
-                          className="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded"
+                          onClick={() => removeSelectedItem(index)}
+                          className="text-gray-400 hover:text-red-500 p-1.5 rounded-md hover:bg-red-50 transition-colors"
                         >
                           <X size={16} />
                         </button>
                       </div>
                     ))}
-                    <div className="text-sm text-gray-600 mt-2">
-                      Total: {selectedItems.length} items • ₹{selectedItems.reduce((sum, item) => sum + parseFloat(item.price), 0).toFixed(2)}
-                    </div>
                   </div>
                 )}
               </div>
 
               {/* Item Selector */}
               {showItemSelector && (
-                <div className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
+                <div className="border border-gray-200 rounded-xl p-4 bg-white shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="mb-4">
                     <input
                       type="text"
-                      placeholder="Search items by name, description, or category..."
+                      placeholder="Search items..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      className="w-full border-gray-200 rounded-lg shadow-sm p-2.5 focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm bg-gray-50"
                     />
                   </div>
 
-                  <div className="max-h-60 overflow-y-auto">
+                  <div className="max-h-60 overflow-y-auto custom-scrollbar">
                     {filteredFoodItems.length === 0 ? (
                       <div className="text-center py-8 text-gray-500">
-                        <Package size={24} className="mx-auto mb-2 text-gray-400" />
-                        No items found
+                        <Package size={24} className="mx-auto mb-2 text-gray-300" />
+                        <span className="text-sm">No items found</span>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 gap-2">
                         {filteredFoodItems.map(item => {
-                          const isSelected = selectedItems.some(selected => selected.id === item.id);
+                          const count = selectedItems.filter(selected => selected.id === item.id).length;
+                          const isSelected = count > 0;
                           return (
                             <div
                               key={item.id}
-                              onClick={() => toggleItemSelection(item)}
-                              className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${isSelected
-                                  ? 'bg-orange-100 border-2 border-orange-300'
-                                  : 'hover:bg-gray-50 border border-gray-200'
+                              onClick={() => handleAddItem(item)}
+                              className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all hover:bg-orange-50 border ${isSelected
+                                ? 'border-orange-200 bg-orange-50/50'
+                                : 'border-transparent'
                                 }`}
                             >
-                              {item.image && (
-                                <img src={item.image} alt={item.name} className="w-10 h-10 object-cover rounded" />
-                              )}
-                              <div className="flex-1">
-                                <div className="font-medium text-sm">{item.name}</div>
-                                <div className="text-xs text-gray-500">
-                                  {item.category} • ₹{parseFloat(item.price).toFixed(2)}
-                                </div>
+                              <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'bg-orange-500 border-orange-500' : 'border-gray-300'}`}>
+                                {count > 0 ? (
+                                  <span className="text-[9px] text-white font-bold">{count}</span>
+                                ) : (
+                                  <Plus size={10} className="text-gray-400" />
+                                )}
                               </div>
-                              {isSelected && (
-                                <Check size={16} className="text-orange-600" />
-                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className={`text-sm font-medium truncate ${isSelected ? 'text-orange-900' : 'text-gray-700'}`}>{item.name}</div>
+                                <div className="text-xs text-gray-500">₹{parseFloat(item.price).toFixed(2)}</div>
+                              </div>
                             </div>
                           );
                         })}
@@ -673,44 +667,50 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
               )}
 
               {/* Carousel Option */}
-              <div className="flex items-center space-x-3 p-4 bg-blue-50 rounded-lg">
-                <input
-                  type="checkbox"
-                  id="is_carousel"
-                  checked={formData.is_carousel}
-                  onChange={handleInputChange}
-                  name="is_carousel"
-                  className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
-                />
-                <label htmlFor="is_carousel" className="flex-1 text-sm text-gray-700">
-                  <div className="font-medium">Add to Main Carousel</div>
-                  <div className="text-xs text-gray-500">
-                    Display this offer prominently on the home page ({carouselOffers.length}/3 slots used)
+              <div className="flex items-start space-x-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+                <div className="flex items-center h-5">
+                  <input
+                    type="checkbox"
+                    id="is_carousel"
+                    checked={formData.is_carousel}
+                    onChange={handleInputChange}
+                    name="is_carousel"
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
+                  />
+                </div>
+                <div className="flex-1 text-sm">
+                  <label htmlFor="is_carousel" className="font-bold text-gray-800 cursor-pointer block">
+                    Feature in Carousel
+                  </label>
+                  <p className="text-xs text-gray-600 mt-0.5">
+                    Show this offer on the home page slider. ({carouselOffers.length}/3 slots used)
+                  </p>
+                </div>
+                {carouselOffers.length >= 3 && !editingOffer && !formData.is_carousel && (
+                  <div className="text-amber-500" title="Carousel full">
+                    <AlertCircle size={18} />
                   </div>
-                </label>
-                {carouselOffers.length >= 3 && !editingOffer && (
-                  <AlertCircle size={16} className="text-amber-500" />
                 )}
               </div>
 
               {/* Form Actions */}
-              <div className="flex justify-end space-x-3 pt-4 border-t">
+              <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => {
                     setShowForm(false);
                     resetForm();
                   }}
-                  className="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                  className="px-5 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isUpdating}
-                  className="px-6 py-2 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-5 py-2.5 text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 rounded-lg transition-colors disabled:opacity-50 shadow-sm shadow-orange-200"
                 >
-                  {isUpdating ? 'Saving...' : (editingOffer ? 'Update Offer' : 'Create Offer')}
+                  {isUpdating ? 'Saving...' : (editingOffer ? 'Save Changes' : 'Create Offer')}
                 </button>
               </div>
             </form>
@@ -719,75 +719,85 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
 
         {/* Carousel Offers Section */}
         <div className="mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium text-gray-800">Featured Carousel Offers</h3>
-            <span className="text-sm text-gray-500">
-              {carouselOffers.length}/3 slots used
+          <div className="flex justify-between items-center mb-4 px-1">
+            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+              <ShoppingBag size={20} className="text-orange-500" />
+              Featured Offers
+            </h3>
+            <span className="text-xs font-medium px-2 py-1 bg-gray-100 rounded-full text-gray-600">
+              {carouselOffers.length}/3 Active
             </span>
           </div>
 
           {carouselOffers.length === 0 ? (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
-              <ShoppingBag size={24} className="mx-auto text-blue-400 mb-2" />
-              <p className="text-blue-700 font-medium">No carousel offers yet</p>
-              <p className="text-sm text-blue-600 mt-1">
-                Create an offer and enable "Add to Main Carousel" to display it prominently
+            <div className="bg-white border text-center rounded-2xl p-8 shadow-sm">
+              <div className="flex justify-center mb-4">
+                <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center">
+                  <ShoppingBag size={24} className="text-blue-500" />
+                </div>
+              </div>
+              <h4 className="text-gray-900 font-medium mb-1">No featured offers</h4>
+              <p className="text-sm text-gray-500 mb-4 max-w-xs mx-auto">
+                Promote your best deals by adding them to the carousel.
               </p>
+              <button
+                onClick={() => setShowForm(true)}
+                className="text-sm font-medium text-orange-600 hover:text-orange-700"
+              >
+                + Create Offer
+              </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 -mx-4 px-4 md:grid md:grid-cols-3 md:gap-5 md:pb-0 md:mx-0 md:px-0 no-scrollbar">
               {carouselOffers.map(offer => {
                 const savings = calculateSavings(offer.price, offer.discounted_price);
                 return (
-                  <div key={offer.id} className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                    {offer.image ? (
-                      <div className="aspect-[2/1] bg-gray-100">
+                  <div key={offer.id} className="min-w-[85vw] md:min-w-0 snap-center bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all relative group">
+                    <div className="relative aspect-[2/1] bg-gray-100">
+                      {offer.image ? (
                         <img
                           src={offer.image}
                           alt={offer.name}
                           className="w-full h-full object-cover"
                         />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-orange-500 to-amber-500 flex flex-col justify-center items-center p-6 text-white text-center">
+                          <h3 className="font-bold text-lg leading-tight mb-1 opacity-90">{offer.name}</h3>
+                          <div className="text-4xl font-extrabold tracking-tight drop-shadow-sm">{savings.percentage.toFixed(0)}% <span className="text-lg align-top font-medium opacity-80">OFF</span></div>
+                        </div>
+                      )}
+
+                      <div className="absolute top-3 right-3 flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => setViewingOffer(offer)}
+                          className="bg-white/90 backdrop-blur-sm text-gray-700 p-2 rounded-full shadow-sm hover:text-blue-600 transition-colors"
+                        >
+                          <Eye size={16} />
+                        </button>
+                        <button
+                          onClick={() => toggleCarouselStatus(offer)}
+                          className="bg-white/90 backdrop-blur-sm text-gray-700 p-2 rounded-full shadow-sm hover:text-red-500 transition-colors"
+                        >
+                          <X size={16} />
+                        </button>
                       </div>
-                    ) : (
-                      <div className="aspect-[2/1] bg-gradient-to-br from-orange-500 to-orange-600 text-white flex flex-col justify-center items-center p-4">
-                        <p className="text-lg font-medium text-center">{offer.name}</p>
-                        <p className="text-3xl font-bold mt-2">
-                          {savings.percentage.toFixed(0)}% OFF
-                        </p>
+
+                      <div className="absolute bottom-3 left-3">
+                        <span className="px-2 py-1 bg-white/95 backdrop-blur-md rounded-lg text-xs font-bold shadow-sm text-orange-600 flex items-center gap-1">
+                          <Check size={10} strokeWidth={4} /> Featured
+                        </span>
                       </div>
-                    )}
+                    </div>
 
                     <div className="p-4">
-                      <h4 className="font-medium text-gray-800 mb-1">{offer.name}</h4>
-                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">{offer.description}</p>
-
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <span className="line-through text-gray-400 text-sm mr-2">
-                            ₹{parseFloat(offer.price).toFixed(2)}
-                          </span>
-                          <span className="text-orange-600 font-semibold text-lg">
-                            ₹{parseFloat(offer.discounted_price).toFixed(2)}
-                          </span>
-                        </div>
-
-                        <div className="flex gap-1">
-                          <button
-                            onClick={() => setViewingOffer(offer)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-                            title="View details"
-                          >
-                            <Eye size={16} />
-                          </button>
-                          <button
-                            onClick={() => toggleCarouselStatus(offer)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                            title="Remove from carousel"
-                          >
-                            <X size={16} />
-                          </button>
+                      <div className="flex justify-between items-start mb-1">
+                        <h4 className="font-bold text-gray-900 line-clamp-1">{offer.name}</h4>
+                        <div className="text-right shrink-0 ml-2">
+                          <span className="block text-lg font-bold text-orange-600 leading-none">₹{parseFloat(offer.discounted_price).toFixed(0)}</span>
+                          <span className="text-xs text-gray-400 line-through decoration-gray-300">₹{parseFloat(offer.price).toFixed(0)}</span>
                         </div>
                       </div>
+                      <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">{offer.description}</p>
                     </div>
                   </div>
                 );
@@ -891,58 +901,84 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
         </div>
       </div>
 
-      {/* Offer Details Modal */}
       {viewingOffer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-6 relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-5 md:p-8 relative animate-in zoom-in-95 duration-200">
             <button
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-1 bg-gray-50 rounded-full"
               onClick={() => setViewingOffer(null)}
             >
               <X size={20} />
             </button>
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center text-center">
               {viewingOffer.image ? (
                 <img
                   src={viewingOffer.image}
                   alt={viewingOffer.name}
-                  className="w-40 h-40 object-cover rounded-lg mb-4"
+                  className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-2xl shadow-md mb-4 ring-4 ring-gray-50"
                 />
               ) : (
-                <div className="w-40 h-40 flex items-center justify-center bg-orange-100 text-orange-600 text-4xl font-bold rounded-lg mb-4">
-                  {calculateSavings(viewingOffer.price, viewingOffer.discounted_price).percentage.toFixed(0)}%
+                <div className="w-24 h-24 md:w-32 md:h-32 flex items-center justify-center bg-gradient-to-br from-orange-400 to-orange-600 text-white rounded-2xl shadow-md mb-4 ring-4 ring-orange-100">
+                  <span className="text-3xl font-bold">
+                    {calculateSavings(viewingOffer.price, viewingOffer.discounted_price).percentage.toFixed(0)}%
+                  </span>
                 </div>
               )}
-              <h2 className="text-2xl font-bold mb-2">{viewingOffer.name}</h2>
-              <p className="text-gray-600 mb-2 text-center">{viewingOffer.description}</p>
-              <div className="flex items-center gap-4 mb-4">
-                <span className="line-through text-gray-400 text-lg">
-                  ₹{parseFloat(viewingOffer.price).toFixed(2)}
-                </span>
-                <span className="text-orange-600 font-bold text-2xl">
-                  ₹{parseFloat(viewingOffer.discounted_price).toFixed(2)}
-                </span>
-                <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-sm font-medium">
-                  Save ₹{(viewingOffer.price - viewingOffer.discounted_price).toFixed(2)}
-                </span>
+
+              <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">{viewingOffer.name}</h2>
+              <p className="text-sm text-gray-500 mb-4 px-2">{viewingOffer.description}</p>
+
+              <div className="flex items-center justify-center gap-3 mb-6 bg-gray-50 px-4 py-2 rounded-xl border border-gray-100 w-full">
+                <div className="flex flex-col items-end">
+                  <span className="text-xs text-gray-400 font-medium uppercase">Original</span>
+                  <span className="line-through text-gray-400 text-sm font-semibold Decoration-2">
+                    ₹{parseFloat(viewingOffer.price).toFixed(0)}
+                  </span>
+                </div>
+                <div className="h-8 w-px bg-gray-200 mx-1"></div>
+                <div className="flex flex-col items-start">
+                  <span className="text-xs text-orange-600 font-medium uppercase">Deal Price</span>
+                  <span className="text-orange-600 font-bold text-xl leading-none">
+                    ₹{parseFloat(viewingOffer.discounted_price).toFixed(0)}
+                  </span>
+                </div>
+                <div className="ml-auto bg-green-100 text-green-700 px-2.5 py-1 rounded-lg text-xs font-bold shadow-sm">
+                  SAVE ₹{(viewingOffer.price - viewingOffer.discounted_price).toFixed(0)}
+                </div>
               </div>
-              <div className="w-full">
-                <h4 className="font-medium mb-2">Included Items:</h4>
-                <ul className="list-disc pl-5 text-gray-700">
+
+              <div className="w-full text-left bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <h4 className="font-semibold text-gray-900 text-sm mb-2 flex items-center gap-2">
+                  <Package size={14} className="text-gray-400" /> Included Items
+                </h4>
+                <div className="space-y-2 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
                   {(viewingOffer.items || []).map(itemId => {
                     const item = foodItems.find(f => f.id === itemId);
                     return item ? (
-                      <li key={item.id}>
-                        {item.name} <span className="text-gray-500 text-xs">({item.category})</span>
-                      </li>
+                      <div key={item.id} className="flex items-center gap-2 text-sm bg-white p-2 rounded-lg border border-gray-100 shadow-sm">
+                        {item.image &&
+                          <img src={item.image} className="w-8 h-8 rounded-md object-cover bg-gray-100" />
+                        }
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-gray-700 truncate">{item.name}</div>
+                          <div className="text-xs text-gray-400">{item.category}</div>
+                        </div>
+                      </div>
                     ) : null;
                   })}
-                </ul>
+                </div>
               </div>
-              <div className="flex justify-end w-full mt-6">
+
+              <div className="w-full mt-6 grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => handleEditOffer(viewingOffer)}
+                  className="px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 font-medium text-sm flex items-center justify-center gap-2"
+                >
+                  <Edit size={16} /> Edit
+                </button>
                 <button
                   onClick={() => setViewingOffer(null)}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                  className="px-4 py-2.5 bg-gray-900 text-white rounded-xl hover:bg-gray-800 font-medium text-sm shadow-lg shadow-gray-200"
                 >
                   Close
                 </button>

@@ -56,11 +56,10 @@ const FoodItemForm = ({
         format: 'webp'
       });
 
-      // Update form data with optimized file
+      // Update form data with optimized file but keep permanent image field clean
       setFormData({
         ...formData,
-        imageFile: optimizedFile,
-        image: previewUrl
+        imageFile: optimizedFile
       });
 
 
@@ -82,7 +81,8 @@ const FoodItemForm = ({
         throw new Error('Please fill all required fields');
       }
 
-      let imageUrl = formData.image;
+      // Sanitize current image to ensure no temporary blob URLs persist
+      let imageUrl = formData.image && formData.image.startsWith('blob:') ? null : formData.image;
 
       // If we have a new image file to upload
       if (formData.imageFile) {
