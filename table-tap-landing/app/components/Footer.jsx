@@ -17,6 +17,9 @@ const Footer = () => {
     const { footer: localFooter, contact: localContact } = data;
     const { company, social, logo, loading } = useSettings();
 
+    const companyName = company?.name || "Table Tap";
+    const logoUrl = logo?.url || "/logo.png";
+
     // Override with database settings if available
     const contact = {
         ...localContact,
@@ -36,8 +39,9 @@ const Footer = () => {
         ...localFooter,
         socialLinks: localFooter.socialLinks.map(link => {
             if (!social) return link;
-            if (social[link.platform.toLowerCase()]) {
-                return { ...link, href: social[link.platform.toLowerCase()] };
+            const platformKey = link.platform.toLowerCase();
+            if (social[platformKey]) {
+                return { ...link, href: social[platformKey] };
             }
             return link;
         })
@@ -56,8 +60,8 @@ const Footer = () => {
                         <a href="#home" className="inline-flex items-center gap-3 mb-4 group min-h-[44px]">
                             <div className="h-10 sm:h-12 rounded-xl overflow-hidden group-hover:scale-105 transition-transform bg-white/10 p-1">
                                 <Image
-                                    src={logo?.url || "/logo.png"}
-                                    alt="Table Tap Logo"
+                                    src={logoUrl}
+                                    alt={`${companyName} Logo`}
                                     width={120}
                                     height={48}
                                     className={`h-full w-auto object-contain ${!logo?.url ? 'brightness-0 invert' : ''}`}

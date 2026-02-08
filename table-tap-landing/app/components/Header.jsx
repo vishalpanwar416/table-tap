@@ -13,9 +13,10 @@ const Header = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const { header } = data;
     const { openModal } = useModal();
-    const { logo } = useSettings();
+    const { logo, company } = useSettings();
 
     const logoUrl = logo?.url || '/logo.png';
+    const companyName = company?.name || "Table Tap";
 
     useEffect(() => {
         const handleScroll = () => {
@@ -35,7 +36,7 @@ const Header = () => {
                 <Link href="#home" className="flex items-center gap-2 group min-h-[44px] min-w-[44px] shrink-0">
                     <Image
                         src={logoUrl}
-                        alt="Table Tap"
+                        alt={companyName}
                         width={180}
                         height={72}
                         className="h-10 sm:h-12 md:h-14 lg:h-16 w-auto transition-transform group-hover:scale-105"

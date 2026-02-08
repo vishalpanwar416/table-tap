@@ -15,6 +15,7 @@ export const SettingsProvider = ({ children, initialSettings = null }) => {
         loading: !initialSettings
     });
 
+
     useEffect(() => {
         // Skip client fetch when server already provided settings (faster load)
         if (initialSettings != null) {
@@ -23,12 +24,23 @@ export const SettingsProvider = ({ children, initialSettings = null }) => {
         }
         const fetchSettings = async () => {
             try {
+                console.log('Fetching landing settings...');
                 const { data, error } = await supabase
                     .from('system_settings')
                     .select('key, value')
                     .in('key', ['company_details', 'social_links', 'landing_hero', 'system_logo', 'google_maps_key']);
 
-                if (error) throw error;
+                if (error) {
+                    console.error('Supabase error fetching settings:', error);
+                    throw error;
+                }
+
+                console.log(`Fetched ${data?.length || 0} settings rows`);
+                if (data && data.length > 0) {
+                    console.log('Settings received for keys:', data.map(d => d.key));
+                }
+
+                console.log('Fetched settings data:', data);
 
                 const settingsMap = (data ?? []).reduce((acc, curr) => {
                     acc[curr.key] = curr.value;
