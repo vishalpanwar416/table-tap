@@ -10,6 +10,10 @@ export default function sitemap() {
     'cafes', 'fine-dining', 'bars', 'qsr'
   ];
 
+  const alternatives = [
+    'petpooja', 'dotpe', 'menutiger', 'finedine', 'best-qr-systems'
+  ];
+
   const solutions = [
     'qr-menu', 'restaurant-management', 'whatsapp-ordering', 'ai-restaurant', 'ai-ordering'
   ];
@@ -59,5 +63,17 @@ export default function sitemap() {
       changeFrequency: 'weekly',
       priority: 0.7,
     })),
+    ...alternatives.map(alt => ({
+      url: `${baseUrl}/alternatives/${alt}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    })),
+    {
+      url: `${baseUrl}/alternatives`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    },
   ];
 }

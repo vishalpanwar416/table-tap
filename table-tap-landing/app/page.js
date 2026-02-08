@@ -10,6 +10,8 @@ const Pricing = dynamic(() => import('./components/Pricing'));
 const Contact = dynamic(() => import('./components/Contact'));
 const Footer = dynamic(() => import('./components/Footer'));
 
+const WhySwitch = dynamic(() => import('./components/WhySwitch'));
+
 export default function Home() {
   return (
     <main className="min-h-screen bg-white">
@@ -21,6 +23,9 @@ export default function Home() {
 
       {/* Services Section */}
       <Services />
+
+      {/* Why Switch Section */}
+      <WhySwitch />
 
       {/* Features Section */}
       <Features />

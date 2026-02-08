@@ -307,6 +307,10 @@
                         "href": "/pricing-calculator"
                     },
                     {
+                        "label": "Compare & Switch",
+                        "href": "/alternatives"
+                    },
+                    {
                         "label": "Integrations",
                         "href": "#services"
                     }
