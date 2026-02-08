@@ -32,15 +32,15 @@ const Hero = () => {
             <div className="container mx-auto px-4 sm:px-6 relative z-10 max-w-full">
                 <div className="flex flex-col items-center text-center">
                     {/* Main Title */}
-                    <div className="overflow-hidden mb-4 sm:mb-6 md:mb-8 pb-2 sm:pb-4">
-                        <h1 className="text-[clamp(2rem,6vw+0.5rem,3.8rem)] sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl font-black tracking-tighter leading-[0.98] animate-slide-up px-1">
+                    <div className="mb-4 sm:mb-6 md:mb-8 pb-2 sm:pb-4">
+                        <h1 className="text-[clamp(2rem,6vw+0.5rem,3.8rem)] sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl font-black tracking-tighter leading-[0.98] px-1 translate-y-0 opacity-100">
                             <span className="text-gray-900">{hero.titlePrefix} </span>
                             <span className="gradient-text drop-shadow-sm">{hero.titleMain}</span>
                         </h1>
                     </div>
 
                     {/* Subtitle */}
-                    <p className="text-gray-500 text-[0.95rem] sm:text-lg md:text-xl lg:text-2xl max-w-2xl sm:max-w-3xl mb-7 sm:mb-10 md:mb-12 leading-relaxed font-medium animate-fade-in-up px-3 sm:px-2">
+                    <p className="text-gray-500 text-[0.95rem] sm:text-lg md:text-xl lg:text-2xl max-w-2xl sm:max-w-3xl mb-7 sm:mb-10 md:mb-12 leading-relaxed font-medium px-3 sm:px-2 opacity-100">
                         {hero.subtitle}
                     </p>
 
@@ -62,10 +62,9 @@ const Hero = () => {
                         </a>
                     </div>
 
-                    {/* Phone Showcase - smaller on mobile */}
                     <div className="relative w-full max-w-4xl mx-auto min-h-[280px] sm:min-h-[430px] md:min-h-[560px] mt-4 sm:mt-10 flex justify-center px-2">
                         {/* Main Phone View */}
-                        <div className="relative w-[210px] h-[380px] sm:w-[270px] sm:h-[480px] md:w-[300px] md:h-[550px] bg-[#0F172A] rounded-[34px] sm:rounded-[46px] md:rounded-[56px] p-3 sm:p-4 shadow-[0_24px_50px_-15px_rgba(0,0,0,0.15)] sm:shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] z-20 border-[5px] sm:border-[8px] border-white ring-1 ring-gray-200 animate-phone-appear">
+                        <div className="relative w-[210px] h-[380px] sm:w-[270px] sm:h-[480px] md:w-[300px] md:h-[550px] bg-[#0F172A] rounded-[34px] sm:rounded-[46px] md:rounded-[56px] p-3 sm:p-4 shadow-[0_24px_50px_-15px_rgba(0,0,0,0.15)] sm:shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] z-20 border-[5px] sm:border-[8px] border-white ring-1 ring-gray-200 opacity-100">
                             <div className="bg-white w-full h-full rounded-[44px] overflow-hidden relative flex flex-col">
                                 {/* Status Bar */}
                                 <div className="h-8 w-full bg-white flex justify-between px-8 items-center pt-4">

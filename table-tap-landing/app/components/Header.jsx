@@ -28,7 +28,7 @@ const Header = () => {
 
     return (
         <header
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 animate-slide-down safe-area-inset-top ${isScrolled ? 'glass-header py-2 sm:py-3 px-3 sm:px-4 mx-2 sm:mx-4 lg:mx-auto max-w-[1200px] lg:mt-4 rounded-xl sm:rounded-2xl shadow-lg' : 'bg-transparent py-4 sm:py-6'
+            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 safe-area-inset-top ${isScrolled ? 'glass-header py-2 sm:py-3 px-3 sm:px-4 mx-2 sm:mx-4 lg:mx-auto max-w-[1200px] lg:mt-4 rounded-xl sm:rounded-2xl shadow-lg' : 'bg-transparent py-4 sm:py-6'
                 }`}
         >
             <div className="container mx-auto px-4 sm:px-6 flex items-center justify-between max-w-full">

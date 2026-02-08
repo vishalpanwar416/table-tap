@@ -1,3 +1,4 @@
+import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { ModalProvider } from "./context/ModalContext";
@@ -6,6 +7,18 @@ import StructuredData from "./components/StructuredData";
 import LeadModalWrapper from "./components/LeadModalWrapper";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+  display: "swap",
+});
 
 export const metadata = {
   metadataBase: new URL('https://table-tap.in'),
@@ -139,7 +152,7 @@ export default function RootLayout({ children }) {
         <StructuredData settings={null} />
       </head>
       <body
-        className="font-sans antialiased bg-white text-gray-900"
+        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased bg-white text-gray-900`}
         suppressHydrationWarning
       >
         <SettingsProvider initialSettings={null}>
