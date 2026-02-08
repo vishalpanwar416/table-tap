@@ -1,6 +1,4 @@
 'use client';
-
-// Refined Pricing component - Force Rebuild - Timestamp: 19:28:00
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';

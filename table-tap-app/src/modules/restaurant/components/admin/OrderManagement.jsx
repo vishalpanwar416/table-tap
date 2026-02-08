@@ -940,18 +940,24 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
     }
   };
 
-  // Filter orders
-  let periodFilteredOrders = orders;
-  if (periodFilter !== 'all') {
-    periodFilteredOrders = getOrdersByPeriod(orders, periodFilter);
-  }
-  const filteredOrders = filterOrders(periodFilteredOrders, { statusFilter, searchQuery: searchTerm });
+  // Filter and sort orders
+  const sortedOrders = useMemo(() => {
+    let result = orders;
 
-  // Sort orders
-  const sortedOrders = sortOrders(filteredOrders, sortBy, sortDirection);
+    // 1. Period Filter
+    if (periodFilter !== 'all') {
+      result = getOrdersByPeriod(result, periodFilter);
+    }
+
+    // 2. Status & Search Filter
+    result = filterOrders(result, { statusFilter, searchQuery: searchTerm });
+
+    // 3. Sort
+    return sortOrders(result, sortBy, sortDirection);
+  }, [orders, periodFilter, statusFilter, searchTerm, sortBy, sortDirection]);
 
   // Get counts by status for dashboard
-  const statusCounts = getStatusCounts(orders);
+  const statusCounts = useMemo(() => getStatusCounts(orders), [orders]);
 
   useEffect(() => {
     const handleClick = (e) => {

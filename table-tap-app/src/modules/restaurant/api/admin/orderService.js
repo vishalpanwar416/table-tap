@@ -140,7 +140,7 @@ export const updateOrderStatus = async (orderId, status, cancelReason = null, us
         ...updatedOrder,
         cancel_reason: cancelReason || 'Order rejected by restaurant',
       });
-      
+
       if (refundResult.success) {
         console.log('Refund processed successfully:', refundResult.refund);
       } else {
@@ -155,12 +155,12 @@ export const updateOrderStatus = async (orderId, status, cancelReason = null, us
   }
 
   if (userData && updatedOrder) {
-    const activityDetails = { 
-      old_status: null, 
-      new_status: status, 
-      cancel_reason: cancelReason 
+    const activityDetails = {
+      old_status: null,
+      new_status: status,
+      cancel_reason: cancelReason
     };
-    
+
     // Add refund info to activity log if refund was processed
     if (refundResult) {
       activityDetails.refund_processed = refundResult.success;
@@ -553,8 +553,8 @@ export const getStatusCounts = (orders) => {
   return counts;
 };
 
-// Fetch all orders with optional restaurant filter
-export const fetchAllOrders = async (restaurantId = null) => {
+// Fetch all orders with optional restaurant filter and limit
+export const fetchAllOrders = async (restaurantId = null, limit = 200) => {
   try {
     let query = supabase
       .from('orders')
@@ -564,7 +564,9 @@ export const fetchAllOrders = async (restaurantId = null) => {
       query = query.eq('restaurant_id', restaurantId);
     }
 
-    const { data, error } = await query.order('created_at', { ascending: false });
+    const { data, error } = await query
+      .order('created_at', { ascending: false })
+      .limit(limit);
 
     if (error) throw error;
     return data || [];
