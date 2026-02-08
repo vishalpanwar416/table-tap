@@ -260,6 +260,40 @@
                 ]
             },
             {
+                "title": "Solutions",
+                "items": [
+                    {
+                        "label": "QR Menu Ordering",
+                        "href": "/solutions/qr-menu"
+                    },
+                    {
+                        "label": "Cafes & Bakeries",
+                        "href": "/industries/cafes"
+                    },
+                    {
+                        "label": "Staff Control",
+                        "href": "#features"
+                    }
+                ]
+            },
+            {
+                "title": "Locations",
+                "items": [
+                    {
+                        "label": "Hyderabad",
+                        "href": "/locations/hyderabad"
+                    },
+                    {
+                        "label": "Bangalore",
+                        "href": "#"
+                    },
+                    {
+                        "label": "Mumbai",
+                        "href": "#"
+                    }
+                ]
+            },
+            {
                 "title": "Company",
                 "items": [
                     {
