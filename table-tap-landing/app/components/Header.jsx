@@ -40,6 +40,7 @@ const Header = () => {
                         height={72}
                         className="h-10 sm:h-12 md:h-14 lg:h-16 w-auto transition-transform group-hover:scale-105"
                         priority
+                        fetchPriority="high"
                     />
                 </Link>
 

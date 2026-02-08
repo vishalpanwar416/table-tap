@@ -16,6 +16,11 @@ export const SettingsProvider = ({ children, initialSettings = null }) => {
     });
 
     useEffect(() => {
+        // Skip client fetch when server already provided settings (faster load)
+        if (initialSettings != null) {
+            setSettings(prev => ({ ...prev, loading: false }));
+            return;
+        }
         const fetchSettings = async () => {
             try {
                 const { data, error } = await supabase
@@ -25,27 +30,26 @@ export const SettingsProvider = ({ children, initialSettings = null }) => {
 
                 if (error) throw error;
 
-                const settingsMap = data.reduce((acc, curr) => {
+                const settingsMap = (data ?? []).reduce((acc, curr) => {
                     acc[curr.key] = curr.value;
                     return acc;
                 }, {});
 
                 setSettings(prev => ({
-                    company: settingsMap['company_details'] || prev.company,
-                    social: settingsMap['social_links'] || prev.social,
-                    hero: settingsMap['landing_hero'] || prev.hero,
-                    logo: settingsMap['system_logo'] || prev.logo,
-                    mapsKey: settingsMap['google_maps_key']?.key || prev.mapsKey,
+                    company: settingsMap['company_details'] ?? prev.company,
+                    social: settingsMap['social_links'] ?? prev.social,
+                    hero: settingsMap['landing_hero'] ?? prev.hero,
+                    logo: settingsMap['system_logo'] ?? prev.logo,
+                    mapsKey: settingsMap['google_maps_key']?.key ?? prev.mapsKey,
                     loading: false
                 }));
-            } catch (err) {
-                console.error('Error fetching landing settings:', err);
+            } catch {
                 setSettings(prev => ({ ...prev, loading: false }));
             }
         };
 
         fetchSettings();
-    }, []);
+    }, [initialSettings]);
 
     return (
         <SettingsContext.Provider value={settings}>

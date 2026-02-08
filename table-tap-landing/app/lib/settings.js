@@ -1,21 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
+import { unstable_cache } from 'next/cache';
 
-export async function getLandingSettings() {
+async function fetchLandingSettingsFromSupabase() {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-    console.log('--- Server Side Settings Check ---');
-    console.log('URL defined:', !!supabaseUrl);
-    console.log('Service Key defined:', !!serviceKey);
-
-    if (!supabaseUrl || !serviceKey) {
-        if (!supabaseUrl) console.warn('Missing NEXT_PUBLIC_SUPABASE_URL for server-side settings fetch');
-        if (!serviceKey) console.warn('Missing SUPABASE_SERVICE_ROLE_KEY for server-side settings fetch');
-        return null;
-    }
+    if (!supabaseUrl || !serviceKey) return null;
 
     const supabase = createClient(supabaseUrl, serviceKey);
-
     try {
         const { data, error } = await supabase
             .from('system_settings')
@@ -24,12 +16,20 @@ export async function getLandingSettings() {
 
         if (error) throw error;
 
-        return data.reduce((acc, curr) => {
+        return data?.reduce((acc, curr) => {
             acc[curr.key] = curr.value;
             return acc;
-        }, {});
-    } catch (err) {
-        console.error('Error fetching settings with service role:', err);
+        }, {}) ?? null;
+    } catch {
         return null;
     }
+}
+
+/** Cached for 5 minutes so layout render is fast; revalidates in background. */
+export async function getLandingSettings() {
+    return unstable_cache(
+        fetchLandingSettingsFromSupabase,
+        ['landing-settings'],
+        { revalidate: 300, tags: ['landing-settings'] }
+    )();
 }

@@ -1,12 +1,11 @@
-import dynamic from "next/dynamic";
 import Script from "next/script";
 import "./globals.css";
 import { ModalProvider } from "./context/ModalContext";
 import { SettingsProvider } from "./context/SettingsContext";
 import StructuredData from "./components/StructuredData";
-
-// Lazy load modal - it's hidden initially and interaction-only
-import LeadModal from "./components/LeadModal";
+import LeadModalWrapper from "./components/LeadModalWrapper";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata = {
   metadataBase: new URL('https://table-tap.in'),
@@ -126,30 +125,29 @@ export const viewport = {
   viewportFit: "cover", // safe area for notched devices
 };
 
-import { Analytics } from "@vercel/analytics/next";
-import { getLandingSettings } from "./lib/settings";
-
-export default async function RootLayout({ children }) {
-  const landingSettings = await getLandingSettings();
-
+/** No server fetch: layout is fully sync so first byte and first paint are never blocked. Settings load on client. */
+export default function RootLayout({ children }) {
   return (
     <html lang="en-IN" className="scroll-smooth" dir="ltr" suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="geo.region" content="IN" />
-        <meta name="geo.placename" content={landingSettings?.company_details?.city || "India"} />
-        <StructuredData settings={landingSettings} />
-
+        <meta name="geo.placename" content="India" />
+        <link rel="preload" href="/logo.png" as="image" />
+        <link rel="preconnect" href="https://vogixryubhpqziivspks.supabase.co" />
+        <link rel="dns-prefetch" href="https://vogixryubhpqziivspks.supabase.co" />
+        <StructuredData settings={null} />
       </head>
       <body
         className="font-sans antialiased bg-white text-gray-900"
         suppressHydrationWarning
       >
-        <SettingsProvider initialSettings={landingSettings}>
+        <SettingsProvider initialSettings={null}>
           <ModalProvider>
             {children}
-            <LeadModal />
+            <LeadModalWrapper />
             <Analytics />
+            <SpeedInsights />
           </ModalProvider>
         </SettingsProvider>
       </body>
