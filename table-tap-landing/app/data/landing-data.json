@@ -243,6 +243,39 @@
         ],
         "links": [
             {
+                "title": "Services",
+                "items": [
+                    {
+                        "label": "Menu Management",
+                        "href": "/services/menu-management"
+                    },
+                    {
+                        "label": "Integrated Payments",
+                        "href": "/services/payments"
+                    },
+                    {
+                        "label": "Restaurant Partner Support",
+                        "href": "/services/restaurant-services"
+                    },
+                    {
+                        "label": "Analytics & Reports",
+                        "href": "/services/analytics"
+                    },
+                    {
+                        "label": "POS & Dashboard",
+                        "href": "/services/pos-dashboard"
+                    },
+                    {
+                        "label": "Kitchen Display (KDS)",
+                        "href": "/services/kds"
+                    },
+                    {
+                        "label": "WhatsApp Ordering",
+                        "href": "/solutions/whatsapp-ordering"
+                    }
+                ]
+            },
+            {
                 "title": "Product",
                 "items": [
                     {
@@ -263,16 +296,24 @@
                 "title": "Solutions",
                 "items": [
                     {
-                        "label": "QR Menu Ordering",
-                        "href": "/solutions/qr-menu"
+                        "label": "Restaurant Management",
+                        "href": "/solutions/restaurant-management"
+                    },
+                    {
+                        "label": "Partner With Us",
+                        "href": "/partners"
                     },
                     {
                         "label": "Cafes & Bakeries",
                         "href": "/industries/cafes"
                     },
                     {
-                        "label": "Staff Control",
-                        "href": "#features"
+                        "label": "Fine Dining",
+                        "href": "/industries/fine-dining"
+                    },
+                    {
+                        "label": "Bars & Lounges",
+                        "href": "/industries/bars"
                     }
                 ]
             },
@@ -285,11 +326,31 @@
                     },
                     {
                         "label": "Bangalore",
-                        "href": "#"
+                        "href": "/locations/bangalore"
+                    },
+                    {
+                        "label": "Delhi NCR",
+                        "href": "/locations/delhi"
                     },
                     {
                         "label": "Mumbai",
-                        "href": "#"
+                        "href": "/locations/mumbai"
+                    },
+                    {
+                        "label": "Pune",
+                        "href": "/locations/pune"
+                    },
+                    {
+                        "label": "Chennai",
+                        "href": "/locations/chennai"
+                    },
+                    {
+                        "label": "Kolkata",
+                        "href": "/locations/kolkata"
+                    },
+                    {
+                        "label": "Ahmedabad",
+                        "href": "/locations/ahmedabad"
                     }
                 ]
             },
