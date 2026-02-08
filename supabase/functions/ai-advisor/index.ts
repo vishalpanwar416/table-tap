@@ -32,28 +32,30 @@ serve(async (req) => {
 
     try {
         const authHeader = req.headers.get('Authorization')
-        console.log('Incoming Authorization header present:', !!authHeader)
+        const token = authHeader?.replace('Bearer ', '')
 
-        if (!authHeader) {
-            return new Response(JSON.stringify({ error: 'Missing Authorization header' }), {
+        console.log('Auth check - Header present:', !!authHeader, 'Token length:', token?.length || 0)
+
+        if (!token) {
+            return new Response(JSON.stringify({ error: 'Missing or malformed Authorization header' }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
                 status: 401,
             })
         }
 
-        // Require authenticated caller so the function can't be abused publicly.
         const supabaseClient = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
-            Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-            { global: { headers: { Authorization: authHeader } } }
+            Deno.env.get('SUPABASE_ANON_KEY') ?? ''
         )
 
-        const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
+        // Explicitly pass the token to getUser for more reliable auth in Edge Functions
+        const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token)
 
         if (authError || !user) {
-            console.error('Auth verification failed. Error:', authError?.message || 'No user data')
-            console.log('Supabase URL being used:', Deno.env.get('SUPABASE_URL'))
-            return new Response(JSON.stringify({ error: `Unauthorized: ${authError?.message || 'Invalid or expired session'}. Please log out and back in.` }), {
+            console.error('Auth verification failed [v2.1]:', authError?.message || 'No user found for token')
+            return new Response(JSON.stringify({
+                error: `Unauthorized [v2.1]: ${authError?.message || 'Invalid or expired session'}. Please try logging out and in one more time.`
+            }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
                 status: 401,
             })
