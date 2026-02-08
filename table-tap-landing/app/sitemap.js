@@ -14,6 +14,10 @@ export default function sitemap() {
     'petpooja', 'dotpe', 'menutiger', 'finedine', 'best-qr-systems'
   ];
 
+  const stories = [
+    'urban-brew', 'spice-route', 'social-bytes'
+  ];
+
   const solutions = [
     'qr-menu', 'restaurant-management', 'whatsapp-ordering', 'ai-restaurant', 'ai-ordering'
   ];
@@ -74,6 +78,18 @@ export default function sitemap() {
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.7,
+    },
+    ...stories.map(slug => ({
+      url: `${baseUrl}/success-stories/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    })),
+    {
+      url: `${baseUrl}/success-stories`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
     },
   ];
 }

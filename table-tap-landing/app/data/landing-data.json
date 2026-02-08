@@ -22,6 +22,10 @@
                 "href": "/pricing-calculator"
             },
             {
+                "name": "Success Stories",
+                "href": "/success-stories"
+            },
+            {
                 "name": "Contact",
                 "href": "#contact"
             }
@@ -309,6 +313,10 @@
                     {
                         "label": "Compare & Switch",
                         "href": "/alternatives"
+                    },
+                    {
+                        "label": "Success Stories",
+                        "href": "/success-stories"
                     },
                     {
                         "label": "Integrations",
