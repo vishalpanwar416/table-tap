@@ -18,6 +18,10 @@
                 "href": "#pricing"
             },
             {
+                "name": "Earnings Estimator",
+                "href": "/pricing-calculator"
+            },
+            {
                 "name": "Contact",
                 "href": "#contact"
             }
@@ -297,6 +301,10 @@
                     {
                         "label": "Pricing",
                         "href": "#pricing"
+                    },
+                    {
+                        "label": "ROI Calculator",
+                        "href": "/pricing-calculator"
                     },
                     {
                         "label": "Integrations",

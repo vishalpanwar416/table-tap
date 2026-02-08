@@ -22,6 +22,7 @@ export default function sitemap() {
   const staticPages = [
     { url: '', priority: 1, changeFrequency: 'weekly' },
     { url: '/partners', priority: 0.9, changeFrequency: 'weekly' },
+    { url: '/pricing-calculator', priority: 0.9, changeFrequency: 'weekly' },
     { url: '/privacy', priority: 0.3, changeFrequency: 'monthly' },
     { url: '/terms', priority: 0.3, changeFrequency: 'monthly' },
     { url: '/refunds', priority: 0.3, changeFrequency: 'monthly' },
