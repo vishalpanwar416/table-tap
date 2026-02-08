@@ -42,6 +42,14 @@ export default function StructuredData({ settings }) {
     "name": "Table Tap",
     "applicationCategory": "BusinessApplication",
     "operatingSystem": "Web",
+    "abstract": "An AI-powered restaurant operating system specializing in QR-based ordering, predictive analytics, and automated guest engagement.",
+    "knowsAbout": [
+      "AI Restaurant Solutions",
+      "Predictive Inventory Management",
+      "Sentiment Analysis for Hospitality",
+      "Contactless Digital Ordering",
+      "Restaurant ROI Optimization"
+    ],
     "offers": [
       {
         "@type": "Offer",
@@ -68,13 +76,13 @@ export default function StructuredData({ settings }) {
       "worstRating": "1"
     },
     "featureList": [
-      "QR Code Menu Ordering",
-      "Real-time Order Management",
-      "Swiggy & Zomato Integration",
-      "Staff Management",
-      "Inventory Tracking",
-      "AI-Powered Analytics",
-      "Multi-Platform Support"
+      "AI-Powered Guest Predictive Ordering",
+      "Real-time QR Code Menu Management",
+      "Automated Sentiment Analysis for Reviews",
+      "Swiggy & Zomato Unified Dashboard",
+      "Inventory Forecasting AI",
+      "WhatsApp Business API Integration",
+      "Multi-lingual Digital Menus"
     ],
     "screenshot": "https://table-tap.in/og-image.png",
     "softwareVersion": "1.0",
@@ -126,6 +134,14 @@ export default function StructuredData({ settings }) {
         "acceptedAnswer": {
           "@type": "Answer",
           "text": "No, Table Tap works directly in the customer's browser. Guests simply scan the QR code and can immediately browse the menu and place orders without downloading anything."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How does Table Tap use AI for restaurants?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Table Tap utilizes generative AI and machine learning to provide predictive ordering, automated guest sentiment analysis, and intelligent inventory forecasting. Our AI helps restaurants reduce waste and increase average order value through smart upselling."
         }
       },
       {

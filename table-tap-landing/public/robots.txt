@@ -1,11 +1,19 @@
 User-agent: *
 Allow: /
+Allow: /_next/static/
 Disallow: /api/
 Disallow: /register/
 
-# Allow crawl of Next.js assets for proper rendering
-User-agent: Googlebot
-Allow: /_next/static/
+# Allow Generative AI Crawlers for GEO
+User-agent: GPTBot
+Allow: /
+User-agent: ChatGPT-User
+Allow: /
+User-agent: Claude-Web
+Allow: /
+User-agent: PerplexityBot
+Allow: /
+User-agent: CCBot
 Allow: /
 
 Sitemap: https://table-tap.in/sitemap.xml
