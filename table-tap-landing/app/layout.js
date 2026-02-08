@@ -124,9 +124,9 @@ export const metadata = {
     "apple-mobile-web-app-title": "Table Tap",
   },
   icons: {
-    icon: '/logo.png',
-    shortcut: '/logo.png',
-    apple: '/logo.png',
+    icon: 'https://vogixryubhpqziivspks.supabase.co/storage/v1/object/public/system-assets/logott.png',
+    shortcut: 'https://vogixryubhpqziivspks.supabase.co/storage/v1/object/public/system-assets/logott.png',
+    apple: 'https://vogixryubhpqziivspks.supabase.co/storage/v1/object/public/system-assets/logott.png',
   },
 };
 
@@ -146,7 +146,8 @@ export default function RootLayout({ children }) {
         <link rel="manifest" href="/manifest.json" />
         <meta name="geo.region" content="IN" />
         <meta name="geo.placename" content="India" />
-        <link rel="preload" href="/logo.png" as="image" />
+        <link rel="icon" href="https://vogixryubhpqziivspks.supabase.co/storage/v1/object/public/system-assets/logott.png" sizes="any" />
+        <link rel="preload" href="https://vogixryubhpqziivspks.supabase.co/storage/v1/object/public/system-assets/logott.png" as="image" />
         <link rel="preconnect" href="https://vogixryubhpqziivspks.supabase.co" />
         <link rel="dns-prefetch" href="https://vogixryubhpqziivspks.supabase.co" />
         <StructuredData settings={null} />

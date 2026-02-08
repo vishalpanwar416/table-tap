@@ -7,7 +7,7 @@ export default function StructuredData({ settings }) {
     "@type": "Organization",
     "name": company.name || "Table Tap",
     "url": company.website || "https://table-tap.in",
-    "logo": settings?.system_logo?.url || "https://table-tap.in/logo.png",
+    "logo": settings?.system_logo?.url || "https://vogixryubhpqziivspks.supabase.co/storage/v1/object/public/system-assets/logott.png",
     "description": "Table Tap helps restaurants deliver exceptional guest experiences through seamless QR-based digital ordering.",
     "foundingDate": "2024",
     "founders": [
