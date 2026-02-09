@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { ChevronLeft, Trash2, Minus, Plus, ChevronDown, CheckCircle, Clock, MapPin, User, Mail, Phone, AlertCircle, Info, LogIn } from 'lucide-react';
+import { ChevronLeft, Trash2, Minus, Plus, ChevronDown, CheckCircle, Clock, MapPin, User, Mail, Phone, AlertCircle, Info, LogIn, Smartphone } from 'lucide-react';
 import { useCart } from '../../shared/config/CartContent';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../shared/supabase';
@@ -243,32 +243,61 @@ const GuestForm = ({
   handleEmailChange,
   guestEmailInputRef
 }) => (
-  <div className="mb-8 p-6 border-2 border-gray-200 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 animate-in slide-in-from-bottom-2 duration-500">
-    <h3 className="font-bold text-xl mb-4 flex items-center gap-2 text-gray-800">
-      <User size={20} className="text-blue-500" />
-      Guest Information
+  <div className="mb-8 p-6 border-2 border-gray-200 rounded-3xl bg-gradient-to-br from-orange-50 to-white animate-in slide-in-from-bottom-2 duration-500 shadow-sm">
+    <h3 className="font-bold text-xl mb-6 flex items-center gap-2 text-gray-800">
+      <Smartphone size={20} className="text-orange-500" />
+      Ordering as Guest
     </h3>
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Phone Number - Now Primary and Mandatory */}
       <div>
-        <label className="text-sm font-semibold text-gray-700 flex items-center gap-2" htmlFor="guestName">
-          <User size={16} />
-          Full Name *
+        <label className="text-sm font-bold text-gray-700 flex items-center gap-2 mb-1" htmlFor="guestPhone">
+          <Phone size={16} className="text-orange-500" />
+          Phone Number *
+        </label>
+        <div className="relative">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">+91</div>
+          <input
+            id="guestPhone"
+            type="tel"
+            value={guestPhone}
+            onChange={(e) => setGuestPhone(e.target.value.replace(/\D/g, ''))}
+            maxLength={10}
+            placeholder="nEnter mobile number"
+            className="w-full pl-14 pr-4 py-4 border-2 border-orange-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all duration-200 text-lg font-bold tracking-wider"
+            required
+          />
+        </div>
+      </div>
+
+      <div className="relative py-2">
+        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-100"></div></div>
+        <div className="relative flex justify-center text-xs uppercase text-gray-400 font-black tracking-widest bg-white px-2 w-fit mx-auto">Optional Details</div>
+      </div>
+
+      {/* Name - Now Optional */}
+      <div>
+        <label className="text-xs font-bold text-gray-500 flex items-center gap-2 mb-1" htmlFor="guestName">
+          <User size={14} />
+          Full Name (Optional)
         </label>
         <input
           id="guestName"
           type="text"
           value={guestName}
           onChange={(e) => setGuestName(e.target.value)}
-          className="w-full mt-2 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-          required
+          placeholder="To help us identify your order"
+          className="w-full px-4 py-3 border border-gray-100 rounded-xl focus:outline-none focus:border-orange-500 transition-all duration-200"
         />
       </div>
+
+      {/* Email - Now Optional */}
       <div>
-        <label className="text-sm font-semibold text-gray-700 flex items-center gap-2" htmlFor="guestEmail">
-          <Mail size={16} />
-          Email Address *
+        <label className="text-xs font-bold text-gray-500 flex items-center gap-2 mb-1" htmlFor="guestEmail">
+          <Mail size={14} />
+          Email for Invoice (Optional)
           {isCheckingEmail && (
-            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-3 h-3 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
           )}
         </label>
         <input
@@ -276,38 +305,23 @@ const GuestForm = ({
           type="email"
           value={guestEmail}
           onChange={handleEmailChange}
-          className={`w-full mt-2 px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${emailExists ? 'border-orange-300 bg-orange-50' : 'border-gray-200'
+          placeholder="For digital bill"
+          className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:border-orange-500 transition-all duration-200 ${emailExists ? 'border-orange-300 bg-orange-50' : 'border-gray-100'
             }`}
-          required
           autoComplete="email"
           ref={guestEmailInputRef}
         />
         {emailExists && (
           <div className="mt-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
             <div className="flex items-center gap-2 text-orange-700">
-              <Info size={16} />
-              <span className="text-sm font-medium">This email is already registered</span>
+              <Info size={14} />
+              <span className="text-xs font-bold">Account Found</span>
             </div>
-            <p className="text-xs text-orange-600 mt-1">
-              Please login to continue with your existing account or use a different email
+            <p className="text-[10px] text-orange-600 mt-1">
+              This email is linked to an account. Login for faster checkout.
             </p>
           </div>
         )}
-      </div>
-      <div>
-        <label className="text-sm font-semibold text-gray-700 flex items-center gap-2" htmlFor="guestPhone">
-          <Phone size={16} />
-          Phone Number *
-        </label>
-        <input
-          id="guestPhone"
-          type="tel"
-          value={guestPhone}
-          onChange={(e) => setGuestPhone(e.target.value)}
-          maxLength={10}
-          className="w-full mt-2 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-          required
-        />
       </div>
     </div>
   </div>
@@ -584,19 +598,24 @@ const OrderConfirmation = () => {
       return;
     }
     if (!user) {
-      if (!guestName.trim() || !guestEmail.trim() || !guestPhone.trim()) {
-        setFormError('Please fill in your name, email, and phone number to continue.');
+      if (!guestPhone.trim()) {
+        setFormError('Please enter your phone number to continue.');
         return;
       }
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(guestEmail)) {
-        setFormError('Please enter a valid email address.');
-        return;
-      }
+
       const phoneRegex = /^[6-9]\d{9}$/;
       if (!phoneRegex.test(guestPhone)) {
-        setFormError('Please enter a valid 10-digit phone number.');
+        setFormError('Please enter a valid 10-digit mobile number.');
         return;
+      }
+
+      // If optional email is provided, validate it
+      if (guestEmail.trim()) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(guestEmail)) {
+          setFormError('Please enter a valid email address or leave it blank.');
+          return;
+        }
       }
     }
     setIsPlacingOrder(true);

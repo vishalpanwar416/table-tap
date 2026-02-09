@@ -101,15 +101,37 @@ export default function LoginPage() {
         return;
       }
 
-      // Role-based redirection
+      // ---------------------------------------------------------
+      // STRICT PORTAL ACCESS CONTROL & REDIRECTION
+      // ---------------------------------------------------------
+      const h = (window.location.hostname || '').toLowerCase();
       const role = profile?.profile_role || profile?.role || 'customer';
-      const PORTAL_ROLES = ['admin', 'owner', 'manager', 'captain', 'chef', 'staff', 'waiter', 'cashier'];
 
-      if (PORTAL_ROLES.includes(role)) {
-        const redirect = (role === 'admin') ? '/admin' : '/restaurant';
-        navigate(redirect, { replace: true });
+      // 1. Admin Portal
+      if (h.startsWith('admin.')) {
+        if (role !== 'admin') {
+          await authService.signOut();
+          throw new Error('Access Denied: Only administrators can log in here.');
+        }
+        navigate('/', { replace: true });
         return;
       }
+
+      // 2. Restaurant/Partner Portal
+      if (h.startsWith('restaurant.') || h.startsWith('manager.') || h.startsWith('owner.')) {
+        const RESTAURANT_ROLES = ['owner', 'manager', 'captain', 'chef', 'staff', 'waiter', 'cashier'];
+        if (!RESTAURANT_ROLES.includes(role)) {
+          await authService.signOut();
+          throw new Error('Access Denied: Restricted to restaurant staff.');
+        }
+        navigate('/', { replace: true });
+        return;
+      }
+
+      // 3. Customer App (app.table-tap.in or localhost)
+      // All roles (including Admin/Staff) are allowed to log in here as customers.
+      // They simply fall through to the standard customer navigation below.
+      // No redirection to admin/restaurant dashboards from here.
 
       // Customer redirection
       if (hasValidRestaurantSelection()) {

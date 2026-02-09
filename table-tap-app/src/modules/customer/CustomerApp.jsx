@@ -32,17 +32,12 @@ function OpeningOrRedirect() {
         if (!authLoading && user && pathname === '/' && isCustomerOrigin()) {
             const checkRoleAndRedirect = async () => {
                 try {
-                    const profile = await authService.getProfile(user.id);
-                    const role = profile?.profile_role || profile?.role || 'customer';
-                    const PORTAL_ROLES = ['admin', 'owner', 'manager', 'captain', 'chef', 'staff', 'waiter', 'cashier'];
+                    // Check if profile exists just to ensure valid session,
+                    // but DO NOT redirect based on role if we are on customer app.
+                    await authService.getProfile(user.id);
 
-                    if (PORTAL_ROLES.includes(role)) {
-                        const redirect = (role === 'admin') ? '/admin' : '/restaurant';
-                        navigate(redirect + search, { replace: true });
-                    } else {
-                        const to = hasValidRestaurantSelection() ? '/home' : '/restaurant-selection';
-                        navigate(to + search, { replace: true });
-                    }
+                    const to = hasValidRestaurantSelection() ? '/home' : '/restaurant-selection';
+                    navigate(to + search, { replace: true });
                 } catch (err) {
                     console.error('Role check failed:', err);
                     navigate('/restaurant-selection' + search, { replace: true });

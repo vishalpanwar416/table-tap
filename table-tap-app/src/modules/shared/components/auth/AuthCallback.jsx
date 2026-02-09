@@ -81,8 +81,19 @@ const AuthCallback = () => {
       }, 10000);
 
       try {
-        const profilePromise = authService.getProfile(user.id);
-        const syncPromise = syncProfile(user).catch(e => console.warn('Sync failed:', e));
+        // Double check user if coming from useAuth, or fetch if we just set session
+        let currentUser = user;
+        if (!currentUser) {
+          const { data: { user: freshlyFetchedUser } } = await supabase.auth.getUser();
+          currentUser = freshlyFetchedUser;
+        }
+
+        if (!currentUser) {
+          throw new Error('No user found after session sync');
+        }
+
+        const profilePromise = authService.getProfile(currentUser.id);
+        const syncPromise = syncProfile(currentUser).catch(e => console.warn('Sync failed:', e));
 
         const [profile] = await Promise.all([profilePromise, syncPromise]);
 
@@ -91,35 +102,55 @@ const AuthCallback = () => {
 
         // Check environment context
         const h = (typeof window !== 'undefined' && window.location.hostname || '').toLowerCase();
-        const path = window.location.pathname;
+        const isCustomerOrigin = !h.startsWith('admin.') && !h.startsWith('restaurant.') && !h.startsWith('manager.') && !h.startsWith('owner.');
 
-        // Portal roles (any role that has dashboard access)
-        const PORTAL_ROLES = ['owner', 'manager', 'captain', 'chef', 'staff', 'waiter', 'cashier'];
+        // Portal roles
+        const RESTAURANT_ROLES = ['owner', 'manager', 'captain', 'chef', 'staff', 'waiter', 'cashier'];
 
-        // Determine context-specific root redirects
-        const getPortalRedirect = (targetRole) => {
-          if (targetRole === 'admin') return (h.startsWith('admin.') ? '/' : '/admin');
-          if (targetRole === 'owner' && path.startsWith('/owner')) return '/owner';
-          return (h.startsWith('restaurant.') || h.startsWith('manager.') || h.startsWith('owner.')) ? '/' : '/restaurant';
-        };
-
-        if (role === 'admin') {
-          setStatus('Welcome back, Admin');
-          navigate(getPortalRedirect('admin'), { replace: true });
-        } else if (PORTAL_ROLES.includes(role)) {
-          setStatus(`Welcome back, ${role.charAt(0).toUpperCase() + role.slice(1)}`);
-          navigate(getPortalRedirect(role), { replace: true });
-        } else {
-          setStatus('Checking profile...');
+        if (isCustomerOrigin) {
+          // Customer App: Allow everyone, treat as customer
+          setStatus('Finding your table...');
           const isComplete = Boolean(profile?.mobile_number && profile?.date_of_birth);
-
           if (!isComplete) {
             navigate('/complete-profile', { replace: true });
           } else {
-            setStatus('Finding your table...');
             navigate(hasValidRestaurantSelection() ? '/home' : '/restaurant-selection', { replace: true });
           }
+        } else if (h.startsWith('admin.')) {
+          // Admin Portal: Strict Admin Only
+          if (role === 'admin') {
+            setStatus('Welcome back, Admin');
+            navigate('/', { replace: true }); // Admin dashboard root
+          } else {
+            setStatus('Access Denied');
+            throw new Error('Only administrators can access this portal.');
+          }
+        } else {
+          // Restaurant/Partner Portal
+          if (RESTAURANT_ROLES.includes(role)) {
+            setStatus('Welcome back');
+            navigate('/', { replace: true }); // Restaurant dashboard root
+          } else if (role === 'admin') {
+            // Admins can probably access restaurant portal too, or maybe not. User said "do not allow anyone else to log in using admin page".
+            // Detailed request: "do not allower customer to login using restauarnt or admin login page". 
+            // Assuming Admin is powerful enough, but safe to redirect to admin portal if they are admin? 
+            // Or just let them in if the system allows. 
+            // Current logic: Admin on Restaurant Portal -> Redirect to Admin Dashboard?
+            // Or just Allow? Let's assume Admin is NOT a restaurant user for now unless they have that role. 
+            // But wait, key requirement: "do not allow customer to login using restauarnt".
+            // So if role == 'customer', DENY.
+
+            // If Admin tries to login to Restaurant Portal, let's Redirect to Admin Portal if possible, or Deny. 
+            // Let's Deny for strictness as requested "do not allow anyone else".
+            // Actually, usually admins can impersonate. But let's stick to strict role check.
+            setStatus('Access Denied');
+            throw new Error('Access reserved for restaurant partners.');
+          } else {
+            setStatus('Access Denied');
+            throw new Error('Customers cannot access the partner portal.');
+          }
         }
+
       } catch (error) {
         // Ignore AbortError and stop flow (likely component unmounted or navigated)
         if (error.name === 'AbortError' || error.message?.includes('aborted')) {
