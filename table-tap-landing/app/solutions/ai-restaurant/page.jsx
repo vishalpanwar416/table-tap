@@ -1,3 +1,4 @@
+import React from 'react';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import Contact from '../../components/Contact';
@@ -11,30 +12,36 @@ export const metadata = {
 
 export default function AIRestaurantSolution() {
     return (
-        <main className="min-h-screen bg-slate-950 text-white selection:bg-[#2A9D8F] selection:text-white">
+        <main className="min-h-screen bg-white text-slate-900">
             <Header />
 
             {/* Futuristic Hero Section */}
-            <section className="pt-32 pb-24 relative overflow-hidden">
-                {/* Animated Background Elements */}
-                <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-[#2A9D8F]/10 blur-[150px] rounded-full -translate-y-1/2 translate-x-1/2 animate-pulse" />
-                <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-purple-500/10 blur-[120px] rounded-full translate-y-1/2 -translate-x-1/2" />
+            <section className="pt-32 pb-24 relative overflow-hidden bg-[#F8FAFC]/30">
+                {/* Background Blobs */}
+                <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+                    <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-[#2A9D8F]/5 rounded-full blur-[120px]" />
+                    <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#4F46E5]/5 rounded-full blur-[120px]" />
+                </div>
 
-                <div className="container mx-auto px-4 relative z-10 flex flex-col items-center text-center">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-[#2A9D8F] font-bold text-sm mb-8 animate-bounce">
-                        <Sparkles className="w-4 h-4" />
-                        AI-DRIVEN HOSPITALITY
+                <div className="container mx-auto px-4 relative z-10 text-center">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white shadow-sm border border-gray-100 mb-8 animate-fade-in-up">
+                        <Sparkles size={16} className="text-[#2A9D8F]" />
+                        <span className="text-gray-600 font-bold text-xs uppercase tracking-widest">
+                            AI-Driven Hospitality
+                        </span>
                     </div>
-                    <h1 className="text-6xl md:text-9xl font-black mb-8 leading-[0.9] tracking-tighter">
-                        The First <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#2A9D8F] via-emerald-400 to-blue-500">Autonomous</span> <br />
-                        Chef's Assistant.
+
+                    <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-gray-900 mb-8 leading-[1.1] tracking-tight animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+                        The First Autonomous <br />
+                        <span className="gradient-text">Chef's Assistant.</span>
                     </h1>
-                    <p className="text-xl text-slate-400 mb-12 leading-relaxed max-w-2xl mx-auto font-medium">
+
+                    <p className="text-xl md:text-2xl text-gray-500 mb-12 leading-relaxed max-w-3xl mx-auto font-medium animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
                         Stop managing, start growing. Table Tap AI analyzes your sales patterns, predicts busy hours, and automatically suggests upsells to your guests, increasing average order value by 20% without human effort.
                     </p>
-                    <div className="flex flex-wrap justify-center gap-6">
-                        <button className="px-12 py-5 bg-[#2A9D8F] hover:bg-[#238b7e] text-white rounded-2xl font-bold transition-all shadow-2xl shadow-[#2A9D8F]/30 flex items-center gap-2">
+
+                    <div className="flex flex-wrap justify-center gap-5 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                        <button className="btn-premium px-10 py-4 shadow-2xl shadow-[#2A9D8F]/20 hover:shadow-[#2A9D8F]/40 flex items-center gap-2">
                             Activate AI Dashboard <Zap className="w-5 h-5 fill-current" />
                         </button>
                     </div>
@@ -42,32 +49,36 @@ export default function AIRestaurantSolution() {
             </section>
 
             {/* AI Capabilities Grid */}
-            <section className="py-24 bg-slate-900 border-y border-white/5">
+            <section className="py-24 relative">
                 <div className="container mx-auto px-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {[
                             {
-                                icon: <Brain className="w-10 h-10 text-[#2A9D8F]" />,
+                                icon: <Brain />,
                                 title: "Predictive Ordering",
                                 desc: "Our AI forecasts tomorrow's sales based on past data, weather, and local events to help you optimize inventory."
                             },
                             {
-                                icon: <Cpu className="text-blue-400 w-10 h-10" />,
+                                icon: <Cpu />,
                                 title: "Smart Upselling",
                                 desc: "Dynamically recommend food pairings to guests while they browse your QR menu, just like Amazon."
                             },
                             {
-                                icon: <Bot className="text-purple-400 w-10 h-10" />,
+                                icon: <Bot />,
                                 title: "AI Guest Retention",
                                 desc: "Automatically send personalized offers to your regulars based on their favorite dishes and peak visit times."
                             }
                         ].map((item, i) => (
-                            <div key={i} className="p-10 rounded-[40px] bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-all group">
-                                <div className="mb-8 p-5 bg-white/5 rounded-2xl w-fit group-hover:scale-110 transition-transform">
-                                    {item.icon}
+                            <div
+                                key={i}
+                                className="glass-card p-10 rounded-[40px] hover:-translate-y-2 transition-transform duration-300 group"
+                                style={{ animationDelay: `${i * 0.1}s` }}
+                            >
+                                <div className="mb-8 w-16 h-16 rounded-2xl bg-[#0F172A] flex items-center justify-center text-[#2A9D8F] shadow-lg group-hover:rotate-12 transition-transform">
+                                    {React.cloneElement(item.icon, { size: 32 })}
                                 </div>
-                                <h3 className="text-3xl font-bold mb-6">{item.title}</h3>
-                                <p className="text-slate-400 leading-relaxed text-lg">{item.desc}</p>
+                                <h3 className="text-3xl font-black text-gray-900 mb-6">{item.title}</h3>
+                                <p className="text-gray-500 text-lg leading-relaxed font-medium">{item.desc}</p>
                             </div>
                         ))}
                     </div>
@@ -77,20 +88,23 @@ export default function AIRestaurantSolution() {
             {/* Impact Section */}
             <section className="py-24 relative overflow-hidden">
                 <div className="container mx-auto px-4">
-                    <div className="bg-gradient-to-br from-[#2A9D8F]/20 to-blue-500/20 rounded-[60px] p-12 md:p-24 border border-white/10 text-center">
-                        <h2 className="text-4xl md:text-6xl font-black mb-12">Numbers Speak Louder <br />Than Algorithms.</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                    <div className="bg-[#0F172A] rounded-[60px] p-12 md:p-24 border border-white/10 text-center relative overflow-hidden">
+                        {/* Background Effects */}
+                        <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-[#2A9D8F]/10 blur-[100px] rounded-full" />
+
+                        <h2 className="text-4xl md:text-6xl font-black text-white mb-12 relative z-10">Numbers Speak Louder <br />Than Algorithms.</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative z-10">
                             <div>
                                 <div className="text-6xl font-black text-[#2A9D8F] mb-4">22%</div>
-                                <div className="text-slate-400 font-bold uppercase tracking-widest text-sm">Higher Check Value</div>
+                                <div className="text-gray-400 font-bold uppercase tracking-widest text-sm">Higher Check Value</div>
                             </div>
                             <div>
-                                <div className="text-6xl font-black text-blue-400 mb-4">15%</div>
-                                <div className="text-slate-400 font-bold uppercase tracking-widest text-sm">Less Food Waste</div>
+                                <div className="text-6xl font-black text-[#4F46E5] mb-4">15%</div>
+                                <div className="text-gray-400 font-bold uppercase tracking-widest text-sm">Less Food Waste</div>
                             </div>
                             <div>
-                                <div className="text-6xl font-black text-purple-400 mb-4">3x</div>
-                                <div className="text-slate-400 font-bold uppercase tracking-widest text-sm">Faster Table Service</div>
+                                <div className="text-6xl font-black text-[#E76F51] mb-4">3x</div>
+                                <div className="text-gray-400 font-bold uppercase tracking-widest text-sm">Faster Table Service</div>
                             </div>
                         </div>
                     </div>

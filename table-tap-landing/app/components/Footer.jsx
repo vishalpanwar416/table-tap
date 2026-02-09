@@ -93,7 +93,7 @@ const Footer = () => {
 
                     {/* Quick Links - stack on mobile */}
                     <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-x-8 sm:gap-x-12 gap-y-10 justify-center lg:justify-end">
-                        {footer.links.slice(0, 4).map((group) => (
+                        {footer.links.map((group) => (
                             <nav key={group.title} aria-label={`${group.title} links`} className="text-center lg:text-left">
                                 <h4 className="text-white/40 font-bold text-[10px] uppercase tracking-[0.2em] mb-3 sm:mb-4">{group.title}</h4>
                                 <ul className="space-y-2" role="list">

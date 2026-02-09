@@ -38,6 +38,16 @@ const nextConfig = {
     optimizePackageImports: ['lucide-react', 'framer-motion'], // Tree shake these icons/anim libs
   },
 
+  async redirects() {
+    return [
+      {
+        source: '/services/ai-ordering',
+        destination: '/solutions/ai-ordering',
+        permanent: true,
+      },
+    ];
+  },
+
   // Headers for aggressive caching
   async headers() {
     return [

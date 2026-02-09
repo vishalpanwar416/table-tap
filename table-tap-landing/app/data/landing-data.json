@@ -2,28 +2,34 @@
     "header": {
         "navLinks": [
             {
-                "name": "Our Story",
-                "href": "#home"
+                "name": "Features",
+                "href": "#features"
             },
             {
                 "name": "Experience",
                 "href": "#services"
             },
             {
-                "name": "Features",
-                "href": "#features"
-            },
-            {
                 "name": "Pricing",
                 "href": "#pricing"
             },
             {
-                "name": "Earnings Estimator",
-                "href": "/pricing-calculator"
-            },
-            {
-                "name": "Success Stories",
-                "href": "/success-stories"
+                "name": "Resources",
+                "href": "#",
+                "dropdown": [
+                    {
+                        "name": "Success Stories",
+                        "href": "/success-stories"
+                    },
+                    {
+                        "name": "ROI Calculator",
+                        "href": "/pricing-calculator"
+                    },
+                    {
+                        "name": "Why Switch?",
+                        "href": "/alternatives"
+                    }
+                ]
             },
             {
                 "name": "Contact",
@@ -251,60 +257,61 @@
         ],
         "links": [
             {
-                "title": "Services",
+                "title": "Features",
                 "items": [
                     {
                         "label": "Menu Management",
                         "href": "/services/menu-management"
                     },
                     {
-                        "label": "Integrated Payments",
-                        "href": "/services/payments"
+                        "label": "QR Ordering",
+                        "href": "/solutions/ai-ordering"
                     },
                     {
-                        "label": "Restaurant Partner Support",
-                        "href": "/services/restaurant-services"
-                    },
-                    {
-                        "label": "Analytics & Reports",
-                        "href": "/services/analytics"
-                    },
-                    {
-                        "label": "POS & Dashboard",
-                        "href": "/services/pos-dashboard"
-                    },
-                    {
-                        "label": "Kitchen Display (KDS)",
+                        "label": "Inventory & KDS",
                         "href": "/services/kds"
                     },
                     {
-                        "label": "AI Business Insights",
-                        "href": "/services/ai-insights"
+                        "label": "Marketing & CRM",
+                        "href": "/solutions/restaurant-management"
                     },
                     {
-                        "label": "AI Guest Feedback",
-                        "href": "/services/ai-feedback"
-                    },
-                    {
-                        "label": "AI Inventory Control",
-                        "href": "/services/ai-inventory"
-                    },
-                    {
-                        "label": "WhatsApp Ordering",
-                        "href": "/solutions/whatsapp-ordering"
+                        "label": "Analytics",
+                        "href": "/services/analytics"
                     }
                 ]
             },
             {
-                "title": "Product",
+                "title": "Solutions",
                 "items": [
                     {
-                        "label": "Features",
-                        "href": "#features"
+                        "label": "Fine Dining",
+                        "href": "/industries/fine-dining"
                     },
                     {
-                        "label": "Pricing",
-                        "href": "#pricing"
+                        "label": "Cafes & Bakeries",
+                        "href": "/industries/cafes"
+                    },
+                    {
+                        "label": "Bars & Clubs",
+                        "href": "/industries/bars"
+                    },
+                    {
+                        "label": "WhatsApp Billing",
+                        "href": "/solutions/whatsapp-ordering"
+                    },
+                    {
+                        "label": "Partner Program",
+                        "href": "/partners"
+                    }
+                ]
+            },
+            {
+                "title": "Resources",
+                "items": [
+                    {
+                        "label": "Success Stories",
+                        "href": "/success-stories"
                     },
                     {
                         "label": "ROI Calculator",
@@ -315,116 +322,12 @@
                         "href": "/alternatives"
                     },
                     {
-                        "label": "Success Stories",
-                        "href": "/success-stories"
-                    },
-                    {
-                        "label": "Integrations",
-                        "href": "#services"
-                    }
-                ]
-            },
-            {
-                "title": "Solutions",
-                "items": [
-                    {
-                        "label": "Restaurant Management",
-                        "href": "/solutions/restaurant-management"
-                    },
-                    {
-                        "label": "AI Restaurant Suite",
-                        "href": "/solutions/ai-restaurant"
-                    },
-                    {
-                        "label": "AI Virtual Server",
-                        "href": "/solutions/ai-ordering"
-                    },
-                    {
-                        "label": "Partner With Us",
-                        "href": "/partners"
-                    },
-                    {
-                        "label": "Cafes & Bakeries",
-                        "href": "/industries/cafes"
-                    },
-                    {
-                        "label": "Fine Dining",
-                        "href": "/industries/fine-dining"
-                    },
-                    {
-                        "label": "Bars & Lounges",
-                        "href": "/industries/bars"
-                    }
-                ]
-            },
-            {
-                "title": "Locations",
-                "items": [
-                    {
-                        "label": "Hyderabad",
-                        "href": "/locations/hyderabad"
-                    },
-                    {
-                        "label": "Bangalore",
-                        "href": "/locations/bangalore"
-                    },
-                    {
-                        "label": "Delhi NCR",
-                        "href": "/locations/delhi"
-                    },
-                    {
-                        "label": "Mumbai",
-                        "href": "/locations/mumbai"
-                    },
-                    {
-                        "label": "Pune",
-                        "href": "/locations/pune"
-                    },
-                    {
-                        "label": "Chennai",
-                        "href": "/locations/chennai"
-                    },
-                    {
-                        "label": "Kolkata",
-                        "href": "/locations/kolkata"
-                    },
-                    {
-                        "label": "Ahmedabad",
-                        "href": "/locations/ahmedabad"
-                    }
-                ]
-            },
-            {
-                "title": "Company",
-                "items": [
-                    {
                         "label": "About Us",
                         "href": "#home"
                     },
                     {
-                        "label": "Contact",
-                        "href": "#contact"
-                    },
-                    {
-                        "label": "Careers",
-                        "href": "#"
-                    }
-                ]
-            },
-            {
-                "title": "Legal",
-                "items": [
-                    {
-                        "label": "Privacy Policy",
-                        "href": "/privacy"
-                    },
-                    {
-                        "label": "Terms of Service",
-                        "href": "/terms"
-                    },
-                    {
-                        "label": "Refund Policy",
-                        "href": "/refunds"
+                        "label": "Pricing",
+                        "href": "#pricing"
                     }
                 ]
             }

@@ -1,3 +1,4 @@
+import React from 'react';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import Contact from '../../components/Contact';
@@ -11,45 +12,60 @@ export const metadata = {
 
 export default function RestaurantServices() {
     return (
-        <main className="min-h-screen bg-white">
+        <main className="min-h-screen bg-white text-slate-900">
             <Header />
 
             {/* Hero Section */}
-            <section className="pt-32 pb-24 bg-teal-50 relative overflow-hidden">
+            <section className="pt-32 pb-24 relative overflow-hidden bg-[#F8FAFC]/30">
+                {/* Background Blobs */}
+                <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+                    <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-[#2A9D8F]/5 rounded-full blur-[120px]" />
+                    <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#E76F51]/5 rounded-full blur-[120px]" />
+                </div>
+
                 <div className="container mx-auto px-4 relative z-10 text-center">
-                    <span className="inline-block px-4 py-2 rounded-full bg-teal-100 text-teal-600 font-bold text-sm mb-6 uppercase tracking-widest border border-teal-200">
-                        World-Class Hospitality
-                    </span>
-                    <h1 className="text-5xl md:text-8xl font-black text-slate-900 mb-8 leading-[1.1]">
-                        Exceptional <span className="text-teal-600">Restaurant Services.</span>
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white shadow-sm border border-gray-100 mb-8 animate-fade-in-up">
+                        <HeartHandshake size={16} className="text-[#E76F51]" />
+                        <span className="text-gray-600 font-bold text-xs uppercase tracking-widest">
+                            World-Class Hospitality
+                        </span>
+                    </div>
+
+                    <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-gray-900 mb-8 leading-[1.1] tracking-tight animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+                        Exceptional <br />
+                        <span className="gradient-text">Restaurant Services.</span>
                     </h1>
-                    <p className="text-xl text-slate-600 mb-12 leading-relaxed max-w-2xl mx-auto font-medium">
+
+                    <p className="text-xl md:text-2xl text-gray-500 mb-12 leading-relaxed max-w-3xl mx-auto font-medium animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
                         At Table Tap, we don't just provide software; we provide a complete service ecosystem. From menu digitalization to staff training, we ensure your restaurant delivers excellence every single day.
                     </p>
-                    <div className="flex flex-wrap justify-center gap-5">
-                        <button className="btn-premium px-10">Explore Our Services</button>
+
+                    <div className="flex flex-wrap justify-center gap-5 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                        <button className="btn-premium px-10 py-4 shadow-2xl shadow-[#E76F51]/20 hover:shadow-[#E76F51]/40">Explore Our Services</button>
                     </div>
                 </div>
             </section>
 
             {/* Services Grid */}
-            <section className="py-24 bg-white">
+            <section className="py-24 relative">
                 <div className="container mx-auto px-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                         {[
-                            { icon: <HeartHandshake className="text-teal-600 w-8 h-8" />, title: "Onboarding & Menu Setup", desc: "Our expert team handles the entire transition. We digitize your existing menu and optimize it for high conversion rates and visual appeal." },
-                            { icon: <ShieldCheck className="text-teal-600 w-8 h-8" />, title: "24/7 Managed Services", desc: "Technical hiccups don't follow a schedule. Our dedicated support team is always on standby to ensure your digital ordering never goes down." },
-                            { icon: <Sparkles className="text-teal-600 w-8 h-8" />, title: "Digital Transformation", desc: "We guide your restaurant through the shift from traditional paper-based systems to a fully optimized, data-driven digital powerhouse." },
-                            { icon: <Smile className="text-teal-600 w-8 h-8" />, title: "Staff Training & Success", desc: "We provide comprehensive training sessions for your waiters, chefs, and managers to ensure everyone is comfortable with the new tech." }
-                        ].map((service, i) => (
-                            <div key={i} className="flex gap-6 p-10 rounded-[40px] bg-slate-50 border border-slate-100 hover:bg-white hover:shadow-2xl transition-all">
-                                <div className="shrink-0 w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm">
-                                    {service.icon}
+                            { icon: <HeartHandshake />, title: "Onboarding & Menu Setup", desc: "Our expert team handles the entire transition. We digitize your existing menu and optimize it for high conversion rates and visual appeal." },
+                            { icon: <ShieldCheck />, title: "24/7 Managed Services", desc: "Technical hiccups don't follow a schedule. Our dedicated support team is always on standby to ensure your digital ordering never goes down." },
+                            { icon: <Sparkles />, title: "Digital Transformation", desc: "We guide your restaurant through the shift from traditional paper-based systems to a fully optimized, data-driven digital powerhouse." },
+                            { icon: <Smile />, title: "Staff Training & Success", desc: "We provide comprehensive training sessions for your waiters, chefs, and managers to ensure everyone is comfortable with the new tech." }
+                        ].map((item, i) => (
+                            <div
+                                key={i}
+                                className="glass-card p-10 rounded-[40px] hover:-translate-y-2 transition-transform duration-300 group"
+                                style={{ animationDelay: `${i * 0.1}s` }}
+                            >
+                                <div className="mb-8 w-16 h-16 rounded-2xl bg-[#0F172A] flex items-center justify-center text-[#E76F51] shadow-lg group-hover:rotate-12 transition-transform">
+                                    {React.cloneElement(item.icon, { size: 32 })}
                                 </div>
-                                <div>
-                                    <h3 className="text-2xl font-bold text-slate-900 mb-4">{service.title}</h3>
-                                    <p className="text-slate-500 leading-relaxed font-medium text-lg">{service.desc}</p>
-                                </div>
+                                <h3 className="text-2xl font-black text-gray-900 mb-4">{item.title}</h3>
+                                <p className="text-gray-500 font-medium leading-relaxed text-lg">{item.desc}</p>
                             </div>
                         ))}
                     </div>

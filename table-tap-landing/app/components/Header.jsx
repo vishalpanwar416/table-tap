@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, ChevronDown } from 'lucide-react';
 import { useModal } from '../context/ModalContext';
 import { useSettings } from '../context/SettingsContext';
 import data from '../data/landing-data.json';
@@ -11,6 +11,7 @@ import data from '../data/landing-data.json';
 const Header = () => {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [mobileDropdowns, setMobileDropdowns] = useState({});
     const { header } = data;
     const { openModal } = useModal();
     const { logo, company } = useSettings();
@@ -25,6 +26,13 @@ const Header = () => {
         window.addEventListener('scroll', handleScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
+
+    const toggleMobileDropdown = (name) => {
+        setMobileDropdowns(prev => ({
+            ...prev,
+            [name]: !prev[name]
+        }));
+    };
 
     return (
         <header
@@ -46,16 +54,44 @@ const Header = () => {
                 </Link>
 
                 {/* Desktop Navigation */}
-                <nav className="hidden lg:flex items-center gap-10">
+                <nav className="hidden lg:flex items-center gap-8">
                     {header.navLinks.map((link) => (
-                        <a
-                            key={link.name}
-                            href={link.href}
-                            className="text-gray-600 hover:text-gray-900 transition-colors text-[16px] font-bold tracking-tight uppercase group relative"
-                        >
-                            {link.name}
-                            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#2A9D8F] transition-all duration-300 group-hover:w-full" />
-                        </a>
+                        <div key={link.name} className="relative group">
+                            {link.dropdown ? (
+                                <>
+                                    <button
+                                        className="flex items-center gap-1 text-gray-600 hover:text-gray-900 transition-colors text-[16px] font-bold tracking-tight uppercase group-hover:text-[#2A9D8F]"
+                                        aria-haspopup="true"
+                                    >
+                                        {link.name}
+                                        <ChevronDown size={16} className="transition-transform duration-300 group-hover:rotate-180" />
+                                    </button>
+
+                                    {/* Dropdown Menu */}
+                                    <div className="absolute top-full left-0 pt-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform group-hover:translate-y-0 translate-y-2 w-48">
+                                        <div className="bg-white/90 backdrop-blur-md rounded-xl shadow-xl border border-gray-100 overflow-hidden p-2 flex flex-col gap-1">
+                                            {link.dropdown.map((item) => (
+                                                <Link
+                                                    key={item.name}
+                                                    href={item.href}
+                                                    className="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-[#2A9D8F]/10 hover:text-[#2A9D8F] rounded-lg transition-colors whitespace-nowrap"
+                                                >
+                                                    {item.name}
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <a
+                                    href={link.href}
+                                    className="text-gray-600 hover:text-gray-900 transition-colors text-[16px] font-bold tracking-tight uppercase group relative"
+                                >
+                                    {link.name}
+                                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#2A9D8F] transition-all duration-300 group-hover:w-full" />
+                                </a>
+                            )}
+                        </div>
                     ))}
                 </nav>
 
@@ -85,14 +121,46 @@ const Header = () => {
                 <div className="lg:hidden absolute top-full left-2 right-2 mt-2 glass rounded-2xl overflow-hidden shadow-2xl p-5 animate-fade-in-up max-h-[calc(100vh-5rem)] overflow-y-auto">
                     <div className="flex flex-col gap-1">
                         {header.navLinks.map((link) => (
-                            <a
-                                key={link.name}
-                                href={link.href}
-                                onClick={() => setIsMobileMenuOpen(false)}
-                                className="text-gray-900 text-base font-bold py-4 px-3 -mx-3 rounded-xl hover:bg-white/50 active:bg-gray-100 border-b border-gray-100 last:border-0 min-h-[48px] flex items-center"
-                            >
-                                {link.name}
-                            </a>
+                            <div key={link.name} className="border-b border-gray-100 last:border-0">
+                                {link.dropdown ? (
+                                    <>
+                                        <button
+                                            onClick={() => toggleMobileDropdown(link.name)}
+                                            className="w-full text-left text-gray-900 text-base font-bold py-4 px-3 -mx-3 rounded-xl hover:bg-white/50 active:bg-gray-100 flex items-center justify-between"
+                                        >
+                                            {link.name}
+                                            <ChevronDown
+                                                size={20}
+                                                className={`transition-transform duration-300 ${mobileDropdowns[link.name] ? 'rotate-180' : ''}`}
+                                            />
+                                        </button>
+
+                                        {/* Mobile Dropdown Items */}
+                                        {mobileDropdowns[link.name] && (
+                                            <div className="pl-4 pb-2 space-y-1 animate-in slide-in-from-top-2 duration-200">
+                                                {link.dropdown.map((item) => (
+                                                    <Link
+                                                        key={item.name}
+                                                        href={item.href}
+                                                        onClick={() => setIsMobileMenuOpen(false)}
+                                                        className="block py-3 px-3 text-sm font-medium text-gray-600 hover:text-[#2A9D8F] rounded-lg hover:bg-gray-50/50"
+                                                    >
+                                                        {item.name}
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    <a
+                                        href={link.href}
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className="block text-gray-900 text-base font-bold py-4 px-3 -mx-3 rounded-xl hover:bg-white/50 active:bg-gray-100"
+                                    >
+                                        {link.name}
+                                    </a>
+                                )}
+                            </div>
                         ))}
                         <button
                             onClick={() => { openModal('starter'); setIsMobileMenuOpen(false); }}

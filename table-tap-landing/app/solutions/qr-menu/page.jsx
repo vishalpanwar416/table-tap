@@ -1,3 +1,4 @@
+import React from 'react';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import Contact from '../../components/Contact';
@@ -15,47 +16,59 @@ export default function QRMenuSolution() {
             <Header />
 
             {/* Hero Section */}
-            <section className="pt-32 pb-24 bg-white relative overflow-hidden">
+            <section className="pt-32 pb-24 relative overflow-hidden bg-[#F8FAFC]/30">
+                {/* Background Blobs */}
+                <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+                    <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-[#2A9D8F]/5 rounded-full blur-[120px]" />
+                    <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#E76F51]/5 rounded-full blur-[120px]" />
+                </div>
+
                 <div className="container mx-auto px-4 relative z-10">
                     <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
-                        <span className="inline-block px-4 py-2 rounded-full bg-emerald-50 text-emerald-600 font-bold text-sm mb-6 uppercase tracking-widest border border-emerald-100">
-                            The Digital Evolution
-                        </span>
-                        <h1 className="text-5xl md:text-8xl font-black text-slate-900 mb-8 leading-[1]">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white shadow-sm border border-gray-100 mb-8 animate-fade-in-up">
+                            <Smartphone size={16} className="text-[#2A9D8F]" />
+                            <span className="text-gray-600 font-bold text-xs uppercase tracking-widest">
+                                The Digital Evolution
+                            </span>
+                        </div>
+
+                        <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-gray-900 mb-8 leading-[1] tracking-tight animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
                             Not Just a Menu. <br />
                             <span className="gradient-text">A Dining Experience.</span>
                         </h1>
-                        <p className="text-xl text-slate-500 mb-12 leading-relaxed max-w-2xl">
+
+                        <p className="text-xl md:text-2xl text-gray-500 mb-12 leading-relaxed max-w-3xl font-medium animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
                             Table Tap's QR ordering system turns every table into a point of sale. No apps, no registration—just scan and savor.
                         </p>
-                        <div className="flex flex-wrap justify-center gap-5">
-                            <button className="btn-premium px-10">Launch Your Digital Menu</button>
-                            <button className="btn-outline px-10">View Sample Menu</button>
+
+                        <div className="flex flex-wrap justify-center gap-5 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                            <button className="btn-premium px-8 py-4 text-lg shadow-2xl shadow-[#2A9D8F]/20 hover:shadow-[#2A9D8F]/40">Launch Your Digital Menu</button>
+                            <button className="btn-outline px-8 py-4 text-lg">View Sample Menu</button>
                         </div>
                     </div>
                 </div>
             </section>
 
             {/* Feature Deep Dive */}
-            <section className="py-24 bg-slate-50">
+            <section className="py-24 relative">
                 <div className="container mx-auto px-4">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                        <div>
-                            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-8">Why 500+ Restaurants <br /> Switched to Digital.</h2>
-                            <div className="space-y-8">
+                        <div className="order-2 lg:order-1">
+                            <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-8 tracking-tight">Why 500+ Restaurants <br /> <span className="gradient-text">Switched to Digital.</span></h2>
+                            <div className="space-y-6">
                                 {[
                                     { icon: <Smartphone />, title: "No App Required", desc: "Guests simply use their phone camera. No friction, no barriers to ordering." },
                                     { icon: <Zap />, title: "Instant Updates", desc: "Sold out of a dish? Toggle it off instantly. No more crossing out items on paper." },
                                     { icon: <MousePointer2 />, title: "Smart Upselling", desc: "Auto-recommend pairings like 'Add a cold brew' or 'Make it a combo'." },
                                     { icon: <BarChart3 />, title: "Data Insights", desc: "Know which dishes are viewed most, not just which sell most." }
                                 ].map((item, i) => (
-                                    <div key={i} className="flex gap-6">
-                                        <div className="shrink-0 w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-[#2A9D8F]">
-                                            {item.icon}
+                                    <div key={i} className="glass-card p-6 rounded-2xl flex gap-6 hover:-translate-x-2 transition-transform duration-300">
+                                        <div className="shrink-0 w-14 h-14 rounded-xl bg-[#0F172A] flex items-center justify-center text-[#2A9D8F] shadow-lg">
+                                            {React.cloneElement(item.icon, { size: 24 })}
                                         </div>
                                         <div>
-                                            <h3 className="text-xl font-bold text-slate-900 mb-2">{item.title}</h3>
-                                            <p className="text-slate-500 leading-relaxed">{item.desc}</p>
+                                            <h3 className="text-xl font-black text-gray-900 mb-2">{item.title}</h3>
+                                            <p className="text-gray-500 font-medium leading-relaxed">{item.desc}</p>
                                         </div>
                                     </div>
                                 ))}
