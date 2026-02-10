@@ -6,11 +6,15 @@ import 'react-alice-carousel/lib/alice-carousel.css';
 import { BrowserRouter } from 'react-router-dom';
 import { Analytics } from "@vercel/analytics/react"
 
+// Initialize Sentry for error tracking
+import initSentry from './sentry';
+initSentry();
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <App />
-      </BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <App />
+    </BrowserRouter>
   </React.StrictMode>
 );

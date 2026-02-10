@@ -32,7 +32,11 @@ const PrivacyPolicy = () => {
             content: "We use cookies to enhance your experience, remember your preferences, and analyze how our service is used. You can control cookie settings through your browser."
         },
         {
-            title: "7. Changes to This Policy",
+            title: "7. Third-Party Services",
+            content: "We use trusted third-party services to operate and improve our platform. These include Vercel Analytics (for performance monitoring), Sentry (for error tracking), Razorpay (for secure payments), Meta/WhatsApp (for notifications), and Resend (for emails). Each provider processes data according to their own privacy policies."
+        },
+        {
+            title: "8. Changes to This Policy",
             content: "We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the 'last updated' date."
         }
     ];
