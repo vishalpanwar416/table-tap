@@ -20,7 +20,7 @@ import {
 import tableTapLogo from '../../../../assets/icons/logott.png';
 import ManagerNotificationsToast from './ManagerNotificationsToast';
 
-const MobileNav = ({ showMobileNav, setShowMobileNav, activeTab, setActiveTab, menuItems, handleLogout, currentUser, restaurantName, restaurantLogoUrl, userRole, searchTerm, setSearchTerm }) => {
+const MobileNav = ({ showMobileNav, setShowMobileNav, activeTab, setActiveTab, menuItems, handleLogout, currentUser, restaurantName, restaurantLogoUrl, userRole, searchTerm, setSearchTerm, onSelectTab }) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   // Map icon strings to actual components

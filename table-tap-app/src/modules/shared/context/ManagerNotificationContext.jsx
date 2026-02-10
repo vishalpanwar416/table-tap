@@ -57,11 +57,19 @@ export const ManagerNotificationProvider = ({ children }) => {
     await fetchManagerNotifications();
   };
 
+  const markAsRead = async (notificationId) => {
+    await markNotificationAsRead(notificationId);
+    setNotifications(prev =>
+      prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+    );
+  };
+
   return (
     <ManagerNotificationContext.Provider value={{
       notifications,
       unreadCount,
       refreshNotifications: fetchManagerNotifications,
+      markAsRead,
       markAllAsRead
     }}>
       {children}

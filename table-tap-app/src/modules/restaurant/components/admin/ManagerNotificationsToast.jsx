@@ -3,15 +3,35 @@ import { Bell, X, Check, AlertCircle, Trash2, Clock, ChevronRight } from 'lucide
 import { useManagerNotifications } from '../../../shared/context/ManagerNotificationContext';
 import { formatDistanceToNow } from 'date-fns';
 
-const ManagerNotificationsToast = ({ buttonClassName = "text-gray-500 hover:bg-gray-100 hover:text-gray-700" }) => {
+const ManagerNotificationsToast = ({ buttonClassName = "text-gray-500 hover:bg-gray-100 hover:text-gray-700", onSelectTab }) => {
   // Use context safely
   const context = useManagerNotifications();
   const notifications = context?.notifications || [];
   const unreadCount = context?.unreadCount || 0;
   const markAllAsRead = context?.markAllAsRead || (() => { });
+  const markAsRead = context?.markAsRead || (() => { });
 
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  const handleNotificationClick = async (notification) => {
+    // Mark as read
+    if (!notification.read) {
+      await markAsRead(notification.id);
+    }
+
+    // Deep link navigation
+    const orderId = notification.order_id || notification.metadata?.order_id;
+    if (orderId && onSelectTab) {
+      // Navigate to orders tab
+      onSelectTab('orders');
+      // Store the order ID in URL for OrderManagement to pick up
+      const url = new URL(window.location);
+      url.searchParams.set('orderId', orderId);
+      window.history.replaceState({}, '', url);
+      setIsOpen(false);
+    }
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -122,7 +142,8 @@ const ManagerNotificationsToast = ({ buttonClassName = "text-gray-500 hover:bg-g
                         {groupItems.map((notification) => (
                           <div
                             key={notification.id}
-                            className={`group relative p-4 transition-all duration-200 hover:bg-gray-50 ${!notification.read ? 'bg-orange-50/30' : ''
+                            onClick={() => handleNotificationClick(notification)}
+                            className={`group relative p-4 transition-all duration-200 cursor-pointer hover:bg-gray-50 ${!notification.read ? 'bg-orange-50/30' : ''
                               }`}
                           >
                             <div className="flex items-start gap-3.5">

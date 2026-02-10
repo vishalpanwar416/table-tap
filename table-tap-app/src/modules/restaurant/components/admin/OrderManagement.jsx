@@ -527,6 +527,27 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
     fetchOrders();
   }, [restaurantId]);
 
+  // Deep-link: Auto-expand and scroll to order if orderId is in URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderIdToHighlight = urlParams.get('orderId');
+
+    if (orderIdToHighlight && orders.length > 0) {
+      setExpandedOrderId(orderIdToHighlight);
+
+      // Clear the param from URL to avoid repeated scrolling but keep it in history if needed
+      // Actually, let's just scroll once.
+      setTimeout(() => {
+        const element = document.getElementById(`order-card-${orderIdToHighlight}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.classList.add('ring-2', 'ring-orange-500', 'ring-offset-2');
+          setTimeout(() => element.classList.remove('ring-2', 'ring-orange-500', 'ring-offset-2'), 3000);
+        }
+      }, 500);
+    }
+  }, [orders.length, window.location.search]);
+
   // Load menu items when opening create order modal
   useEffect(() => {
     const fetchMenu = async () => {
@@ -1347,7 +1368,10 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
             {sortedOrders.map((order) => (
               <React.Fragment key={order.id}>
                 {/* Mobile Compact Card */}
-                <div className="block sm:hidden mb-2 bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden status-card-mobile h-fit">
+                <div
+                  id={`order-card-${order.id}`}
+                  className="block sm:hidden mb-2 bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden status-card-mobile h-fit"
+                >
                   <div
                     className="p-2.5 flex items-start gap-3 active:bg-gray-50 transition-colors"
                     onClick={() => toggleOrderExpansion(order.id)}
@@ -1449,6 +1473,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
 
                 {/* Desktop Card (Original) */}
                 <div
+                  id={`order-card-${order.id}`}
                   className={`
                       hidden sm:block group relative rounded-2xl border border-gray-100 shadow-md hover:shadow-lg transition-shadow duration-150 ease-out overflow-hidden
                       ${order.status === 'pending'
