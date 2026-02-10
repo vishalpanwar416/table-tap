@@ -62,10 +62,24 @@ const StatsCards = ({ revenueData, orderStats, activeUsers, menuStats, isCollaps
                 <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-orange-50 flex items-center justify-center text-orange-600 group-hover:scale-110 transition-transform">
                   <TrendingUp size={16} className="md:w-5 md:h-5" />
                 </div>
-                <div className="flex items-center gap-0.5 text-[8px] md:text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full">
-                  <ChevronUp size={8} />
-                  <span>{((revenueData.daily / ((revenueData.weekly / 7) || 1) - 1) * 100).toFixed(0)}%</span>
-                </div>
+                {(() => {
+                  const dailyAvg = (revenueData.weekly / 7) || 0;
+                  const percentage = dailyAvg > 0
+                    ? ((revenueData.daily / dailyAvg) - 1) * 100
+                    : (revenueData.daily > 0 ? 100 : 0);
+
+                  const isPositive = percentage >= 0;
+                  const isZero = percentage === 0;
+
+                  return (
+                    <div className={`flex items-center gap-0.5 text-[8px] md:text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isZero ? 'text-gray-500 bg-gray-50' :
+                      isPositive ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'
+                      }`}>
+                      {!isZero && (isPositive ? <ChevronUp size={8} /> : <ChevronDown size={8} />)}
+                      <span>{isZero ? 'Stable' : `${Math.abs(percentage).toFixed(0)}%`}</span>
+                    </div>
+                  );
+                })()}
               </div>
               <p className="text-[9px] md:text-xs font-bold text-gray-400 uppercase tracking-widest">Revenue</p>
               <h4 className="text-base md:text-2xl font-black text-gray-900 mt-0.5 tracking-tight truncate">
