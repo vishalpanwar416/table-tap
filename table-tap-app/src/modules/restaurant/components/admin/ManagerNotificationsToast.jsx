@@ -15,21 +15,25 @@ const ManagerNotificationsToast = ({ buttonClassName = "text-gray-500 hover:bg-g
   const dropdownRef = useRef(null);
 
   const handleNotificationClick = async (notification) => {
-    // Mark as read
-    if (!notification.read) {
-      await markAsRead(notification.id);
-    }
+    try {
+      // Mark as read
+      if (!notification.read) {
+        await markAsRead(notification.id);
+      }
 
-    // Deep link navigation
-    const orderId = notification.order_id || notification.metadata?.order_id;
-    if (orderId && onSelectTab) {
-      // Navigate to orders tab
-      onSelectTab('orders');
-      // Store the order ID in URL for OrderManagement to pick up
-      const url = new URL(window.location);
-      url.searchParams.set('orderId', orderId);
-      window.history.replaceState({}, '', url);
-      setIsOpen(false);
+      // Deep link navigation
+      const orderId = notification.order_id || notification.metadata?.order_id;
+      if (orderId && onSelectTab) {
+        // Navigate to orders tab
+        onSelectTab('orders');
+        // Store the order ID in URL for OrderManagement to pick up
+        const url = new URL(window.location.href);
+        url.searchParams.set('orderId', orderId);
+        window.history.replaceState({}, '', url.toString());
+        setIsOpen(false);
+      }
+    } catch (error) {
+      console.error('Error handling notification click:', error);
     }
   };
 

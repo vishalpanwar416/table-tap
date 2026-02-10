@@ -59,10 +59,19 @@ export const ManagerNotificationProvider = ({ children }) => {
   };
 
   const markAsRead = async (notificationId) => {
-    await markNotificationAsRead(notificationId);
-    setNotifications(prev =>
-      prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
-    );
+    try {
+      // Update local state first for instant UI feedback
+      setNotifications(prev =>
+        prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+      );
+
+      // Perform API call
+      await markNotificationAsRead(notificationId);
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+      // We don't necessarily want to revert state here if it's just a read status, 
+      // but we could if we wanted it to be strictly consistent.
+    }
   };
 
   return (
