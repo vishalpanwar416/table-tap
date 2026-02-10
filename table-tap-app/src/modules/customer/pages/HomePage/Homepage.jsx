@@ -18,9 +18,8 @@ import { useMultiScrollLock } from '../../../shared/hooks/useScrollLock';
 import SearchResultsOverlay from '../../components/SearchResultsOverlay';
 
 // Enhanced lazy loading with preloading hints
-const Maincarosel = lazy(() => import('../../components/Maincarosel'), {
-  suspense: true
-});
+// Import Maincarosel directly to prevent chunk loading errors
+import Maincarosel from '../../components/Maincarosel';
 const Sidebar = lazy(() => import('../../components/Slidebar'), {
   suspense: true
 });
@@ -463,11 +462,9 @@ const HomePage = memo(() => {
 
             {/* Carousel with enhanced loading */}
             <motion.div {...slideUp}>
-              <Suspense fallback={<CarouselSkeleton />}>
-                <div className="relative pt-3 pb-3 my-2">
-                  <Maincarosel />
-                </div>
-              </Suspense>
+              <div className="relative pt-3 pb-3 my-2">
+                <Maincarosel />
+              </div>
             </motion.div>
 
             {/* Main Content Area with conditional rendering */}
