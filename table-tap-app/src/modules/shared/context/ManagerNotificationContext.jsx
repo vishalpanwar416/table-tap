@@ -4,7 +4,8 @@ import {
   getManagerNotifications,
   getUnreadManagerNotifications,
   markAllManagerNotificationsAsRead,
-  subscribeToManagerNotifications
+  subscribeToManagerNotifications,
+  markNotificationAsRead
 } from '../api/notificationService';
 
 import { useAdminRestaurant } from './AdminRestaurantContext';
