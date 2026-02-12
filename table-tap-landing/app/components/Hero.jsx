@@ -14,7 +14,7 @@ const Hero = () => {
         <section
             id="home"
             aria-label="Hero section - Introduction to Table Tap"
-            className="relative min-h-[90dvh] sm:min-h-[100vh] flex items-center pt-16 sm:pt-28 md:pt-36 pb-10 sm:pb-14 md:pb-18 overflow-hidden bg-white"
+            className="relative min-h-[90dvh] sm:min-h-[100vh] flex items-center pt-16 sm:pt-28 md:pt-36 pb-10 sm:pb-14 md:pb-18 overflow-hidden max-w-full bg-white"
         >
             {/* Background Aesthetic Elements - CSS only (smaller on mobile) */}
             <div className="blob top-[-80px] left-[-80px] bg-[#2A9D8F]/20 opacity-40 sm:opacity-60 w-[220px] h-[220px] sm:w-[480px] sm:h-[480px]" />
