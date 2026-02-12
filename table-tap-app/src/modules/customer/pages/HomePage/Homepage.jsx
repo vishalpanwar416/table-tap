@@ -16,6 +16,7 @@ import Tags from '../../components/Tags';
 import { useRestaurant } from '../../../restaurant/pages/RestaurantSelection/RestaurantContext';
 import { useMultiScrollLock } from '../../../shared/hooks/useScrollLock';
 import SearchResultsOverlay from '../../components/SearchResultsOverlay';
+import { authService } from '../../../shared/api/authService';
 
 // Enhanced lazy loading with preloading hints
 // Import Maincarosel directly to prevent chunk loading errors
@@ -267,10 +268,17 @@ const HomePage = memo(() => {
     setActiveCategory(category);
   }, []);
 
-  const handleLogout = useCallback(() => {
-    setIsLogoutOpen(false);
-    setIsSidebarOpen(false);
-    navigate('/login');
+  const handleLogout = useCallback(async () => {
+    try {
+      await authService.signOut();
+      setIsLogoutOpen(false);
+      setIsSidebarOpen(false);
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Still redirect to login as a fallback
+      navigate('/login');
+    }
   }, [navigate]);
 
   // Enhanced click outside handler with performance optimization
