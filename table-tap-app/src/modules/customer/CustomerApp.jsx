@@ -9,7 +9,7 @@ import { useAuth } from '../shared/config/AuthContext';
 import { hasValidRestaurantSelection } from '../shared/utils/restaurantCheck';
 
 // Opening loads eagerly so "/" never shows a black loading screen
-import Opening from '../shared/components/pages/opening';
+import Opening from '../shared/pages/opening';
 
 import { authService } from '../shared/api/authService';
 
@@ -54,7 +54,7 @@ function OpeningOrRedirect() {
     return <Opening />;
 }
 // Lazy load other pages for better performance
-const OnboardingScreen = lazy(() => import('../shared/components/pages/onboardingScreen'));
+const OnboardingScreen = lazy(() => import('../shared/pages/onboardingScreen'));
 const LoginPage = lazy(() => import('../shared/components/auth/LoginPage'));
 const SignupPage = lazy(() => import('../shared/components/auth/SignupPage'));
 const CompleteProfile = lazy(() => import('../shared/components/auth/CompleteProfile'));

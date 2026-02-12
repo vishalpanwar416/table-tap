@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import logo1 from '../../../../assets/icons/logott.png';
-import { storeRestaurantSelection } from '../../../shared/utils/restaurantCheck';
+import logo1 from '../../../assets/icons/logott.png';
+import { storeRestaurantSelection } from '../utils/restaurantCheck';
 
 // Animation configurations
 const ANIMATIONS = {
