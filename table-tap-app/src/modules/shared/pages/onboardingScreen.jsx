@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import logo1 from '../../../../assets/images/Food/Burger.jpg';
-import logo2 from '../../../../assets/images/Food/chickencurry.jpg';
+import logo1 from '../../../assets/images/Food/Burger.jpg';
+import logo2 from '../../../assets/images/Food/chickencurry.jpg';
 import { useNavigate } from 'react-router-dom';
-import { hasValidRestaurantSelection } from '../../../shared/utils/restaurantCheck';
+import { hasValidRestaurantSelection } from '../utils/restaurantCheck';
 
 export default function OnboardingScreens() {
   const [currentScreen, setCurrentScreen] = useState(0);
