@@ -8,6 +8,7 @@ import LoadingScreen from '../../shared/components/LoadingScreen';
 const HelpFAQPage = () => {
   const { restaurant, loading, error, tableNumber } = useRestaurant();
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchActive, setIsSearchActive] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const navigate = useNavigate();
@@ -256,23 +257,66 @@ const HelpFAQPage = () => {
   return (
     <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl flex flex-col mx-auto">
       {/* Header */}
-      <div className="w-full px-6 py-8 relative flex items-center justify-center">
+      {/* Header */}
+      <div className="w-full px-6 py-6 sm:py-8 relative flex items-center justify-between">
         <button
           onClick={handleBack}
-          className="absolute left-4 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-10"
+          className="text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-10"
           aria-label="Go back"
         >
-          <ChevronLeft size={30} />
+          <ChevronLeft size={24} className="sm:w-[30px] sm:h-[30px]" />
         </button>
 
-        <div className="flex flex-col items-center">
-          <h1 className="text-gray-100 text-3xl font-medium">
+        <div className="flex flex-col items-center absolute left-1/2 transform -translate-x-1/2 w-full max-w-[200px] sm:max-w-none pointer-events-none">
+          <h1 className="text-gray-100 text-2xl sm:text-3xl font-medium text-center pointer-events-auto">
             Help & FAQ's
           </h1>
-          <p className="text-orange-100/60 text-sm mt-1">Everything you need to know, all in one place.</p>
+          <p className="text-orange-100/60 text-xs sm:text-sm mt-1 text-center pointer-events-auto">Everything you need to know.</p>
         </div>
+
+        {/* Search Icon */}
+        <button
+          onClick={() => setIsSearchActive(!isSearchActive)}
+          className="text-white hover:text-orange-400 transition-all duration-300 p-2 rounded-full hover:bg-white/10 active:bg-white/20 focus:outline-none z-10"
+          aria-label="Search FAQs"
+        >
+          <Search size={22} className="sm:w-[24px] sm:h-[24px]" />
+        </button>
       </div>
-      <div className="flex justify-center items-center pt-12 px-4 min-h-[85vh]">
+
+      {/* Search Bar (appears when search is active) */}
+      <AnimatePresence>
+        {isSearchActive && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="px-6 pb-4 relative z-20"
+          >
+            <div className="relative max-w-2xl mx-auto">
+              <input
+                type="text"
+                placeholder="Search questions..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-white/10 backdrop-blur-md text-white placeholder-gray-400 rounded-full px-5 py-3 pl-12 pr-12 focus:outline-none focus:ring-2 focus:ring-orange-500/50 border border-white/20 text-sm sm:text-base"
+                autoFocus
+              />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                >
+                  <X size={18} />
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="flex justify-center items-center pt-0 sm:pt-12 px-0 sm:px-4 min-h-[85vh]">
         <motion.div
           initial={{ opacity: 0, y: 30, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -280,52 +324,35 @@ const HelpFAQPage = () => {
           className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl mx-auto"
         >
           {/* Main Card */}
-          <div className="bg-white rounded-3xl shadow-2xl overflow-hidden w-full">
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden w-full">
 
 
-
-            <div className="p-8">
-              {/* Search Bar */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="relative mb-8"
-              >
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    type="text"
-                    placeholder="Search for questions..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  />
-                </div>
-              </motion.div>
+            <div className="p-4 sm:p-8">
+              {/* Category Filter - was below search bar, now top item */}
 
               {/* Category Filter */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="mb-8"
+                className="mb-6 sm:mb-8"
               >
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Categories</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Categories</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setSelectedCategory('all')}
-                    className={`p-3 rounded-xl border-2 transition-all ${selectedCategory === 'all'
+                    className={`p-2 sm:p-3 rounded-xl border-2 transition-all ${selectedCategory === 'all'
                       ? 'border-blue-500 bg-blue-50 text-blue-700'
                       : 'border-gray-200 hover:border-gray-300'
                       }`}
                   >
                     <div className="flex items-center">
-                      <div className="w-8 h-8 bg-gradient-to-r from-gray-400 to-gray-600 rounded-lg flex items-center justify-center mr-2">
-                        <HelpCircle className="w-4 h-4 text-white" />
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-r from-gray-400 to-gray-600 rounded-lg flex items-center justify-center mr-2">
+                        <HelpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
                       </div>
-                      <span className="text-sm font-medium">All</span>
+                      <span className="text-xs sm:text-sm font-medium">All</span>
                     </div>
                   </motion.button>
 
@@ -335,16 +362,16 @@ const HelpFAQPage = () => {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setSelectedCategory(category.id)}
-                      className={`p-3 rounded-xl border-2 transition-all ${selectedCategory === category.id
+                      className={`p-2 sm:p-3 rounded-xl border-2 transition-all ${selectedCategory === category.id
                         ? 'border-blue-500 bg-blue-50 text-blue-700'
                         : 'border-gray-200 hover:border-gray-300'
                         }`}
                     >
                       <div className="flex items-center">
-                        <div className={`w-8 h-8 bg-gradient-to-r ${category.color} rounded-lg flex items-center justify-center mr-2`}>
-                          {category.icon}
+                        <div className={`w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-r ${category.color} rounded-lg flex items-center justify-center mr-2`}>
+                          {React.cloneElement(category.icon, { className: "w-3.5 h-3.5 sm:w-5 sm:h-5 text-white" })}
                         </div>
-                        <span className="text-sm font-medium">{category.title}</span>
+                        <span className="text-xs sm:text-sm font-medium">{category.title}</span>
                       </div>
                     </motion.button>
                   ))}
@@ -356,9 +383,9 @@ const HelpFAQPage = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="space-y-4 mb-8"
+                className="space-y-3 sm:space-y-4 mb-6 sm:mb-8"
               >
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">
                   {filteredFaqs.length > 0
                     ? `Found ${filteredFaqs.length} question${filteredFaqs.length !== 1 ? 's' : ''}`
                     : 'No questions found'
@@ -376,19 +403,19 @@ const HelpFAQPage = () => {
                     >
                       <button
                         onClick={() => handleFaqToggle(faq.id)}
-                        className="w-full p-6 text-left flex items-center justify-between hover:bg-gray-100 transition-colors"
+                        className="w-full p-3 sm:p-6 text-left flex items-start sm:items-center justify-between hover:bg-gray-100 transition-colors"
                       >
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-gray-800 mb-1">{faq.question}</h4>
-                          <p className="text-sm text-gray-500">
+                        <div className="flex-1 pr-2">
+                          <h4 className="font-semibold text-xs sm:text-base text-gray-800 mb-0.5 sm:mb-1">{faq.question}</h4>
+                          <p className="text-[10px] sm:text-sm text-gray-500">
                             {faqCategories.find(cat => cat.id === faq.category)?.title}
                           </p>
                         </div>
-                        <div className="ml-4">
+                        <div className="mt-0.5 sm:mt-0">
                           {expandedFaq === faq.id ? (
-                            <ChevronUp className="w-5 h-5 text-gray-400" />
+                            <ChevronUp className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-gray-400" />
                           ) : (
-                            <ChevronDown className="w-5 h-5 text-gray-400" />
+                            <ChevronDown className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-gray-400" />
                           )}
                         </div>
                       </button>
@@ -402,9 +429,9 @@ const HelpFAQPage = () => {
                             transition={{ duration: 0.3 }}
                             className="overflow-hidden"
                           >
-                            <div className="px-6 pb-6">
-                              <div className="border-t border-gray-200 pt-4">
-                                <p className="text-gray-700 leading-relaxed">{faq.answer}</p>
+                            <div className="px-3 pb-3 sm:px-6 sm:pb-6">
+                              <div className="border-t border-gray-200 pt-2 sm:pt-4">
+                                <p className="text-xs sm:text-base text-gray-700 leading-relaxed">{faq.answer}</p>
                               </div>
                             </div>
                           </motion.div>
@@ -420,25 +447,25 @@ const HelpFAQPage = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6 border border-blue-100"
+                className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-4 sm:p-6 border border-blue-100"
               >
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Still Need Help?</h3>
-                <p className="text-gray-600 text-center mb-6">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-1 sm:mb-4 text-center">Still Need Help?</h3>
+                <p className="text-xs sm:text-base text-gray-600 text-center mb-3 sm:mb-6">
                   Can't find what you're looking for? Our support team is here to help!
                 </p>
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleContactSupport}
-                    className="flex items-center justify-center p-4 bg-white rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 group"
+                    className="flex flex-col sm:flex-row items-center justify-center p-3 sm:p-4 bg-white rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 group text-center sm:text-left"
                   >
-                    <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-purple-500 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">
-                      <MessageCircle className="w-5 h-5 text-white" />
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-blue-400 to-purple-500 rounded-lg flex items-center justify-center mb-2 sm:mb-0 sm:mr-3 group-hover:scale-110 transition-transform">
+                      <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                     </div>
-                    <div className="text-left">
-                      <p className="font-semibold text-gray-800">Contact Support</p>
-                      <p className="text-sm text-gray-600">Send us a message</p>
+                    <div>
+                      <p className="font-semibold text-xs sm:text-base text-gray-800">Contact Support</p>
+                      <p className="text-[10px] sm:text-sm text-gray-600 hidden sm:block">Send us a message</p>
                     </div>
                   </motion.button>
 
@@ -447,14 +474,14 @@ const HelpFAQPage = () => {
                       href={`tel:${restaurant.contact_phone}`}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      className="flex items-center justify-center p-4 bg-white rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 group"
+                      className="flex flex-col sm:flex-row items-center justify-center p-3 sm:p-4 bg-white rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 group text-center sm:text-left"
                     >
-                      <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">
-                        <Phone className="w-5 h-5 text-white" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-lg flex items-center justify-center mb-2 sm:mb-0 sm:mr-3 group-hover:scale-110 transition-transform">
+                        <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                       </div>
-                      <div className="text-left">
-                        <p className="font-semibold text-gray-800">Call Us</p>
-                        <p className="text-sm text-gray-600">Speak directly</p>
+                      <div>
+                        <p className="font-semibold text-xs sm:text-base text-gray-800">Call Us</p>
+                        <p className="text-[10px] sm:text-sm text-gray-600 hidden sm:block">Speak directly</p>
                       </div>
                     </motion.a>
                   )}

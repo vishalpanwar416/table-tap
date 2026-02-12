@@ -20,9 +20,7 @@ import SearchResultsOverlay from '../../components/SearchResultsOverlay';
 // Enhanced lazy loading with preloading hints
 // Import Maincarosel directly to prevent chunk loading errors
 import Maincarosel from '../../components/Maincarosel';
-const Sidebar = lazy(() => import('../../components/Slidebar'), {
-  suspense: true
-});
+import Sidebar from '../../components/Slidebar';
 const NotificationSidebar = lazy(() => import('../../components/NotificationSlidebar'), {
   suspense: true
 });
