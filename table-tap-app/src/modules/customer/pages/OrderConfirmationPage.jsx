@@ -28,6 +28,14 @@ const OrderConfirmationPage = () => {
           return;
         }
 
+        // Save order ID for guest tracking (Array + Most Recent)
+        const currentGuestOrders = JSON.parse(localStorage.getItem('guestOrderIds') || '[]');
+        if (!currentGuestOrders.includes(orderId)) {
+          const newGuestOrders = [orderId, ...currentGuestOrders].slice(0, 5); // Keep last 5
+          localStorage.setItem('guestOrderIds', JSON.stringify(newGuestOrders));
+        }
+        localStorage.setItem('lastGuestOrderId', orderId);
+
         const order = await getOrderDetails(orderId);
         console.log('OrderConfirmationPage: Retrieved order:', order);
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ChevronLeft, CheckCircle, Clock, XCircle, Truck, MapPin, CreditCard, ShoppingBag, User, X, LogIn } from 'lucide-react';
+import { ChevronLeft, CheckCircle, Clock, XCircle, Truck, MapPin, CreditCard, ShoppingBag, User, X, LogIn, Archive } from 'lucide-react';
 import { useOrders } from '../../shared/context/OrderContext';
 import { useAuth } from '../../shared/config/AuthContext';
 import LoadingScreen from '../../shared/components/LoadingScreen';
@@ -14,9 +14,13 @@ const OrderTracking = () => {
   const { user } = useAuth();
   const [statusPercentage, setStatusPercentage] = useState(0);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
 
-  // Get order ID from params or router state (for guest flow)
-  const orderId = id || location.state?.orderId;
+  // Get guest history
+  const guestOrderIds = JSON.parse(localStorage.getItem('guestOrderIds') || '[]');
+
+  // Get order ID from params, router state, or fallback to storage
+  const orderId = id || location.state?.orderId || localStorage.getItem('lastGuestOrderId');
 
   useEffect(() => {
     if (orderId) {
@@ -154,18 +158,30 @@ const OrderTracking = () => {
             <p className="text-orange-100/60 text-xs mt-1 text-center">#{currentOrder.id.slice(0, 8).toUpperCase()}</p>
           </div>
 
-          {/* Guest Login Button (if not logged in) */}
-          {!user ? (
-            <button
-              onClick={() => setShowLoginModal(true)}
-              className="text-white hover:text-orange-400 p-2 rounded-full transition-colors bg-white/10 hover:bg-white/20 backdrop-blur-md z-10"
-              aria-label="Login to save order"
-            >
-              <User size={20} />
-            </button>
-          ) : (
-            <div className="w-10"></div>
-          )}
+          {/* Guest History & Login Buttons */}
+          <div className="flex items-center gap-2">
+            {!user && guestOrderIds.length > 1 && (
+              <button
+                onClick={() => setShowHistoryModal(true)}
+                className="text-white hover:text-orange-400 p-2 rounded-full transition-colors bg-white/10 hover:bg-white/20 backdrop-blur-md z-10"
+                aria-label="View order history"
+              >
+                <Archive size={20} />
+              </button>
+            )}
+
+            {!user ? (
+              <button
+                onClick={() => setShowLoginModal(true)}
+                className="text-white hover:text-orange-400 p-2 rounded-full transition-colors bg-white/10 hover:bg-white/20 backdrop-blur-md z-10"
+                aria-label="Login to save order"
+              >
+                <User size={20} />
+              </button>
+            ) : (
+              <div className="w-10"></div>
+            )}
+          </div>
         </div>
 
         {/* Main Content - White block with rounded top corners */}
@@ -366,6 +382,67 @@ const OrderTracking = () => {
                       Maybe Later
                     </button>
                   </div>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Guest History Modal */}
+      <AnimatePresence>
+        {showHistoryModal && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+              onClick={() => setShowHistoryModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none p-4"
+            >
+              <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm pointer-events-auto relative">
+                <button
+                  onClick={() => setShowHistoryModal(false)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+
+                <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <Archive className="text-orange-500" size={24} />
+                  Recent Orders
+                </h3>
+
+                <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+                  {guestOrderIds.map((guestId, index) => (
+                    <button
+                      key={guestId}
+                      onClick={() => {
+                        navigate(`/order-tracking/${guestId}`);
+                        setShowHistoryModal(false);
+                      }}
+                      className={`w-full p-3 rounded-xl flex items-center justify-between transition-colors ${guestId === currentOrder?.id
+                          ? 'bg-orange-50 border border-orange-200'
+                          : 'bg-gray-50 hover:bg-gray-100'
+                        }`}
+                    >
+                      <div className="text-left">
+                        <p className={`font-medium text-sm ${guestId === currentOrder?.id ? 'text-orange-700' : 'text-gray-800'}`}>
+                          Order #{guestId.slice(0, 8).toUpperCase()}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {index === 0 ? 'Latest' : 'Previous'}
+                        </p>
+                      </div>
+                      <ChevronLeft size={16} className={`rotate-180 ${guestId === currentOrder?.id ? 'text-orange-500' : 'text-gray-400'}`} />
+                    </button>
+                  ))}
                 </div>
               </div>
             </motion.div>
