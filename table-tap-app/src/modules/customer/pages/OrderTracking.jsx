@@ -50,22 +50,27 @@ const OrderTracking = () => {
       // Update progress bar based on status
       switch (currentOrder.status) {
         case 'pending':
-          setStatusPercentage(25);
+          setStatusPercentage(20);
           break;
+        case 'confirmed':
         case 'accepted':
-          setStatusPercentage(50);
+          setStatusPercentage(40);
           break;
         case 'preparing':
-          setStatusPercentage(75);
+          setStatusPercentage(60);
+          break;
+        case 'ready':
+          setStatusPercentage(80);
           break;
         case 'completed':
           setStatusPercentage(100);
           break;
         case 'rejected':
+        case 'cancelled':
           setStatusPercentage(0);
           break;
         default:
-          setStatusPercentage(0);
+          setStatusPercentage(10);
       }
     }
   }, [currentOrder]);
@@ -86,13 +91,17 @@ const OrderTracking = () => {
     switch (status) {
       case 'pending':
         return <Clock className="w-8 h-8 text-yellow-500" />;
+      case 'confirmed':
       case 'accepted':
         return <CheckCircle className="w-8 h-8 text-blue-500" />;
       case 'preparing':
-        return <Truck className="w-8 h-8 text-purple-500" />;
+        return <Truck className="w-8 h-8 text-purple-500" />; // Or ChefHat if available
+      case 'ready':
+        return <ShoppingBag className="w-8 h-8 text-orange-500" />;
       case 'completed':
         return <CheckCircle className="w-8 h-8 text-green-500" />;
       case 'rejected':
+      case 'cancelled':
         return <XCircle className="w-8 h-8 text-red-500" />;
       default:
         return <Clock className="w-8 h-8 text-gray-500" />;
@@ -100,11 +109,14 @@ const OrderTracking = () => {
   };
 
   const statusMessages = {
-    pending: "Your order is waiting to be accepted by the restaurant.",
-    accepted: "Good news! Your order has been accepted.",
+    pending: "Your order is being reviewed by the restaurant.",
+    confirmed: "Order accepted! Kitchen will start shortly.",
+    accepted: "Order accepted! Kitchen will start shortly.",
     preparing: "Your food is being prepared right now.",
-    completed: "Your order is ready! Please collect from the restaurant.",
-    rejected: "We're sorry, your order couldn't be fulfilled at this time."
+    ready: "Your order is ready! It will be served shortly.",
+    completed: "Order completed. Enjoy your meal!",
+    rejected: "Sorry, your order was rejected. Please contact staff.",
+    cancelled: "This order has been cancelled."
   };
 
   const handleLoginRedirect = () => {
@@ -215,7 +227,9 @@ const OrderTracking = () => {
                 >
                   {getStatusIcon(currentOrder.status)}
                 </motion.div>
-                <h2 className="text-xl font-bold text-gray-800 capitalize mb-1">{currentOrder.status}</h2>
+                <h2 className={`text-xl font-bold capitalize mb-1 ${['preparing', 'ready'].includes(currentOrder.status) ? 'text-orange-600 animate-pulse' : 'text-gray-800'}`}>
+                  {currentOrder.status}
+                </h2>
                 <p className="text-sm text-gray-500">{formatDate(currentOrder.created_at)}</p>
               </div>
 
