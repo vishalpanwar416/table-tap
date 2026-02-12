@@ -202,9 +202,6 @@ export const createOrder = async (orderData) => {
       if (!orderData.customerName || orderData.customerName.trim() === '') {
         throw new Error('Customer name is required.');
       }
-      if (!orderData.customerEmail || orderData.customerEmail.trim() === '') {
-        throw new Error('Customer email is required.');
-      }
       if (!orderData.customerPhone || orderData.customerPhone.trim() === '') {
         throw new Error('Customer phone is required.');
       }
@@ -221,7 +218,10 @@ export const createOrder = async (orderData) => {
       user_id: orderData.userId || null, // null for guest users
       // Ensure data is trimmed to prevent whitespace issues with RLS
       customer_name: (orderData.customerName || 'Walk-in Customer').trim(),
-      customer_email: (orderData.customerEmail || 'guest@example.com').trim(),
+      // Use provided email or generate a placeholder based on phone
+      customer_email: (orderData.customerEmail && orderData.customerEmail.trim() !== '')
+        ? orderData.customerEmail.trim()
+        : `guest_${orderData.customerPhone.replace(/[^0-9]/g, '')}@tabletap.com`,
       customer_phone: (orderData.customerPhone || '').trim(),
       table_number: orderData.tableNumber || 'Not Specified',
       items: orderData.items.map(item => ({
@@ -753,19 +753,20 @@ export const processOrderWithPayment = async ({
       if (!finalCustomerName || finalCustomerName.trim() === '') {
         throw new Error('Customer name is required');
       }
-      if (!finalCustomerEmail || finalCustomerEmail.trim() === '') {
-        throw new Error('Customer email is required');
-      }
       if (!finalCustomerPhone || finalCustomerPhone.trim() === '') {
         throw new Error('Customer phone is required');
-      }
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(finalCustomerEmail.trim())) {
-        throw new Error('Please enter a valid email address');
       }
       const phoneRegex = /^[6-9]\d{9}$/;
       if (!phoneRegex.test(finalCustomerPhone.trim())) {
         throw new Error('Please enter a valid 10-digit phone number');
+      }
+
+      // Email is optional for guests now
+      if (finalCustomerEmail && finalCustomerEmail.trim() !== '') {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(finalCustomerEmail.trim())) {
+          throw new Error('Please enter a valid email address');
+        }
       }
     }
 
@@ -790,7 +791,9 @@ export const processOrderWithPayment = async ({
       restaurantId: restaurant.id,
       userId: user ? user.id : null,
       customerName: (finalCustomerName || 'Guest').trim(),
-      customerEmail: (finalCustomerEmail || 'guest@example.com').trim(),
+      customerEmail: (finalCustomerEmail && finalCustomerEmail.trim() !== '')
+        ? finalCustomerEmail.trim()
+        : `guest_${finalCustomerPhone.replace(/[^0-9]/g, '')}@tabletap.com`,
       customerPhone: (finalCustomerPhone || '').trim(),
       tableNumber,
       items: cartItems.map(item => ({

@@ -134,6 +134,11 @@ export default function LoginPage() {
       // No redirection to admin/restaurant dashboards from here.
 
       // Customer redirection
+      if (location.state?.returnUrl) {
+        navigate(location.state.returnUrl, { state: location.state });
+        return;
+      }
+
       if (hasValidRestaurantSelection()) {
         navigate('/home');
       } else {

@@ -296,15 +296,11 @@ const PaymentPage = () => {
         if (!finalCustomerName || finalCustomerName.trim() === '') {
           throw new Error('Customer name is required');
         }
-        if (!finalCustomerEmail || finalCustomerEmail.trim() === '') {
-          throw new Error('Customer email is required');
-        }
-        if (!finalCustomerPhone || finalCustomerPhone.trim() === '') {
-          throw new Error('Customer phone is required');
-        }
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(finalCustomerEmail.trim())) {
-          throw new Error('Please enter a valid email address');
+        if (finalCustomerEmail && finalCustomerEmail.trim() !== '') {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(finalCustomerEmail.trim())) {
+            throw new Error('Please enter a valid email address');
+          }
         }
         const phoneRegex = /^[6-9]\d{9}$/;
         if (!phoneRegex.test(finalCustomerPhone.trim())) {

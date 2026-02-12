@@ -34,8 +34,12 @@ const OrderConfirmationPage = () => {
         setOrderDetails(order);
         startStatusUpdates(orderId);
 
-        // Auto-redirect after 8 seconds
-        setTimeout(() => navigate('/my-orders'), 8000);
+        // Auto-redirect to tracking page after 8 seconds
+        setTimeout(() => {
+          navigate('/order-tracking', {
+            state: { orderId: orderId }
+          });
+        }, 8000);
       } catch (err) {
         console.error('OrderConfirmationPage: Error:', err);
         setError(err.message || 'Failed to load order details');
@@ -67,7 +71,9 @@ const OrderConfirmationPage = () => {
 
   const handleTrackOrder = () => {
     if (orderDetails && orderDetails.id) {
-      navigate(`/track-order/${orderDetails.id}`);
+      navigate('/order-tracking', {
+        state: { orderId: orderDetails.id }
+      });
     }
   };
 
@@ -84,10 +90,7 @@ const OrderConfirmationPage = () => {
       <div className="min-h-screen bg-black flex items-center justify-center text-white">
         <div className="text-center">
           <p className="text-red-400 mb-4">{error}</p>
-          <button onClick={() => navigate('/my-orders')} className="text-orange-500 mt-4">
-            View My Orders
-          </button>
-          <button onClick={() => navigate('/')} className="text-orange-500 mt-4 ml-4">
+          <button onClick={() => navigate('/home')} className="text-orange-500 mt-4">
             Go Home
           </button>
         </div>
@@ -180,7 +183,7 @@ const OrderConfirmationPage = () => {
         >
           <motion.button
             whileTap={{ scale: 0.97 }}
-            onClick={() => navigate('/my-orders')}
+            onClick={handleTrackOrder}
             className="w-full bg-orange-500 text-white py-3 px-6 rounded-lg font-semibold shadow-lg hover:bg-orange-600 transition-colors"
           >
             Track My Order
