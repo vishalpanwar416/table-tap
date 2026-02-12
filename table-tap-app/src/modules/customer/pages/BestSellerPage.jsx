@@ -681,6 +681,9 @@ const BestSellerPage = memo(() => {
               onSearch={handleSearch}
               onSearchClose={handleSearchClose}
               cartItems={cartItems}
+              toggleSidebar={toggles.sidebar}
+              toggleNotifications={toggles.notification}
+              toggleCart={toggles.cart}
               showRestaurantInfo={false} // Hide restaurant info on best seller page
               className="w-full"
             />
