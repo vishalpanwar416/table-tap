@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../components/Header';
 import Sidebar from '../components/Slidebar';
 import CartSidebar from '../components/CartSidebar';
-import { profileImg } from '../../../assets/images/Food/index';
+import { profileImg } from '../../../assets/images/Food';
 import { useCart } from '../../shared/config/CartContent';
 import { useNavigate } from 'react-router-dom';
 import { useLikes } from '../../shared/config/LikesContent';
