@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ChevronLeft, CheckCircle, Clock, XCircle, Truck, MapPin, CreditCard, ShoppingBag, User, X, LogIn, Archive } from 'lucide-react';
+import { ChevronLeft, CheckCircle, Clock, XCircle, Truck, MapPin, CreditCard, ShoppingBag, User, X, LogIn, Archive, MessageCircle } from 'lucide-react';
 import { useOrders } from '../../shared/context/OrderContext';
 import { useAuth } from '../../shared/config/AuthContext';
 import { supabase } from '../../shared/supabase';
@@ -117,6 +117,23 @@ const OrderTracking = () => {
     completed: "Order completed. Enjoy your meal!",
     rejected: "Sorry, your order was rejected. Please contact staff.",
     cancelled: "This order has been cancelled."
+  };
+
+  const handleWhatsAppShare = () => {
+    if (!currentOrder) return;
+
+    const orderNum = currentOrder.order_number || currentOrder.id.slice(0, 8);
+    const total = currentOrder.total?.toFixed(2);
+    const trackingUrl = window.location.origin + `/order-tracking/${currentOrder.id}`;
+
+    const text = `Hey! Here is my official order bill:
+Order ID: #${orderNum.toUpperCase()}
+Total Amount: ₹${total}
+Status: ${currentOrder.status.toUpperCase()}
+
+View Details: ${trackingUrl}`;
+
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   const handleLoginRedirect = () => {
@@ -337,6 +354,17 @@ const OrderTracking = () => {
                     <span>₹{(currentOrder.total || 0).toFixed(2)}</span>
                   </div>
                 </div>
+              </div>
+
+              {/* Share via WhatsApp Button (especially for guests) */}
+              <div className="mt-4">
+                <button
+                  onClick={handleWhatsAppShare}
+                  className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white font-bold py-3.5 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 transform active:scale-[0.98]"
+                >
+                  <MessageCircle size={22} fill="white" className="text-[#25D366]" />
+                  Share Bill via WhatsApp
+                </button>
               </div>
 
             </div>

@@ -585,8 +585,15 @@ export const updateOrderStatus = async (orderId, newStatus, cancelReason = null,
       }
 
       const onlineBillingEnabled = restaurant?.billing_features_enabled !== false && restaurant?.online_bill_enabled !== false;
+      const isGuestEmail = customerEmail?.startsWith('guest_') && customerEmail?.endsWith('@tabletap.com');
+
       if (!restaurant) {
         autoEmailResult.skippedReason = 'restaurant_not_found';
+      } else if (isGuestEmail) {
+        autoEmailResult.skippedReason = 'guest_placeholder_email';
+        if (['preparing', 'rejected', 'completed'].includes(status)) {
+          console.log('[Auto email] Skipped: Guest placeholder email detected.');
+        }
       } else if (!restaurant.auto_email_billing_enabled) {
         autoEmailResult.skippedReason = 'auto_email_disabled';
         if (['preparing', 'rejected', 'completed'].includes(status)) {
