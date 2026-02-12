@@ -373,9 +373,6 @@ const LikedItemsPage = () => {
         <Sidebar
           isSidebarOpen={isSidebarOpen}
           toggleSidebar={toggle.sidebar}
-          profileImg={profileImg}
-          userName="Vishal Panwar"
-          userEmail="Vishalpanwar416@gmail.com"
         />
 
         {isNotificationOpen && (

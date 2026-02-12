@@ -2,33 +2,69 @@ import { createContext, useContext, useState, useEffect, useRef, useCallback } f
 import { supabase } from '../../shared/supabase';
 import { useAuth } from './AuthContext';
 import { useRestaurant } from '../../restaurant/pages/RestaurantSelection/RestaurantContext';
+import { secureStorage } from '../../shared/utils/security';
 
 const LikesContext = createContext();
 
 export const LikesProvider = ({ children }) => {
-  const [likedItems, setLikedItems] = useState([]); // Only for current restaurant
+  const [likedItems, setLikedItems] = useState([]); // Currently viewed liked items (filtered by restaurant)
   const [likedItemIds, setLikedItemIds] = useState([]); // Global list of liked item IDs
   const [loading, setLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Cache for liked items per restaurant (key: restaurantId, value: items array)
+  // Cache/Store for liked items per restaurant (key: restaurantId, value: items array)
+  // We use this to keep track of full item objects for the UI
   const restaurantCache = useRef(new Map());
 
   const { user } = useAuth();
   const { restaurantId } = useRestaurant();
 
+  // Helper to get local storage key for guest likes
+  const getGuestLikesKey = useCallback(() => 'guest_liked_item_ids', []);
+  const getGuestLikedItemsKey = useCallback(() => 'guest_liked_items', []);
+
   // Load liked items and IDs when user or restaurant changes
   useEffect(() => {
-    if (user) {
-      loadUserLikes(user.id, restaurantId);
-    } else {
+    const initializeLikes = async () => {
+      if (user) {
+        await loadUserLikes(user.id, restaurantId);
+      } else {
+        loadGuestLikes(restaurantId);
+      }
+    };
+
+    initializeLikes();
+  }, [user, restaurantId]);
+
+  // Load guest liked items from localStorage
+  const loadGuestLikes = (currentRestaurantId) => {
+    try {
+      setLoading(true);
+      const guestLikedIds = secureStorage.getItem(getGuestLikesKey()) || [];
+      const guestLikedItems = secureStorage.getItem(getGuestLikedItemsKey()) || [];
+
+      setLikedItemIds(guestLikedIds);
+
+      // Filter items for the current restaurant
+      const itemsForRestaurant = guestLikedItems.filter(item =>
+        item.restaurant_id === currentRestaurantId && guestLikedIds.includes(item.id)
+      );
+
+      setLikedItems(itemsForRestaurant);
+
+      // Initialize cache for guests too
+      if (currentRestaurantId) {
+        restaurantCache.current.set(currentRestaurantId, itemsForRestaurant);
+      }
+    } catch (error) {
+      console.error('Error loading guest likes:', error);
       setLikedItems([]);
       setLikedItemIds([]);
+    } finally {
       setLoading(false);
-      setIsInitialized(false);
-      restaurantCache.current.clear(); // Clear cache on logout
+      setIsInitialized(true);
     }
-  }, [user, restaurantId]);
+  };
 
   // Load user liked items from profiles table, filtered by current restaurant
   const loadUserLikes = async (userId, currentRestaurantId) => {
@@ -50,37 +86,63 @@ export const LikesProvider = ({ children }) => {
         .single();
 
       if (error) {
+        console.error('Error fetching user profile for likes:', error);
         setLikedItems([]);
         setLikedItemIds([]);
         return;
       }
 
+      let profileLikedIds = profile?.liked_items || [];
+
+      // MERGE LOGIC: If there are guest likes, merge them with the profile likes
+      const guestLikedIds = secureStorage.getItem(getGuestLikesKey());
+      if (guestLikedIds && guestLikedIds.length > 0) {
+        // Create a unique set of IDs from both sources
+        const mergedIds = [...new Set([...profileLikedIds, ...guestLikedIds])];
+
+        // If there were new IDs to add, update the database
+        if (mergedIds.length > profileLikedIds.length) {
+          profileLikedIds = mergedIds;
+          await updateLikedItemsInDB(mergedIds);
+        }
+
+        // Clear guest likes after merging
+        secureStorage.removeItem(getGuestLikesKey());
+        secureStorage.removeItem(getGuestLikedItemsKey());
+      }
+
       // Set global liked item IDs
-      if (profile?.liked_items && profile.liked_items.length > 0) {
-        setLikedItemIds(profile.liked_items);
+      if (profileLikedIds.length > 0) {
+        setLikedItemIds(profileLikedIds);
 
         // Only fetch liked items for the current restaurant
-        const { data: foodItems, error: foodError } = await supabase
-          .from('fooditems')
-          .select('*')
-          .in('id', profile.liked_items)
-          .eq('is_active', true)
-          .eq('restaurant_id', currentRestaurantId);
+        if (currentRestaurantId) {
+          const { data: foodItems, error: foodError } = await supabase
+            .from('fooditems')
+            .select('*')
+            .in('id', profileLikedIds)
+            .eq('is_active', true)
+            .eq('restaurant_id', currentRestaurantId);
 
-        if (foodError) {
-          setLikedItems([]);
-        } else {
-          const items = foodItems || [];
-          setLikedItems(items);
-          // Cache the results
-          restaurantCache.current.set(currentRestaurantId, items);
+          if (foodError) {
+            console.error('Error fetching food items for likes:', foodError);
+            setLikedItems([]);
+          } else {
+            const items = foodItems || [];
+            setLikedItems(items);
+            // Cache the results
+            restaurantCache.current.set(currentRestaurantId, items);
+          }
         }
       } else {
         setLikedItemIds([]);
         setLikedItems([]);
-        restaurantCache.current.set(currentRestaurantId, []);
+        if (currentRestaurantId) {
+          restaurantCache.current.set(currentRestaurantId, []);
+        }
       }
     } catch (error) {
+      console.error('Error loading user likes:', error);
       setLikedItems([]);
       setLikedItemIds([]);
     } finally {
@@ -99,13 +161,12 @@ export const LikesProvider = ({ children }) => {
         .eq('id', user.id);
       if (error) throw error;
     } catch (error) {
-      console.error('Error updating liked items:', error);
+      console.error('Error updating liked items in DB:', error);
     }
   }, [user]);
 
-  // Optimistic toggle like - updates UI immediately, then syncs with DB
+  // Optimistic toggle like - updates UI immediately, then syncs with DB or LocalStorage
   const toggleLike = useCallback(async (item) => {
-    if (!user) return;
     if (item.restaurant_id !== restaurantId) return;
 
     const isCurrentlyLiked = likedItemIds.includes(item.id);
@@ -113,11 +174,11 @@ export const LikesProvider = ({ children }) => {
     let newLikedItems;
 
     if (isCurrentlyLiked) {
-      // Removing like - optimistic update
+      // Removing like
       newLikedItemIds = likedItemIds.filter(id => id !== item.id);
       newLikedItems = likedItems.filter(i => i.id !== item.id);
     } else {
-      // Adding like - optimistic update
+      // Adding like
       newLikedItemIds = [...likedItemIds, item.id];
       newLikedItems = [...likedItems, item];
     }
@@ -129,9 +190,30 @@ export const LikesProvider = ({ children }) => {
     // Update cache
     restaurantCache.current.set(restaurantId, newLikedItems);
 
-    // Sync with database in background (fire-and-forget)
-    updateLikedItemsInDB(newLikedItemIds);
-  }, [user, restaurantId, likedItemIds, likedItems, updateLikedItemsInDB]);
+    if (user) {
+      // Sync with database for authenticated users
+      updateLikedItemsInDB(newLikedItemIds);
+    } else {
+      // Sync with localStorage for guests
+      try {
+        secureStorage.setItem(getGuestLikesKey(), newLikedItemIds);
+
+        // Also store full item objects for guests to prevent refetching
+        const guestLikedItems = secureStorage.getItem(getGuestLikedItemsKey()) || [];
+        let updatedGuestLikedItems;
+
+        if (isCurrentlyLiked) {
+          updatedGuestLikedItems = guestLikedItems.filter(i => i.id !== item.id);
+        } else {
+          updatedGuestLikedItems = [...guestLikedItems, item];
+        }
+
+        secureStorage.setItem(getGuestLikedItemsKey(), updatedGuestLikedItems);
+      } catch (error) {
+        console.error('Error saving guest likes to storage:', error);
+      }
+    }
+  }, [user, restaurantId, likedItemIds, likedItems, updateLikedItemsInDB, getGuestLikesKey, getGuestLikedItemsKey]);
 
   // Check if an item is liked (global)
   const isLiked = useCallback((itemId) => {
@@ -140,12 +222,17 @@ export const LikesProvider = ({ children }) => {
 
   // Clear all likes
   const clearAllLikes = useCallback(async () => {
-    if (!user) return;
     setLikedItems([]);
     setLikedItemIds([]);
     restaurantCache.current.clear();
-    await updateLikedItemsInDB([]);
-  }, [user, updateLikedItemsInDB]);
+
+    if (user) {
+      await updateLikedItemsInDB([]);
+    } else {
+      secureStorage.removeItem(getGuestLikesKey());
+      secureStorage.removeItem(getGuestLikedItemsKey());
+    }
+  }, [user, updateLikedItemsInDB, getGuestLikesKey, getGuestLikedItemsKey]);
 
   return (
     <LikesContext.Provider value={{
