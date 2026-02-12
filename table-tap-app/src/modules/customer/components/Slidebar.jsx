@@ -89,12 +89,16 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
 
   // 2. Memoize menu options and handlers
   const menuOptions = React.useMemo(() => [
-    { name: 'My Orders', icon: <ShoppingBag className="w-6 h-6" />, path: '/my-orders' },
+    {
+      name: isAuthenticated ? 'My Orders' : 'Track Order',
+      icon: <ShoppingBag className="w-6 h-6" />,
+      path: isAuthenticated ? '/my-orders' : '/order-tracking'
+    },
     { name: 'My Profile', icon: <User className="w-6 h-6" />, path: '/profile' },
     { name: 'Change Restaurant', icon: <Globe className="w-6 h-6" />, path: '/restaurant-selection' },
     { name: 'Contact Us', icon: <Phone className="w-6 h-6" />, path: '/contact' },
     { name: 'Help & FAQs', icon: <HelpCircle className="w-6 h-6" />, path: '/help' },
-  ], []);
+  ], [isAuthenticated]);
 
   const managerOption = {
     name: 'Manager Dashboard',
@@ -172,7 +176,11 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
       return;
     }
 
-    if (isAuthenticated) {
+    // List of paths allowed for guests without login
+    const publicPaths = ['/order-tracking', '/restaurant-selection', '/contact', '/help'];
+    const isPublic = publicPaths.some(publicPath => path.startsWith(publicPath));
+
+    if (isAuthenticated || isPublic) {
       navigate(path);
     } else {
       navigate('/login', { state: { from: path } });
