@@ -193,8 +193,8 @@ export const OrderProvider = ({ children }) => {
 
       setCurrentOrder(order);
 
-      // Subscribe to status updates for this order
-      subscribeToOrderStatus(orderId);
+      // Removed automatic subscription to prevent leaks. 
+      // Components must subscribe explicitly using subscribeToOrderStatus.
 
       return order;
     } catch (err) {
