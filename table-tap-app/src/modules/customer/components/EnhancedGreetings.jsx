@@ -4,68 +4,37 @@ import { motion } from 'framer-motion';
 
 // Animation variants
 const containerVariants = {
-  hidden: { opacity: 0 },
+  hidden: { opacity: 0, y: 10 },
   visible: {
     opacity: 1,
+    y: 0,
     transition: {
       when: "beforeChildren",
-      staggerChildren: 0.2
+      staggerChildren: 0.15,
+      duration: 0.6,
+      ease: "easeOut"
     }
   }
 };
 
-const textVariants = {
+const itemVariants = {
   hidden: { y: 20, opacity: 0 },
   visible: {
     y: 0,
     opacity: 1,
-    transition: { duration: 0.6, ease: "easeOut" }
+    transition: { duration: 0.5, ease: "easeOut" }
   }
 };
 
-const nameVariants = {
-  hidden: { x: -20, opacity: 0 },
-  visible: {
-    x: 0,
-    opacity: 1,
-    transition: { duration: 0.7, ease: "easeOut", delay: 0.3 }
-  }
-};
-
-const underlineVariants = {
-  hidden: { width: 0 },
-  visible: {
-    width: '100%',
-    transition: { duration: 0.8, ease: "easeOut", delay: 0.5 }
-  }
-};
-
-const emojiVariants = {
-  hidden: { scale: 0, rotate: -45 },
+const badgeVariants = {
+  hidden: { scale: 0.8, opacity: 0 },
   visible: {
     scale: 1,
-    rotate: 0,
-    transition: {
-      type: "spring",
-      stiffness: 260,
-      damping: 20,
-      delay: 0.7
-    }
-  },
-  hover: {
-    scale: 1.2,
-    rotate: 5,
-    transition: { duration: 0.3 }
-  },
-  tap: {
-    scale: 0.8,
-    rotate: -5,
-    transition: { duration: 0.1 }
+    opacity: 1,
+    transition: { type: "spring", stiffness: 200, damping: 15 }
   }
 };
 
-
-// Helper functions defined outside the component
 const getTimeOfDay = () => {
   const currentHour = new Date().getHours();
   if (currentHour >= 5 && currentHour < 12) return "morning";
@@ -75,185 +44,122 @@ const getTimeOfDay = () => {
 };
 
 const getGreetingText = () => {
-  const currentHour = new Date().getHours();
-  if (currentHour >= 5 && currentHour < 12) return "Good Morning";
-  if (currentHour >= 12 && currentHour < 17) return "Good Afternoon";
-  if (currentHour >= 17 && currentHour < 21) return "Good Evening";
-  return "Hello";
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return "Good Morning";
+  if (hour >= 12 && hour < 17) return "Good Afternoon";
+  if (hour >= 17 && hour < 21) return "Good Evening";
+  return "Hello There";
 };
 
-const getRandomQuote = (timeOfDay) => {
-  const quotes = {
-    morning: [
-      "Rise and shine! Today is full of possibilities.",
-      "The early bird catches the worm!",
-      "Every morning is a fresh start.",
-      "Ready to seize the day?"
-    ],
-    afternoon: [
-      "Keep up the great work today!",
-      "The day is still young, make it count!",
-      "How's your day going so far?",
-      "Still plenty of time to accomplish your goals!"
-    ],
-    evening: [
-      "Another day well spent!",
-      "Time to start winding down.",
-      "Reflect on the day's achievements.",
-      "Evening is a time for relaxation and planning."
-    ],
-    night: [
-      "The night is still young!",
-      "Stars are out, dreams are waiting.",
-      "Some of the best ideas come at night.",
-      "Time to rest and recharge for tomorrow."
-    ]
+const getEmojiData = (timeOfDay) => {
+  const emojis = {
+    morning: ["🌅", "☕", "🥚", "✨", "🌞"],
+    afternoon: ["☀️", "🥣", "🥗", "🍕", "🥤"],
+    evening: ["🌆", "🍵", "🍝", "🍹", "🌙"],
+    night: ["🌌", "🍦", "🍷", "🍕", "🦉"]
   };
+  const list = emojis[timeOfDay] || ["✨"];
+  return list[Math.floor(Math.random() * list.length)];
+};
 
-  const quoteList = quotes[timeOfDay];
-  return quoteList[Math.floor(Math.random() * quoteList.length)];
+const getAestheticQuote = (userName) => {
+  const isGuest = userName.toLowerCase() === 'guest';
+  if (isGuest) {
+    return [
+      "Embark on a culinary journey with us.",
+      "Flavor is the story of a culture.",
+      "Good food is the foundation of genuine happiness.",
+      "Savor every moment, taste every dream."
+    ][Math.floor(Math.random() * 4)];
+  }
+  return [
+    "Your table is ready for a new experience.",
+    "Treat yourself to something extraordinary today.",
+    "Fueling your passions, one bite at a time.",
+    "The perfect meal is closer than you think."
+  ][Math.floor(Math.random() * 4)];
 };
 
 export default function EnhancedGreetings({ userName = "Guest" }) {
-  const [greeting, setGreeting] = useState(getGreetingText());
-  const [timeString, setTimeString] = useState("");
   const [timeOfDay, setTimeOfDay] = useState(getTimeOfDay());
-  const [currentEmoji, setCurrentEmoji] = useState("");
-  const [quote, setQuote] = useState("");
-  const [isEmojiHovered, setIsEmojiHovered] = useState(false);
-  const [showQuote, setShowQuote] = useState(false);
-  const [emojiRotation, setEmojiRotation] = useState(0);
-  const [dateString, setDateString] = useState(
-    new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
-  );
+  const [emoji, setEmoji] = useState(getEmojiData(timeOfDay));
+  const [timeString, setTimeString] = useState("");
+  const [dateString, setDateString] = useState("");
 
+  const isGuest = userName.toLowerCase() === 'guest';
 
-
-  // Initialize emoji and quote
   useEffect(() => {
-    setQuote(getRandomQuote(timeOfDay));
-  }, [timeOfDay]);
-
-  // Update time and greeting periodically
-  useEffect(() => {
-    const updateTime = () => {
+    const update = () => {
       const now = new Date();
-      const hours = now.getHours();
-      const minutes = now.getMinutes();
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      const formattedHours = hours % 12 || 12;
-      const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
-
-      setTimeString(`${formattedHours}:${formattedMinutes} ${ampm}`);
-      setGreeting(getGreetingText());
+      setTimeString(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      setDateString(now.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' }));
       setTimeOfDay(getTimeOfDay());
-      setDateString(
-        now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
-      );
     };
-
-    updateTime();
-    const interval = setInterval(updateTime, 60000);
-    return () => clearInterval(interval);
+    update();
+    const timer = setInterval(update, 60000);
+    return () => clearInterval(timer);
   }, []);
-
-  // Handle emoji click - change emoji and show quote
-  const handleEmojiClick = () => {
-    // Get a new random emoji from the current time period
-
-
-    // Change the quote
-    setQuote(getRandomQuote(timeOfDay));
-
-    // Show the quote
-    setShowQuote(true);
-
-    // Add a small rotation for click effect
-    setEmojiRotation(prev => prev === 0 ? 10 : 0);
-
-    // Hide quote after 5 seconds
-    setTimeout(() => {
-      setShowQuote(false);
-    }, 5000);
-  };
 
   return (
     <motion.div
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="px-4 mt-2"
+      className="px-5 py-4"
     >
-      <div className="flex flex-col">
-        <div className="flex items-center">
-          <motion.h1
-            variants={textVariants}
-            className="text-[29px] font-spartan-bold"
-          >
-            {greeting}
-            <motion.span
-              variants={nameVariants}
-              className="text-orange-500 ml-2"
+      <div className="relative overflow-hidden rounded-3xl p-6 bg-gradient-to-br from-white/10 to-transparent backdrop-blur-md border border-white/10 shadow-xl">
+        {/* Background Decorative Element */}
+        <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-orange-500/20 rounded-full blur-3xl -z-10" />
+        <div className="absolute bottom-[-20%] left-[-10%] w-24 h-24 bg-blue-500/10 rounded-full blur-2xl -z-10" />
+
+        <div className="flex flex-col space-y-4">
+          <div className="flex justify-between items-start">
+            <motion.div variants={itemVariants} className="space-y-1">
+              <span className="text-orange-400 text-xs font-bold uppercase tracking-widest opacity-80">
+                {isGuest ? "Welcome to TableTap" : "Welcome Back"}
+              </span>
+              <h1 className="text-3xl font-bold flex flex-wrap items-center gap-2 tracking-tight">
+                <span className="text-white">{getGreetingText()},</span>
+                <span className="bg-gradient-to-r from-orange-400 to-rose-400 bg-clip-text text-transparent">
+                  {userName}
+                </span>
+                <motion.span
+                  animate={{ rotate: [0, 10, -10, 0] }}
+                  transition={{ repeat: Infinity, duration: 4 }}
+                  className="inline-block"
+                >
+                  {emoji}
+                </motion.span>
+              </h1>
+            </motion.div>
+
+            <motion.div
+              variants={badgeVariants}
+              className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm shadow-inner"
             >
-              {userName}!
-            </motion.span>
-          </motion.h1>
+              <span className="text-white/60 text-[10px] whitespace-nowrap font-medium tracking-wider uppercase">
+                {timeString} • {dateString}
+              </span>
+            </motion.div>
+          </div>
+
+          <motion.p
+            variants={itemVariants}
+            className="text-white/60 text-sm font-medium italic leading-relaxed max-w-[85%]"
+          >
+            "{getAestheticQuote(userName)}"
+          </motion.p>
 
           <motion.div
-            className="ml-3 flex items-center space-x-2"
+            variants={itemVariants}
+            className="flex items-center gap-2 pt-1"
           >
-            <motion.span
-              variants={emojiVariants}
-              whileHover="hover"
-              whileTap="tap"
-              animate={{ rotate: emojiRotation }}
-              onClick={handleEmojiClick}
-              onMouseEnter={() => setIsEmojiHovered(true)}
-              onMouseLeave={() => setIsEmojiHovered(false)}
-              className="text-2xl cursor-pointer"
-              title="Click me for a quote!"
-            >
-              {currentEmoji}
-            </motion.span>
-
-            <motion.span
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 1, duration: 0.5 }}
-              className="text-xl"
-            >
-              {currentEmoji}
-            </motion.span>
+            <div className="h-0.5 w-12 bg-gradient-to-r from-orange-500 to-transparent rounded-full" />
+            <span className="text-[10px] text-white/40 font-bold uppercase tracking-tighter">
+              {isGuest ? "Explore today's specials" : "Your favorites await"}
+            </span>
           </motion.div>
         </div>
-
-        <motion.div
-          variants={textVariants}
-          className="text-sm text-gray-600 mt-1"
-        >
-          It's <span className="font-semibold">{timeString}</span> on <span className="font-semibold">{dateString}</span>
-        </motion.div>
-
-        <motion.div
-          variants={underlineVariants}
-          className="h-1 bg-orange-500 mt-2 max-w-xs"
-        />
-
-        <motion.div
-          initial={{ height: 0, opacity: 0 }}
-          animate={{
-            height: showQuote ? "auto" : 0,
-            opacity: showQuote ? 1 : 0
-          }}
-          transition={{ duration: 0.3 }}
-          className="mt-3 overflow-hidden"
-        >
-          <motion.p
-            className="text-sm italic text-gray-700 bg-orange-100 p-3 rounded-lg shadow-sm"
-          >
-            "{quote}"
-          </motion.p>
-        </motion.div>
       </div>
     </motion.div>
   );
