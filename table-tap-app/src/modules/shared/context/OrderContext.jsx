@@ -155,13 +155,12 @@ export const OrderProvider = ({ children }) => {
   };
 
   // Subscribe to order status updates
-  const subscribeToOrderStatus = (orderId) => {
+  const subscribeToOrderStatus = useCallback((orderId) => {
     if (!orderId) {
       return null;
     }
 
     const subscription = subscribeToOrderUpdates(orderId, (updatedOrder) => {
-
       // Update order in local state
       setUserOrders(prev =>
         prev.map(order =>
@@ -170,16 +169,16 @@ export const OrderProvider = ({ children }) => {
       );
 
       // Update current order if it's the one being viewed
-      if (currentOrder && currentOrder.id === updatedOrder.id) {
-        setCurrentOrder(updatedOrder);
-      }
+      setCurrentOrder(prevCurrent =>
+        (prevCurrent && prevCurrent.id === updatedOrder.id) ? updatedOrder : prevCurrent
+      );
     });
 
     return subscription;
-  };
+  }, []);
 
   // Get a specific order by ID
-  const getOrderDetails = async (orderId) => {
+  const getOrderDetails = useCallback(async (orderId) => {
     try {
       if (!orderId) {
         throw new Error('Order ID is required');
@@ -204,7 +203,7 @@ export const OrderProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [subscribeToOrderStatus]);
 
   const value = {
     userOrders,

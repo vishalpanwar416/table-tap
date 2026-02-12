@@ -75,6 +75,15 @@ export const AuthProvider = ({ children }) => {
 
         if (event === 'SIGNED_IN') {
           setWasAuthenticated(true);
+          // NEW: Attempt to sync guest orders using RPC
+          try {
+            const { data: syncResult, error: syncError } = await supabase.rpc('sync_guest_orders');
+            if (!syncError && syncResult?.success && syncResult?.linked_count > 0) {
+              console.log(`[Auth] Automatically linked ${syncResult.linked_count} guest orders to account.`);
+            }
+          } catch (err) {
+            console.warn('[Auth] Background sync of guest orders failed (non-critical):', err);
+          }
         }
 
         if (event === 'SIGNED_OUT') {

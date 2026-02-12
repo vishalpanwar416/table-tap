@@ -914,11 +914,22 @@ const OrderConfirmation = () => {
                 (!user && emailExists) ||
                 isPlacingOrder ||
                 !tableNumber ||
-                (!user && (!/^([^\s@]+)@([^\s@]+)\.[^\s@]+$/.test(guestEmail) || !/^[6-9]\d{9}$/.test(guestPhone)))
+                (!user && (
+                  !/^[6-9]\d{9}$/.test(guestPhone) ||
+                  (guestEmail.trim() !== '' && !/^([^\s@]+)@([^\s@]+)\.[^\s@]+$/.test(guestEmail))
+                ))
               }
-              className={`w-full py-4 rounded-full font-bold text-lg transition-all duration-300 transform hover:scale-105 ${cartItems.length === 0 || isCheckingEmail || (!user && emailExists) || isPlacingOrder || !tableNumber || (!user && (!/^([^\s@]+)@([^\s@]+)\.[^\s@]+$/.test(guestEmail) || !/^[6-9]\d{9}$/.test(guestPhone)))
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-gray-600 text-white hover:bg-gray-700 shadow-lg hover:shadow-xl'
+              className={`w-full py-4 rounded-full font-bold text-lg transition-all duration-300 transform hover:scale-105 ${cartItems.length === 0 ||
+                  isCheckingEmail ||
+                  (!user && emailExists) ||
+                  isPlacingOrder ||
+                  !tableNumber ||
+                  (!user && (
+                    !/^[6-9]\d{9}$/.test(guestPhone) ||
+                    (guestEmail.trim() !== '' && !/^([^\s@]+)@([^\s@]+)\.[^\s@]+$/.test(guestEmail))
+                  ))
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-gray-600 text-white hover:bg-gray-700 shadow-lg hover:shadow-xl'
                 }`}
               aria-busy={isPlacingOrder}
             >
