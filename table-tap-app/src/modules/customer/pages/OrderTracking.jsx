@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, CheckCircle, Clock, XCircle, Truck, MapPin, CreditCard, ShoppingBag, User, X, LogIn, Archive } from 'lucide-react';
 import { useOrders } from '../../shared/context/OrderContext';
 import { useAuth } from '../../shared/config/AuthContext';
+import { supabase } from '../../shared/supabase';
 import LoadingScreen from '../../shared/components/LoadingScreen';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -10,7 +11,7 @@ const OrderTracking = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { getOrderDetails, currentOrder, loading, error } = useOrders();
+  const { getOrderDetails, subscribeToOrderStatus, currentOrder, loading, error } = useOrders();
   const { user } = useAuth();
   const [statusPercentage, setStatusPercentage] = useState(0);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -22,11 +23,27 @@ const OrderTracking = () => {
   // Get order ID from params, router state, or fallback to storage
   const orderId = id || location.state?.orderId || localStorage.getItem('lastGuestOrderId');
 
+  // Fetch initial details
   useEffect(() => {
     if (orderId) {
       getOrderDetails(orderId);
     }
   }, [orderId, getOrderDetails]);
+
+  // Subscribe to real-time updates
+  useEffect(() => {
+    if (!orderId) return;
+
+    // Create subscription
+    const subscription = subscribeToOrderStatus(orderId);
+
+    // Cleanup subscription on unmount or ID change
+    return () => {
+      if (subscription) {
+        supabase.removeChannel(subscription);
+      }
+    };
+  }, [orderId, subscribeToOrderStatus]);
 
   useEffect(() => {
     if (currentOrder) {
@@ -428,8 +445,8 @@ const OrderTracking = () => {
                         setShowHistoryModal(false);
                       }}
                       className={`w-full p-3 rounded-xl flex items-center justify-between transition-colors ${guestId === currentOrder?.id
-                          ? 'bg-orange-50 border border-orange-200'
-                          : 'bg-gray-50 hover:bg-gray-100'
+                        ? 'bg-orange-50 border border-orange-200'
+                        : 'bg-gray-50 hover:bg-gray-100'
                         }`}
                     >
                       <div className="text-left">
