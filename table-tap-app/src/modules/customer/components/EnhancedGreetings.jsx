@@ -62,11 +62,12 @@ export default function EnhancedGreetings({ userName = "Guest" }) {
       const formattedHours = hours % 12 || 12;
       const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
 
-      setTimeString(`${formattedHours}:${formattedMinutes} ${ampm}`);
+      const time = `${formattedHours}:${formattedMinutes} ${ampm}`;
+      const date = now.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+
+      setTimeString(time);
+      setDateString(date);
       setGreeting(getGreetingText());
-      setDateString(
-        now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
-      );
     };
 
     updateTime();
@@ -99,9 +100,9 @@ export default function EnhancedGreetings({ userName = "Guest" }) {
 
         <motion.div
           variants={textVariants}
-          className="text-sm text-gray-400 mt-1"
+          className="text-[13px] text-gray-400 mt-0.5 opacity-90"
         >
-          It's <span className="font-semibold">{timeString}</span> on <span className="font-semibold">{dateString}</span>
+          {dateString} <span className="mx-1 text-gray-600">•</span> {timeString}
         </motion.div>
 
         <motion.div
