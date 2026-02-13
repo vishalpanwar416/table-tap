@@ -177,20 +177,20 @@ export default function LoginPage() {
 
   // Animation variants
   const bgVariants = {
-    initial: { opacity: 0 },
-    animate: { opacity: 1, transition: { duration: 1 } }
+    initial: { opacity: 0, scale: 1.1 },
+    animate: { opacity: 1, scale: 1, transition: { duration: 1.2, ease: "easeOut" } }
   };
   const cardVariants = {
-    initial: { y: 40, opacity: 0 },
-    animate: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 60, damping: 16 } },
-    exit: { y: 40, opacity: 0, transition: { duration: 0.2 } }
+    initial: { y: "20%", opacity: 0 },
+    animate: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 50, damping: 18, mass: 1.1 } },
+    exit: { y: "20%", opacity: 0, transition: { duration: 0.3 } }
   };
   const stagger = {
-    animate: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } }
+    animate: { transition: { staggerChildren: 0.1, delayChildren: 0.2 } }
   };
   const itemVariants = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 80, damping: 18 } }
+    initial: { opacity: 0, y: 30, scale: 0.98 },
+    animate: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 90, damping: 20 } }
   };
   const errorVariants = {
     initial: { opacity: 0, x: 0 },
@@ -199,7 +199,7 @@ export default function LoginPage() {
   };
   const buttonVariants = {
     initial: { scale: 1 },
-    hover: { scale: 1.04 },
+    hover: { scale: 1.02 },
     tap: { scale: 0.98 },
     loading: { scale: 1, opacity: 0.7 }
   };
@@ -274,12 +274,12 @@ export default function LoginPage() {
               <ChevronLeft size={30} />
             </button>
             <motion.h1
-              className="text-gray-100 text-3xl font-medium font-spartan"
-              initial={{ opacity: 0, y: -10 }}
+              className="text-gray-100 text-3xl font-medium font-spartan text-center"
+              initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
+              transition={{ delay: 0.3, type: 'spring', stiffness: 70 }}
             >
-              Log In
+              Welcome to table tap
             </motion.h1>
           </div>
           {/* Login Container */}
@@ -291,10 +291,11 @@ export default function LoginPage() {
             exit="exit"
           >
             <motion.h2
-              className="justify-center text-center text-black text-3xl font-semibold mb-12"
+              className="justify-center text-center text-black text-2xl font-bold mb-10 px-4 leading-tight"
               variants={itemVariants}
             >
-              Welcome
+              We missed you!<br />
+              <span className="text-gray-600 font-medium text-lg italic">Let's get you with log in</span>
             </motion.h2>
             <AnimatePresence>
               {error && (
