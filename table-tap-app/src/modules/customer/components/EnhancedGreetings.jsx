@@ -31,20 +31,15 @@ const nameVariants = {
   }
 };
 
-const emojiVariants = {
-  hidden: { scale: 0, rotate: -45 },
+const underlineVariants = {
+  hidden: { width: 0 },
   visible: {
-    scale: 1,
-    rotate: 0,
-    transition: {
-      type: "spring",
-      stiffness: 260,
-      damping: 20,
-      delay: 0.5
-    }
+    width: '100%',
+    transition: { duration: 0.8, ease: "easeOut", delay: 0.5 }
   }
 };
 
+// Helper for time-based greetings
 const getGreetingText = () => {
   const currentHour = new Date().getHours();
   if (currentHour >= 5 && currentHour < 12) return "Good Morning";
@@ -53,24 +48,29 @@ const getGreetingText = () => {
   return "Hello";
 };
 
-const getTimeEmoji = () => {
-  const currentHour = new Date().getHours();
-  if (currentHour >= 5 && currentHour < 12) return "☀️";
-  if (currentHour >= 12 && currentHour < 17) return "✨";
-  if (currentHour >= 17 && currentHour < 21) return "🌙";
-  return "👋";
-};
-
 export default function EnhancedGreetings({ userName = "Guest" }) {
   const [greeting, setGreeting] = useState(getGreetingText());
-  const [emoji, setEmoji] = useState(getTimeEmoji());
+  const [timeString, setTimeString] = useState("");
+  const [dateString, setDateString] = useState("");
 
   useEffect(() => {
-    const update = () => {
+    const updateTime = () => {
+      const now = new Date();
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const formattedHours = hours % 12 || 12;
+      const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+
+      setTimeString(`${formattedHours}:${formattedMinutes} ${ampm}`);
       setGreeting(getGreetingText());
-      setEmoji(getTimeEmoji());
+      setDateString(
+        now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
+      );
     };
-    const interval = setInterval(update, 60000);
+
+    updateTime();
+    const interval = setInterval(updateTime, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -81,26 +81,33 @@ export default function EnhancedGreetings({ userName = "Guest" }) {
       animate="visible"
       className="px-6 mt-6 mb-4"
     >
-      <div className="flex items-center">
-        <motion.h1
-          variants={textVariants}
-          className="text-[29px] font-spartan-bold text-white flex items-center flex-wrap tracking-tight"
-        >
-          {greeting}
-          <motion.span
-            variants={nameVariants}
-            className="text-orange-500 ml-2.5"
+      <div className="flex flex-col">
+        <div className="flex items-center">
+          <motion.h1
+            variants={textVariants}
+            className="text-[29px] font-spartan-bold text-white flex items-center flex-wrap tracking-tight"
           >
-            {userName || "Guest"}!
-          </motion.span>
+            {greeting}
+            <motion.span
+              variants={nameVariants}
+              className="text-orange-500 ml-2.5"
+            >
+              {userName || "Guest"}!
+            </motion.span>
+          </motion.h1>
+        </div>
 
-          <motion.span
-            variants={emojiVariants}
-            className="ml-3 text-3xl"
-          >
-            {emoji}
-          </motion.span>
-        </motion.h1>
+        <motion.div
+          variants={textVariants}
+          className="text-sm text-gray-400 mt-1"
+        >
+          It's <span className="font-semibold">{timeString}</span> on <span className="font-semibold">{dateString}</span>
+        </motion.div>
+
+        <motion.div
+          variants={underlineVariants}
+          className="h-1 bg-orange-500 mt-2 max-w-xs"
+        />
       </div>
     </motion.div>
   );
