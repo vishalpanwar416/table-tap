@@ -135,7 +135,6 @@ function RegisterForm() {
     const [showPhonePrompt, setShowPhonePrompt] = useState(false);
     const [isPincodeLookup, setIsPincodeLookup] = useState(false);
     const [pincodeError, setPincodeError] = useState(null);
-    const [showLocationPicker, setShowLocationPicker] = useState(false);
     const { company, logo } = useSettings();
 
     const logoUrl = logo?.url || "/logo.png";
@@ -258,7 +257,6 @@ function RegisterForm() {
             longitude: location.lng || prev.longitude,
             googleMapsLink: location.googleMapsLink || prev.googleMapsLink
         }));
-        setShowLocationPicker(false);
         setPincodeError(null);
     };
 
@@ -651,7 +649,7 @@ function RegisterForm() {
                         <p className="text-sm text-gray-500 font-bold">Selected Plan</p>
                         <p className="text-2xl font-black text-gray-900">{plan.name}</p>
                         {plan.price && (
-                            <p className="text-[#2A9D8F] font-bold">₹{total}/{formData.billingCycle === 'monthly' ? 'mo' : 'yr'} (incl. GST)</p>
+                            <p className="text-[#2A9D8F]">₹{total}/{formData.billingCycle === 'monthly' ? 'mo' : 'yr'} (incl. GST)</p>
                         )}
                         {paymentId && (
                             <p className="text-xs text-gray-400 mt-2">Payment ID: {paymentId}</p>
@@ -941,27 +939,20 @@ function RegisterForm() {
                                                     </div>
                                                 </div>
 
-                                                {/* Location Selection */}
-                                                <div className="bg-gradient-to-r from-[#2A9D8F]/5 to-transparent p-4 rounded-2xl border border-[#2A9D8F]/10">
-                                                    <div className="flex items-center justify-between mb-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-10 h-10 bg-[#2A9D8F]/10 rounded-xl flex items-center justify-center">
-                                                                <Navigation className="text-[#2A9D8F]" size={20} />
-                                                            </div>
-                                                            <div>
-                                                                <p className="font-bold text-gray-900 text-sm">Restaurant Location</p>
-                                                                <p className="text-gray-500 text-xs">Use map for accurate address</p>
-                                                            </div>
-                                                        </div>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setShowLocationPicker(true)}
-                                                            className="px-4 py-2 bg-[#2A9D8F] text-white rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-[#238b7e] transition-colors"
-                                                        >
-                                                            <MapPin size={16} />
-                                                            Select on Map
-                                                        </button>
-                                                    </div>
+                                                {/* Inline Location Selection */}
+                                                <div className="space-y-4">
+                                                    <label className="block text-[11px] font-black uppercase tracking-wider text-gray-400">Restaurant Location *</label>
+                                                    <LocationPicker
+                                                        variant="inline"
+                                                        onLocationSelect={handleLocationSelect}
+                                                        initialLocation={{
+                                                            lat: formData.latitude,
+                                                            lng: formData.longitude
+                                                        }}
+                                                    />
+                                                    <p className="text-[10px] text-gray-400 font-bold px-2 italic">
+                                                        * Drag the marker or search to pinpoint your exact restaurant location.
+                                                    </p>
                                                 </div>
 
                                                 <div>
@@ -1505,13 +1496,6 @@ function RegisterForm() {
                 </div>
             </div>
 
-            {/* Location Picker Modal */}
-            {showLocationPicker && (
-                <LocationPicker
-                    onLocationSelect={handleLocationSelect}
-                    onClose={() => setShowLocationPicker(false)}
-                />
-            )}
         </div>
     );
 }
