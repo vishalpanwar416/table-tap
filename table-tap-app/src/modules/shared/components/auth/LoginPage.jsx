@@ -15,8 +15,33 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [existingSession, setExistingSession] = useState(null);
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [typingText, setTypingText] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
+
+  const welcomeText = "Welcome to Table-Tap";
+  const missionText = "We missed you! Let's get you in.";
+
+  useEffect(() => {
+    const welcomeTimer = setTimeout(() => {
+      setShowWelcome(false);
+    }, 2000);
+
+    return () => clearTimeout(welcomeTimer);
+  }, []);
+
+  useEffect(() => {
+    if (!showWelcome) {
+      let i = 0;
+      const interval = setInterval(() => {
+        setTypingText(missionText.slice(0, i + 1));
+        i++;
+        if (i >= missionText.length) clearInterval(interval);
+      }, 40);
+      return () => clearInterval(interval);
+    }
+  }, [showWelcome]);
 
   // Get URL parameters
   const urlParams = new URLSearchParams(location.search);
@@ -177,13 +202,23 @@ export default function LoginPage() {
 
   // Animation variants
   const bgVariants = {
-    initial: { opacity: 0 },
-    animate: { opacity: 1, transition: { duration: 1 } }
+    initial: { opacity: 0, scale: 1.1 },
+    animate: { opacity: 1, scale: 1, transition: { duration: 1.2, ease: "easeOut" } }
   };
   const cardVariants = {
-    initial: { y: 40, opacity: 0 },
-    animate: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 60, damping: 16 } },
-    exit: { y: 40, opacity: 0, transition: { duration: 0.2 } }
+    initial: { y: 120, opacity: 0, scale: 0.95 },
+    animate: {
+      y: 0,
+      opacity: 1,
+      scale: 1,
+      transition: {
+        type: 'spring',
+        stiffness: 70,
+        damping: 15,
+        mass: 0.8
+      }
+    },
+    exit: { y: 100, opacity: 0, transition: { duration: 0.3 } }
   };
   const stagger = {
     animate: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } }
@@ -290,12 +325,36 @@ export default function LoginPage() {
             animate="animate"
             exit="exit"
           >
-            <motion.h2
-              className="justify-center text-center text-black text-3xl font-semibold mb-12"
-              variants={itemVariants}
-            >
-              Welcome
-            </motion.h2>
+            <div className="h-20 flex items-center justify-center mb-6">
+              <AnimatePresence mode="wait">
+                {showWelcome ? (
+                  <motion.h2
+                    key="welcome"
+                    className="text-black text-3xl font-bold text-center leading-tight"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    {welcomeText}
+                  </motion.h2>
+                ) : (
+                  <motion.h2
+                    key="typing"
+                    className="text-black text-2xl font-medium text-center leading-tight max-w-[280px]"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    {typingText}
+                    <motion.span
+                      animate={{ opacity: [0, 1, 0] }}
+                      transition={{ repeat: Infinity, duration: 0.8 }}
+                      className="inline-block w-[3px] h-6 bg-orange-500 ml-1 mb-[-2px]"
+                    />
+                  </motion.h2>
+                )}
+              </AnimatePresence>
+            </div>
             <AnimatePresence>
               {error && (
                 <motion.div
