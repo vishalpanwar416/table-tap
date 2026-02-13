@@ -106,7 +106,7 @@ export default function EnhancedGreetings({ userName = "Guest" }) {
 
         <motion.div
           variants={underlineVariants}
-          className="h-[1px] bg-orange-500/50 mt-1.5 max-w-[100px]"
+          className="h-[1px] bg-orange-500/50 mt-1.5 max-w-xs"
         />
       </div>
     </motion.div>
