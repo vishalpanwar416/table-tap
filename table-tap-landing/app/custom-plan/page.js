@@ -22,13 +22,25 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const SERVICES = [
+const ICON_MAP = {
+    Building2,
+    MessageSquare,
+    Brain,
+    Globe,
+    ShieldCheck,
+    Headphones,
+    Layers,
+    Zap
+};
+
+const DEFAULT_SERVICES = [
     {
         id: 'multi-outlet',
         name: 'Multi-Outlet Sync',
         description: 'Centralized control for chains and franchises.',
         icon: Building2,
-        basePrice: 5000,
+        iconStr: 'Building2',
+        basePrice: 999,
         unit: 'outlet',
         minUnit: 2
     },
@@ -37,7 +49,8 @@ const SERVICES = [
         name: 'WhatsApp Pro Bundle',
         description: '10,000 automated messages per month.',
         icon: MessageSquare,
-        basePrice: 3500,
+        iconStr: 'MessageSquare',
+        basePrice: 499,
         unit: 'bundle',
         minUnit: 1
     },
@@ -46,7 +59,8 @@ const SERVICES = [
         name: 'AI Smart Insights',
         description: 'Predictive analytics and smart inventory alerts.',
         icon: Brain,
-        basePrice: 2000,
+        iconStr: 'Brain',
+        basePrice: 499,
         unit: 'fixed'
     },
     {
@@ -54,7 +68,8 @@ const SERVICES = [
         name: 'White-Label Domain',
         description: 'Use your own domain for menu and ordering.',
         icon: Globe,
-        basePrice: 1000,
+        iconStr: 'Globe',
+        basePrice: 499,
         unit: 'fixed'
     },
     {
@@ -62,7 +77,8 @@ const SERVICES = [
         name: 'Security Audit Trails',
         description: 'Full logs of every action taken by staff.',
         icon: ShieldCheck,
-        basePrice: 1500,
+        iconStr: 'ShieldCheck',
+        basePrice: 299,
         unit: 'fixed'
     },
     {
@@ -70,7 +86,8 @@ const SERVICES = [
         name: 'Dedicated Support',
         description: 'A dedicated manager for your restaurant group.',
         icon: Headphones,
-        basePrice: 5000,
+        iconStr: 'Headphones',
+        basePrice: 1499,
         unit: 'fixed'
     },
     {
@@ -78,20 +95,67 @@ const SERVICES = [
         name: 'Digital KDS & Floor Plan',
         description: 'Visual table management and kitchen display.',
         icon: Layers,
-        basePrice: 1500,
+        iconStr: 'Layers',
+        basePrice: 499,
         unit: 'fixed'
     }
 ];
 
 export default function CustomPlanBuilder() {
     const router = useRouter();
+    const [services, setServices] = useState(DEFAULT_SERVICES);
+    const [loading, setLoading] = useState(true);
+    const [enterpriseBasePrice, setEnterpriseBasePrice] = useState(siteConfig.pricing.enterpriseBaseMonthly);
     const [selectedItems, setSelectedItems] = useState(['multi-outlet', 'whatsapp-bundle', 'dedicated-csm']);
     const [outlets, setOutlets] = useState(2);
     const [bundles, setBundles] = useState(1);
 
+    React.useEffect(() => {
+        const fetchAddons = async () => {
+            try {
+                const { supabase } = await import('../lib/supabase');
+
+                // Fetch addons from system_settings
+                const settingsPromise = supabase
+                    .from('system_settings')
+                    .select('value')
+                    .eq('key', 'custom_plan_addons')
+                    .single();
+
+                // Fetch enterprise base price
+                const planPromise = supabase
+                    .from('subscription_plans')
+                    .select('base_price')
+                    .eq('key', 'enterprise')
+                    .single();
+
+                const [settingsRes, planRes] = await Promise.all([settingsPromise, planPromise]);
+
+                if (settingsRes.data && settingsRes.data.value && Array.isArray(settingsRes.data.value)) {
+                    // map iconStr back to the React component
+                    const mappedServices = settingsRes.data.value.map(item => ({
+                        ...item,
+                        icon: ICON_MAP[item.iconStr] || Zap // fallback icon
+                    }));
+                    setServices(mappedServices);
+                }
+
+                if (planRes.data && typeof planRes.data.base_price === 'number') {
+                    setEnterpriseBasePrice(planRes.data.base_price);
+                }
+            } catch (err) {
+                console.error('Error fetching custom addons:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchAddons();
+    }, []);
+
     const totalPrice = useMemo(() => {
-        let total = siteConfig.pricing.enterpriseBaseMonthly;
-        SERVICES.forEach(service => {
+        let total = enterpriseBasePrice;
+        services.forEach(service => {
             if (selectedItems.includes(service.id)) {
                 if (service.id === 'multi-outlet') {
                     total += service.basePrice * outlets;
@@ -103,7 +167,7 @@ export default function CustomPlanBuilder() {
             }
         });
         return total;
-    }, [selectedItems, outlets, bundles]);
+    }, [selectedItems, outlets, bundles, enterpriseBasePrice, services]);
 
     const toggleItem = (id) => {
         setSelectedItems(prev =>
@@ -134,9 +198,9 @@ export default function CustomPlanBuilder() {
                             </div>
 
                             <div className="grid gap-4">
-                                {SERVICES.map((service) => {
+                                {services.map((service) => {
                                     const isSelected = selectedItems.includes(service.id);
-                                    const Icon = service.icon;
+                                    const Icon = service.icon || Zap;
 
                                     return (
                                         <div
@@ -223,10 +287,10 @@ export default function CustomPlanBuilder() {
                                 <div className="space-y-4 mb-10 border-y border-gray-50 py-8">
                                     <div className="flex justify-between items-center text-xs font-black uppercase tracking-widest text-gray-400">
                                         <span>Base Enterprise</span>
-                                        <span className="text-gray-900">₹{siteConfig.pricing.enterpriseBaseMonthly.toLocaleString()}</span>
+                                        <span className="text-gray-900">₹{enterpriseBasePrice.toLocaleString()}</span>
                                     </div>
                                     {selectedItems.map(itemId => {
-                                        const s = SERVICES.find(x => x.id === itemId);
+                                        const s = services.find(x => x.id === itemId);
                                         if (!s) return null;
                                         let price = s.basePrice;
                                         let qty = '';

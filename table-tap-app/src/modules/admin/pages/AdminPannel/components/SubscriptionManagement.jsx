@@ -537,7 +537,7 @@ const SubscriptionManagementV2 = () => {
           key: 'custom',
           name: 'Enterprise',
           description: 'Bespoke solutions for restaurant chains and enterprise groups.',
-          base_price: 29999,
+          base_price: 2999,
           features: [
             "Bespoke Multi-outlet controls",
             "Custom WhatsApp bundles (10k-50k)",
@@ -545,7 +545,7 @@ const SubscriptionManagementV2 = () => {
             "Custom AI & ERP integrations",
             "SSO & Security audit trails",
             "Dedicated CSM & Priority SLA",
-            "Starting ₹29,999 - ₹59,999/mo",
+            "Starting ₹2,999 - ₹5,999/mo",
             "Full migration & onboarding support"
           ],
           color: 'from-amber-600 to-orange-700',
