@@ -83,8 +83,13 @@ const AdminPanel = () => {
     }
   }, [tabFromUrl, tabFromStorage, setSearchParams]);
   const [restaurants, setRestaurants] = useState([]);
+  const [totalRestaurants, setTotalRestaurants] = useState(0);
+  const [restaurantPage, setRestaurantPage] = useState(1);
   const [staff, setStaff] = useState([]);
+  const [totalStaff, setTotalStaff] = useState(0);
+  const [staffPage, setStaffPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
   const [showError, setShowError] = useState(false);
   const [success, setSuccess] = useState(null);
@@ -181,10 +186,13 @@ const AdminPanel = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      // Reset pages on fresh fetch
+      setRestaurantPage(1);
+      setStaffPage(1);
 
       const [restaurantsResponse, staffResponse] = await Promise.all([
-        getAllRestaurants(),
-        getAllStaff()
+        getAllRestaurants(1, 40),
+        getAllStaff(1, 40)
       ]);
 
       if (restaurantsResponse.error) {
@@ -195,11 +203,48 @@ const AdminPanel = () => {
       }
 
       setRestaurants(restaurantsResponse.data);
+      setTotalRestaurants(restaurantsResponse.total);
+
       setStaff(staffResponse.data);
+      setTotalStaff(staffResponse.total);
     } catch (error) {
       handleError('Failed to load data: ' + error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLoadMoreRestaurants = async () => {
+    if (loadingMore || restaurants.length >= totalRestaurants) return;
+    try {
+      setLoadingMore(true);
+      const nextPage = restaurantPage + 1;
+      const response = await getAllRestaurants(nextPage, 40);
+      if (response.error) throw new Error(response.error);
+
+      setRestaurants(prev => [...prev, ...response.data]);
+      setRestaurantPage(nextPage);
+    } catch (err) {
+      handleError('Failed to load more restaurants');
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  const handleLoadMoreStaff = async () => {
+    if (loadingMore || staff.length >= totalStaff) return;
+    try {
+      setLoadingMore(true);
+      const nextPage = staffPage + 1;
+      const response = await getAllStaff(nextPage, 40);
+      if (response.error) throw new Error(response.error);
+
+      setStaff(prev => [...prev, ...response.data]);
+      setStaffPage(nextPage);
+    } catch (err) {
+      handleError('Failed to load more staff');
+    } finally {
+      setLoadingMore(false);
     }
   };
 
@@ -584,6 +629,7 @@ const AdminPanel = () => {
         return (
           <RestaurantManagement
             restaurants={filteredRestaurants}
+            total={totalRestaurants}
             loading={loading}
             onAddRestaurant={() => setShowAddRestaurant(true)}
             onToggleStatus={handleToggleRestaurantStatus}
@@ -593,7 +639,7 @@ const AdminPanel = () => {
             onEdit={handleEditRestaurant}
             onDelete={handleDeleteRestaurant}
             onClick={handleRestaurantClick}
-            onLoadMore={(page, pageSize) => handleLoadMore('restaurants', page, pageSize)}
+            onLoadMore={handleLoadMoreRestaurants}
           />
         );
       case 'staff':
@@ -601,13 +647,14 @@ const AdminPanel = () => {
           <div className="-mx-4 md:mx-0 px-4 md:px-0">
             <StaffManagement
               staff={filteredStaff}
+              total={totalStaff}
               restaurants={restaurants}
               selectedRestaurantId={selectedRestaurantId}
               setSelectedRestaurantId={setSelectedRestaurantId}
               onAddStaff={() => setShowAddStaff(true)}
               onEdit={handleEditStaffClick}
               onDelete={handleDeleteStaff}
-              onLoadMore={(restaurantId, page, pageSize) => handleLoadMore('staff', page, pageSize, restaurantId)}
+              onLoadMore={handleLoadMoreStaff}
             />
           </div>
         );

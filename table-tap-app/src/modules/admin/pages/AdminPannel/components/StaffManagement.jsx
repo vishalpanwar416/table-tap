@@ -9,6 +9,7 @@ import StaffGrid from './StaffGrid';
 const StaffManagement = ({
   staff,
   restaurants,
+  total,
   selectedRestaurantId,
   setSelectedRestaurantId,
   onAddStaff,
@@ -108,8 +109,8 @@ const StaffManagement = ({
                 <button
                   onClick={() => setViewMode('restaurant')}
                   className={`flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${viewMode === 'restaurant'
-                      ? 'bg-white text-blue-600 shadow-sm'
-                      : 'text-gray-500 hover:text-gray-900'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-900'
                     }`}
                 >
                   <Building2 className="w-3.5 h-3.5 mr-1.5" />
@@ -119,8 +120,8 @@ const StaffManagement = ({
                 <button
                   onClick={() => setViewMode('grid')}
                   className={`flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${viewMode === 'grid'
-                      ? 'bg-white text-blue-600 shadow-sm'
-                      : 'text-gray-500 hover:text-gray-900'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-900'
                     }`}
                 >
                   <Grid className="w-3.5 h-3.5 mr-1.5" />
@@ -175,6 +176,7 @@ const StaffManagement = ({
               </div>
             ) : (
               <div className="text-center py-16 sm:py-20 px-6 bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl border border-slate-200">
+                {/* ... existing empty state ... */}
                 <div className="w-24 h-24 sm:w-28 sm:h-28 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
                   <Building2 className="h-12 w-12 sm:h-14 sm:w-14 text-blue-600" />
                 </div>
@@ -204,6 +206,22 @@ const StaffManagement = ({
               onDelete={onDelete}
               onLoadMore={onLoadMore}
             />
+          )}
+
+          {/* Load More Button */}
+          {staff.length < (total || staff.length) && (
+            <div className="mt-8 flex justify-center">
+              <button
+                onClick={onLoadMore}
+                className="px-8 py-3 bg-white border-2 border-blue-100 text-blue-600 rounded-xl font-bold hover:bg-blue-50 transition-all shadow-sm flex items-center gap-2"
+              >
+                <span>Load More Staff</span>
+                {/* Small indicator showing progress */}
+                <span className="text-xs font-normal text-blue-400">
+                  ({staff.length} of {total})
+                </span>
+              </button>
+            </div>
           )}
         </div>
       </div>

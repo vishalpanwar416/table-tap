@@ -404,27 +404,20 @@ const AdminDashboard = () => {
       supabase.removeChannel(orderChannelRef.current);
     }
 
-    // Enhanced real-time subscription with restaurant filtering
+    // Enhanced real-time subscription with SERVER-SIDE restaurant filtering
     const channel = supabase
-      .channel('orders-channel')
+      .channel('orders-channel-' + (userRestaurantId || 'all'))
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'orders',
+          filter: userRestaurantId ? `restaurant_id=eq.${userRestaurantId}` : undefined
         },
         (payload) => {
-
-
-          const { eventType, new: newRecord, old: oldRecord } = payload;
-          console.log('Realtime Event:', eventType, newRecord);
-
-          // Filter by restaurant if available, otherwise show all (for admin/owner with no specific filter)
-          if (userRestaurantId && newRecord.restaurant_id && newRecord.restaurant_id !== userRestaurantId) {
-            console.log('Skipping notification: Restaurant ID mismatch', userRestaurantId, newRecord.restaurant_id);
-            return;
-          }
+          const { eventType, new: newRecord } = payload;
+          if (!newRecord) return; // For DELETE events, newRecord is null
 
           if (eventType === 'INSERT') {
             console.log('New order received, triggering notification...');

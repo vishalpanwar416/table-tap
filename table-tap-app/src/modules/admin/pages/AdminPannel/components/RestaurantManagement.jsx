@@ -7,6 +7,7 @@ import { supabase } from '../../../../shared/supabase';
 
 const RestaurantManagement = ({
   restaurants,
+  total,
   loading,
   onAddRestaurant,
   onToggleStatus,
@@ -256,6 +257,21 @@ const RestaurantManagement = ({
                 onClick={onClick}
                 onLoadMore={onLoadMore}
               />
+            )}
+
+            {/* Load More Button */}
+            {restaurants.length < (total || restaurants.length) && (
+              <div className="mt-8 flex justify-center">
+                <button
+                  onClick={onLoadMore}
+                  className="px-8 py-3 bg-white border-2 border-blue-100 text-blue-600 rounded-xl font-bold hover:bg-blue-50 transition-all shadow-sm flex items-center gap-2"
+                >
+                  <span>Load More Restaurants</span>
+                  <span className="text-xs font-normal text-blue-400">
+                    ({restaurants.length} of {total})
+                  </span>
+                </button>
+              </div>
             )}
           </>
         )}
