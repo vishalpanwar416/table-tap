@@ -18,6 +18,7 @@ import {
   ChevronUp
 } from 'lucide-react';
 
+import tableTapLogo from '../../../../../assets/icons/logott.png';
 
 const RestaurantListView = ({
   restaurants,
@@ -193,7 +194,18 @@ const RestaurantListView = ({
           <div className="col-span-2">
             <div className="flex items-center space-x-3">
               {restaurant.logo_url ? (
-                <img src={restaurant.logo_url} alt="" className="w-10 h-10 rounded-lg object-contain bg-white border border-gray-200" />
+                <img
+                  key={restaurant.logo_url}
+                  src={restaurant.logo_url}
+                  alt=""
+                  className="w-10 h-10 rounded-lg object-contain bg-white border border-gray-200"
+                  onError={(e) => {
+                    if (e.target.src !== tableTapLogo) {
+                      e.target.onerror = null;
+                      e.target.src = tableTapLogo;
+                    }
+                  }}
+                />
               ) : (
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${restaurant.is_active ? 'bg-blue-500' : 'bg-red-500'}`}>
                   <Building2 className="w-5 h-5 text-white" />
@@ -224,7 +236,18 @@ const RestaurantListView = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               {restaurant.logo_url ? (
-                <img src={restaurant.logo_url} alt="" className="w-10 h-10 rounded-lg object-contain bg-white border border-gray-200" />
+                <img
+                  key={restaurant.logo_url}
+                  src={restaurant.logo_url}
+                  alt=""
+                  className="w-10 h-10 rounded-lg object-contain bg-white border border-gray-200"
+                  onError={(e) => {
+                    if (e.target.src !== tableTapLogo) {
+                      e.target.onerror = null;
+                      e.target.src = tableTapLogo;
+                    }
+                  }}
+                />
               ) : (
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${restaurant.is_active ? 'bg-blue-500' : 'bg-red-500'}`}>
                   <Building2 className="w-5 h-5 text-white" />

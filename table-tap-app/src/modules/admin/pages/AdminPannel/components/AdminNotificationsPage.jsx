@@ -48,6 +48,7 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
     unreadCount,
     loading,
     markAsRead,
+    markAsUnread,
     markAllAsRead,
     fetchNotifications,
     clearOldNotifications
@@ -164,53 +165,18 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
     }
   };
 
-  // Get background color for notification type
-  const getNotificationBg = (type, read) => {
-    if (read) return 'bg-white hover:bg-gray-50';
-
-    switch (type) {
-      case NOTIFICATION_TYPES.NEW_INQUIRY:
-        return 'bg-pink-50 hover:bg-pink-100';
-      case NOTIFICATION_TYPES.INQUIRY_CONVERTED:
-        return 'bg-emerald-50 hover:bg-emerald-100';
-      case NOTIFICATION_TYPES.NEW_REGISTRATION:
-        return 'bg-amber-50 hover:bg-amber-100';
-      case NOTIFICATION_TYPES.REGISTRATION_APPROVED:
-        return 'bg-green-50 hover:bg-green-100';
-      case NOTIFICATION_TYPES.REGISTRATION_REJECTED:
-        return 'bg-red-50 hover:bg-red-100';
-      case NOTIFICATION_TYPES.NEW_SUBSCRIPTION:
-        return 'bg-green-50 hover:bg-green-100';
-      case NOTIFICATION_TYPES.SUBSCRIPTION_RENEWED:
-        return 'bg-blue-50 hover:bg-blue-100';
-      case NOTIFICATION_TYPES.SUBSCRIPTION_CANCELLED:
-        return 'bg-red-50 hover:bg-red-100';
-      case NOTIFICATION_TYPES.SUBSCRIPTION_EXPIRED:
-        return 'bg-orange-50 hover:bg-orange-100';
-      case NOTIFICATION_TYPES.SUBSCRIPTION_UPGRADED:
-        return 'bg-purple-50 hover:bg-purple-100';
-      case NOTIFICATION_TYPES.NEW_RESTAURANT:
-        return 'bg-purple-50 hover:bg-purple-100';
-      case NOTIFICATION_TYPES.RESTAURANT_ACTIVATED:
-        return 'bg-green-50 hover:bg-green-100';
-      case NOTIFICATION_TYPES.NEW_STAFF:
-        return 'bg-blue-50 hover:bg-blue-100';
-      case NOTIFICATION_TYPES.STAFF_CONNECTED:
-        return 'bg-teal-50 hover:bg-teal-100';
-      case NOTIFICATION_TYPES.AI_ENABLED:
-        return 'bg-indigo-50 hover:bg-indigo-100';
-      case NOTIFICATION_TYPES.AGGREGATORS_ENABLED:
-        return 'bg-orange-50 hover:bg-orange-100';
-      case NOTIFICATION_TYPES.PAYMENT_RECEIVED:
-        return 'bg-emerald-50 hover:bg-emerald-100';
-      case NOTIFICATION_TYPES.PAYMENT_FAILED:
-        return 'bg-red-50 hover:bg-red-100';
-      case NOTIFICATION_TYPES.EMAIL_SENT:
-        return 'bg-green-50 hover:bg-green-100';
-      case NOTIFICATION_TYPES.EMAIL_FAILED:
-        return 'bg-red-50 hover:bg-red-100';
-      default:
-        return 'bg-gray-50 hover:bg-gray-100';
+  // Get category colors
+  const getCategoryColor = (category) => {
+    switch (category) {
+      case 'Inquiries': return 'bg-pink-100 text-pink-700';
+      case 'Registrations': return 'bg-amber-100 text-amber-700';
+      case 'Subscriptions': return 'bg-emerald-100 text-emerald-700';
+      case 'Restaurants': return 'bg-indigo-100 text-indigo-700';
+      case 'Staff': return 'bg-teal-100 text-teal-700';
+      case 'Features': return 'bg-blue-100 text-blue-700';
+      case 'Payments': return 'bg-emerald-100 text-emerald-700';
+      case 'Emails': return 'bg-orange-100 text-orange-700';
+      default: return 'bg-gray-100 text-gray-700';
     }
   };
 
@@ -405,41 +371,10 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
   }, [notifications, unreadCount]);
 
   return (
-    <div className="p-2 md:p-6 max-w-7xl mx-auto">
-      {/* Header Actions Only - Desktop Only */}
-      <div className="mb-6 hidden md:flex justify-end">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="p-2.5 rounded-xl bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50"
-            title="Refresh"
-          >
-            <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
-          </button>
-          {unreadCount > 0 && (
-            <button
-              onClick={markAllAsRead}
-              className="px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center gap-2 text-sm font-medium"
-            >
-              <CheckCheck className="w-4 h-4" />
-              Mark all read
-            </button>
-          )}
-          <button
-            onClick={clearOldNotifications}
-            className="px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center gap-2 text-sm font-medium"
-            title="Clear notifications older than 30 days"
-          >
-            <Trash2 className="w-4 h-4" />
-            Clear old
-          </button>
-        </div>
-      </div>
-
+    <div className="w-full h-full md:p-6 lg:max-w-[1600px] mx-auto">
       {/* Stats Cards */}
       {/* Stats Cards - Compact on Mobile */}
-      <div className="grid grid-cols-4 gap-1 md:gap-3 mt-2 md:mt-6 pb-2 md:pb-0">
+      <div className="grid grid-cols-4 gap-1 md:gap-3 px-1 md:px-0 mt-1 md:mt-2 pb-2 md:pb-0">
         <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
           <div className="p-1 md:p-2 bg-blue-100 rounded-lg mb-1">
             <Inbox className="w-3.5 h-3.5 md:w-5 md:h-5 text-blue-600" />
@@ -479,10 +414,10 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
       </div>
 
 
-      {/* Filters & Search */}
-      <div className="md:bg-white md:rounded-2xl md:border md:border-gray-200 md:shadow-sm mb-2 md:mb-6">
-        <div className="md:p-4 md:border-b md:border-gray-100">
-          <div className="flex items-center justify-between gap-1 pb-1">
+      {/* Filters, Sort & Actions - Single Line on Desktop */}
+      <div className="bg-white border-y md:border md:rounded-xl border-gray-200 md:shadow-sm mb-2 md:mb-3 mt-2 md:mt-4 overflow-x-auto no-scrollbar">
+        <div className="p-2 md:p-3 md:border-b md:border-gray-100 min-w-max">
+          <div className="flex items-center gap-2 sm:gap-3">
 
 
             {/* Type Filter */}
@@ -563,32 +498,61 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
             </button>
 
             {/* Sort */}
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 shrink-0 border-l border-gray-200 pl-2 sm:pl-3">
               <button
                 onClick={() => toggleSort('date')}
-                className={`flex items-center justify-center gap-1.5 w-9 h-9 md:w-auto md:h-auto md:px-3 md:py-2.5 rounded-lg md:rounded-xl border text-xs md:text-sm font-medium transition-all whitespace-nowrap ${sortBy === 'date'
+                className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border text-xs md:text-sm font-medium transition-all whitespace-nowrap ${sortBy === 'date'
                   ? 'border-blue-200 bg-blue-50 text-blue-700'
                   : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
                   }`}
               >
                 <Clock className="w-4 h-4" />
-                <span className="hidden md:inline">Date</span>
+                <span className="inline">Date</span>
                 {sortBy === 'date' && (
-                  sortOrder === 'desc' ? <SortDesc className="w-3 h-3 absolute md:static top-0.5 right-0.5" /> : <SortAsc className="w-3 h-3 absolute md:static top-0.5 right-0.5" />
+                  sortOrder === 'desc' ? <SortDesc className="w-3 h-3" /> : <SortAsc className="w-3 h-3" />
                 )}
               </button>
               <button
                 onClick={() => toggleSort('type')}
-                className={`flex items-center justify-center gap-1.5 w-9 h-9 md:w-auto md:h-auto md:px-3 md:py-2.5 rounded-lg md:rounded-xl border text-xs md:text-sm font-medium transition-all whitespace-nowrap ${sortBy === 'type'
+                className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border text-xs md:text-sm font-medium transition-all whitespace-nowrap ${sortBy === 'type'
                   ? 'border-blue-200 bg-blue-50 text-blue-700'
                   : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
                   }`}
               >
                 <ArrowUpDown className="w-4 h-4" />
-                <span className="hidden md:inline">Type</span>
+                <span className="inline">Type</span>
                 {sortBy === 'type' && (
-                  sortOrder === 'desc' ? <SortDesc className="w-3 h-3 absolute md:static top-0.5 right-0.5" /> : <SortAsc className="w-3 h-3 absolute md:static top-0.5 right-0.5" />
+                  sortOrder === 'desc' ? <SortDesc className="w-3 h-3" /> : <SortAsc className="w-3 h-3" />
                 )}
+              </button>
+            </div>
+
+            {/* Actions (Refresh, Mark Read, Clear) */}
+            <div className="flex items-center gap-2 shrink-0 border-l border-gray-200 pl-2 sm:pl-3">
+              <button
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="p-2 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50"
+                title="Refresh"
+              >
+                <RefreshCw className={`w-4 h-4 md:w-5 md:h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </button>
+              {unreadCount > 0 && (
+                <button
+                  onClick={markAllAsRead}
+                  className="px-3 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center gap-2 text-xs md:text-sm font-medium whitespace-nowrap"
+                >
+                  <CheckCheck className="w-4 h-4" />
+                  Mark all read
+                </button>
+              )}
+              <button
+                onClick={clearOldNotifications}
+                className="px-3 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center gap-2 text-xs md:text-sm font-medium whitespace-nowrap"
+                title="Clear notifications older than 30 days"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span className="hidden md:inline">Clear old</span>
               </button>
             </div>
           </div>
@@ -619,8 +583,8 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
         )}
 
         {/* Results count */}
-        <div className="px-2 py-2 md:px-4 md:py-3 border-b border-gray-100 flex items-center justify-between text-sm text-gray-500">
-          <div className="flex items-center gap-4">
+        <div className="px-2 py-2 md:px-3 md:py-2.5 border-b border-gray-100 flex items-center justify-between text-xs md:text-sm text-gray-500">
+          <div className="flex items-center gap-3 md:gap-4">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -657,75 +621,89 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
             filteredNotifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`flex items-start gap-2 md:gap-3 p-1.5 md:p-3 transition-all cursor-pointer border-b border-gray-50 last:border-0 ${getNotificationBg(notification.type, notification.read)}`}
+                className={`group flex flex-col md:flex-row md:items-center gap-2 md:gap-3 p-2.5 md:py-3 md:px-3 transition-all cursor-pointer border-b border-gray-100 last:border-0 ${notification.read ? 'bg-white hover:bg-gray-50' : 'bg-blue-50/40 hover:bg-blue-50/70'
+                  }`}
                 onClick={() => handleNotificationClick(notification)}
               >
-                {/* Checkbox - Compact */}
-                <div className="pt-0.5 md:pt-1">
-                  <input
-                    type="checkbox"
-                    checked={selectedNotifications.includes(notification.id)}
-                    onChange={(e) => {
-                      e.stopPropagation();
-                      setSelectedNotifications(prev =>
-                        prev.includes(notification.id)
-                          ? prev.filter(id => id !== notification.id)
-                          : [...prev, notification.id]
-                      );
-                    }}
-                    className="w-3 md:w-3.5 h-3 md:h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                </div>
-
-                {/* Icon - Smaller */}
-                <div className={`flex-shrink-0 p-1 md:p-2 rounded-xl ${notification.read ? 'bg-gray-100' : 'bg-white shadow-sm'}`}>
-                  {React.cloneElement(getNotificationIcon(notification.type), {
-                    className: "w-3.5 h-3.5 md:w-4 md:h-4 " + getNotificationIcon(notification.type).props.className.split(' ').filter(c => !c.startsWith('w-') && !c.startsWith('h-')).join(' ')
-                  })}
-                </div>
-
-                {/* Content - Compact Typography */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-1.5">
-                    <div className="flex-1 min-w-0">
-                      <h4 className={`text-xs md:text-sm font-semibold leading-tight mb-0 ${notification.read ? 'text-gray-600' : 'text-gray-900'} truncate`}>
-                        {notification.title}
-                      </h4>
-                      <p className={`text-[11px] md:text-xs leading-relaxed ${notification.read ? 'text-gray-400' : 'text-gray-600'} line-clamp-2`}>
-                        {notification.message}
-                      </p>
-                    </div>
-                    {!notification.read && (
-                      <span className="flex-shrink-0 w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-blue-500 mt-1" />
-                    )}
+                {/* Checkbox & Icon */}
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                  <div className="flex-shrink-0">
+                    <input
+                      type="checkbox"
+                      checked={selectedNotifications.includes(notification.id)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        setSelectedNotifications(prev =>
+                          prev.includes(notification.id)
+                            ? prev.filter(id => id !== notification.id)
+                            : [...prev, notification.id]
+                        );
+                      }}
+                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
                   </div>
-                  <div className="flex items-center gap-2 md:gap-3 mt-1 flex-wrap">
-                    <span className={`inline-flex items-center gap-1 px-1 py-0.5 rounded-full text-[9px] md:text-[10px] font-medium whitespace-nowrap ${notification.read ? 'bg-gray-100 text-gray-500' : 'bg-white/80 text-gray-600 border border-gray-100'
+
+                  <div className={`flex-shrink-0 p-2 rounded-xl border ${notification.read ? 'bg-gray-50 border-gray-100' : 'bg-white border-blue-100 shadow-sm'}`}>
+                    {React.cloneElement(getNotificationIcon(notification.type), {
+                      className: "w-4 h-4 " + getNotificationIcon(notification.type).props.className.split(' ').filter(c => !c.startsWith('w-') && !c.startsWith('h-')).join(' ')
+                    })}
+                  </div>
+
+                  {/* Mobile-only tags & status */}
+                  <div className="flex-1 md:hidden flex items-center justify-between min-w-0 pr-1">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase ${getCategoryColor(getCategoryForType(notification.type))
                       }`}>
                       {getCategoryForType(notification.type)}
                     </span>
-                    <span className="text-[9px] md:text-[10px] text-gray-400 whitespace-nowrap flex items-center gap-1" title={formatFullDate(notification.created_at)}>
-                      <Clock className="w-2.5 h-2.5" />
-                      {formatTimeAgo(notification.created_at)}
-                    </span>
+                    {!notification.read && <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />}
                   </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex-shrink-0 flex items-center gap-0.5 md:gap-1">
-                  {!notification.read && (
+                {/* Content */}
+                <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center gap-1 md:gap-3 pl-10 md:pl-0">
+                  {/* Desktop-only tags */}
+                  <div className="hidden md:flex items-center gap-2 flex-shrink-0">
+                    {!notification.read && <span className="w-2 h-2 rounded-full bg-blue-500" />}
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase ${getCategoryColor(getCategoryForType(notification.type))
+                      }`}>
+                      {getCategoryForType(notification.type)}
+                    </span>
+                  </div>
+
+                  <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center gap-0.5 md:gap-2">
+                    <h4 className={`text-sm md:text-[15px] font-semibold truncate ${notification.read ? 'text-gray-700' : 'text-gray-900'}`}>
+                      {notification.title}
+                    </h4>
+                    <span className="hidden md:inline text-gray-300 mx-1">•</span>
+                    <p className={`text-xs md:text-[13px] truncate ${notification.read ? 'text-gray-500' : 'text-gray-700 font-medium'}`}>
+                      {notification.message}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Right Actions & Date */}
+                <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto pl-10 md:pl-0 mt-2 md:mt-0">
+                  <span className="text-xs text-gray-400 whitespace-nowrap flex items-center gap-1.5" title={formatFullDate(notification.created_at)}>
+                    <Clock className="w-3.5 h-3.5" />
+                    {formatTimeAgo(notification.created_at)}
+                  </span>
+
+                  <div className="flex items-center gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        markAsRead(notification.id);
+                        notification.read ? markAsUnread(notification.id) : markAsRead(notification.id);
                       }}
-                      className="p-1.5 md:p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                      title="Mark as read"
+                      className={`p-1.5 rounded-lg transition-colors ${notification.read
+                        ? 'text-gray-400 hover:text-orange-600 hover:bg-orange-50'
+                        : 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+                        }`}
+                      title={notification.read ? "Mark as unread" : "Mark as read"}
                     >
-                      <Eye className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                      {notification.read ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
-                  )}
-                  <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-gray-300" />
+                    <ChevronRight className="w-4 h-4 text-gray-300 ml-1" />
+                  </div>
                 </div>
               </div>
             ))

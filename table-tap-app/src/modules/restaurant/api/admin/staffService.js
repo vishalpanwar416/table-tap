@@ -42,7 +42,7 @@ export const addStaff = async (restaurantId, formData) => {
     throw new Error('Please select a restaurant first.');
   }
 
-  // Check for existing staff
+  // Check for existing staff in THIS restaurant
   const { data: existingStaff, error: existingStaffError } = await supabase
     .from('restaurant_staff')
     .select('*')
@@ -53,6 +53,29 @@ export const addStaff = async (restaurantId, formData) => {
     throw new Error(existingStaffError.message || 'Failed to check existing staff member.');
   }
   if (existingStaff) throw new Error('A staff member with this email already exists for this restaurant.');
+
+  // Check if they are attempting to be in MULTIPLE restaurants
+  const { data: profileData } = await supabase
+    .from('profiles')
+    .select('profile_role')
+    .eq('email', formData.email)
+    .maybeSingle();
+
+  const isOwnerOrAdmin = profileData?.profile_role === 'owner' || profileData?.profile_role === 'admin';
+
+  if (!isOwnerOrAdmin) {
+    const { data: otherRestaurantStaff } = await supabase
+      .from('restaurant_staff')
+      .select('restaurant_id')
+      .eq('staff_email', formData.email)
+      .neq('restaurant_id', restaurantId)
+      .limit(1)
+      .maybeSingle();
+
+    if (otherRestaurantStaff) {
+      throw new Error('This person is already working at another restaurant. Managers and staff can only be attached to a single restaurant.');
+    }
+  }
 
   // Insert new staff
   const { error: createError } = await supabase

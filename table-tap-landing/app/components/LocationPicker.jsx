@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { MapPin, Search, X, Navigation, Check } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 
-export default function LocationPicker({ onLocationSelect, onClose, initialLocation }) {
+export default function LocationPicker({ onLocationSelect, onClose, initialLocation, variant = 'modal' }) {
     const { mapsKey } = useSettings();
     const mapRef = useRef(null);
     const mapInstanceRef = useRef(null);
@@ -17,6 +17,8 @@ export default function LocationPicker({ onLocationSelect, onClose, initialLocat
     const [selectedLocation, setSelectedLocation] = useState(initialLocation || null);
     const [isLocating, setIsLocating] = useState(false);
     const [error, setError] = useState(null);
+
+    const isInline = variant === 'inline';
 
     // Helper to process helper results
     const processPlaceResult = useCallback((place, lat, lng) => {
@@ -83,13 +85,13 @@ export default function LocationPicker({ onLocationSelect, onClose, initialLocat
     useEffect(() => {
         if (window.google?.maps) {
             // Use setTimeout to avoid synchronous state update warning
-            setTimeout(() => setIsLoaded(true), 0);
-            return;
+            const timer = setTimeout(() => setIsLoaded(true), 100);
+            return () => clearTimeout(timer);
         }
 
         const apiKey = mapsKey || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
         if (!apiKey) {
-            setTimeout(() => setError('Google Maps API key not configured. Please contact support or set it in Admin Settings.'), 0);
+            setError('Google Maps API key not configured. Please contact support.');
             return;
         }
 
@@ -98,13 +100,13 @@ export default function LocationPicker({ onLocationSelect, onClose, initialLocat
         script.async = true;
         script.defer = true;
         script.onload = () => setIsLoaded(true);
-        script.onerror = () => setError('Failed to load Google Maps. Please check your API key and restrictions.');
+        script.onerror = () => setError('Failed to load Google Maps. Please check your API key.');
         document.head.appendChild(script);
 
         return () => {
             // Cleanup if needed
         };
-    }, []);
+    }, [mapsKey]);
 
     // Initialize map
     useEffect(() => {
@@ -190,6 +192,13 @@ export default function LocationPicker({ onLocationSelect, onClose, initialLocat
         }
     }, [isLoaded, initialLocation, reverseGeocode, processPlaceResult]);
 
+    // Sync selected location back
+    useEffect(() => {
+        if (selectedLocation && isInline) {
+            onLocationSelect(selectedLocation);
+        }
+    }, [selectedLocation, isInline, onLocationSelect]);
+
     const handleCurrentLocation = () => {
         if (!navigator.geolocation) {
             setError('Geolocation is not supported by your browser');
@@ -226,94 +235,105 @@ export default function LocationPicker({ onLocationSelect, onClose, initialLocat
 
     if (error && !isLoaded) {
         return (
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-3xl p-8 max-w-md w-full text-center">
-                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <X className="text-red-500" size={32} />
+            <div className={isInline ? "w-full p-4 bg-red-50 rounded-2xl border border-red-100 text-center" : "fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"}>
+                <div className={isInline ? "" : "bg-white rounded-3xl p-8 max-w-md w-full text-center"}>
+                    <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <X className="text-red-500" size={24} />
                     </div>
-                    <h3 className="text-xl font-black text-gray-900 mb-2">Unable to Load Map</h3>
-                    <p className="text-gray-500 mb-6">{error}</p>
-                    <button
-                        onClick={onClose}
-                        className="px-6 py-3 bg-gray-100 rounded-xl font-bold text-gray-700 hover:bg-gray-200 transition-colors"
-                    >
-                        Close
-                    </button>
+                    <h3 className="text-lg font-black text-gray-900 mb-2">Map Error</h3>
+                    <p className="text-gray-500 text-sm mb-4">{error}</p>
+                    {!isInline && (
+                        <button
+                            onClick={onClose}
+                            className="px-6 py-3 bg-gray-100 rounded-xl font-bold text-gray-700 hover:bg-gray-200 transition-colors"
+                        >
+                            Close
+                        </button>
+                    )}
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl">
-                {/* Header */}
-                <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-[#2A9D8F]/10 rounded-2xl flex items-center justify-center">
-                            <MapPin className="text-[#2A9D8F]" size={24} />
+        <div className={isInline ? "w-full" : "fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"}>
+            <div className={isInline ? "bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm" : "bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl"}>
+                {/* Header - Only for modal or simplified for inline */}
+                {!isInline ? (
+                    <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 bg-[#2A9D8F]/10 rounded-2xl flex items-center justify-center">
+                                <MapPin className="text-[#2A9D8F]" size={24} />
+                            </div>
+                            <div>
+                                <h2 className="text-2xl font-black text-gray-900">Select Location</h2>
+                                <p className="text-gray-500 text-sm font-medium">Search or click on the map to pin your restaurant</p>
+                            </div>
                         </div>
-                        <div>
-                            <h2 className="text-2xl font-black text-gray-900">Select Location</h2>
-                            <p className="text-gray-500 text-sm font-medium">Search or click on the map to pin your restaurant</p>
+                        <button
+                            onClick={onClose}
+                            className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+                        >
+                            <X size={20} className="text-gray-500" />
+                        </button>
+                    </div>
+                ) : (
+                    <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <MapPin className="text-[#2A9D8F]" size={18} />
+                            <span className="font-bold text-gray-900 text-sm">Pick on Map</span>
                         </div>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
-                    >
-                        <X size={20} className="text-gray-500" />
-                    </button>
-                </div>
+                )}
 
                 {/* Search Bar */}
-                <div className="p-4 border-b border-gray-100 flex gap-3">
+                <div className="p-3 border-b border-gray-100 flex gap-2">
                     <div className="flex-1 relative">
-                        <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                             ref={searchInputRef}
                             type="text"
-                            placeholder="Search for your restaurant location..."
-                            className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-medium text-gray-900"
+                            placeholder="Search your location..."
+                            className="w-full pl-11 pr-4 py-2 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 focus:border-[#2A9D8F] font-bold text-gray-900 text-sm"
                         />
                     </div>
                     <button
                         onClick={handleCurrentLocation}
                         disabled={isLocating}
-                        className="px-4 py-3 bg-[#2A9D8F]/10 text-[#2A9D8F] rounded-xl font-bold flex items-center gap-2 hover:bg-[#2A9D8F]/20 transition-colors disabled:opacity-50"
+                        className="px-3 py-2 bg-[#2A9D8F]/10 text-[#2A9D8F] rounded-xl font-bold flex items-center gap-2 hover:bg-[#2A9D8F]/20 transition-colors disabled:opacity-50"
                     >
                         {isLocating ? (
-                            <div className="w-5 h-5 border-2 border-[#2A9D8F] border-t-transparent rounded-full animate-spin" />
+                            <div className="w-4 h-4 border-2 border-[#2A9D8F] border-t-transparent rounded-full animate-spin" />
                         ) : (
-                            <Navigation size={20} />
+                            <Navigation size={18} />
                         )}
-                        <span className="hidden sm:inline">Current Location</span>
+                        <span className="hidden sm:inline text-xs">Me</span>
                     </button>
                 </div>
 
                 {/* Map */}
                 <div className="relative">
                     {!isLoaded && (
-                        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-10">
+                        <div className="absolute inset-0 bg-gray-50 flex items-center justify-center z-10">
                             <div className="text-center">
-                                <div className="w-10 h-10 border-3 border-[#2A9D8F] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                                <p className="text-gray-500 font-medium">Loading map...</p>
+                                <div className="w-8 h-8 border-3 border-[#2A9D8F] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                                <p className="text-gray-400 text-xs font-bold">Loading map...</p>
                             </div>
                         </div>
                     )}
-                    <div ref={mapRef} className="w-full h-[350px]" />
+                    <div ref={mapRef} className={`w-full ${isInline ? 'h-[250px]' : 'h-[350px]'}`} />
                 </div>
 
                 {/* Selected Location Info */}
                 {selectedLocation && (
-                    <div className="p-4 border-t border-gray-100 bg-gray-50">
-                        <div className="flex items-start gap-3">
-                            <div className="w-10 h-10 bg-[#2A9D8F] rounded-xl flex items-center justify-center shrink-0">
-                                <MapPin className="text-white" size={20} />
+                    <div className="p-3 border-t border-gray-100 bg-gray-50">
+                        <div className="flex items-start gap-2">
+                            <div className="w-8 h-8 bg-[#2A9D8F] rounded-lg flex items-center justify-center shrink-0">
+                                <MapPin className="text-white" size={16} />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="font-bold text-gray-900 truncate">{selectedLocation.formattedAddress || selectedLocation.address}</p>
-                                <p className="text-sm text-gray-500">
+                                <p className="font-bold text-gray-900 truncate text-xs">{selectedLocation.formattedAddress || selectedLocation.address}</p>
+                                <p className="text-[10px] text-gray-500 font-bold">
                                     {[selectedLocation.city, selectedLocation.state, selectedLocation.pincode].filter(Boolean).join(', ')}
                                 </p>
                             </div>
@@ -321,23 +341,25 @@ export default function LocationPicker({ onLocationSelect, onClose, initialLocat
                     </div>
                 )}
 
-                {/* Footer */}
-                <div className="p-4 border-t border-gray-100 flex justify-end gap-3">
-                    <button
-                        onClick={onClose}
-                        className="px-6 py-3 bg-gray-100 rounded-xl font-bold text-gray-700 hover:bg-gray-200 transition-colors"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={handleConfirm}
-                        disabled={!selectedLocation}
-                        className="px-6 py-3 bg-[#2A9D8F] text-white rounded-xl font-bold flex items-center gap-2 hover:bg-[#238b7e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <Check size={20} />
-                        Confirm Location
-                    </button>
-                </div>
+                {/* Footer - Only for modal */}
+                {!isInline && (
+                    <div className="p-4 border-t border-gray-100 flex justify-end gap-3">
+                        <button
+                            onClick={onClose}
+                            className="px-6 py-3 bg-gray-100 rounded-xl font-bold text-gray-700 hover:bg-gray-200 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleConfirm}
+                            disabled={!selectedLocation}
+                            className="px-6 py-3 bg-[#2A9D8F] text-white rounded-xl font-bold flex items-center gap-2 hover:bg-[#238b7e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <Check size={20} />
+                            Confirm Location
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

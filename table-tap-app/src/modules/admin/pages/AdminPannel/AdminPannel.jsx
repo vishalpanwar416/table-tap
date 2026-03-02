@@ -668,7 +668,7 @@ const AdminPanel = () => {
           />
 
           {/* Main Content */}
-          <div className={`${sidebarCollapsed ? 'md:ml-20' : 'md:ml-64'} transition-all duration-300 font-spartan`}>
+          <div className={`${sidebarCollapsed ? 'md:ml-20' : 'md:ml-56'} transition-all duration-300 font-spartan`}>
             {/* Mobile Header */}
             <MobileAdminHeader
               activeTab={activeTab}
@@ -711,7 +711,7 @@ const AdminPanel = () => {
             </div>
 
             {/* Main Content Area */}
-            <div className="p-2 md:p-6">
+            <div className={activeTab === 'notifications' || activeTab === 'activity' ? 'p-0' : 'p-2 md:p-6'}>
               {loading ? (
                 <LoadingSpinner />
               ) : (

@@ -90,8 +90,8 @@ const browserStorage = {
 
 const storageAdapter = isBrowser ? browserStorage : {
   getItem: () => null,
-  setItem: () => {},
-  removeItem: () => {}
+  setItem: () => { },
+  removeItem: () => { }
 };
 
 export const supabase = createClient(
@@ -102,7 +102,7 @@ export const supabase = createClient(
       autoRefreshToken: isBrowser,
       persistSession: isBrowser,
       detectSessionInUrl: isBrowser,
-      multiTab: isBrowser,
+      multiTab: false,
       // Note: Storing tokens in localStorage is convenient but less secure than HttpOnly cookies.
       // For high-security applications, consider moving to server-side auth or HttpOnly cookies to prevent XSS.
       storage: storageAdapter,

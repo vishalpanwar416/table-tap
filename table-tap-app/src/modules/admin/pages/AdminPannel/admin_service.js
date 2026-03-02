@@ -121,6 +121,74 @@ export const uploadRestaurantLogo = async (file, restaurantId) => {
 };
 
 /**
+ * Transform restaurant data for easier frontend usage
+ * Handles PostGIS POINT format and owner mapping
+ */
+const transformRestaurantData = (restaurant) => {
+  if (!restaurant) return null;
+
+  // Extract latitude and longitude from PostGIS POINT format (WKT)
+  let latitude = '';
+  let longitude = '';
+
+  if (restaurant.location) {
+    if (typeof restaurant.location === 'string') {
+      // Handle WKT: POINT(lng lat)
+      const pointMatch = restaurant.location.match(/POINT\(([^)]+)\)/);
+      if (pointMatch) {
+        const coords = pointMatch[1].split(' ');
+        longitude = coords[0];
+        latitude = coords[1];
+      } else if (/^[0-9a-fA-F]+$/.test(restaurant.location)) {
+        // Likely WKB hex string - we can't easily parse this without a library
+        // but we'll leave latitude/longitude alone if they already exist in the object
+      }
+    } else if (restaurant.location.type === 'Point' && Array.isArray(restaurant.location.coordinates)) {
+      // Handle GeoJSON format
+      longitude = restaurant.location.coordinates[0];
+      latitude = restaurant.location.coordinates[1];
+    }
+  }
+
+  // Map staff/owner info
+  const ownerStaff = restaurant.restaurant_staff?.find(
+    staff => staff.staff_role === 'owner'
+  ) || restaurant.restaurant_staff?.find(
+    staff => staff.staff_role === 'manager'
+  );
+
+  let manager = null;
+  if (ownerStaff) {
+    if (ownerStaff.connected && ownerStaff.profiles) {
+      manager = {
+        name: ownerStaff.profiles.full_name,
+        email: ownerStaff.profiles.email,
+        id: ownerStaff.profiles.id,
+        connected: true,
+        role: ownerStaff.staff_role
+      };
+    } else {
+      manager = {
+        name: ownerStaff.staff_name,
+        email: ownerStaff.staff_email,
+        phone: ownerStaff.staff_phone_number,
+        connected: false,
+        staff_id: ownerStaff.id,
+        role: ownerStaff.staff_role
+      };
+    }
+  }
+
+  return {
+    ...restaurant,
+    latitude: latitude || restaurant.latitude || '',
+    longitude: longitude || restaurant.longitude || '',
+    manager: manager || restaurant.manager || null,
+    staff_count: restaurant.staff_count || 0
+  };
+};
+
+/**
  * Delete restaurant photo from storage
  */
 export const deleteRestaurantPhotoForAdmin = async (url) => {
@@ -202,87 +270,7 @@ export const getAllRestaurants = async () => {
     }
 
     // Step 3: Transform the data
-    const transformedData = data.map(restaurant => {
-
-      const ownerStaff = restaurant.restaurant_staff?.find(
-        staff => staff.staff_role === 'owner'
-      ) || restaurant.restaurant_staff?.find(
-        staff => staff.staff_role === 'manager'
-      ); // Fallback to manager
-
-      let manager = null; // Variable name kept as 'manager' to match UI prop expectation or I should rename it?
-      // The frontend RestaurantCard uses `restaurant.manager`. I should keep the KEY `manager` but populate it with Owner info.
-
-      if (ownerStaff) {
-        if (ownerStaff.connected && ownerStaff.profiles) {
-          manager = {
-            name: ownerStaff.profiles.full_name,
-            email: ownerStaff.profiles.email,
-            id: ownerStaff.profiles.id,
-            connected: true,
-            role: ownerStaff.staff_role // Add role info
-          };
-        } else {
-          manager = {
-            name: ownerStaff.staff_name,
-            email: ownerStaff.staff_email,
-            phone: ownerStaff.staff_phone_number,
-            connected: false,
-            staff_id: ownerStaff.id,
-            role: ownerStaff.staff_role
-          };
-        }
-      }
-
-      // Extract latitude and longitude from PostGIS POINT format
-      let latitude = '';
-      let longitude = '';
-      if (restaurant.location) {
-        const pointMatch = restaurant.location.match(/POINT\(([^)]+)\)/);
-        if (pointMatch) {
-          const coords = pointMatch[1].split(' ');
-          longitude = coords[0];
-          latitude = coords[1];
-        }
-      }
-
-      const transformed = {
-        id: restaurant.id,
-        name: restaurant.name,
-        address: restaurant.address,
-        contact_phone: restaurant.contact_phone,
-        contact_email: restaurant.contact_email,
-        cuisine_type: restaurant.cuisine_type,
-        is_active: restaurant.is_active,
-        logo_url: restaurant.logo_url,
-        restaurant_photo_url: restaurant.restaurant_photo_url,
-        description: restaurant.description,
-        opening_hours: restaurant.opening_hours,
-        location: restaurant.location,
-        latitude: latitude,
-        longitude: longitude,
-        social_media: restaurant.social_media,
-        google_maps_link: restaurant.google_maps_link,
-        razorpay_key_id: restaurant.razorpay_key_id,
-        gst_number: restaurant.gst_number,
-        fssai_license: restaurant.fssai_license,
-        manager: manager,
-        staff_count: 0,
-        created_at: restaurant.created_at,
-        updated_at: restaurant.updated_at,
-        ai_enabled: restaurant.ai_enabled,
-        aggregators_enabled: restaurant.aggregators_enabled,
-        swiggy_api_key: restaurant.swiggy_api_key,
-        zomato_api_key: restaurant.zomato_api_key,
-        billing_features_enabled: restaurant.billing_features_enabled,
-        online_bill_enabled: restaurant.online_bill_enabled,
-        auto_email_billing_enabled: restaurant.auto_email_billing_enabled,
-        created_at: restaurant.created_at,
-        updated_at: restaurant.updated_at
-      };
-
-      return transformed;
-    });
+    const transformedData = data.map(restaurant => transformRestaurantData(restaurant));
 
 
     // Step 4: Get staff counts (simplified)
@@ -546,7 +534,7 @@ export const createRestaurant = async (restaurantData) => {
       description: `New restaurant ${restaurant.name} created.`
     });
 
-    return { data: restaurant, error: null };
+    return { data: transformRestaurantData(restaurant), error: null };
   } catch (error) {
     return { data: null, error: error.message };
   }
@@ -598,7 +586,8 @@ export const updateRestaurant = async (restaurantId, updateData) => {
     }
 
     // FIX: Correct longitude/latitude order
-    const locationData = updateData.latitude && updateData.longitude
+    const locationData = (updateData.latitude !== null && updateData.latitude !== undefined && updateData.latitude !== '' &&
+      updateData.longitude !== null && updateData.longitude !== undefined && updateData.longitude !== '')
       ? `POINT(${updateData.longitude} ${updateData.latitude})`
       : null;
 
@@ -641,6 +630,14 @@ export const updateRestaurant = async (restaurantId, updateData) => {
 
     if (error) throw error;
 
+    // Transform returned data to ensure lat/lng are present
+    const transformed = transformRestaurantData({
+      ...data,
+      // If DB returned blank/WKB, use our known good updateData as backup
+      latitude: data.latitude || updateData.latitude,
+      longitude: data.longitude || updateData.longitude
+    });
+
     await logAdminActivity({
       activity_type: ACTIVITY_TYPES.RESTAURANT_UPDATED,
       activity_name: 'Restaurant Updated',
@@ -651,7 +648,7 @@ export const updateRestaurant = async (restaurantId, updateData) => {
       description: `Restaurant ${updateData.name || ''} updated.`
     });
 
-    return { data, error: null };
+    return { data: transformed, error: null };
   } catch (error) {
     return { data: null, error: error.message };
   }

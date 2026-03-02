@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Upload, Trash2, MapPin, Phone, Mail, Clock, Globe, Building2, Users, ChevronDown, Check, UserCog, Star, Award, ChefHat, UtensilsCrossed, Coins, Crown } from 'lucide-react';
-import { uploadRestaurantPhotoForAdmin, uploadRestaurantLogo, getRestaurantOwners, updateOwnerDetails } from '../admin_service.js';
+import { uploadRestaurantPhotoForAdmin, uploadRestaurantLogo, getRestaurantOwners, updateOwnerDetails, getSystemSetting } from '../admin_service.js';
 // Remove the supabase import since we're moving all calls to the service
 // import { supabase } from '../../../../shared/supabase'; 
 
@@ -54,14 +54,247 @@ const isShortGoogleMapsUrl = (url) => {
   );
 };
 
+// Map Picker Component
+const MapPicker = ({ apiKey, onLocationSelect, initialLocation }) => {
+  const mapRef = useRef(null);
+  const searchInputRef = useRef(null);
+  const [map, setMap] = useState(null);
+  const [marker, setMarker] = useState(null);
+  const [loadError, setLoadError] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!apiKey) {
+      setLoadError("Maps API Key is missing");
+      setIsLoading(false);
+      return;
+    }
+
+    const initMap = () => {
+      if (!mapRef.current) return;
+
+      try {
+        const defaultLat = parseFloat(initialLocation?.lat);
+        const defaultLng = parseFloat(initialLocation?.lng);
+
+        const hasValidCoords = !isNaN(defaultLat) && !isNaN(defaultLng);
+        const defaultLocation = hasValidCoords
+          ? { lat: defaultLat, lng: defaultLng }
+          : { lat: 20.5937, lng: 78.9629 }; // Center of India
+
+        const googleMap = new window.google.maps.Map(mapRef.current, {
+          center: defaultLocation,
+          zoom: hasValidCoords ? 16 : 5,
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: false,
+          gestureHandling: 'greedy', // Better for mobile
+        });
+
+        const googleMarker = new window.google.maps.Marker({
+          position: defaultLocation,
+          map: googleMap,
+          draggable: true,
+          animation: window.google.maps.Animation.DROP
+        });
+
+        // Add "Locate Me" control
+        const controlDiv = document.createElement("div");
+        const controlUI = document.createElement("button");
+        controlUI.type = "button";
+        controlUI.style.backgroundColor = "#fff";
+        controlUI.style.border = "2px solid #fff";
+        controlUI.style.borderRadius = "3px";
+        controlUI.style.boxShadow = "0 2px 6px rgba(0,0,0,.3)";
+        controlUI.style.cursor = "pointer";
+        controlUI.style.margin = "10px";
+        controlUI.style.padding = "8px";
+        controlUI.title = "Click to recenter to your location";
+        controlUI.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>';
+        controlDiv.appendChild(controlUI);
+
+        controlUI.addEventListener("click", () => {
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+              (position) => {
+                const pos = {
+                  lat: position.coords.latitude,
+                  lng: position.coords.longitude,
+                };
+                googleMap.setCenter(pos);
+                googleMap.setZoom(17);
+                googleMarker.setPosition(pos);
+                onLocationSelect(pos);
+              },
+              () => {
+                alert("Error: The Geolocation service failed.");
+              }
+            );
+          } else {
+            alert("Error: Your browser doesn't support geolocation.");
+          }
+        });
+
+        googleMap.controls[window.google.maps.ControlPosition.RIGHT_BOTTOM].push(controlDiv);
+
+        // Search Box logic
+        if (searchInputRef.current && window.google.maps.places) {
+          const searchBox = new window.google.maps.places.SearchBox(searchInputRef.current);
+
+          searchBox.addListener("places_changed", () => {
+            const places = searchBox.getPlaces();
+            if (places.length === 0) return;
+
+            const place = places[0];
+            if (!place.geometry || !place.geometry.location) return;
+
+            googleMap.setCenter(place.geometry.location);
+            googleMap.setZoom(17);
+            googleMarker.setPosition(place.geometry.location);
+
+            onLocationSelect({
+              lat: place.geometry.location.lat(),
+              lng: place.geometry.location.lng(),
+              address: place.formatted_address
+            });
+          });
+        }
+
+        // Click on map to move marker
+        googleMap.addListener("click", (e) => {
+          googleMarker.setPosition(e.latLng);
+          onLocationSelect({
+            lat: e.latLng.lat(),
+            lng: e.latLng.lng()
+          });
+        });
+
+        // Drag marker
+        googleMarker.addListener("dragend", () => {
+          const pos = googleMarker.getPosition();
+          onLocationSelect({
+            lat: pos.lat(),
+            lng: pos.lng()
+          });
+        });
+
+        setMap(googleMap);
+        setMarker(googleMarker);
+        setIsLoading(false);
+      } catch (err) {
+        console.error("Map initialization failed:", err);
+        setLoadError("Failed to initialize map. Check your API key and permissions.");
+        setIsLoading(false);
+      }
+    };
+
+    // Global auth failure handler
+    window.gm_authFailure = () => {
+      setLoadError("Google Maps Authentication Failed. Check API Key restrictions.");
+      setIsLoading(false);
+    };
+
+    if (window.google && window.google.maps) {
+      initMap();
+    } else {
+      const scriptId = 'google-maps-script';
+      if (!document.getElementById(scriptId)) {
+        const script = document.createElement("script");
+        script.id = scriptId;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+        script.async = true;
+        script.defer = true;
+        script.onload = initMap;
+        script.onerror = () => {
+          setLoadError("Failed to load Google Maps script.");
+          setIsLoading(false);
+        };
+        document.head.appendChild(script);
+      } else {
+        // Script already exists but google object not ready yet? Wait or check again
+        const interval = setInterval(() => {
+          if (window.google && window.google.maps) {
+            clearInterval(interval);
+            initMap();
+          }
+        }, 100);
+      }
+    }
+  }, [apiKey]);
+
+  return (
+    <div className="space-y-3">
+      {loadError ? (
+        <div className="w-full h-[300px] bg-red-50 rounded-2xl border border-red-100 flex flex-col items-center justify-center p-6 text-center">
+          <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-3">
+            <X className="w-6 h-6" />
+          </div>
+          <h4 className="text-sm font-bold text-red-900 mb-1">Map Error</h4>
+          <p className="text-xs text-red-600 max-w-[200px]">{loadError}</p>
+        </div>
+      ) : (
+        <>
+          <div className="relative group">
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Search for a location..."
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none bg-white shadow-sm pr-10"
+              onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
+            />
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-blue-500 transition-colors">
+              <Globe className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="relative">
+            <div
+              ref={mapRef}
+              className={`w-full h-[300px] rounded-2xl border border-gray-200 shadow-inner overflow-hidden transition-opacity duration-500 ${isLoading ? 'opacity-30' : 'opacity-100'}`}
+              style={{ background: '#f8fafc' }}
+            />
+            {isLoading && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mb-2"></div>
+                <span className="text-[10px] font-bold text-blue-600 uppercase tracking-tighter">Loading Map...</span>
+              </div>
+            )}
+          </div>
+          <p className="text-[10px] text-gray-500 italic flex items-center gap-1">
+            <span className="text-blue-500">TIP:</span> You can drag the marker or click anywhere on the map to set the exact location.
+          </p>
+        </>
+      )}
+    </div>
+  );
+};
+
 // Restaurant Modal
 export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEditing }) => {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(data.logo_url || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [restaurantPhotoFile, setRestaurantPhotoFile] = useState(null);
-  const [managers, setManagers] = useState([]); // Add this
-  const [selectedManagerId, setSelectedManagerId] = useState(''); // Add this
+  const [owners, setOwners] = useState([]); // Corrected state name
+  const [selectedOwnerId, setSelectedOwnerId] = useState(''); // Corrected state name
+  const [mapsApiKey, setMapsApiKey] = useState('');
+  const [showMap, setShowMap] = useState(false);
+
+  // Fetch Maps API key
+  useEffect(() => {
+    const fetchKey = async () => {
+      try {
+        const setting = await getSystemSetting('google_maps_key');
+        // Handle cases where setting might be a string or an object with key/api_key
+        const key = setting?.key || setting?.api_key || (typeof setting === 'string' ? setting : null);
+        if (key) {
+          setMapsApiKey(key);
+        }
+      } catch (err) {
+        console.error('Error fetching Maps key:', err);
+      }
+    };
+    fetchKey();
+  }, []);
 
   // Update image preview when data change
   useEffect(() => {
@@ -118,12 +351,18 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
     if (data.google_maps_link) {
       const { latitude, longitude } = extractCoordinatesFromGoogleMaps(data.google_maps_link);
       if (latitude && longitude) {
-        // Only update if different to avoid infinite loop
-        if (data.latitude !== latitude || data.longitude !== longitude) {
+        // Parse as numbers to compare correctly
+        const newLat = parseFloat(latitude);
+        const newLng = parseFloat(longitude);
+        const currentLat = parseFloat(data.latitude);
+        const currentLng = parseFloat(data.longitude);
+
+        // Only update if significantly different to avoid rounding issues and infinite loops
+        if (Math.abs(currentLat - newLat) > 0.000001 || Math.abs(currentLng - newLng) > 0.000001) {
           setData(prev => ({
             ...prev,
-            latitude,
-            longitude,
+            latitude: newLat,
+            longitude: newLng,
           }));
         }
       }
@@ -153,28 +392,61 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
     }
   };
 
+  // Handle location selection from Map
+  const handleLocationSelect = (location) => {
+    setData(prev => ({
+      ...prev,
+      latitude: location.lat,
+      longitude: location.lng,
+      // Only update address if it was provided (from search) and current address is empty
+      address: location.address && !prev.address ? location.address : prev.address
+    }));
+  };
+
+  const handleApplyMapsLink = () => {
+    const coords = extractCoordinatesFromGoogleMaps(data.google_maps_link);
+    if (coords.latitude && coords.longitude) {
+      setData(prev => ({
+        ...prev,
+        latitude: coords.latitude,
+        longitude: coords.longitude
+      }));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      // 1. First, update owner details if necessary (before closing modal)
+      if (isEditing && selectedOwnerId) {
+        // Ensure owner data is up to date in the staff record
+        const { error: ownerError } = await updateOwnerDetails(selectedOwnerId, {
+          owner_name: data.owner_name,
+          owner_email: data.owner_email,
+          owner_phone: data.owner_phone
+        });
+        if (ownerError) {
+          console.error('Error updating owner details:', ownerError);
+        }
+      }
+
+      // 2. Upload photo if changed
+      if (restaurantPhotoFile && data.id) {
+        const { url, error: uploadError } = await uploadRestaurantPhotoForAdmin(restaurantPhotoFile, data.id);
+        if (uploadError) {
+          console.error('Error uploading photo:', uploadError);
+        } else if (url) {
+          data.restaurant_photo_url = url;
+        }
+      }
+
+      // 3. Call the parent's onSubmit (which updates restaurant table and closes modal)
       await onSubmit(e);
 
-      // If editing and an owner is selected, update the owner details
-      if (isEditing && selectedOwnerId) {
-        const { error } = await updateOwnerDetails(selectedOwnerId, data);
-        if (error) {
-          console.error('Error updating owner details:', error);
-        }
-      }
-
-      // Then upload the photo if there's a file
-      if (restaurantPhotoFile && data.id) {
-        const { url, error } = await uploadRestaurantPhotoForAdmin(restaurantPhotoFile, data.id);
-        if (url) {
-          // Update the restaurant with the photo URL
-          // You might need to call an update function here
-        }
-      }
+    } catch (error) {
+      console.error('Submit error:', error);
+      alert('Failed to update: ' + error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -563,18 +835,70 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
             </div>
 
             {/* Google Maps Link */}
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <Globe className="w-4 h-4 text-green-500" />
-                Google Maps Link
-              </label>
-              <input
-                type="url"
-                value={data.google_maps_link || ''}
-                onChange={(e) => setData({ ...data, google_maps_link: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
-                placeholder="Paste Google Maps URL"
-              />
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-green-500" />
+                  Google Maps Link
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!mapsApiKey) {
+                      alert("Please configure 'google_maps_key' in System Settings to use the map picker.");
+                      return;
+                    }
+                    setShowMap(!showMap);
+                  }}
+                  className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1.5 
+                    ${showMap
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-100'
+                      : mapsApiKey
+                        ? 'bg-white text-blue-600 border-blue-100 hover:bg-blue-50'
+                        : 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed'}`}
+                >
+                  <MapPin className="w-3 h-3" />
+                  {showMap ? 'Hide Map' : 'Pick from Map'}
+                </button>
+              </div>
+
+              {showMap && mapsApiKey && (
+                <div className="animate-in fade-in slide-in-from-top-4 duration-300 space-y-4">
+                  <MapPicker
+                    apiKey={mapsApiKey}
+                    onLocationSelect={handleLocationSelect}
+                    initialLocation={{ lat: data.latitude, lng: data.longitude }}
+                  />
+                  <div className="flex justify-end pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowMap(false)}
+                      className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
+                    >
+                      <Check className="w-4 h-4" />
+                      Confirm Selection
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={data.google_maps_link || ''}
+                  onChange={(e) => setData({ ...data, google_maps_link: e.target.value })}
+                  className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
+                  placeholder="Paste Google Maps URL"
+                />
+                <button
+                  type="button"
+                  onClick={handleApplyMapsLink}
+                  className="px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold text-sm hover:bg-gray-200 transition-colors whitespace-nowrap"
+                  title="Extract Coordinates from Link"
+                >
+                  Apply Link
+                </button>
+              </div>
             </div>
 
             {/* Latitude & Longitude */}

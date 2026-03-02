@@ -133,10 +133,16 @@ const Sidebar = ({
             <div className="flex flex-col items-center space-y-2">
               <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center overflow-hidden shadow-lg border border-white/10 p-2">
                 <img
+                  key={restaurantLogoUrl || 'default'}
                   src={restaurantLogoUrl || currentUser?.restaurant_logo_url || tableTapLogo}
                   alt={restaurantName || "Restaurant Logo"}
                   className="w-full h-full object-contain"
-                  onError={(e) => { e.target.src = tableTapLogo; }}
+                  onError={(e) => {
+                    if (e.target.src !== tableTapLogo) {
+                      e.target.onerror = null;
+                      e.target.src = tableTapLogo;
+                    }
+                  }}
                 />
               </div>
               {!collapsed && (

@@ -5,8 +5,8 @@ import { useAuth } from '../../shared/config/AuthContext';
 
 const AdminRestaurantContext = createContext();
 
-// Restaurants we never want to surface in the admin UI (legacy demo data)
-const BLOCKED_RESTAURANT_NAMES = ['Restaurant-1', 'Resturant-1'];
+// Restaurants we never want to surface in the admin UI (legacy demo data) - currently empty to allow all for development
+const BLOCKED_RESTAURANT_NAMES = []; // was ['Restaurant-1', 'Resturant-1']
 const filterBlockedRestaurants = (list = []) =>
   list.filter(r => !BLOCKED_RESTAURANT_NAMES.includes((r.name || '').trim()));
 
@@ -64,6 +64,15 @@ export const AdminRestaurantProvider = ({ children }) => {
         return;
       }
 
+      const safetyTimer = setTimeout(() => {
+        if (mounted && loading) {
+          console.warn('[AdminRestaurantContext] Initialization timeout, force clearing...');
+          if (userRole === null) setUserRole('customer');
+          if (ownedRestaurants.length === 0) setOwnedRestaurants([]);
+          setLoading(false);
+        }
+      }, 10000);
+
       try {
         if (!userRole) setLoading(true);
         setError(null);
@@ -97,24 +106,36 @@ export const AdminRestaurantProvider = ({ children }) => {
 
         // 2. Fetch Restaurants via Edge Function
         // This handles Admin (all active), Owner (all connected), and Manager/Staff (single connected) logic securely
-        const { data: funcData, error: funcError } = await supabase.functions.invoke('fetch-owner-restaurants');
+        try {
+          const { data: funcData, error: funcError } = await supabase.functions.invoke('fetch-owner-restaurants');
 
-        if (funcError) {
-          console.error('[AdminRestaurantContext] Edge Object fetch error:', funcError);
-          // Fallback to basic DB fetch if edge function fails
-          const { data: staffRows } = await supabase
-            .from('restaurant_staff')
-            .select('restaurant_id')
-            .eq('user_id', user.id)
-            .eq('connected', true);
-
-          if (staffRows && staffRows.length > 0) {
-            const ids = staffRows.map(r => r.restaurant_id);
-            const { data: rests } = await supabase.from('restaurants').select('*').in('id', ids).eq('is_active', true);
-            availableRestaurants = rests || [];
+          if (!funcError && funcData && funcData.restaurants) {
+            availableRestaurants = funcData.restaurants;
+          } else {
+            if (funcError) console.warn('[AdminRestaurantContext] Edge Function error, falling back:', funcError);
+            throw new Error('Edge function failed');
           }
-        } else if (funcData && funcData.restaurants) {
-          availableRestaurants = funcData.restaurants;
+        } catch (funcErr) {
+          // Fallback to basic DB fetch if edge function fails or causes CORS/network error
+          if (role === 'admin') {
+            const { data: allRests } = await supabase
+              .from('restaurants')
+              .select('*')
+              .eq('is_active', true);
+            availableRestaurants = allRests || [];
+          } else {
+            const { data: staffRows } = await supabase
+              .from('restaurant_staff')
+              .select('restaurant_id')
+              .eq('user_id', user.id)
+              .eq('connected', true);
+
+            if (staffRows && staffRows.length > 0) {
+              const ids = staffRows.map(r => r.restaurant_id);
+              const { data: rests } = await supabase.from('restaurants').select('*').in('id', ids).eq('is_active', true);
+              availableRestaurants = rests || [];
+            }
+          }
         }
 
         if (!mounted) return;
@@ -132,7 +153,11 @@ export const AdminRestaurantProvider = ({ children }) => {
           targetId = urlRestaurantId;
         } else if (storedId && filteredIds.includes(storedId)) {
           targetId = storedId;
-        } else if (filteredRestaurants.length > 0) {
+        } else if (filteredRestaurants.length === 1) {
+          // Only auto-select if exactly 1 restaurant is available (or for non-admins)
+          targetId = filteredRestaurants[0].id;
+        } else if (!['admin', 'owner'].includes(role) && filteredRestaurants.length > 0) {
+          // For managers, staff, etc - always pick their assigned one
           targetId = filteredRestaurants[0].id;
         }
 
@@ -156,6 +181,7 @@ export const AdminRestaurantProvider = ({ children }) => {
         console.error('[AdminRestaurantContext] Initialization error:', err);
         setError('System error loading management data');
       } finally {
+        clearTimeout(safetyTimer);
         if (mounted) setLoading(false);
       }
     };

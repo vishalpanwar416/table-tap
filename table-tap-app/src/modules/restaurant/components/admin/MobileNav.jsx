@@ -100,10 +100,16 @@ const MobileNav = ({ showMobileNav, setShowMobileNav, activeTab, setActiveTab, m
             <h1 className="text-lg font-bold flex items-center gap-3 flex-1 min-w-0 mr-2">
               <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center overflow-hidden p-1 flex-shrink-0">
                 <img
+                  key={restaurantLogoUrl || 'default'}
                   src={restaurantLogoUrl || currentUser?.restaurant_logo_url || tableTapLogo}
                   alt="Logo"
                   className="w-full h-full object-contain"
-                  onError={(e) => { e.target.src = tableTapLogo; }}
+                  onError={(e) => {
+                    if (e.target.src !== tableTapLogo) {
+                      e.target.onerror = null;
+                      e.target.src = tableTapLogo;
+                    }
+                  }}
                 />
               </div>
               <div className="flex flex-col min-w-0">
