@@ -764,6 +764,66 @@ const SubscriptionManagementV2 = () => {
     }
   };
 
+  const handleSendRenewalReminder = async (subscription) => {
+    if (!subscription.restaurant?.contact_email) {
+      handleError("This restaurant currently has no contact email configured.");
+      return;
+    }
+
+    setProcessingId(`remind-${subscription.id}`);
+
+    try {
+      // Fetch template
+      const template = await getEmailTemplate('email_template_renewal_reminder');
+
+      let subject = `Action Required: Your Table Tap Subscription is Expiring Soon`;
+      let html = `<p>Hello,</p><p>This is a reminder that your subscription is expiring.</p>`;
+
+      if (template) {
+        subject = template.subject;
+        html = template.html;
+
+        const vars = {
+          restaurant_name: subscription.restaurant.name,
+          plan_name: subscription.plan_name,
+          days_left: subscription.daysUntilExpiry,
+          expiration_date: formatDate(subscription.end_date)
+        };
+
+        const applied = applyTemplate(template.subject, template.html, vars);
+        subject = applied.subject;
+        html = applied.html;
+      }
+
+      const { data, error } = await supabase.functions.invoke('send-email', {
+        body: {
+          to: subscription.restaurant.contact_email,
+          subject: subject,
+          html: html,
+          text: `Your subscription for ${subscription.restaurant.name} is expiring in ${subscription.daysUntilExpiry} days.`
+        }
+      });
+
+      if (error) throw error;
+      if (data && data.success === false) {
+        throw new Error(data.error || "Email service returned failure.");
+      }
+
+      setSuccess(`Reminder email sent to ${subscription.restaurant.contact_email}`);
+
+    } catch (err) {
+      console.error('Email send failed:', err);
+      if (err.message && (err.message.includes('Function not found') || err.message.includes('Failed to fetch'))) {
+        handleError("Email service unavailable. Please define and deploy the 'send-email' function.");
+      } else {
+        handleError(`Failed to send reminder: ${err.message}`);
+      }
+    } finally {
+      setProcessingId(null);
+      setTimeout(() => setSuccess(null), 3000);
+    }
+  };
+
   // Dedicated Invoice Page View
   if (viewingInvoices && selectedBillingRestaurant) {
     return (
@@ -970,68 +1030,66 @@ const SubscriptionManagementV2 = () => {
         </div>
       )}
 
-      {/* Tabs */}
-      {/* Tabs - Modern Pills */}
-      <div className="flex overflow-x-auto pb-2 no-scrollbar">
-        <nav className="flex space-x-2 p-1 bg-gray-100/50 rounded-2xl">
-          {[
-            { id: 'overview', label: 'Overview', icon: TrendingUp },
-            { id: 'subscriptions', label: 'All Subscriptions', icon: Building2 },
-            { id: 'billing', label: 'Billing & Invoices', icon: IndianRupee },
-            { id: 'expiring', label: 'Expiring Soon', icon: AlertTriangle, count: upcomingRenewals.length },
-            { id: 'plans', label: 'Plans', icon: Package }
-          ].map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`group flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 whitespace-nowrap flex-shrink-0 ${isActive
-                  ? 'bg-black text-white shadow-lg shadow-gray-900/20'
-                  : 'text-gray-500 hover:bg-white hover:text-gray-900 hover:shadow-sm'
-                  }`}
-              >
-                <tab.icon className={`w-4 h-4 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-600'}`} />
-                {tab.label}
-                {tab.count > 0 && (
-                  <span className={`ml-1 px-2 py-0.5 text-[10px] rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-orange-100 text-orange-600'
-                    }`}>
-                    {tab.count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
+      {/* Top Navigation & Actions */}
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-2 md:gap-4 font-spartan">
+        {/* Tabs - Compact Pills */}
+        <div className="w-full xl:w-auto overflow-x-auto no-scrollbar pb-1 md:pb-0">
+          <nav className="flex space-x-1 md:space-x-1.5 p-0.5 md:p-1 bg-gray-50 rounded-xl border border-gray-100 max-w-max">
+            {[
+              { id: 'overview', label: 'Overview', icon: TrendingUp },
+              { id: 'subscriptions', label: 'All Subscriptions', icon: Building2 },
+              { id: 'billing', label: 'Billing & Invoices', icon: IndianRupee },
+              { id: 'expiring', label: 'Expiring Soon', icon: AlertTriangle, count: upcomingRenewals.length },
+              { id: 'plans', label: 'Plans', icon: Package }
+            ].map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`group flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-bold transition-all duration-200 whitespace-nowrap flex-shrink-0 ${isActive
+                    ? 'bg-black text-white shadow-md'
+                    : 'text-gray-500 hover:bg-white hover:text-gray-900 shadow-sm'
+                    }`}
+                >
+                  <tab.icon className={`w-3.5 h-3.5 md:w-4 md:h-4 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-600'}`} />
+                  {tab.label}
+                  {tab.count > 0 && (
+                    <span className={`ml-1 px-1.5 md:px-2 py-0.5 text-[9px] md:text-[10px] rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-orange-100 text-orange-600'
+                      }`}>
+                      {tab.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Quick Actions (Always visible) */}
+        <div className="flex items-center gap-1.5 md:gap-2 w-full xl:w-auto pt-1 md:pt-0">
+          <button
+            onClick={handleProcessExpired}
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 bg-white border border-orange-200 text-orange-700 rounded-lg hover:bg-orange-50 transition-all shadow-sm text-xs md:text-sm font-bold flex-1 xl:flex-initial whitespace-nowrap"
+            title="Process Expirations"
+          >
+            <CalendarClock className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0" />
+            <span>Process Expirations</span>
+          </button>
+          <button
+            onClick={() => openAssignModal()}
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-all shadow-md text-xs md:text-sm font-bold flex-1 xl:flex-initial whitespace-nowrap"
+            title="Assign Subscription"
+          >
+            <Package className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0" />
+            <span>Assign Subscription</span>
+          </button>
+        </div>
       </div>
 
       {/* Overview Tab */}
       {activeTab === 'overview' && stats && (
-        <div className="space-y-6 animate-in fade-in duration-300">
-
-          {/* Quick Actions Toolbar */}
-          <div className="flex flex-wrap items-center justify-end gap-4 bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
-            <div className="flex gap-2 w-full md:w-auto overflow-x-auto no-scrollbar md:gap-3">
-              <button
-                onClick={handleProcessExpired}
-                className="flex items-center justify-center gap-2 px-3 py-2 md:px-4 md:py-2.5 bg-white border border-orange-200 text-orange-700 rounded-xl hover:bg-orange-50 transition-all shadow-sm text-xs md:text-sm font-medium flex-1 md:flex-initial whitespace-nowrap"
-                title="Process Expirations"
-              >
-                <CalendarClock className="w-4 h-4 flex-shrink-0" />
-                <span className="hidden md:inline">Process Expirations</span>
-                <span className="md:hidden">Expiry</span>
-              </button>
-              <button
-                onClick={() => openAssignModal()}
-                className="flex items-center justify-center gap-2 px-3 py-2 md:px-5 md:py-2.5 bg-black text-white rounded-xl hover:bg-gray-800 transition-all shadow-lg shadow-gray-200 text-xs md:text-sm font-medium flex-1 md:flex-initial whitespace-nowrap"
-                title="Assign Subscription"
-              >
-                <Package className="w-4 h-4 flex-shrink-0" />
-                <span className="hidden md:inline">Assign Subscription</span>
-                <span className="md:hidden">Assign</span>
-              </button>
-            </div>
-          </div>
+        <div className="space-y-4 animate-in fade-in duration-300 font-spartan">
 
           {/* Stats Cards - Compact Single Line on Mobile */}
           <div className="grid grid-cols-4 gap-1.5 md:gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -1424,14 +1482,24 @@ const SubscriptionManagementV2 = () => {
                   <div className="mt-auto pt-4 border-t border-dashed border-gray-200">
                     <div className="flex justify-between items-center mb-4 text-xs font-medium text-gray-500">
                       <span>Expires: {formatDate(sub.end_date)}</span>
-                      <span className="font-bold text-gray-900">₹{sub.total_amount?.toLocaleString()}</span>
+                      <span className="font-bold text-gray-900">₹{sub.total_amount?.toLocaleString() || 0}</span>
                     </div>
-                    <button
-                      onClick={() => openAssignModal(sub)}
-                      className="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-orange-500/20 hover:to-red-600 transition-all"
-                    >
-                      Renew Subscription
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => openAssignModal(sub)}
+                        className="flex-1 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-orange-500/20 hover:to-red-600 transition-all"
+                      >
+                        Renew
+                      </button>
+                      <button
+                        onClick={() => handleSendRenewalReminder(sub)}
+                        disabled={processingId === `remind-${sub.id}`}
+                        className="px-4 py-3 bg-orange-50 text-orange-600 border border-orange-200 rounded-xl font-bold text-sm hover:bg-orange-100 transition-all flex items-center justify-center disabled:opacity-50"
+                        title="Send Reminder Email"
+                      >
+                        {processingId === `remind-${sub.id}` ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))
@@ -1470,12 +1538,22 @@ const SubscriptionManagementV2 = () => {
                     <div className="text-xs text-gray-500">
                       Expires: <span className="text-gray-900 font-bold">{formatDate(sub.end_date)}</span>
                     </div>
-                    <button
-                      onClick={() => openAssignModal(sub)}
-                      className="px-4 py-1.5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg text-xs font-bold shadow-sm hover:to-red-600 transition-all"
-                    >
-                      Renew
-                    </button>
+                    <div className="flex gap-1.5">
+                      <button
+                        onClick={() => handleSendRenewalReminder(sub)}
+                        disabled={processingId === `remind-${sub.id}`}
+                        className="p-1.5 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition-all shadow-sm disabled:opacity-50"
+                        title="Remind"
+                      >
+                        {processingId === `remind-${sub.id}` ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                      </button>
+                      <button
+                        onClick={() => openAssignModal(sub)}
+                        className="px-4 py-1.5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg text-xs font-bold shadow-sm hover:to-red-600 transition-all"
+                      >
+                        Renew
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))

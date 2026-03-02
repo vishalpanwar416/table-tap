@@ -6,34 +6,23 @@ import {
   markAllManagerNotificationsAsRead,
   subscribeToManagerNotifications
 } from '../api/notificationService';
+import { useAdminRestaurant } from './AdminRestaurantContext';
 
 const ManagerNotificationContext = createContext();
 
 export const ManagerNotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  // Use centralized restaurant context instead of re-fetching manually
+  const { userRestaurantId } = useAdminRestaurant();
   const [restaurantId, setRestaurantId] = useState(null);
 
-  // Fetch user's restaurant ID on mount
+  // Sync internal state with AdminRestaurantContext
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      // Try to get restaurant_id from metadata or profile
-      // Assuming it's in user_metadata for now as per other parts of the app often do
-      if (user?.user_metadata?.restaurant_id) {
-        setRestaurantId(user.user_metadata.restaurant_id);
-      } else {
-        // Double check via profile table if needed, but for now rely on metadata first or context usage
-        // If not found in metadata, we might need to fetch profile.
-        // Let's try to fetch profile
-        if (user) {
-          const { data: profile } = await supabase.from('profiles').select('restaurant_id').eq('id', user.id).single();
-          if (profile?.restaurant_id) setRestaurantId(profile.restaurant_id);
-        }
-      }
-    };
-    getUser();
-  }, []);
+    if (userRestaurantId) {
+      setRestaurantId(userRestaurantId);
+    }
+  }, [userRestaurantId]);
 
   const fetchManagerNotifications = async () => {
     if (!restaurantId) return; // Don't fetch if no restaurant ID known yet

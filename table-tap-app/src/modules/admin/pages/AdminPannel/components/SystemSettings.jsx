@@ -518,6 +518,7 @@ const SystemSettings = () => {
                                     onTestEmail={handleTestEmail}
                                     onTestTemplate={handleTestTemplate}
                                     onPreviewInvoice={handlePreviewInvoice}
+                                    onPreviewTemplate={handlePreviewTemplate}
                                     isPopup={true}
                                     onClose={() => setEditingSetting(null)}
                                 />

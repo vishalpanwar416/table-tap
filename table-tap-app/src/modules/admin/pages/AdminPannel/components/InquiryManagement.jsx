@@ -107,62 +107,82 @@ const InquiryManagement = ({ searchTerm = '' }) => {
     }
 
     return (
-        <div className="space-y-6 md:space-y-8 font-spartan">
-            {/* Toolbar - Stats & Filters in a single line on Desktop */}
-            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-                {/* Stats Toolbar */}
-                <div className="grid grid-cols-4 gap-1.5 md:flex md:items-center md:gap-3">
-                    {/* Total Leads */}
-                    <div className="flex flex-col md:flex-row items-center justify-center md:justify-start md:gap-2 px-1 py-2 md:px-4 md:py-3 bg-white rounded-xl border border-gray-100 shadow-sm">
-                        <span className="text-[9px] md:text-xs text-gray-500 font-bold uppercase tracking-wider text-center">Total</span>
-                        <span className="text-xs md:text-lg font-bold text-gray-900 leading-tight">{inquiries.length}</span>
+        <div className="w-full h-full font-spartan">
+            {/* Stats Cards - Compact on Mobile */}
+            <div className="grid grid-cols-4 gap-1 md:gap-3 px-1 md:px-0 mt-1 md:mt-2 pb-2 md:pb-0">
+                <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-3 shadow-sm flex flex-col items-center justify-center text-center">
+                    <div className="p-1 md:p-1.5 bg-blue-100 rounded-lg mb-0.5 md:mb-1">
+                        <User className="w-3 h-3 md:w-4 md:h-4 text-blue-600" />
                     </div>
-
-                    {/* New Leads */}
-                    <div className="flex flex-col md:flex-row items-center justify-center md:justify-start md:gap-2 px-1 py-2 md:px-4 md:py-3 bg-amber-50 rounded-xl border border-amber-100">
-                        <span className="text-[9px] md:text-xs text-amber-600 font-bold uppercase tracking-wider text-center">New</span>
-                        <span className="text-xs md:text-lg font-bold text-amber-700 leading-tight">
-                            {inquiries.filter(i => i.status === 'new' || !i.status).length}
-                        </span>
-                    </div>
-
-                    {/* Converted */}
-                    <div className="flex flex-col md:flex-row items-center justify-center md:justify-start md:gap-2 px-1 py-2 md:px-4 md:py-3 bg-green-50 rounded-xl border border-green-100">
-                        <span className="text-[9px] md:text-xs text-green-600 font-bold uppercase tracking-wider text-center">Won</span>
-                        <span className="text-xs md:text-lg font-bold text-green-700 leading-tight">
-                            {inquiries.filter(i => i.status === 'converted').length}
-                        </span>
-                    </div>
-
-                    {/* Restaurants */}
-                    <div className="flex flex-col md:flex-row items-center justify-center md:justify-start md:gap-2 px-1 py-2 md:px-4 md:py-3 bg-purple-50 rounded-xl border border-purple-100">
-                        <span className="text-[9px] md:text-xs text-purple-600 font-bold uppercase tracking-wider text-center">Rest.</span>
-                        <span className="text-xs md:text-lg font-bold text-purple-700 leading-tight">
-                            {new Set(inquiries.map(i => i.restaurant_name).filter(Boolean)).size}
-                        </span>
+                    <div>
+                        <p className="text-xs md:text-xl font-bold text-gray-900 leading-none">{inquiries.length}</p>
+                        <p className="text-[9px] md:text-[10px] text-gray-500 mt-0.5 font-bold uppercase tracking-wider">Total</p>
                     </div>
                 </div>
 
-                {/* Filters & Refresh */}
-                <div className="bg-white p-2.5 md:p-3 rounded-2xl border border-gray-100 shadow-sm flex flex-row gap-3 items-center justify-end">
-                    <div className="flex items-center gap-3 w-full md:w-auto">
-                        <Filter size={18} className="text-gray-400" />
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-sm flex-1 md:flex-none font-bold"
-                        >
-                            <option value="all">All Status</option>
-                            <option value="new">New</option>
-                            <option value="contacted">Contacted</option>
-                            <option value="converted">Converted</option>
-                            <option value="ignored">Ignored</option>
-                        </select>
+                <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-3 shadow-sm flex flex-col items-center justify-center text-center">
+                    <div className="p-1 md:p-1.5 bg-amber-100 rounded-lg mb-0.5 md:mb-1">
+                        <AlertCircle className="w-3 h-3 md:w-4 md:h-4 text-amber-600" />
+                    </div>
+                    <div>
+                        <p className="text-xs md:text-xl font-bold text-gray-900 leading-none">{inquiries.filter(i => i.status === 'new' || !i.status).length}</p>
+                        <p className="text-[9px] md:text-[10px] text-gray-500 mt-0.5 font-bold uppercase tracking-wider">New</p>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-3 shadow-sm flex flex-col items-center justify-center text-center">
+                    <div className="p-1 md:p-1.5 bg-green-100 rounded-lg mb-0.5 md:mb-1">
+                        <CheckCircle2 className="w-3 h-3 md:w-4 md:h-4 text-green-600" />
+                    </div>
+                    <div>
+                        <p className="text-xs md:text-xl font-bold text-gray-900 leading-none">{inquiries.filter(i => i.status === 'converted').length}</p>
+                        <p className="text-[9px] md:text-[10px] text-gray-500 mt-0.5 font-bold uppercase tracking-wider">Won</p>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-3 shadow-sm flex flex-col items-center justify-center text-center">
+                    <div className="p-1 md:p-1.5 bg-purple-100 rounded-lg mb-0.5 md:mb-1">
+                        <Building2 className="w-3 h-3 md:w-4 md:h-4 text-purple-600" />
+                    </div>
+                    <div>
+                        <p className="text-xs md:text-xl font-bold text-gray-900 leading-none">{new Set(inquiries.map(i => i.restaurant_name).filter(Boolean)).size}</p>
+                        <p className="text-[9px] md:text-[10px] text-gray-500 mt-0.5 font-bold uppercase tracking-wider">Rest.</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Filters */}
+            <div className="bg-white border-y md:border md:rounded-xl border-gray-200 md:shadow-sm mb-2 md:mb-3 mt-2 md:mt-4 overflow-x-auto no-scrollbar">
+                <div className="p-2 md:p-3 min-w-max flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <div className="flex bg-gray-50 rounded-lg border border-gray-200 p-0.5 overflow-hidden">
+                            {[
+                                { value: 'all', label: 'All Status' },
+                                { value: 'new', label: 'New' },
+                                { value: 'contacted', label: 'Contacted' },
+                                { value: 'converted', label: 'Converted' },
+                                { value: 'ignored', label: 'Ignored' }
+                            ].map(({ value, label }) => (
+                                <button
+                                    key={value}
+                                    onClick={() => setStatusFilter(value)}
+                                    className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${statusFilter === value
+                                        ? 'bg-white text-blue-600 shadow-sm border border-gray-200/50'
+                                        : 'text-gray-500 hover:text-gray-700'
+                                        }`}
+                                >
+                                    {label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 border-l border-gray-200 pl-2 sm:pl-3">
                         <button
                             onClick={fetchInquiries}
-                            className="p-2 hover:bg-gray-100 rounded-xl text-gray-500 transition-colors shrink-0"
+                            className="p-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all"
+                            title="Refresh"
                         >
-                            <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+                            <RefreshCw className={`w-4 h-4 md:w-4 md:h-4 ${loading ? 'animate-spin' : ''}`} />
                         </button>
                     </div>
                 </div>

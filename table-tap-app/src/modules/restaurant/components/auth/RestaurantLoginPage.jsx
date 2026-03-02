@@ -51,6 +51,11 @@ export default function RestaurantLoginPage() {
             const role = profile?.profile_role || profile?.role;
 
             if (profile && ALLOWED_ROLES.includes(role)) {
+                // Clear any leftover selected restaurant so they land on selection page if they have multiple
+                try {
+                    localStorage.removeItem('admin_selected_restaurant');
+                } catch (e) { }
+
                 navigate('/dashboard');
             } else {
                 setError('You do not have access to the restaurant dashboard. Please contact your administrator.');

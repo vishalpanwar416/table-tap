@@ -272,54 +272,74 @@ const AdminActivityLogs = ({ searchTerm }) => {
   }, [logs, searchTerm]);
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto">
+    <div className="w-full h-full md:p-6 lg:max-w-[1600px] mx-auto">
       {/* Header Actions - Moved to Filters */}
 
       {/* Stats Cards */}
       {stats && (
-        <div className="flex items-center gap-2 mt-2 overflow-x-auto pb-2 no-scrollbar px-1">
+        <div className="grid grid-cols-5 gap-1 md:gap-3 px-1 md:px-0 mt-1 md:mt-2 pb-2 md:pb-0 overflow-x-auto no-scrollbar">
           {/* Total */}
-          <div className="bg-white rounded-lg border border-gray-100 p-2 min-w-[70px] flex flex-col items-center justify-center flex-shrink-0 shadow-sm">
-            <Activity className="w-3.5 h-3.5 text-blue-600 mb-1" />
-            <p className="text-sm font-bold text-gray-900 leading-tight">{stats.total}</p>
-            <p className="text-[9px] text-gray-400">Total</p>
+          <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
+            <div className="p-1 md:p-2 bg-blue-100 rounded-lg mb-1">
+              <Activity className="w-3.5 h-3.5 md:w-5 md:h-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">{stats.total}</p>
+              <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate w-full">Total</p>
+            </div>
           </div>
 
           {/* Sent */}
-          <div className="bg-white rounded-lg border border-gray-100 p-2 min-w-[70px] flex flex-col items-center justify-center flex-shrink-0 shadow-sm">
-            <MailCheck className="w-3.5 h-3.5 text-green-600 mb-1" />
-            <p className="text-sm font-bold text-gray-900 leading-tight">{stats.emails.sent}</p>
-            <p className="text-[9px] text-gray-400">Sent</p>
+          <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
+            <div className="p-1 md:p-2 bg-green-100 rounded-lg mb-1">
+              <MailCheck className="w-3.5 h-3.5 md:w-5 md:h-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">{stats.emails.sent}</p>
+              <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate w-full">Sent</p>
+            </div>
           </div>
 
           {/* Failed */}
-          <div className="bg-white rounded-lg border border-gray-100 p-2 min-w-[70px] flex flex-col items-center justify-center flex-shrink-0 shadow-sm">
-            <MailX className="w-3.5 h-3.5 text-red-600 mb-1" />
-            <p className="text-sm font-bold text-gray-900 leading-tight">{stats.emails.failed}</p>
-            <p className="text-[9px] text-gray-400">Failed</p>
+          <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
+            <div className="p-1 md:p-2 bg-red-100 rounded-lg mb-1">
+              <MailX className="w-3.5 h-3.5 md:w-5 md:h-5 text-red-600" />
+            </div>
+            <div>
+              <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">{stats.emails.failed}</p>
+              <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate w-full">Failed</p>
+            </div>
           </div>
 
           {/* Successful */}
-          <div className="bg-white rounded-lg border border-gray-100 p-2 min-w-[70px] flex flex-col items-center justify-center flex-shrink-0 shadow-sm">
-            <CheckCircle className="w-3.5 h-3.5 text-emerald-600 mb-1" />
-            <p className="text-sm font-bold text-gray-900 leading-tight">{stats.byStatus.success}</p>
-            <p className="text-[9px] text-gray-400">Success</p>
+          <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
+            <div className="p-1 md:p-2 bg-emerald-100 rounded-lg mb-1">
+              <CheckCircle className="w-3.5 h-3.5 md:w-5 md:h-5 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">{stats.byStatus.success}</p>
+              <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate w-full">Success</p>
+            </div>
           </div>
 
           {/* Pending */}
-          <div className="bg-white rounded-lg border border-gray-100 p-2 min-w-[70px] flex flex-col items-center justify-center flex-shrink-0 shadow-sm">
-            <Clock className="w-3.5 h-3.5 text-amber-600 mb-1" />
-            <p className="text-sm font-bold text-gray-900 leading-tight">{stats.byStatus.pending}</p>
-            <p className="text-[9px] text-gray-400">Pending</p>
+          <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
+            <div className="p-1 md:p-2 bg-amber-100 rounded-lg mb-1">
+              <Clock className="w-3.5 h-3.5 md:w-5 md:h-5 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">{stats.byStatus.pending}</p>
+              <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate w-full">Pending</p>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Filters & Search */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm mb-6">
-        <div className="p-4 border-b border-gray-100">
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-            {/* Refresh & Export */}
+      {/* Filters, Sort & Actions - Single Line on Desktop */}
+      <div className="bg-white border-y md:border md:rounded-xl border-gray-200 md:shadow-sm mb-2 md:mb-3 mt-2 md:mt-4 overflow-x-auto no-scrollbar">
+        <div className="p-2 md:p-3 md:border-b md:border-gray-100 min-w-max">
+          <div className="flex items-center justify-between gap-2 sm:gap-3">
+            {/* Left side actions */}
             <div className="flex items-center gap-2 flex-shrink-0">
 
               <button className="flex items-center gap-1.5 px-2 py-2 md:px-3 bg-white border border-gray-200 rounded-lg shadow-sm text-xs font-medium whitespace-nowrap active:bg-gray-50">
@@ -331,38 +351,45 @@ const AdminActivityLogs = ({ searchTerm }) => {
 
 
 
-            {/* Status Filter (Dropdown) */}
-            <div className="relative">
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="appearance-none pl-3 pr-8 py-2 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-700 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none shadow-sm flex-shrink-0 min-w-[110px]"
-              >
-                <option value="all">All Status</option>
-                <option value="success">Success</option>
-                <option value="failed">Failed</option>
-                <option value="pending">Pending</option>
-              </select>
-              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-            </div>
+            <div className="flex items-center gap-2 shrink-0 border-l border-gray-200 pl-2 sm:pl-3">
+              {/* Status Filter (Dropdown) */}
+              <div className="relative">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="appearance-none pl-3 pr-8 py-2 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none shadow-sm flex-shrink-0 min-w-[110px] cursor-pointer"
+                >
+                  <option value="all">All Status</option>
+                  <option value="success">Success</option>
+                  <option value="failed">Failed</option>
+                  <option value="pending">Pending</option>
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+              </div>
 
-            {/* Date Filter */}
-            <select
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-700 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none shadow-sm flex-shrink-0"
-            >
-              <option value="24hours">Last 24 Hours</option>
-              <option value="7days">Last 7 Days</option>
-              <option value="30days">Last 30 Days</option>
-              <option value="all">All Time</option>
-            </select>
+              {/* Date Filter */}
+              <div className="relative">
+                <select
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                  className="appearance-none pl-3 pr-8 py-2 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none shadow-sm flex-shrink-0 min-w-[120px] cursor-pointer"
+                >
+                  <option value="24hours">Last 24 Hours</option>
+                  <option value="7days">Last 7 Days</option>
+                  <option value="30days">Last 30 Days</option>
+                  <option value="all">All Time</option>
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Results count */}
-        <div className="px-4 py-3 border-b border-gray-100 text-sm text-gray-500">
-          Showing {filteredLogs.length} of {totalCount} activities
+        <div className="px-2 py-2 md:px-3 md:py-2.5 border-b border-gray-100 flex items-center justify-between text-xs md:text-sm text-gray-500">
+          <div className="flex items-center gap-3 md:gap-4">
+            Showing {filteredLogs.length} of {totalCount} activities
+          </div>
         </div>
 
         {/* Logs List */}
@@ -386,47 +413,64 @@ const AdminActivityLogs = ({ searchTerm }) => {
             filteredLogs.map((log) => (
               <div
                 key={log.id}
-                className="flex items-start gap-3 p-3 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-50 last:border-0"
+                className="group flex flex-col md:flex-row md:items-center gap-2 md:gap-3 p-2.5 md:py-3 md:px-3 transition-all cursor-pointer border-b border-gray-100 last:border-0 bg-white hover:bg-gray-50"
                 onClick={() => setSelectedLog(log)}
               >
-                {/* Icon */}
-                <div className={`flex-shrink-0 p-1.5 rounded-lg mt-0.5 ${log.status === 'failed' ? 'bg-red-50' :
-                  log.status === 'pending' ? 'bg-amber-50' :
-                    'bg-gray-50'
-                  }`}>
-                  {React.cloneElement(getActivityIcon(log.activity_type), { className: "w-4 h-4" })}
+                {/* Icon & Status */}
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                  <div className={`flex-shrink-0 p-2 rounded-xl border ${log.status === 'failed' ? 'bg-red-50 border-red-100' :
+                    log.status === 'pending' ? 'bg-amber-50 border-amber-100' :
+                      'bg-gray-50 border-gray-100'
+                    }`}>
+                    {React.cloneElement(getActivityIcon(log.activity_type), { className: "w-4 h-4" })}
+                  </div>
+
+                  {/* Mobile-only status & time */}
+                  <div className="flex-1 md:hidden flex items-center justify-between min-w-0 pr-1">
+                    <div className="scale-75 origin-left -ml-2">
+                      {getStatusBadge(log.status)}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <h4 className="text-sm font-medium text-gray-900 truncate pr-2">
+                <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center gap-1 md:gap-3 pl-10 md:pl-0">
+                  <div className="hidden md:flex items-center flex-shrink-0 scale-90 origin-left">
+                    {getStatusBadge(log.status)}
+                  </div>
+
+                  <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center gap-0.5 md:gap-2">
+                    <h4 className="text-sm md:text-[14px] font-semibold text-gray-900 truncate pr-2">
                       {log.activity_name}
                       {log.target_name && <span className="text-gray-400 font-normal ml-1">· {log.target_name}</span>}
                     </h4>
-                    <span className="text-[10px] text-gray-400 flex-shrink-0 whitespace-nowrap mt-0.5">
-                      {formatTimeAgo(log.created_at)}
-                    </span>
+                    <span className="hidden md:inline text-gray-300 mx-1">•</span>
+                    <p className="text-xs md:text-[13px] text-gray-500 truncate mt-0.5 md:mt-0">
+                      {log.description}
+                    </p>
                   </div>
+                </div>
 
-                  <p className="text-xs text-gray-500 truncate mt-0.5">
-                    {log.description}
-                  </p>
-
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <div className="scale-75 origin-left -ml-1">
-                      {getStatusBadge(log.status)}
-                    </div>
-                    <span className="text-[10px] text-gray-400 flex items-center gap-1">
-                      <User className="w-3 h-3 opacity-70" />
-                      {log.user_name}
+                {/* Right Metadata & Date */}
+                <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto pl-10 md:pl-0 mt-2 md:mt-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] md:text-xs text-gray-400 flex items-center gap-1">
+                      <User className="w-3 h-3 md:w-3.5 md:h-3.5 opacity-70" />
+                      <span className="truncate max-w-[80px] md:max-w-[120px]">{log.user_name}</span>
                     </span>
                     {log.details?.amount && (
-                      <span className="text-[10px] text-emerald-600 font-medium flex items-center gap-0.5 border-l border-gray-200 pl-2">
-                        <IndianRupee className="w-2.5 h-2.5" />
+                      <span className="text-[10px] md:text-xs text-emerald-600 font-medium flex items-center gap-0.5 border-l border-gray-200 pl-2">
+                        <IndianRupee className="w-2.5 h-2.5 md:w-3 md:h-3" />
                         {log.details.amount.toLocaleString()}
                       </span>
                     )}
+                  </div>
+
+                  <div className="flex items-center gap-1 opacity-100">
+                    <span className="text-[10px] md:text-xs text-gray-400 whitespace-nowrap" title={formatTimeAgo(log.created_at)}>
+                      {formatTimeAgo(log.created_at)}
+                    </span>
+                    <ChevronRight className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-300 ml-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                 </div>
               </div>

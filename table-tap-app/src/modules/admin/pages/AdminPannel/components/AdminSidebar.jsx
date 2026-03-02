@@ -116,18 +116,18 @@ const AdminSidebar = ({
       {/* Sidebar - Fixed position */}
       <div className={`
         fixed inset-y-0 left-0 z-40
-        ${collapsed ? 'md:w-20' : 'md:w-64'} w-64 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white
+        ${collapsed ? 'md:w-20' : 'md:w-56'} w-64 md:w-56 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white
         transform transition-all duration-300 ease-in-out
         ${showMobileNav ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         shadow-2xl font-spartan
       `}>
         <div className="flex flex-col h-full">
           {/* Logo & Collapse Toggle */}
-          <div className="p-4 border-b border-slate-700/50">
+          <div className="p-3 border-b border-slate-700/50">
 
 
             {/* Collapse toggle button (desktop only) */}
-            <div className={`flex items-center ${collapsed ? 'justify-center' : 'justify-end'} mb-3 hidden md:flex`}>
+            <div className={`flex items-center ${collapsed ? 'justify-center' : 'justify-end'} mb-2 hidden md:flex`}>
               <button
                 type="button"
                 onClick={() => onToggleCollapsed?.()}
@@ -159,14 +159,14 @@ const AdminSidebar = ({
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto py-4 md:py-6">
-            <ul className="space-y-1 md:space-y-2 px-3">
+          <nav className="flex-1 overflow-y-auto py-3 md:py-4">
+            <ul className="space-y-1 px-3">
               {menuItems.map((item) => (
                 <li key={item.id}>
                   <button
                     onClick={() => handleTabChange(item.id)}
                     title={collapsed ? item.label : undefined}
-                    className={`flex items-center w-full ${collapsed ? 'justify-center p-3' : 'p-3 md:p-4'} rounded-xl transition-all duration-200 group font-spartan ${activeTab === item.id
+                    className={`flex items-center w-full ${collapsed ? 'justify-center p-2.5' : 'p-2.5 md:p-3'} rounded-xl transition-all duration-200 group font-spartan ${activeTab === item.id
                       ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
                       : 'hover:bg-slate-700/50 text-slate-300 hover:text-white'
                       }`}
@@ -177,7 +177,7 @@ const AdminSidebar = ({
                       }`}>
                       {getIcon(item.icon)}
                     </div>
-                    {!collapsed && <span className="ml-2 md:ml-3 text-sm md:text-base font-medium font-spartan">{item.label}</span>}
+                    {!collapsed && <span className="ml-2 md:ml-3 text-sm font-medium font-spartan">{item.label}</span>}
                   </button>
                 </li>
               ))}
@@ -185,8 +185,8 @@ const AdminSidebar = ({
           </nav>
 
           {/* User profile and logout */}
-          <div className="p-4 border-t border-slate-700/50">
-            <div className={`admin-profile flex items-center ${collapsed ? 'justify-center' : 'gap-4'} p-3 bg-slate-800/50 rounded-xl`}>
+          <div className="p-3 border-t border-slate-700/50">
+            <div className={`admin-profile flex items-center ${collapsed ? 'justify-center' : 'gap-3'} p-2.5 bg-slate-800/50 rounded-xl`}>
               <div className="relative group">
                 {currentUser?.avatar_url ? (
                   <img
@@ -228,7 +228,7 @@ const AdminSidebar = ({
             </div>
             <button
               onClick={handleLogout}
-              className={`w-full mt-4 px-4 py-3 text-sm text-center rounded-xl bg-slate-800 hover:bg-slate-700 transition-all duration-200 flex items-center justify-center gap-2 group font-spartan ${collapsed ? 'md:px-2' : ''}`}
+              className={`w-full mt-3 px-3 py-2.5 text-sm md:text-sm text-center rounded-xl bg-slate-800 hover:bg-slate-700 transition-all duration-200 flex items-center justify-center gap-2 group font-spartan ${collapsed ? 'md:px-2' : ''}`}
               title={collapsed ? 'Log Out' : undefined}
               aria-label="Log Out"
             >

@@ -20,6 +20,9 @@ import QRManagement from '../../components/admin/QRManagement/QRManagement';
 import ActivityLogs from '../../components/admin/ActivityLogs';
 import AggregatorIntegration from '../../components/admin/AggregatorIntegration';
 import { X, ChevronLeft, Package, BarChart3, Sparkles, Plus, Building2, ChevronDown, Clock, Grid, Crown } from 'lucide-react';
+// Use Building2 as a fallback for Store icon if it's missing from the version of lucide-react
+const StoreIcon = Building2;
+
 import FloorPlanView from '../../components/admin/FloorPlan/FloorPlanView';
 import { getAllFoodItems, getRestaurantFoodItems } from '../../../customer/api/foodService';
 import { supabase } from '../../../shared/supabase';
@@ -352,11 +355,24 @@ const AdminDashboard = () => {
     if (menuItems.length === 0 || tabFromUrlInitialized.current) return;
     const allowedIds = menuItems.map(item => item.id);
     const tabFromUrl = searchParams.get('tab');
-    if (tabFromUrl && allowedIds.includes(tabFromUrl)) {
+    const restaurantFromUrl = searchParams.get('restaurant');
+
+    // Check if we need to force aggregate analytics as landing
+    const isOwnerWithMultiple = (contextIsOwner() || contextIsAdmin()) && ownedRestaurants && ownedRestaurants.length > 1;
+
+    // Only land on aggregate if there's no tab specified, NO specific restaurant requested in URL, 
+    // and they haven't picked one yet
+    const shouldLandOnAggregate = !tabFromUrl && !restaurantFromUrl && isOwnerWithMultiple && !userRestaurantId && allowedIds.includes('aggregate-analytics');
+
+    if (shouldLandOnAggregate) {
+      setActiveTab('aggregate-analytics');
+    } else if (tabFromUrl && allowedIds.includes(tabFromUrl)) {
       setActiveTab(tabFromUrl);
+    } else if (restaurantFromUrl && allowedIds.includes('dashboard')) {
+      setActiveTab('dashboard');
     }
     tabFromUrlInitialized.current = true;
-  }, [menuItems, searchParams]);
+  }, [menuItems, searchParams, userRestaurantId, contextIsOwner, ownedRestaurants, contextIsAdmin]);
 
   // Redirect to first allowed tab if current activeTab is restricted
   useEffect(() => {
@@ -379,27 +395,9 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (!currentUser) return;
 
-    const fetchOrders = async () => {
-      try {
-        let query = supabase
-          .from('orders')
-          .select('*');
+    // Orders are loaded by OrderManagement; 
+    // This effect only handles the real-time subscription setup
 
-        // Filter by restaurant if available
-        if (userRestaurantId) {
-          query = query.eq('restaurant_id', userRestaurantId);
-        }
-
-        const { data, error } = await query.order('created_at', { ascending: false });
-
-        if (error) throw error;
-        // Orders are loaded by OrderManagement; this run is only to satisfy the subscription setup below if needed
-      } catch (error) {
-        setErrorMsg('Failed to load orders: ' + (error.message || error));
-      }
-    };
-
-    fetchOrders();
 
     // Remove previous channel if exists
     if (orderChannelRef.current) {
@@ -937,10 +935,15 @@ const AdminDashboard = () => {
               </div>
 
               {/* Content Components - Removed redundant padding */}
-              {activeTab === 'aggregate-analytics' && contextIsOwner() && ownedRestaurants && ownedRestaurants.length > 1 && (
+              {activeTab === 'aggregate-analytics' && (contextIsOwner() || contextIsAdmin()) && ownedRestaurants && ownedRestaurants.length > 1 && (
                 <AggregateAnalytics
                   onSelectRestaurant={async (restaurantId) => {
-                    const success = await setOwnerRestaurant(restaurantId);
+                    let success;
+                    if (contextIsAdmin()) {
+                      success = await setAdminRestaurant(restaurantId);
+                    } else {
+                      success = await setOwnerRestaurant(restaurantId);
+                    }
                     if (success) {
                       setActiveTab('dashboard');
                       setSuccessMsg('Switched to restaurant dashboard');
@@ -949,126 +952,148 @@ const AdminDashboard = () => {
                 />
               )}
 
-              {activeTab === 'dashboard' && (
-                <DashboardOverview
-                  foodItems={foodItems}
-                  updateOrderStatus={updateOrderStatus}
-                  setActiveTab={setActiveTab}
-                  restaurant={restaurant}
-                  userRole={contextUserRole}
-                />
-              )}
-
-              {activeTab === 'floor-plan' && (
-                <FloorPlanView
-                  searchTerm={searchTerm}
-                  onViewOrders={() => setActiveTab('orders')}
-                />
-              )}
-
-              {activeTab === 'menu' && (
-                <div className="h-full">
-                  <MenuManagement
-                    foodItems={foodItems}
-                    fetchFoodItems={fetchFoodItems}
-                    setLoading={setLoading}
-                    setErrorMsg={setErrorMsg}
-                    setSuccessMsg={setSuccessMsg}
-                    searchTerm={searchTerm}
-                  />
+              {activeTab !== 'aggregate-analytics' && !userRestaurantId ? (
+                <div className="flex justify-center items-center min-h-[50vh]">
+                  <div className="text-center p-8 max-w-md bg-white rounded-2xl border border-gray-100 shadow-sm">
+                    <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <StoreIcon className="text-orange-500" size={32} />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Select a Restaurant</h3>
+                    <p className="text-gray-500 mb-6">You need to select a restaurant from the top menu to view its dashboard.</p>
+                    {(contextIsOwner() || contextIsAdmin()) && ownedRestaurants?.length > 1 && (
+                      <button
+                        onClick={() => setActiveTab('aggregate-analytics')}
+                        className="w-full py-3 bg-orange-500 text-white rounded-xl font-medium hover:bg-orange-600 transition-colors shadow-sm"
+                      >
+                        View All Restaurants
+                      </button>
+                    )}
+                  </div>
                 </div>
-              )}
+              ) : (
+                <>
+                  {activeTab === 'dashboard' && (
+                    <DashboardOverview
+                      foodItems={foodItems}
+                      updateOrderStatus={updateOrderStatus}
+                      setActiveTab={setActiveTab}
+                      restaurant={restaurant}
+                      userRole={contextUserRole}
+                    />
+                  )}
 
-              {activeTab === 'orders' && (
-                <OrderManagement
-                  restaurantId={userRestaurantId}
-                  updateOrderStatus={updateOrderStatus}
-                  searchTerm={searchTerm}
-                />
-              )}
+                  {activeTab === 'floor-plan' && (
+                    <FloorPlanView
+                      searchTerm={searchTerm}
+                      onViewOrders={() => setActiveTab('orders')}
+                    />
+                  )}
 
-              {activeTab === 'inventory' && (
-                <InventoryManagement
-                  setLoading={setLoading}
-                  setErrorMsg={setErrorMsg}
-                  setSuccessMsg={setSuccessMsg}
-                  searchTerm={searchTerm}
-                />
-              )}
-
-              {activeTab === 'users' && (
-                <StaffManagement
-                  searchTerm={searchTerm}
-                  setSearchTerm={setSearchTerm}
-                />
-              )}
-
-              {activeTab === 'offers' && (
-                <OffersManagement
-                  setLoading={setLoading}
-                  setErrorMsg={setErrorMsg}
-                  setSuccessMsg={setSuccessMsg}
-                />
-              )}
-
-              {activeTab === 'qr' && (
-                <QRManagement
-                  setLoading={setLoading}
-                  setErrorMsg={setErrorMsg}
-                  setSuccessMsg={setSuccessMsg}
-                  searchTerm={searchTerm}
-                />
-              )}
-
-              {activeTab === 'analytics' && (contextUserRole === 'manager' || contextUserRole === 'admin' || contextUserRole === 'owner' || restaurant?.ai_enabled == true || contextIsAdmin()) && (
-                <div className="h-full flex flex-col">
-                  {restaurant?.ai_enabled ? (
-                    <Suspense fallback={
-                      <div className="bg-white rounded-2xl p-6 shadow-sm">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="h-8 w-8 bg-purple-100 rounded-lg animate-pulse"></div>
-                          <div className="h-6 bg-gray-200 rounded w-40 animate-pulse"></div>
-                        </div>
-                        <div className="space-y-3">
-                          <div className="h-4 bg-gray-100 rounded w-3/4 animate-pulse"></div>
-                          <div className="h-4 bg-gray-100 rounded w-1/2 animate-pulse"></div>
-                          <div className="h-32 bg-gray-50 rounded animate-pulse"></div>
-                        </div>
-                      </div>
-                    }>
-                      <AIAnalyticsChat restaurantId={restaurant?.id} />
-                    </Suspense>
-                  ) : (
-                    <div className="p-4 mb-8 bg-yellow-50 border border-yellow-200 rounded">
-                      <p className="text-yellow-800 font-medium">
-                        AI Analytics is disabled for this restaurant.
-                      </p>
+                  {activeTab === 'menu' && (
+                    <div className="h-full">
+                      <MenuManagement
+                        foodItems={foodItems}
+                        fetchFoodItems={fetchFoodItems}
+                        setLoading={setLoading}
+                        setErrorMsg={setErrorMsg}
+                        setSuccessMsg={setSuccessMsg}
+                        searchTerm={searchTerm}
+                      />
                     </div>
                   )}
-                </div>
-              )}
 
-              {activeTab === 'aggregators' && restaurant && (
-                <AggregatorIntegration
-                  restaurantId={restaurant.id}
-                  restaurant={restaurant}
-                />
-              )}
+                  {activeTab === 'orders' && (
+                    <OrderManagement
+                      restaurantId={userRestaurantId}
+                      updateOrderStatus={updateOrderStatus}
+                      searchTerm={searchTerm}
+                    />
+                  )}
 
-              {activeTab === 'settings' && (
-                <SettingsManagement
-                  currentUser={currentUser}
-                />
-              )}
+                  {activeTab === 'inventory' && (
+                    <InventoryManagement
+                      setLoading={setLoading}
+                      setErrorMsg={setErrorMsg}
+                      setSuccessMsg={setSuccessMsg}
+                      searchTerm={searchTerm}
+                    />
+                  )}
 
-              {activeTab === 'activity-logs' && (
-                <ActivityLogs
-                  setLoading={setLoading}
-                  setErrorMsg={setErrorMsg}
-                  setSuccessMsg={setSuccessMsg}
-                  searchTerm={searchTerm}
-                  setSearchTerm={setSearchTerm}
-                />
+                  {activeTab === 'users' && (
+                    <StaffManagement
+                      searchTerm={searchTerm}
+                      setSearchTerm={setSearchTerm}
+                    />
+                  )}
+
+                  {activeTab === 'offers' && (
+                    <OffersManagement
+                      setLoading={setLoading}
+                      setErrorMsg={setErrorMsg}
+                      setSuccessMsg={setSuccessMsg}
+                    />
+                  )}
+
+                  {activeTab === 'qr' && (
+                    <QRManagement
+                      setLoading={setLoading}
+                      setErrorMsg={setErrorMsg}
+                      setSuccessMsg={setSuccessMsg}
+                      searchTerm={searchTerm}
+                    />
+                  )}
+
+                  {activeTab === 'analytics' && (contextUserRole === 'manager' || contextUserRole === 'admin' || contextUserRole === 'owner' || restaurant?.ai_enabled == true || contextIsAdmin()) && (
+                    <div className="h-full flex flex-col">
+                      {restaurant?.ai_enabled ? (
+                        <Suspense fallback={
+                          <div className="bg-white rounded-2xl p-6 shadow-sm">
+                            <div className="flex items-center gap-3 mb-4">
+                              <div className="h-8 w-8 bg-purple-100 rounded-lg animate-pulse"></div>
+                              <div className="h-6 bg-gray-200 rounded w-40 animate-pulse"></div>
+                            </div>
+                            <div className="space-y-3">
+                              <div className="h-4 bg-gray-100 rounded w-3/4 animate-pulse"></div>
+                              <div className="h-4 bg-gray-100 rounded w-1/2 animate-pulse"></div>
+                              <div className="h-32 bg-gray-50 rounded animate-pulse"></div>
+                            </div>
+                          </div>
+                        }>
+                          <AIAnalyticsChat restaurantId={restaurant?.id} />
+                        </Suspense>
+                      ) : (
+                        <div className="p-4 mb-8 bg-yellow-50 border border-yellow-200 rounded">
+                          <p className="text-yellow-800 font-medium">
+                            AI Analytics is disabled for this restaurant.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {activeTab === 'aggregators' && restaurant && (
+                    <AggregatorIntegration
+                      restaurantId={restaurant.id}
+                      restaurant={restaurant}
+                    />
+                  )}
+
+                  {activeTab === 'settings' && (
+                    <SettingsManagement
+                      currentUser={currentUser}
+                    />
+                  )}
+
+                  {activeTab === 'activity-logs' && (
+                    <ActivityLogs
+                      setLoading={setLoading}
+                      setErrorMsg={setErrorMsg}
+                      setSuccessMsg={setSuccessMsg}
+                      searchTerm={searchTerm}
+                      setSearchTerm={setSearchTerm}
+                    />
+                  )}
+                </>
               )}
             </div>
           </div>
