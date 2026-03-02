@@ -40,8 +40,8 @@ const Header = () => {
                 }`}
         >
             <div className="container mx-auto px-4 sm:px-6 flex items-center justify-between max-w-full">
-                {/* Logo */}
-                <Link href="#home" className="flex items-center gap-2 group min-h-[44px] min-w-[44px] shrink-0">
+                {/* Logo - always link to home for SEO pages */}
+                <Link href="/" className="flex items-center gap-2 group min-h-[44px] min-w-[44px] shrink-0">
                     <Image
                         src={logoUrl}
                         alt={companyName}

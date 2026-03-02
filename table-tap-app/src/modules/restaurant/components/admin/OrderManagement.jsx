@@ -523,38 +523,53 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
     }
   };
 
+  const orderSupabaseRef = useRef(null);
+  const orderRealtimeChannelRef = useRef(null);
   useEffect(() => {
     fetchOrders();
 
-    // Setup real-time subscription for the orders list
     if (!restaurantId) return;
 
-    const channel = supabase
-      .channel(`ordermgmt-realtime-${restaurantId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'orders',
-          filter: `restaurant_id=eq.${restaurantId}`
-        },
-        (payload) => {
-          const { eventType, new: newOrder, old: oldOrder } = payload;
+    let cancelled = false;
+    (async () => {
+      const { supabase } = await import('../../../shared/supabase');
+      if (cancelled || !supabase) return;
+      orderSupabaseRef.current = supabase;
 
-          if (eventType === 'INSERT' && newOrder) {
-            setOrders(prev => [newOrder, ...prev]);
-          } else if (eventType === 'UPDATE' && newOrder) {
-            setOrders(prev => prev.map(o => o.id === newOrder.id ? { ...o, ...newOrder } : o));
-          } else if (eventType === 'DELETE' && oldOrder) {
-            setOrders(prev => prev.filter(o => o.id !== oldOrder.id));
+      const channel = supabase
+        .channel(`ordermgmt-realtime-${restaurantId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'orders',
+            filter: `restaurant_id=eq.${restaurantId}`
+          },
+          (payload) => {
+            const { eventType, new: newOrder, old: oldOrder } = payload;
+
+            if (eventType === 'INSERT' && newOrder) {
+              setOrders(prev => [newOrder, ...prev]);
+            } else if (eventType === 'UPDATE' && newOrder) {
+              setOrders(prev => prev.map(o => o.id === newOrder.id ? { ...o, ...newOrder } : o));
+            } else if (eventType === 'DELETE' && oldOrder) {
+              setOrders(prev => prev.filter(o => o.id !== oldOrder.id));
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
+
+      if (!cancelled) orderRealtimeChannelRef.current = channel;
+    })();
 
     return () => {
-      supabase.removeChannel(channel);
+      cancelled = true;
+      const client = orderSupabaseRef.current;
+      if (client && orderRealtimeChannelRef.current) {
+        client.removeChannel(orderRealtimeChannelRef.current);
+      }
+      orderRealtimeChannelRef.current = null;
     };
   }, [restaurantId]);
 

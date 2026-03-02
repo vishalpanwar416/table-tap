@@ -62,7 +62,7 @@ export default function AhmedabadSEO() {
             <section className="py-24 bg-slate-900 text-white overflow-hidden relative">
                 <div className="container mx-auto px-4 relative z-10">
                     <div className="text-center max-w-3xl mx-auto mb-20">
-                        <h2 className="text-4xl md:text-5xl font-black mb-6">Serving Ahmedabad's Best Locales.</h2>
+                        <h2 className="text-4xl md:text-5xl font-black mb-6">Serving Ahmedabad&apos;s Best Locales.</h2>
                         <p className="text-slate-400 text-lg">We understand the unique dining culture of Ahmedabad and provide tailored solutions for every entrepreneur.</p>
                     </div>
 

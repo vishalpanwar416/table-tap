@@ -37,7 +37,7 @@ export default function RestaurantServices() {
                     </h1>
 
                     <p className="text-xl md:text-2xl text-gray-500 mb-12 leading-relaxed max-w-3xl mx-auto font-medium animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                        At Table Tap, we don't just provide software; we provide a complete service ecosystem. From menu digitalization to staff training, we ensure your restaurant delivers excellence every single day.
+                        At Table Tap, we don&apos;t just provide software; we provide a complete service ecosystem. From menu digitalization to staff training, we ensure your restaurant delivers excellence every single day.
                     </p>
 
                     <div className="flex flex-wrap justify-center gap-5 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>

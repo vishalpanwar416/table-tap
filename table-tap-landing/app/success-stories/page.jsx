@@ -2,6 +2,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import Contact from '../components/Contact';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Star, ArrowRight, Quote, TrendingUp, Clock, Zap } from 'lucide-react';
 
 export const metadata = {
@@ -62,7 +63,7 @@ export default function SuccessStories() {
                         {stories.map((story, i) => (
                             <Link href={story.href} key={i} className="group bg-white rounded-[40px] overflow-hidden border border-slate-100 shadow-sm hover:shadow-2xl transition-all">
                                 <div className="h-64 relative overflow-hidden">
-                                    <img src={story.image} alt={story.restaurant} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                    <Image src={story.image} alt={story.restaurant} width={800} height={400} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                                     <div className="absolute top-6 left-6 px-4 py-2 bg-white/90 backdrop-blur-md rounded-2xl font-black text-slate-900 text-sm shadow-xl">
                                         {story.result}
                                     </div>

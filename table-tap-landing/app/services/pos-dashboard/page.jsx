@@ -37,7 +37,7 @@ export default function POSSolution() {
                     </h1>
 
                     <p className="text-xl md:text-2xl text-gray-500 mb-12 leading-relaxed max-w-3xl mx-auto font-medium animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                        Table Tap's cloud-based POS gives you a bird's eye view of your business. Manage multiple outlets, track live table statuses, and oversee staff performance from anywhere in the world.
+                        Table Tap&apos;s cloud-based POS gives you a bird&apos;s eye view of your business. Manage multiple outlets, track live table statuses, and oversee staff performance from anywhere in the world.
                     </p>
 
                     <div className="flex flex-wrap justify-center gap-5 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>

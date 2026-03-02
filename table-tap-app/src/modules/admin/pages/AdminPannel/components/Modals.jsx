@@ -1055,28 +1055,28 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
               </label>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <input
-                  type="url"
+                  type="text"
                   value={data.social_media?.facebook || ''}
                   onChange={(e) => setData({ ...data, social_media: { ...data.social_media, facebook: e.target.value } })}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
-                  placeholder="Facebook URL"
+                  placeholder="Facebook URL or handle"
                 />
                 <input
-                  type="url"
+                  type="text"
                   value={data.social_media?.instagram || ''}
                   onChange={(e) => setData({ ...data, social_media: { ...data.social_media, instagram: e.target.value } })}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
-                  placeholder="Instagram URL"
+                  placeholder="Instagram URL or handle"
                 />
                 <input
-                  type="url"
+                  type="text"
                   value={data.social_media?.twitter || ''}
                   onChange={(e) => setData({ ...data, social_media: { ...data.social_media, twitter: e.target.value } })}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
-                  placeholder="Twitter URL"
+                  placeholder="Twitter URL or handle"
                 />
                 <input
-                  type="url"
+                  type="text"
                   value={data.social_media?.website || ''}
                   onChange={(e) => setData({ ...data, social_media: { ...data.social_media, website: e.target.value } })}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"

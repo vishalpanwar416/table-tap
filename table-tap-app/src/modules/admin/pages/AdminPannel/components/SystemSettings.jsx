@@ -134,33 +134,48 @@ const SystemSettings = () => {
     const [activeCategory, setActiveCategory] = useState('all');
     const [editingSetting, setEditingSetting] = useState(null);
 
-    // Fetch settings on mount
+    // Fetch settings on mount and category change
     useEffect(() => {
-        fetchSettings();
-    }, []);
+        if (activeCategory === 'email') {
+            fetchSettings(true); // Fetch both settings and templates
+        } else if (activeCategory === 'diagnostics') {
+            // No fetch needed
+        } else {
+            fetchSettings(false); // Fetch only system settings
+        }
+    }, [activeCategory]);
 
-    const fetchSettings = async () => {
+    const fetchSettings = async (includeTemplates = false) => {
         setLoading(true);
         try {
-            const [settingsRes, templatesRes] = await Promise.all([
-                supabase.from('system_settings').select('*').order('category').order('key'),
-                supabase.from('email_templates').select('*').order('category').order('key')
-            ]);
+            const queries = [supabase.from('system_settings').select('*').order('category').order('key')];
+
+            if (includeTemplates) {
+                queries.push(supabase.from('email_templates').select('*').order('category').order('key'));
+            }
+
+            const results = await Promise.all(queries);
+            const settingsRes = results[0];
+            const templatesRes = results[1];
 
             if (settingsRes.error) throw settingsRes.error;
-            if (templatesRes.error) throw templatesRes.error;
 
-            // Map templates to match the setting format for the UI
-            const templates = (templatesRes.data || []).map(t => ({
-                key: t.key,
-                value: { subject: t.subject, html: t.html },
-                description: t.description,
-                category: 'email', // Force to 'email' category for the UI view
-                is_template: true, // Flag to differentiate for updates
-                updated_at: t.updated_at
-            }));
+            let allSettings = [...settingsRes.data];
 
-            setSettings([...settingsRes.data, ...templates]);
+            if (includeTemplates && templatesRes && !templatesRes.error) {
+                // Map templates to match the setting format for the UI
+                const templates = (templatesRes.data || []).map(t => ({
+                    key: t.key,
+                    value: { subject: t.subject, html: t.html },
+                    description: t.description,
+                    category: 'email', // Force to 'email' category for the UI view
+                    is_template: true, // Flag to differentiate for updates
+                    updated_at: t.updated_at
+                }));
+                allSettings = [...allSettings, ...templates];
+            }
+
+            setSettings(allSettings);
         } catch (err) {
             console.error('Error fetching settings:', err);
             setError('Failed to load settings');

@@ -30,6 +30,7 @@ import {
 import { supabase } from '../lib/supabase';
 import { useSettings } from '../context/SettingsContext';
 import LocationPicker from '../components/LocationPicker';
+import siteConfig from '../data/site-config.json';
 
 // Demo plan (fallback if needed)
 const demoPlan = {
@@ -215,6 +216,7 @@ function RegisterForm() {
         };
 
         fetchData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- load plans/cycles once on mount; searchParams/formData used only for initial sync
     }, []);
 
     const handleGoogleSignIn = async () => {
@@ -379,7 +381,7 @@ function RegisterForm() {
             return {
                 ...basePlan,
                 name: 'Custom Enterprise Plan',
-                price: customPriceParam ? parseInt(customPriceParam) : (basePlan.price || 29999),
+                price: customPriceParam ? parseInt(customPriceParam) : (basePlan.price || siteConfig.pricing.enterpriseBaseMonthly),
                 features: customServicesParam
                     ? customServicesParam.split(',').map(id => CUSTOM_SERVICES[id] || id)
                     : basePlan.features

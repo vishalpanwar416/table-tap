@@ -41,7 +41,7 @@ export default function UrbanBrewCaseStudy() {
 
                                 <h2 className="text-3xl font-black mb-6">The Solution</h2>
                                 <p className="text-slate-600 leading-relaxed font-medium">
-                                    They implemented Table Tap’s **AI-Powered QR System**. Guests could now scan and browse instantaneously. Our AI automatically suggested add-ons like "extra cheese" or "pairing with a cold brew," which increased the average ticket value automatically.
+                                    They implemented Table Tap’s **AI-Powered QR System**. Guests could now scan and browse instantaneously. Our AI automatically suggested add-ons like &quot;extra cheese&quot; or &quot;pairing with a cold brew,&quot; which increased the average ticket value automatically.
                                 </p>
                             </div>
 
@@ -49,7 +49,7 @@ export default function UrbanBrewCaseStudy() {
                                 <Quote className="absolute top-10 right-10 text-white/10" size={120} />
                                 <div className="relative z-10">
                                     <p className="text-2xl font-medium italic mb-8">
-                                        "Table Tap didn't just replace our menus; it became our best salesperson. The AI knows exactly what to suggest and when. Our dessert sales alone have doubled."
+                                        &quot;Table Tap didn&apos;t just replace our menus; it became our best salesperson. The AI knows exactly what to suggest and when. Our dessert sales alone have doubled.&quot;
                                     </p>
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center font-black">AK</div>

@@ -20,7 +20,7 @@ export default function BangaloreSEO() {
                 <div className="container mx-auto px-4 relative z-10">
                     <div className="max-w-4xl">
                         <span className="inline-block px-4 py-2 rounded-full bg-[#2A9D8F]/10 text-[#2A9D8F] font-bold text-sm mb-6 uppercase tracking-widest">
-                            Silicon Valley's Choice
+                            Silicon Valley&apos;s Choice
                         </span>
                         <h1 className="text-5xl md:text-7xl font-black text-slate-900 mb-8 leading-[1.1]">
                             The Smartest way to Dine in <span className="text-[#2A9D8F]">Bangalore.</span>

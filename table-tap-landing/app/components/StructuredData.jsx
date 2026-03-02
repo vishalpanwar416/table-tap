@@ -1,13 +1,16 @@
+import siteConfig from '../data/site-config.json';
+
 export default function StructuredData({ settings }) {
   const company = settings?.company_details || {};
   const social = settings?.social_links || {};
+  const { site, contact: siteContact, assets, pricing: sitePricing, map } = siteConfig;
 
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": company.name || "Table Tap",
-    "url": company.website || "https://table-tap.in",
-    "logo": settings?.system_logo?.url || "https://vogixryubhpqziivspks.supabase.co/storage/v1/object/public/system-assets/logott.png",
+    "name": company.name || site.name,
+    "url": company.website || site.baseUrl,
+    "logo": settings?.system_logo?.url || assets.logoUrl,
     "description": "Table Tap helps restaurants deliver exceptional guest experiences through seamless QR-based digital ordering.",
     "foundingDate": "2024",
     "founders": [
@@ -18,15 +21,15 @@ export default function StructuredData({ settings }) {
     ],
     "address": {
       "@type": "PostalAddress",
-      "addressLocality": company.city || "Hyderabad",
-      "addressRegion": company.state || "Telangana",
+      "addressLocality": company.city || siteContact.city,
+      "addressRegion": company.state || siteContact.state,
       "addressCountry": "IN"
     },
     "contactPoint": {
       "@type": "ContactPoint",
-      "telephone": company.phone || "+91-75009-88212",
+      "telephone": company.phone || siteContact.phoneFormatted,
       "contactType": "sales",
-      "email": company.email || "vishalpanwar416@gmail.com",
+      "email": company.email || siteContact.email,
       "availableLanguage": ["English", "Hindi"]
     },
     "sameAs": [
@@ -54,17 +57,17 @@ export default function StructuredData({ settings }) {
       {
         "@type": "Offer",
         "name": "Starter Plan",
-        "price": "999",
+        "price": String(sitePricing.starterMonthly),
         "priceCurrency": "INR",
-        "priceValidUntil": "2025-12-31",
+        "priceValidUntil": sitePricing.priceValidUntil,
         "availability": "https://schema.org/InStock"
       },
       {
         "@type": "Offer",
         "name": "Professional Plan",
-        "price": "1999",
+        "price": String(sitePricing.professionalMonthly),
         "priceCurrency": "INR",
-        "priceValidUntil": "2025-12-31",
+        "priceValidUntil": sitePricing.priceValidUntil,
         "availability": "https://schema.org/InStock"
       }
     ],
@@ -84,11 +87,11 @@ export default function StructuredData({ settings }) {
       "WhatsApp Business API Integration",
       "Multi-lingual Digital Menus"
     ],
-    "screenshot": "https://table-tap.in/og-image.png",
+    "screenshot": `${site.baseUrl}/og-image.png`,
     "softwareVersion": "1.0",
     "author": {
       "@type": "Organization",
-      "name": company.name || "Table Tap"
+      "name": company.name || site.name
     }
   };
 
@@ -158,21 +161,21 @@ export default function StructuredData({ settings }) {
   const localBusinessSchema = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    "name": company.name || "Table Tap",
-    "@id": company.website || "https://table-tap.in",
-    "url": company.website || "https://table-tap.in",
-    "telephone": company.phone || "+91-75009-88212",
-    "email": company.email || "vishalpanwar416@gmail.com",
+    "name": company.name || site.name,
+    "@id": company.website || site.baseUrl,
+    "url": company.website || site.baseUrl,
+    "telephone": company.phone || siteContact.phoneFormatted,
+    "email": company.email || siteContact.email,
     "address": {
       "@type": "PostalAddress",
-      "addressLocality": company.city || "Hyderabad",
-      "addressRegion": company.state || "Telangana",
+      "addressLocality": company.city || siteContact.city,
+      "addressRegion": company.state || siteContact.state,
       "addressCountry": "IN"
     },
     "geo": {
       "@type": "GeoCoordinates",
-      "latitude": "17.385044",
-      "longitude": "78.486671"
+      "latitude": String(map.defaultCenter.lat),
+      "longitude": String(map.defaultCenter.lng)
     },
     "priceRange": "₹₹",
     "openingHoursSpecification": {
@@ -187,30 +190,10 @@ export default function StructuredData({ settings }) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
-      {
-        "@type": "ListItem",
-        "position": 1,
-        "name": "Home",
-        "item": "https://table-tap.in"
-      },
-      {
-        "@type": "ListItem",
-        "position": 2,
-        "name": "Features",
-        "item": "https://table-tap.in/#features"
-      },
-      {
-        "@type": "ListItem",
-        "position": 3,
-        "name": "Pricing",
-        "item": "https://table-tap.in/#pricing"
-      },
-      {
-        "@type": "ListItem",
-        "position": 4,
-        "name": "Contact",
-        "item": "https://table-tap.in/#contact"
-      }
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": site.baseUrl },
+      { "@type": "ListItem", "position": 2, "name": "Features", "item": `${site.baseUrl}/#features` },
+      { "@type": "ListItem", "position": 3, "name": "Pricing", "item": `${site.baseUrl}/#pricing` },
+      { "@type": "ListItem", "position": 4, "name": "Contact", "item": `${site.baseUrl}/#contact` }
     ]
   };
 

@@ -37,7 +37,7 @@ export default function KDSSolution() {
                     </h1>
 
                     <p className="text-xl md:text-2xl text-gray-500 mb-12 leading-relaxed max-w-3xl mx-auto font-medium animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                        Say goodbye to lost tickets and messy handwriting. Table Tap KDS sends orders directly from the table to the chef's screen, organized by priority and preparation time.
+                        Say goodbye to lost tickets and messy handwriting. Table Tap KDS sends orders directly from the table to the chef&apos;s screen, organized by priority and preparation time.
                     </p>
 
                     <div className="flex flex-wrap justify-center gap-5 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>

@@ -5,8 +5,6 @@ const RevenueChart = React.lazy(() => import('./RevenueChart'));
 import ActiveOrders from './ActiveOrders';
 import PopularItems from './PopularItems';
 import { generateChartData, formatDate, getStatusIcon, getStatusBadge } from './helpers';
-import { supabase } from '../../../../shared/supabase';
-
 const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab, restaurant, userRole }) => {
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
@@ -22,86 +20,93 @@ const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab, restaur
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
 
   const ordersChannelRef = useRef(null);
+  const supabaseRef = useRef(null);
 
   useEffect(() => {
     let loadingTimeout;
-    const fetchOrders = async () => {
-      try {
-        setOrdersLoading(true);
-        loadingTimeout = setTimeout(() => {
-          setOrdersLoading(false);
-          setOrdersError('Orders request took too long. Please try again.');
-        }, 15000);
+    let cancelled = false;
+    (async () => {
+      const { supabase } = await import('../../../../shared/supabase');
+      if (cancelled || !supabase) return;
+      supabaseRef.current = supabase;
 
-        let query = supabase
-          .from('orders')
-          .select('*');
+      const fetchOrders = async () => {
+        try {
+          setOrdersLoading(true);
+          loadingTimeout = setTimeout(() => {
+            setOrdersLoading(false);
+            setOrdersError('Orders request took too long. Please try again.');
+          }, 15000);
 
-        if (restaurant?.id) {
-          query = query.eq('restaurant_id', restaurant.id);
+          let query = supabase
+            .from('orders')
+            .select('*');
+
+          if (restaurant?.id) {
+            query = query.eq('restaurant_id', restaurant.id);
+          }
+
+          if (['captain', 'waiter', 'cashier'].includes(userRole)) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            query = query.gte('created_at', today.toISOString());
+          }
+
+          const { data, error } = await query.order('created_at', { ascending: false });
+          if (cancelled) return;
+          if (error) throw error;
+          setOrders(data || []);
+          setOrdersError('');
+        } catch (error) {
+          if (!cancelled) setOrdersError('Failed to load orders: ' + (error.message || error));
+        } finally {
+          clearTimeout(loadingTimeout);
+          if (!cancelled) setOrdersLoading(false);
         }
+      };
 
-        // Restrict data for non-management roles to today only
-        if (['captain', 'waiter', 'cashier'].includes(userRole)) {
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          query = query.gte('created_at', today.toISOString());
-        }
+      fetchOrders();
 
-        const { data, error } = await query.order('created_at', { ascending: false });
-
-        if (error) throw error;
-        setOrders(data || []);
-        setOrdersError('');
-      } catch (error) {
-        setOrdersError('Failed to load orders: ' + (error.message || error));
-      } finally {
-        clearTimeout(loadingTimeout);
-        setOrdersLoading(false);
-      }
-    };
-
-    fetchOrders();
-
-    // Clean up any previous channel
-    if (ordersChannelRef.current) {
-      supabase.removeChannel(ordersChannelRef.current);
-      ordersChannelRef.current = null;
-    }
-
-    // Subscribe to real-time order changes
-    const channel = supabase
-      .channel('dashboard-orders')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'orders' },
-        (payload) => {
-          const { eventType, new: newRecord, old: oldRecord } = payload;
-          setOrders((prev) => {
-            let next = [...prev];
-            if (eventType === 'INSERT') {
-              next = [newRecord, ...next];
-            } else if (eventType === 'UPDATE') {
-              next = next.map((o) => (o.id === newRecord.id ? { ...o, ...newRecord } : o));
-            } else if (eventType === 'DELETE') {
-              next = next.filter((o) => o.id !== oldRecord.id);
-            }
-            return next;
-          });
-        }
-      )
-      .subscribe();
-
-    ordersChannelRef.current = channel;
-
-    return () => {
-      if (loadingTimeout) clearTimeout(loadingTimeout);
       if (ordersChannelRef.current) {
         supabase.removeChannel(ordersChannelRef.current);
         ordersChannelRef.current = null;
       }
+
+      const channel = supabase
+        .channel('dashboard-orders')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'orders' },
+          (payload) => {
+            const { eventType, new: newRecord, old: oldRecord } = payload;
+            setOrders((prev) => {
+              let next = [...prev];
+              if (eventType === 'INSERT') {
+                next = [newRecord, ...next];
+              } else if (eventType === 'UPDATE') {
+                next = next.map((o) => (o.id === newRecord.id ? { ...o, ...newRecord } : o));
+              } else if (eventType === 'DELETE') {
+                next = next.filter((o) => o.id !== oldRecord.id);
+              }
+              return next;
+            });
+          }
+        )
+        .subscribe();
+
+      ordersChannelRef.current = channel;
+    })();
+
+    return () => {
+      cancelled = true;
+      if (loadingTimeout) clearTimeout(loadingTimeout);
+      const client = supabaseRef.current;
+      if (client && ordersChannelRef.current) {
+        client.removeChannel(ordersChannelRef.current);
+      }
+      ordersChannelRef.current = null;
     };
-  }, []);
+  }, [restaurant?.id, userRole]);
 
   useEffect(() => {
     const now = new Date();
@@ -190,9 +195,11 @@ const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab, restaur
       // Call upstream handler (will also trigger realtime update)
       await updateOrderStatus(orderId, status);
     } catch (e) {
-      // If failed, refetch to sync
-      const { data } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
-      setOrders(data || []);
+      const client = supabaseRef.current;
+      if (client) {
+        const { data } = await client.from('orders').select('*').order('created_at', { ascending: false });
+        setOrders(data || []);
+      }
     }
   };
 

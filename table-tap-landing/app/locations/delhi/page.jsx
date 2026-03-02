@@ -23,7 +23,7 @@ export default function DelhiSEO() {
                             Built for Delhi NCR
                         </span>
                         <h1 className="text-5xl md:text-7xl font-black text-slate-900 mb-8 leading-[1.1]">
-                            Elevate the <span className="text-[#2A9D8F]">Capital's</span> Dining Experience.
+                            Elevate the <span className="text-[#2A9D8F]">Capital&apos;s</span> Dining Experience.
                         </h1>
                         <p className="text-xl text-slate-600 mb-10 leading-relaxed max-w-2xl">
                             From the legendary eateries of Connaught Place to the sophisticated fine-dining scene in South Delhi, Table Tap is the trusted partner for 150+ Delhi NCR restaurants.
@@ -63,7 +63,7 @@ export default function DelhiSEO() {
                 <div className="container mx-auto px-4 relative z-10">
                     <div className="text-center max-w-3xl mx-auto mb-20">
                         <h2 className="text-4xl md:text-5xl font-black mb-6">Dominating the North.</h2>
-                        <p className="text-slate-400 text-lg">Whether it's a crowded QSR in Chandni Chowk or a rooftop bar in Gurgaon, we deliver performance.</p>
+                        <p className="text-slate-400 text-lg">Whether it&apos;s a crowded QSR in Chandni Chowk or a rooftop bar in Gurgaon, we deliver performance.</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

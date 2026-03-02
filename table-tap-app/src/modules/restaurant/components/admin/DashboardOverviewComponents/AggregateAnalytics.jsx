@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../../../shared/supabase';
 import { useAdminRestaurant } from '../../../../shared/context/AdminRestaurantContext';
 import {
   TrendingUp,
@@ -26,7 +25,7 @@ const AggregateAnalytics = ({ onSelectRestaurant }) => {
   const [period, setPeriod] = useState('weekly');
   const [expandedRestaurant, setExpandedRestaurant] = useState(null);
 
-  // Fetch aggregate analytics data for all owned restaurants
+  // Fetch aggregate analytics data for all owned restaurants (dynamic import avoids chunk supabase undefined)
   const fetchAggregateData = async () => {
     if (!ownedRestaurants || ownedRestaurants.length === 0) {
       setLoading(false);
@@ -36,6 +35,12 @@ const AggregateAnalytics = ({ onSelectRestaurant }) => {
     try {
       setLoading(true);
       setError(null);
+
+      const { supabase } = await import('../../../../shared/supabase');
+      if (!supabase) {
+        setLoading(false);
+        return;
+      }
 
       const restaurantIds = ownedRestaurants.map(r => r.id);
       const now = new Date();

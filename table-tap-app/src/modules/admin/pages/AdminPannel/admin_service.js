@@ -1127,7 +1127,36 @@ export const cancelRestaurantSubscription = async (restaurantId) => {
 // ========= LEAD INQUIRIES MANAGEMENT =========
 
 /**
- * Get all inquiries from the landing page
+ * Get lead inquiries with pagination
+ */
+export const getPaginatedInquiries = async (page = 1, pageSize = 20, status = 'all') => {
+  try {
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    let query = supabase
+      .from('landing_inquiries')
+      .select('*', { count: 'exact' });
+
+    if (status !== 'all') {
+      query = query.eq('status', status);
+    }
+
+    const { data, count, error } = await query
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (error) throw error;
+    return { data, totalCount: count || 0, error: null };
+  } catch (error) {
+    console.error('Error fetching paginated inquiries:', error);
+    return { data: [], totalCount: 0, error: error.message };
+  }
+};
+
+/**
+ * Get all inquiries from the landing page.
+ * @deprecated Use getPaginatedInquiries instead.
  */
 export const getAllInquiries = async () => {
   try {
@@ -1217,5 +1246,32 @@ export const getEmailTemplate = async (key) => {
   } catch (error) {
     console.error(`Error fetching email template ${key}:`, error);
     return null;
+  }
+};
+/**
+ * Get restaurant registrations with pagination
+ */
+export const getPaginatedRegistrations = async (page = 1, pageSize = 20, status = 'all') => {
+  try {
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    let query = supabase
+      .from('restaurant_registrations')
+      .select('*', { count: 'exact' });
+
+    if (status !== 'all') {
+      query = query.eq('status', status);
+    }
+
+    const { data, count, error } = await query
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (error) throw error;
+    return { data: data || [], totalCount: count || 0, error: null };
+  } catch (error) {
+    console.error('Error fetching paginated registrations:', error);
+    return { data: [], totalCount: 0, error: error.message };
   }
 };

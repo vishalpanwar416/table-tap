@@ -94,7 +94,7 @@ const storageAdapter = isBrowser ? browserStorage : {
   removeItem: () => { }
 };
 
-export const supabase = createClient(
+const supabaseClient = createClient(
   supabaseUrl || defaultUrl,
   supabaseAnonKey || defaultKey,
   {
@@ -114,3 +114,10 @@ export const supabase = createClient(
       }
     }
   });
+
+export const supabase = supabaseClient;
+
+/** Use in effects/chunks where top-level supabase may not be in scope yet. */
+export function getSupabase() {
+  return supabaseClient;
+}

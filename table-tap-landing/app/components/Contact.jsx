@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Mail, Phone, MapPin, Send, CheckCircle, AlertCircle, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import data from '../data/landing-data.json';
+import siteConfig from '../data/site-config.json';
 import { useSettings } from '../context/SettingsContext';
 
 const IconMap = {
@@ -16,16 +17,22 @@ const Contact = () => {
     const { contact: localContact } = data;
     const { company, loading } = useSettings();
 
-    // Override with database settings if available
     const contact = {
         ...localContact,
         info: localContact.info.map(item => {
-            if (!company) return item;
-            if (item.type === 'mail' && company.email) return { ...item, value: company.email };
-            if (item.type === 'phone' && company.phone) return { ...item, value: company.phone };
-            if (item.type === 'map-pin' && company.address) {
-                const fullAddress = `${company.address}, ${company.city}, ${company.state} - ${company.pincode}`;
-                return { ...item, value: fullAddress };
+            if (item.type === 'mail') {
+                const value = company?.email || siteConfig.contact.email;
+                return { ...item, value: value || item.value };
+            }
+            if (item.type === 'phone') {
+                const value = company?.phone || siteConfig.contact.phone;
+                return { ...item, value: value || item.value };
+            }
+            if (item.type === 'map-pin') {
+                const value = company?.address
+                    ? `${company.address}, ${company.city}, ${company.state} - ${company.pincode}`
+                    : siteConfig.contact.address;
+                return { ...item, value: value || item.value };
             }
             return item;
         })
@@ -140,7 +147,7 @@ const Contact = () => {
                                     Send us a Message
                                 </h3>
                                 <p className="text-gray-500 font-bold text-sm sm:text-lg mb-6 sm:mb-10">
-                                    We'd love to hear from you!
+                                    We&apos;d love to hear from you!
                                 </p>
                                 <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-8" aria-label="Contact form for demo request">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">

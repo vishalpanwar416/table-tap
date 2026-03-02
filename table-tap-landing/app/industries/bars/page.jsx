@@ -10,46 +10,53 @@ export const metadata = {
 };
 
 export default function BarsSolution() {
+    const features = [
+        { icon: Wine, title: "Digital Cocktails", desc: "Showcase your signature drinks with stunning visuals and ingredients." },
+        { icon: Zap, title: "Instant Re-order", desc: "One-tap re-ordering for the same drink keeps the revenue flowing." },
+        { icon: Music, title: "Dark-Mode UI", desc: "A sleek interface that looks perfect in low-light environments." },
+        { icon: Users, title: "Group Tabs", desc: "Easily handle group orders and split bills without the headache." }
+    ];
+
     return (
-        <main className="min-h-screen bg-slate-950 text-white">
+        <main className="min-h-screen bg-white">
             <Header />
 
             {/* Hero Section */}
-            <section className="pt-32 pb-24 relative overflow-hidden">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-gradient-to-b from-purple-500/10 to-transparent pointer-events-none" />
+            <section className="pt-32 pb-24 bg-slate-50 relative overflow-hidden border-b border-slate-100">
+                <div className="blob top-0 left-1/2 -translate-x-1/2 bg-[#2A9D8F]/10 w-[600px] h-[600px]" />
                 <div className="container mx-auto px-4 relative z-10 text-center">
-                    <span className="inline-block px-4 py-2 rounded-full bg-purple-500/20 text-purple-400 font-bold text-sm mb-6 uppercase tracking-widest border border-purple-500/30">
+                    <span className="inline-block px-4 py-2 rounded-full bg-[#2A9D8F]/10 text-[#2A9D8F] font-bold text-sm mb-6 uppercase tracking-widest border border-[#2A9D8F]/20">
                         High-Volume Service
                     </span>
-                    <h1 className="text-6xl md:text-9xl font-black mb-8 leading-[0.9]">
+                    <h1 className="text-5xl md:text-7xl font-black text-slate-900 mb-8 leading-tight">
                         Faster Drinks. <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">Better Nights.</span>
+                        <span className="gradient-text">Better Nights.</span>
                     </h1>
-                    <p className="text-xl text-slate-400 mb-12 leading-relaxed max-w-2xl mx-auto">
-                        In a crowded bar, every second counts. Table Tap's lightning-fast QR ordering means your guests spend more time enjoying and less time waiting at the counter.
+                    <p className="text-xl text-slate-600 mb-12 leading-relaxed max-w-2xl mx-auto font-medium">
+                        In a crowded bar, every second counts. Table Tap&apos;s lightning-fast QR ordering means your guests spend more time enjoying and less time waiting at the counter.
                     </p>
                     <div className="flex flex-wrap justify-center gap-5">
-                        <button className="px-8 py-4 bg-purple-600 hover:bg-purple-700 rounded-2xl font-bold transition-all transform hover:scale-105">Get Your Bar Online</button>
+                        <button className="btn-premium">Get Your Bar Online</button>
                     </div>
                 </div>
             </section>
 
             {/* Bar Specific Features */}
-            <section className="py-24 bg-slate-900">
+            <section className="py-24 bg-white">
                 <div className="container mx-auto px-4">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                        {[
-                            { icon: <Wine className="text-purple-400" />, title: "Digital Cocktails", desc: "Showcase your signature drinks with stunning visuals and ingredients." },
-                            { icon: <Zap className="text-blue-400" />, title: "Instant Re-order", desc: "One-tap re-ordering for the same drink keeps the revenue flowing." },
-                            { icon: <Music className="text-pink-400" />, title: "Dark-Mode UI", desc: "A sleek interface that looks perfect in low-light environments." },
-                            { icon: <Users className="text-emerald-400" />, title: "Group Tabs", desc: "Easily handle group orders and split bills without the headache." }
-                        ].map((item, i) => (
-                            <div key={i} className="p-8 bg-slate-800/50 border border-slate-700 rounded-[32px] hover:border-purple-500/50 transition-all">
-                                <div className="mb-6">{item.icon}</div>
-                                <h3 className="text-xl font-bold mb-4">{item.title}</h3>
-                                <p className="text-slate-400 text-sm leading-relaxed">{item.desc}</p>
-                            </div>
-                        ))}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                        {features.map((item, i) => {
+                            const Icon = item.icon;
+                            return (
+                                <div key={i} className="p-8 bg-slate-50 border border-slate-100 rounded-[32px] hover:border-[#2A9D8F]/30 transition-all">
+                                    <div className="mb-6 p-4 bg-[#2A9D8F]/10 rounded-2xl w-fit">
+                                        <Icon className="text-[#2A9D8F]" size={24} />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-slate-900 mb-4">{item.title}</h3>
+                                    <p className="text-slate-600 text-sm leading-relaxed">{item.desc}</p>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             </section>

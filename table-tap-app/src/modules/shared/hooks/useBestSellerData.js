@@ -50,19 +50,14 @@ export const useBestSellerData = (restaurantId) => {
     setError(null);
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-
       const data = await fetchBestSellerItems(restaurantId);
-      
-      clearTimeout(timeoutId);
-      
+
       setBestSellerItems(data);
       setLastFetch(Date.now());
       saveToCache(data);
     } catch (error) {
       setError(error.message || 'Failed to load best sellers');
-      
+
       // Try to load from cache as fallback
       if (!loadFromCache()) {
         setBestSellerItems([]);

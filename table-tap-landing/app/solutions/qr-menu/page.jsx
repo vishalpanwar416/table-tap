@@ -38,7 +38,7 @@ export default function QRMenuSolution() {
                         </h1>
 
                         <p className="text-xl md:text-2xl text-gray-500 mb-12 leading-relaxed max-w-3xl font-medium animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                            Table Tap's QR ordering system turns every table into a point of sale. No apps, no registration—just scan and savor.
+                            Table Tap&apos;s QR ordering system turns every table into a point of sale. No apps, no registration—just scan and savor.
                         </p>
 
                         <div className="flex flex-wrap justify-center gap-5 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
