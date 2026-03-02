@@ -40,8 +40,13 @@ const Hero = () => {
                     </div>
 
                     {/* Subtitle */}
-                    <p className="text-gray-500 text-[0.95rem] sm:text-lg md:text-xl lg:text-2xl max-w-2xl sm:max-w-3xl mb-7 sm:mb-10 md:mb-12 leading-relaxed font-medium px-3 sm:px-2 opacity-100">
+                    <p className="text-gray-500 text-[0.95rem] sm:text-lg md:text-xl lg:text-2xl max-w-2xl sm:max-w-3xl mb-4 sm:mb-6 md:mb-8 leading-relaxed font-medium px-3 sm:px-2 opacity-100">
                         {hero.subtitle}
+                    </p>
+
+                    {/* Hardware-free story highlight */}
+                    <p className="text-sm sm:text-base md:text-lg text-slate-700 max-w-2xl sm:max-w-3xl mb-7 sm:mb-10 md:mb-12 leading-relaxed font-semibold px-3 sm:px-2">
+                        Behind the scenes, a single billing computer and your captains&apos; phones are enough&mdash;no bulky POS machines, no extra tablets, just lean software that keeps your floor moving and your costs low.
                     </p>
 
                     {/* CTA Section - stack on very small, side-by-side on sm+ */}

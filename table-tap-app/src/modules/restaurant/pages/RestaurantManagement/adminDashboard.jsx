@@ -426,7 +426,7 @@ const AdminDashboard = () => {
             }
           }
         )
-        .subscribe(() => {});
+        .subscribe(() => { });
       orderChannelRef.current = channel;
     })();
     return () => {
@@ -971,6 +971,10 @@ const AdminDashboard = () => {
                     <FloorPlanView
                       searchTerm={searchTerm}
                       onViewOrders={() => setActiveTab('orders')}
+                      onCreateOrder={(tableNum) => {
+                        setCreateOrderData(prev => ({ ...prev, table_number: tableNum }));
+                        setShowCreateOrderModal(true);
+                      }}
                     />
                   )}
 

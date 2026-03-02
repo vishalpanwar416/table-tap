@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import PrintBill from '../PrintBill';
 
-const FloorPlanView = ({ searchTerm, onViewOrders }) => {
+const FloorPlanView = ({ searchTerm, onViewOrders, onCreateOrder }) => {
     const { restaurant, updateRestaurant } = useAdminRestaurant();
     const [tables, setTables] = useState([]);
     const [tableOrders, setTableOrders] = useState({});
@@ -570,19 +570,35 @@ const FloorPlanView = ({ searchTerm, onViewOrders }) => {
                             )}
                         </div>
 
-                        {onViewOrders && selectedTable.orders.length > 0 && (
-                            <div className="p-4 border-t border-gray-100 bg-gray-50/50 rounded-b-2xl">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setSelectedTable(null);
-                                        onViewOrders();
-                                    }}
-                                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-orange-600 text-white font-bold text-sm shadow-md hover:bg-orange-700 active:scale-95 transition-all"
-                                >
-                                    <ExternalLink className="w-4 h-4" />
-                                    Manage Orders
-                                </button>
+                        {(onViewOrders || onCreateOrder) && (
+                            <div className="p-4 border-t border-gray-100 bg-gray-50/50 rounded-b-2xl flex flex-col sm:flex-row gap-3">
+                                {onCreateOrder && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const tblNum = selectedTable.table.tableNumber;
+                                            setSelectedTable(null);
+                                            onCreateOrder(tblNum);
+                                        }}
+                                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-green-600 text-white font-bold text-sm shadow-md hover:bg-green-700 active:scale-95 transition-all"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                        Create Order
+                                    </button>
+                                )}
+                                {onViewOrders && selectedTable.orders.length > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setSelectedTable(null);
+                                            onViewOrders();
+                                        }}
+                                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-orange-600 text-white font-bold text-sm shadow-md hover:bg-orange-700 active:scale-95 transition-all"
+                                    >
+                                        <ExternalLink className="w-4 h-4" />
+                                        Manage Orders
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>
