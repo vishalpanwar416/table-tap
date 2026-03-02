@@ -101,11 +101,50 @@ export const deleteSubscriptionPlan = async (id) => {
 };
 
 /**
- * Get all restaurant subscriptions from the subscriptions table
+ * Get restaurant subscriptions with pagination
+ */
+export const getPaginatedSubscriptions = async (page = 1, pageSize = 20, status = 'all') => {
+  try {
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    let query = supabase
+      .from('subscriptions')
+      .select(`
+        *,
+        restaurant:restaurants (
+          id,
+          name,
+          contact_email,
+          contact_phone,
+          logo_url,
+          is_active
+        )
+      `, { count: 'exact' });
+
+    if (status !== 'all') {
+      query = query.eq('status', status);
+    }
+
+    const { data, count, error } = await query
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (error) throw error;
+    return { data: data || [], totalCount: count || 0, error: null };
+  } catch (error) {
+    console.error('Error fetching paginated subscriptions:', error);
+    return { data: [], totalCount: 0, error: error.message };
+  }
+};
+
+/**
+ * Get all restaurant subscriptions from the subscriptions table.
+ * @deprecated Use getPaginatedSubscriptions instead.
  */
 export const getRestaurantSubscriptions = async () => {
   try {
-    const { data: subscriptions, error } = await supabase
+    const { data, error } = await supabase
       .from('subscriptions')
       .select(`
         *,
@@ -121,14 +160,8 @@ export const getRestaurantSubscriptions = async () => {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-
-    // Plan detail mapping will happen on consumer side or via extra fetch if needed
-    // For now returning subscriptions- the consumer can look up plans from the plans state
-    return { data: subscriptions, error: null };
-
-    return { data: enrichedSubscriptions, error: null };
+    return { data, error: null };
   } catch (error) {
-    console.error('Error fetching subscriptions:', error);
     return { data: null, error: error.message };
   }
 };
@@ -490,41 +523,52 @@ export const reactivateSubscription = async (subscriptionId, durationMonths = 1)
 };
 
 /**
- * Get subscription statistics
+ * Get subscription statistics (Optimized with DB counts)
  */
 export const getSubscriptionStats = async () => {
   try {
-    const { data: subscriptions, error } = await supabase
+    // 1. Get counts for each status using head queries (very fast)
+    const [
+      { count: totalSubscriptions },
+      { count: activeSubscriptions },
+      { count: gracePeriodSubscriptions },
+      { count: expiredSubscriptions },
+      { count: cancelledSubscriptions }
+    ] = await Promise.all([
+      supabase.from('subscriptions').select('*', { count: 'exact', head: true }),
+      supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+      supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'grace_period'),
+      supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'expired'),
+      supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'cancelled')
+    ]);
+
+    // 2. Get counts for each plan (only for active subscriptions)
+    const { data: plansData } = await supabase
       .from('subscriptions')
-      .select('status, plan_name, total_amount, billing_cycle');
-
-    if (error) throw error;
-
-    const totalSubscriptions = subscriptions.length;
-    const activeSubscriptions = subscriptions.filter(s => s.status === 'active').length;
-    const gracePeriodSubscriptions = subscriptions.filter(s => s.status === 'grace_period').length;
-    const expiredSubscriptions = subscriptions.filter(s => s.status === 'expired').length;
-    const cancelledSubscriptions = subscriptions.filter(s => s.status === 'cancelled').length;
+      .select('plan_name')
+      .eq('status', 'active');
 
     const planCounts = {};
-    subscriptions.forEach(s => {
-      if (s.status === 'active') {
-        planCounts[s.plan_name] = (planCounts[s.plan_name] || 0) + 1;
-      }
+    (plansData || []).forEach(s => {
+      planCounts[s.plan_name] = (planCounts[s.plan_name] || 0) + 1;
     });
 
-    const totalRevenue = subscriptions
-      .filter(s => s.status === 'active')
-      .reduce((sum, s) => sum + (s.total_amount || 0), 0);
+    // 3. Get revenue (only for active subscriptions)
+    // Note: In a real large scale app, you'd use a RPC or specialized view for this.
+    // For now, we'll fetch the sum of active subscriptions.
+    const { data: revenueData } = await supabase
+      .from('subscriptions')
+      .select('total_amount, billing_cycle')
+      .eq('status', 'active');
 
-    // Get monthly recurring revenue
-    const monthlyRevenue = subscriptions
-      .filter(s => s.status === 'active' && s.billing_cycle === 'monthly')
-      .reduce((sum, s) => sum + (s.total_amount || 0), 0);
+    const totalRevenue = (revenueData || []).reduce((sum, s) => sum + (s.total_amount || 0), 0);
 
-    const yearlyRevenue = subscriptions
-      .filter(s => s.status === 'active' && s.billing_cycle === 'yearly')
-      .reduce((sum, s) => sum + ((s.total_amount || 0) / 12), 0);
+    // MRR Calculation
+    const mrr = (revenueData || []).reduce((sum, s) => {
+      if (s.billing_cycle === 'monthly') return sum + (s.total_amount || 0);
+      if (s.billing_cycle === 'yearly') return sum + ((s.total_amount || 0) / 12);
+      return sum;
+    }, 0);
 
     return {
       data: {
@@ -533,19 +577,20 @@ export const getSubscriptionStats = async () => {
         gracePeriodSubscriptions,
         expiredSubscriptions,
         cancelledSubscriptions,
-        planCounts, // Return full map for flexibility
+        planCounts,
         starterPlans: planCounts['starter'] || 0,
         professionalPlans: planCounts['professional'] || 0,
         enterprisePlans: planCounts['enterprise'] || 0,
         premiumSubscriptions: (planCounts['professional'] || 0) + (planCounts['enterprise'] || 0),
         totalRevenue,
-        monthlyRecurringRevenue: monthlyRevenue + yearlyRevenue,
+        monthlyRecurringRevenue: mrr,
         cancellationRate: totalSubscriptions > 0 ?
           ((cancelledSubscriptions / totalSubscriptions) * 100).toFixed(2) : 0
       },
       error: null
     };
   } catch (error) {
+    console.error('Error fetching subscription stats:', error);
     return { data: null, error: error.message };
   }
 };

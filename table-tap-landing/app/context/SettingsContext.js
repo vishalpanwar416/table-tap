@@ -6,22 +6,18 @@ import { supabase } from '../lib/supabase';
 const SettingsContext = createContext();
 
 export const SettingsProvider = ({ children, initialSettings = null }) => {
+    const hasInitial = initialSettings != null;
     const [settings, setSettings] = useState({
         company: initialSettings?.company_details || null,
         social: initialSettings?.social_links || null,
         hero: initialSettings?.landing_hero || null,
         logo: initialSettings?.system_logo || null,
         mapsKey: initialSettings?.google_maps_key?.key || null,
-        loading: !initialSettings
+        loading: !hasInitial
     });
 
-
     useEffect(() => {
-        // Skip client fetch when server already provided settings (faster load)
-        if (initialSettings != null) {
-            setSettings(prev => ({ ...prev, loading: false }));
-            return;
-        }
+        if (hasInitial) return;
         const fetchSettings = async () => {
             try {
                 console.log('Fetching landing settings...');
@@ -31,8 +27,10 @@ export const SettingsProvider = ({ children, initialSettings = null }) => {
                     .in('key', ['company_details', 'social_links', 'landing_hero', 'system_logo', 'google_maps_key']);
 
                 if (error) {
-                    console.error('Supabase error fetching settings:', error);
-                    throw error;
+                    const msg = error?.message || error?.code || (typeof error === 'object' && Object.keys(error || {}).length ? JSON.stringify(error) : String(error));
+                    console.warn('Settings: fetch failed (using defaults). Details:', msg);
+                    setSettings(prev => ({ ...prev, loading: false }));
+                    return;
                 }
 
                 console.log(`Fetched ${data?.length || 0} settings rows`);
@@ -61,7 +59,7 @@ export const SettingsProvider = ({ children, initialSettings = null }) => {
         };
 
         fetchSettings();
-    }, [initialSettings]);
+    }, [hasInitial]);
 
     return (
         <SettingsContext.Provider value={settings}>

@@ -4,9 +4,9 @@ import { supabase } from '../../../shared/supabase';
  * Helper function to mark authentication errors
  */
 const markAuthError = (error) => {
-  if (error && (error.code === 'PGRST301' || error.status === 401 || 
-      error.message?.includes('JWT') || error.message?.includes('expired') ||
-      error.message?.includes('Invalid Refresh Token') || error.message?.includes('Refresh Token Not Found'))) {
+  if (error && (error.code === 'PGRST301' || error.status === 401 ||
+    error.message?.includes('JWT') || error.message?.includes('expired') ||
+    error.message?.includes('Invalid Refresh Token') || error.message?.includes('Refresh Token Not Found'))) {
     error.isAuthError = true;
   }
   return error;
@@ -426,9 +426,8 @@ export async function getAllRestaurants() {
   try {
     const { data, error } = await supabase
       .from('restaurants')
-      .select('*, subscriptions!inner(status)')
+      .select('*, subscriptions(status)')
       .eq('is_active', true)
-      .in('subscriptions.status', ['active', 'grace_period'])
       .order('name');
     if (error) {
       console.error('Failed to fetch all restaurants:', error);

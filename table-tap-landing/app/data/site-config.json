@@ -1,0 +1,41 @@
+{
+  "site": {
+    "baseUrl": "https://table-tap.in",
+    "name": "Table Tap",
+    "twitterHandle": "@tabletap",
+    "locale": "en_IN"
+  },
+  "contact": {
+    "email": "vishalpanwar416@gmail.com",
+    "phone": "+91 75009 88212",
+    "phoneFormatted": "+91-75009-88212",
+    "address": "Hyderabad, India",
+    "city": "Hyderabad",
+    "state": "Telangana",
+    "supportEmail": "support@tabletap.in",
+    "fromEmail": "Table Tap <noreply@table-tap.in>"
+  },
+  "assets": {
+    "logoUrl": "https://vogixryubhpqziivspks.supabase.co/storage/v1/object/public/system-assets/logott.png",
+    "supabaseStorageHost": "vogixryubhpqziivspks.supabase.co"
+  },
+  "analytics": {
+    "gaId": "G-9D6YVYRTQN",
+    "googleVerification": "your-google-verification-code"
+  },
+  "pricing": {
+    "starterMonthly": 999,
+    "professionalMonthly": 1999,
+    "enterpriseBaseMonthly": 29999,
+    "priceValidUntil": "2025-12-31"
+  },
+  "map": {
+    "defaultCenter": {
+      "lat": 17.385044,
+      "lng": 78.486671
+    }
+  },
+  "legal": {
+    "governingLawJurisdiction": "Hyderabad, Telangana"
+  }
+}

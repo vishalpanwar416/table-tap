@@ -17,30 +17,53 @@ import {
     RefreshCw,
     Eye
 } from 'lucide-react';
-import { getAllInquiries, updateInquiryStatus, deleteInquiry } from '../admin_service.js';
+import { getPaginatedInquiries, updateInquiryStatus, deleteInquiry } from '../admin_service.js';
 
 const InquiryManagement = ({ searchTerm = '' }) => {
     const [inquiries, setInquiries] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
     const [error, setError] = useState(null);
     const [statusFilter, setStatusFilter] = useState('all');
     const [updatingId, setUpdatingId] = useState(null);
     const [selectedInquiry, setSelectedInquiry] = useState(null);
+    const pageSize = 20;
 
     useEffect(() => {
-        fetchInquiries();
-    }, []);
+        setPage(1);
+        fetchInquiries(1, false);
+    }, [statusFilter]);
 
-    const fetchInquiries = async () => {
+    const fetchInquiries = async (pageNum = 1, isLoadMore = false) => {
         try {
-            setLoading(true);
-            const { data, error } = await getAllInquiries();
+            if (isLoadMore) setLoadingMore(true);
+            else setLoading(true);
+
+            const { data, totalCount, error } = await getPaginatedInquiries(pageNum, pageSize, statusFilter);
             if (error) throw new Error(error);
-            setInquiries(data || []);
+
+            if (isLoadMore) {
+                setInquiries(prev => [...prev, ...(data || [])]);
+            } else {
+                setInquiries(data || []);
+            }
+
+            setHasMore((pageNum * pageSize) < totalCount);
         } catch (err) {
             setError(err.message);
         } finally {
             setLoading(false);
+            setLoadingMore(false);
+        }
+    };
+
+    const handleLoadMore = () => {
+        if (!loadingMore && hasMore) {
+            const nextPage = page + 1;
+            setPage(nextPage);
+            fetchInquiries(nextPage, true);
         }
     };
 
@@ -92,9 +115,9 @@ const InquiryManagement = ({ searchTerm = '' }) => {
             item.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             item.restaurant_name?.toLowerCase().includes(searchTerm.toLowerCase());
 
-        const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
-
-        return matchesSearch && matchesStatus;
+        // Note: Filter is already applied in API call for performance
+        // We only keep this for search matches on already loaded data
+        return matchesSearch;
     });
 
     if (loading) {
@@ -438,6 +461,19 @@ const InquiryManagement = ({ searchTerm = '' }) => {
                             </div>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* Load More */}
+            {hasMore && (
+                <div className="flex justify-center py-8">
+                    <button
+                        onClick={handleLoadMore}
+                        disabled={loadingMore}
+                        className="px-8 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 transition-all flex items-center gap-2 shadow-sm disabled:opacity-50"
+                    >
+                        {loadingMore ? 'Loading...' : 'Load More Inquiries'}
+                    </button>
                 </div>
             )}
         </div>

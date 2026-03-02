@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { unstable_cache } from 'next/cache';
 
+/** Fetches company_details, social_links, landing_hero, system_logo, google_maps_key from system_settings. */
 async function fetchLandingSettingsFromSupabase() {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

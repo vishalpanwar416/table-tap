@@ -2,7 +2,9 @@
 
 import { Globe, Instagram, Twitter, Linkedin, Facebook, Mail, Phone, MapPin } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import data from '../data/landing-data.json';
+import siteConfig from '../data/site-config.json';
 import { useSettings } from '../context/SettingsContext';
 
 const IconMap = {
@@ -17,19 +19,25 @@ const Footer = () => {
     const { footer: localFooter, contact: localContact } = data;
     const { company, social, logo, loading } = useSettings();
 
-    const companyName = company?.name || "Table Tap";
+    const companyName = company?.name || siteConfig.site.name;
     const logoUrl = logo?.url || "/logo.png";
 
-    // Override with database settings if available
     const contact = {
         ...localContact,
         info: localContact.info.map(item => {
-            if (!company) return item;
-            if (item.type === 'mail' && company.email) return { ...item, value: company.email };
-            if (item.type === 'phone' && company.phone) return { ...item, value: company.phone };
-            if (item.type === 'map-pin' && company.address) {
-                const fullAddress = `${company.address}, ${company.city}, ${company.state} - ${company.pincode}`;
-                return { ...item, value: fullAddress };
+            if (item.type === 'mail') {
+                const value = company?.email || siteConfig.contact.email;
+                return { ...item, value: value || item.value };
+            }
+            if (item.type === 'phone') {
+                const value = company?.phone || siteConfig.contact.phone;
+                return { ...item, value: value || item.value };
+            }
+            if (item.type === 'map-pin') {
+                const value = company?.address
+                    ? `${company.address}, ${company.city}, ${company.state} - ${company.pincode}`
+                    : siteConfig.contact.address;
+                return { ...item, value: value || item.value };
             }
             return item;
         })
@@ -57,7 +65,7 @@ const Footer = () => {
                 <div className="flex flex-col lg:flex-row justify-between gap-10 sm:gap-12 pb-8 sm:pb-10 border-b border-white/5">
                     {/* Brand & Description */}
                     <div className="shrink-0 text-center lg:text-left">
-                        <a href="#home" className="inline-flex items-center gap-3 mb-4 group min-h-[44px]">
+                        <Link href="/" className="inline-flex items-center gap-3 mb-4 group min-h-[44px]">
                             <div className="h-10 sm:h-12 rounded-xl overflow-hidden group-hover:scale-105 transition-transform bg-white/10 p-1">
                                 <Image
                                     src={logoUrl}
@@ -67,7 +75,7 @@ const Footer = () => {
                                     className={`h-full w-auto object-contain ${!logo?.url ? 'brightness-0 invert' : ''}`}
                                 />
                             </div>
-                        </a>
+                        </Link>
                         <p className="text-gray-500 text-xs sm:text-sm max-w-xs leading-relaxed mb-4 sm:mb-5 mx-auto lg:mx-0">
                             Seamless QR-based ordering for modern restaurants. Built in India.
                         </p>

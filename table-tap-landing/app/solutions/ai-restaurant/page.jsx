@@ -33,7 +33,7 @@ export default function AIRestaurantSolution() {
 
                     <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-gray-900 mb-8 leading-[1.1] tracking-tight animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
                         The First Autonomous <br />
-                        <span className="gradient-text">Chef's Assistant.</span>
+                        <span className="gradient-text">Chef&apos;s Assistant.</span>
                     </h1>
 
                     <p className="text-xl md:text-2xl text-gray-500 mb-12 leading-relaxed max-w-3xl mx-auto font-medium animate-fade-in-up" style={{ animationDelay: '0.2s' }}>

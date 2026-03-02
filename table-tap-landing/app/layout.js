@@ -7,6 +7,8 @@ import StructuredData from "./components/StructuredData";
 import LeadModalWrapper from "./components/LeadModalWrapper";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import siteConfig from "./data/site-config.json";
+import { getLandingSettings } from "./lib/settings";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,47 +22,44 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
+const { site, assets, analytics, pricing } = siteConfig;
+
 export const metadata = {
-  metadataBase: new URL('https://table-tap.in'),
+  metadataBase: new URL(site.baseUrl),
   title: {
     default: "Table Tap - QR Based Restaurant Ordering System India | Digital Menu & Contactless Ordering",
     template: "%s | Table Tap - Restaurant Ordering System"
   },
-  description: "India's leading QR-based restaurant ordering system. Transform your restaurant with digital menus, contactless ordering, Swiggy & Zomato integration. Reduce wait times by 40%, increase revenue by 25%. Start free trial today. ₹999/month.",
+  description: `India's leading QR-based restaurant ordering system. Transform your restaurant with digital menus, contactless ordering, Swiggy & Zomato integration. Reduce wait times by 40%, increase revenue by 25%. Start free trial today. ₹${pricing.starterMonthly}/month.`,
   keywords: [
-    // Primary keywords
     "QR code restaurant ordering system",
     "digital menu for restaurants India",
     "contactless ordering system",
     "restaurant QR menu",
-    // Location-specific
     "restaurant ordering software India",
     "restaurant management system Hyderabad",
     "digital menu India",
     "QR ordering Bangalore",
     "restaurant POS Mumbai",
     "cafe ordering system Delhi",
-    // Feature keywords
     "Swiggy Zomato integration",
     "restaurant order management",
     "table ordering system",
     "restaurant inventory management",
     "restaurant staff management",
-    // Long-tail keywords
     "best QR code menu app for restaurants",
     "how to create digital menu for restaurant",
     "restaurant ordering without app download",
     "unified restaurant order dashboard",
-    // Industry terms
     "restaurant technology solutions",
     "hospitality management software",
     "food service technology",
     "restaurant automation",
     "smart restaurant solutions"
   ],
-  authors: [{ name: "Table Tap", url: "https://table-tap.in" }],
-  creator: "Table Tap",
-  publisher: "Table Tap",
+  authors: [{ name: site.name, url: site.baseUrl }],
+  creator: site.name,
+  publisher: site.name,
   category: "Technology",
   classification: "Restaurant Software",
   robots: {
@@ -78,11 +77,11 @@ export const metadata = {
   },
   openGraph: {
     type: "website",
-    locale: "en_IN",
-    url: "https://table-tap.in",
-    siteName: "Table Tap",
+    locale: site.locale,
+    url: site.baseUrl,
+    siteName: site.name,
     title: "Table Tap - QR Based Restaurant Ordering System | Digital Menu India",
-    description: "Transform your restaurant with India's best QR-based ordering system. Digital menus, Swiggy & Zomato integration, real-time orders. Start free trial - ₹999/month.",
+    description: `Transform your restaurant with India's best QR-based ordering system. Digital menus, Swiggy & Zomato integration, real-time orders. Start free trial - ₹${pricing.starterMonthly}/month.`,
     images: [
       {
         url: "/og-image.png",
@@ -95,8 +94,8 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    site: "@tabletap",
-    creator: "@tabletap",
+    site: site.twitterHandle,
+    creator: site.twitterHandle,
     title: "Table Tap - QR Restaurant Ordering System India",
     description: "Digital menu & contactless ordering for restaurants. Swiggy & Zomato integration. Reduce wait times 40%. Free trial available!",
     images: {
@@ -105,14 +104,12 @@ export const metadata = {
     },
   },
   verification: {
-    google: "your-google-verification-code", // Replace with actual Google Search Console verification code
-    // yandex: "your-yandex-verification-code",
-    // bing: "your-bing-verification-code",
+    google: analytics.googleVerification,
   },
   alternates: {
-    canonical: "https://table-tap.in",
+    canonical: site.baseUrl,
     languages: {
-      "en-IN": "https://table-tap.in",
+      "en-IN": site.baseUrl,
     },
   },
   other: {
@@ -121,12 +118,12 @@ export const metadata = {
     "mobile-web-app-capable": "yes",
     "apple-mobile-web-app-capable": "yes",
     "apple-mobile-web-app-status-bar-style": "default",
-    "apple-mobile-web-app-title": "Table Tap",
+    "apple-mobile-web-app-title": site.name,
   },
   icons: {
-    icon: 'https://vogixryubhpqziivspks.supabase.co/storage/v1/object/public/system-assets/logott.png',
-    shortcut: 'https://vogixryubhpqziivspks.supabase.co/storage/v1/object/public/system-assets/logott.png',
-    apple: 'https://vogixryubhpqziivspks.supabase.co/storage/v1/object/public/system-assets/logott.png',
+    icon: assets.logoUrl,
+    shortcut: assets.logoUrl,
+    apple: assets.logoUrl,
   },
 };
 
@@ -138,25 +135,27 @@ export const viewport = {
   viewportFit: "cover", // safe area for notched devices
 };
 
-/** No server fetch: layout is fully sync so first byte and first paint are never blocked. Settings load on client. */
-export default function RootLayout({ children }) {
+/** Contact, company, logo, hero: from system_settings when available; site-config is fallback. */
+export default async function RootLayout({ children }) {
+  const settings = await getLandingSettings();
+
   return (
     <html lang="en-IN" className="scroll-smooth" dir="ltr" suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="geo.region" content="IN" />
         <meta name="geo.placename" content="India" />
-        <link rel="icon" href="https://vogixryubhpqziivspks.supabase.co/storage/v1/object/public/system-assets/logott.png" sizes="any" />
-        <link rel="preload" href="https://vogixryubhpqziivspks.supabase.co/storage/v1/object/public/system-assets/logott.png" as="image" />
-        <link rel="preconnect" href="https://vogixryubhpqziivspks.supabase.co" />
-        <link rel="dns-prefetch" href="https://vogixryubhpqziivspks.supabase.co" />
-        <StructuredData settings={null} />
+        <link rel="icon" href={assets.logoUrl} sizes="any" />
+        <link rel="preload" href={assets.logoUrl} as="image" />
+        <link rel="preconnect" href={`https://${assets.supabaseStorageHost}`} />
+        <link rel="dns-prefetch" href={`https://${assets.supabaseStorageHost}`} />
+        <StructuredData settings={settings} />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased bg-white text-gray-900`}
         suppressHydrationWarning
       >
-        <SettingsProvider initialSettings={null}>
+        <SettingsProvider initialSettings={settings}>
           <ModalProvider>
             {children}
             <LeadModalWrapper />
@@ -165,14 +164,13 @@ export default function RootLayout({ children }) {
           </ModalProvider>
         </SettingsProvider>
       </body>
-      <Script src="https://www.googletagmanager.com/gtag/js?id=G-9D6YVYRTQN" strategy="afterInteractive" />
+      <Script src={`https://www.googletagmanager.com/gtag/js?id=${analytics.gaId}`} strategy="afterInteractive" />
       <Script id="google-analytics" strategy="afterInteractive">
         {`
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
-
-          gtag('config', 'G-9D6YVYRTQN');
+          gtag('config', '${analytics.gaId}');
         `}
       </Script>
     </html>

@@ -62,7 +62,7 @@ export default function ChennaiSEO() {
             <section className="py-24 bg-slate-900 text-white overflow-hidden relative">
                 <div className="container mx-auto px-4 relative z-10">
                     <div className="text-center max-w-3xl mx-auto mb-20">
-                        <h2 className="text-4xl md:text-5xl font-black mb-6">Serving Chennai's Trusted Hubs.</h2>
+                        <h2 className="text-4xl md:text-5xl font-black mb-6">Serving Chennai&apos;s Trusted Hubs.</h2>
                         <p className="text-slate-400 text-lg">Whether you are a traditional eatery in Mylapore or a corporate cafeteria in OMR, we deliver excellence.</p>
                     </div>
 

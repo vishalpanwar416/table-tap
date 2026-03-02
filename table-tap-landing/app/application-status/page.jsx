@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSettings } from '../context/SettingsContext';
+import siteConfig from '../data/site-config.json';
 
 const statusConfig = {
     pending_review: {
@@ -93,8 +94,8 @@ function StatusContent() {
 
     const logoUrl = logo?.url || "/logo.png";
     const companyName = company?.name || "Table Tap";
-    const supportEmail = company?.email || "support@tabletap.in";
-    const supportPhone = company?.phone || "+91 98765 43210";
+    const supportEmail = company?.email || siteConfig.contact.supportEmail;
+    const supportPhone = company?.phone || siteConfig.contact.phone;
 
     // Fetch Razorpay Key
     useEffect(() => {

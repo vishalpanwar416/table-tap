@@ -37,7 +37,7 @@ export default function PaymentsSolution() {
                     </h1>
 
                     <p className="text-xl md:text-2xl text-gray-500 mb-12 leading-relaxed max-w-3xl mx-auto font-medium animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                        Eliminate the "bill-please" wait time. Let your guests pay instantly via UPI or cards directly from their phone. Fast, secure, and automatically synced with your dashboard.
+                        Eliminate the &quot;bill-please&quot; wait time. Let your guests pay instantly via UPI or cards directly from their phone. Fast, secure, and automatically synced with your dashboard.
                     </p>
 
                     <div className="flex flex-wrap justify-center gap-5 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>

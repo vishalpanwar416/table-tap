@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { MapPin, Search, X, Navigation, Check } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
+import siteConfig from '../data/site-config.json';
 
 export default function LocationPicker({ onLocationSelect, onClose, initialLocation, variant = 'modal' }) {
     const { mapsKey } = useSettings();
@@ -91,7 +92,7 @@ export default function LocationPicker({ onLocationSelect, onClose, initialLocat
 
         const apiKey = mapsKey || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
         if (!apiKey) {
-            setError('Google Maps API key not configured. Please contact support.');
+            queueMicrotask(() => setError('Google Maps API key not configured. Please contact support.'));
             return;
         }
 
@@ -114,7 +115,7 @@ export default function LocationPicker({ onLocationSelect, onClose, initialLocat
 
         const defaultCenter = initialLocation?.lat && initialLocation?.lng
             ? { lat: initialLocation.lat, lng: initialLocation.lng }
-            : { lat: 17.385, lng: 78.4867 }; // Hyderabad default
+            : siteConfig.map.defaultCenter;
 
         const map = new window.google.maps.Map(mapRef.current, {
             center: defaultCenter,

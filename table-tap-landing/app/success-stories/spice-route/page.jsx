@@ -36,12 +36,12 @@ export default function SpiceRouteCaseStudy() {
                             <div className="prose prose-lg prose-slate max-w-none">
                                 <h2 className="text-3xl font-black mb-6">The Challenge</h2>
                                 <p className="text-slate-600 leading-relaxed font-medium mb-6">
-                                    In a high-pressure fine dining environment, communication between the front-of-house and the kitchen is critical. Spice Route was experiencing "Friday-night bottlenecks" where handwritten KOTs (Kitchen Order Tickets) were getting lost or misread, leading to comped meals and unhappy guests.
+                                    In a high-pressure fine dining environment, communication between the front-of-house and the kitchen is critical. Spice Route was experiencing &quot;Friday-night bottlenecks&quot; where handwritten KOTs (Kitchen Order Tickets) were getting lost or misread, leading to comped meals and unhappy guests.
                                 </p>
 
                                 <h2 className="text-3xl font-black mb-6">The Solution</h2>
                                 <p className="text-slate-600 leading-relaxed font-medium">
-                                    They deployed Table Tap’s **Integrated KDS (Kitchen Display System)** alongside the digital menu. Orders now flow directly from the guest's phone to the kitchen screen in milliseconds. The system even prioritizes appetizers and warns chefs when a table has been waiting too long.
+                                    They deployed Table Tap’s **Integrated KDS (Kitchen Display System)** alongside the digital menu. Orders now flow directly from the guest&apos;s phone to the kitchen screen in milliseconds. The system even prioritizes appetizers and warns chefs when a table has been waiting too long.
                                 </p>
                             </div>
 
@@ -49,7 +49,7 @@ export default function SpiceRouteCaseStudy() {
                                 <Quote className="absolute top-10 right-10 text-white/10" size={120} />
                                 <div className="relative z-10">
                                     <p className="text-2xl font-medium italic mb-8">
-                                        "Fine dining is about the details. Table Tap ensures that the technical details are perfect so our staff can focus 100% on guest hospitality, not running KOTs to the kitchen."
+                                        &quot;Fine dining is about the details. Table Tap ensures that the technical details are perfect so our staff can focus 100% on guest hospitality, not running KOTs to the kitchen.&quot;
                                     </p>
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center font-black">VR</div>

@@ -14,7 +14,7 @@ export default function WhySwitch() {
                             Switching to Table Tap is <span className="gradient-text">Instant and Easy.</span>
                         </h2>
                         <p className="text-lg text-slate-600 mb-8 font-medium">
-                            Whether you're using Petpooja, DotPe, or a generic QR system, we help you migrate your entire menu and data in under 15 minutes. Experience the power of AI-first hospitality.
+                            Whether you&apos;re using Petpooja, DotPe, or a generic QR system, we help you migrate your entire menu and data in under 15 minutes. Experience the power of AI-first hospitality.
                         </p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
                             {[
@@ -38,11 +38,11 @@ export default function WhySwitch() {
                             <h3 className="text-xl font-black mb-6">Why restaurants switch:</h3>
                             <div className="space-y-6">
                                 <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
-                                    <p className="text-emerald-800 font-bold italic">"We switched from Petpooja and saw a 14% increase in sales within the first month thanks to the AI upselling."</p>
+                                    <p className="text-emerald-800 font-bold italic">&quot;We switched from Petpooja and saw a 14% increase in sales within the first month thanks to the AI upselling.&quot;</p>
                                     <p className="text-emerald-600 text-xs font-black mt-2 uppercase">— Bangalore Cafe Owner</p>
                                 </div>
                                 <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                                    <p className="text-blue-800 font-bold italic">"The branding is on another level. It makes our restaurant look much more professional than DotPe did."</p>
+                                    <p className="text-blue-800 font-bold italic">&quot;The branding is on another level. It makes our restaurant look much more professional than DotPe did.&quot;</p>
                                     <p className="text-blue-600 text-xs font-black mt-2 uppercase">— Mumbai Fine Dining</p>
                                 </div>
                             </div>

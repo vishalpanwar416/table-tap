@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../shared/supabase';
-import { createRestaurant, getEmailTemplate } from '../../../admin/pages/AdminPannel/admin_service.js';
+import { createRestaurant, getEmailTemplate, getPaginatedRegistrations } from '../../../admin/pages/AdminPannel/admin_service.js';
 import { applyTemplate } from '../../../shared/api/emailService';
 import {
     Building2,
@@ -31,11 +31,15 @@ import {
 const RegistrationRequests = ({ searchTerm = '' }) => {
     const [registrations, setRegistrations] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
     const [error, setError] = useState(null);
     const [selectedRegistration, setSelectedRegistration] = useState(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [processingId, setProcessingId] = useState(null);
     const [statusFilter, setStatusFilter] = useState('all');
+    const pageSize = 20;
 
     // Status colors
     const statusColors = {
@@ -46,35 +50,44 @@ const RegistrationRequests = ({ searchTerm = '' }) => {
     };
 
     // Fetch registrations
-    const fetchRegistrations = async () => {
+    const fetchRegistrations = async (pageNum = 1, isLoadMore = false) => {
         try {
-            setLoading(true);
+            if (isLoadMore) setLoadingMore(true);
+            else setLoading(true);
             setError(null);
 
-            let query = supabase
-                .from('restaurant_registrations')
-                .select('*')
-                .order('created_at', { ascending: false });
+            const { data, totalCount, error: fetchError } = await getPaginatedRegistrations(pageNum, pageSize, statusFilter);
 
-            if (statusFilter !== 'all') {
-                query = query.eq('status', statusFilter);
+            if (fetchError) throw new Error(fetchError);
+
+            if (isLoadMore) {
+                setRegistrations(prev => [...prev, ...(data || [])]);
+            } else {
+                setRegistrations(data || []);
             }
 
-            const { data, error: fetchError } = await query;
-
-            if (fetchError) throw fetchError;
-            setRegistrations(data || []);
+            setHasMore((pageNum * pageSize) < totalCount);
         } catch (err) {
             console.error('Error fetching registrations:', err);
             setError('Failed to load registrations');
         } finally {
             setLoading(false);
+            setLoadingMore(false);
         }
     };
 
     useEffect(() => {
-        fetchRegistrations();
+        setPage(1);
+        fetchRegistrations(1, false);
     }, [statusFilter]);
+
+    const handleLoadMore = () => {
+        if (!loadingMore && hasMore) {
+            const nextPage = page + 1;
+            setPage(nextPage);
+            fetchRegistrations(nextPage, true);
+        }
+    };
 
     // Filter registrations by search term
     const filteredRegistrations = registrations.filter(reg =>
@@ -571,6 +584,26 @@ const RegistrationRequests = ({ searchTerm = '' }) => {
                             </table>
                         </div>
                     </div>
+
+                    {/* Load More */}
+                    {hasMore && (
+                        <div className="flex justify-center mt-8 pb-8">
+                            <button
+                                onClick={handleLoadMore}
+                                disabled={loadingMore}
+                                className="px-8 py-3 bg-white border border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 transition-all flex items-center gap-2 shadow-sm disabled:opacity-50"
+                            >
+                                {loadingMore ? (
+                                    <>
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                        Loading...
+                                    </>
+                                ) : (
+                                    'Load More Registrations'
+                                )}
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
 

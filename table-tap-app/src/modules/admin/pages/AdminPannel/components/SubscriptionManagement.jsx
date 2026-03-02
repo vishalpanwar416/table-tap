@@ -58,7 +58,8 @@ import {
   getSubscriptionStats,
   getUpcomingRenewals,
   processExpiredSubscriptions,
-  getSubscriptionHistory
+  getSubscriptionHistory,
+  getPaginatedSubscriptions
 } from '../../../../admin/api/subscriptionService';
 import { supabase } from '../../../../shared/supabase';
 import { getAllRestaurants, getSystemSetting, getEmailTemplate } from '../admin_service.js';
@@ -83,6 +84,15 @@ const SubscriptionManagementV2 = () => {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [editingSubscription, setEditingSubscription] = useState(null);
   const [processingId, setProcessingId] = useState(null);
+
+  // Pagination & Loading States for Tabs
+  const [loadingStats, setLoadingStats] = useState(false);
+  const [loadingRenewals, setLoadingRenewals] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 20;
 
   // Billing & Invoice State
   const [showBillingModal, setShowBillingModal] = useState(false);
@@ -126,48 +136,87 @@ const SubscriptionManagementV2 = () => {
   });
 
   useEffect(() => {
-    fetchData();
+    // Initial master data fetch
+    fetchMasterData();
   }, []);
 
-  const fetchData = async () => {
+  useEffect(() => {
+    // Fetch data for the current tab
+    if (activeTab === 'subscriptions' || activeTab === 'billing') {
+      setPage(1);
+      fetchTabData(activeTab, 1, false);
+    } else {
+      fetchTabData(activeTab);
+    }
+  }, [activeTab]);
+
+  const fetchMasterData = async () => {
     try {
-      setLoading(true);
-      setError(null);
-
-      const [
-        plansResponse,
-        cyclesResponse,
-        subscriptionsResponse,
-        restaurantsResponse,
-        statsResponse,
-        renewalsResponse
-      ] = await Promise.all([
+      const [plansRes, cyclesRes] = await Promise.all([
         getSubscriptionPlans(),
-        getBillingCycles(),
-        getRestaurantSubscriptions(),
-        getAllRestaurants(),
-        getSubscriptionStats(),
-        getUpcomingRenewals(14)
+        getBillingCycles()
       ]);
+      setPlans(plansRes.data || []);
+      setBillingCycles(cyclesRes.data || []);
+    } catch (e) {
+      console.error('Master data fail:', e);
+    }
+  };
 
-      if (plansResponse.error) throw new Error(plansResponse.error);
-      if (subscriptionsResponse.error) throw new Error(subscriptionsResponse.error);
-      if (statsResponse.error) throw new Error(statsResponse.error);
+  const fetchTabData = async (tab, pageNum = 1, isLoadMore = false) => {
+    try {
+      setError(null);
+      if (pageNum === 1) setLoading(true);
 
-      setPlans(plansResponse.data || []);
-      setBillingCycles(cyclesResponse.data || []);
-      setSubscriptions(subscriptionsResponse.data || []);
-      setRestaurants(restaurantsResponse.data || []);
-      setStats(statsResponse.data);
-      setUpcomingRenewals(renewalsResponse.data || []);
+      switch (tab) {
+        case 'overview':
+          setLoadingStats(true);
+          const statsRes = await getSubscriptionStats();
+          if (statsRes.data) setStats(statsRes.data);
+          setLoadingStats(false);
+          break;
+        case 'expiring':
+          setLoadingRenewals(true);
+          const renewalsRes = await getUpcomingRenewals(14);
+          setUpcomingRenewals(renewalsRes.data || []);
+          setLoadingRenewals(false);
+          break;
+        case 'subscriptions':
+        case 'billing':
+          if (isLoadMore) setLoadingMore(true);
+          const subsRes = await getPaginatedSubscriptions(pageNum, pageSize);
 
-      if (plansResponse.data?.length > 0 && !assignForm.plan_id) {
-        setAssignForm(prev => ({ ...prev, plan_id: plansResponse.data[0].key }));
+          if (isLoadMore) {
+            setSubscriptions(prev => [...prev, ...(subsRes.data || [])]);
+          } else {
+            setSubscriptions(subsRes.data || []);
+            // Also fetch restaurants for the lookup if needed for assignment modal
+            const restRes = await getAllRestaurants();
+            setRestaurants(restRes.data || []);
+          }
+
+          setTotalCount(subsRes.totalCount);
+          setHasMore((pageNum * pageSize) < subsRes.totalCount);
+          setLoadingMore(false);
+          break;
       }
     } catch (error) {
       setError(error.message);
     } finally {
       setLoading(false);
+      setLoadingStats(false);
+      setLoadingRenewals(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const fetchData = () => fetchTabData(activeTab, page, false);
+
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMore) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchTabData(activeTab, nextPage, true);
     }
   };
 
@@ -1444,6 +1493,19 @@ const SubscriptionManagementV2 = () => {
               })
             )}
           </div>
+
+          {/* Load More Button */}
+          {hasMore && (
+            <div className="flex justify-center py-8">
+              <button
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+                className="px-8 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 transition-all flex items-center gap-2 shadow-sm disabled:opacity-50"
+              >
+                {loadingMore ? 'Loading...' : 'Load More Restaurants'}
+              </button>
+            </div>
+          )}
         </>
       )}
 

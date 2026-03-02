@@ -1,34 +1,28 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import Contact from '../components/Contact';
 import { Calculator, TrendingUp, Users, Clock, ArrowRight, CheckCircle2, Percent } from 'lucide-react';
 
 export default function PricingCalculator() {
-    // Inputs
     const [avgOrders, setAvgOrders] = useState(50);
     const [avgTicket, setAvgTicket] = useState(500);
     const [tables, setTables] = useState(15);
     const [staffCount, setStaffCount] = useState(4);
 
-    // Results
-    const [monthlyRevenue, setMonthlyRevenue] = useState(0);
-    const [potentialUpsell, setPotentialUpsell] = useState(0);
-    const [staffEfficiency, setStaffEfficiency] = useState(0);
-    const [totalValue, setTotalValue] = useState(0);
-
-    useEffect(() => {
+    const { monthlyRevenue, potentialUpsell, staffEfficiency, totalValue } = useMemo(() => {
         const currentRevenue = avgOrders * avgTicket * 30;
-        const upsellImpact = currentRevenue * 0.15; // 15% increase via AI upselling
-        const efficiencyGain = (staffCount * 15000) * 0.25; // 25% staff efficiency gain (using avg salary ₹15k)
-
-        setMonthlyRevenue(currentRevenue);
-        setPotentialUpsell(upsellImpact);
-        setStaffEfficiency(efficiencyGain);
-        setTotalValue(upsellImpact + efficiencyGain);
-    }, [avgOrders, avgTicket, tables, staffCount]);
+        const upsellImpact = currentRevenue * 0.15;
+        const efficiencyGain = (staffCount * 15000) * 0.25;
+        return {
+            monthlyRevenue: currentRevenue,
+            potentialUpsell: upsellImpact,
+            staffEfficiency: efficiencyGain,
+            totalValue: upsellImpact + efficiencyGain
+        };
+    }, [avgOrders, avgTicket, staffCount]);
 
     const formatCurrency = (val) => {
         return new Intl.NumberFormat('en-IN', {

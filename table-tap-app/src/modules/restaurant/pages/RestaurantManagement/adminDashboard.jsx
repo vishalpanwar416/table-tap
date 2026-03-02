@@ -25,7 +25,7 @@ const StoreIcon = Building2;
 
 import FloorPlanView from '../../components/admin/FloorPlan/FloorPlanView';
 import { getAllFoodItems, getRestaurantFoodItems } from '../../../customer/api/foodService';
-import { supabase } from '../../../shared/supabase';
+// Use dynamic import in effects to avoid "Can't find variable: supabase" when chunk loads before shared module
 import { updateOrderStatus as updateOrderStatusService } from '../../api/admin/orderService';
 import { useAdminRestaurant } from '../../../shared/context/AdminRestaurantContext';
 
@@ -178,7 +178,8 @@ const AdminDashboard = () => {
   // Fetch all restaurants for admin selector
   const fetchAllRestaurants = async () => {
     if (!contextIsAdmin()) return;
-
+    const { supabase } = await import('../../../shared/supabase');
+    if (!supabase) return;
     try {
       setLoadingRestaurants(true);
       const { data, error } = await supabase
@@ -246,40 +247,38 @@ const AdminDashboard = () => {
     };
   }, [showRestaurantSelector]);
 
-  // Check authentication and get user on mount
+  // Check authentication and get user on mount (dynamic import avoids chunk-order "supabase" undefined)
   useEffect(() => {
-    const checkAuth = async () => {
+    let authListener = null;
+    let cancelled = false;
+    (async () => {
+      const { supabase } = await import('../../../shared/supabase');
+      if (cancelled || !supabase) return;
       try {
-        setAuthLoading(true); // Start loading
+        setAuthLoading(true);
         const { data: { session } } = await supabase.auth.getSession();
         const user = session?.user;
+        if (cancelled) return;
         if (!user) {
           navigate('/login');
           return;
         }
         setCurrentUser(user);
       } catch (error) {
-        navigate('/login');
+        if (!cancelled) navigate('/login');
       } finally {
-        setAuthLoading(false); // End loading
+        if (!cancelled) setAuthLoading(false);
       }
-    };
-
-    checkAuth();
-
-    // Set up auth state listener
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT') {
-        navigate('/login');
-      } else if (session?.user) {
-        setCurrentUser(session.user);
-      }
-    });
-
+      if (cancelled) return;
+      const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_OUT') navigate('/login');
+        else if (session?.user) setCurrentUser(session.user);
+      });
+      authListener = listener;
+    })();
     return () => {
-      if (authListener && authListener.subscription) {
-        authListener.subscription.unsubscribe();
-      }
+      cancelled = true;
+      if (authListener?.subscription) authListener.subscription.unsubscribe();
     };
   }, [navigate]);
 
@@ -292,14 +291,17 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     if (!currentUser) return;
-
-    const fetchUserProfile = async () => {
+    let cancelled = false;
+    (async () => {
+      const { supabase } = await import('../../../shared/supabase');
+      if (cancelled || !supabase) return;
       try {
         const { data: profileData, error } = await supabase
           .from('profiles')
           .select('profile_role, avatar_url')
           .eq('id', currentUser.id)
           .single();
+        if (cancelled) return;
 
         if (!error && profileData) {
           const role = profileData.profile_role;
@@ -325,11 +327,10 @@ const AdminDashboard = () => {
           }
         }
       } catch (error) {
-        // On profile fetch error, don't redirect to customer home; stay on dashboard and let user retry
-        console.error('Dashboard: failed to load profile', error);
+        if (!cancelled) console.error('Dashboard: failed to load profile', error);
       }
-    };
-    fetchUserProfile();
+    })();
+    return () => { cancelled = true; };
   }, [currentUser, navigate]);
 
   // Fetch food items with restaurant filter (no global loading overlay to avoid "Processing..." popup on dashboard open)
@@ -391,60 +392,51 @@ const AdminDashboard = () => {
     }
   }, [currentUser, userRestaurantId]); // Add userRestaurantId to dependencies
 
-  // Realtime subscription for orders (OrderManagement loads its own orders; no initial fetch here to avoid "Processing..." popup on open)
+  // Realtime subscription for orders (dynamic import avoids chunk-order "supabase" undefined)
+  const orderSupabaseRef = useRef(null);
   useEffect(() => {
     if (!currentUser) return;
-
-    // Orders are loaded by OrderManagement; 
-    // This effect only handles the real-time subscription setup
-
-
-    // Remove previous channel if exists
-    if (orderChannelRef.current) {
-      supabase.removeChannel(orderChannelRef.current);
-    }
-
-    // Enhanced real-time subscription with SERVER-SIDE restaurant filtering
-    const channel = supabase
-      .channel('orders-channel-' + (userRestaurantId || 'all'))
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'orders',
-          filter: userRestaurantId ? `restaurant_id=eq.${userRestaurantId}` : undefined
-        },
-        (payload) => {
-          const { eventType, new: newRecord } = payload;
-          if (!newRecord) return; // For DELETE events, newRecord is null
-
-          if (eventType === 'INSERT') {
-            console.log('New order received, triggering notification...');
-            setOrderToastTitle('New Order Received! 🔔');
-            setOrderToastMessage(`Order #${newRecord.order_number || newRecord.id.slice(0, 8)} - Table ${newRecord.table_number || 'Takeaway'}`);
-            setOrderSoundType('new_order');
-            setPlayOrderSound(true);
-            setShowOrderToast(true);
-          }
-        }
-      )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-        } else if (status === 'CHANNEL_ERROR') {
-        } else if (status === 'TIMED_OUT') {
-        }
-      });
-
-    orderChannelRef.current = channel;
-
-    return () => {
+    orderSupabaseRef.current = null;
+    (async () => {
+      const { supabase: client } = await import('../../../shared/supabase');
+      if (!client) return;
+      orderSupabaseRef.current = client;
       if (orderChannelRef.current) {
-        supabase.removeChannel(orderChannelRef.current);
-        orderChannelRef.current = null;
+        client.removeChannel(orderChannelRef.current);
       }
+      const channel = client
+        .channel('orders-channel-' + (userRestaurantId || 'all'))
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'orders',
+            filter: userRestaurantId ? `restaurant_id=eq.${userRestaurantId}` : undefined
+          },
+          (payload) => {
+            const { eventType, new: newRecord } = payload;
+            if (!newRecord) return;
+            if (eventType === 'INSERT') {
+              setOrderToastTitle('New Order Received! 🔔');
+              setOrderToastMessage(`Order #${newRecord.order_number || newRecord.id.slice(0, 8)} - Table ${newRecord.table_number || 'Takeaway'}`);
+              setOrderSoundType('new_order');
+              setPlayOrderSound(true);
+              setShowOrderToast(true);
+            }
+          }
+        )
+        .subscribe(() => {});
+      orderChannelRef.current = channel;
+    })();
+    return () => {
+      const client = orderSupabaseRef.current;
+      if (client && orderChannelRef.current) {
+        client.removeChannel(orderChannelRef.current);
+      }
+      orderChannelRef.current = null;
     };
-  }, [currentUser, userRestaurantId]); // Add userRestaurantId to dependencies
+  }, [currentUser, userRestaurantId]);
 
   // Reset playOrderSound after it is triggered
   useEffect(() => {

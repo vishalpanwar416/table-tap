@@ -214,21 +214,9 @@
         "titleHighlight": "Amazing.",
         "description": "Ready to transform your restaurant? Our team is here to help you get started. Reach out for a personalized demo or any questions.",
         "info": [
-            {
-                "label": "Email Us",
-                "value": "vishalpanwar416@gmail.com",
-                "type": "mail"
-            },
-            {
-                "label": "Call Us",
-                "value": "+91 75009 88212",
-                "type": "phone"
-            },
-            {
-                "label": "Visit Us",
-                "value": "Hyderabad, India",
-                "type": "map-pin"
-            }
+            { "label": "Email Us", "value": "", "type": "mail" },
+            { "label": "Call Us", "value": "", "type": "phone" },
+            { "label": "Visit Us", "value": "", "type": "map-pin" }
         ],
         "form": {
             "title": "Request a Demo",
@@ -323,7 +311,7 @@
                     },
                     {
                         "label": "About Us",
-                        "href": "#home"
+                        "href": "/"
                     },
                     {
                         "label": "Pricing",

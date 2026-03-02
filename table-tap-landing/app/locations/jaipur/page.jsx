@@ -26,7 +26,7 @@ export default function JaipurSEO() {
                             Heritage Hospitality Meets <span className="text-rose-500">Modern Tech.</span>
                         </h1>
                         <p className="text-xl text-slate-600 mb-10 leading-relaxed max-w-2xl">
-                            From the bustling rooftop cafes in Malviya Nagar to the iconic heritage eateries in the Old City, Table Tap is helping Jaipur's food scene shine with seamless QR ordering.
+                            From the bustling rooftop cafes in Malviya Nagar to the iconic heritage eateries in the Old City, Table Tap is helping Jaipur&apos;s food scene shine with seamless QR ordering.
                         </p>
                         <div className="flex flex-wrap gap-4">
                             <button className="px-8 py-4 bg-slate-900 text-white hover:bg-slate-800 rounded-2xl font-bold transition-all shadow-lg">Scale Your Jaipur Business</button>

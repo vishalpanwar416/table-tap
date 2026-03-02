@@ -44,7 +44,11 @@ export default function Pricing() {
           .eq('is_public', true)
           .order('base_price', { ascending: true });
 
-        if (plansError) throw plansError;
+        if (plansError) {
+          const msg = plansError?.message || plansError?.code || JSON.stringify(plansError);
+          console.warn('Pricing: subscription_plans fetch failed:', msg);
+          throw plansError;
+        }
 
         // Fetch Billing Cycles
         const { data: cycles, error: cyclesError } = await supabase
@@ -53,7 +57,11 @@ export default function Pricing() {
           .eq('is_active', true)
           .order('duration_months', { ascending: true });
 
-        if (cyclesError) throw cyclesError;
+        if (cyclesError) {
+          const msg = cyclesError?.message || cyclesError?.code || JSON.stringify(cyclesError);
+          console.warn('Pricing: billing_cycles fetch failed:', msg);
+          throw cyclesError;
+        }
 
         if (dbPlans && dbPlans.length > 0) {
           setPlans(dbPlans);
@@ -66,13 +74,15 @@ export default function Pricing() {
           }
         }
       } catch (err) {
-        console.error('Error fetching data:', err);
+        const msg = err?.message || err?.code || (typeof err === 'object' && Object.keys(err || {}).length ? JSON.stringify(err) : String(err));
+        console.warn('Pricing: error fetching plans/cycles. Using fallback. Details:', msg);
       } finally {
         setLoading(false);
       }
     }
 
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetch plans/cycles once on mount
   }, []);
 
   if (!mounted) return null;
@@ -147,6 +157,11 @@ export default function Pricing() {
                 <Stars className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[#2A9D8F] w-6 h-6 animate-pulse" />
               </div>
               <p className="text-gray-500 font-black uppercase tracking-[0.2em] text-[10px] animate-pulse text-center">Curating the best plans for your restaurant...</p>
+            </div>
+          ) : plans.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 px-4 min-h-[400px] text-center">
+              <p className="text-gray-500 font-medium mb-6 max-w-md">Plans are loading from our servers. If you see this, check your connection or try again later.</p>
+              <Link href="/#contact" className="btn-premium">Get in touch for pricing</Link>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">

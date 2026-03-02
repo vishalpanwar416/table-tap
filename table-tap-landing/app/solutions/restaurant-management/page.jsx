@@ -38,7 +38,7 @@ export default function RestaurantManagement() {
                         </h1>
 
                         <p className="text-xl md:text-2xl text-gray-500 mb-12 leading-relaxed max-w-3xl font-medium animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                            Table Tap is more than just a QR menu. It's a comprehensive restaurant management system that streamlines your entire operation, from the moment a guest sits down to the final checkout.
+                            Table Tap is more than just a QR menu. It&apos;s a comprehensive restaurant management system that streamlines your entire operation, from the moment a guest sits down to the final checkout.
                         </p>
 
                         <div className="flex flex-wrap justify-center gap-5 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
@@ -54,13 +54,13 @@ export default function RestaurantManagement() {
                     <div className="text-center mb-16">
                         <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-6 tracking-tight">One Platform, <span className="gradient-text">Every Department.</span></h2>
                         <p className="text-gray-500 max-w-2xl mx-auto font-medium text-lg leading-relaxed">
-                            We've modularized restaurant management to give you exactly what you need.
+                            We&apos;ve modularized restaurant management to give you exactly what you need.
                         </p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                         {[
-                            { icon: <LayoutGrid />, title: "Order Tracking", desc: "Monitor every table's order status, prep time, and service speed in real-time." },
+                            { icon: <LayoutGrid />, title: "Order Tracking", desc: "Monitor every table&apos;s order status, prep time, and service speed in real-time." },
                             { icon: <Users />, title: "Staff Control", desc: "Manage permissions and see server performance metrics instantly." },
                             { icon: <ClipboardCheck />, title: "Inventory", desc: "Low-stock alerts and automated deductions as orders are served." },
                             { icon: <BarChart2 />, title: "Live Reporting", desc: "Daily sales summaries and profit analytics delivered to your phone." }

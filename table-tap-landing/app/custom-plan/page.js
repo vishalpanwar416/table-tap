@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Header from '../components/Header';
+import siteConfig from '../data/site-config.json';
 import Footer from '../components/Footer';
 import {
     Building2,
@@ -86,11 +88,9 @@ export default function CustomPlanBuilder() {
     const [selectedItems, setSelectedItems] = useState(['multi-outlet', 'whatsapp-bundle', 'dedicated-csm']);
     const [outlets, setOutlets] = useState(2);
     const [bundles, setBundles] = useState(1);
-    const [totalPrice, setTotalPrice] = useState(0);
 
-    useEffect(() => {
-        let total = 29999; // Base Enterprise Price
-
+    const totalPrice = useMemo(() => {
+        let total = siteConfig.pricing.enterpriseBaseMonthly;
         SERVICES.forEach(service => {
             if (selectedItems.includes(service.id)) {
                 if (service.id === 'multi-outlet') {
@@ -102,8 +102,7 @@ export default function CustomPlanBuilder() {
                 }
             }
         });
-
-        setTotalPrice(total);
+        return total;
     }, [selectedItems, outlets, bundles]);
 
     const toggleItem = (id) => {
@@ -123,14 +122,14 @@ export default function CustomPlanBuilder() {
                         {/* Left Column: Selector */}
                         <div className="flex-1">
                             <div className="mb-10">
-                                <a href="/#pricing" className="inline-flex items-center gap-2 text-[#2A9D8F] font-bold text-sm uppercase tracking-widest mb-6 hover:gap-3 transition-all">
+                                <Link href="/#pricing" className="inline-flex items-center gap-2 text-[#2A9D8F] font-bold text-sm uppercase tracking-widest mb-6 hover:gap-3 transition-all">
                                     <ArrowLeft size={16} /> Back to Plans
-                                </a>
+                                </Link>
                                 <h1 className="text-4xl sm:text-6xl font-black text-gray-900 tracking-tighter leading-none mb-4">
                                     Build Your <span className="gradient-text italic font-serif">Custom</span> Plan
                                 </h1>
                                 <p className="text-gray-500 font-bold max-w-xl">
-                                    Select the premium services your restaurant group needs. We'll handle the scaling while you focus on hospitality.
+                                    Select the premium services your restaurant group needs. We&apos;ll handle the scaling while you focus on hospitality.
                                 </p>
                             </div>
 
@@ -224,7 +223,7 @@ export default function CustomPlanBuilder() {
                                 <div className="space-y-4 mb-10 border-y border-gray-50 py-8">
                                     <div className="flex justify-between items-center text-xs font-black uppercase tracking-widest text-gray-400">
                                         <span>Base Enterprise</span>
-                                        <span className="text-gray-900">₹29,999</span>
+                                        <span className="text-gray-900">₹{siteConfig.pricing.enterpriseBaseMonthly.toLocaleString()}</span>
                                     </div>
                                     {selectedItems.map(itemId => {
                                         const s = SERVICES.find(x => x.id === itemId);

@@ -1,5 +1,7 @@
+import siteConfig from './data/site-config.json';
+
 export default function sitemap() {
-  const baseUrl = 'https://table-tap.in';
+  const baseUrl = siteConfig.site.baseUrl;
 
   const locations = [
     'hyderabad', 'bangalore', 'delhi', 'mumbai',
@@ -15,7 +17,7 @@ export default function sitemap() {
   ];
 
   const stories = [
-    'urban-brew', 'spice-route', 'social-bytes'
+    'urban-brew', 'spice-route'
   ];
 
   const solutions = [

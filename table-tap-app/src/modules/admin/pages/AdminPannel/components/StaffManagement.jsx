@@ -54,41 +54,65 @@ const StaffManagement = ({
   return (
     <div className="space-y-6 sm:space-y-8 font-spartan px-2 sm:px-0">
       {/* Overview section with stats and Add Staff CTA */}
-      {/* Action & Stats Toolbar - Compact Single Line */}
-      {/* Action & Stats Toolbar - Compact Single Line */}
-      <div className="grid grid-cols-5 gap-1.5 md:flex md:items-center md:justify-between md:gap-4 mb-6">
-        {/* Add Staff Button - Compact on Mobile */}
-        <button
-          onClick={onAddStaff}
-          className="col-span-1 flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 px-1 py-1.5 md:px-4 md:py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg md:rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-sm hover:shadow font-semibold text-[9px] md:text-sm font-spartan h-full md:h-auto"
-        >
-          <Plus className="w-3.5 h-3.5 md:w-4 md:h-4" />
-          <span className="leading-tight text-center md:text-left">Add</span>
-        </button>
+      {/* Action & Stats Toolbar - Premium & Mobile Friendly */}
+      <div className="flex flex-col gap-4 mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 sm:p-2.5 bg-blue-50 rounded-xl">
+              <Users className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+            </div>
+          </div>
 
-        {/* Stats - 4 Columns */}
-        {/* Total Staff */}
-        <div className="flex flex-col md:flex-row items-center justify-center md:justify-start md:gap-2 px-1 py-1.5 md:px-3 md:py-1.5 bg-white rounded-lg border border-gray-100 shadow-sm">
-          <span className="text-[9px] md:text-xs text-gray-500 font-bold uppercase tracking-wider text-center">Total</span>
-          <span className="text-[10px] md:text-sm font-bold text-gray-900 leading-tight">{staff.length}</span>
+          <button
+            onClick={onAddStaff}
+            className="flex items-center justify-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg font-bold text-sm sm:text-base font-spartan touch-manipulation"
+          >
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span>Add New Staff</span>
+          </button>
         </div>
 
-        {/* Restaurants */}
-        <div className="flex flex-col md:flex-row items-center justify-center md:justify-start md:gap-2 px-1 py-1.5 md:px-3 md:py-1.5 bg-purple-50 rounded-lg border border-purple-100">
-          <span className="text-[9px] md:text-xs text-purple-600 font-bold uppercase tracking-wider text-center">Rest.</span>
-          <span className="text-[10px] md:text-sm font-bold text-purple-700 leading-tight">{restaurants.length}</span>
-        </div>
+        {/* Stats Grid - 2x2 on Mobile, 4x1 on Desk */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="bg-white p-3 sm:p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+              <Users className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest">Total Staff</p>
+              <p className="text-base sm:text-xl font-bold text-gray-900 font-spartan">{staff.length}</p>
+            </div>
+          </div>
 
-        {/* Connected */}
-        <div className="flex flex-col md:flex-row items-center justify-center md:justify-start md:gap-2 px-1 py-1.5 md:px-3 md:py-1.5 bg-green-50 rounded-lg border border-green-100">
-          <span className="text-[9px] md:text-xs text-green-600 font-bold uppercase tracking-wider text-center">Online</span>
-          <span className="text-[10px] md:text-sm font-bold text-green-700 leading-tight">{staff.filter(s => s.connected).length}</span>
-        </div>
+          <div className="bg-white p-3 sm:p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-purple-50 flex items-center justify-center shrink-0">
+              <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
+            </div>
+            <div>
+              <p className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest">Restaurants</p>
+              <p className="text-base sm:text-xl font-bold text-gray-900 font-spartan">{restaurants.length}</p>
+            </div>
+          </div>
 
-        {/* Disconnected */}
-        <div className="flex flex-col md:flex-row items-center justify-center md:justify-start md:gap-2 px-1 py-1.5 md:px-3 md:py-1.5 bg-red-50 rounded-lg border border-red-100">
-          <span className="text-[9px] md:text-xs text-red-600 font-bold uppercase tracking-wider text-center">Offline</span>
-          <span className="text-[10px] md:text-sm font-bold text-red-700 leading-tight">{staff.filter(s => !s.connected).length}</span>
+          <div className="bg-white p-3 sm:p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-green-50 flex items-center justify-center shrink-0">
+              <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+            </div>
+            <div>
+              <p className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest">Connected</p>
+              <p className="text-base sm:text-xl font-bold text-green-700 font-spartan">{staff.filter(s => s.connected).length}</p>
+            </div>
+          </div>
+
+          <div className="bg-white p-3 sm:p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
+              <XCircle className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
+            </div>
+            <div>
+              <p className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest">Offline</p>
+              <p className="text-base sm:text-xl font-bold text-red-700 font-spartan">{staff.filter(s => !s.connected).length}</p>
+            </div>
+          </div>
         </div>
       </div>
 

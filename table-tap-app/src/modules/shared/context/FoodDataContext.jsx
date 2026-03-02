@@ -118,7 +118,7 @@ export const FoodDataProvider = ({ children }) => {
     setError(null);
 
     if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
+      abortControllerRef.current.abort('cancelled');
     }
     requestInProgressRef.current = false;
   }, []);
@@ -159,7 +159,7 @@ export const FoodDataProvider = ({ children }) => {
 
       // Cancel previous requests
       if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
+        abortControllerRef.current.abort('cancelled');
       }
       abortControllerRef.current = new AbortController();
 

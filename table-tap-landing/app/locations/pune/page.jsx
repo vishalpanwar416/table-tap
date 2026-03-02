@@ -20,13 +20,13 @@ export default function PuneSEO() {
                 <div className="container mx-auto px-4 relative z-10">
                     <div className="max-w-4xl">
                         <span className="inline-block px-4 py-2 rounded-full bg-[#2A9D8F]/10 text-[#2A9D8F] font-bold text-sm mb-6 uppercase tracking-widest">
-                            Built for Pune's Foodies
+                            Built for Pune&apos;s Foodies
                         </span>
                         <h1 className="text-5xl md:text-7xl font-black text-slate-900 mb-8 leading-[1.1]">
                             Scale Your <span className="text-[#2A9D8F]">Pune</span> Restaurant Effortlessly.
                         </h1>
                         <p className="text-xl text-slate-600 mb-10 leading-relaxed max-w-2xl">
-                            From the legendary cafes of FC Road to the premium lounges in Koregaon Park, Table Tap is helping Pune's vibrant food scene embrace the digital revolution.
+                            From the legendary cafes of FC Road to the premium lounges in Koregaon Park, Table Tap is helping Pune&apos;s vibrant food scene embrace the digital revolution.
                         </p>
                         <div className="flex flex-wrap gap-4">
                             <button className="btn-premium">Get Started in Pune</button>
@@ -62,7 +62,7 @@ export default function PuneSEO() {
             <section className="py-24 bg-slate-900 text-white overflow-hidden relative">
                 <div className="container mx-auto px-4 relative z-10">
                     <div className="text-center max-w-3xl mx-auto mb-20">
-                        <h2 className="text-4xl md:text-5xl font-black mb-6">Serving Pune's Best Localities.</h2>
+                        <h2 className="text-4xl md:text-5xl font-black mb-6">Serving Pune&apos;s Best Localities.</h2>
                         <p className="text-slate-400 text-lg">We understand the unique vibe of every Pune neighborhood, from traditional to tech-savvy.</p>
                     </div>
 

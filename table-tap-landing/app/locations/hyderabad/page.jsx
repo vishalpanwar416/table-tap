@@ -23,7 +23,7 @@ export default function HyderabadSEO() {
                             Built for Hyderabad
                         </span>
                         <h1 className="text-5xl md:text-7xl font-black text-slate-900 mb-8 leading-[1.1]">
-                            The Future of <span className="text-[#2A9D8F]">Hyderabad's</span> Dining is Here.
+                            The Future of <span className="text-[#2A9D8F]">Hyderabad&apos;s</span> Dining is Here.
                         </h1>
                         <p className="text-xl text-slate-600 mb-10 leading-relaxed max-w-2xl">
                             From the bustling cafes of Banjara Hills to the iconic biryani outlets in Charminar, Table Tap is helping 100+ Hyderabad restaurants reduce wait times and increase revenue by 30%.

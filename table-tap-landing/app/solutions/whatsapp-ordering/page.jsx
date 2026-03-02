@@ -35,7 +35,7 @@ export default function WhatsAppBilling() {
                         </h1>
 
                         <p className="text-xl md:text-2xl text-gray-500 mb-12 leading-relaxed max-w-3xl font-medium animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                            Stop printing thousands of paper bills. Send digital receipts directly to your customer's WhatsApp. Collect feedback, build your CRM, and save paper instantly.
+                            Stop printing thousands of paper bills. Send digital receipts directly to your customer&apos;s WhatsApp. Collect feedback, build your CRM, and save paper instantly.
                         </p>
 
                         <div className="flex flex-wrap justify-center gap-4 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>

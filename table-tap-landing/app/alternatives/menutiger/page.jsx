@@ -39,7 +39,7 @@ export default function MenuTigerComparison() {
                         <div className="p-8 rounded-[40px] bg-emerald-50 border border-emerald-100">
                             <Sparkles className="text-emerald-500 mb-6" />
                             <h3 className="text-xl font-bold mb-4">Predictive AI</h3>
-                            <p className="text-emerald-700/80 text-sm leading-relaxed">We don't just show a QR menu; we predict guest behavior and suggest items to increase your Average Ticket Value by 15%.</p>
+                            <p className="text-emerald-700/80 text-sm leading-relaxed">We don&apos;t just show a QR menu; we predict guest behavior and suggest items to increase your Average Ticket Value by 15%.</p>
                         </div>
                         <div className="p-8 rounded-[40px] bg-blue-50 border border-blue-100">
                             <Heart className="text-blue-500 mb-6" />

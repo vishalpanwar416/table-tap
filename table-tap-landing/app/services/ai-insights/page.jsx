@@ -37,7 +37,7 @@ export default function AIInsightsService() {
                     </h1>
 
                     <p className="text-xl md:text-2xl text-gray-500 mb-12 leading-relaxed max-w-3xl mx-auto font-medium animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                        Our AI doesn't just show you charts; it tells you what to do. From spotting a trending dish to alerting you about a drop in service speed, it's like having a full-time consultant for your restaurant.
+                        Our AI doesn&apos;t just show you charts; it tells you what to do. From spotting a trending dish to alerting you about a drop in service speed, it&apos;s like having a full-time consultant for your restaurant.
                     </p>
 
                     <div className="flex flex-wrap justify-center gap-5 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>

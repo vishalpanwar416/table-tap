@@ -53,7 +53,7 @@ export default function FineDineComparison() {
                         <div>
                             <h2 className="text-4xl font-black mb-8">Performance <br />Meets Aesthetics.</h2>
                             <p className="text-slate-600 mb-8 leading-relaxed font-medium text-lg">
-                                Don't choose between a pretty menu and a powerful POS. Table Tap provides the same 'iPad-style' luxury on every guest's smartphone, powered by a backend that out-thinks the competition.
+                                Don&apos;t choose between a pretty menu and a powerful POS. Table Tap provides the same &apos;iPad-style&apos; luxury on every guest&apos;s smartphone, powered by a backend that out-thinks the competition.
                             </p>
                             <button className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black flex items-center gap-3 hover:gap-5 transition-all">
                                 Request a Luxury Demo <ArrowRight size={20} />

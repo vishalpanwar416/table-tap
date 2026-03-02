@@ -1,13 +1,10 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-
-// Email service configuration
-// You can use Resend, SendGrid, Mailgun, or any other email service
-// For now, we'll use Resend as it's simple and has a generous free tier
+import siteConfig from '../../data/site-config.json';
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const FROM_EMAIL = process.env.FROM_EMAIL || 'Table Tap <noreply@table-tap.in>';
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://tabletap.in';
+const FROM_EMAIL = process.env.FROM_EMAIL || siteConfig.contact.fromEmail;
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || siteConfig.site.baseUrl;
 
 export async function POST(request) {
     try {
@@ -29,7 +26,7 @@ export async function POST(request) {
 
         // 1. Security: Origin Check
         const origin = request.headers.get('origin');
-        const allowedOrigin = process.env.NEXT_PUBLIC_APP_URL || 'https://table-tap.in';
+        const allowedOrigin = process.env.NEXT_PUBLIC_APP_URL || siteConfig.site.baseUrl;
         // Allow localhost for dev
         const isLocalhost = origin?.includes('localhost');
 
@@ -250,7 +247,7 @@ export async function POST(request) {
                         <td style="background-color: #f8f8f8; padding: 30px 40px; text-align: center;">
                             <p style="margin: 0 0 10px; color: #999; font-size: 13px;">
                                 Questions? Contact us at 
-                                <a href="mailto:support@tabletap.in" style="color: #2A9D8F;">support@tabletap.in</a>
+                                <a href="mailto:${siteConfig.contact.supportEmail}" style="color: #2A9D8F;">${siteConfig.contact.supportEmail}</a>
                             </p>
                             <p style="margin: 0; color: #bbb; font-size: 12px;">
                                 © ${new Date().getFullYear()} Table Tap. All rights reserved.
@@ -289,7 +286,7 @@ What happens next?
 4. Get your dashboard access credentials
 5. Start managing your restaurant digitally!
 
-Questions? Contact us at support@tabletap.in
+Questions? Contact us at ${siteConfig.contact.supportEmail}
 
 Best regards,
 The Table Tap Team
@@ -320,7 +317,7 @@ The Table Tap Team
         }
 
         const FINAL_API_KEY = dbResendKey || process.env.RESEND_API_KEY;
-        const FINAL_FROM_EMAIL = dbFromEmail || process.env.FROM_EMAIL || 'Table Tap <noreply@table-tap.in>';
+        const FINAL_FROM_EMAIL = dbFromEmail || process.env.FROM_EMAIL || siteConfig.contact.fromEmail;
 
         // If Resend API key is configured, send email
         if (FINAL_API_KEY) {
