@@ -620,7 +620,9 @@ const AdminPanel = () => {
         return (
           <AdminDashboard
             restaurants={restaurants}
+            totalRestaurants={totalRestaurants}
             staff={staff}
+            totalStaff={totalStaff}
             currentUser={currentUserProfile}
             onTabChange={setActiveTab}
           />
