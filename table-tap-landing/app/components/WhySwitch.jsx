@@ -45,6 +45,12 @@ export default function WhySwitch() {
                                     <p className="text-blue-800 font-bold italic">&quot;The branding is on another level. It makes our restaurant look much more professional than DotPe did.&quot;</p>
                                     <p className="text-blue-600 text-xs font-black mt-2 uppercase">— Mumbai Fine Dining</p>
                                 </div>
+                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                                    <p className="text-slate-900 font-bold italic">
+                                        &quot;The best part? We didn&apos;t have to buy a single extra device. One computer for billing and our captains&apos; own phones were enough. No POS hardware lock-in, no maintenance contracts—just software that quietly runs the floor.&quot;
+                                    </p>
+                                    <p className="text-slate-600 text-xs font-black mt-2 uppercase">— Hyderabad Multi-Cuisine Restaurant</p>
+                                </div>
                             </div>
                         </div>
                         {/* Aesthetic blobs */}
