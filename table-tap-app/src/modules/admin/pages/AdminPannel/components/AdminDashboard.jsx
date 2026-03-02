@@ -34,7 +34,14 @@ import {
 import { supabase } from '../../../../shared/supabase';
 import { getSubscriptionStats, getUpcomingRenewals, getSubscriptionPlans } from '../../../api/subscriptionService';
 
-const AdminDashboard = ({ restaurants, staff, currentUser, onTabChange }) => {
+const AdminDashboard = ({
+  restaurants,
+  totalRestaurants,
+  staff,
+  totalStaff,
+  currentUser,
+  onTabChange
+}) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState({
@@ -76,7 +83,7 @@ const AdminDashboard = ({ restaurants, staff, currentUser, onTabChange }) => {
     try {
       // Calculate restaurant stats from props
       const restaurantStats = {
-        total: restaurants?.length || 0,
+        total: totalRestaurants || restaurants?.length || 0,
         active: restaurants?.filter(r => r.is_active).length || 0,
         inactive: restaurants?.filter(r => !r.is_active).length || 0,
         withAI: restaurants?.filter(r => r.ai_enabled).length || 0,
@@ -85,7 +92,7 @@ const AdminDashboard = ({ restaurants, staff, currentUser, onTabChange }) => {
 
       // Calculate staff stats from props
       const staffStats = {
-        total: staff?.length || 0,
+        total: totalStaff || staff?.length || 0,
         connected: staff?.filter(s => s.connected).length || 0,
         pending: staff?.filter(s => !s.connected).length || 0,
         managers: staff?.filter(s => s.role === 'manager').length || 0,
