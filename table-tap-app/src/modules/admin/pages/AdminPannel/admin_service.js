@@ -220,104 +220,38 @@ export const deleteRestaurantPhotoForAdmin = async (url) => {
 
 /**
  * Get all restaurants (admin only)
+ * Optimized for scalability using Database Views and Pagination
  */
-export const getAllRestaurants = async () => {
+export const getAllRestaurants = async (page = 1, pageSize = 50) => {
   try {
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
 
-    // Step 1: Try a very simple query first
-    const { data: simpleData, error: simpleError } = await supabase
-      .from('restaurants')
-      .select('id, name, is_active')
-      .order('created_at', { ascending: false });
-
-
-    if (simpleError) {
-      if (simpleError.name === 'AbortError') return { data: [], error: null };
-      throw simpleError;
-    }
-
-    if (!simpleData || simpleData.length === 0) {
-      return { data: [], error: null };
-    }
-
-
-    // Step 2: If simple query works, try the complex query
-    const { data, error } = await supabase
-      .from('restaurants')
-      .select(`
-        *,
-        restaurant_staff (
-          staff_role,
-          staff_name,
-          staff_email,
-          staff_phone_number,
-          connected,
-          user_id,
-          profiles (
-            id,
-            full_name,
-            email
-          )
-        )
-      `)
-      .order('created_at', { ascending: false });
-
+    // Use optimized Database View for single-query performance
+    const { data, error, count } = await supabase
+      .from('restaurant_admin_summary')
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(from, to);
 
     if (error) {
-      if (error.name === 'AbortError') return { data: simpleData, error: null };
-      // If complex query fails, return simple data
-      return { data: simpleData, error: null };
+      if (error.name === 'AbortError') return { data: [], total: 0, error: null };
+      throw error;
     }
 
-    // Step 3: Transform the data
-    const transformedData = data.map(restaurant => transformRestaurantData(restaurant));
+    // Step 2: Transform the data (WKT to Lat/Lng, etc.)
+    const transformedData = (data || []).map(restaurant => transformRestaurantData(restaurant));
 
-
-    // Step 4: Get staff counts (simplified)
-    for (let restaurant of transformedData) {
-      try {
-        const { count } = await supabase
-          .from('restaurant_staff')
-          .select('*', { count: 'exact', head: true })
-          .eq('restaurant_id', restaurant.id);
-        restaurant.staff_count = count || 0;
-      } catch (error) {
-        restaurant.staff_count = 0;
-      }
-    }
-
-    // Step 5: Get active subscriptions for all restaurants
-    const restaurantIds = transformedData.map(r => r.id);
-    const { data: subscriptions } = await supabase
-      .from('subscriptions')
-      .select('restaurant_id, plan_name, status, end_date, billing_cycle')
-      .in('restaurant_id', restaurantIds)
-      .in('status', ['active', 'grace_period']);
-
-    // Map subscription data to restaurants
-    if (subscriptions && subscriptions.length > 0) {
-      const subscriptionMap = {};
-      subscriptions.forEach(sub => {
-        subscriptionMap[sub.restaurant_id] = {
-          plan_name: sub.plan_name,
-          status: sub.status,
-          end_date: sub.end_date,
-          billing_cycle: sub.billing_cycle
-        };
-      });
-
-      transformedData.forEach(restaurant => {
-        restaurant.subscription = subscriptionMap[restaurant.id] || null;
-      });
-    } else {
-      transformedData.forEach(restaurant => {
-        restaurant.subscription = null;
-      });
-    }
-
-    return { data: transformedData, error: null };
+    return {
+      data: transformedData,
+      total: count || 0,
+      page,
+      pageSize,
+      error: null
+    };
   } catch (error) {
-    return { data: [], error: error.message };
+    console.error('[AdminService] getAllRestaurants failed:', error);
+    return { data: [], total: 0, error: error.message };
   }
 };
 
@@ -700,10 +634,16 @@ export const deleteRestaurant = async (restaurantId) => {
 /**
  * Get all staff members
  */
-export const getAllStaff = async () => {
+/**
+ * Get all staff members (admin only)
+ * Optimized for scalability with Pagination
+ */
+export const getAllStaff = async (page = 1, pageSize = 50) => {
   try {
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
 
-    const { data, error } = await supabase
+    const { data, error, count } = await supabase
       .from('restaurant_staff')
       .select(`
         *,
@@ -718,16 +658,18 @@ export const getAllStaff = async () => {
           email,
           avatar_url
         )
-      `);
+      `, { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(from, to);
 
     if (error) {
-      if (error.name === 'AbortError') return { data: [], error: null };
+      if (error.name === 'AbortError') return { data: [], total: 0, error: null };
       throw error;
     }
 
 
     // Transform data to match component structure
-    const transformedData = data.map(staff => ({
+    const transformedData = (data || []).map(staff => ({
       id: staff.id,
       name: staff.connected && staff.profiles ? staff.profiles.full_name : staff.staff_name,
       email: staff.connected && staff.profiles ? staff.profiles.email : staff.staff_email,
@@ -743,9 +685,16 @@ export const getAllStaff = async () => {
     }));
 
 
-    return { data: transformedData, error: null };
+    return {
+      data: transformedData,
+      total: count || 0,
+      page,
+      pageSize,
+      error: null
+    };
   } catch (error) {
-    return { data: [], error: error.message };
+    console.error('[AdminService] getAllStaff failed:', error);
+    return { data: [], total: 0, error: error.message };
   }
 };
 

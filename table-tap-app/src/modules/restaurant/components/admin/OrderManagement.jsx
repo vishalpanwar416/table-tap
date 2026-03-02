@@ -525,6 +525,37 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
 
   useEffect(() => {
     fetchOrders();
+
+    // Setup real-time subscription for the orders list
+    if (!restaurantId) return;
+
+    const channel = supabase
+      .channel(`ordermgmt-realtime-${restaurantId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+          filter: `restaurant_id=eq.${restaurantId}`
+        },
+        (payload) => {
+          const { eventType, new: newOrder, old: oldOrder } = payload;
+
+          if (eventType === 'INSERT' && newOrder) {
+            setOrders(prev => [newOrder, ...prev]);
+          } else if (eventType === 'UPDATE' && newOrder) {
+            setOrders(prev => prev.map(o => o.id === newOrder.id ? { ...o, ...newOrder } : o));
+          } else if (eventType === 'DELETE' && oldOrder) {
+            setOrders(prev => prev.filter(o => o.id !== oldOrder.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [restaurantId]);
 
   // Load menu items when opening create order modal
