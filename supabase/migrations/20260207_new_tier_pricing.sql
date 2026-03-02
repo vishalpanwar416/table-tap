@@ -57,7 +57,7 @@ DECLARE
       {
         "key": "custom",
         "name": "Enterprise",
-        "base_price": 29999,
+        "base_price": 2999,
         "features": [
           "Bespoke Multi-outlet controls",
           "Custom WhatsApp bundles (10k-50k)",
@@ -65,7 +65,7 @@ DECLARE
           "Custom AI & ERP integrations",
           "SSO & Security audit trails",
           "Dedicated CSM & Priority SLA",
-          "Starting ₹29,999 - ₹59,999/mo",
+          "Starting ₹2,999 - ₹5,999/mo",
           "Full migration & onboarding support"
         ],
         "is_active": true

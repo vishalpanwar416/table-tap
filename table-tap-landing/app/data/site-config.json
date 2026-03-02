@@ -26,7 +26,7 @@
   "pricing": {
     "starterMonthly": 999,
     "professionalMonthly": 1999,
-    "enterpriseBaseMonthly": 29999,
+    "enterpriseBaseMonthly": 2999,
     "priceValidUntil": "2025-12-31"
   },
   "map": {
