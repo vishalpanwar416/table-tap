@@ -451,7 +451,6 @@ export function CartProvider({ children }) {
     const currentRestId = restaurantId ? String(restaurantId) : null;
 
     if (itemRestId && currentRestId && itemRestId !== currentRestId) {
-      console.warn(`[Cart] Restaurant mismatch: Item(${itemRestId}) vs Current(${currentRestId})`);
       setError('Cannot add items from different restaurants');
       return;
     }
@@ -595,19 +594,18 @@ export function CartProvider({ children }) {
     }
   }, [cartItems, user, saveCartToStorage, debouncedSaveToServer]);
 
-  // Set up periodic server sync for logged-in users
+  // Sync on tab focus (better than interval polling — only fetches when actually needed)
   useEffect(() => {
-    if (user && restaurantId) {
-      syncIntervalRef.current = setInterval(() => {
-        loadCartFromServer();
-      }, 5 * 60 * 1000); // Every 5 minutes
+    if (!user || !restaurantId) return;
 
-      return () => {
-        if (syncIntervalRef.current) {
-          clearInterval(syncIntervalRef.current);
-        }
-      };
-    }
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadCartFromServer();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [user, restaurantId, loadCartFromServer]);
 
   // Clear cart when restaurant changes (but not on initial mount)

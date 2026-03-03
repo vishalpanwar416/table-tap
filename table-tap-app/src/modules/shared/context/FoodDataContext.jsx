@@ -187,13 +187,6 @@ export const FoodDataProvider = ({ children }) => {
         allItems
       });
 
-      // Save partial data to cache immediately
-      saveToCache(restaurantId, {
-        bestSellers,
-        recommended,
-        allItems: cached?.data?.allItems || []
-      });
-
     } catch (error) {
       if (error.name === 'AbortError') return;
 
@@ -267,18 +260,16 @@ export const FoodDataProvider = ({ children }) => {
     }
   }, []);
 
-  // Prefetch data for a restaurant (called when hovering over restaurant)
-  const prefetchRestaurantData = useCallback(async (restaurantId) => {
-    if (!restaurantId || loadFromCache(restaurantId)) return;
+  // Prefetch data for a restaurant (called when hovering over restaurant card)
+  const prefetchRestaurantData = useCallback(async (restId) => {
+    if (!restId || loadFromCache(restId)) return;
 
     try {
-      const [bestSellers, recommended] = await Promise.all([
-        fetchBestSellerItems(restaurantId),
-        fetchRecommendedItems(restaurantId)
-      ]);
-
-      saveToCache(restaurantId, { bestSellers, recommended, allItems: [] });
-    } catch (error) {
+      const allItems = await fetchFoodItems(restId);
+      const bestSellers = allItems.filter(item => hasTag(item, BESTSELLER_TAGS));
+      const recommended = allItems.filter(item => hasTag(item, RECOMMENDED_TAGS));
+      saveToCache(restId, { bestSellers, recommended, allItems });
+    } catch {
       // Silent fail for prefetch
     }
   }, [loadFromCache, saveToCache]);
@@ -289,14 +280,14 @@ export const FoodDataProvider = ({ children }) => {
       recommendedItems,
       allFoodItems,
       loading,
-      isRefreshing, // New: indicates background refresh
+      isRefreshing,
       error,
       currentRestaurantId,
       loadFoodData,
       retryLoadData,
       clearCache,
       clearAllCache,
-      prefetchRestaurantData, // New: prefetch for better UX
+      prefetchRestaurantData,
       clearData
     }}>
       {children}

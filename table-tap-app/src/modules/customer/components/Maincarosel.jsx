@@ -73,11 +73,14 @@ const Maincarosel = () => {
       {/* Image section */}
       <div className="w-1/2 h-full overflow-hidden relative">
         <img
-          src={item.imade || '/api/placeholder/300/200'}
+          src={item.imade}
           alt={item.name || "Dish"}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          loading="lazy"
+          decoding="async"
           onError={(e) => {
-            e.target.src = '/api/placeholder/300/200';
+            e.target.style.display = 'none';
+            e.target.parentNode.style.background = 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)';
           }}
         />
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-500 pointer-events-none" />
@@ -88,8 +91,12 @@ const Maincarosel = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-[220px] md:h-[280px] rounded-[3rem] bg-gray-100">
-        <div className="text-gray-500">Loading offers...</div>
+      <div className="h-[220px] md:h-[280px] rounded-[3rem] overflow-hidden bg-gray-200 animate-pulse relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%] animate-[shimmer_1.5s_infinite]" />
+        <div className="absolute inset-0 flex">
+          <div className="w-1/2 h-full bg-gray-300/60" />
+          <div className="w-1/2 h-full bg-gray-200/60" />
+        </div>
       </div>
     );
   }

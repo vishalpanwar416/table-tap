@@ -17,13 +17,11 @@ export const AuthProvider = ({ children }) => {
     const getSession = async (isRetry = false) => {
       const safetyTimer = setTimeout(() => {
         if (mounted && loading) {
-          console.warn('[AuthContext] Loading timeout (5s), force clearing...');
           setLoading(false);
         }
       }, 5000);
 
       try {
-        console.log('[AuthContext] Fetching session...');
         // Safely fetch session (detectSessionInUrl: true is handled by SDK)
         const result = await supabase.auth.getSession();
         const session = result?.data?.session;
@@ -33,20 +31,16 @@ export const AuthProvider = ({ children }) => {
 
         if (mounted) {
           const hasUser = !!session?.user;
-          console.log('[AuthContext] User present:', hasUser);
           setUser(session?.user ?? null);
           setWasAuthenticated(hasUser);
           setLoading(false);
         }
       } catch (error) {
-        console.error('[AuthContext] Session error:', error);
-
         // AbortError = stale/incompatible session in localStorage is causing the SDK
         // to abort its refresh cycle and poison all subsequent requests.
         // Fix: clear ALL stale supabase keys and retry once with a clean slate.
         const isAbort = error?.name === 'AbortError' || error?.message?.includes('aborted');
         if (isAbort && !isRetry) {
-          console.warn('[AuthContext] AbortError detected — clearing ALL supabase storage and retrying...');
           try {
             // Clear all heartbeat/auth keys from localStorage
             Object.keys(localStorage)
@@ -72,15 +66,11 @@ export const AuthProvider = ({ children }) => {
           if (mounted) {
             clearTimeout(safetyTimer);
 
-            // If we've already tried clearing storage once and it still aborted, 
-            // a hard reload is often the only way to reset the browser/SDK state.
             if (isRetry) {
-              console.warn('[AuthContext] Abort persistent — performing HARD RELOAD');
               window.location.reload();
               return;
             }
 
-            // Wait slightly more to let browser/SDK settle
             await new Promise(r => setTimeout(r, 600));
             return getSession(true); // retry once
           }
