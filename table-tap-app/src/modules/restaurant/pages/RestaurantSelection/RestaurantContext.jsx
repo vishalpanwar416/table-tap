@@ -80,10 +80,17 @@ export const RestaurantProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    if (!restaurantId || authLoading) {
+    // Still waiting for auth to resolve — don't touch loading, just wait.
+    // The initial loading=true state is correct during this time.
+    if (authLoading) return;
+
+    // Auth done, but no restaurant ID found — nothing to fetch
+    if (!restaurantId) {
       setLoading(false);
       return;
     }
+
+    const abortController = new AbortController();
 
     const fetchRestaurant = async () => {
       try {
@@ -98,15 +105,15 @@ export const RestaurantProvider = ({ children }) => {
           .eq('is_active', true)
           .single();
 
+        if (abortController.signal.aborted) return;
+
         if (restaurantError) {
-          // Check if it's an authentication error
           if (restaurantError.code === 'PGRST301' ||
             restaurantError.message?.includes('JWT') ||
             restaurantError.message?.includes('expired') ||
             restaurantError.message?.includes('Invalid Refresh Token') ||
             restaurantError.message?.includes('Refresh Token Not Found') ||
             restaurantError.status === 401) {
-            // This is an auth error, don't set error here - let the wrapper handle redirect
             setError('AUTH_ERROR');
             return;
           }
@@ -127,7 +134,8 @@ export const RestaurantProvider = ({ children }) => {
           .in('status', ['active', 'grace_period'])
           .maybeSingle();
 
-        // Check if subscription query failed due to auth
+        if (abortController.signal.aborted) return;
+
         if (subscriptionError) {
           if (subscriptionError.code === 'PGRST301' ||
             subscriptionError.message?.includes('JWT') ||
@@ -140,13 +148,11 @@ export const RestaurantProvider = ({ children }) => {
           }
         }
 
-        // If no active subscription, show error to customer
         if (!subscription) {
           setError('This restaurant is currently unavailable. Please try again later.');
           return;
         }
 
-        // Add subscription info to restaurant data
         setRestaurant({
           ...restaurantData,
           subscription_status: subscription.status,
@@ -154,13 +160,8 @@ export const RestaurantProvider = ({ children }) => {
         });
 
       } catch (err) {
-        // Ignore AbortError (fetch cancelled)
-        if (err.name === 'AbortError' || err.message?.includes('aborted')) {
-          console.log('Fetch aborted');
-          return;
-        }
+        if (abortController.signal.aborted) return;
 
-        // Check if it's an authentication error
         if (err?.code === 'PGRST301' ||
           err?.message?.includes('JWT') ||
           err?.message?.includes('expired') ||
@@ -172,12 +173,18 @@ export const RestaurantProvider = ({ children }) => {
           setError('Failed to load restaurant data');
         }
       } finally {
-        // Only set loading false if not aborted (to avoid setting state on unmounted component)
-        setLoading(false);
+        if (!abortController.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
-    fetchRestaurant();
+    // Hard safety timeout — if fetch takes > 8s, unblock the UI
+    const safetyTimer = setTimeout(() => setLoading(false), 8000);
+
+    fetchRestaurant().finally(() => clearTimeout(safetyTimer));
+
+    return () => abortController.abort();
   }, [restaurantId, authLoading]);
 
   const updateRestaurant = async (updates) => {

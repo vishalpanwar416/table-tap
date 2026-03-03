@@ -1,110 +1,66 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '../../../shared/config/AuthContext';
 import { useRestaurant } from './RestaurantContext';
-import { needsRestaurantSelection, hasValidRestaurantSelection } from '../../../shared/utils/restaurantCheck';
-import RestaurantSelectionPage from './RestaurantSelectionPage';
+import { needsRestaurantSelection } from '../../../shared/utils/restaurantCheck';
 import LoadingScreen from '../../../shared/components/LoadingScreen';
+
+const SKIP_PATHS = new Set([
+  '/restaurant-selection',
+  '/',
+  '/skip1',
+  '/login',
+  '/signup',
+  '/forgot-password',
+  '/reset-password',
+  '/complete-profile',
+]);
 
 const RestaurantSelectionWrapper = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
-  const { restaurantId, loading, error, clearSession } = useRestaurant();
-  const [checking, setChecking] = useState(true);
+  const { restaurantId, loading: restaurantLoading, error, clearSession } = useRestaurant();
 
   // Get URL parameters
   const urlParams = new URLSearchParams(location.search);
   const urlRestaurant = urlParams.get('restaurant');
   const urlTable = urlParams.get('table');
 
-  // Helper function to preserve parameters in navigation
-  const navigateWithParams = (path) => {
-    const params = urlRestaurant && urlTable ? `?restaurant=${urlRestaurant}&table=${urlTable}` : '';
-    navigate(`${path}${params}`);
-  };
-
+  // Redirect to restaurant selection if needed (only when both loadings are done)
   useEffect(() => {
-    const checkRestaurantSelection = () => {
-      // Don't redirect if we're already on the restaurant selection page
-      if (location.pathname === '/restaurant-selection') {
-        setChecking(false);
-        return;
-      }
+    if (authLoading || restaurantLoading) return;
+    if (SKIP_PATHS.has(location.pathname)) return;
 
-      // Don't redirect if we're on auth pages
-      const authPages = ['/login', '/signup', '/forgot-password', '/reset-password', '/complete-profile'];
-      if (authPages.includes(location.pathname)) {
-        setChecking(false);
-        return;
-      }
-
-      // Don't redirect if we're on the opening page
-      if (location.pathname === '/') {
-        setChecking(false);
-        return;
-      }
-
-      // Don't redirect if we're on the onboarding page
-      if (location.pathname === '/skip1') {
-        setChecking(false);
-        return;
-      }
-
-      // If user is authenticated and needs restaurant selection, redirect
-      if (user && !authLoading && !loading) {
-        if (needsRestaurantSelection()) {
-          navigateWithParams('/restaurant-selection');
-          return;
-        }
-      }
-
-      setChecking(false);
-    };
-
-    // Wait for auth and restaurant loading to complete
-    if (!authLoading && !loading) {
-      checkRestaurantSelection();
+    if (user && needsRestaurantSelection()) {
+      const params = urlRestaurant && urlTable
+        ? `?restaurant=${urlRestaurant}&table=${urlTable}`
+        : '';
+      navigate(`/restaurant-selection${params}`);
     }
-  }, [user, authLoading, loading, location.pathname, navigate, urlRestaurant, urlTable]);
+  }, [user, authLoading, restaurantLoading, location.pathname, navigate, urlRestaurant, urlTable]);
 
-  // If there's an authentication error, redirect correctly
+  // Handle auth errors — redirect to login
   useEffect(() => {
     if (error === 'AUTH_ERROR') {
-      // Clear session data
       clearSession();
-
-      // If we are on a protected route (profile/orders), RequireAuth will handle it.
-      // If we are on a public route (home/menu), we should just refresh/clear state
-      // so the user can continue as a guest or re-login.
-      // We'll redirect to login with a return URL just in case, but avoid the loop.
       const returnUrl = location.pathname + location.search;
-
-      // Only redirect to login if we assume the user *must* be logged in.
-      // Otherwise, just reloading the page or going to restaurant selection might be safer
-      // to clear the bad state.
       navigate(`/login?redirect=${encodeURIComponent(returnUrl)}`, { replace: true });
     }
   }, [error, navigate, clearSession, location.pathname, location.search]);
 
-  if (checking || authLoading || loading) {
+  // Show spinner only while auth OR restaurant data is loading
+  if (authLoading || restaurantLoading) {
     return <LoadingScreen message="Verifying session..." variant="page" />;
   }
 
-  // If no restaurant is selected, redirect to selection page
-  if (!restaurantId && !checking) {
-    if (location.pathname !== '/restaurant-selection') {
-      return <Navigate to="/restaurant-selection" replace />;
-    }
+  // If no restaurant is selected → redirect to selection page
+  if (!restaurantId && location.pathname !== '/restaurant-selection') {
+    return <Navigate to="/restaurant-selection" replace />;
   }
 
-  // If there's an error (and it's not an auth error/handled above), show error state
+  // Non-auth errors
   if (error && error !== 'AUTH_ERROR') {
-    const handleBackToSelection = () => {
-      clearSession();
-      navigate('/restaurant-selection');
-    };
-
     return (
       <div className="flex justify-center items-center min-h-screen bg-black">
         <div className="bg-red-50 border border-red-200 rounded-xl p-6 max-w-md shadow-lg">
@@ -119,7 +75,7 @@ const RestaurantSelectionWrapper = ({ children }) => {
               Try Again
             </button>
             <button
-              onClick={handleBackToSelection}
+              onClick={() => { clearSession(); navigate('/restaurant-selection'); }}
               className="w-full bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
             >
               Back to Restaurant Selection
@@ -133,4 +89,4 @@ const RestaurantSelectionWrapper = ({ children }) => {
   return children;
 };
 
-export default RestaurantSelectionWrapper; 
+export default RestaurantSelectionWrapper;

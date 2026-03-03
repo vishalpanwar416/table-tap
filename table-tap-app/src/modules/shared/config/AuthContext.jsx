@@ -45,9 +45,9 @@ export const AuthProvider = ({ children }) => {
             // Clear all heartbeat/auth keys from localStorage
             Object.keys(localStorage)
               .filter(k => k.toLowerCase().includes('sb-') || k.includes('supabase'))
-              .forEach(k => { console.log('[AuthContext] Removing key:', k); localStorage.removeItem(k); });
+              .forEach(k => localStorage.removeItem(k));
 
-            // Aggressively clear cookies as well (sources of many AbortErrors)
+            // Clear supabase cookies too
             try {
               const cookies = document.cookie.split(";");
               for (let i = 0; i < cookies.length; i++) {
@@ -56,7 +56,6 @@ export const AuthProvider = ({ children }) => {
                 const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
                 if (name.includes('sb-') || name.includes('supabase')) {
                   document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
-                  // Also try clearing with current domain
                   document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=" + window.location.hostname;
                 }
               }
@@ -64,6 +63,8 @@ export const AuthProvider = ({ children }) => {
           } catch { /* ignore storage errors */ }
 
           if (mounted) {
+            // IMPORTANT: cancel the outer safety timer BEFORE the retry wait
+            // so it can't fire mid-retry and incorrectly set loading=false
             clearTimeout(safetyTimer);
 
             if (isRetry) {
@@ -72,7 +73,7 @@ export const AuthProvider = ({ children }) => {
             }
 
             await new Promise(r => setTimeout(r, 600));
-            return getSession(true); // retry once
+            return getSession(true); // retry once with clean storage
           }
         }
 
