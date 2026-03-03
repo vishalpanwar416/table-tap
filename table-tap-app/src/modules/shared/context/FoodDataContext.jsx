@@ -23,6 +23,7 @@ export const FoodDataProvider = ({ children }) => {
   const abortControllerRef = useRef(null);
   const requestInProgressRef = useRef(false);
   const lastFetchTimeRef = useRef(null);
+  const lastLoadedRestaurantRef = useRef(null); // tracks last initiated load (sync, avoids loop)
 
   // Per-restaurant cache in memory (survives re-renders, faster than storage)
   const memoryCache = useRef(new Map());
@@ -109,16 +110,15 @@ export const FoodDataProvider = ({ children }) => {
     }
   }, []);
 
-  // Clear all data
+  // Clear all data (does NOT reset currentRestaurantId to avoid re-triggering the load effect)
   const clearData = useCallback(() => {
     setBestSellerItems([]);
     setRecommendedItems([]);
     setAllFoodItems([]);
-    setCurrentRestaurantId(null);
     setError(null);
 
     if (abortControllerRef.current) {
-      abortControllerRef.current.abort('cancelled');
+      abortControllerRef.current.abort('restaurant-change');
     }
     requestInProgressRef.current = false;
   }, []);
@@ -128,76 +128,67 @@ export const FoodDataProvider = ({ children }) => {
     if (!restaurantId) return;
 
     // Prevent duplicate requests
-    if (requestInProgressRef.current && !forceRefresh) {
-      return;
-    }
+    if (requestInProgressRef.current && !forceRefresh) return;
 
     // Check cache first
     const cached = loadFromCache(restaurantId);
 
     if (cached && !forceRefresh) {
-      // Apply cached data immediately
       applyCachedData(cached.data);
       setCurrentRestaurantId(restaurantId);
 
-      // If data is fresh, we're done
       if (!cached.isStale) {
         setLoading(false);
         return;
       }
-
-      // Data is stale - refresh in background (don't show loading spinner)
+      // Data is stale - refresh in background
       setIsRefreshing(true);
     } else if (!cached) {
-      // No cache - show loading spinner
       setLoading(true);
     }
+
+    // Hard safety: if fetch never resolves, unblock UI after 12s
+    const safetyTimer = setTimeout(() => {
+      setLoading(false);
+      setIsRefreshing(false);
+      requestInProgressRef.current = false;
+    }, 12000);
 
     try {
       requestInProgressRef.current = true;
       setError(null);
 
-      // Cancel previous requests
+      // Cancel any previous in-flight request
       if (abortControllerRef.current) {
-        abortControllerRef.current.abort('cancelled');
+        abortControllerRef.current.abort('new-request');
       }
       abortControllerRef.current = new AbortController();
 
-      // Fetch all items once (critical for everything)
+      // Single fetch — filter in memory (zero extra network cost)
       const allItems = await fetchWithRetry(() => fetchFoodItems(restaurantId));
 
-      // Check if still relevant (restaurant might have changed)
+      // Check if this restaurant is still relevant
       if (abortControllerRef.current?.signal.aborted) return;
 
-      // Filter in memory (zero network cost)
       const bestSellers = allItems.filter(item => hasTag(item, BESTSELLER_TAGS));
       const recommended = allItems.filter(item => hasTag(item, RECOMMENDED_TAGS));
 
-      // Update state with fresh data
       setBestSellerItems(bestSellers);
       setRecommendedItems(recommended);
       setAllFoodItems(allItems);
       setCurrentRestaurantId(restaurantId);
       lastFetchTimeRef.current = Date.now();
 
-      // Save complete data to cache
-      saveToCache(restaurantId, {
-        bestSellers,
-        recommended,
-        allItems
-      });
+      saveToCache(restaurantId, { bestSellers, recommended, allItems });
 
     } catch (error) {
-      if (error.name === 'AbortError') return;
-
-      console.error('Food data fetch error:', error);
-      setError(error);
-
-      // If we have cached data, keep showing it
-      if (!cached) {
-        setError(error);
+      if (error.name === 'AbortError' || error?.message?.includes('aborted')) {
+        // Silently stop — finally will clear loading
+        return;
       }
+      setError(error);
     } finally {
+      clearTimeout(safetyTimer);
       setLoading(false);
       setIsRefreshing(false);
       requestInProgressRef.current = false;
@@ -205,25 +196,43 @@ export const FoodDataProvider = ({ children }) => {
   }, [loadFromCache, applyCachedData, fetchWithRetry, saveToCache]);
 
   // Watch for restaurant changes
+  // Uses a ref (lastLoadedRestaurantRef) as the deduplication key instead of
+  // currentRestaurantId state, so that clearing data can't re-trigger this effect.
   useEffect(() => {
-    if (restaurantId && restaurantId !== currentRestaurantId) {
-      // Try to load from cache first for instant render
-      const cached = loadFromCache(restaurantId);
-      if (cached) {
-        applyCachedData(cached.data);
-        setCurrentRestaurantId(restaurantId);
-
-        // If stale, refresh in background
-        if (cached.isStale) {
-          loadFoodData(restaurantId, true);
-        }
-      } else {
-        // No cache, clear and load fresh
-        clearData();
-        loadFoodData(restaurantId);
-      }
+    if (!restaurantId) {
+      setLoading(false);
+      return;
     }
-  }, [restaurantId, currentRestaurantId, loadFromCache, applyCachedData, clearData, loadFoodData]);
+
+    // Already initiated a load for this restaurant — skip
+    if (lastLoadedRestaurantRef.current === restaurantId) return;
+
+    // Mark as initiated SYNCHRONOUSLY before any async work
+    lastLoadedRestaurantRef.current = restaurantId;
+
+    // Try cache first for instant render
+    const cached = loadFromCache(restaurantId);
+    if (cached) {
+      applyCachedData(cached.data);
+      setCurrentRestaurantId(restaurantId);
+      setLoading(false);
+
+      if (cached.isStale) {
+        loadFoodData(restaurantId, true);
+      }
+    } else {
+      // Clear visual data from previous restaurant (not the ID ref)
+      setBestSellerItems([]);
+      setRecommendedItems([]);
+      setAllFoodItems([]);
+      setError(null);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort('restaurant-change');
+      }
+      requestInProgressRef.current = false;
+      loadFoodData(restaurantId);
+    }
+  }, [restaurantId, loadFromCache, applyCachedData, loadFoodData]);
 
   // Retry function for error recovery
   const retryLoadData = useCallback(() => {
