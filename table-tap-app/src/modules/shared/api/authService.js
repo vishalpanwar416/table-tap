@@ -1,6 +1,6 @@
 import { supabase } from '../../shared/supabase';
 
-const DEFAULT_AVATAR_URL = 'https://vogixryubhpqziivspks.supabase.co/storage/v1/object/public/avatars//default.jpg';
+const DEFAULT_AVATAR_URL = 'https://table-tap.jiobase.com/storage/v1/object/public/avatars//default.jpg';
 
 export const syncProfile = async (user, extraFields = {}) => {
   const metadata = user.user_metadata || {};
@@ -118,12 +118,14 @@ export const authService = {
    * @returns {Promise<Object>} Auth session data
    * @throws {Error} If OAuth fails
    */
-  signInWithGoogle: async (redirectTo = '/home') => {
+  signInWithGoogle: async () => {
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}${redirectTo}`
+          // Must land on /auth-callback so AuthCallback.jsx can pick up the
+          // session tokens and run the role-based redirect logic.
+          redirectTo: `${window.location.origin}/auth-callback`
         }
       });
 
@@ -224,12 +226,14 @@ export const authService = {
    * @returns {Promise<Object>} Auth data
    * @throws {Error} If Google signup failss
    */
-  signUpWithGoogle: async (redirectTo = '/home') => {
+  signUpWithGoogle: async () => {
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}${redirectTo}`,
+          // Must land on /auth-callback so AuthCallback.jsx can pick up the
+          // session tokens and run the role-based redirect logic.
+          redirectTo: `${window.location.origin}/auth-callback`,
           queryParams: {
             prompt: 'consent',
             screen_hint: 'signup',
@@ -239,12 +243,6 @@ export const authService = {
       });
 
       if (error) throw error;
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await syncProfile(user);
-      }
-
       return data;
     } catch (error) {
       throw error;

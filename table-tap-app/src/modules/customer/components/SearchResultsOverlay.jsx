@@ -21,9 +21,9 @@ function getDiscountedPrice(item) {
     : Math.max(0, item.price - item.discountvalue);
 }
 
-const SearchResultsOverlay = ({ 
-  items = [], 
-  onItemClick, 
+const SearchResultsOverlay = ({
+  items = [],
+  onItemClick,
   onRequestCloseOverlay,
   cartItems = [],
   onAddToCart,
@@ -31,8 +31,8 @@ const SearchResultsOverlay = ({
   onRemoveItem
 }) => {
   // Memoize cart quantities map to prevent unnecessary re-renders
-  const cartQuantities = useMemo(() => 
-    new Map(cartItems.map(item => [item.id, item.quantity])), 
+  const cartQuantities = useMemo(() =>
+    new Map(cartItems.map(item => [String(item.id), item.quantity])),
     [cartItems]
   );
 
@@ -55,10 +55,11 @@ const SearchResultsOverlay = ({
   const handleDecrement = useCallback((e, item) => {
     e.preventDefault();
     e.stopPropagation();
-    const cartQuantity = cartQuantities.get(item.id) || 0;
+    const itemId = String(item.id);
+    const cartQuantity = cartQuantities.get(itemId) || 0;
     if (cartQuantity === 1) {
       if (onRemoveItem) onRemoveItem(item.id, item.category);
-    } else {
+    } else if (cartQuantity > 1) {
       if (onUpdateQuantity) onUpdateQuantity(item.id, item.category, cartQuantity - 1);
     }
   }, [cartQuantities, onRemoveItem, onUpdateQuantity]);
@@ -83,8 +84,8 @@ const SearchResultsOverlay = ({
             items.map((item) => {
               const discountedPrice = getDiscountedPrice(item);
               const hasDiscount = item.discounttype && item.discountvalue;
-              const cartQuantity = cartQuantities.get(item.id) || 0;
-              
+              const cartQuantity = cartQuantities.get(String(item.id)) || 0;
+
               return (
                 <motion.div
                   key={item.id}
@@ -132,12 +133,12 @@ const SearchResultsOverlay = ({
                       )}
                     </div>
                   </div>
-                  
+
                   {/* Cart Controls */}
                   <div className="flex-shrink-0 ml-2" onClick={(e) => e.stopPropagation()}>
                     <AnimatePresence mode="wait">
                       {cartQuantity > 0 ? (
-                        <motion.div 
+                        <motion.div
                           key="quantity-controls"
                           className="flex items-center bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full px-2 py-1 shadow-lg"
                           initial={{ scale: 0.8, opacity: 0 }}

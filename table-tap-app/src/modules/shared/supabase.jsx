@@ -101,19 +101,23 @@ const supabaseClient = createClient(
     auth: {
       autoRefreshToken: isBrowser,
       persistSession: isBrowser,
-      detectSessionInUrl: isBrowser,
-      multiTab: false,
-      // Note: Storing tokens in localStorage is convenient but less secure than HttpOnly cookies.
-      // For high-security applications, consider moving to server-side auth or HttpOnly cookies to prevent XSS.
-      storage: storageAdapter,
+      detectSessionInUrl: true,
+      // Force implicit flow: JioBase returns tokens in the URL hash (#access_token=…)
+      flowType: 'implicit',
+      // Use default localStorage in dev to avoid stale cookies from the old
+      // supabase.co project being returned and causing token refresh AbortErrors.
+      // Cookie adapter is only needed on production (cross-subdomain sharing).
+      storage: isBrowser && window.location.hostname.endsWith('table-tap.in')
+        ? storageAdapter
+        : undefined, // undefined = SDK uses its own localStorage
     },
-    // Add this realtime configuration
     realtime: {
       params: {
         eventsPerSecond: 10
       }
     }
   });
+
 
 export const supabase = supabaseClient;
 

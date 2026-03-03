@@ -52,7 +52,7 @@ const setCachedLocation = (loc) => {
       address: loc.address,
       timestamp: Date.now()
     }));
-  } catch {}
+  } catch { }
 };
 
 const staggerItems = {
@@ -113,8 +113,9 @@ const RestaurantSelectionPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Owner specific states
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [isOwner, setIsOwner] = useState(false);
+
   const [userRole, setUserRole] = useState(null);
   const [showMyRestaurants, setShowMyRestaurants] = useState(false);
   const [ownedRestaurants, setOwnedRestaurants] = useState([]);
@@ -270,9 +271,11 @@ const RestaurantSelectionPage = () => {
 
   // Consolidated useEffect for fetching restaurants
   useEffect(() => {
+    // Skip if auth is still loading to avoid race conditions with session refresh
+    if (authLoading) return;
+
     fetchRestaurants(false);
-    // Only run when necessary dependencies change
-  }, [userLocation, showAllRestaurants, showMyRestaurants, isOwner]);
+  }, [userLocation, showAllRestaurants, showMyRestaurants, isOwner, authLoading]);
 
   // Throttled scroll handler with ref and stable effect
   useEffect(() => {
@@ -520,9 +523,15 @@ const RestaurantSelectionPage = () => {
     return baseScale;
   };
 
+  const fetchInProgressRef = useRef(false);
+
   // Update fetchRestaurants to use and update cache
-  const fetchRestaurants = async (showRefreshAnimation = false, force = false) => {
+  const fetchRestaurants = async (showRefreshAnimation = false, force = false, retryCount = 0) => {
+    if (fetchInProgressRef.current && !force) return;
+
+    let failedWithAbort = false;
     try {
+      fetchInProgressRef.current = true;
       if (showRefreshAnimation) {
         setIsRefreshing(true);
       } else if (restaurants.length === 0) {
@@ -531,6 +540,7 @@ const RestaurantSelectionPage = () => {
       setError(null);
 
       let data = [];
+
       if (showAllRestaurants) {
         // Use cache if available and not forcing
         if (cachedAll && !force) {
@@ -586,7 +596,7 @@ const RestaurantSelectionPage = () => {
           return a.distance - b.distance;
         });
         setCachedNearby(data);
-      } else if (showMyRestaurants && isOwner) {
+      } else if (showMyRestaurants && isOwner && user?.id) {
         // Fetch restaurants connected to the user (My Restaurants)
         const { data: staffData, error: staffError } = await supabase
           .from('restaurant_staff')
@@ -612,7 +622,7 @@ const RestaurantSelectionPage = () => {
 
       const restaurantsData = data || [];
       setRestaurants(restaurantsData);
-      
+
       // Log for debugging
       if (restaurantsData.length === 0) {
         console.warn('No restaurants found. Filters:', {
@@ -627,40 +637,64 @@ const RestaurantSelectionPage = () => {
       }
     } catch (err) {
       console.error('Error fetching restaurants:', err);
-      
+
+      // Handle AbortError (common after migration/session mismatch)
+      const isAbort = err?.name === 'AbortError' || err?.message?.includes('aborted');
+      if (isAbort && retryCount < 1) {
+        failedWithAbort = true;
+        console.warn('[RestaurantSelection] AbortError detected — clearing stale storage and retrying once...');
+        try {
+          // Clear all supabase session keys from localStorage
+          Object.keys(localStorage)
+            .filter(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
+            .forEach(k => { console.log('[RestaurantSelection] Removing stale key:', k); localStorage.removeItem(k); });
+        } catch (e) { /* ignore */ }
+
+        // Wait a moment and retry
+        await new Promise(r => setTimeout(r, 300));
+        return fetchRestaurants(showRefreshAnimation, force, retryCount + 1);
+      }
+
       // Check if it's an authentication error
       const isAuthError = err?.isAuthError ||
-                         err?.code === 'PGRST301' || 
-                         err?.message?.includes('JWT') ||
-                         err?.message?.includes('expired') ||
-                         err?.message?.includes('Invalid Refresh Token') ||
-                         err?.message?.includes('Refresh Token Not Found') ||
-                         err?.status === 401 ||
-                         err?.error?.code === 'PGRST301' ||
-                         err?.error?.status === 401 ||
-                         err?.error?.isAuthError;
-      
+        err?.code === 'PGRST301' ||
+        err?.message?.includes('JWT') ||
+        err?.message?.includes('expired') ||
+        err?.message?.includes('Invalid Refresh Token') ||
+        err?.message?.includes('Refresh Token Not Found') ||
+        err?.status === 401 ||
+        err?.error?.code === 'PGRST301' ||
+        err?.error?.status === 401 ||
+        err?.error?.isAuthError;
+
       if (isAuthError) {
         // Redirect to login on auth error
         const returnUrl = window.location.pathname + window.location.search;
         navigate(`/login?redirect=${encodeURIComponent(returnUrl)}`, { replace: true });
         return;
       }
-      
+
       const errorMessage = err?.message || err?.error?.message || 'Failed to load restaurants. Please check your connection and try again.';
       setError(errorMessage);
     } finally {
-      setLoading(false);
+      if (!failedWithAbort) {
+        setLoading(false);
+      }
+
+
+
       if (showRefreshAnimation) {
         setTimeout(() => setIsRefreshing(false), 500);
       }
+      fetchInProgressRef.current = false;
     }
+
   };
 
-  // When toggling, call fetchRestaurants only if not cached
-  useEffect(() => {
-    fetchRestaurants(false);
-  }, [showAllRestaurants]);
+
+  // Effect was consolidated above. 
+  // No longer needed to prevent double-firing on mount while auth loads.
+
 
   // Invalidate nearby cache when userLocation changes so next fetch gets fresh nearby list
   useEffect(() => {
@@ -1058,7 +1092,7 @@ const RestaurantSelectionPage = () => {
                   className={`w-full rounded-lg py-2 px-3 font-medium text-sm transition-all flex items-center justify-between gap-2 border ${showMyRestaurants
                     ? 'bg-amber-500 border-amber-600 text-white shadow-sm'
                     : 'bg-white border-amber-200 text-amber-800 hover:bg-amber-50 hover:border-amber-300'
-                  }`}
+                    }`}
                 >
                   <span className="flex-1 min-w-0" aria-hidden="true" />
                   <span className="flex items-center gap-2 flex-shrink-0">
@@ -1095,9 +1129,10 @@ const RestaurantSelectionPage = () => {
                   height: '100%'
                 }}
               >
-                {loading && restaurants.length === 0 ? (
+                {(loading || authLoading) && restaurants.length === 0 ? (
                   <div className="flex flex-col items-center w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl">
                     {[...Array(5)].map((_, i) => (
+
                       <div key={i} className="animate-pulse bg-white/10 rounded-2xl border-2 border-gray-800 shadow-sm mb-4 flex items-center px-2 py-3 md:px-4 md:py-4 w-full max-w-xl">
                         <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-300 rounded-lg mr-3" />
                         <div className="flex-1 space-y-2">
@@ -1147,13 +1182,13 @@ const RestaurantSelectionPage = () => {
                       <div className="text-gray-400 text-6xl mb-4">🍽️</div>
                       <h3 className="text-gray-700 text-xl font-semibold mb-2">No Restaurants Available</h3>
                       <p className="text-gray-500 text-sm mb-4">
-                        {showMyRestaurants 
+                        {showMyRestaurants
                           ? "You don't have any restaurants assigned to your account."
                           : showAllRestaurants
-                          ? "There are no restaurants available at the moment. This may be because no restaurants have active subscriptions."
-                          : userLocation
-                          ? "No restaurants found nearby. Try enabling location or viewing all restaurants."
-                          : "No restaurants found. Try enabling location to see nearby restaurants or view all restaurants."}
+                            ? "There are no restaurants available at the moment. This may be because no restaurants have active subscriptions."
+                            : userLocation
+                              ? "No restaurants found nearby. Try enabling location or viewing all restaurants."
+                              : "No restaurants found. Try enabling location to see nearby restaurants or view all restaurants."}
                       </p>
                       <div className="flex flex-col gap-2">
                         {!showAllRestaurants && (
@@ -1350,80 +1385,80 @@ const RestaurantSelectionPage = () => {
                       }
                     }}
                     tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === 'Escape') { setSelectedRestaurant(null); setShowTableSelection(false); setTableNumber(''); } } }
+                    onKeyDown={(e) => { if (e.key === 'Escape') { setSelectedRestaurant(null); setShowTableSelection(false); setTableNumber(''); } }}
                     aria-label="Swipe down to cancel selection"
                   >
-                  <motion.div
-                    className="p-2.5"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{
-                      opacity: 0,
-                      y: 20,
-                      transition: { duration: 0.2, delay: 0.1 }
-                    }}
-                    transition={{ duration: 0.3, delay: 0.1 }}
-                  >
-                    {/* Row 1: Restaurant name (always visible) */}
-                    <div className="flex items-center min-w-0 mb-2">
-                      <Store size={16} className="text-orange-500 mr-1.5 flex-shrink-0" />
-                      <span className="text-sm font-bold text-orange-600 truncate min-w-0 block">
-                        {selectedRestaurant.name}
-                      </span>
-                    </div>
-                    {/* Row 2: Table selector · Continue (swipe down to cancel) */}
-                    <div className="flex items-center gap-2 flex-nowrap min-w-0">
-                      {availableTables.length > 0 ? (
-                        <select
-                          value={tableNumber}
-                          onChange={(e) => setTableNumber(e.target.value)}
-                          className={`flex-shrink-0 text-[11px] font-medium rounded-md border py-1 pl-2 pr-6 appearance-none bg-no-repeat focus:outline-none focus:ring-2 focus:ring-orange-400 cursor-pointer min-w-0 max-w-[7rem] ${isTableAutoSelected()
-                            ? 'bg-green-100 text-green-800 border-green-300'
-                            : 'bg-gray-50 text-gray-800 border-gray-200 hover:border-orange-300'
-                            }`}
-                          style={{
-                            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-                            backgroundPosition: 'right 6px center'
+                    <motion.div
+                      className="p-2.5"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{
+                        opacity: 0,
+                        y: 20,
+                        transition: { duration: 0.2, delay: 0.1 }
+                      }}
+                      transition={{ duration: 0.3, delay: 0.1 }}
+                    >
+                      {/* Row 1: Restaurant name (always visible) */}
+                      <div className="flex items-center min-w-0 mb-2">
+                        <Store size={16} className="text-orange-500 mr-1.5 flex-shrink-0" />
+                        <span className="text-sm font-bold text-orange-600 truncate min-w-0 block">
+                          {selectedRestaurant.name}
+                        </span>
+                      </div>
+                      {/* Row 2: Table selector · Continue (swipe down to cancel) */}
+                      <div className="flex items-center gap-2 flex-nowrap min-w-0">
+                        {availableTables.length > 0 ? (
+                          <select
+                            value={tableNumber}
+                            onChange={(e) => setTableNumber(e.target.value)}
+                            className={`flex-shrink-0 text-[11px] font-medium rounded-md border py-1 pl-2 pr-6 appearance-none bg-no-repeat focus:outline-none focus:ring-2 focus:ring-orange-400 cursor-pointer min-w-0 max-w-[7rem] ${isTableAutoSelected()
+                              ? 'bg-green-100 text-green-800 border-green-300'
+                              : 'bg-gray-50 text-gray-800 border-gray-200 hover:border-orange-300'
+                              }`}
+                            style={{
+                              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+                              backgroundPosition: 'right 6px center'
+                            }}
+                            aria-label="Select table"
+                          >
+                            <option value="">Select table</option>
+                            {availableTables.map((table) => (
+                              <option key={table.id} value={table.tableNumber}>
+                                Table {table.tableNumber}
+                              </option>
+                            ))}
+                          </select>
+                        ) : null}
+                        <div className="flex-1 min-w-0" />
+                        <motion.button
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{
+                            opacity: 0,
+                            y: 20,
+                            transition: { duration: 0.2 }
                           }}
-                          aria-label="Select table"
+                          transition={{ duration: 0.3, delay: 0.3 }}
+                          onClick={handleContinue}
+                          disabled={isSelecting || (availableTables.length > 0 && !tableNumber.trim())}
+                          className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-2 px-3 rounded-lg transition-colors shadow-sm touch-manipulation text-sm flex-shrink-0 flex items-center gap-1.5"
+                          style={{ minHeight: '36px' }}
                         >
-                          <option value="">Select table</option>
-                          {availableTables.map((table) => (
-                            <option key={table.id} value={table.tableNumber}>
-                              Table {table.tableNumber}
-                            </option>
-                          ))}
-                        </select>
-                      ) : null}
-                      <div className="flex-1 min-w-0" />
-                      <motion.button
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{
-                          opacity: 0,
-                          y: 20,
-                          transition: { duration: 0.2 }
-                        }}
-                        transition={{ duration: 0.3, delay: 0.3 }}
-                        onClick={handleContinue}
-                        disabled={isSelecting || (availableTables.length > 0 && !tableNumber.trim())}
-                        className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-2 px-3 rounded-lg transition-colors shadow-sm touch-manipulation text-sm flex-shrink-0 flex items-center gap-1.5"
-                        style={{ minHeight: '36px' }}
-                      >
-                        {isSelecting ? (
-                          <>
-                            <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent" />
-                            <span>Setting up...</span>
-                          </>
-                        ) : (
-                          <>
-                            <span>Continue</span>
-                            <ArrowRight size={14} />
-                          </>
-                        )}
-                      </motion.button>
-                    </div>
-                  </motion.div>
+                          {isSelecting ? (
+                            <>
+                              <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent" />
+                              <span>Setting up...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>Continue</span>
+                              <ArrowRight size={14} />
+                            </>
+                          )}
+                        </motion.button>
+                      </div>
+                    </motion.div>
                   </div>
                 </motion.div>
               )}

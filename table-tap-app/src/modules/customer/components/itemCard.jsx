@@ -17,7 +17,7 @@ const OrderCard = ({ isOpen, onClose, item }) => {
   const isLiked = item
     ? likedItems.some(likedItem => String(likedItem.id) === String(item.id))
     : false;
-  const cartItem = item ? cartItems.find(i => i.id === item.id) : null;
+  const cartItem = item ? cartItems.find(i => String(i.id) === String(item.id)) : null;
   const quantity = cartItem?.quantity || 0;
 
   const y = useMotionValue(0);
@@ -30,7 +30,7 @@ const OrderCard = ({ isOpen, onClose, item }) => {
     } else {
       document.body.style.overflow = 'auto';
     }
-    
+
     return () => {
       document.body.style.overflow = 'auto';
     };
@@ -44,7 +44,7 @@ const OrderCard = ({ isOpen, onClose, item }) => {
 
   const handleDecrementQuantity = () => {
     if (!item) return;
-    
+
     if (quantity === 1) {
       removeItem(item.id, item.category);
     } else {
@@ -75,15 +75,15 @@ const OrderCard = ({ isOpen, onClose, item }) => {
             className="fixed inset-0 bg-gradient-to-br from-black/80 via-black/60 to-black/40 backdrop-blur-sm z-40"
             onClick={onClose}
           />
-          
+
           {/* Order Card */}
           <motion.div
             initial={{ y: '100%', scale: 0.95, opacity: 0 }}
             animate={{ y: 0, scale: 1, opacity: 1 }}
             exit={{ y: '100%', scale: 0.95, opacity: 0 }}
-            transition={{ 
-              type: 'spring', 
-              duration: 0.5, 
+            transition={{
+              type: 'spring',
+              duration: 0.5,
               bounce: 0.3,
               ease: [0.25, 0.46, 0.45, 0.94]
             }}
@@ -107,19 +107,19 @@ const OrderCard = ({ isOpen, onClose, item }) => {
             >
               <X className="w-5 h-5 text-gray-500" />
             </button> */}
-            
+
             {/* Image and like button */}
             <div className="relative w-full h-64 md:h-80 overflow-hidden">
               {/* Loading skeleton */}
               {!imageLoaded && (
-                <motion.div 
+                <motion.div
                   className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse"
                   initial={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.3 }}
                 />
               )}
-              
+
               <motion.img
                 src={item.image}
                 alt={item.name}
@@ -129,10 +129,10 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                 transition={{ duration: 0.6, ease: "easeOut" }}
                 onLoad={() => setImageLoaded(true)}
               />
-              
+
               {/* Gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
-              
+
               {/* Badge for popular items */}
               {item.tags?.includes('popular') && (
                 <motion.div
@@ -145,7 +145,7 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                   Popular
                 </motion.div>
               )}
-              
+
               {/* Rating badge */}
               {item.rating && (
                 <motion.div
@@ -158,7 +158,7 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                   {item.rating}
                 </motion.div>
               )}
-              
+
               {/* Enhanced like button */}
               <motion.button
                 className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-md rounded-full p-2.5 shadow-lg z-10 border border-gray-200/50"
@@ -167,24 +167,23 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                 onClick={handleLikeClick}
               >
                 <motion.div
-                  animate={isLikedAnimating ? { 
+                  animate={isLikedAnimating ? {
                     scale: [1, 1.4, 1],
                     rotate: [0, 15, -15, 0]
                   } : {}}
                   transition={{ duration: 0.6 }}
                 >
                   <Heart
-                    className={`h-6 w-6 transition-all duration-300 ${
-                      isLiked ? "text-red-500 fill-red-500 drop-shadow-lg" : "text-gray-600 hover:text-red-400"
-                    }`}
+                    className={`h-6 w-6 transition-all duration-300 ${isLiked ? "text-red-500 fill-red-500 drop-shadow-lg" : "text-gray-600 hover:text-red-400"
+                      }`}
                   />
                 </motion.div>
               </motion.button>
             </div>
-            
+
             {/* Content */}
             <div className="p-4 pb-24 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 320px)' }}>
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.5 }}
@@ -215,9 +214,9 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                   <PriceDisplay item={item} className="text-xl font-bold text-black" />
                 </motion.div>
               </motion.div>
-              
+
               {/* Order Details Section - compact */}
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.5 }}
@@ -227,7 +226,7 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                   <div className="w-0.5 h-4 bg-gradient-to-b from-orange-500 to-red-500 rounded-full flex-shrink-0"></div>
                   Order Details
                 </h3>
-                
+
                 <div className="space-y-2">
                   {/* Preparation Time */}
                   {item.preparationTime && (
@@ -279,10 +278,10 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                   )}
                 </div>
               </motion.div>
-              
+
               {/* Nutrition facts if available */}
               {item.nutritionFacts && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5, duration: 0.5 }}
@@ -294,8 +293,8 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                   </h3>
                   <div className="grid grid-cols-2 gap-2">
                     {Object.entries(item.nutritionFacts).map(([key, value]) => (
-                      <motion.div 
-                        key={key} 
+                      <motion.div
+                        key={key}
                         className="bg-gradient-to-br from-green-50 to-blue-50 rounded-lg px-2.5 py-2 border border-green-200/50"
                         whileHover={{ scale: 1.02 }}
                         transition={{ duration: 0.2 }}
@@ -307,13 +306,13 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                   </div>
                 </motion.div>
               )}
-              
+
               {/* Tags if available */}
               {/* This block is removed as tags are now part of Order Details */}
             </div>
-            
+
             {/* Add to cart button (fixed at bottom) */}
-            <motion.div 
+            <motion.div
               className="absolute bottom-0 left-0 right-0 p-4"
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -321,7 +320,7 @@ const OrderCard = ({ isOpen, onClose, item }) => {
             >
               <AnimatePresence mode="wait">
                 {quantity > 0 ? (
-                  <motion.div 
+                  <motion.div
                     key="quantity-controls"
                     className="flex items-center bg-gradient-to-r from-black via-gray-900 to-black text-white rounded-2xl w-full justify-between px-6 py-2.5 shadow-2xl"
                     initial={{ scale: 0.8, opacity: 0, y: 20 }}
@@ -338,7 +337,7 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                     >
                       <Minus className="h-4 w-4" />
                     </motion.button>
-                    <motion.span 
+                    <motion.span
                       className="text-white text-lg font-bold"
                       key={quantity}
                       initial={{ scale: 1.3, y: -10 }}
@@ -362,7 +361,7 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                     key="add-button"
                     onClick={handleAddToCart}
                     className="bg-gradient-to-r from-black via-gray-900 to-black hover:from-gray-900 hover:via-black hover:to-gray-900 text-white rounded-2xl w-full py-2.5 flex items-center justify-center gap-2 text-base font-semibold shadow-2xl transition-all duration-300 group"
-                    whileHover={{ 
+                    whileHover={{
                       scale: 1.02,
                       boxShadow: "0 20px 40px rgba(0,0,0,0.3)"
                     }}

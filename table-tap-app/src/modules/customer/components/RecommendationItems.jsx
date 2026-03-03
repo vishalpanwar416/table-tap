@@ -11,9 +11,9 @@ const RecommendationItem = memo(({ item, onImageClick, index = 0 }) => {
   const { cartItems, addToCart, updateQuantity, removeItem } = useCart();
   const [isLikedAnimating, setIsLikedAnimating] = useState(false);
 
-  const cartItem = useMemo(() => cartItems.find(i => i.id === item.id), [cartItems, item.id]);
+  const cartItem = useMemo(() => cartItems.find(i => String(i.id) === String(item.id)), [cartItems, item.id]);
   const quantity = cartItem?.quantity || 0;
-  const isLiked = useMemo(() => likedItems.some(likedItem => likedItem.id === item.id), [likedItems, item.id]);
+  const isLiked = useMemo(() => likedItems.some(likedItem => String(likedItem.id) === String(item.id)), [likedItems, item.id]);
 
   const handleAddClick = useCallback(() => addToCart(item), [addToCart, item]);
   const handleIncrement = useCallback(() => addToCart(item), [addToCart, item]);

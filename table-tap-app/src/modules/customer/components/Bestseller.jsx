@@ -233,7 +233,7 @@ const BestSellers = ({ foodItems = [] }) => { // Default to empty array
 
   // Memoize cart quantities map to prevent unnecessary re-renders
   const cartQuantities = useMemo(() =>
-    new Map(cartItems.map(item => [item.id, item.quantity])),
+    new Map(cartItems.map(item => [String(item.id), item.quantity])),
     [cartItems]
   );
 
@@ -292,7 +292,7 @@ const BestSellers = ({ foodItems = [] }) => { // Default to empty array
             item={item}
             onItemClick={handleOpenItemCard}
             index={index}
-            cartQuantity={cartQuantities.get(item.id) || 0}
+            cartQuantity={cartQuantities.get(String(item.id)) || 0}
             isLiked={likedItemsSet.has(item.id)}
             onAddToCart={handleAddToCart}
             onUpdateQuantity={handleUpdateQuantity}

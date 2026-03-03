@@ -14,17 +14,23 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     let mounted = true;
 
-    const getSession = async () => {
+    const getSession = async (isRetry = false) => {
       const safetyTimer = setTimeout(() => {
         if (mounted && loading) {
-          console.warn('[AuthContext] Loading timeout, force clearing...');
+          console.warn('[AuthContext] Loading timeout (5s), force clearing...');
           setLoading(false);
         }
-      }, 10000);
+      }, 5000);
 
       try {
         console.log('[AuthContext] Fetching session...');
-        const { data: { session } } = await supabase.auth.getSession();
+        // Safely fetch session (detectSessionInUrl: true is handled by SDK)
+        const result = await supabase.auth.getSession();
+        const session = result?.data?.session;
+        const authError = result?.error;
+
+        if (authError) throw authError;
+
         if (mounted) {
           const hasUser = !!session?.user;
           console.log('[AuthContext] User present:', hasUser);
@@ -34,6 +40,52 @@ export const AuthProvider = ({ children }) => {
         }
       } catch (error) {
         console.error('[AuthContext] Session error:', error);
+
+        // AbortError = stale/incompatible session in localStorage is causing the SDK
+        // to abort its refresh cycle and poison all subsequent requests.
+        // Fix: clear ALL stale supabase keys and retry once with a clean slate.
+        const isAbort = error?.name === 'AbortError' || error?.message?.includes('aborted');
+        if (isAbort && !isRetry) {
+          console.warn('[AuthContext] AbortError detected — clearing ALL supabase storage and retrying...');
+          try {
+            // Clear all heartbeat/auth keys from localStorage
+            Object.keys(localStorage)
+              .filter(k => k.toLowerCase().includes('sb-') || k.includes('supabase'))
+              .forEach(k => { console.log('[AuthContext] Removing key:', k); localStorage.removeItem(k); });
+
+            // Aggressively clear cookies as well (sources of many AbortErrors)
+            try {
+              const cookies = document.cookie.split(";");
+              for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i];
+                const eqPos = cookie.indexOf("=");
+                const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+                if (name.includes('sb-') || name.includes('supabase')) {
+                  document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+                  // Also try clearing with current domain
+                  document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=" + window.location.hostname;
+                }
+              }
+            } catch (e) { /* ignore cookie errors */ }
+          } catch { /* ignore storage errors */ }
+
+          if (mounted) {
+            clearTimeout(safetyTimer);
+
+            // If we've already tried clearing storage once and it still aborted, 
+            // a hard reload is often the only way to reset the browser/SDK state.
+            if (isRetry) {
+              console.warn('[AuthContext] Abort persistent — performing HARD RELOAD');
+              window.location.reload();
+              return;
+            }
+
+            // Wait slightly more to let browser/SDK settle
+            await new Promise(r => setTimeout(r, 600));
+            return getSession(true); // retry once
+          }
+        }
+
         if (
           typeof error?.message === 'string' &&
           (error.message.includes('Invalid Refresh Token') || error.message.includes('Refresh Token Not Found'))

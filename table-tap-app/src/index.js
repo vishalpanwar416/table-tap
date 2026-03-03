@@ -1,5 +1,16 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+
+// GLOBAL: Silence AbortError popups in development.
+// These are harmless cancellations during re-renders/navigation but cause intrusive overlays.
+if (typeof window !== 'undefined') {
+  window.addEventListener('unhandledrejection', (event) => {
+    if (event.reason?.name === 'AbortError' || event.reason?.message?.includes('aborted')) {
+      event.preventDefault(); // Silence the Error Overlay
+      console.log('Suppressed AbortError rejection (legitimate cancellation)');
+    }
+  });
+}
 import './index.css';
 // Ensure Supabase is in main bundle so lazy chunks (e.g. admin dashboard) never see undefined
 import './modules/shared/supabase';
