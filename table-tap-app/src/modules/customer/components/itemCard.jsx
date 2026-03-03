@@ -9,8 +9,6 @@ import { useMotionValue, useTransform } from 'framer-motion';
 const OrderCard = ({ isOpen, onClose, item }) => {
   const { cartItems, addToCart, updateQuantity, removeItem } = useCart();
   const { toggleLike, likedItems } = useLikes();
-  console.log("likedItems:", likedItems);
-  console.log("OrderCard item:", item);
   const [isLikedAnimating, setIsLikedAnimating] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
 
@@ -55,7 +53,6 @@ const OrderCard = ({ isOpen, onClose, item }) => {
   const handleLikeClick = (e) => {
     e.stopPropagation();
     setIsLikedAnimating(true);
-    console.log("Toggling like for:", item);
     toggleLike(item);
     setTimeout(() => setIsLikedAnimating(false), 600);
   };

@@ -67,15 +67,6 @@ const App = () => {
     }
     sessionStorage.setItem('last_reload', now.toString());
 
-    // Break persistent service worker loops
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(registrations => {
-        for (let registration of registrations) {
-          registration.unregister();
-        }
-      });
-    }
-
     // Offline sync listener
     const handleOnline = async () => {
       console.log('App is online, syncing pending actions...');

@@ -14,6 +14,34 @@ export const categories = [
 ];
 
 /**
+ * Constants for tag variations
+ */
+export const BESTSELLER_TAGS = [
+  'bestseller',
+  'best seller',
+  'best-seller',
+  'best_seller',
+  'top seller',
+  'popular',
+  'featured',
+  'trending',
+  'hot'
+];
+
+export const RECOMMENDED_TAGS = [
+  'recommended',
+  'recommend',
+  'suggested',
+  'trending',
+  'hot',
+  'new',
+  'must try',
+  'top pick',
+  'chef choice',
+  'chef\'s choice'
+];
+
+/**
  * Fetches all food items for a restaurant with image fallback handling.
  */
 export const fetchFoodItems = async (restaurantId) => {
@@ -38,7 +66,7 @@ export const fetchFoodItems = async (restaurantId) => {
 /**
  * Helper function to check if an item has a specific tag (case-insensitive)
  */
-const hasTag = (item, targetTags) => {
+export const hasTag = (item, targetTags) => {
   if (!item.tags || !Array.isArray(item.tags)) return false;
 
   // Convert target tags to lowercase for comparison
@@ -66,22 +94,9 @@ export const fetchBestSellerItems = async (restaurantId) => {
 
     if (error) throw error;
 
-    // Define all possible variations of bestseller tags
-    const bestSellerTags = [
-      'bestseller',
-      'best seller',
-      'best-seller',
-      'best_seller',
-      'top seller',
-      'popular',
-      'featured',
-      'trending',
-      'hot'
-    ];
-
     // Filter items with case-insensitive tag matching
     const bestSellerItems = (data || []).filter(item => {
-      return hasTag(item, bestSellerTags);
+      return hasTag(item, BESTSELLER_TAGS);
     });
 
 
@@ -108,23 +123,9 @@ export const fetchRecommendedItems = async (restaurantId) => {
 
     if (error) throw error;
 
-    // Define all possible variations of recommended tags
-    const recommendedTags = [
-      'recommended',
-      'recommend',
-      'suggested',
-      'trending',
-      'hot',
-      'new',
-      'must try',
-      'top pick',
-      'chef choice',
-      'chef\'s choice'
-    ];
-
     // Filter items with case-insensitive tag matching
     const recommendedItems = (data || []).filter(item => {
-      return hasTag(item, recommendedTags);
+      return hasTag(item, RECOMMENDED_TAGS);
     });
 
 

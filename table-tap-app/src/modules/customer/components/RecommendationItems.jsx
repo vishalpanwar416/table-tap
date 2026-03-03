@@ -6,31 +6,35 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useMemo, useCallback, memo, useState } from 'react';
 import OrderCard from './itemCard';
 
-const RecommendationItem = memo(({ item, onImageClick, index = 0 }) => {
-  const { toggleLike, likedItems } = useLikes();
-  const { cartItems, addToCart, updateQuantity, removeItem } = useCart();
+const RecommendationItem = memo(({
+  item,
+  onImageClick,
+  index = 0,
+  quantity = 0,
+  isLiked = false,
+  onAddToCart,
+  onUpdateQuantity,
+  onRemoveItem,
+  onToggleLike
+}) => {
   const [isLikedAnimating, setIsLikedAnimating] = useState(false);
 
-  const cartItem = useMemo(() => cartItems.find(i => String(i.id) === String(item.id)), [cartItems, item.id]);
-  const quantity = cartItem?.quantity || 0;
-  const isLiked = useMemo(() => likedItems.some(likedItem => String(likedItem.id) === String(item.id)), [likedItems, item.id]);
-
-  const handleAddClick = useCallback(() => addToCart(item), [addToCart, item]);
-  const handleIncrement = useCallback(() => addToCart(item), [addToCart, item]);
+  const handleAddClick = useCallback(() => onAddToCart(item), [onAddToCart, item]);
+  const handleIncrement = useCallback(() => onAddToCart(item), [onAddToCart, item]);
   const handleDecrement = useCallback(() => {
     if (quantity === 1) {
-      removeItem(item.id, item.category);
+      onRemoveItem(item.id, item.category);
     } else {
-      updateQuantity(item.id, item.category, quantity - 1);
+      onUpdateQuantity(item.id, item.category, quantity - 1);
     }
-  }, [quantity, removeItem, updateQuantity, item.id, item.category]);
+  }, [quantity, onRemoveItem, onUpdateQuantity, item.id, item.category]);
 
   const handleLikeClick = useCallback((e) => {
     e.stopPropagation();
     setIsLikedAnimating(true);
-    toggleLike(item);
+    onToggleLike(item);
     setTimeout(() => setIsLikedAnimating(false), 600);
-  }, [toggleLike, item]);
+  }, [onToggleLike, item]);
 
   // Helper for the discount tag
   const DiscountTag = () =>
@@ -217,6 +221,25 @@ RecommendationItem.displayName = 'RecommendationItem';
 const RecommendationItems = ({ allFoodItems = [], onItemClick, scrollRef, scroll }) => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [isOrderCardOpen, setIsOrderCardOpen] = useState(false);
+  const { cartItems, addToCart, updateQuantity, removeItem } = useCart();
+  const { likedItems, toggleLike } = useLikes();
+
+  // Memoize state maps to prevent children re-renders
+  const cartQuantities = useMemo(() =>
+    new Map(cartItems.map(item => [String(item.id), item.quantity])),
+    [cartItems]
+  );
+
+  const likedItemsSet = useMemo(() =>
+    new Set(likedItems.map(item => String(item.id))),
+    [likedItems]
+  );
+
+  // Memoize handlers
+  const handleAddToCart = useCallback((item) => addToCart(item), [addToCart]);
+  const handleUpdateQuantity = useCallback((id, cat, qty) => updateQuantity(id, cat, qty), [updateQuantity]);
+  const handleRemoveItem = useCallback((id, cat) => removeItem(id, cat), [removeItem]);
+  const handleToggleLike = useCallback((item) => toggleLike(item), [toggleLike]);
 
   if (allFoodItems.length === 0) return null;
 
@@ -256,6 +279,12 @@ const RecommendationItems = ({ allFoodItems = [], onItemClick, scrollRef, scroll
               item={item}
               onImageClick={handleOpenItemCard}
               index={index}
+              quantity={cartQuantities.get(String(item.id)) || 0}
+              isLiked={likedItemsSet.has(String(item.id))}
+              onAddToCart={handleAddToCart}
+              onUpdateQuantity={handleUpdateQuantity}
+              onRemoveItem={handleRemoveItem}
+              onToggleLike={handleToggleLike}
             />
           </div>
         ))}

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { fetchFoodItems, fetchBestSellerItems, fetchRecommendedItems } from '../../customer/api/foodData';
+import { fetchFoodItems, BESTSELLER_TAGS, RECOMMENDED_TAGS, hasTag } from '../../customer/api/foodData';
 import { useRestaurant } from '../../restaurant/pages/RestaurantSelection/RestaurantContext';
 
 const FoodDataContext = createContext();
@@ -163,40 +163,29 @@ export const FoodDataProvider = ({ children }) => {
       }
       abortControllerRef.current = new AbortController();
 
-      // Parallel fetch of critical data with retry
-      const [bestSellers, recommended] = await Promise.all([
-        fetchWithRetry(() => fetchBestSellerItems(restaurantId)),
-        fetchWithRetry(() => fetchRecommendedItems(restaurantId))
-      ]);
+      // Fetch all items once (critical for everything)
+      const allItems = await fetchWithRetry(() => fetchFoodItems(restaurantId));
 
       // Check if still relevant (restaurant might have changed)
       if (abortControllerRef.current?.signal.aborted) return;
 
+      // Filter in memory (zero network cost)
+      const bestSellers = allItems.filter(item => hasTag(item, BESTSELLER_TAGS));
+      const recommended = allItems.filter(item => hasTag(item, RECOMMENDED_TAGS));
+
       // Update state with fresh data
       setBestSellerItems(bestSellers);
       setRecommendedItems(recommended);
+      setAllFoodItems(allItems);
       setCurrentRestaurantId(restaurantId);
       lastFetchTimeRef.current = Date.now();
 
-      // Background fetch of all items (non-blocking)
-      fetchWithRetry(() => fetchFoodItems(restaurantId))
-        .then(allItems => {
-          if (abortControllerRef.current?.signal.aborted) return;
-
-          setAllFoodItems(allItems);
-
-          // Save complete data to cache
-          saveToCache(restaurantId, {
-            bestSellers,
-            recommended,
-            allItems
-          });
-        })
-        .catch(err => {
-          if (err.name !== 'AbortError') {
-            console.warn('Background fetch failed:', err);
-          }
-        });
+      // Save complete data to cache
+      saveToCache(restaurantId, {
+        bestSellers,
+        recommended,
+        allItems
+      });
 
       // Save partial data to cache immediately
       saveToCache(restaurantId, {
