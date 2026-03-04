@@ -55,7 +55,6 @@ export default function Opening() {
       storeRestaurantSelection(urlRestaurant, urlTable);
       navigate(`/home?restaurant=${urlRestaurant}&table=${urlTable}`, { replace: true });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
