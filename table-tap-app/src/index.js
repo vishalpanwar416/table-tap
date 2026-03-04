@@ -4,11 +4,27 @@ import ReactDOM from 'react-dom/client';
 // GLOBAL: Silence AbortError popups in development.
 // These are harmless cancellations during re-renders/navigation but cause intrusive overlays.
 if (typeof window !== 'undefined') {
+  const isAbortError = (reason) => {
+    if (!reason) return false;
+    if (reason.name === 'AbortError') return true;
+    const msg = reason.message || '';
+    return (
+      msg.includes('aborted') ||
+      msg.includes('The operation was aborted') ||
+      msg.includes('signal is aborted') ||
+      msg.includes('without reason')
+    );
+  };
+
   window.addEventListener('unhandledrejection', (event) => {
-    const reason = event.reason;
-    const isAbort = reason?.name === 'AbortError' || reason?.message?.includes('aborted') || reason?.message?.includes('The operation was aborted');
-    if (isAbort) {
+    if (isAbortError(event.reason)) {
       event.preventDefault(); // Silently suppress — these are harmless fetch cancellations
+    }
+  });
+
+  window.addEventListener('error', (event) => {
+    if (isAbortError(event.error)) {
+      event.preventDefault();
     }
   });
 }

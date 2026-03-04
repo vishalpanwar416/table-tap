@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { AlertTriangle, CreditCard, X, Clock, RefreshCw, ExternalLink, Bell } from 'lucide-react';
 import { supabase } from '../supabase';
 
@@ -18,9 +18,14 @@ const SubscriptionExpiredBanner = ({ restaurantId, userRole }) => {
     const [subscription, setSubscription] = useState(undefined); // undefined = loading
     const [dismissed, setDismissed] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
+    const abortRef = useRef(null);
+    const mountedRef = useRef(true);
 
     const fetchSubscription = useCallback(async () => {
         if (!restaurantId) return;
+        // Cancel any previous in-flight request
+        if (abortRef.current) abortRef.current.abort();
+        abortRef.current = new AbortController();
         try {
             const { data } = await supabase
                 .from('subscriptions')
@@ -29,14 +34,22 @@ const SubscriptionExpiredBanner = ({ restaurantId, userRole }) => {
                 .order('created_at', { ascending: false })
                 .limit(1)
                 .maybeSingle();
-            setSubscription(data || null);
-        } catch {
-            setSubscription(null);
+            if (mountedRef.current) setSubscription(data || null);
+        } catch (err) {
+            // AbortError is expected on unmount — ignore silently
+            if (err?.name !== 'AbortError' && mountedRef.current) {
+                setSubscription(null);
+            }
         }
     }, [restaurantId]);
 
     useEffect(() => {
+        mountedRef.current = true;
         fetchSubscription();
+        return () => {
+            mountedRef.current = false;
+            if (abortRef.current) abortRef.current.abort();
+        };
     }, [fetchSubscription]);
 
     const handleRefresh = async () => {
