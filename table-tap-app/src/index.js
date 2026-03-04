@@ -5,9 +5,10 @@ import ReactDOM from 'react-dom/client';
 // These are harmless cancellations during re-renders/navigation but cause intrusive overlays.
 if (typeof window !== 'undefined') {
   window.addEventListener('unhandledrejection', (event) => {
-    if (event.reason?.name === 'AbortError' || event.reason?.message?.includes('aborted')) {
-      event.preventDefault(); // Silence the Error Overlay
-      console.log('Suppressed AbortError rejection (legitimate cancellation)');
+    const reason = event.reason;
+    const isAbort = reason?.name === 'AbortError' || reason?.message?.includes('aborted') || reason?.message?.includes('The operation was aborted');
+    if (isAbort) {
+      event.preventDefault(); // Silently suppress — these are harmless fetch cancellations
     }
   });
 }
