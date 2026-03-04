@@ -162,7 +162,7 @@ const SubscriptionExpiredBanner = ({ restaurantId, userRole }) => {
                             className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-2xl flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
                         >
                             <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
-                            {refreshing ? 'Checking...' : 'I've Renewed — Check Again'}
+                            {refreshing ? 'Checking...' : "I've Renewed \u2014 Check Again"}
                         </button>
                     </div>
 
