@@ -6,14 +6,34 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "theme_color": "#ffffff",
-  "background_color": "#ffffff",
+  "theme_color": "#1a1a2e",
+  "background_color": "#1a1a2e",
+  "version": "2.0",
   "icons": [
-    { "src": "/logo.png", "type": "image/png", "sizes": "192x192", "purpose": "any" },
-    { "src": "/logo192.png", "type": "image/png", "sizes": "192x192", "purpose": "any maskable" },
-    { "src": "/logo512.png", "type": "image/png", "sizes": "512x512", "purpose": "any maskable" }
+    {
+      "src": "/logo.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
   ],
-  "categories": ["food", "business", "productivity"],
+  "categories": [
+    "food",
+    "business",
+    "productivity"
+  ],
   "lang": "en",
   "dir": "ltr"
 }
