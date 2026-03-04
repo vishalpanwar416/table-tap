@@ -1,14 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { AlertTriangle, CreditCard, X, Clock, RefreshCw, ExternalLink } from 'lucide-react';
+import { AlertTriangle, CreditCard, X, Clock, RefreshCw, ExternalLink, Bell } from 'lucide-react';
 import { supabase } from '../supabase';
 
 /**
  * SubscriptionExpiredBanner
  *
- * Shows a full-screen blocking modal when a restaurant's subscription is
- * expired, cancelled, or missing. Shown in the manager/owner dashboard wrapper.
+ * Grace period logic (matches customer-app RestaurantContext):
  *
- * Shows a softer top banner when subscription expires within 7 days.
+ *  active                 → nothing shown
+ *  active, ≤7 days left  → dismissible amber top banner ("expiring soon")
+ *  expired, ≤7 days past → dismissible RED top banner ("grace period — renew to continue")
+ *  expired, >7 days past → full-screen BLOCKING modal (dashboard locked)
+ *  cancelled / missing   → full-screen BLOCKING modal
+ *  grace_period (DB)     → treated same as "expiring soon" banner
  */
 const SubscriptionExpiredBanner = ({ restaurantId, userRole }) => {
     const [subscription, setSubscription] = useState(undefined); // undefined = loading
@@ -45,32 +49,52 @@ const SubscriptionExpiredBanner = ({ restaurantId, userRole }) => {
     // Still loading
     if (subscription === undefined) return null;
 
+    // Days helpers
     const daysRemaining = subscription?.end_date
         ? Math.ceil((new Date(subscription.end_date) - new Date()) / (1000 * 60 * 60 * 24))
         : null;
 
-    const isExpired = !subscription || subscription.status === 'expired' || subscription.status === 'cancelled';
-    const isGracePeriod = subscription?.status === 'grace_period';
-    const isExpiringSoon = subscription?.status === 'active' && daysRemaining !== null && daysRemaining <= 7 && daysRemaining > 0;
+    const daysSinceExpiry = subscription?.end_date
+        ? Math.ceil((new Date() - new Date(subscription.end_date)) / (1000 * 60 * 60 * 24))
+        : null;
 
-    // Admins see everything but are not blocked
-    const isBlocking = isExpired || isGracePeriod;
-    const canDismiss = userRole === 'admin' || (!isBlocking && isExpiringSoon);
+    const status = subscription?.status;
 
-    if (!isExpired && !isGracePeriod && !isExpiringSoon) return null;
-    if (!isBlocking && dismissed) return null;
+    // ── Classify the state ────────────────────────────────────────────────
+    const isActive = status === 'active' && daysRemaining !== null && daysRemaining > 7;
+    const isExpiringSoon = status === 'active' && daysRemaining !== null && daysRemaining <= 7 && daysRemaining > 0;
+    const isGracePeriodDB = status === 'grace_period'; // DB-marked grace
+    const isInGraceWindow = status === 'expired' && daysSinceExpiry !== null && daysSinceExpiry <= 7;
+    const isHardBlocked = !subscription || status === 'cancelled' ||
+        (status === 'expired' && daysSinceExpiry !== null && daysSinceExpiry > 7);
 
-    // ── Expiring-soon top banner (dismissible) ─────────────────────────────
-    if (isExpiringSoon && !isBlocking) {
+    // Nothing to show
+    if (isActive) return null;
+    // Dismissed banners (non-blocking)
+    if (dismissed && !isHardBlocked) return null;
+
+    // ── 1. Expiring soon (≤7 days, still active) ─────────────────────────
+    if (isExpiringSoon || isGracePeriodDB) {
+        const daysLeft = isGracePeriodDB ? daysRemaining : daysRemaining;
         return (
-            <div className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-3 flex items-center gap-3 shadow-md z-50">
+            <div className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-3 flex items-center gap-3 shadow-md relative z-50">
                 <Clock size={18} className="flex-shrink-0" />
                 <span className="flex-1 text-sm font-semibold">
-                    ⚠️ Your subscription expires in <strong>{daysRemaining} day{daysRemaining !== 1 ? 's' : ''}</strong>. Renew now to avoid interruption.
+                    ⚠️ Your subscription expires in{' '}
+                    <strong>{daysLeft} day{daysLeft !== 1 ? 's' : ''}</strong>.{' '}
+                    Renew now to avoid interruption.
                 </span>
+                <a
+                    href="https://table-tap.in/#pricing"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hidden sm:flex items-center gap-1 bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-1.5 rounded-full transition-colors whitespace-nowrap"
+                >
+                    Renew <ExternalLink size={11} />
+                </a>
                 <button
                     onClick={() => setDismissed(true)}
-                    className="ml-2 hover:bg-white/20 rounded-full p-1 transition-colors flex-shrink-0"
+                    className="ml-1 hover:bg-white/20 rounded-full p-1 transition-colors flex-shrink-0"
                     title="Dismiss"
                 >
                     <X size={16} />
@@ -79,12 +103,47 @@ const SubscriptionExpiredBanner = ({ restaurantId, userRole }) => {
         );
     }
 
-    // ── Full-screen blocking modal for expired / grace period ──────────────
-    return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-            style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(6px)' }}>
+    // ── 2. Within 7-day grace window after expiry ─────────────────────────
+    if (isInGraceWindow) {
+        const daysLeft = 7 - daysSinceExpiry;
+        return (
+            <div className="w-full bg-gradient-to-r from-red-500 to-rose-600 text-white px-4 py-3 flex items-center gap-3 shadow-md relative z-50">
+                <Bell size={18} className="flex-shrink-0 animate-pulse" />
+                <span className="flex-1 text-sm font-semibold">
+                    🔴 Subscription expired!{' '}
+                    <strong>{daysLeft} day{daysLeft !== 1 ? 's' : ''} left</strong>{' '}
+                    before dashboard &amp; customer app are locked. Renew now.
+                </span>
+                <a
+                    href="https://table-tap.in/#pricing"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hidden sm:flex items-center gap-1 bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-1.5 rounded-full transition-colors whitespace-nowrap"
+                >
+                    Renew Now <ExternalLink size={11} />
+                </a>
+                <button
+                    onClick={() => setDismissed(true)}
+                    className="ml-1 hover:bg-white/20 rounded-full p-1 transition-colors flex-shrink-0"
+                    title="Dismiss for now"
+                >
+                    <X size={16} />
+                </button>
+            </div>
+        );
+    }
 
-            {/* Admin dismiss button */}
+    // ── 3. Hard blocked — full-screen modal (>7 days past expiry or cancelled) ──
+    if (!isHardBlocked) return null;
+
+    const canDismiss = userRole === 'admin';
+
+    return (
+        <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+            style={{ background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(8px)' }}
+        >
+            {/* Admin-only dismiss */}
             {canDismiss && (
                 <button
                     onClick={() => setDismissed(true)}
@@ -96,45 +155,42 @@ const SubscriptionExpiredBanner = ({ restaurantId, userRole }) => {
             )}
 
             <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden">
-                {/* Red top stripe */}
-                <div className={`h-2 w-full ${isGracePeriod ? 'bg-gradient-to-r from-amber-500 to-orange-500' : 'bg-gradient-to-r from-red-500 to-rose-600'}`} />
+                <div className="h-2 w-full bg-gradient-to-r from-red-500 to-rose-600" />
 
                 <div className="p-8 text-center">
-                    {/* Icon */}
-                    <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5 ${isGracePeriod ? 'bg-amber-100' : 'bg-red-100'}`}>
-                        <AlertTriangle
-                            size={40}
-                            className={isGracePeriod ? 'text-amber-500' : 'text-red-500'}
-                        />
+                    <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-5">
+                        <AlertTriangle size={40} className="text-red-500" />
                     </div>
 
-                    {/* Title */}
                     <h2 className="text-2xl font-black text-gray-900 mb-2">
-                        {isGracePeriod ? 'Grace Period Active' : 'Subscription Expired'}
+                        Subscription Expired
                     </h2>
 
-                    {/* Message */}
                     <p className="text-gray-500 text-sm leading-relaxed mb-2">
-                        {isGracePeriod
-                            ? `Your subscription has entered its grace period. Please renew immediately to avoid service interruption.`
-                            : `Your ${subscription?.plan_name ? `${subscription.plan_name} ` : ''}subscription has expired. Your restaurant is currently hidden from customers.`
-                        }
+                        Your{subscription?.plan_name ? ` ${subscription.plan_name}` : ''} subscription
+                        has expired and the 7-day grace period has ended.
+                        Renew to restore full access.
                     </p>
 
                     {subscription?.end_date && (
                         <p className="text-xs text-gray-400 mb-6">
-                            {isGracePeriod ? 'Grace period ends' : 'Expired on'}{' '}
-                            <strong>{new Date(subscription.end_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</strong>
+                            Expired on{' '}
+                            <strong>
+                                {new Date(subscription.end_date).toLocaleDateString('en-IN', {
+                                    day: 'numeric', month: 'long', year: 'numeric'
+                                })}
+                            </strong>
                         </p>
                     )}
 
-                    {/* Impact bullets */}
+                    {/* Impact */}
                     <div className="bg-red-50 border border-red-100 rounded-2xl p-4 mb-6 text-left space-y-2">
                         <p className="text-xs font-bold text-red-700 uppercase tracking-wider mb-1">Impact</p>
                         {[
                             'Restaurant hidden from customers',
                             'Online orders paused',
                             'QR code menus unavailable',
+                            'Dashboard access restricted',
                         ].map((item) => (
                             <div key={item} className="flex items-center gap-2 text-sm text-red-600">
                                 <span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" />
@@ -143,7 +199,7 @@ const SubscriptionExpiredBanner = ({ restaurantId, userRole }) => {
                         ))}
                     </div>
 
-                    {/* Action buttons */}
+                    {/* Actions */}
                     <div className="space-y-3">
                         <a
                             href="https://table-tap.in/#pricing"
@@ -167,7 +223,7 @@ const SubscriptionExpiredBanner = ({ restaurantId, userRole }) => {
                     </div>
 
                     <p className="mt-4 text-xs text-gray-400">
-                        Need help? Contact{' '}
+                        Need help?{' '}
                         <a href="mailto:support@table-tap.in" className="text-orange-500 hover:underline">
                             support@table-tap.in
                         </a>

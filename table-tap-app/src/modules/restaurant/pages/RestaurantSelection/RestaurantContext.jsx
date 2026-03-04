@@ -126,12 +126,13 @@ export const RestaurantProvider = ({ children }) => {
           return;
         }
 
-        // Check if restaurant has an active subscription
+        // Check if restaurant has an active subscription (includes 7-day grace window after expiry)
         const { data: subscription, error: subscriptionError } = await supabase
           .from('subscriptions')
           .select('id, status, end_date')
           .eq('restaurant_id', restaurantId)
-          .in('status', ['active', 'grace_period'])
+          .order('created_at', { ascending: false })
+          .limit(1)
           .maybeSingle();
 
         if (abortController.signal.aborted) return;
@@ -148,7 +149,23 @@ export const RestaurantProvider = ({ children }) => {
           }
         }
 
-        if (!subscription) {
+        // Determine if restaurant is accessible:
+        // - active / grace_period: always accessible
+        // - expired: allow 7-day grace window after end_date before blocking
+        // - cancelled / no subscription: block immediately
+        const isAccessible = (() => {
+          if (!subscription) return false;
+          if (subscription.status === 'active' || subscription.status === 'grace_period') return true;
+          if (subscription.status === 'expired' && subscription.end_date) {
+            const daysSinceExpiry = Math.ceil(
+              (new Date() - new Date(subscription.end_date)) / (1000 * 60 * 60 * 24)
+            );
+            return daysSinceExpiry <= 7; // Allow 7-day grace window
+          }
+          return false;
+        })();
+
+        if (!isAccessible) {
           setError('This restaurant is currently unavailable. Please try again later.');
           return;
         }
