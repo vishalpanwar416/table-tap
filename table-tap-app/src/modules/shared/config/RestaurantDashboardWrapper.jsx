@@ -4,6 +4,7 @@ import AuthWrapper from './AuthWrapper';
 import { useAdminRestaurant } from '../context/AdminRestaurantContext';
 import LoadingScreen from '../components/LoadingScreen';
 import { useBasePathNavigate } from './BasePathContext';
+import SubscriptionExpiredBanner from '../components/SubscriptionExpiredBanner';
 
 /**
  * RestaurantDashboardWrapper
@@ -110,6 +111,19 @@ export default function RestaurantDashboardWrapper({ children }) {
     );
   }
 
-  return <AuthWrapper>{children}</AuthWrapper>;
+  // Show subscription banner for manager/owner/captain roles (not admin — admin manages all restaurants)
+  const showSubscriptionBanner = userRestaurantId && !isAdmin();
+
+  return (
+    <AuthWrapper>
+      {showSubscriptionBanner && (
+        <SubscriptionExpiredBanner
+          restaurantId={userRestaurantId}
+          userRole={userRole}
+        />
+      )}
+      {children}
+    </AuthWrapper>
+  );
 }
 
