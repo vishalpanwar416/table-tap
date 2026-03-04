@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import logo1 from '../../../assets/icons/logott.png';
-import { storeRestaurantSelection } from '../utils/restaurantCheck';
+import { storeRestaurantSelection, hasValidRestaurantSelection } from '../utils/restaurantCheck';
 
 // Animation configurations
 const ANIMATIONS = {
@@ -44,34 +44,49 @@ export default function Opening() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const urlParams = new URLSearchParams(location.search);
+  const urlRestaurant = urlParams.get('restaurant');
+  const urlTable = urlParams.get('table');
+  const hasQRParams = !!(urlRestaurant && urlTable);
+
+  // QR code scan: store restaurant+table and jump straight to /home, skip the splash
+  useEffect(() => {
+    if (hasQRParams) {
+      storeRestaurantSelection(urlRestaurant, urlTable);
+      navigate(`/home?restaurant=${urlRestaurant}&table=${urlTable}`, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     const timer = setTimeout(() => setShowButtons(true), 2500);
     return () => clearTimeout(timer);
   }, []);
 
-  // Preserve URL parameters when navigating
   const preserveParams = (path) => {
-    const urlParams = new URLSearchParams(location.search);
-    const restaurant = urlParams.get('restaurant');
-    const table = urlParams.get('table');
-
-    if (restaurant && table) {
-      // Store the parameters for later use
-      storeRestaurantSelection(restaurant, table);
-      return `${path}?restaurant=${restaurant}&table=${table}`;
+    if (hasQRParams) {
+      return `${path}?restaurant=${urlRestaurant}&table=${urlTable}`;
     }
     return path;
   };
 
-  const handleSkip = useCallback(() => navigate(preserveParams('/onboarding')), [navigate, location.search]);
+  // "Browse as Guest" → skip login, go directly to the menu
+  const handleSkip = useCallback(() => {
+    const dest = hasValidRestaurantSelection() ? '/home' : '/restaurant-selection';
+    navigate(preserveParams(dest));
+  }, [navigate, hasQRParams, urlRestaurant, urlTable]);
+
   const handleLogin = useCallback(() => navigate(preserveParams('/login')), [navigate, location.search]);
   const handleSignup = useCallback(() => navigate(preserveParams('/signup')), [navigate, location.search]);
 
   const buttons = [
     { text: "Log In", onClick: handleLogin, style: BUTTON_STYLES.primary },
     { text: "Sign Up", onClick: handleSignup, style: BUTTON_STYLES.primary },
-    { text: "Skip for now", onClick: handleSkip, style: BUTTON_STYLES.skip }
+    { text: "Browse as Guest", onClick: handleSkip, style: BUTTON_STYLES.skip }
   ];
+
+  // Don't flash the splash screen during QR redirect
+  if (hasQRParams) return null;
 
   return (
     <div className="w-full min-h-screen flex flex-col justify-center items-center font-spartan overflow-hidden bg-gradient-to-b from-white to-cyan-100 md:from-cyan-100 md:to-white">
