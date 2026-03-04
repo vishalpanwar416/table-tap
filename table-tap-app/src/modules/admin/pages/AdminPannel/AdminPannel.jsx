@@ -89,6 +89,7 @@ const AdminPanel = () => {
   const [totalStaff, setTotalStaff] = useState(0);
   const [staffPage, setStaffPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false); // For mutations (add/edit/delete) — don't block the full UI
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
   const [showError, setShowError] = useState(false);
@@ -184,6 +185,11 @@ const AdminPanel = () => {
   }, []);
 
   const fetchData = async () => {
+    // Safety net: if fetch never resolves, unblock UI after 12 seconds
+    const safetyTimer = setTimeout(() => {
+      setLoading(false);
+    }, 12000);
+
     try {
       setLoading(true);
       // Reset pages on fresh fetch
@@ -210,6 +216,7 @@ const AdminPanel = () => {
     } catch (error) {
       handleError('Failed to load data: ' + error.message);
     } finally {
+      clearTimeout(safetyTimer);
       setLoading(false);
     }
   };
@@ -358,7 +365,7 @@ const AdminPanel = () => {
 
   const handleAddRestaurant = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setSaving(true);
     try {
       const { data, error } = await createRestaurant(newRestaurant);
       if (error) {
@@ -399,7 +406,7 @@ const AdminPanel = () => {
     } catch (err) {
       handleError('Failed to create restaurant: ' + err.message);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -410,7 +417,7 @@ const AdminPanel = () => {
 
   const handleUpdateRestaurant = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setSaving(true);
     try {
       const { data, error } = await updateRestaurant(selectedRestaurant.id, selectedRestaurant);
       if (error) {
@@ -431,13 +438,13 @@ const AdminPanel = () => {
     } catch (err) {
       handleError('Failed to update restaurant: ' + err.message);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
   const handleAddStaff = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setSaving(true);
     try {
       const { data, error } = await createStaff(newStaff);
       if (error) {
@@ -458,7 +465,7 @@ const AdminPanel = () => {
     } catch (err) {
       handleError('Failed to create staff member: ' + err.message);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -494,7 +501,7 @@ const AdminPanel = () => {
 
   const handleUpdateStaff = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setSaving(true);
     try {
       const { data, error } = await updateStaff(editingStaff.id, editingStaff);
       if (error) {
@@ -516,7 +523,7 @@ const AdminPanel = () => {
       console.error('Error in handleUpdateStaff:', err);
       handleError('Failed to update staff member: ' + err.message);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -693,7 +700,8 @@ const AdminPanel = () => {
     }
   };
 
-  if (loading && (restaurants.length === 0 && staff.length === 0)) {
+  // Only show full-page loading spinner during the INITIAL data load (when we have nothing to show yet)
+  if (loading && restaurants.length === 0 && staff.length === 0) {
     return <LoadingSpinner />;
   }
 
@@ -761,11 +769,7 @@ const AdminPanel = () => {
 
             {/* Main Content Area */}
             <div className={activeTab === 'notifications' || activeTab === 'activity' ? 'p-0' : 'p-2 md:p-6'}>
-              {loading ? (
-                <LoadingSpinner />
-              ) : (
-                renderActiveTab()
-              )}
+              {renderActiveTab()}
             </div>
           </div>
 
