@@ -79,13 +79,13 @@ export default function EnhancedGreetings({ userName = "Guest" }) {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="px-6 mt-6 mb-4"
+      className="px-6 mt-0 mb-2"
     >
       <div className="flex flex-col">
         <div className="flex items-center">
           <motion.h1
             variants={textVariants}
-            className="text-[29px] font-spartan-bold text-white flex items-center flex-wrap tracking-tight"
+            className="text-[29px] font-spartan-bold text-white flex items-center flex-wrap tracking-tight mb-0 leading-tight"
           >
             {greeting}
             <motion.span
@@ -99,14 +99,15 @@ export default function EnhancedGreetings({ userName = "Guest" }) {
 
         <motion.div
           variants={textVariants}
-          className="text-[11px] text-gray-400 mt-0 opacity-80"
+          className="text-[11px] text-gray-400 -mt-0.5 opacity-80"
         >
           It's <span className="font-semibold">{timeString}</span> on <span className="font-semibold">{dateString}</span>
         </motion.div>
 
         <motion.div
           variants={underlineVariants}
-          className="h-[1px] bg-orange-500/50 mt-1.5 max-w-xs"
+          className="h-[1px] mt-1.5 max-w-xs"
+          style={{ background: 'linear-gradient(to right, rgba(249,115,22,0.7), transparent)' }}
         />
       </div>
     </motion.div>

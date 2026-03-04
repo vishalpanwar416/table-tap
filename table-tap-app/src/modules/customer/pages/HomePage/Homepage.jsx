@@ -468,7 +468,7 @@ const HomePage = memo(() => {
 
             {/* Carousel with enhanced loading */}
             <motion.div {...slideUp}>
-              <div className="relative pt-3 pb-3 my-2">
+              <div className="relative py-2">
                 <Maincarosel />
               </div>
             </motion.div>

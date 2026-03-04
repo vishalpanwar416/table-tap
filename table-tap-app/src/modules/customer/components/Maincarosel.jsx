@@ -19,6 +19,10 @@ const Maincarosel = () => {
   const { restaurantId } = useRestaurant();
 
   useEffect(() => {
+    if (!restaurantId) {
+      setLoading(false); // no restaurant yet — stop shimmer
+      return;
+    }
     const loadCarouselData = async () => {
       try {
         const data = await fetchMaincaroselData(restaurantId);
@@ -76,8 +80,6 @@ const Maincarosel = () => {
           src={item.imade}
           alt={item.name || "Dish"}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-          loading="lazy"
-          decoding="async"
           onError={(e) => {
             e.target.style.display = 'none';
             e.target.parentNode.style.background = 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)';
