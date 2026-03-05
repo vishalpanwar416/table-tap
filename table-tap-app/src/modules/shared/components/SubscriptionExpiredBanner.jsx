@@ -74,12 +74,20 @@ const SubscriptionExpiredBanner = ({ restaurantId, userRole }) => {
     const status = subscription?.status;
 
     // ── Classify the state ────────────────────────────────────────────────
+    // Belt-and-suspenders: treat 'active' with a past end_date as expired
+    // (handles stale DB status before the hourly cron runs)
+    const effectivelyExpired =
+        (status === 'active' || status === 'expired') &&
+        daysRemaining !== null &&
+        daysRemaining <= 0;
+
     const isActive = status === 'active' && daysRemaining !== null && daysRemaining > 7;
     const isExpiringSoon = status === 'active' && daysRemaining !== null && daysRemaining <= 7 && daysRemaining > 0;
     const isGracePeriodDB = status === 'grace_period'; // DB-marked grace
-    const isInGraceWindow = status === 'expired' && daysSinceExpiry !== null && daysSinceExpiry <= 7;
+    // In grace window: expired (or stale active) AND within 7 days past expiry
+    const isInGraceWindow = effectivelyExpired && daysSinceExpiry !== null && daysSinceExpiry <= 7;
     const isHardBlocked = !subscription || status === 'cancelled' ||
-        (status === 'expired' && daysSinceExpiry !== null && daysSinceExpiry > 7);
+        (effectivelyExpired && daysSinceExpiry !== null && daysSinceExpiry > 7);
 
     // Nothing to show
     if (isActive) return null;
