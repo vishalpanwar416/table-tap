@@ -185,13 +185,15 @@ const AdminPanel = () => {
   }, []);
 
   const fetchData = async () => {
+    setLoading(true); // Set loading FIRST before anything else
+
     // Safety net: if fetch never resolves, unblock UI after 12 seconds
     const safetyTimer = setTimeout(() => {
+      console.warn('[AdminPanel] fetchData safety timeout — unblocking UI');
       setLoading(false);
     }, 12000);
 
     try {
-      setLoading(true);
       // Reset pages on fresh fetch
       setRestaurantPage(1);
       setStaffPage(1);
@@ -202,9 +204,11 @@ const AdminPanel = () => {
       ]);
 
       if (restaurantsResponse.error) {
+        console.error('[AdminPanel] getAllRestaurants error:', restaurantsResponse.error);
         throw new Error(restaurantsResponse.error);
       }
       if (staffResponse.error) {
+        console.error('[AdminPanel] getAllStaff error:', staffResponse.error);
         throw new Error(staffResponse.error);
       }
 
@@ -214,6 +218,7 @@ const AdminPanel = () => {
       setStaff(staffResponse.data);
       setTotalStaff(staffResponse.total);
     } catch (error) {
+      console.error('[AdminPanel] fetchData failed:', error);
       handleError('Failed to load data: ' + error.message);
     } finally {
       clearTimeout(safetyTimer);
