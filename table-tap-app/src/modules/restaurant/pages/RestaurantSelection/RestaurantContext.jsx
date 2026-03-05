@@ -177,17 +177,17 @@ export const RestaurantProvider = ({ children }) => {
         });
 
       } catch (err) {
-        if (abortController.signal.aborted) return;
+        // AbortError is expected on unmount / re-render — suppress it silently
+        if (abortController.signal.aborted || err?.name === 'AbortError') return;
 
         if (err?.code === 'PGRST301' ||
           err?.message?.includes('JWT') ||
-          err?.message?.includes('expired') ||
           err?.message?.includes('Invalid Refresh Token') ||
           err?.message?.includes('Refresh Token Not Found') ||
           err?.status === 401) {
           setError('AUTH_ERROR');
         } else {
-          setError('Failed to load restaurant data');
+          setError(err?.message || 'Failed to load restaurant data');
         }
       } finally {
         if (!abortController.signal.aborted) {
@@ -259,19 +259,18 @@ export const RestaurantProvider = ({ children }) => {
         return false;
       }
 
-      // Check subscription status
+      // Check subscription status — use same grace window logic as fetchRestaurant
       const { data: subscription, error: subscriptionError } = await supabase
         .from('subscriptions')
         .select('id, status, end_date')
         .eq('restaurant_id', restaurantId)
-        .in('status', ['active', 'grace_period'])
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
-      // Check if subscription query failed due to auth
       if (subscriptionError) {
         if (subscriptionError.code === 'PGRST301' ||
           subscriptionError.message?.includes('JWT') ||
-          subscriptionError.message?.includes('expired') ||
           subscriptionError.message?.includes('Invalid Refresh Token') ||
           subscriptionError.message?.includes('Refresh Token Not Found') ||
           subscriptionError.status === 401) {
@@ -280,7 +279,20 @@ export const RestaurantProvider = ({ children }) => {
         }
       }
 
-      if (!subscription) {
+      // Apply same grace window: allow expired restaurants up to 7 days past end_date
+      const isAccessible = (() => {
+        if (!subscription) return false;
+        if (subscription.status === 'active' || subscription.status === 'grace_period') return true;
+        if (subscription.status === 'expired' && subscription.end_date) {
+          const daysSinceExpiry = Math.ceil(
+            (new Date() - new Date(subscription.end_date)) / (1000 * 60 * 60 * 24)
+          );
+          return daysSinceExpiry <= 7;
+        }
+        return false;
+      })();
+
+      if (!isAccessible) {
         setError('This restaurant is currently unavailable. Please try again later.');
         return false;
       }
@@ -294,10 +306,9 @@ export const RestaurantProvider = ({ children }) => {
       return true;
 
     } catch (err) {
-      // Check if it's an authentication error
+      if (err?.name === 'AbortError') return false;
       if (err?.code === 'PGRST301' ||
         err?.message?.includes('JWT') ||
-        err?.message?.includes('expired') ||
         err?.message?.includes('Invalid Refresh Token') ||
         err?.message?.includes('Refresh Token Not Found') ||
         err?.status === 401) {
