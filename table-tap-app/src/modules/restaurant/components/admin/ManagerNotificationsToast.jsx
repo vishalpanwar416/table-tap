@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, X, Check, AlertCircle, Trash2, Clock, ChevronRight } from 'lucide-react';
+import { Bell, X, Check, AlertCircle, Trash2, Clock, ChevronRight, ShieldAlert, CreditCard } from 'lucide-react';
 import { useManagerNotifications } from '../../../shared/context/ManagerNotificationContext';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -119,51 +119,91 @@ const ManagerNotificationsToast = ({ buttonClassName = "text-gray-500 hover:bg-g
                         {group}
                       </div>
                       <div className="divide-y divide-gray-50">
-                        {groupItems.map((notification) => (
-                          <div
-                            key={notification.id}
-                            className={`group relative p-4 transition-all duration-200 hover:bg-gray-50 ${!notification.read ? 'bg-orange-50/30' : ''
-                              }`}
-                          >
-                            <div className="flex items-start gap-3.5">
-                              {/* Icon */}
-                              <div className="flex-shrink-0 mt-1 relative">
-                                {notification.type === 'order' ? (
-                                  <div className="p-2 bg-orange-100 text-orange-600 rounded-xl shadow-sm group-hover:bg-orange-200 transition-colors">
-                                    <AlertCircle className="w-4 h-4" />
-                                  </div>
-                                ) : notification.type === 'success' ? (
-                                  <div className="p-2 bg-green-100 text-green-600 rounded-xl shadow-sm group-hover:bg-green-200 transition-colors">
-                                    <Check className="w-4 h-4" />
-                                  </div>
-                                ) : (
-                                  <div className="p-2 bg-blue-100 text-blue-600 rounded-xl shadow-sm group-hover:bg-blue-200 transition-colors">
-                                    <Bell className="w-4 h-4" />
-                                  </div>
-                                )}
-                                {!notification.read && (
-                                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
-                                )}
-                              </div>
+                        {groupItems.map((notification) => {
+                          const isSubExpired = notification.type === 'subscription_expired';
+                          const isSubExpiring = notification.type === 'subscription_expiring';
+                          const isSubNotif = isSubExpired || isSubExpiring;
 
-                              {/* Content */}
-                              <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-start gap-2">
-                                  <p className={`text-sm leading-tight ${!notification.read ? 'font-bold text-gray-900' : 'font-medium text-gray-700'}`}>
-                                    {notification.title}
-                                  </p>
-                                  <span className="text-[10px] text-gray-400 whitespace-nowrap flex-shrink-0 pt-0.5 font-medium">
-                                    {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true }).replace('about ', '')}
-                                  </span>
+                          return (
+                            <div
+                              key={notification.id}
+                              className={`group relative p-4 transition-all duration-200 hover:bg-gray-50 ${!notification.read
+                                  ? isSubExpired ? 'bg-red-50/60'
+                                    : isSubExpiring ? 'bg-amber-50/60'
+                                      : 'bg-orange-50/30'
+                                  : ''
+                                }`}
+                            >
+                              <div className="flex items-start gap-3.5">
+                                {/* Icon */}
+                                <div className="flex-shrink-0 mt-1 relative">
+                                  {isSubExpired ? (
+                                    <div className="p-2 bg-red-100 text-red-600 rounded-xl shadow-sm group-hover:bg-red-200 transition-colors">
+                                      <ShieldAlert className="w-4 h-4" />
+                                    </div>
+                                  ) : isSubExpiring ? (
+                                    <div className="p-2 bg-amber-100 text-amber-600 rounded-xl shadow-sm group-hover:bg-amber-200 transition-colors">
+                                      <Clock className="w-4 h-4" />
+                                    </div>
+                                  ) : notification.type === 'order' ? (
+                                    <div className="p-2 bg-orange-100 text-orange-600 rounded-xl shadow-sm group-hover:bg-orange-200 transition-colors">
+                                      <AlertCircle className="w-4 h-4" />
+                                    </div>
+                                  ) : notification.type === 'success' ? (
+                                    <div className="p-2 bg-green-100 text-green-600 rounded-xl shadow-sm group-hover:bg-green-200 transition-colors">
+                                      <Check className="w-4 h-4" />
+                                    </div>
+                                  ) : (
+                                    <div className="p-2 bg-blue-100 text-blue-600 rounded-xl shadow-sm group-hover:bg-blue-200 transition-colors">
+                                      <Bell className="w-4 h-4" />
+                                    </div>
+                                  )}
+                                  {!notification.read && (
+                                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
+                                  )}
                                 </div>
 
-                                <p className={`text-sm mt-1 leading-relaxed ${!notification.read ? 'text-gray-800' : 'text-gray-500'}`}>
-                                  {notification.message}
-                                </p>
+                                {/* Content */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex justify-between items-start gap-2">
+                                    <p className={`text-sm leading-tight ${!notification.read
+                                        ? isSubExpired ? 'font-bold text-red-700'
+                                          : isSubExpiring ? 'font-bold text-amber-700'
+                                            : 'font-bold text-gray-900'
+                                        : 'font-medium text-gray-700'
+                                      }`}>
+                                      {notification.title}
+                                    </p>
+                                    <span className="text-[10px] text-gray-400 whitespace-nowrap flex-shrink-0 pt-0.5 font-medium">
+                                      {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true }).replace('about ', '')}
+                                    </span>
+                                  </div>
+
+                                  <p className={`text-sm mt-1 leading-relaxed ${!notification.read ? 'text-gray-800' : 'text-gray-500'
+                                    }`}>
+                                    {notification.message}
+                                  </p>
+
+                                  {/* Renew button for subscription notifications */}
+                                  {isSubNotif && (
+                                    <a
+                                      href="https://table-tap.in/#pricing"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className={`inline-flex items-center gap-1 mt-2 text-xs font-bold px-3 py-1.5 rounded-full transition-colors ${isSubExpired
+                                          ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                                          : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                                        }`}
+                                    >
+                                      <CreditCard className="w-3 h-3" />
+                                      Renew Subscription
+                                    </a>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   );

@@ -17,7 +17,12 @@ export const createNotification = async (notification) => {
       'order_ready',
       'order_rejected',
       'payment_success',
-      'payment_failed'
+      'payment_failed',
+      'subscription_expired',
+      'subscription_expiring',
+      'subscription_renewed',
+      'subscription_cancelled',
+      'system'
     ];
 
     if (!allowedTypes.includes(notification.type)) {
