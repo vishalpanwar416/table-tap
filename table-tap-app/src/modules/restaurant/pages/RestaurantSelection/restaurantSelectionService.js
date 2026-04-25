@@ -17,31 +17,34 @@ const markAuthError = (error) => {
  */
 export const getActiveRestaurants = async () => {
   try {
+    // Step 1: get restaurant IDs that have an accessible subscription.
+    // Filtering on a joined table column via .in() is unreliable in PostgREST,
+    // so we query subscriptions separately then filter restaurants by those IDs.
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
+    const { data: subData, error: subError } = await supabase
+      .from('subscriptions')
+      .select('restaurant_id, status, end_date')
+      .or(`status.in.(active,grace_period),and(status.eq.expired,end_date.gte.${sevenDaysAgo})`);
+
+    if (subError) throw markAuthError(subError);
+
+    const accessibleIds = [...new Set((subData || []).map(s => s.restaurant_id))];
+    if (accessibleIds.length === 0) return [];
+
+    // Step 2: fetch those restaurants
     const { data, error } = await supabase
       .from('restaurants')
       .select(`
-        id,
-        name,
-        description,
-        address,
-        contact_phone,
-        opening_hours,
-        logo_url,
-        restaurant_photo_url,
-        is_active,
-        cuisine_type,
-        location,
-        tables,
-        subscriptions!inner(status)
+        id, name, description, address, contact_phone,
+        opening_hours, logo_url, restaurant_photo_url,
+        is_active, cuisine_type, location, tables
       `)
       .eq('is_active', true)
-      .in('subscriptions.status', ['active', 'grace_period'])
+      .in('id', accessibleIds)
       .order('name');
 
-    if (error) {
-      throw markAuthError(error);
-    }
+    if (error) throw markAuthError(error);
 
     return data || [];
   } catch (error) {
@@ -424,15 +427,32 @@ export async function getClosestRestaurants(latitude, longitude, radiusMeters = 
  */
 export async function getAllRestaurants() {
   try {
+    // Same two-step pattern as getActiveRestaurants — filter by accessible subscription first
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { data: subData, error: subError } = await supabase
+      .from('subscriptions')
+      .select('restaurant_id, status, end_date')
+      .or(`status.in.(active,grace_period),and(status.eq.expired,end_date.gte.${sevenDaysAgo})`);
+
+    if (subError) throw markAuthError(subError);
+
+    const accessibleIds = [...new Set((subData || []).map(s => s.restaurant_id))];
+    if (accessibleIds.length === 0) return [];
+
     const { data, error } = await supabase
       .from('restaurants')
-      .select('*, subscriptions(status)')
+      .select(`
+        id, name, description, address, contact_phone,
+        opening_hours, logo_url, restaurant_photo_url,
+        is_active, cuisine_type, location, tables
+      `)
       .eq('is_active', true)
+      .in('id', accessibleIds)
       .order('name');
-    if (error) {
-      console.error('Failed to fetch all restaurants:', error);
-      throw markAuthError(error);
-    }
+
+    if (error) throw markAuthError(error);
+
     return data || [];
   } catch (err) {
     console.error('Failed to get all restaurants:', err);
