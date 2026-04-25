@@ -1,9 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform",
-};
 
 interface EmailRequest {
   to: string;
@@ -27,10 +24,9 @@ Deno.serve(async (req: Request) => {
   return await withRateLimit(
     req,
     async (req: Request) => {
-      // Handle CORS preflight
-      if (req.method === "OPTIONS") {
-        return new Response("ok", { headers: corsHeaders });
-      }
+      const corsResponse = handleCors(req);
+      if (corsResponse) return corsResponse;
+      const corsHeaders = getCorsHeaders(req);
 
       try {
         // 1. Verify Authentication (Optional: Rely on Gateway validation or check header presence)

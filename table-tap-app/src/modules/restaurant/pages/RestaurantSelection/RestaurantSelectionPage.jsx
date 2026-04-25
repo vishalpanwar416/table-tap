@@ -633,7 +633,6 @@ const RestaurantSelectionPage = () => {
           userId: user?.id
         });
       } else {
-        console.log(`Loaded ${restaurantsData.length} restaurant(s)`);
       }
     } catch (err) {
       console.error('Error fetching restaurants:', err);
@@ -647,7 +646,7 @@ const RestaurantSelectionPage = () => {
           // Clear all supabase session keys from localStorage
           Object.keys(localStorage)
             .filter(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
-            .forEach(k => { console.log('[RestaurantSelection] Removing stale key:', k); localStorage.removeItem(k); });
+            .forEach(k => { localStorage.removeItem(k); });
         } catch (e) { /* ignore */ }
 
         // Wait a moment and retry

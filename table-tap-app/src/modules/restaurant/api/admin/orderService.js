@@ -56,7 +56,6 @@ export const processRefund = async (order) => {
       return { success: false, error: result.error || 'Refund failed' };
     }
 
-    console.log('Refund processed successfully:', result);
     return { success: true, refund: result.refund };
   } catch (error) {
     console.error('Error processing refund:', error);
@@ -120,13 +119,6 @@ export const getRestaurantOrders = async (restaurantId) => {
 // Helper function to create user notification for order status updates
 const createOrderStatusNotification = async (order, refundResult = null) => {
   try {
-    console.log('[Notification] Attempting to create notification for order:', {
-      orderId: order.id,
-      orderNumber: order.order_number,
-      userId: order.user_id,
-      status: order.status,
-      refundProcessed: refundResult?.success || false
-    });
 
     // Skip if no user_id (guest orders)
     if (!order.user_id) {
@@ -193,7 +185,6 @@ const createOrderStatusNotification = async (order, refundResult = null) => {
       user_id: order.user_id,
       metadata
     });
-    console.log('Notification created for user:', order.user_id);
   } catch (error) {
     console.error('Error creating order status notification:', error);
   }
@@ -415,7 +406,6 @@ export const syncPendingActions = async () => {
   const pendingActions = await offlineStorage.getPendingActions();
   if (pendingActions.length === 0) return;
 
-  console.log(`Syncing ${pendingActions.length} pending offline actions...`);
 
   const processedIds = [];
 
@@ -435,7 +425,6 @@ export const syncPendingActions = async () => {
 
   if (processedIds.length > 0) {
     await offlineStorage.clearPendingActions(processedIds);
-    console.log('Sync complete');
   }
 };
 
@@ -506,22 +495,16 @@ export const updateOrderStatus = async (orderId, newStatus, cancelReason = null,
     let refundResult = null;
     if (status === 'rejected' && updatedOrder) {
       if (updatedOrder.payment_status === 'completed' && updatedOrder.razorpay_payment_id) {
-        console.log('Processing automatic refund for rejected order:', updatedOrder.id);
         refundResult = await processRefund({
           ...updatedOrder,
           cancel_reason: cancelReason || 'Order rejected by restaurant',
         });
 
         if (refundResult.success) {
-          console.log('Refund processed successfully:', refundResult.refund);
         } else {
           console.error('Refund processing failed:', refundResult.error);
         }
       } else {
-        console.log('Skipping refund - payment not completed or no payment ID:', {
-          payment_status: updatedOrder.payment_status,
-          has_payment_id: !!updatedOrder.razorpay_payment_id,
-        });
       }
     }
 
@@ -568,7 +551,6 @@ export const updateOrderStatus = async (orderId, newStatus, cancelReason = null,
     if (!customerEmail) {
       autoEmailResult.skippedReason = 'no_customer_email';
       if (['preparing', 'rejected', 'completed'].includes(status)) {
-        console.log('[Auto email] Skipped: order has no customer_email. Add email in order details for auto emails.');
       }
     } else {
       let restaurant = null;
@@ -592,17 +574,14 @@ export const updateOrderStatus = async (orderId, newStatus, cancelReason = null,
       } else if (isGuestEmail) {
         autoEmailResult.skippedReason = 'guest_placeholder_email';
         if (['preparing', 'rejected', 'completed'].includes(status)) {
-          console.log('[Auto email] Skipped: Guest placeholder email detected.');
         }
       } else if (!restaurant.auto_email_billing_enabled) {
         autoEmailResult.skippedReason = 'auto_email_disabled';
         if (['preparing', 'rejected', 'completed'].includes(status)) {
-          console.log('[Auto email] Skipped: enable "Auto email billing" in Settings → Online Bill Delivery.');
         }
       } else if (!onlineBillingEnabled) {
         autoEmailResult.skippedReason = 'online_billing_disabled';
         if (['preparing', 'rejected', 'completed'].includes(status)) {
-          console.log('[Auto email] Skipped: enable "Online Bill" and ensure admin has billing enabled for this restaurant.');
         }
       } else if (['preparing', 'rejected', 'completed'].includes(status)) {
         try {
@@ -671,7 +650,6 @@ export const updateOrderStatus = async (orderId, newStatus, cancelReason = null,
         // Queue the action for later sync
         await offlineStorage.queueAction('UPDATE_STATUS', { orderId, status, cancelReason, userData });
 
-        console.log('Action queued for offline sync');
         return optimisticOrder; // Return optimistic data to UI
       }
     } catch (offlineErr) {

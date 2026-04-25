@@ -59,7 +59,6 @@ const OrderCard = ({ order, onClick, restaurantName }) => {
     setExpanded(!expanded);
   };
   
-  console.log('OrderCard order:', order);
   
   return (
     <div 

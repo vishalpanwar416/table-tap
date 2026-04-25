@@ -18,8 +18,6 @@ const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefine
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase credentials missing! Check your .env file or Vercel project settings.');
-  console.log('URL present:', !!supabaseUrl);
-  console.log('Key present:', !!supabaseAnonKey);
 }
 
 // Use fallback values if env vars are missing to prevent app crash
@@ -102,8 +100,6 @@ const supabaseClient = createClient(
       autoRefreshToken: isBrowser,
       persistSession: isBrowser,
       detectSessionInUrl: true,
-      // Force implicit flow: JioBase returns tokens in the URL hash (#access_token=…)
-      flowType: 'implicit',
       // Use default localStorage in dev to avoid stale cookies from the old
       // supabase.co project being returned and causing token refresh AbortErrors.
       // Cookie adapter is only needed on production (cross-subdomain sharing).

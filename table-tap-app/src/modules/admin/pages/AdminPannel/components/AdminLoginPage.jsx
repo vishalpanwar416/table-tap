@@ -31,7 +31,6 @@ export default function AdminLoginPage() {
                     }
                 }
             } catch (err) {
-                console.log('No existing session');
             }
         };
         checkSession();

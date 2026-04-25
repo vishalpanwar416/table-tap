@@ -30,7 +30,6 @@ export const NotificationProvider = ({ children }) => {
 
       // Subscribe to new notifications
       const subscription = subscribeToUserNotifications(user.id, (newNotification) => {
-        console.log('[Realtime] New notification received:', newNotification);
         // Add notification to state
         setNotifications(prev => [newNotification, ...prev]);
 
@@ -51,15 +50,12 @@ export const NotificationProvider = ({ children }) => {
 
       if (subscription && subscription.on) {
         subscription.on('status', (status) => {
-          console.log('[Supabase Realtime] Channel status:', status);
         });
       }
-      console.log('[Realtime] Subscribed to notifications for user:', user.id);
 
       return () => {
         if (subscription) {
           subscription.unsubscribe();
-          console.log('[Realtime] Unsubscribed from notifications for user:', user.id);
         }
       };
     }
@@ -81,7 +77,6 @@ export const NotificationProvider = ({ children }) => {
       setUnreadCount(unreadNotifications.length);
 
       setError(null);
-      console.log('[Debug] Notifications fetched:', userNotifications);
     } catch (err) {
       setError('Failed to load notifications');
       console.error('[NotificationContext] Error fetching notifications:', err);
@@ -104,7 +99,6 @@ export const NotificationProvider = ({ children }) => {
 
       // Update unread count
       setUnreadCount(prevCount => Math.max(0, prevCount - 1));
-      console.log('[Debug] Notification marked as read:', notificationId);
     } catch (err) {
       console.error('[NotificationContext] Error marking as read:', err);
     }
@@ -142,7 +136,6 @@ export const NotificationProvider = ({ children }) => {
         if (deletedNotification && !deletedNotification.read) {
           setUnreadCount(prevCount => Math.max(0, prevCount - 1));
         }
-        console.log('[Debug] Notification deleted:', notificationId);
       }
     } catch (err) {
       console.error('[NotificationContext] Error deleting notification:', err);

@@ -786,7 +786,6 @@ export const createStaff = async (staffData) => {
  * Update staff member
  */
 export const updateStaff = async (id, updates) => {
-  console.log('🔍 updateStaff called with:', { id, updates });
 
   try {
     // Map frontend fields to database fields (remove updated_at)
@@ -799,7 +798,6 @@ export const updateStaff = async (id, updates) => {
       // Removed updated_at since it doesn't exist in the table
     };
 
-    console.log('🔍 Mapped to database fields:', dbUpdates);
 
     const result = await supabase
       .from('restaurant_staff')
@@ -808,14 +806,12 @@ export const updateStaff = async (id, updates) => {
       .select()
       .maybeSingle();
 
-    console.log('🔍 Supabase response:', result);
 
     if (result.error) {
       console.error('❌ Supabase error:', result.error);
       throw new Error(result.error.message);
     }
 
-    console.log('✅ Staff updated successfully in database');
 
     await logAdminActivity({
       activity_type: ACTIVITY_TYPES.STAFF_UPDATED,

@@ -122,7 +122,6 @@ export const AuthProvider = ({ children }) => {
           try {
             const { data: syncResult } = await supabase.rpc('sync_guest_orders').throwOnError();
             if (syncResult?.linked_count > 0) {
-              console.log(`[Auth] Linked ${syncResult.linked_count} guest orders to account.`);
             }
           } catch {
             // RPC may not exist on all environments — ignore completely

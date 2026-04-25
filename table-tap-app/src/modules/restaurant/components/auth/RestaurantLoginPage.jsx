@@ -32,7 +32,6 @@ export default function RestaurantLoginPage() {
                     }
                 }
             } catch (err) {
-                console.log('No existing session');
             }
         };
         checkSession();

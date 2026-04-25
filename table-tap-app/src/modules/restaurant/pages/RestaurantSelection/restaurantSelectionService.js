@@ -148,30 +148,27 @@ export const updateRestaurantTables = async (restaurantId, tables) => {
  */
 export const searchRestaurants = async (searchTerm) => {
   try {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { data: subData, error: subError } = await supabase
+      .from('subscriptions')
+      .select('restaurant_id')
+      .or(`status.in.(active,grace_period),and(status.eq.expired,end_date.gte.${sevenDaysAgo})`);
+
+    if (subError) throw markAuthError(subError);
+
+    const accessibleIds = [...new Set((subData || []).map(s => s.restaurant_id))];
+    if (accessibleIds.length === 0) return [];
 
     const { data, error } = await supabase
       .from('restaurants')
-      .select(`
-        id,
-        name,
-        description,
-        address,
-        contact_phone,
-        opening_hours,
-        logo_url,
-        is_active,
-        cuisine_type,
-        location,
-        subscriptions!inner(status)
-      `)
+      .select('id, name, description, address, contact_phone, opening_hours, logo_url, is_active, cuisine_type, location')
       .eq('is_active', true)
-      .in('subscriptions.status', ['active', 'grace_period'])
+      .in('id', accessibleIds)
       .or(`name.ilike.%${searchTerm}%,cuisine_type.ilike.%${searchTerm}%`)
       .order('name');
 
-    if (error) {
-      throw markAuthError(error);
-    }
+    if (error) throw markAuthError(error);
 
     return data || [];
   } catch (error) {
@@ -184,30 +181,27 @@ export const searchRestaurants = async (searchTerm) => {
  */
 export const getRestaurantsByCuisine = async (cuisineType) => {
   try {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { data: subData, error: subError } = await supabase
+      .from('subscriptions')
+      .select('restaurant_id')
+      .or(`status.in.(active,grace_period),and(status.eq.expired,end_date.gte.${sevenDaysAgo})`);
+
+    if (subError) throw markAuthError(subError);
+
+    const accessibleIds = [...new Set((subData || []).map(s => s.restaurant_id))];
+    if (accessibleIds.length === 0) return [];
 
     const { data, error } = await supabase
       .from('restaurants')
-      .select(`
-        id,
-        name,
-        description,
-        address,
-        contact_phone,
-        opening_hours,
-        logo_url,
-        is_active,
-        cuisine_type,
-        location,
-        subscriptions!inner(status)
-      `)
+      .select('id, name, description, address, contact_phone, opening_hours, logo_url, is_active, cuisine_type, location')
       .eq('is_active', true)
-      .in('subscriptions.status', ['active', 'grace_period'])
+      .in('id', accessibleIds)
       .eq('cuisine_type', cuisineType)
       .order('name');
 
-    if (error) {
-      throw markAuthError(error);
-    }
+    if (error) throw markAuthError(error);
 
     return data || [];
   } catch (error) {
@@ -344,11 +338,20 @@ async function getClosestRestaurantsPostGIS(latitude, longitude, radiusMeters = 
 async function getClosestRestaurantsJavaScript(latitude, longitude, radiusMeters = 5000) {
   try {
     // Fetch all active restaurants
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: subData, error: subError } = await supabase
+      .from('subscriptions')
+      .select('restaurant_id')
+      .or(`status.in.(active,grace_period),and(status.eq.expired,end_date.gte.${sevenDaysAgo})`);
+    if (subError) throw subError;
+    const accessibleIds = [...new Set((subData || []).map(s => s.restaurant_id))];
+    if (accessibleIds.length === 0) return [];
+
     const { data: restaurants, error } = await supabase
       .from('restaurants')
-      .select('*, subscriptions!inner(status)')
+      .select('*')
       .eq('is_active', true)
-      .in('subscriptions.status', ['active', 'grace_period']);
+      .in('id', accessibleIds);
     if (error) {
       console.error('Failed to fetch restaurants:', error);
       throw error;
@@ -402,10 +405,8 @@ export async function getClosestRestaurants(latitude, longitude, radiusMeters = 
     // First, try PostGIS method
     const isPostGISAvailable = await checkPostGISAvailability();
     if (isPostGISAvailable) {
-      console.log('Using PostGIS for restaurant search');
       return await getClosestRestaurantsPostGIS(latitude, longitude, radiusMeters);
     } else {
-      console.log('Using JavaScript fallback for restaurant search');
       return await getClosestRestaurantsJavaScript(latitude, longitude, radiusMeters);
     }
   } catch (err) {

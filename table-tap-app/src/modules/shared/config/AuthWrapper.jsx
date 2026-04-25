@@ -127,7 +127,6 @@ export default function AuthWrapper({ children, publicOnly = false }) {
             ? (location.pathname.startsWith('/admin') ? '/admin/login' : '/restaurant/login')
             : '/login';
 
-        console.log('[AuthWrapper] Redirecting to login:', loginPath);
         navigateWithParams(loginPath);
         stopChecking();
         return;

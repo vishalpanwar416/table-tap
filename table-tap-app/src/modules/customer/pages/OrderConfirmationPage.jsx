@@ -16,11 +16,9 @@ const OrderConfirmationPage = () => {
 
   useEffect(() => {
     const initializeOrder = async () => {
-      console.log('OrderConfirmationPage: Initializing with state:', location.state);
 
       try {
         const orderId = location.state?.orderId;
-        console.log('OrderConfirmationPage: Order ID:', orderId);
 
         if (!orderId) {
           setError('No order ID provided');
@@ -37,7 +35,6 @@ const OrderConfirmationPage = () => {
         localStorage.setItem('lastGuestOrderId', orderId);
 
         const order = await getOrderDetails(orderId);
-        console.log('OrderConfirmationPage: Retrieved order:', order);
 
         setOrderDetails(order);
         startStatusUpdates(orderId);

@@ -1,5 +1,10 @@
-import React, { Suspense, lazy, useMemo } from 'react';
+import React, { Suspense, lazy, useMemo, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+
+const ExternalRedirect = ({ to }) => {
+  useEffect(() => { window.location.replace(to); }, [to]);
+  return null;
+};
 import RestaurantDashboardWrapper from '../shared/config/RestaurantDashboardWrapper';
 import { AdminRestaurantProvider } from '../shared/context/AdminRestaurantContext';
 import { ManagerNotificationProvider } from '../shared/context/ManagerNotificationContext';
@@ -53,7 +58,7 @@ const RestaurantAppRoutes = () => {
                     </RestaurantDashboardWrapper>
                 } />
                 <Route path="login/*" element={<RestaurantLoginPage />} />
-                <Route path="signup/*" element={<div dangerouslySetInnerHTML={{ __html: '<script>window.location.href="https://table-tap.in/#pricing"</script>' }} />} />
+                <Route path="signup/*" element={<ExternalRedirect to="https://table-tap.in/#pricing" />} />
                 <Route path="forgot-password/*" element={<ForgotPassword />} />
                 <Route path="reset-password/*" element={<ResetPassword />} />
                 <Route path="auth-callback/*" element={<AuthCallback />} />

@@ -1239,23 +1239,16 @@ export const StaffModal = ({ show, onClose, onSubmit, data, setData, restaurants
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('🔍 StaffModal handleSubmit called');
-    console.log('🔍 Current form data:', data);
-    console.log('🔍 Is editing:', isEditing);
 
     if (isEditing) {
       const confirmed = window.confirm(`Are you sure you want to update ${data.name}'s information?`);
-      console.log('🔍 User confirmed update:', confirmed);
       if (!confirmed) return;
     }
 
     setIsSubmitting(true);
-    console.log('🔍 Set submitting to true');
 
     try {
-      console.log('🔍 About to call onSubmit with data:', data);
       await onSubmit(e);
-      console.log(' onSubmit completed successfully');
     } catch (error) {
       console.error('❌ Error in StaffModal handleSubmit:', error);
       console.error('❌ Error details:', {
@@ -1264,7 +1257,6 @@ export const StaffModal = ({ show, onClose, onSubmit, data, setData, restaurants
         data: data
       });
     } finally {
-      console.log('🔍 Set submitting to false');
       setIsSubmitting(false);
     }
   };
