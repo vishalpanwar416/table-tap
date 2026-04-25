@@ -8,11 +8,19 @@ import { authService } from '../../shared/api/authService';
 
 const AUTH_CHECK_TIMEOUT_MS = 10000;
 
-/** True when on admin or restaurant subdomain (e.g. admin.table-tap.in). Pathname is "/" there, so we must use hostname. */
+/**
+ * True when on admin or restaurant subdomain — handles both production and staging.
+ * e.g. admin.table-tap.in, staging.admin.table-tap.in, restaurant.table-tap.in
+ */
 function isAdminOrRestaurantOrigin() {
   if (typeof window === 'undefined') return false;
   const h = (window.location.hostname || '').toLowerCase();
-  return h.startsWith('admin.') || h.startsWith('restaurant.') || h.startsWith('manager.') || h.startsWith('owner.');
+  // Strip optional staging/preview prefix before checking app type
+  const withoutPrefix = h.replace(/^(staging|preview)\./i, '');
+  return withoutPrefix.startsWith('admin.') ||
+    withoutPrefix.startsWith('restaurant.') ||
+    withoutPrefix.startsWith('manager.') ||
+    withoutPrefix.startsWith('owner.');
 }
 
 export default function AuthWrapper({ children, publicOnly = false }) {

@@ -1,124 +1,160 @@
 /**
  * Subdomain Router Utility
- * Detects the current subdomain and returns the appropriate app type
+ * Detects the current subdomain and returns the appropriate app type.
+ *
+ * Handles both production and staging:
+ *   Production:  app.table-tap.in, restaurant.table-tap.in, admin.table-tap.in
+ *   Staging:     staging.app.table-tap.in, staging.restaurant.table-tap.in, etc.
  */
+
+// App-type keywords in order of priority
+const APP_KEYWORDS = ['admin', 'owner', 'restaurant', 'manager', 'app'];
+
+/**
+ * Extracts the logical app type from a hostname regardless of staging prefix.
+ * e.g. "staging.app.table-tap.in" → "app"
+ *      "restaurant.table-tap.in"  → "restaurant"
+ */
+const resolveAppType = (hostname) => {
+  const parts = hostname.toLowerCase().split('.');
+  // Walk subdomain parts (everything before the root domain) left→right
+  // and return the first recognised app-type keyword.
+  for (const part of parts) {
+    if (part === 'admin') return 'admin';
+    if (part === 'owner') return 'owner';
+    if (part === 'restaurant' || part === 'manager') return 'restaurant';
+    if (part === 'app') return 'app';
+    // Skip non-keyword prefixes like "staging", "preview", etc.
+  }
+  // Fallback: substring match (catches Vercel preview URLs)
+  if (hostname.includes('admin')) return 'admin';
+  if (hostname.includes('owner')) return 'owner';
+  if (hostname.includes('restaurant') || hostname.includes('manager')) return 'restaurant';
+  if (hostname.includes('app')) return 'app';
+  return 'app';
+};
 
 /**
  * Get the current subdomain from window.location
- * @returns {'landing' | 'app' | 'restaurant' | 'admin'} The app type based on subdomain
+ * @returns {'landing' | 'app' | 'restaurant' | 'admin' | 'owner'} The app type based on subdomain
  */
 export const getSubdomain = () => {
-    const hostname = window.location.hostname;
+  const hostname = window.location.hostname;
 
-    // Handle localhost development (use query param or default to landing)
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        // For development, check URL path or query param
-        const params = new URLSearchParams(window.location.search);
-        const devSubdomain = params.get('subdomain');
-        if (devSubdomain) return devSubdomain;
+  // Localhost dev — use path or query param
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    const params = new URLSearchParams(window.location.search);
+    const devSubdomain = params.get('subdomain');
+    if (devSubdomain) return devSubdomain;
 
-        // Check if path starts with module name for dev convenience
-        const pathname = window.location.pathname;
-        if (pathname.startsWith('/app')) return 'app';
-        if (pathname.startsWith('/restaurant')) return 'restaurant';
-        if (pathname.startsWith('/admin')) return 'admin';
-
-        // Default to app for localhost (to keep current behavior)
-        return 'app';
-    }
-
-    // Production: detect by first subdomain for custom domains (e.g. admin.table-tap.in)
-    const parts = hostname.split('.');
-    if (parts.length >= 3) {
-        const first = (parts[0] || '').toLowerCase();
-        if (first === 'admin') return 'admin';
-        if (first === 'owner') return 'owner';
-        if (first === 'restaurant' || first === 'manager') return 'restaurant';
-        if (first === 'app') return 'app';
-    }
-
-    // Fallback: substring match for Vercel-style hostnames (e.g. table-tap-admin.vercel.app)
-    if (hostname.includes('admin')) return 'admin';
-    if (hostname.includes('owner')) return 'owner';
-    if (hostname.includes('restaurant') || hostname.includes('manager')) return 'restaurant';
-    if (hostname.includes('app')) return 'app';
+    const pathname = window.location.pathname;
+    if (pathname.startsWith('/app')) return 'app';
+    if (pathname.startsWith('/restaurant')) return 'restaurant';
+    if (pathname.startsWith('/admin')) return 'admin';
 
     return 'app';
+  }
+
+  return resolveAppType(hostname);
 };
 
 /**
- * Get the base path for the current subdomain
- * Used for routing configuration
+ * Get the base path for the current subdomain (localhost only)
  */
 export const getBasePath = () => {
-    const subdomain = getSubdomain();
+  const subdomain = getSubdomain();
 
-    // On localhost, we use path-based routing for development
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        switch (subdomain) {
-            case 'app':
-                return '/app';
-            case 'restaurant':
-                return '/restaurant';
-            case 'admin':
-                return '/admin';
-            default:
-                return '';
-        }
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    switch (subdomain) {
+      case 'app': return '/app';
+      case 'restaurant': return '/restaurant';
+      case 'admin': return '/admin';
+      default: return '';
     }
+  }
 
-    // In production with subdomains, base path is always root
-    return '';
+  return '';
 };
 
 /**
- * Check if current environment is development
+ * Check if current environment is development or staging.
+ * Staging is treated as production for routing but as non-prod for
+ * features like source maps.
  */
 export const isDevelopment = () => {
-    const hostname = window.location.hostname;
-    return hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('vercel.app');
+  const hostname = window.location.hostname;
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('vercel.app');
 };
 
 /**
- * Get the appropriate URL for navigation between subdomains
- * @param {string} targetSubdomain - The subdomain to navigate to
+ * Returns true when on a staging deployment (staging.*.table-tap.in)
+ */
+export const isStaging = () => {
+  const hostname = window.location.hostname;
+  return hostname.startsWith('staging.') && hostname.endsWith('table-tap.in');
+};
+
+/**
+ * Get the appropriate URL for cross-subdomain navigation.
+ * Preserves any staging prefix so links between apps work on staging too.
+ *
+ * e.g. on staging.app.table-tap.in:
+ *   getSubdomainUrl('restaurant') → https://staging.restaurant.table-tap.in/
+ *
+ * @param {string} targetSubdomain - The app type to navigate to ('app', 'restaurant', 'admin', 'owner')
  * @param {string} path - The path within that subdomain
  */
 export const getSubdomainUrl = (targetSubdomain, path = '/') => {
-    const hostname = window.location.hostname;
-    const protocol = window.location.protocol;
+  const hostname = window.location.hostname;
+  const protocol = window.location.protocol;
 
-    // Development mode - use path-based routing
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        const port = window.location.port ? `:${window.location.port}` : '';
-        switch (targetSubdomain) {
-            case 'app':
-                return `${protocol}//${hostname}${port}/app${path}`;
-            case 'restaurant':
-                return `${protocol}//${hostname}${port}/restaurant${path}`;
-            case 'admin':
-                return `${protocol}//${hostname}${port}/admin${path}`;
-            default:
-                return `${protocol}//${hostname}${port}${path}`;
-        }
+  // Development — use path-based routing
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    const port = window.location.port ? `:${window.location.port}` : '';
+    switch (targetSubdomain) {
+      case 'app': return `${protocol}//${hostname}${port}/app${path}`;
+      case 'restaurant': return `${protocol}//${hostname}${port}/restaurant${path}`;
+      case 'admin': return `${protocol}//${hostname}${port}/admin${path}`;
+      default: return `${protocol}//${hostname}${port}${path}`;
     }
+  }
 
-    // Production - use actual subdomains
-    const parts = hostname.split('.');
-    // Remove existing subdomain if present
-    const baseDomain = parts.length >= 3 ? parts.slice(1).join('.') : hostname;
+  // Production/staging — derive the root domain and any staging prefix
+  const parts = hostname.split('.');
 
-    if (targetSubdomain === 'landing') {
-        // Point to landing page (assuming it's the root domain)
-        return `${protocol}//${baseDomain}${path}`;
+  // Find root domain: last two parts that contain the actual domain name
+  // e.g. ['staging','app','table-tap','in'] → rootDomain = 'table-tap.in'
+  // e.g. ['app','table-tap','in']           → rootDomain = 'table-tap.in'
+  const knownAppParts = new Set(['staging', 'preview', 'app', 'restaurant', 'admin', 'owner', 'manager']);
+  const rootParts = [];
+  let passedAppPart = false;
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const p = parts[i].toLowerCase();
+    if (!passedAppPart && !knownAppParts.has(p)) {
+      rootParts.unshift(parts[i]);
+    } else {
+      passedAppPart = true;
+      // Once we hit an app-type or prefix, stop collecting root parts
+      break;
     }
+  }
+  // Fallback: use last 2 parts as root domain
+  const rootDomain = rootParts.length >= 2 ? rootParts.join('.') : parts.slice(-2).join('.');
 
-    return `${protocol}//${targetSubdomain}.${baseDomain}${path}`;
+  // Detect staging prefix (e.g. "staging")
+  const stagingPrefix = isStaging() ? `${parts[0]}.` : '';
+
+  if (targetSubdomain === 'landing') {
+    return `${protocol}//${stagingPrefix}${rootDomain}${path}`;
+  }
+
+  return `${protocol}//${stagingPrefix}${targetSubdomain}.${rootDomain}${path}`;
 };
 
 export default {
-    getSubdomain,
-    getBasePath,
-    isDevelopment,
-    getSubdomainUrl
+  getSubdomain,
+  getBasePath,
+  isDevelopment,
+  isStaging,
+  getSubdomainUrl,
 };
