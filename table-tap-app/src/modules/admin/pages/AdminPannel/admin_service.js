@@ -227,24 +227,39 @@ export const getAllRestaurants = async (page = 1, pageSize = 50) => {
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
-    // Use optimized Database View for single-query performance
-    const { data, error, count } = await supabase
+    // Try the optimised view first; fall back to direct table query if the
+    // view doesn't exist or lacks grants in this Supabase environment.
+    let data, error, count;
+
+    ({ data, error, count } = await supabase
       .from('restaurant_admin_summary')
-      .select('*', { count: 'exact' })
+      .select('*', { count: 'estimated' })
       .order('created_at', { ascending: false })
-      .range(from, to);
+      .range(from, to));
+
+    if (error || !data || data.length === 0) {
+      // Fallback: query restaurants table directly with staff join
+      ({ data, error, count } = await supabase
+        .from('restaurants')
+        .select(`
+          *,
+          restaurant_staff (id, staff_role, connected, staff_name, staff_email,
+            profiles (id, full_name, email, avatar_url))
+        `, { count: 'estimated' })
+        .order('created_at', { ascending: false })
+        .range(from, to));
+    }
 
     if (error) {
       if (error.name === 'AbortError') return { data: [], total: 0, error: null };
       throw error;
     }
 
-    // Step 2: Transform the data (WKT to Lat/Lng, etc.)
     const transformedData = (data || []).map(restaurant => transformRestaurantData(restaurant));
 
     return {
       data: transformedData,
-      total: count || 0,
+      total: count || transformedData.length,
       page,
       pageSize,
       error: null
@@ -658,7 +673,7 @@ export const getAllStaff = async (page = 1, pageSize = 50) => {
           email,
           avatar_url
         )
-      `, { count: 'exact' })
+      `, { count: 'estimated' })
       .order('created_at', { ascending: false })
       .range(from, to);
 

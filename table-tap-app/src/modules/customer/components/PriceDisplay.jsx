@@ -1,27 +1,31 @@
 const PriceDisplay = ({ item, className = '', percentageClass = '' }) => {
+    const basePrice = typeof item?.price === 'number' ? item.price : parseFloat(item?.price) || 0;
+
     const calculatePrice = () => {
-      if (item.discountType === 'percentage') {
-        return item.price * (1 - item.discountValue/100);
+      if (item?.discountType === 'percentage' && item?.discountValue) {
+        return basePrice * (1 - item.discountValue / 100);
       }
-      if (item.discountType === 'fixed') {
-        return item.price - item.discountValue;
+      if (item?.discountType === 'fixed' && item?.discountValue) {
+        return basePrice - item.discountValue;
       }
-      return item.price;
+      return basePrice;
     };
-  
+
     const finalPrice = calculatePrice();
-    const hasDiscount = finalPrice < item.price;
-  
+    const hasDiscount = finalPrice < basePrice;
+
+    if (basePrice === 0 && !hasDiscount) return null;
+
     return (
       <div className={`flex flex-col items-end ${className}`}>
         {hasDiscount ? (
           <>
             <span className="line-through text-sm">
-              ₹{item.price.toFixed(2)}
+              ₹{basePrice.toFixed(2)}
             </span>
             <div className="flex items-center gap-1">
               <span>₹{finalPrice.toFixed(2)}</span>
-              {item.discountType === 'percentage' && (
+              {item?.discountType === 'percentage' && (
                 <span className={`text-xs px-1 rounded ${percentageClass}`}>
                   {item.discountValue}% OFF
                 </span>
@@ -29,7 +33,7 @@ const PriceDisplay = ({ item, className = '', percentageClass = '' }) => {
             </div>
           </>
         ) : (
-          <span>₹{item.price.toFixed(2)}</span>
+          <span>₹{basePrice.toFixed(2)}</span>
         )}
       </div>
     );

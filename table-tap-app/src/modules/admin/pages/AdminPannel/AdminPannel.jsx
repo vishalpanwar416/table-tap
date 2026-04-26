@@ -187,11 +187,8 @@ const AdminPanel = () => {
   const fetchData = async () => {
     setLoading(true); // Set loading FIRST before anything else
 
-    // Safety net: if fetch never resolves, unblock UI after 12 seconds
-    const safetyTimer = setTimeout(() => {
-      console.warn('[AdminPanel] fetchData safety timeout — unblocking UI');
-      setLoading(false);
-    }, 12000);
+    // Safety net: unblock UI after 8s if fetch hangs
+    const safetyTimer = setTimeout(() => setLoading(false), 8000);
 
     try {
       // Reset pages on fresh fetch

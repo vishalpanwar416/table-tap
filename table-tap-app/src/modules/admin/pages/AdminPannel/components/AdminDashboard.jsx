@@ -80,8 +80,10 @@ const AdminDashboard = ({
 
   const fetchDashboardData = async () => {
     setLoading(true);
+    // Safety net — never hang longer than 8s regardless of network
+    const safetyTimer = setTimeout(() => setLoading(false), 8000);
     try {
-      // Calculate restaurant stats from props
+      // Stats derived from already-loaded props — no network call
       const restaurantStats = {
         total: totalRestaurants || restaurants?.length || 0,
         active: restaurants?.filter(r => r.is_active).length || 0,
@@ -89,8 +91,6 @@ const AdminDashboard = ({
         withAI: restaurants?.filter(r => r.ai_enabled).length || 0,
         withAggregators: restaurants?.filter(r => r.aggregators_enabled).length || 0
       };
-
-      // Calculate staff stats from props
       const staffStats = {
         total: totalStaff || staff?.length || 0,
         connected: staff?.filter(s => s.connected).length || 0,
@@ -101,77 +101,71 @@ const AdminDashboard = ({
         waiters: staff?.filter(s => s.role === 'waiter').length || 0
       };
 
-      // Get subscription stats from API
-      const { data: subStats } = await getSubscriptionStats();
-
-      // Get upcoming renewals
-      const { data: renewals } = await getUpcomingRenewals(7);
-      setUpcomingRenewals(renewals || []);
-
-      // Get inquiry stats
-      const { data: inquiries } = await supabase
-        .from('landing_inquiries')
-        .select('status');
-
-      if (inquiries) {
-        setInquiryStats({
-          total: inquiries.length,
-          pending: inquiries.filter(i => i.status === 'pending' || i.status === 'new').length,
-          contacted: inquiries.filter(i => i.status === 'contacted').length,
-          converted: inquiries.filter(i => i.status === 'converted').length
-        });
-      }
-
-      // Get registration stats
-      const { data: registrations } = await supabase
-        .from('restaurant_registrations')
-        .select('status');
-
-      if (registrations) {
-        setRegistrationStats({
-          total: registrations.length,
-          pending: registrations.filter(r => r.status === 'pending').length,
-          approved: registrations.filter(r => r.status === 'approved').length,
-          rejected: registrations.filter(r => r.status === 'rejected').length
-        });
-      }
-
-      // Get recent activity (subscription history)
-      const { data: history } = await supabase
-        .from('subscription_history')
-        .select(`
-          *,
-          restaurant:restaurants (name)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(6);
-
-      setRecentActivity(history || []);
-
-      // Calculate revenue growth (comparing this month vs last month)
+      // Fire ALL network requests in parallel
       const now = new Date();
-      const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-      const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+      const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+      const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0).toISOString();
 
-      const { data: thisMonthRevenue } = await supabase
-        .from('subscription_history')
-        .select('amount_paid')
-        .gte('created_at', thisMonthStart.toISOString())
-        .in('action', ['created', 'renewed', 'upgraded']);
+      // Wrap each query in a timeout so a single stalled query can't block everything
+      const withTimeout = (promise, ms = 5000) =>
+        Promise.race([promise, new Promise(resolve => setTimeout(() => resolve(null), ms))]);
 
-      const { data: lastMonthRevenue } = await supabase
-        .from('subscription_history')
-        .select('amount_paid')
-        .gte('created_at', lastMonthStart.toISOString())
-        .lte('created_at', lastMonthEnd.toISOString())
-        .in('action', ['created', 'renewed', 'upgraded']);
+      const [
+        subStatsRes,
+        renewalsRes,
+        inquiriesRes,
+        registrationsRes,
+        historyRes,
+        thisMonthRes,
+        lastMonthRes,
+        plansRes,
+      ] = await Promise.all([
+        withTimeout(getSubscriptionStats()),
+        withTimeout(getUpcomingRenewals(7)),
+        withTimeout(supabase.from('landing_inquiries').select('status')),
+        withTimeout(supabase.from('restaurant_registrations').select('status')),
+        withTimeout(supabase.from('subscription_history')
+          .select('*, restaurant:restaurants(name)')
+          .order('created_at', { ascending: false })
+          .limit(6)),
+        withTimeout(supabase.from('subscription_history')
+          .select('amount_paid')
+          .gte('created_at', thisMonthStart)
+          .in('action', ['created', 'renewed', 'upgraded'])),
+        withTimeout(supabase.from('subscription_history')
+          .select('amount_paid')
+          .gte('created_at', lastMonthStart)
+          .lte('created_at', lastMonthEnd)
+          .in('action', ['created', 'renewed', 'upgraded'])),
+        withTimeout(getSubscriptionPlans()),
+      ]);
 
-      const thisMonthTotal = thisMonthRevenue?.reduce((sum, r) => sum + (r.amount_paid || 0), 0) || 0;
-      const lastMonthTotal = lastMonthRevenue?.reduce((sum, r) => sum + (r.amount_paid || 0), 0) || 0;
+      const subStats = subStatsRes?.data;
+      setUpcomingRenewals(renewalsRes?.data || []);
+
+      const inquiries = inquiriesRes?.data || [];
+      setInquiryStats({
+        total: inquiries.length,
+        pending: inquiries.filter(i => i.status === 'pending' || i.status === 'new').length,
+        contacted: inquiries.filter(i => i.status === 'contacted').length,
+        converted: inquiries.filter(i => i.status === 'converted').length
+      });
+
+      const registrations = registrationsRes?.data || [];
+      setRegistrationStats({
+        total: registrations.length,
+        pending: registrations.filter(r => r.status === 'pending').length,
+        approved: registrations.filter(r => r.status === 'approved').length,
+        rejected: registrations.filter(r => r.status === 'rejected').length
+      });
+
+      setRecentActivity(historyRes?.data || []);
+
+      const thisMonthTotal = (thisMonthRes?.data || []).reduce((s, r) => s + (r.amount_paid || 0), 0);
+      const lastMonthTotal = (lastMonthRes?.data || []).reduce((s, r) => s + (r.amount_paid || 0), 0);
       const growth = lastMonthTotal > 0 ? ((thisMonthTotal - lastMonthTotal) / lastMonthTotal * 100) : 0;
 
-      // Set all stats
       setStats({
         restaurants: restaurantStats,
         staff: staffStats,
@@ -185,26 +179,21 @@ const AdminDashboard = ({
         revenue: {
           total: subStats?.totalRevenue || 0,
           monthly: subStats?.monthlyRecurringRevenue || 0,
-          growth: growth,
+          growth,
           thisMonth: thisMonthTotal,
           lastMonth: lastMonthTotal
         },
         plans: subStats?.planCounts || {}
       });
 
-      // Get available plans to ensure we show all of them even with 0 counts
-      const { data: plansList } = await getSubscriptionPlans();
-      if (plansList) {
-        setAvailablePlans(plansList);
-      }
+      if (plansRes?.data) setAvailablePlans(plansRes.data);
 
-      // Get top restaurants (those with most orders or longest subscription)
-      const sortedRestaurants = [...(restaurants || [])].filter(r => r.is_active).slice(0, 5);
-      setTopRestaurants(sortedRestaurants);
+      setTopRestaurants([...(restaurants || [])].filter(r => r.is_active).slice(0, 5));
 
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
+      clearTimeout(safetyTimer);
       setLoading(false);
       setRefreshing(false);
     }

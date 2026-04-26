@@ -28,37 +28,51 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
 
   // 1. Fetch user profile data only when sidebar is opened and user is authenticated
   useEffect(() => {
-    if (!isSidebarOpen || !user) return;
+    if (!isSidebarOpen || !user) {
+      // If no user, immediately set data from whatever we have and stop loading
+      if (!user) {
+        setProfileLoading(false);
+        setUserData({ profileImg: '', userName: '', userEmail: '', profile_role: 'customer' });
+      }
+      return;
+    }
 
-    let isMounted = true;
+    // Immediately populate from user object so UI never stays blank
+    setUserData({
+      profileImg: user.user_metadata?.avatar_url || '',
+      userName: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+      userEmail: user.email || '',
+      profile_role: (user.app_metadata?.role || user.user_metadata?.role || 'customer').toLowerCase()
+    });
+
+    let cancelled = false;
     const fetchUserProfile = async () => {
+      setProfileLoading(true);
       try {
-        setProfileLoading(true);
-        // We already have user from context, just fetch profile
-
-        // Attempt to fetch profile details
-        const { data: profile, error: profileError } = await supabase
+        const { data: profile } = await supabase
           .from('profiles')
           .select('full_name, email, profile_role, avatar_url')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
-        if (isMounted) {
+        if (!cancelled && profile) {
           setUserData({
-            profileImg: profile?.avatar_url || user.user_metadata?.avatar_url || '',
-            userName: profile?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+            profileImg: profile.avatar_url || user.user_metadata?.avatar_url || '',
+            userName: profile.full_name || user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User',
             userEmail: user.email || '',
-            profile_role: (profile?.profile_role || user.app_metadata?.role || user.user_metadata?.role || 'customer').toLowerCase()
+            profile_role: (profile.profile_role || user.app_metadata?.role || 'customer').toLowerCase()
           });
         }
       } catch (error) {
         console.warn('Error in fetchUserProfile:', error);
       } finally {
-        if (isMounted) setProfileLoading(false);
+        // Always clear loading — isMounted guard causes stuck skeleton in StrictMode
+        setProfileLoading(false);
       }
     };
+
     fetchUserProfile();
-    return () => { isMounted = false; };
+    return () => { cancelled = true; };
   }, [isSidebarOpen, user]);
 
   // 4. Only subscribe to real-time updates when sidebar is open and user is authenticated

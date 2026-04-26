@@ -17,31 +17,27 @@ const markAuthError = (error) => {
  */
 export const getActiveRestaurants = async () => {
   try {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { data: subData, error: subError } = await supabase
+      .from('subscriptions')
+      .select('restaurant_id')
+      .or(`status.in.(active,grace_period),and(status.eq.expired,end_date.gte.${sevenDaysAgo})`);
+
+    if (subError) throw markAuthError(subError);
+
+    const accessibleIds = [...new Set((subData || []).map(s => s.restaurant_id))];
+    if (accessibleIds.length === 0) return [];
 
     const { data, error } = await supabase
       .from('restaurants')
-      .select(`
-        id,
-        name,
-        description,
-        address,
-        contact_phone,
-        opening_hours,
-        logo_url,
-        restaurant_photo_url,
-        is_active,
-        cuisine_type,
-        location,
-        tables,
-        subscriptions!inner(status)
-      `)
+      .select(`id, name, description, address, contact_phone, opening_hours,
+        logo_url, restaurant_photo_url, is_active, cuisine_type, location, tables`)
       .eq('is_active', true)
-      .in('subscriptions.status', ['active', 'grace_period'])
+      .in('id', accessibleIds)
       .order('name');
 
-    if (error) {
-      throw markAuthError(error);
-    }
+    if (error) throw markAuthError(error);
 
     return data || [];
   } catch (error) {
@@ -148,32 +144,19 @@ export const updateRestaurantTables = async (restaurantId, tables) => {
  */
 export const searchRestaurants = async (searchTerm) => {
   try {
+    // Fetch all accessible restaurants then filter client-side.
+    // PostgREST ilike with % wildcards inside .or() is unreliable due to URL encoding,
+    // and restaurant lists are small enough that client-side filtering is fast and safe.
+    const all = await getActiveRestaurants();
+    const term = searchTerm.toLowerCase().trim();
+    if (!term) return all;
 
-    const { data, error } = await supabase
-      .from('restaurants')
-      .select(`
-        id,
-        name,
-        description,
-        address,
-        contact_phone,
-        opening_hours,
-        logo_url,
-        is_active,
-        cuisine_type,
-        location,
-        subscriptions!inner(status)
-      `)
-      .eq('is_active', true)
-      .in('subscriptions.status', ['active', 'grace_period'])
-      .or(`name.ilike.%${searchTerm}%,cuisine_type.ilike.%${searchTerm}%`)
-      .order('name');
-
-    if (error) {
-      throw markAuthError(error);
-    }
-
-    return data || [];
+    return all.filter(r =>
+      r.name?.toLowerCase().includes(term) ||
+      r.cuisine_type?.toLowerCase().includes(term) ||
+      r.description?.toLowerCase().includes(term) ||
+      r.address?.toLowerCase().includes(term)
+    );
   } catch (error) {
     throw markAuthError(error);
   }
@@ -184,30 +167,27 @@ export const searchRestaurants = async (searchTerm) => {
  */
 export const getRestaurantsByCuisine = async (cuisineType) => {
   try {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { data: subData, error: subError } = await supabase
+      .from('subscriptions')
+      .select('restaurant_id')
+      .or(`status.in.(active,grace_period),and(status.eq.expired,end_date.gte.${sevenDaysAgo})`);
+
+    if (subError) throw markAuthError(subError);
+
+    const accessibleIds = [...new Set((subData || []).map(s => s.restaurant_id))];
+    if (accessibleIds.length === 0) return [];
 
     const { data, error } = await supabase
       .from('restaurants')
-      .select(`
-        id,
-        name,
-        description,
-        address,
-        contact_phone,
-        opening_hours,
-        logo_url,
-        is_active,
-        cuisine_type,
-        location,
-        subscriptions!inner(status)
-      `)
+      .select('id, name, description, address, contact_phone, opening_hours, logo_url, is_active, cuisine_type, location')
       .eq('is_active', true)
-      .in('subscriptions.status', ['active', 'grace_period'])
+      .in('id', accessibleIds)
       .eq('cuisine_type', cuisineType)
       .order('name');
 
-    if (error) {
-      throw markAuthError(error);
-    }
+    if (error) throw markAuthError(error);
 
     return data || [];
   } catch (error) {
@@ -343,16 +323,7 @@ async function getClosestRestaurantsPostGIS(latitude, longitude, radiusMeters = 
  */
 async function getClosestRestaurantsJavaScript(latitude, longitude, radiusMeters = 5000) {
   try {
-    // Fetch all active restaurants
-    const { data: restaurants, error } = await supabase
-      .from('restaurants')
-      .select('*, subscriptions!inner(status)')
-      .eq('is_active', true)
-      .in('subscriptions.status', ['active', 'grace_period']);
-    if (error) {
-      console.error('Failed to fetch restaurants:', error);
-      throw error;
-    }
+    const restaurants = await getActiveRestaurants();
     if (!restaurants || restaurants.length === 0) {
       return [];
     }

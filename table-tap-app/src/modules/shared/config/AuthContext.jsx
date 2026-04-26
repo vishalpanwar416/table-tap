@@ -148,8 +148,17 @@ export const AuthProvider = ({ children }) => {
 
   const handleLoginSuccess = () => setShowSessionModal(false);
 
+  // Explicitly re-reads the session from Supabase and updates state.
+  // Call this after signInWithPassword so the user is set before navigation.
+  const refreshUser = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+    } catch (_) {}
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, loading, refreshUser }}>
       {children}
       <SessionExpiryModal open={showSessionModal} onLoginSuccess={handleLoginSuccess} />
     </AuthContext.Provider>

@@ -142,11 +142,11 @@ export const fetchRecommendedItems = async (restaurantId) => {
  */
 export const fetchMaincaroselData = async (restaurantId = null) => {
   try {
+    // Note: carousel offers may not have is_active set — don't filter on it here
     let query = supabase
       .from('fooditems')
       .select('*')
-      .eq('is_carousel', true)
-      .eq('is_active', true);
+      .eq('is_carousel', true);
 
     // Filter by restaurant if restaurantId is provided
     if (restaurantId) {
@@ -272,20 +272,20 @@ const formatDiscount = (item) => {
 export const fallbackMaincaroselData = [
   {
     id: 'fallback-1',
-    imade: '/api/placeholder/300/200',
+    imade: null,
     discount: '30% OFF',
     message: 'Experience our delicious new dish',
   },
   {
     id: 'fallback-2',
-    imade: '/api/placeholder/300/200',
+    imade: null,
     discount: 'BUY 1 GET 1',
     message: 'Try our spicy treat today',
   },
   {
     id: 'fallback-3',
-    imade: '/api/placeholder/300/200',
-    discount: 'CHEF\'S CHOICE',
+    imade: null,
+    discount: "Chef's Choice",
     message: 'Tastier than ever before!',
   }
 ];

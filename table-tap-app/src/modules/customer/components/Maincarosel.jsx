@@ -20,20 +20,30 @@ const Maincarosel = () => {
 
   useEffect(() => {
     if (!restaurantId) {
-      setLoading(false); // no restaurant yet — stop shimmer
+      setLoading(false);
       return;
     }
+
+    let cancelled = false;
+    // Safety net — never show shimmer for more than 5s
+    const safetyTimer = setTimeout(() => {
+      if (!cancelled) { setCarouselData(fallbackMaincaroselData); setLoading(false); }
+    }, 5000);
+
     const loadCarouselData = async () => {
       try {
         const data = await fetchMaincaroselData(restaurantId);
-        setCarouselData(data.length === 0 ? fallbackMaincaroselData : data);
+        if (!cancelled) setCarouselData(data.length === 0 ? fallbackMaincaroselData : data);
       } catch {
-        setCarouselData(fallbackMaincaroselData);
+        if (!cancelled) setCarouselData(fallbackMaincaroselData);
       } finally {
-        setLoading(false);
+        clearTimeout(safetyTimer);
+        if (!cancelled) setLoading(false);
       }
     };
+
     loadCarouselData();
+    return () => { cancelled = true; clearTimeout(safetyTimer); };
   }, [restaurantId]);
 
   const handleItemClick = (item) => {

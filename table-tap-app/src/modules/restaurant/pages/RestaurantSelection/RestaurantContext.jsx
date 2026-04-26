@@ -152,16 +152,20 @@ export const RestaurantProvider = ({ children }) => {
         // Determine if restaurant is accessible:
         // - active / grace_period: always accessible
         // - expired: allow 7-day grace window after end_date before blocking
-        // - cancelled / no subscription: block immediately
+        // - null (no subscription row or RLS blocked read): allow access, banner handles messaging
+        // - cancelled: block
         const isAccessible = (() => {
-          if (!subscription) return false;
+          // No subscription row — could be RLS blocking an expired sub, or genuinely no sub.
+          // Trust is_active flag on the restaurant; the SubscriptionExpiredBanner will warn owners.
+          if (!subscription) return true;
           if (subscription.status === 'active' || subscription.status === 'grace_period') return true;
           if (subscription.status === 'expired' && subscription.end_date) {
             const daysSinceExpiry = Math.ceil(
-              (new Date() - new Date(subscription.end_date)) / (1000 * 60 * 60 * 24)
+              (Date.now() - new Date(subscription.end_date).getTime()) / (1000 * 60 * 60 * 24)
             );
-            return daysSinceExpiry <= 7; // Allow 7-day grace window
+            return daysSinceExpiry <= 7;
           }
+          // 'cancelled' or unknown status — block
           return false;
         })();
 
@@ -172,8 +176,8 @@ export const RestaurantProvider = ({ children }) => {
 
         setRestaurant({
           ...restaurantData,
-          subscription_status: subscription.status,
-          subscription_end_date: subscription.end_date
+          subscription_status: subscription?.status ?? null,
+          subscription_end_date: subscription?.end_date ?? null
         });
 
       } catch (err) {
@@ -279,13 +283,14 @@ export const RestaurantProvider = ({ children }) => {
         }
       }
 
-      // Apply same grace window: allow expired restaurants up to 7 days past end_date
+      // Apply same grace window: allow expired restaurants up to 7 days past end_date.
+      // null subscription = trust is_active on restaurant; banner handles owner messaging.
       const isAccessible = (() => {
-        if (!subscription) return false;
+        if (!subscription) return true;
         if (subscription.status === 'active' || subscription.status === 'grace_period') return true;
         if (subscription.status === 'expired' && subscription.end_date) {
           const daysSinceExpiry = Math.ceil(
-            (new Date() - new Date(subscription.end_date)) / (1000 * 60 * 60 * 24)
+            (Date.now() - new Date(subscription.end_date).getTime()) / (1000 * 60 * 60 * 24)
           );
           return daysSinceExpiry <= 7;
         }
@@ -299,8 +304,8 @@ export const RestaurantProvider = ({ children }) => {
 
       setRestaurant({
         ...restaurantData,
-        subscription_status: subscription.status,
-        subscription_end_date: subscription.end_date
+        subscription_status: subscription?.status ?? null,
+        subscription_end_date: subscription?.end_date ?? null
       });
       setError(null);
       return true;

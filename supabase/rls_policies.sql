@@ -133,12 +133,12 @@ with check (public.is_platform_admin());
 -- Enable RLS on subscriptions if not already enabled
 alter table public.subscriptions enable row level security;
 
--- Allow public read access to subscription status for active/grace_period subscriptions
--- This is needed for the restaurant selection queries
+-- Allow public read access to subscription status.
+-- Includes expired subscriptions so RestaurantContext can apply the 7-day grace window check.
 drop policy if exists subscriptions_public_read_status on public.subscriptions;
 create policy subscriptions_public_read_status
 on public.subscriptions for select
-using (status in ('active', 'grace_period'));
+using (status in ('active', 'grace_period', 'expired'));
 
 -- Allow admins to read all subscriptions
 drop policy if exists subscriptions_admin_read_all on public.subscriptions;
@@ -340,6 +340,10 @@ using (
   and (storage.foldername(name))[1] = 'profile-photos'
   and (storage.foldername(name))[2] = auth.uid()::text
 );
+
+-- Grant SELECT on admin summary view to all authenticated roles
+-- Required for the admin panel to read restaurant data via the view
+grant select on public.restaurant_admin_summary to anon, authenticated;
 
 commit;
 

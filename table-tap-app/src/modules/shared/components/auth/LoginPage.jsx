@@ -4,11 +4,13 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import GoogleButton from './auth/GoogleButton';
 import AuthForm from './auth/AuthForm';
 import { authService } from '../../api/authService';
+import { useAuth } from '../../../shared/config/AuthContext';
 import { hasValidRestaurantSelection, getStoredRestaurantSelection } from '../../../shared/utils/restaurantCheck';
 import { motion, AnimatePresence } from 'framer-motion';
 import { validateEmail, sanitizeInput, rateLimiter, sessionManager } from '../../../shared/utils/security';
 
 export default function LoginPage() {
+  const { refreshUser } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -116,6 +118,9 @@ export default function LoginPage() {
 
       // Update session activity
       sessionManager.updateActivity();
+
+      // Ensure AuthContext has the user before navigating — prevents "Guest" flash
+      await refreshUser();
 
       // Check if profile is complete before deciding where to go
       const profile = await authService.getProfile(authUser.id);

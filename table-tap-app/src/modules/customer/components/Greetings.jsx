@@ -17,27 +17,27 @@ export default function DynamicGreeting() {
       }
 
       try {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('profiles')
           .select('full_name')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
         if (mounted) {
-          if (data?.full_name) {
-            // Use only first name
-            setUserName(data.full_name.split(' ')[0]);
-          } else {
-            // Fallback to metadata or email (first name only)
-            const fallbackName = user.user_metadata?.name || user.email?.split('@')[0] || "Guest";
-            setUserName(fallbackName.split(' ')[0]);
-          }
+          const name = data?.full_name ||
+            user.user_metadata?.full_name ||
+            user.user_metadata?.name ||
+            user.email?.split('@')[0] ||
+            '';
+          setUserName(name.split(' ')[0]);
         }
       } catch (err) {
-        console.error("Error fetching profile for greeting:", err);
         if (mounted) {
-          const fallbackName = user.user_metadata?.name || user.email?.split('@')[0] || "Guest";
-          setUserName(fallbackName.split(' ')[0]);
+          const name = user.user_metadata?.full_name ||
+            user.user_metadata?.name ||
+            user.email?.split('@')[0] ||
+            '';
+          setUserName(name.split(' ')[0]);
         }
       }
     };
