@@ -192,7 +192,7 @@ const ResetPassword = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-white text-lg">Verifying reset link...</p>
         </div>
       </div>
@@ -215,7 +215,7 @@ const ResetPassword = () => {
           <p className="text-gray-600 mb-6">{message.text}</p>
           <button
             onClick={() => navigate('/forgot-password')}
-            className="w-full py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-full font-medium transition-colors"
+            className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-full font-medium transition-colors"
           >
             Request New Reset Link
           </button>
@@ -241,7 +241,7 @@ const ResetPassword = () => {
         {/* Header */}
         <div className="w-full px-6 py-8 relative flex items-center justify-center">
           <motion.button
-            className="absolute left-4 text-primary-500 hover:text-primary-600 transition-all duration-300 p-2 rounded-full hover:bg-primary-500/10 active:bg-primary-500/20 focus:outline-none focus:ring-2 focus:ring-primary-500/30 z-10"
+            className="absolute left-4 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-10"
             onClick={() => navigate('/login')}
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
@@ -309,7 +309,7 @@ const ResetPassword = () => {
                     setPassword(e.target.value);
                     setMessage({ text: '', type: '' });
                   }}
-                  className="w-full p-4 bg-white rounded-xl border-0 focus:ring-2 focus:ring-primary-500 text-black pr-12"
+                  className="w-full p-4 bg-white rounded-xl border-0 focus:ring-2 focus:ring-orange-500 text-black pr-12"
                   placeholder="••••••••"
                   required
                   minLength="6"
@@ -338,7 +338,7 @@ const ResetPassword = () => {
                     setConfirmPassword(e.target.value);
                     setMessage({ text: '', type: '' });
                   }}
-                  className="w-full p-4 bg-white rounded-xl border-0 focus:ring-2 focus:ring-primary-500 text-black pr-12"
+                  className="w-full p-4 bg-white rounded-xl border-0 focus:ring-2 focus:ring-orange-500 text-black pr-12"
                   placeholder="••••••••"
                   required
                   minLength="6"

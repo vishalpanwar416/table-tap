@@ -74,7 +74,7 @@ const SecureInput = ({
     focus:outline-none focus:ring-2 transition-all duration-200
     ${showError 
       ? 'focus:ring-red-500 border-red-300' 
-      : 'focus:ring-primary-500 border-gray-300'
+      : 'focus:ring-orange-500 border-gray-300'
     }
     ${className}
   `.trim();

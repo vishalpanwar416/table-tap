@@ -54,7 +54,7 @@ const MOCK_DATA = {
         restaurant_name: 'New Burger Joint',
         plan: 'starter',
         status_url: typeof window !== 'undefined' ? window.location.origin + '/application-status' : 'https://tabletap.in/status',
-        payment_row: '<tr><td style="padding: 10px 0; color: #64748b; font-size: 14px;">Payment Status</td><td style="padding: 10px 0; font-size: 14px; text-align: right;"><span style="background-color: #f97316; color: white; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 11px; text-transform: uppercase;">Pending Verification</span></td></tr>',
+        payment_row: '<tr><td style="padding: 10px 0; color: #64748b; font-size: 14px;">Payment Status</td><td style="padding: 10px 0; font-size: 14px; text-align: right;"><span style="background-color: #F97316; color: white; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 11px; text-transform: uppercase;">Pending Verification</span></td></tr>',
         year: new Date().getFullYear()
     },
     email_template_bill: {
@@ -429,7 +429,7 @@ const SystemSettings = () => {
     if (loading) {
         return (
             <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
             </div>
         );
     }
@@ -445,8 +445,8 @@ const SystemSettings = () => {
                             onClick={() => setActiveCategory(cat)}
                             className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex-shrink-0
                                 ${activeCategory === cat
-                                    ? 'bg-primary-600 text-white shadow-lg shadow-primary-200'
-                                    : 'bg-white text-gray-500 hover:bg-slate-50'
+                                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200'
+                                    : 'bg-white text-gray-500 hover:bg-gray-50'
                                 }`}
                         >
                             {cat}
@@ -455,7 +455,7 @@ const SystemSettings = () => {
                 </div>
                 <button
                     onClick={fetchSettings}
-                    className="p-2 text-gray-400 hover:text-primary-600 transition-colors shrink-0 bg-white rounded-lg shadow-sm border border-slate-100"
+                    className="p-2 text-gray-400 hover:text-indigo-600 transition-colors shrink-0 bg-white rounded-lg shadow-sm border border-gray-100"
                     title="Refresh Settings"
                 >
                     <RefreshCw size={18} />
@@ -511,7 +511,7 @@ const SystemSettings = () => {
                         )}
 
                         {filteredSettings.length === 0 && (
-                            <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-slate-200">
+                            <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-200">
                                 <Database className="mx-auto text-gray-300 mb-2" size={32} />
                                 <p className="text-gray-500">No settings found in this category.</p>
                             </div>
@@ -549,7 +549,7 @@ const SystemSettings = () => {
                                 onClick={() => setPreviewInvoice(null)}
                             />
                             <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-                                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
+                                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50">
                                     <h3 className="font-bold text-gray-900">Invoice Preview</h3>
                                     <button
                                         onClick={() => setPreviewInvoice(null)}
@@ -558,7 +558,7 @@ const SystemSettings = () => {
                                         <X className="w-5 h-5 text-gray-500" />
                                     </button>
                                 </div>
-                                <div className="flex-1 overflow-auto bg-slate-100 p-6">
+                                <div className="flex-1 overflow-auto bg-gray-100 p-6">
                                     <div
                                         className="bg-white shadow-lg mx-auto"
                                         style={{ maxWidth: '800px' }}
@@ -580,23 +580,23 @@ const SystemSettings = () => {
                                 onClick={() => setPreviewTemplate(null)}
                             />
                             <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-                                <div className="flex items-center justify-between px-4 py-3 md:px-6 md:py-4 border-b border-slate-100 bg-slate-50/50">
+                                <div className="flex items-center justify-between px-4 py-3 md:px-6 md:py-4 border-b border-gray-100 bg-gray-50/50">
                                     <div>
                                         <h3 className="font-bold text-gray-900 text-sm md:text-base">Email Preview</h3>
                                         <p className="text-[10px] md:text-xs text-gray-500 font-mono mt-0.5">{previewTemplate.key}</p>
                                     </div>
                                     <button
                                         onClick={() => setPreviewTemplate(null)}
-                                        className="p-2 hover:bg-slate-100 rounded-xl transition-colors"
+                                        className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
                                     >
                                         <X className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
                                     </button>
                                 </div>
-                                <div className="px-4 py-2 border-b border-slate-100">
+                                <div className="px-4 py-2 border-b border-gray-100">
                                     <p className="text-[10px] uppercase font-black text-gray-400 tracking-wider">Subject</p>
                                     <p className="text-xs md:text-sm font-bold text-gray-800">{previewTemplate.subject}</p>
                                 </div>
-                                <div className="flex-1 overflow-auto bg-slate-100 p-2 md:p-6 custom-scrollbar">
+                                <div className="flex-1 overflow-auto bg-gray-100 p-2 md:p-6 custom-scrollbar">
                                     <div
                                         className="bg-white shadow-sm mx-auto rounded-lg overflow-hidden"
                                         style={{ maxWidth: '600px' }}
@@ -605,14 +605,14 @@ const SystemSettings = () => {
                                         }}
                                     />
                                 </div>
-                                <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex justify-end">
+                                <div className="p-4 border-t border-gray-100 bg-gray-50/50 flex justify-end">
                                     <button
                                         onClick={() => {
                                             const templateKey = previewTemplate.key;
                                             setPreviewTemplate(null);
                                             handleTestTemplate(templateKey, settings.find(s => s.key === templateKey)?.value);
                                         }}
-                                        className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-xl font-bold text-xs hover:bg-primary-700 transition-all shadow-sm"
+                                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold text-xs hover:bg-indigo-700 transition-all shadow-sm"
                                     >
                                         <Send size={14} />
                                         Send Test Email
@@ -643,10 +643,10 @@ const CompactEmailItem = ({ setting, onEdit, onTestTemplate, onPreviewTemplate }
     return (
         <div
             onClick={onEdit}
-            className="group flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl hover:border-primary-200 hover:shadow-md transition-all cursor-pointer active:scale-[0.98] w-full overflow-hidden"
+            className="group flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl hover:border-indigo-200 hover:shadow-md transition-all cursor-pointer active:scale-[0.98] w-full overflow-hidden"
         >
             <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                <div className={`p-1.5 rounded-lg shrink-0 ${isTemplate ? 'bg-primary-50 text-primary-500' : 'bg-primary-50 text-primary-500'}`}>
+                <div className={`p-1.5 rounded-lg shrink-0 ${isTemplate ? 'bg-indigo-50 text-indigo-500' : 'bg-blue-50 text-blue-500'}`}>
                     {isTemplate ? <FileCode size={16} /> : <Send size={16} />}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -673,14 +673,14 @@ const CompactEmailItem = ({ setting, onEdit, onTestTemplate, onPreviewTemplate }
                                 e.stopPropagation();
                                 onTestTemplate(setting.key, setting.value);
                             }}
-                            className="p-1.5 text-primary-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                            className="p-1.5 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                             title="Quick Test"
                         >
                             <Play size={14} fill="currentColor" />
                         </button>
                     </div>
                 )}
-                <div className="p-1 px-1.5 text-[9px] font-black text-gray-300 group-hover:text-primary-500 transition-colors uppercase">
+                <div className="p-1 px-1.5 text-[9px] font-black text-gray-300 group-hover:text-indigo-500 transition-colors uppercase">
                     Edit
                 </div>
             </div>
@@ -843,16 +843,16 @@ const DiagnosticsPanel = ({ onFixPayment }) => {
     };
 
     const StatusIcon = ({ status }) => {
-        if (status === 'loading') return <RefreshCw className="w-5 h-5 animate-spin text-primary-500" />;
+        if (status === 'loading') return <RefreshCw className="w-5 h-5 animate-spin text-blue-500" />;
         if (status === 'success') return <CheckCircle className="w-5 h-5 text-green-500" />;
         if (status === 'error') return <AlertTriangle className="w-5 h-5 text-red-500" />;
         if (status === 'warning') return <AlertTriangle className="w-5 h-5 text-amber-500" />;
-        return <div className="w-5 h-5 rounded-full border-2 border-slate-200" />;
+        return <div className="w-5 h-5 rounded-full border-2 border-gray-200" />;
     };
 
     return (
         <div className="space-y-6">
-            <div className="bg-white rounded-xl border border-slate-100 p-6 shadow-sm">
+            <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
                 <div className="flex justify-between items-center mb-6">
                     <div>
                         <h3 className="text-lg font-bold text-gray-900">System Diagnostics</h3>
@@ -861,7 +861,7 @@ const DiagnosticsPanel = ({ onFixPayment }) => {
                     <button
                         onClick={runDiagnostics}
                         disabled={running}
-                        className="px-4 py-2 bg-primary-600 text-white text-sm font-bold rounded-lg hover:bg-primary-700 disabled:opacity-50 flex items-center gap-2 transition-colors"
+                        className="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2 transition-colors"
                     >
                         {running ? 'Running...' : 'Run Checks'}
                         {!running && <Play size={16} />}
@@ -869,9 +869,9 @@ const DiagnosticsPanel = ({ onFixPayment }) => {
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
-                    <div className="p-4 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-between">
+                    <div className="p-4 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-white rounded-lg shadow-sm text-primary-600">
+                            <div className="p-2 bg-white rounded-lg shadow-sm text-blue-600">
                                 <Database size={20} />
                             </div>
                             <div>
@@ -882,9 +882,9 @@ const DiagnosticsPanel = ({ onFixPayment }) => {
                         <StatusIcon status={checks.database.status} />
                     </div>
 
-                    <div className="p-4 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-between">
+                    <div className="p-4 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-white rounded-lg shadow-sm text-amber-600">
+                            <div className="p-2 bg-white rounded-lg shadow-sm text-purple-600">
                                 <Key size={20} />
                             </div>
                             <div>
@@ -895,9 +895,9 @@ const DiagnosticsPanel = ({ onFixPayment }) => {
                         <StatusIcon status={checks.auth.status} />
                     </div>
 
-                    <div className="p-4 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-between">
+                    <div className="p-4 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-white rounded-lg shadow-sm text-primary-600">
+                            <div className="p-2 bg-white rounded-lg shadow-sm text-orange-600">
                                 <Database size={20} />
                             </div>
                             <div>
@@ -909,7 +909,7 @@ const DiagnosticsPanel = ({ onFixPayment }) => {
                     </div>
 
                     {/* Email Service Check */}
-                    <div className="p-4 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-between">
+                    <div className="p-4 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-white rounded-lg shadow-sm text-green-600">
                                 <Send size={20} />
@@ -923,9 +923,9 @@ const DiagnosticsPanel = ({ onFixPayment }) => {
                     </div>
 
                     {/* Payment Gateway Check */}
-                    <div className="p-4 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-between">
+                    <div className="p-4 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-white rounded-lg shadow-sm text-primary-600">
+                            <div className="p-2 bg-white rounded-lg shadow-sm text-indigo-600">
                                 <CreditCard size={20} />
                             </div>
                             <div>
@@ -937,9 +937,9 @@ const DiagnosticsPanel = ({ onFixPayment }) => {
                     </div>
 
                     {/* AI Advisor Check */}
-                    <div className="p-4 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-between">
+                    <div className="p-4 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-white rounded-lg shadow-sm text-primary-600">
+                            <div className="p-2 bg-white rounded-lg shadow-sm text-indigo-600">
                                 <RefreshCw size={20} />
                             </div>
                             <div>
@@ -951,9 +951,9 @@ const DiagnosticsPanel = ({ onFixPayment }) => {
                     </div>
 
                     {/* Google Maps Check */}
-                    <div className="p-4 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-between">
+                    <div className="p-4 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-white rounded-lg shadow-sm text-primary-600">
+                            <div className="p-2 bg-white rounded-lg shadow-sm text-orange-600">
                                 <Globe size={20} />
                             </div>
                             <div>
@@ -965,7 +965,7 @@ const DiagnosticsPanel = ({ onFixPayment }) => {
                     </div>
 
                     {/* WhatsApp Check */}
-                    <div className="p-4 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-between">
+                    <div className="p-4 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-white rounded-lg shadow-sm text-emerald-600">
                                 <Send size={20} />
@@ -983,7 +983,7 @@ const DiagnosticsPanel = ({ onFixPayment }) => {
                         <div className="md:col-span-2 flex justify-center py-2">
                             <button
                                 onClick={onFixPayment}
-                                className="flex items-center gap-2 px-6 py-2 bg-primary-50 text-primary-700 font-bold rounded-xl border border-primary-100 hover:bg-primary-100 transition-all text-sm shadow-sm"
+                                className="flex items-center gap-2 px-6 py-2 bg-indigo-50 text-indigo-700 font-bold rounded-xl border border-indigo-100 hover:bg-indigo-100 transition-all text-sm shadow-sm"
                             >
                                 <RefreshCw size={14} />
                                 Initialize Missing Settings
@@ -1038,16 +1038,16 @@ const SettingCard = ({ setting, onSave, isSaving, onTestEmail, onTestTemplate, o
     const isRichText = (key, val) => typeof val === 'string' && (val.length > 50 || key === 'html' || key === 'body');
 
     return (
-        <div className={`bg-white rounded-xl md:rounded-2xl border transition-all duration-200 ${isEditing ? 'border-primary-500 shadow-xl ring-1 ring-primary-500' : 'border-slate-100 shadow-sm'} ${isPopup ? 'border-none' : ''}`}>
+        <div className={`bg-white rounded-xl md:rounded-2xl border transition-all duration-200 ${isEditing ? 'border-indigo-500 shadow-xl ring-1 ring-indigo-500' : 'border-gray-100 shadow-sm'} ${isPopup ? 'border-none' : ''}`}>
             <div className={`p-2.5 md:p-6 ${isPopup ? 'max-w-full overflow-x-hidden' : ''}`}>
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-2 md:gap-4 mb-3 md:mb-4">
                     <div className="flex items-start gap-2 md:gap-3 min-w-0">
-                        <div className={`p-1.5 md:p-2 rounded-lg shrink-0 ${isSecret ? 'bg-amber-50 text-amber-600' : 'bg-primary-50 text-primary-600'}`}>
+                        <div className={`p-1.5 md:p-2 rounded-lg shrink-0 ${isSecret ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-blue-600'}`}>
                             {isSecret ? <Lock size={16} className="md:w-5 md:h-5" /> : <Globe size={16} className="md:w-5 md:h-5" />}
                         </div>
                         <div className="min-w-0 flex-1">
                             <h3 className="font-bold text-gray-900 font-mono text-[10px] md:text-sm break-all leading-tight truncate md:whitespace-normal">{setting.key}</h3>
-                            <span className="text-[8px] md:text-[9px] text-gray-400 uppercase tracking-widest font-bold bg-slate-50/80 px-1 py-0.5 rounded mt-0.5 inline-block border border-slate-100">
+                            <span className="text-[8px] md:text-[9px] text-gray-400 uppercase tracking-widest font-bold bg-gray-50/80 px-1 py-0.5 rounded mt-0.5 inline-block border border-gray-100">
                                 {setting.category}
                             </span>
                         </div>
@@ -1066,14 +1066,14 @@ const SettingCard = ({ setting, onSave, isSaving, onTestEmail, onTestTemplate, o
                                 )}
                                 <button
                                     onClick={() => setIsEditing(true)}
-                                    className="flex-1 md:flex-none px-2 py-1.5 md:px-4 md:py-2 text-[10px] md:text-sm font-semibold text-primary-600 hover:bg-primary-50 rounded-lg transition-colors text-center border border-primary-100"
+                                    className="flex-1 md:flex-none px-2 py-1.5 md:px-4 md:py-2 text-[10px] md:text-sm font-semibold text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors text-center border border-indigo-100"
                                 >
                                     Edit
                                 </button>
                                 {isPopup && (
                                     <button
                                         onClick={onClose}
-                                        className="px-2 py-1.5 md:px-4 md:py-2 text-[10px] md:text-sm font-semibold text-gray-400 hover:bg-slate-50 rounded-lg transition-colors border border-slate-100"
+                                        className="px-2 py-1.5 md:px-4 md:py-2 text-[10px] md:text-sm font-semibold text-gray-400 hover:bg-gray-50 rounded-lg transition-colors border border-gray-100"
                                     >
                                         <X size={16} />
                                     </button>
@@ -1092,14 +1092,14 @@ const SettingCard = ({ setting, onSave, isSaving, onTestEmail, onTestTemplate, o
                                 )}
                                 <button
                                     onClick={() => setIsEditing(false)}
-                                    className="flex-1 md:flex-none px-2 py-1.5 md:px-4 md:py-2 text-[10px] md:text-sm font-semibold text-gray-600 hover:bg-slate-50 rounded-lg transition-colors border border-slate-200 text-center"
+                                    className="flex-1 md:flex-none px-2 py-1.5 md:px-4 md:py-2 text-[10px] md:text-sm font-semibold text-gray-600 hover:bg-gray-50 rounded-lg transition-colors border border-gray-200 text-center"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handleSave}
                                     disabled={isSaving}
-                                    className="flex-2 md:flex-none flex items-center justify-center gap-1.5 px-2 py-1.5 md:px-4 md:py-2 text-[10px] md:text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors disabled:opacity-50"
+                                    className="flex-2 md:flex-none flex items-center justify-center gap-1.5 px-2 py-1.5 md:px-4 md:py-2 text-[10px] md:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors disabled:opacity-50"
                                 >
                                     {isSaving ? <RefreshCw size={10} className="animate-spin" /> : <Save size={10} />}
                                     Save
@@ -1118,7 +1118,7 @@ const SettingCard = ({ setting, onSave, isSaving, onTestEmail, onTestTemplate, o
                                 type="text"
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
-                                className="w-full px-3 py-2 text-xs md:text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                                className="w-full px-3 py-2 text-xs md:text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                                 placeholder="Describe what this setting does..."
                             />
                         </div>
@@ -1131,7 +1131,7 @@ const SettingCard = ({ setting, onSave, isSaving, onTestEmail, onTestTemplate, o
                         <div className="flex justify-end">
                             <button
                                 onClick={() => setEditorMode(editorMode === 'form' ? 'json' : 'form')}
-                                className="text-xs font-medium text-primary-600 hover:text-primary-800 flex items-center gap-1"
+                                className="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
                             >
                                 {editorMode === 'form' ? <FileCode size={12} /> : <Database size={12} />}
                                 Switch to {editorMode === 'form' ? 'JSON' : 'Form'} View
@@ -1146,7 +1146,7 @@ const SettingCard = ({ setting, onSave, isSaving, onTestEmail, onTestTemplate, o
                             {isSecret && (
                                 <button
                                     onClick={() => setShowSecret(!showSecret)}
-                                    className="flex items-center gap-1 text-primary-600 hover:text-primary-700 p-1"
+                                    className="flex items-center gap-1 text-indigo-600 hover:text-indigo-700 p-1"
                                 >
                                     {showSecret ? <EyeOff size={12} /> : <Eye size={12} />}
                                     <span className="text-[10px] md:text-xs">{showSecret ? 'Hide' : 'Show'}</span>
@@ -1155,13 +1155,13 @@ const SettingCard = ({ setting, onSave, isSaving, onTestEmail, onTestTemplate, o
                         </label>
 
                         {isSecret && !showSecret && !isEditing ? (
-                            <div className="w-full py-3 px-4 bg-slate-50/50 border border-slate-100 rounded-xl text-center text-gray-300 font-mono text-xs select-none break-all">
+                            <div className="w-full py-3 px-4 bg-gray-50/50 border border-gray-100 rounded-xl text-center text-gray-300 font-mono text-xs select-none break-all">
                                 ••••••••••••••••••••••••••••
                             </div>
                         ) : (
                             <>
                                 {editorMode === 'form' && typeof formValues === 'object' ? (
-                                    <div className={`grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1.5 md:gap-y-3 ${isEditing ? 'p-2 md:p-4 border border-slate-100 rounded-xl bg-slate-50/50' : ''}`}>
+                                    <div className={`grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1.5 md:gap-y-3 ${isEditing ? 'p-2 md:p-4 border border-gray-100 rounded-xl bg-gray-50/50' : ''}`}>
                                         {Object.entries(formValues).map(([key, val]) => {
                                             const isLong = isRichText(key, val);
                                             return (
@@ -1175,8 +1175,8 @@ const SettingCard = ({ setting, onSave, isSaving, onTestEmail, onTestTemplate, o
                                                             onChange={(e) => handleFormChange(key, e.target.value)}
                                                             disabled={!isEditing}
                                                             rows={key === 'html' ? 6 : 3}
-                                                            className={`w-full text-[11px] md:text-sm p-2 md:p-2.5 rounded-lg border focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all
-                                                                ${isEditing ? 'bg-white border-slate-200' : 'bg-transparent border-transparent resize-none p-0'}`}
+                                                            className={`w-full text-[11px] md:text-sm p-2 md:p-2.5 rounded-lg border focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all
+                                                                ${isEditing ? 'bg-white border-gray-200' : 'bg-transparent border-transparent resize-none p-0'}`}
                                                         />
                                                     ) : (
                                                         <input
@@ -1184,8 +1184,8 @@ const SettingCard = ({ setting, onSave, isSaving, onTestEmail, onTestTemplate, o
                                                             value={val}
                                                             onChange={(e) => handleFormChange(key, e.target.value)}
                                                             disabled={!isEditing}
-                                                            className={`w-full text-[11px] md:text-sm p-1 md:p-2 rounded-lg border focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all font-medium
-                                                                ${isEditing ? 'bg-white border-slate-200' : 'bg-transparent border-transparent p-0'}`}
+                                                            className={`w-full text-[11px] md:text-sm p-1 md:p-2 rounded-lg border focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium
+                                                                ${isEditing ? 'bg-white border-gray-200' : 'bg-transparent border-transparent p-0'}`}
                                                         />
                                                     )}
                                                 </div>
@@ -1202,8 +1202,8 @@ const SettingCard = ({ setting, onSave, isSaving, onTestEmail, onTestTemplate, o
                                         disabled={!isEditing}
                                         className={`w-full h-32 md:h-48 font-mono text-[10px] md:text-xs p-3 md:p-4 rounded-xl border leading-relaxed
                                             ${isEditing
-                                                ? 'bg-white border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-gray-900'
-                                                : 'bg-slate-50/50 border-transparent text-gray-500 resize-none'
+                                                ? 'bg-white border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-gray-900'
+                                                : 'bg-gray-50/50 border-transparent text-gray-500 resize-none'
                                             }`}
                                         spellCheck="false"
                                     />
@@ -1215,8 +1215,8 @@ const SettingCard = ({ setting, onSave, isSaving, onTestEmail, onTestTemplate, o
 
                 {/* Resend: show config used for test email and send test */}
                 {setting.key === 'resend_config' && !isEditing && (
-                    <div className="mt-2 pt-2 border-t border-slate-100 space-y-2">
-                        <p className="text-[9px] md:text-[13px] text-gray-500 bg-slate-50/80 border border-slate-100 rounded-lg px-2 py-1 leading-relaxed">
+                    <div className="mt-2 pt-2 border-t border-gray-100 space-y-2">
+                        <p className="text-[9px] md:text-[13px] text-gray-500 bg-gray-50/80 border border-gray-100 rounded-lg px-2 py-1 leading-relaxed">
                             API key and sender are read from here. To send from your domain, set <code className="text-[9px] bg-white px-1 py-0.5 rounded">from_email</code> to e.g. <code className="text-[9px] bg-white px-1 py-0.5 rounded">TableTap &lt;noreply@table-tap.in&gt;</code> (domain must be verified at <a href="https://resend.com/domains" target="_blank" rel="noopener noreferrer" className="underline font-medium">resend.com/domains</a>).
                         </p>
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-1.5">
@@ -1225,7 +1225,7 @@ const SettingCard = ({ setting, onSave, isSaving, onTestEmail, onTestTemplate, o
                             </p>
                             <button
                                 onClick={onTestEmail}
-                                className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-[10px] md:text-sm font-bold text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors border border-primary-100"
+                                className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-[10px] md:text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors border border-indigo-100"
                             >
                                 <Send size={12} /> Send Test Email
                             </button>
@@ -1235,7 +1235,7 @@ const SettingCard = ({ setting, onSave, isSaving, onTestEmail, onTestTemplate, o
 
                 {/* Test Action for Email Templates */}
                 {setting.category === 'email' && setting.key.startsWith('email_template_') && !isEditing && (
-                    <div className="mt-2 pt-2 border-t border-slate-100 flex gap-2 justify-end">
+                    <div className="mt-2 pt-2 border-t border-gray-100 flex gap-2 justify-end">
                         <button
                             onClick={() => onPreviewTemplate(setting.key, setting.value)}
                             className="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-[10px] md:text-sm font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors border border-emerald-100"
@@ -1244,9 +1244,9 @@ const SettingCard = ({ setting, onSave, isSaving, onTestEmail, onTestTemplate, o
                         </button>
                         <button
                             onClick={() => onTestTemplate(setting.key, setting.value)}
-                            className="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-[10px] md:text-sm font-bold text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors border border-primary-100"
+                            className="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-[10px] md:text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors border border-indigo-100"
                         >
-                            <Play size={12} fill="currentColor" /> Test Template
+                            <Play size={12} fill="indigo" /> Test Template
                         </button>
                     </div>
                 )}
@@ -1282,12 +1282,12 @@ const TemplateTesterModal = ({ isOpen, onClose, templates, onTest, onPreview }) 
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 md:p-4">
             <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
             <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-                <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
                     <div>
                         <h3 className="font-bold text-gray-900 text-sm md:text-base">Test Email Templates</h3>
                         <p className="text-[9px] text-gray-400">Send templates with mock data</p>
                     </div>
-                    <button onClick={onClose} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
+                    <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
                         <X size={16} className="text-gray-400" />
                     </button>
                 </div>
@@ -1302,7 +1302,7 @@ const TemplateTesterModal = ({ isOpen, onClose, templates, onTest, onPreview }) 
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="e.g. yourname@example.com"
-                                className="w-full pl-8 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:outline-none focus:border-primary-500 transition-all font-medium text-[12px]"
+                                className="w-full pl-8 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:outline-none focus:border-indigo-500 transition-all font-medium text-[12px]"
                             />
                             <Send size={14} className="absolute left-2.5 top-2.5 text-gray-400" />
                         </div>
@@ -1310,17 +1310,17 @@ const TemplateTesterModal = ({ isOpen, onClose, templates, onTest, onPreview }) 
 
                     {/* Restaurant Templates */}
                     <div className="space-y-3">
-                        <h4 className="text-[10px] font-black text-primary-600 uppercase tracking-[0.2em] flex items-center gap-2">
-                            Restaurant Side <div className="h-px bg-primary-100 flex-1" />
+                        <h4 className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] flex items-center gap-2">
+                            Restaurant Side <div className="h-px bg-indigo-100 flex-1" />
                         </h4>
                         <div className="grid gap-2">
                             {restaurantTemplates.map(t => (
                                 <div
                                     key={t.key}
-                                    className="flex items-center justify-between p-2 rounded-lg border border-slate-100 bg-white hover:border-primary-200 transition-all group"
+                                    className="flex items-center justify-between p-2 rounded-lg border border-gray-100 bg-white hover:border-indigo-200 transition-all group"
                                 >
                                     <div className="text-left min-w-0">
-                                        <p className="text-[12px] font-bold text-gray-700 group-hover:text-primary-600 transition-colors truncate">
+                                        <p className="text-[12px] font-bold text-gray-700 group-hover:text-indigo-600 transition-colors truncate">
                                             {t.key.replace('email_template_', '').replace(/_/g, ' ').toUpperCase()}
                                         </p>
                                         <p className="text-[9px] text-gray-400 truncate">{t.value.subject}</p>
@@ -1342,7 +1342,7 @@ const TemplateTesterModal = ({ isOpen, onClose, templates, onTest, onPreview }) 
                                                 handleSend(t.key, t.value);
                                             }}
                                             disabled={sending === t.key}
-                                            className="p-1.5 text-primary-500 hover:bg-primary-50 rounded-lg transition-colors"
+                                            className="p-1.5 text-indigo-500 hover:bg-indigo-50 rounded-lg transition-colors"
                                             title="Send Test"
                                         >
                                             {sending === t.key ? (
@@ -1366,7 +1366,7 @@ const TemplateTesterModal = ({ isOpen, onClose, templates, onTest, onPreview }) 
                             {customerTemplates.map(t => (
                                 <div
                                     key={t.key}
-                                    className="flex items-center justify-between p-2 rounded-lg border border-slate-100 bg-white hover:border-emerald-200 transition-all group"
+                                    className="flex items-center justify-between p-2 rounded-lg border border-gray-100 bg-white hover:border-emerald-200 transition-all group"
                                 >
                                     <div className="text-left min-w-0">
                                         <p className="text-[12px] font-bold text-gray-700 truncate">

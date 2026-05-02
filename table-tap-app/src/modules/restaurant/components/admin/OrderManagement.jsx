@@ -196,8 +196,8 @@ const STATUS_META = {
   preparing: {
     label: "Preparing",
     color: "orange",
-    icon: <Truck className="h-4 w-4 sm:h-5 sm:w-5 text-primary-600" />,
-    badge: "bg-primary-100 text-primary-800 border border-primary-200",
+    icon: <Truck className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" />,
+    badge: "bg-orange-100 text-orange-800 border border-orange-200",
   },
   ready: {
     label: "Ready",
@@ -261,7 +261,7 @@ const ConfirmOrderModal = forwardRef(function ConfirmOrderModal({ onConfirm, onS
     try {
       await onConfirm(
         order.id,
-        order.user_id || order.userId,
+        order.userId,
         newStatus,
         normalizedType === 'rejected' ? rejectionReason : undefined
       );
@@ -317,7 +317,7 @@ const ConfirmOrderModal = forwardRef(function ConfirmOrderModal({ onConfirm, onS
             type="button"
             onClick={handleConfirm}
             disabled={loading || (type === 'rejected' && !rejectionReason.trim())}
-            className={`min-h-[44px] px-4 py-3 rounded text-white touch-manipulation ${type === 'rejected' ? 'bg-red-500 hover:bg-red-600' : 'bg-primary-500 hover:bg-primary-600'}`}
+            className={`min-h-[44px] px-4 py-3 rounded text-white touch-manipulation ${type === 'rejected' ? 'bg-red-500 hover:bg-red-600' : 'bg-orange-500 hover:bg-orange-600'}`}
           >
             {loading ? 'Processing...' : 'Confirm'}
           </button>
@@ -385,7 +385,7 @@ const ActionButtons = ({
         <button
           disabled={!!loadingAction}
           onClick={(e) => { e.stopPropagation(); handlePrintKOT(order); }}
-          className={`${actionBtnClass} bg-primary-100 text-primary-600 hover:bg-primary-600 hover:text-white`}
+          className={`${actionBtnClass} bg-orange-100 text-orange-600 hover:bg-orange-600 hover:text-white`}
           title="Print KOT"
         >
           <Printer size={18} />
@@ -430,7 +430,7 @@ const ActionButtons = ({
       <>
         <button
           onClick={(e) => { e.stopPropagation(); handlePrintBill(order); }}
-          className={`${actionBtnClass} bg-primary-100 text-primary-600 hover:bg-primary-600 hover:text-white`}
+          className={`${actionBtnClass} bg-orange-100 text-orange-600 hover:bg-orange-600 hover:text-white`}
           title="Print Bill"
         >
           <Printer size={18} />
@@ -511,14 +511,12 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
   const searchTerm = propSearchTerm !== undefined ? propSearchTerm : '';
   // Move fetchOrders outside useEffect so it can be reused
   const fetchOrders = async () => {
-    if (!restaurantId) return;
     try {
       setOrdersLoading(true);
       const data = await fetchAllOrders(restaurantId);
       setOrders(data);
       setOrdersError('');
     } catch (error) {
-      if (error?.name === 'AbortError' || error?.message?.includes('aborted')) return;
       setOrdersError('Failed to load orders: ' + (error.message || error));
     } finally {
       setOrdersLoading(false);
@@ -585,7 +583,6 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
         const items = await getRestaurantFoodItems(restaurantId);
         setMenuItems(processFoodItems(items || []));
       } catch (err) {
-        if (err?.name === 'AbortError' || err?.message?.includes('aborted')) return;
         setMenuError('Failed to load menu items');
         console.error('Failed to load menu items:', err);
       } finally {
@@ -959,10 +956,10 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
             e.stopPropagation();
             handleDownloadByStatus(status);
           }}
-          className="hidden sm:inline-flex mt-1 p-1 rounded bg-primary-100 hover:bg-primary-200"
+          className="hidden sm:inline-flex mt-1 p-1 rounded bg-orange-100 hover:bg-orange-200"
           title={`Download ${STATUS_META[status].label} Orders`}
         >
-          <Download className="w-4 h-4 text-primary-500" />
+          <Download className="w-4 h-4 text-orange-500" />
         </button>
       </div>
     </div>
@@ -1122,7 +1119,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
       <div className="divide-y divide-gray-200">
         {items.map((item, idx) => (
           <div key={idx} className="flex items-center py-2">
-            <div className="w-10 h-10 rounded-full ring-2 ring-primary-200 bg-gradient-to-br from-primary-100 to-amber-100 flex items-center justify-center overflow-hidden">
+            <div className="w-10 h-10 rounded-full ring-2 ring-orange-200 bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center overflow-hidden">
               <img
                 src={item.image || `/api/placeholder/40/40`}
                 alt={item.name || `Item ${idx + 1}`}
@@ -1167,11 +1164,11 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
         </div>
       )}
 
-      <div className={`bg-gradient-to-br from-primary-50 via-amber-50 to-yellow-50 ${overviewOpen ? 'px-3 sm:px-6 py-4' : 'px-3 sm:px-6 py-1 -my-2 sm:py-2 sm:-my-1'}`}>
+      <div className={`bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 ${overviewOpen ? 'px-3 sm:px-6 py-4' : 'px-3 sm:px-6 py-1 -my-2 sm:py-2 sm:-my-1'}`}>
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-              <Package className="h-5 w-5 mr-2 text-primary-500" />
+              <Package className="h-5 w-5 mr-2 text-orange-500" />
               Order Status Overview
             </h3>
             {overviewOpen && (
@@ -1181,7 +1178,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
           <button
             type="button"
             onClick={() => setOverviewOpen((prev) => !prev)}
-            className="p-1.5 sm:p-2 rounded-md hover:bg-primary-100 text-primary-600"
+            className="p-1.5 sm:p-2 rounded-md hover:bg-orange-100 text-orange-600"
             aria-expanded={overviewOpen}
             aria-controls="order-status-overview"
             title={overviewOpen ? 'Collapse overview' : 'Expand overview'}
@@ -1195,7 +1192,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
               <StatusCard key={status} status={status} />
             ))}
             {/* Download Button as a Card */}
-            <div className="relative group flex flex-col sm:flex-row items-center justify-center sm:justify-between w-full sm:w-auto p-1.5 sm:p-3 rounded-lg bg-white shadow-sm border border-gray-200 sm:border-l-4 border-primary-400 cursor-pointer hover:shadow-md transition-all">
+            <div className="relative group flex flex-col sm:flex-row items-center justify-center sm:justify-between w-full sm:w-auto p-1.5 sm:p-3 rounded-lg bg-white shadow-sm border border-gray-200 sm:border-l-4 border-orange-400 cursor-pointer hover:shadow-md transition-all">
 
               {/* Mobile Content (Compact) */}
               <div
@@ -1203,7 +1200,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                 onClick={() => setShowDownloadMenu((prev) => !prev)}
               >
                 <p className="text-[9px] text-gray-500 uppercase font-bold truncate w-full text-center leading-tight tracking-tight">Export</p>
-                <Download className="h-3.5 w-3.5 text-primary-500 mt-1" />
+                <Download className="h-3.5 w-3.5 text-orange-500 mt-1" />
               </div>
 
               {/* Desktop Content (Original) */}
@@ -1211,10 +1208,10 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                 <p className="text-xs text-gray-500 uppercase font-medium">Download</p>
                 <button
                   onClick={() => setShowDownloadMenu((prev) => !prev)}
-                  className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-full bg-primary-100 hover:bg-primary-200 transition-colors cursor-pointer touch-manipulation"
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-full bg-orange-100 hover:bg-orange-200 transition-colors cursor-pointer touch-manipulation"
                   title="Download Orders as Excel"
                 >
-                  <Download className="h-5 w-5 text-primary-500" />
+                  <Download className="h-5 w-5 text-orange-500" />
                 </button>
               </div>
 
@@ -1267,8 +1264,8 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
               <button
                 onClick={() => setViewType('tiles')}
                 className={`flex items-center min-h-[42px] px-3 py-2 rounded-lg text-sm transition-all duration-200 ${viewType === 'tiles'
-                  ? 'bg-white text-primary-600 shadow-sm'
-                  : 'text-gray-600 hover:text-primary-600 active:bg-gray-200'
+                  ? 'bg-white text-orange-600 shadow-sm'
+                  : 'text-gray-600 hover:text-orange-600 active:bg-gray-200'
                   }`}
                 aria-pressed={viewType === 'tiles'}
               >
@@ -1278,8 +1275,8 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
               <button
                 onClick={() => setViewType('table')}
                 className={`flex items-center min-h-[42px] px-3 py-2 rounded-lg text-sm transition-all duration-200 ${viewType === 'table'
-                  ? 'bg-white text-primary-600 shadow-sm'
-                  : 'text-gray-600 hover:text-primary-600 active:bg-gray-200'
+                  ? 'bg-white text-orange-600 shadow-sm'
+                  : 'text-gray-600 hover:text-orange-600 active:bg-gray-200'
                   }`}
                 aria-pressed={viewType === 'table'}
               >
@@ -1332,13 +1329,13 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                 const styles = {
                   daily: 'bg-blue-500 text-white',
                   weekly: 'bg-green-500 text-white',
-                  monthly: 'bg-primary-500 text-white',
+                  monthly: 'bg-orange-500 text-white',
                   all: 'bg-gray-500 text-white',
                 };
                 const inactive = {
                   daily: 'bg-blue-50 text-blue-600',
                   weekly: 'bg-green-50 text-green-600',
-                  monthly: 'bg-primary-50 text-primary-600',
+                  monthly: 'bg-orange-50 text-orange-600',
                   all: 'bg-gray-50 text-gray-600',
                 };
                 return (
@@ -1385,7 +1382,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                 onClick={() => {
                   setStatusFilter('all');
                 }}
-                className="mt-4 px-4 py-2 bg-primary-100 text-primary-600 rounded-lg hover:bg-primary-200 transition-colors"
+                className="mt-4 px-4 py-2 bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition-colors"
               >
                 Clear Filters
               </button>
@@ -1468,7 +1465,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
 
                       {/* Items List */}
                       <div className="space-y-1.5 mb-3">
-                        {(order.items || []).map((item, idx) => (
+                        {order.items.map((item, idx) => (
                           <div key={idx} className="flex justify-between text-xs items-start">
                             <div className="flex gap-2 leading-tight">
                               <span className="font-semibold text-gray-900 min-w-[20px]">{item.quantity}x</span>
@@ -1503,7 +1500,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                       ${order.status === 'pending'
                       ? 'bg-yellow-50'
                       : order.status === 'preparing'
-                        ? 'bg-primary-50'
+                        ? 'bg-orange-50'
                         : order.status === 'ready'
                           ? 'bg-green-50'
                           : order.status === 'completed'
@@ -1523,7 +1520,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                         ${order.status === 'pending'
                         ? 'bg-yellow-200 text-yellow-900'
                         : order.status === 'preparing'
-                          ? 'bg-primary-200 text-primary-900'
+                          ? 'bg-orange-200 text-orange-900'
                           : order.status === 'ready'
                             ? 'bg-green-200 text-green-900'
                             : order.status === 'completed'
@@ -1553,7 +1550,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                       </div>
                       <button
                         onClick={() => toggleOrderExpansion(order.id)}
-                        className="flex-shrink-0 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center rounded-full p-2.5 sm:p-2 bg-gray-100 hover:bg-primary-100 active:bg-primary-200 transition touch-manipulation"
+                        className="flex-shrink-0 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center rounded-full p-2.5 sm:p-2 bg-gray-100 hover:bg-orange-100 active:bg-orange-200 transition touch-manipulation"
                         title={expandedOrderId === order.id ? "Hide details" : "View details"}
                         aria-expanded={expandedOrderId === order.id}
                       >
@@ -1564,7 +1561,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
 
                   {/* Customer Info */}
                   <div className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 pt-3 sm:pt-4 pb-2">
-                    <div className="h-12 w-12 rounded-full ring-2 ring-primary-200 bg-gradient-to-br from-primary-100 to-amber-100 flex items-center justify-center overflow-hidden">
+                    <div className="h-12 w-12 rounded-full ring-2 ring-orange-200 bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center overflow-hidden">
                       <img
                         src={order.profile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(order.customer_name || 'Guest')}&background=f59e42&color=fff`}
                         alt="Profile"
@@ -1629,7 +1626,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                         ) : order.payment_method === 'cod' ? (
                           <span className="inline-block px-2 py-1 rounded-full bg-yellow-100 text-yellow-700 font-semibold">Cash</span>
                         ) : order.payment_status === 'pending' ? (
-                          <span className="inline-block px-2 py-1 rounded-full bg-primary-100 text-primary-700 font-semibold">Pending</span>
+                          <span className="inline-block px-2 py-1 rounded-full bg-orange-100 text-orange-700 font-semibold">Pending</span>
                         ) : order.payment_status === 'failed' ? (
                           <span className="inline-block px-2 py-1 rounded-full bg-red-100 text-red-700 font-semibold">Failed</span>
                         ) : (
@@ -1760,7 +1757,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
 
                                 {/* Items List */}
                                 <div className="space-y-1.5 mb-3">
-                                  {(order.items || []).map((item, idx) => (
+                                  {order.items.map((item, idx) => (
                                     <div key={idx} className="flex justify-between text-xs items-start">
                                       <div className="flex gap-2 leading-tight">
                                         <span className="font-semibold text-gray-900 min-w-[20px]">{item.quantity}x</span>
@@ -1816,7 +1813,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                             </div>
                             <button
                               onClick={() => toggleOrderExpansion(order.id)}
-                              className="ml-2 text-[11px] sm:text-xs text-primary-500 hover:text-primary-600 hidden sm:inline-flex"
+                              className="ml-2 text-[11px] sm:text-xs text-orange-500 hover:text-orange-600 hidden sm:inline-flex"
                             >
                               {expandedOrderId === order.id ? (
                                 <ChevronDown size={12} className="sm:w-[14px] sm:h-[14px]" />
@@ -1842,7 +1839,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                             {/* Mobile expand button - touch-friendly */}
                             <button
                               onClick={() => toggleOrderExpansion(order.id)}
-                              className="inline-flex sm:hidden min-h-[44px] min-w-[44px] items-center justify-center p-2 rounded-lg text-primary-600 bg-primary-50 hover:bg-primary-100 active:bg-primary-200 touch-manipulation"
+                              className="inline-flex sm:hidden min-h-[44px] min-w-[44px] items-center justify-center p-2 rounded-lg text-orange-600 bg-orange-50 hover:bg-orange-100 active:bg-orange-200 touch-manipulation"
                               title={expandedOrderId === order.id ? 'Collapse' : 'Expand'}
                               aria-expanded={expandedOrderId === order.id}
                             >
@@ -1892,7 +1889,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                                   ) : order.payment_method === 'cod' ? (
                                     <span className="text-yellow-600">Cash on Delivery</span>
                                   ) : order.payment_status === 'pending' ? (
-                                    <span className="text-primary-600">Pending Payment</span>
+                                    <span className="text-orange-600">Pending Payment</span>
                                   ) : order.payment_status === 'failed' ? (
                                     <span className="text-red-600">Payment Failed</span>
                                   ) : (
@@ -1949,8 +1946,8 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
               {/* Premium Header */}
               <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 bg-white border-b border-gray-100 flex-shrink-0">
                 <div className="flex items-center gap-3 sm:gap-4">
-                  <div className="p-2 sm:p-2.5 bg-primary-50 rounded-xl shadow-inner shadow-primary-200/50">
-                    <ShoppingBag size={20} className="text-primary-600 sm:w-6 sm:h-6" />
+                  <div className="p-2 sm:p-2.5 bg-orange-50 rounded-xl shadow-inner shadow-orange-200/50">
+                    <ShoppingBag size={20} className="text-orange-600 sm:w-6 sm:h-6" />
                   </div>
                   <div>
                     <h3 className="text-lg sm:text-xl font-black text-gray-900 tracking-tight">Create Order</h3>
@@ -1962,8 +1959,8 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                 </div>
                 <div className="flex items-center gap-2 sm:gap-4">
                   <div className="hidden md:flex items-center gap-1 bg-gray-50/50 p-1 rounded-2xl border border-gray-100/50">
-                    <button onClick={() => setCoStep(1)} className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${coStep === 1 ? 'bg-white shadow-xl shadow-primary-500/10 text-primary-600' : 'text-gray-400 font-bold hover:text-gray-600'}`}>Items</button>
-                    <button disabled={selectedItemsArray.length === 0} onClick={() => setCoStep(2)} className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${coStep === 2 ? 'bg-white shadow-xl shadow-primary-500/10 text-primary-600' : 'text-gray-400 font-bold hover:text-gray-600 disabled:opacity-30'}`}>Details</button>
+                    <button onClick={() => setCoStep(1)} className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${coStep === 1 ? 'bg-white shadow-xl shadow-orange-500/10 text-orange-600' : 'text-gray-400 font-bold hover:text-gray-600'}`}>Items</button>
+                    <button disabled={selectedItemsArray.length === 0} onClick={() => setCoStep(2)} className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${coStep === 2 ? 'bg-white shadow-xl shadow-orange-500/10 text-orange-600' : 'text-gray-400 font-bold hover:text-gray-600 disabled:opacity-30'}`}>Details</button>
                   </div>
                   <button className="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all border border-transparent hover:border-red-100" onClick={() => { setShowCreateOrderModal(false); resetCreateOrder(); }}><X size={18} className="sm:w-5 sm:h-5" /></button>
                 </div>
@@ -1971,7 +1968,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
 
               {/* Progress */}
               <div className="h-1 bg-gray-100 flex-shrink-0">
-                <div className="h-full bg-gradient-to-r from-primary-400 via-primary-500 to-primary-600 transition-all duration-700 ease-out" style={{ width: `${(coStep / 2) * 100}%` }} />
+                <div className="h-full bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 transition-all duration-700 ease-out" style={{ width: `${(coStep / 2) * 100}%` }} />
               </div>
 
               <div className="flex-1 overflow-auto bg-gray-50/30">
@@ -1982,14 +1979,14 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                     <div className="lg:col-span-3 flex flex-col min-h-0 sm:h-[68vh] animate-in slide-in-from-left-4 duration-500">
                       <div className="flex flex-col mb-4 sticky top-0 z-10 bg-transparent">
                         <div className="relative flex-1 group mb-3">
-                          <input value={itemSearch} onChange={(e) => setItemSearch(e.target.value)} placeholder="Search food..." className="w-full bg-white border border-gray-100 shadow-sm rounded-xl px-3 py-2.5 pl-9 focus:ring-4 focus:ring-primary-500/5 focus:border-primary-500 transition-all font-bold placeholder:text-gray-300 text-xs sm:text-sm sm:px-4 sm:py-3 sm:pl-10" />
-                          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-primary-500 transition-colors sm:left-3.5 sm:w-4.5 sm:h-4.5" />
+                          <input value={itemSearch} onChange={(e) => setItemSearch(e.target.value)} placeholder="Search food..." className="w-full bg-white border border-gray-100 shadow-sm rounded-xl px-3 py-2.5 pl-9 focus:ring-4 focus:ring-orange-500/5 focus:border-orange-500 transition-all font-bold placeholder:text-gray-300 text-xs sm:text-sm sm:px-4 sm:py-3 sm:pl-10" />
+                          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-orange-500 transition-colors sm:left-3.5 sm:w-4.5 sm:h-4.5" />
                         </div>
 
                         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
                           <button
                             onClick={() => setItemCategoryFilter('all')}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${itemCategoryFilter === 'all' ? 'bg-primary-600 text-white border-primary-600 shadow-lg shadow-primary-600/20' : 'bg-white border-gray-100 text-gray-400 hover:border-primary-200 hover:text-primary-500'}`}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${itemCategoryFilter === 'all' ? 'bg-orange-600 text-white border-orange-600 shadow-lg shadow-orange-600/20' : 'bg-white border-gray-100 text-gray-400 hover:border-orange-200 hover:text-orange-500'}`}
                           >
                             All <span className={`px-1 rounded-md text-[8px] ${itemCategoryFilter === 'all' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-400'}`}>{categoryCounts.all}</span>
                           </button>
@@ -1997,7 +1994,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                             <button
                               key={cat}
                               onClick={() => setItemCategoryFilter(cat)}
-                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${itemCategoryFilter === cat ? 'bg-primary-600 text-white border-primary-600 shadow-lg shadow-primary-600/20' : 'bg-white border-gray-100 text-gray-400 hover:border-primary-200 hover:text-primary-500'}`}
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${itemCategoryFilter === cat ? 'bg-orange-600 text-white border-orange-600 shadow-lg shadow-orange-600/20' : 'bg-white border-gray-100 text-gray-400 hover:border-orange-200 hover:text-orange-500'}`}
                             >
                               {cat} <span className={`px-1 rounded-md text-[8px] ${itemCategoryFilter === cat ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-400'}`}>{categoryCounts[cat]}</span>
                             </button>
@@ -2007,16 +2004,16 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
 
                       <div className="flex-1 overflow-auto no-scrollbar pr-2">
                         {menuLoading ? (
-                          <div className="flex flex-col items-center justify-center py-20"><div className="w-12 h-12 border-4 border-primary-500/20 border-t-primary-500 rounded-full animate-spin"></div></div>
+                          <div className="flex flex-col items-center justify-center py-20"><div className="w-12 h-12 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin"></div></div>
                         ) : (
                           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3">
                             {filteredMenuItems.map(mi => (
-                              <div key={mi.id} className="group bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-2 sm:p-2.5 flex flex-col gap-1.5 sm:gap-2 transition-all hover:border-primary-200 hover:shadow-2xl hover:shadow-primary-900/5 cursor-pointer h-full" onClick={() => addItem(mi)}>
+                              <div key={mi.id} className="group bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-2 sm:p-2.5 flex flex-col gap-1.5 sm:gap-2 transition-all hover:border-orange-200 hover:shadow-2xl hover:shadow-orange-900/5 cursor-pointer h-full" onClick={() => addItem(mi)}>
                                 <div className="relative h-20 sm:h-28 w-full flex-shrink-0">
                                   {mi.image ? (
                                     <img src={mi.image} alt={mi.name} className="h-full w-full rounded-xl object-cover" />
                                   ) : (
-                                    <div className="h-full w-full rounded-xl bg-primary-50 flex items-center justify-center"><ShoppingBag size={20} className="text-primary-200" /></div>
+                                    <div className="h-full w-full rounded-xl bg-orange-50 flex items-center justify-center"><ShoppingBag size={20} className="text-orange-200" /></div>
                                   )}
                                   {((mi.discounted_price ?? mi.discountedPrice) && Number(mi.discounted_price ?? mi.discountedPrice) < Number(mi.price)) && (
                                     <div className="absolute top-2 left-2 bg-gradient-to-br from-red-500 to-red-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-lg uppercase tracking-tight">
@@ -2026,7 +2023,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                                 </div>
                                 <div className="flex-1 min-w-0 flex flex-col justify-between">
                                   <div className="mb-2">
-                                    <h4 className="font-black text-gray-900 truncate group-hover:text-primary-600 transition-colors uppercase text-[11px] leading-tight tracking-tight">{mi.name}</h4>
+                                    <h4 className="font-black text-gray-900 truncate group-hover:text-orange-600 transition-colors uppercase text-[11px] leading-tight tracking-tight">{mi.name}</h4>
                                     <div className="flex flex-wrap gap-1 mt-1">
                                       <span className="text-[7px] font-bold text-gray-400 uppercase tracking-widest">{mi.category}</span>
                                       {mi.tags && Array.isArray(mi.tags) && mi.tags.slice(0, 2).map(tag => {
@@ -2034,7 +2031,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                                         const isVeg = tagLower === 'veg' || tagLower.includes('vegetarian');
                                         const isNonVeg = tagLower === 'non-veg' || tagLower.includes('chicken') || tagLower.includes('meat');
                                         return (
-                                          <span key={tag} className={`text-[7px] font-black uppercase tracking-tighter px-1 rounded ${isVeg ? 'bg-green-50 text-green-600' : isNonVeg ? 'bg-red-50 text-red-600' : 'bg-primary-50 text-primary-500/70'}`}>
+                                          <span key={tag} className={`text-[7px] font-black uppercase tracking-tighter px-1 rounded ${isVeg ? 'bg-green-50 text-green-600' : isNonVeg ? 'bg-red-50 text-red-600' : 'bg-orange-50 text-orange-500/70'}`}>
                                             {tag}
                                           </span>
                                         );
@@ -2046,7 +2043,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                                     <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 p-0.5 rounded-lg">
                                       <button className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors" onClick={(e) => { e.stopPropagation(); decrementItem(mi.id); }}><Minus size={12} /></button>
                                       <span className="w-4 text-center text-[10px] font-black">{selectedItems[mi.id]?.quantity || 0}</span>
-                                      <button className="w-6 h-6 bg-white shadow-sm border border-gray-100 flex items-center justify-center text-primary-600 hover:bg-primary-600 hover:text-white transition-all rounded-md" onClick={(e) => { e.stopPropagation(); addItem(mi); }}><Plus size={12} /></button>
+                                      <button className="w-6 h-6 bg-white shadow-sm border border-gray-100 flex items-center justify-center text-orange-600 hover:bg-orange-600 hover:text-white transition-all rounded-md" onClick={(e) => { e.stopPropagation(); addItem(mi); }}><Plus size={12} /></button>
                                     </div>
                                   </div>
                                 </div>
@@ -2065,22 +2062,22 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                     {coStep === 2 && (
                       <div className="bg-white border border-gray-100 rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-6 mb-3 sm:mb-4 shadow-xl shadow-gray-200/40 animate-in fade-in slide-in-from-top-4">
                         <div className="flex items-center gap-3 mb-4 sm:mb-6">
-                          <div className="p-2 bg-primary-100 rounded-lg"><User size={16} className="text-primary-600 sm:w-4.5 sm:h-4.5" /></div>
+                          <div className="p-2 bg-orange-100 rounded-lg"><User size={16} className="text-orange-600 sm:w-4.5 sm:h-4.5" /></div>
                           <h4 className="text-base sm:text-lg font-black text-gray-900 uppercase tracking-tight">Customer & Table</h4>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
                           <div className="relative">
                             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1.5 sm:mb-2 ml-1">Table No.</label>
-                            <button onClick={() => setShowTableDropdown(!showTableDropdown)} className="w-full flex justify-between items-center px-4 py-2.5 sm:py-3 bg-gray-50/50 border border-gray-100 rounded-xl hover:bg-white hover:border-primary-500/50 transition-all group shadow-inner">
+                            <button onClick={() => setShowTableDropdown(!showTableDropdown)} className="w-full flex justify-between items-center px-4 py-2.5 sm:py-3 bg-gray-50/50 border border-gray-100 rounded-xl hover:bg-white hover:border-orange-500/50 transition-all group shadow-inner">
                               <span className={`font-black text-xs sm:text-sm ${coTableNumber ? 'text-gray-900' : 'text-gray-300'}`}>{coTableNumber ? `Table ${coTableNumber}` : 'Assign Table'}</span>
-                              <ChevronDown size={14} className={`text-gray-300 transition-transform sm:w-4 sm:h-4 ${showTableDropdown ? 'rotate-180 text-primary-500' : ''}`} />
+                              <ChevronDown size={14} className={`text-gray-300 transition-transform sm:w-4 sm:h-4 ${showTableDropdown ? 'rotate-180 text-orange-500' : ''}`} />
                             </button>
                             {showTableDropdown && (
                               <div className="absolute z-[120] top-full mt-2 w-full bg-white border border-gray-100 rounded-[1.75rem] shadow-2xl p-2 animate-in fade-in zoom-in-95 overflow-hidden">
                                 <div className="p-2 border-b border-gray-50 mb-1"><input value={tableSearch} onChange={(e) => setTableSearch(e.target.value)} placeholder="Find table..." className="w-full bg-gray-50 border-none rounded-xl px-4 py-2.5 text-xs font-bold" /></div>
                                 <div className="max-h-52 overflow-auto no-scrollbar">
                                   {filteredTables.map(t => (
-                                    <button key={`t-${t.tableNumber}`} onClick={() => { setCoTableNumber(t.tableNumber); setShowTableDropdown(false); }} className={`w-full flex justify-between items-center px-4 py-3 rounded-xl mb-1 transition-all ${coTableNumber === t.tableNumber ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/30' : 'hover:bg-primary-50 text-gray-700'}`}>
+                                    <button key={`t-${t.tableNumber}`} onClick={() => { setCoTableNumber(t.tableNumber); setShowTableDropdown(false); }} className={`w-full flex justify-between items-center px-4 py-3 rounded-xl mb-1 transition-all ${coTableNumber === t.tableNumber ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/30' : 'hover:bg-orange-50 text-gray-700'}`}>
                                       <span className="font-black text-sm uppercase">Table {t.tableNumber}</span>
                                       <span className="text-[10px] font-bold opacity-70">{t.capacity} Seats</span>
                                     </button>
@@ -2091,24 +2088,24 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                           </div>
                           <div>
                             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1.5 sm:mb-2 ml-1">Guest Name</label>
-                            <input value={coCustomerName} onChange={(e) => setCoCustomerName(e.target.value)} placeholder="Optional" className="w-full px-4 py-2.5 sm:py-3 bg-gray-50/50 border border-gray-100 rounded-xl font-black text-gray-900 focus:bg-white focus:ring-4 focus:ring-primary-500/5 transition-all shadow-inner text-xs sm:text-sm" />
+                            <input value={coCustomerName} onChange={(e) => setCoCustomerName(e.target.value)} placeholder="Optional" className="w-full px-4 py-2.5 sm:py-3 bg-gray-50/50 border border-gray-100 rounded-xl font-black text-gray-900 focus:bg-white focus:ring-4 focus:ring-orange-500/5 transition-all shadow-inner text-xs sm:text-sm" />
                           </div>
                           <div>
                             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1.5 sm:mb-2 ml-1">Guest Email</label>
-                            <input value={coCustomerEmail} onChange={(e) => setCoCustomerEmail(e.target.value)} placeholder="Optional" className="w-full px-4 py-2.5 sm:py-3 bg-gray-50/50 border border-gray-100 rounded-xl font-black text-gray-900 focus:bg-white focus:ring-4 focus:ring-primary-500/5 transition-all shadow-inner text-xs sm:text-sm" />
+                            <input value={coCustomerEmail} onChange={(e) => setCoCustomerEmail(e.target.value)} placeholder="Optional" className="w-full px-4 py-2.5 sm:py-3 bg-gray-50/50 border border-gray-100 rounded-xl font-black text-gray-900 focus:bg-white focus:ring-4 focus:ring-orange-500/5 transition-all shadow-inner text-xs sm:text-sm" />
                           </div>
                           <div>
                             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1.5 sm:mb-2 ml-1">Contact No.</label>
-                            <input value={coCustomerPhone} onChange={(e) => setCoCustomerPhone(e.target.value.replace(/\D/g, ''))} placeholder="Optional" className="w-full px-4 py-2.5 sm:py-3 bg-gray-50/50 border border-gray-100 rounded-xl font-black text-gray-900 focus:bg-white focus:ring-4 focus:ring-primary-500/5 transition-all shadow-inner text-xs sm:text-sm" />
+                            <input value={coCustomerPhone} onChange={(e) => setCoCustomerPhone(e.target.value.replace(/\D/g, ''))} placeholder="Optional" className="w-full px-4 py-2.5 sm:py-3 bg-gray-50/50 border border-gray-100 rounded-xl font-black text-gray-900 focus:bg-white focus:ring-4 focus:ring-orange-500/5 transition-all shadow-inner text-xs sm:text-sm" />
                           </div>
                           <div>
                             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1.5 sm:mb-2 ml-1">Discount</label>
                             <div className="flex gap-2">
-                              <select value={coDiscountType} onChange={(e) => setCoDiscountType(e.target.value)} className="bg-gray-50/50 border border-gray-100 rounded-xl px-2 py-2.5 sm:py-3 text-[10px] sm:text-xs font-black text-primary-600 shadow-inner appearance-none cursor-pointer">
+                              <select value={coDiscountType} onChange={(e) => setCoDiscountType(e.target.value)} className="bg-gray-50/50 border border-gray-100 rounded-xl px-2 py-2.5 sm:py-3 text-[10px] sm:text-xs font-black text-orange-600 shadow-inner appearance-none cursor-pointer">
                                 <option value="percentage">%</option>
                                 <option value="flat">₹</option>
                               </select>
-                              <input value={coDiscountType === 'percentage' ? coDiscountPercentage : coDiscountFlat} onChange={(e) => coDiscountType === 'percentage' ? setCoDiscountPercentage(e.target.value) : setCoDiscountFlat(e.target.value)} placeholder="0" className="flex-1 px-4 py-2.5 sm:py-3 bg-gray-50/50 border border-gray-100 rounded-xl font-black text-gray-900 focus:bg-white focus:ring-4 focus:ring-primary-500/5 transition-all shadow-inner text-xs sm:text-sm" />
+                              <input value={coDiscountType === 'percentage' ? coDiscountPercentage : coDiscountFlat} onChange={(e) => coDiscountType === 'percentage' ? setCoDiscountPercentage(e.target.value) : setCoDiscountFlat(e.target.value)} placeholder="0" className="flex-1 px-4 py-2.5 sm:py-3 bg-gray-50/50 border border-gray-100 rounded-xl font-black text-gray-900 focus:bg-white focus:ring-4 focus:ring-orange-500/5 transition-all shadow-inner text-xs sm:text-sm" />
                             </div>
                           </div>
                         </div>
@@ -2137,10 +2134,10 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                         ) : (
                           <div className="space-y-4">
                             {selectedItemsArray.map(si => (
-                              <div key={`order-item-${si.id}`} className="group relative bg-gray-50/50 border border-transparent rounded-[1.25rem] sm:rounded-[1.75rem] p-3 sm:p-5 flex justify-between items-center transition-all hover:bg-white hover:border-primary-100 hover:shadow-xl hover:shadow-primary-900/5">
+                              <div key={`order-item-${si.id}`} className="group relative bg-gray-50/50 border border-transparent rounded-[1.25rem] sm:rounded-[1.75rem] p-3 sm:p-5 flex justify-between items-center transition-all hover:bg-white hover:border-orange-100 hover:shadow-xl hover:shadow-orange-900/5">
                                 <div className="min-w-0 pr-2 sm:pr-4">
                                   <div className="flex items-center gap-2 sm:gap-3">
-                                    <span className="bg-primary-600 text-white font-black px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg text-[8px] sm:text-[10px]">x{si.quantity}</span>
+                                    <span className="bg-orange-600 text-white font-black px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg text-[8px] sm:text-[10px]">x{si.quantity}</span>
                                     <span className="font-black text-gray-900 truncate uppercase text-xs sm:text-sm">{si.name}</span>
                                   </div>
                                   <span className="text-[8px] font-black text-gray-300 uppercase mt-1 sm:mt-2 block tracking-widest ml-10 sm:ml-12">{si.category}</span>
@@ -2149,7 +2146,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                                   <div className="font-black text-gray-900 text-sm mb-1">₹{(Number(si.price) * si.quantity).toFixed(0)}</div>
                                   <div className="flex gap-1 justify-end opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
                                     <button onClick={() => decrementItem(si.id)} className="w-6 h-6 bg-red-50 text-red-500 rounded-md flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"><Minus size={10} /></button>
-                                    <button onClick={() => addItem(si)} className="w-6 h-6 bg-primary-600 text-white rounded-md flex items-center justify-center hover:shadow-lg shadow-primary-500/20 transition-all"><Plus size={10} /></button>
+                                    <button onClick={() => addItem(si)} className="w-6 h-6 bg-orange-600 text-white rounded-md flex items-center justify-center hover:shadow-lg shadow-orange-500/20 transition-all"><Plus size={10} /></button>
                                   </div>
                                 </div>
                               </div>
@@ -2180,17 +2177,17 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                           {/* Bottom Row: Total & Action */}
                           <div className="flex items-center justify-between gap-3 md:flex-col md:items-stretch md:gap-4 md:border-t md:border-white/10 md:pt-4">
                             <div className="flex flex-col min-w-max">
-                              <span className="text-[7px] md:text-[10px] font-black text-primary-500 uppercase tracking-widest">Total Amount</span>
+                              <span className="text-[7px] md:text-[10px] font-black text-orange-500 uppercase tracking-widest">Total Amount</span>
                               <span className="font-black text-xl md:text-3xl text-white tracking-tighter leading-none">₹{selectedOrderTotals.finalTotal.toFixed(0)}</span>
                             </div>
 
                             <div className="flex-1 md:w-full">
                               {coStep === 1 ? (
-                                <button disabled={selectedItemsArray.length === 0} onClick={() => setCoStep(2)} className="w-full bg-primary-600 hover:bg-primary-500 disabled:bg-gray-800 text-white font-black py-3 sm:py-4 rounded-xl transition-all shadow-xl shadow-primary-600/30 flex items-center justify-center gap-2 uppercase text-[9px] sm:text-[10px] tracking-[0.1em] active:scale-95 group">Next <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /></button>
+                                <button disabled={selectedItemsArray.length === 0} onClick={() => setCoStep(2)} className="w-full bg-orange-600 hover:bg-orange-500 disabled:bg-gray-800 text-white font-black py-3 sm:py-4 rounded-xl transition-all shadow-xl shadow-orange-600/30 flex items-center justify-center gap-2 uppercase text-[9px] sm:text-[10px] tracking-[0.1em] active:scale-95 group">Next <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /></button>
                               ) : (
                                 <div className="flex gap-2">
                                   <button onClick={() => setCoStep(1)} className="px-3 sm:px-4 bg-white/5 border border-white/10 rounded-xl text-white/50 font-black uppercase text-[8px] sm:text-[9px] tracking-widest hover:bg-white/10 transition-all flex items-center justify-center"><ChevronLeft size={14} className="sm:hidden" /><span className="hidden sm:inline">Back</span></button>
-                                  <button disabled={creatingOrder || !coTableNumber} onClick={handleCreateOrderSubmit} className="flex-1 bg-primary-600 hover:bg-primary-500 disabled:bg-gray-800 text-white font-black py-3 sm:py-4 rounded-xl shadow-xl shadow-primary-600/30 flex items-center justify-center gap-2 uppercase text-[9px] sm:text-[10px] tracking-[0.1em] active:scale-95 whitespace-nowrap">{creatingOrder ? 'Wait...' : 'Place Order'}</button>
+                                  <button disabled={creatingOrder || !coTableNumber} onClick={handleCreateOrderSubmit} className="flex-1 bg-orange-600 hover:bg-orange-500 disabled:bg-gray-800 text-white font-black py-3 sm:py-4 rounded-xl shadow-xl shadow-orange-600/30 flex items-center justify-center gap-2 uppercase text-[9px] sm:text-[10px] tracking-[0.1em] active:scale-95 whitespace-nowrap">{creatingOrder ? 'Wait...' : 'Place Order'}</button>
                                 </div>
                               )}
                             </div>

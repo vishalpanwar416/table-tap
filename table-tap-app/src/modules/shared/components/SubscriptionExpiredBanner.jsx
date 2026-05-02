@@ -191,7 +191,7 @@ const SubscriptionExpiredBanner = ({ restaurantId, userRole }) => {
 
             <div className="bg-white rounded-[28px] shadow-2xl max-w-sm w-full overflow-hidden">
                 {/* Top gradient bar */}
-                <div className="h-2 w-full bg-gradient-to-r from-red-500 via-rose-500 to-primary-500" />
+                <div className="h-2 w-full bg-gradient-to-r from-red-500 via-rose-500 to-orange-500" />
 
                 <div className="p-7 text-center">
                     {/* Icon */}
@@ -234,7 +234,7 @@ const SubscriptionExpiredBanner = ({ restaurantId, userRole }) => {
                         href="https://table-tap.in/#pricing"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-full bg-gradient-to-r from-primary-500 to-rose-500 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:from-primary-600 hover:to-rose-600 transition-all mb-3"
+                        className="w-full bg-gradient-to-r from-orange-500 to-rose-500 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:from-orange-600 hover:to-rose-600 transition-all mb-3"
                     >
                         <CreditCard size={18} />
                         Renew Subscription
@@ -252,7 +252,7 @@ const SubscriptionExpiredBanner = ({ restaurantId, userRole }) => {
 
                     <p className="mt-4 text-xs text-gray-400">
                         Need help?{' '}
-                        <a href="mailto:support@table-tap.in" className="text-primary-500 hover:underline font-medium">
+                        <a href="mailto:support@table-tap.in" className="text-orange-500 hover:underline font-medium">
                             support@table-tap.in
                         </a>
                     </p>

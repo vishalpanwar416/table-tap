@@ -56,7 +56,7 @@ const RegistrationRequests = ({ searchTerm = '' }) => {
             else setLoading(true);
             setError(null);
 
-            const { data, hasMore: more, error: fetchError } = await getPaginatedRegistrations(pageNum, pageSize, statusFilter);
+            const { data, totalCount, error: fetchError } = await getPaginatedRegistrations(pageNum, pageSize, statusFilter);
 
             if (fetchError) throw new Error(fetchError);
 
@@ -66,7 +66,7 @@ const RegistrationRequests = ({ searchTerm = '' }) => {
                 setRegistrations(data || []);
             }
 
-            setHasMore(Boolean(more));
+            setHasMore((pageNum * pageSize) < totalCount);
         } catch (err) {
             console.error('Error fetching registrations:', err);
             setError('Failed to load registrations');
@@ -364,7 +364,7 @@ const RegistrationRequests = ({ searchTerm = '' }) => {
                     <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="w-full appearance-none pl-4 pr-10 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-white text-sm font-medium text-gray-700"
+                        className="w-full appearance-none pl-4 pr-10 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 bg-white text-sm font-medium text-gray-700"
                     >
                         <option value="all">All Status</option>
                         <option value="pending_review">Pending</option>
@@ -412,7 +412,7 @@ const RegistrationRequests = ({ searchTerm = '' }) => {
             {/* Loading State */}
             {loading ? (
                 <div className="flex items-center justify-center py-12">
-                    <Loader2 size={32} className="animate-spin text-primary-500" />
+                    <Loader2 size={32} className="animate-spin text-orange-500" />
                 </div>
             ) : filteredRegistrations.length === 0 ? (
                 <div className="text-center py-12 bg-gray-50 rounded-xl">
@@ -430,8 +430,8 @@ const RegistrationRequests = ({ searchTerm = '' }) => {
                             <div key={registration.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col gap-3">
                                 <div className="flex justify-between items-start">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center shrink-0">
-                                            <Building2 size={20} className="text-primary-600" />
+                                        <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center shrink-0">
+                                            <Building2 size={20} className="text-orange-600" />
                                         </div>
                                         <div>
                                             <h3 className="font-semibold text-gray-900 line-clamp-1">{registration.restaurant_name}</h3>
@@ -517,8 +517,8 @@ const RegistrationRequests = ({ searchTerm = '' }) => {
                                         <tr key={registration.id} className="hover:bg-gray-50 transition-colors">
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-                                                        <Building2 size={20} className="text-primary-600" />
+                                                    <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                                                        <Building2 size={20} className="text-orange-600" />
                                                     </div>
                                                     <div>
                                                         <p className="font-semibold text-gray-900">{registration.restaurant_name}</p>
@@ -635,7 +635,7 @@ const RegistrationRequests = ({ searchTerm = '' }) => {
                             {/* Owner Info */}
                             <div className="bg-gray-50 rounded-xl p-4">
                                 <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                                    <User size={18} className="text-primary-500" />
+                                    <User size={18} className="text-orange-500" />
                                     Owner Information
                                 </h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -657,7 +657,7 @@ const RegistrationRequests = ({ searchTerm = '' }) => {
                             {/* Restaurant Info */}
                             <div className="bg-gray-50 rounded-xl p-4">
                                 <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                                    <Building2 size={18} className="text-primary-500" />
+                                    <Building2 size={18} className="text-orange-500" />
                                     Restaurant Information
                                 </h3>
                                 <div className="grid grid-cols-2 gap-4">
@@ -698,7 +698,7 @@ const RegistrationRequests = ({ searchTerm = '' }) => {
                             {(selectedRegistration.latitude || selectedRegistration.longitude || selectedRegistration.google_maps_link) && (
                                 <div className="bg-gray-50 rounded-xl p-4">
                                     <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                                        <MapPin size={18} className="text-primary-500" />
+                                        <MapPin size={18} className="text-orange-500" />
                                         Precise Location
                                     </h3>
                                     <div className="grid grid-cols-2 gap-4">
@@ -736,7 +736,7 @@ const RegistrationRequests = ({ searchTerm = '' }) => {
                             {(selectedRegistration.gst_number || selectedRegistration.fssai_license) && (
                                 <div className="bg-gray-50 rounded-xl p-4">
                                     <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                                        <Shield size={18} className="text-primary-500" />
+                                        <Shield size={18} className="text-orange-500" />
                                         Legal & Compliance
                                     </h3>
                                     <div className="grid grid-cols-2 gap-4">

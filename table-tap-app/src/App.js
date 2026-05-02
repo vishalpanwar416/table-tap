@@ -12,6 +12,7 @@ import ErrorBoundary from './modules/shared/components/ErrorBoundary';
 import InstallPrompt from './modules/shared/components/InstallPrompt';
 import { register } from './modules/shared/utils/serviceWorkerRegistration';
 import { getSubdomain, isDevelopment } from './modules/shared/utils/subdomainRouter';
+import { syncPendingActions } from './modules/restaurant/api/admin/orderService';
 import toast from 'react-hot-toast';
 
 // Eagerly load CustomerApp for immediate Splash Screen (no initial loading spinner)
@@ -66,10 +67,10 @@ const App = () => {
     }
     sessionStorage.setItem('last_reload', now.toString());
 
-    // Offline sync listener — lazy-load orderService only when actually going online
+    // Offline sync listener
     const handleOnline = async () => {
+      console.log('App is online, syncing pending actions...');
       try {
-        const { syncPendingActions } = await import('./modules/restaurant/api/admin/orderService');
         await syncPendingActions();
         toast.success('Back online! Synced offline changes.');
       } catch (error) {
@@ -150,12 +151,11 @@ const App = () => {
     }
 
     if (pathname.startsWith('/admin')) {
+      console.log('[App] Loading AdminApp for /admin path');
       return (
-        <ErrorBoundary name="admin">
-          <Suspense fallback={<LoadingSpinner />}>
-            <AdminApp />
-          </Suspense>
-        </ErrorBoundary>
+        <Suspense fallback={<LoadingSpinner />}>
+          <AdminApp />
+        </Suspense>
       );
     }
 
@@ -167,52 +167,42 @@ const App = () => {
     }
 
     if (pathname.startsWith('/restaurant')) {
+      console.log('[App] Loading RestaurantApp for /restaurant path');
       return (
-        <ErrorBoundary name="restaurant">
-          <Suspense fallback={<LoadingSpinner />}>
-            <RestaurantApp />
-          </Suspense>
-        </ErrorBoundary>
+        <Suspense fallback={<LoadingSpinner />}>
+          <RestaurantApp />
+        </Suspense>
       );
     }
 
+    console.log('[App] Loading app based on subdomain:', subdomain);
     switch (subdomain) {
       case 'app':
         return (
-          <ErrorBoundary name="customer">
-            <CustomerApp />
-          </ErrorBoundary>
+          <CustomerApp />
         );
       case 'restaurant':
         return (
-          <ErrorBoundary name="restaurant">
-            <Suspense fallback={<LoadingSpinner />}>
-              <RestaurantApp />
-            </Suspense>
-          </ErrorBoundary>
+          <Suspense fallback={<LoadingSpinner />}>
+            <RestaurantApp />
+          </Suspense>
         );
       case 'owner':
         return (
-          <ErrorBoundary name="owner">
-            <Suspense fallback={<LoadingSpinner />}>
-              <OwnerApp />
-            </Suspense>
-          </ErrorBoundary>
+          <Suspense fallback={<LoadingSpinner />}>
+            <OwnerApp />
+          </Suspense>
         );
       case 'admin':
         return (
-          <ErrorBoundary name="admin">
-            <Suspense fallback={<LoadingSpinner />}>
-              <AdminApp />
-            </Suspense>
-          </ErrorBoundary>
+          <Suspense fallback={<LoadingSpinner />}>
+            <AdminApp />
+          </Suspense>
         );
       case 'landing':
       default:
         return (
-          <ErrorBoundary name="landing">
-            <CustomerApp />
-          </ErrorBoundary>
+          <CustomerApp />
         );
     }
   };
@@ -262,11 +252,11 @@ const App = () => {
                     },
                     loading: {
                       iconTheme: {
-                        primary: '#f97316', // Orange-500 (Brand color)
+                        primary: '#F97316', // Orange-500 (Brand color)
                         secondary: '#fff',
                       },
                       style: {
-                        border: '1px solid #FED7AA', // border-primary-200 warning/loading type
+                        border: '1px solid #FED7AA', // border-orange-200 warning/loading type
                       }
                     }
                   }}

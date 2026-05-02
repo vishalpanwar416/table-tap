@@ -382,7 +382,7 @@ export default function SignUpPage() {
           <div className="w-full h-full flex flex-col">
             <div className="w-full px-6 py-8 relative flex items-center justify-center">
               <button
-                className="absolute left-4 text-primary-500 p-2"
+                className="absolute left-4 text-orange-500 p-2"
                 onClick={() => navigate(-1)}
               >
                 <ChevronLeft size={30} />
@@ -407,7 +407,7 @@ export default function SignUpPage() {
               <div className="w-full max-w-xs space-y-4">
                 <button
                   onClick={handleContinue}
-                  className="w-full bg-primary-500 text-white py-3.5 rounded-xl font-medium text-lg flex items-center justify-center gap-2 hover:bg-primary-600 transition-colors shadow-lg"
+                  className="w-full bg-orange-500 text-white py-3.5 rounded-xl font-medium text-lg flex items-center justify-center gap-2 hover:bg-orange-600 transition-colors shadow-lg"
                 >
                   <Home size={20} />
                   Go to Home
@@ -434,7 +434,7 @@ export default function SignUpPage() {
             <div className="w-full px-6 py-8 relative flex items-center justify-center">
               <button
                 onClick={() => navigate(-1)}
-                className="absolute left-4 text-primary-500 hover:text-primary-600 transition-all duration-300 p-2 rounded-full hover:bg-primary-500/10 active:bg-primary-500/20 focus:outline-none focus:ring-2 focus:ring-primary-500/30 z-10"
+                className="absolute left-4 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-10"
                 aria-label="Go back"
               >
                 <ChevronLeft size={30} />
@@ -462,13 +462,13 @@ export default function SignUpPage() {
                 onClick={() => fileInputRef.current && fileInputRef.current.click()}
                 style={{ width: 96, height: 96 }}
               >
-                <div className="w-24 h-24 rounded-full bg-white shadow-lg flex items-center justify-center overflow-hidden border-4 border-gray-300 group-hover:border-primary-400 transition-all">
+                <div className="w-24 h-24 rounded-full bg-white shadow-lg flex items-center justify-center overflow-hidden border-4 border-gray-300 group-hover:border-orange-400 transition-all">
                   {avatarLoading ? (
-                    <div className="w-10 h-10 border-4 border-primary-400 border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-10 h-10 border-4 border-orange-400 border-t-transparent rounded-full animate-spin"></div>
                   ) : avatarUrl ? (
                     <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
                   ) : formData.fullName ? (
-                    <span className="text-3xl font-bold text-primary-600">{getInitials(formData.fullName)}</span>
+                    <span className="text-3xl font-bold text-orange-600">{getInitials(formData.fullName)}</span>
                   ) : (
                     <UserIcon className="w-10 h-10 text-gray-400" />
                   )}
@@ -605,7 +605,7 @@ export default function SignUpPage() {
                       value={formData.mobileNumber}
                       onChange={handleChange}
                       placeholder="+91 98765 43210"
-                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-colors font-spartan"
+                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition-colors font-spartan"
                       required
                     />
                   </div>
@@ -646,7 +646,7 @@ export default function SignUpPage() {
                   <motion.button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-gray-600 text-white py-3 rounded-full mt-6 font-medium text-lg hover:bg-gray-700 transition-colors disabled:bg-primary-300"
+                    className="w-full bg-gray-600 text-white py-3 rounded-full mt-6 font-medium text-lg hover:bg-gray-700 transition-colors disabled:bg-orange-300"
                     variants={buttonVariants}
                     whileHover={!loading ? 'hover' : undefined}
                     whileTap={!loading ? 'tap' : undefined}

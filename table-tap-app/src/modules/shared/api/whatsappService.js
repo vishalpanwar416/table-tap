@@ -54,7 +54,7 @@ export const generateBillMessage = (order, restaurant) => {
         minute: '2-digit'
     });
 
-    const items = (order.items || []).map(item =>
+    const items = order.items.map(item => 
         `• ${item.name} x${item.quantity} - ${formatCurrency(item.price * item.quantity)}`
     ).join('\n');
     
@@ -101,7 +101,7 @@ _Powered by Table Tap_
 export const generateOrderConfirmationMessage = (order, restaurant) => {
     const formatCurrency = (amount) => `₹${(amount || 0).toFixed(2)}`;
     
-    const items = (order.items || []).map(item =>
+    const items = order.items.map(item => 
         `• ${item.name} x${item.quantity}`
     ).join('\n');
 

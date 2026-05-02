@@ -215,7 +215,7 @@ const SubscriptionSection = ({ restaurantId }) => {
                     contact: restaurantData?.contact_phone || ''
                 },
                 theme: {
-                    color: '#f97316' // Orange-500
+                    color: '#F97316' // Orange-500
                 },
                 // Restrict to selected payment method
                 config: {
@@ -369,8 +369,8 @@ const SubscriptionSection = ({ restaurantId }) => {
         if (!subscription) return null;
 
         const statusConfig = {
-            active: { bg: 'bg-primary-600', text: 'text-white', icon: CheckCircle, label: 'Active' },
-            grace_period: { bg: 'bg-primary-100', text: 'text-primary-700', icon: AlertTriangle, label: 'Grace Period' },
+            active: { bg: 'bg-orange-600', text: 'text-white', icon: CheckCircle, label: 'Active' },
+            grace_period: { bg: 'bg-orange-100', text: 'text-orange-700', icon: AlertTriangle, label: 'Grace Period' },
             expired: { bg: 'bg-slate-200', text: 'text-slate-700', icon: XCircle, label: 'Expired' },
             cancelled: { bg: 'bg-slate-100', text: 'text-slate-500', icon: XCircle, label: 'Cancelled' }
         };
@@ -395,7 +395,7 @@ const SubscriptionSection = ({ restaurantId }) => {
         name: masterPlan?.name || subscription.plan_name,
         description: masterPlan?.description || 'Legacy Subscription Plan',
         color: masterPlan?.color?.includes('blue') || masterPlan?.color?.includes('purple')
-            ? 'from-primary-600 to-amber-700'
+            ? 'from-orange-600 to-amber-700'
             : (masterPlan?.color || 'from-slate-900 to-black'),
         icon: masterPlan?.icon || Zap,
         features: masterPlan?.features || ['Core Features', 'Order Management'],
@@ -406,9 +406,9 @@ const SubscriptionSection = ({ restaurantId }) => {
 
     if (loading || masterLoading) {
         return (
-            <div className="bg-gradient-to-br from-slate-50 to-primary-50 rounded-2xl p-8 border">
+            <div className="bg-gradient-to-br from-slate-50 to-orange-50 rounded-2xl p-8 border">
                 <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+                    <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
                     <span className="ml-3 text-gray-600">Loading subscription...</span>
                 </div>
             </div>
@@ -420,7 +420,7 @@ const SubscriptionSection = ({ restaurantId }) => {
             {/* Section Header */}
             <div className="flex items-center justify-between">
                 <h3 className="text-lg md:text-xl font-semibold text-gray-900 flex items-center">
-                    <CreditCard className="w-4 h-4 md:w-5 md:h-5 mr-2 text-primary-600" />
+                    <CreditCard className="w-4 h-4 md:w-5 md:h-5 mr-2 text-orange-600" />
                     Subscription & Billing
                 </h3>
                 <button
@@ -441,10 +441,10 @@ const SubscriptionSection = ({ restaurantId }) => {
             {(!subscription) ? (
                 // No subscription found OR plan was deleted/missing - SHOW PLAN SELECTION
                 <div className="space-y-3 md:space-y-8">
-                    <div className="bg-gradient-to-r from-primary-50 to-amber-50 border border-primary-100 rounded-xl md:rounded-2xl p-3 md:p-6 flex flex-col md:flex-row items-center gap-4 md:gap-6 text-center md:text-left">
+                    <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-100 rounded-xl md:rounded-2xl p-3 md:p-6 flex flex-col md:flex-row items-center gap-4 md:gap-6 text-center md:text-left">
                         <div className="flex flex-col md:flex-row items-center gap-2 md:gap-5 flex-1">
                             <div className="w-10 h-10 md:w-16 md:h-16 bg-white rounded-lg md:rounded-2xl shadow-sm flex items-center justify-center flex-shrink-0">
-                                <Star className="w-5 h-5 md:w-8 md:h-8 text-primary-600" />
+                                <Star className="w-5 h-5 md:w-8 md:h-8 text-orange-600" />
                             </div>
                             <div>
                                 <h4 className="text-base md:text-xl font-bold text-gray-900">Choose your TableTap plan</h4>
@@ -459,7 +459,7 @@ const SubscriptionSection = ({ restaurantId }) => {
                                     key={key}
                                     onClick={() => setSelectedCycle(key)}
                                     className={`flex-none px-2 md:px-6 py-2 md:py-3.5 rounded-lg md:rounded-xl text-[9px] md:text-sm font-black transition-all duration-300 whitespace-nowrap flex items-center justify-center group ${selectedCycle === key
-                                        ? 'bg-gradient-to-r from-primary-600 to-amber-600 text-white shadow-lg'
+                                        ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-lg'
                                         : 'text-gray-500 hover:bg-gray-50'
                                         }`}
                                 >
@@ -479,7 +479,7 @@ const SubscriptionSection = ({ restaurantId }) => {
                             if (!cycleData) return null;
 
                             return (
-                                <div key={key} className="bg-white border hover:border-primary-200 rounded-xl md:rounded-2xl overflow-hidden transition-all hover:shadow-xl flex flex-col">
+                                <div key={key} className="bg-white border hover:border-orange-200 rounded-xl md:rounded-2xl overflow-hidden transition-all hover:shadow-xl flex flex-col">
                                     <div className={`h-1 md:h-2 bg-gradient-to-r ${plan.color}`} />
                                     <div className="p-3 md:p-6 flex-1">
                                         <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-4">
@@ -493,7 +493,7 @@ const SubscriptionSection = ({ restaurantId }) => {
                                         <div className="space-y-1 md:space-y-2">
                                             {plan.features.slice(0, 3).map((feature, i) => (
                                                 <div key={i} className="flex items-center gap-1.5 text-[9px] md:text-sm text-gray-600">
-                                                    <CheckCircle className="w-3 h-3 md:w-4 md:h-4 text-primary-500" />
+                                                    <CheckCircle className="w-3 h-3 md:w-4 md:h-4 text-orange-500" />
                                                     <span className="truncate">{feature}</span>
                                                 </div>
                                             ))}
@@ -510,7 +510,7 @@ const SubscriptionSection = ({ restaurantId }) => {
                                                 <span className="text-gray-500 text-[10px] md:text-sm font-medium">/{selectedCycle === 'monthly' ? 'mo' : cycleData.label.split(' ')[0]}</span>
                                             </div>
                                             {cycleData.discount > 0 && (
-                                                <div className="text-primary-600 text-[8px] md:text-xs font-bold mb-2 md:mb-4">
+                                                <div className="text-orange-600 text-[8px] md:text-xs font-bold mb-2 md:mb-4">
                                                     Save ₹{(plan.basePrice * cycleData.months - price).toLocaleString()}
                                                 </div>
                                             )}
@@ -544,7 +544,7 @@ const SubscriptionSection = ({ restaurantId }) => {
                         <div className="flex items-start justify-between mb-3 md:mb-6">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 md:w-12 md:h-12 bg-white/10 rounded-lg md:rounded-xl flex items-center justify-center border border-white/20">
-                                    <PlanIcon className="w-5 h-5 md:w-6 md:h-6 text-primary-400" />
+                                    <PlanIcon className="w-5 h-5 md:w-6 md:h-6 text-orange-400" />
                                 </div>
                                 <div>
                                     <h4 className="text-lg md:text-2xl font-black tracking-tight">{currentPlan.name} Plan</h4>
@@ -571,7 +571,7 @@ const SubscriptionSection = ({ restaurantId }) => {
                             </div>
                             <div className="bg-white/10 rounded-lg md:rounded-xl p-2.5 md:p-4">
                                 <p className="text-white/70 text-[10px] uppercase tracking-wider mb-0.5 md:mb-1">Remaining</p>
-                                <p className={`text-xs md:text-base font-semibold ${daysRemaining <= 7 ? 'text-primary-400' : ''}`}>
+                                <p className={`text-xs md:text-base font-semibold ${daysRemaining <= 7 ? 'text-orange-400' : ''}`}>
                                     {daysRemaining !== null ? (daysRemaining > 0 ? `${daysRemaining} Days` : 'Expired') : 'N/A'}
                                 </p>
                             </div>
@@ -600,13 +600,13 @@ const SubscriptionSection = ({ restaurantId }) => {
 
                     {/* Expiry Warning */}
                     {daysRemaining !== null && daysRemaining <= 14 && daysRemaining > 0 && subscription.status === 'active' && (
-                        <div className="bg-gradient-to-r from-primary-50 to-amber-50 border border-primary-200 rounded-xl p-2.5 md:p-4 flex items-center gap-3 md:gap-4">
-                            <div className="w-9 h-9 md:w-12 md:h-12 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                <AlertTriangle className="w-4 h-4 md:w-6 md:h-6 text-primary-500" />
+                        <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-xl p-2.5 md:p-4 flex items-center gap-3 md:gap-4">
+                            <div className="w-9 h-9 md:w-12 md:h-12 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <AlertTriangle className="w-4 h-4 md:w-6 md:h-6 text-orange-500" />
                             </div>
                             <div className="flex-1">
-                                <h4 className="text-sm md:text-base font-semibold text-primary-800">Subscription Expiring Soon</h4>
-                                <p className="text-primary-700 text-xs md:text-sm">
+                                <h4 className="text-sm md:text-base font-semibold text-orange-800">Subscription Expiring Soon</h4>
+                                <p className="text-orange-700 text-xs md:text-sm">
                                     Your subscription will expire in {daysRemaining} days.
                                 </p>
                             </div>
@@ -617,15 +617,15 @@ const SubscriptionSection = ({ restaurantId }) => {
                     <div className="bg-white rounded-xl md:rounded-2xl border p-3 md:p-6 mb-4 md:mb-6">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-6 mb-4 md:mb-8">
                             <h4 className="text-sm md:text-base font-semibold text-gray-900 flex items-center gap-2">
-                                <RefreshCw className="w-4 h-4 md:w-5 md:h-5 text-primary-500" />
+                                <RefreshCw className="w-4 h-4 md:w-5 md:h-5 text-orange-500" />
                                 Renew Your {currentPlan.name} Subscription
                             </h4>
 
                             {!currentPlan.isAvailable ? (
                                 <div className="space-y-6 w-full mt-4">
-                                    <div className="bg-primary-50 border border-primary-200 rounded-xl p-3 md:p-6 text-center">
-                                        <div className="w-10 h-10 md:w-12 md:h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                            <AlertTriangle className="w-5 h-5 md:w-6 md:h-6 text-primary-600" />
+                                    <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 md:p-6 text-center">
+                                        <div className="w-10 h-10 md:w-12 md:h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                            <AlertTriangle className="w-5 h-5 md:w-6 md:h-6 text-orange-600" />
                                         </div>
                                         <h4 className="text-sm md:text-lg font-bold text-gray-900 mb-1">Plan No Longer Available</h4>
                                         <p className="text-[10px] md:text-sm text-gray-600 max-w-sm mx-auto">
@@ -643,7 +643,7 @@ const SubscriptionSection = ({ restaurantId }) => {
                                                         key={key}
                                                         onClick={() => setSelectedCycle(key)}
                                                         className={`flex-none px-2 py-2 rounded-lg text-[8px] md:text-xs font-black transition-all duration-300 whitespace-nowrap flex items-center ${selectedCycle === key
-                                                            ? 'bg-gradient-to-r from-primary-600 to-amber-600 text-white shadow-md'
+                                                            ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-md'
                                                             : 'text-gray-500 hover:text-gray-900 hover:bg-white'
                                                             }`}
                                                     >
@@ -659,7 +659,7 @@ const SubscriptionSection = ({ restaurantId }) => {
                                                 const price = calculatePrice(plan.basePrice, selectedCycle);
                                                 const totalWithGst = Math.round(price * 1.18);
                                                 return (
-                                                    <div key={key} className="bg-white border hover:border-primary-300 rounded-xl md:rounded-2xl p-3 md:p-6 transition-all hover:shadow-lg flex flex-col text-left">
+                                                    <div key={key} className="bg-white border hover:border-orange-300 rounded-xl md:rounded-2xl p-3 md:p-6 transition-all hover:shadow-lg flex flex-col text-left">
                                                         <div className="flex items-center gap-2 mb-2 md:mb-4">
                                                             <div className="p-1 md:p-2 bg-gray-50 rounded-lg">
                                                                 <Icon className="w-4 h-4 md:w-5 md:h-5 text-gray-700" />
@@ -693,7 +693,7 @@ const SubscriptionSection = ({ restaurantId }) => {
                                             key={key}
                                             onClick={() => setSelectedCycle(key)}
                                             className={`flex-none px-2.5 md:px-5 py-2.5 md:py-3 rounded-xl text-[9px] md:text-xs font-black transition-all duration-300 whitespace-nowrap flex items-center gap-2 ${selectedCycle === key
-                                                ? 'bg-white text-primary-600 shadow-[0_4px_12px_rgba(0,0,0,0.05)] border border-primary-100'
+                                                ? 'bg-white text-orange-600 shadow-[0_4px_12px_rgba(0,0,0,0.05)] border border-orange-100'
                                                 : 'text-gray-500 hover:text-gray-900 border border-transparent'
                                                 }`}
                                         >
@@ -723,7 +723,7 @@ const SubscriptionSection = ({ restaurantId }) => {
                                 <button
                                     onClick={() => openPaymentModal(subscription.plan_name, selectedCycle)}
                                     disabled={processing}
-                                    className={`w-full max-w-sm mx-auto py-3 md:py-4 bg-gradient-to-r from-primary-600 to-amber-600 text-white font-bold rounded-xl md:rounded-2xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 mb-3 md:mb-4 text-sm md:text-base`}
+                                    className={`w-full max-w-sm mx-auto py-3 md:py-4 bg-gradient-to-r from-orange-600 to-amber-600 text-white font-bold rounded-xl md:rounded-2xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 mb-3 md:mb-4 text-sm md:text-base`}
                                 >
                                     {processing ? (
                                         <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" />
@@ -741,15 +741,15 @@ const SubscriptionSection = ({ restaurantId }) => {
                         )}
                     </div>
 
-                    <div className="bg-gradient-to-br from-slate-50 to-primary-50 rounded-xl md:rounded-2xl p-3 md:p-6 border mb-4 md:mb-6">
+                    <div className="bg-gradient-to-br from-slate-50 to-orange-50 rounded-xl md:rounded-2xl p-3 md:p-6 border mb-4 md:mb-6">
                         <h4 className="text-[11px] md:text-base font-semibold text-gray-900 mb-2 md:mb-4 flex items-center gap-2">
-                            <Star className="w-3.5 h-3.5 md:w-5 md:h-5 text-primary-500" />
+                            <Star className="w-3.5 h-3.5 md:w-5 md:h-5 text-orange-500" />
                             Your Plan Includes
                         </h4>
                         <div className="grid grid-cols-2 md:grid-cols-2 gap-2 md:gap-3">
                             {currentPlan.features.map((feature, idx) => (
                                 <div key={idx} className="flex items-center gap-1.5 md:gap-3 p-1.5 md:p-3 bg-white rounded-lg md:rounded-xl border shadow-sm">
-                                    <CheckCircle className="w-3 h-3 md:w-5 md:h-5 text-primary-500 flex-shrink-0" />
+                                    <CheckCircle className="w-3 h-3 md:w-5 md:h-5 text-orange-500 flex-shrink-0" />
                                     <span className="text-[9px] md:text-sm text-gray-700 font-medium truncate">{feature}</span>
                                 </div>
                             ))}
@@ -757,12 +757,12 @@ const SubscriptionSection = ({ restaurantId }) => {
                     </div>
 
                     {/* Autopay Status */}
-                    <div className="bg-gradient-to-br from-amber-50 to-primary-50 rounded-xl md:rounded-2xl p-3 md:p-5 border border-primary-100 mb-4 md:mb-6">
+                    <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl md:rounded-2xl p-3 md:p-5 border border-orange-100 mb-4 md:mb-6">
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 md:gap-4">
                             <div className="flex items-center gap-3 md:gap-4 w-full sm:w-auto text-left">
-                                <div className={`w-9 h-9 md:w-12 md:h-12 rounded-lg md:rounded-xl flex items-center justify-center shrink-0 ${subscription.auto_renew ? 'bg-primary-100' : 'bg-gray-100'}`}>
+                                <div className={`w-9 h-9 md:w-12 md:h-12 rounded-lg md:rounded-xl flex items-center justify-center shrink-0 ${subscription.auto_renew ? 'bg-orange-100' : 'bg-gray-100'}`}>
                                     {subscription.auto_renew ? (
-                                        <Bell className="w-5 h-5 md:w-6 md:h-6 text-primary-600" />
+                                        <Bell className="w-5 h-5 md:w-6 md:h-6 text-orange-600" />
                                     ) : (
                                         <BellOff className="w-5 h-5 md:w-6 md:h-6 text-gray-400" />
                                     )}
@@ -781,7 +781,7 @@ const SubscriptionSection = ({ restaurantId }) => {
                                 disabled={autopayUpdating}
                                 className={`w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 md:px-6 py-2 rounded-lg md:rounded-xl text-[10px] md:text-sm font-black transition-all ${subscription.auto_renew
                                     ? 'bg-slate-900 text-white hover:bg-black'
-                                    : 'bg-primary-50 text-primary-600 hover:bg-primary-100'
+                                    : 'bg-orange-50 text-orange-600 hover:bg-orange-100'
                                     } disabled:opacity-50 border border-transparent shadow-sm`}
                             >
                                 {autopayUpdating ? (
@@ -817,11 +817,11 @@ const SubscriptionSection = ({ restaurantId }) => {
                     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                         <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden">
                             {/* Header */}
-                            <div className="bg-gradient-to-r from-primary-600 to-amber-600 px-6 py-5">
+                            <div className="bg-gradient-to-r from-orange-600 to-amber-600 px-6 py-5">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <h3 className="text-xl font-bold text-white">Choose Payment Method</h3>
-                                        <p className="text-primary-100 text-sm mt-1">
+                                        <p className="text-orange-100 text-sm mt-1">
                                             {plans[selectedPlan.planKey]?.name} Plan - {billingCycles[selectedPlan.billingCycle]?.label}
                                         </p>
                                     </div>
@@ -845,15 +845,15 @@ const SubscriptionSection = ({ restaurantId }) => {
                                         <button
                                             onClick={() => setPaymentMethod('card')}
                                             className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${paymentMethod === 'card'
-                                                ? 'border-primary-500 bg-primary-50'
-                                                : 'border-gray-200 hover:border-primary-200'
+                                                ? 'border-orange-500 bg-orange-50'
+                                                : 'border-gray-200 hover:border-orange-200'
                                                 }`}
                                         >
-                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${paymentMethod === 'card' ? 'bg-primary-100' : 'bg-gray-100'
+                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${paymentMethod === 'card' ? 'bg-orange-100' : 'bg-gray-100'
                                                 }`}>
-                                                <CreditCard className={`w-6 h-6 ${paymentMethod === 'card' ? 'text-primary-600' : 'text-gray-500'}`} />
+                                                <CreditCard className={`w-6 h-6 ${paymentMethod === 'card' ? 'text-orange-600' : 'text-gray-500'}`} />
                                             </div>
-                                            <span className={`font-semibold ${paymentMethod === 'card' ? 'text-primary-700' : 'text-gray-700'}`}>
+                                            <span className={`font-semibold ${paymentMethod === 'card' ? 'text-orange-700' : 'text-gray-700'}`}>
                                                 Credit/Debit Card
                                             </span>
                                             <span className="text-xs text-gray-500">Visa, Mastercard, RuPay</span>
@@ -862,15 +862,15 @@ const SubscriptionSection = ({ restaurantId }) => {
                                         <button
                                             onClick={() => setPaymentMethod('upi')}
                                             className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${paymentMethod === 'upi'
-                                                ? 'border-primary-500 bg-primary-50'
-                                                : 'border-gray-200 hover:border-primary-200'
+                                                ? 'border-orange-500 bg-orange-50'
+                                                : 'border-gray-200 hover:border-orange-200'
                                                 }`}
                                         >
-                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${paymentMethod === 'upi' ? 'bg-primary-100' : 'bg-gray-100'
+                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${paymentMethod === 'upi' ? 'bg-orange-100' : 'bg-gray-100'
                                                 }`}>
-                                                <Smartphone className={`w-6 h-6 ${paymentMethod === 'upi' ? 'text-primary-600' : 'text-gray-500'}`} />
+                                                <Smartphone className={`w-6 h-6 ${paymentMethod === 'upi' ? 'text-orange-600' : 'text-gray-500'}`} />
                                             </div>
-                                            <span className={`font-semibold ${paymentMethod === 'upi' ? 'text-primary-700' : 'text-gray-700'}`}>
+                                            <span className={`font-semibold ${paymentMethod === 'upi' ? 'text-orange-700' : 'text-gray-700'}`}>
                                                 UPI
                                             </span>
                                             <span className="text-xs text-gray-500">GPay, PhonePe, Paytm</span>
@@ -879,11 +879,11 @@ const SubscriptionSection = ({ restaurantId }) => {
                                 </div>
 
                                 {/* Autopay Toggle */}
-                                <div className="bg-gradient-to-br from-primary-50 to-amber-50 rounded-xl p-4 border border-primary-100">
+                                <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-4 border border-orange-100">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${enableAutopay ? 'bg-primary-100' : 'bg-gray-100'}`}>
-                                                <RefreshCw className={`w-5 h-5 ${enableAutopay ? 'text-primary-600' : 'text-gray-400'}`} />
+                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${enableAutopay ? 'bg-orange-100' : 'bg-gray-100'}`}>
+                                                <RefreshCw className={`w-5 h-5 ${enableAutopay ? 'text-orange-600' : 'text-gray-400'}`} />
                                             </div>
                                             <div>
                                                 <h4 className="font-semibold text-gray-900">Enable Autopay</h4>
@@ -897,12 +897,12 @@ const SubscriptionSection = ({ restaurantId }) => {
                                                 onChange={(e) => setEnableAutopay(e.target.checked)}
                                                 className="sr-only peer"
                                             />
-                                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
                                         </label>
                                     </div>
                                     {enableAutopay && (
                                         <div className="mt-3 p-3 bg-white/50 rounded-lg flex gap-2 items-start">
-                                            <Info className="w-4 h-4 text-primary-500 shrink-0 mt-0.5" />
+                                            <Info className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
                                             <p className="text-[10px] text-gray-600 leading-relaxed">
                                                 Your card/UPI will be automatically charged {billingCycles[selectedPlan.billingCycle]?.label.toLowerCase()} for uninterrupted service. You can disable this anytime in your dashboard.
                                             </p>
@@ -922,7 +922,7 @@ const SubscriptionSection = ({ restaurantId }) => {
                                     </div>
                                     <div className="flex justify-between items-center py-4 border-t border-gray-100">
                                         <span className="text-lg font-bold text-gray-900">Total Amount</span>
-                                        <span className="text-2xl font-black text-primary-600">
+                                        <span className="text-2xl font-black text-orange-600">
                                             ₹{Math.round(calculatePrice(plans[selectedPlan.planKey]?.basePrice, selectedPlan.billingCycle) * 1.18).toLocaleString()}
                                         </span>
                                     </div>
@@ -931,7 +931,7 @@ const SubscriptionSection = ({ restaurantId }) => {
                                 <button
                                     onClick={handlePayment}
                                     disabled={processing}
-                                    className="w-full py-4 bg-gradient-to-r from-primary-600 to-amber-600 text-white font-bold rounded-2xl shadow-lg hover:shadow-primary-200 transition-all flex items-center justify-center gap-2 transform active:scale-[0.98]"
+                                    className="w-full py-4 bg-gradient-to-r from-orange-600 to-amber-600 text-white font-bold rounded-2xl shadow-lg hover:shadow-orange-200 transition-all flex items-center justify-center gap-2 transform active:scale-[0.98]"
                                 >
                                     {processing ? (
                                         <Loader2 className="w-5 h-5 animate-spin" />

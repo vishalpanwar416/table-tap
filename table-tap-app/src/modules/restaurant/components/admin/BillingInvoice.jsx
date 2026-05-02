@@ -162,7 +162,7 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
     const getStatusColor = (status) => {
         switch (status) {
             case 'active': return 'bg-green-100 text-green-700 border-green-200';
-            case 'grace_period': return 'bg-primary-100 text-primary-700 border-primary-200';
+            case 'grace_period': return 'bg-orange-100 text-orange-700 border-orange-200';
             case 'expired': return 'bg-red-100 text-red-700 border-red-200';
             case 'cancelled': return 'bg-gray-100 text-gray-700 border-gray-200';
             default: return 'bg-blue-100 text-blue-700 border-blue-200';
@@ -173,8 +173,8 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
         switch (action) {
             case 'purchased': return 'bg-green-100 text-green-700';
             case 'renewed': return 'bg-blue-100 text-blue-700';
-            case 'upgraded': return 'bg-primary-100 text-primary-700';
-            case 'downgraded': return 'bg-primary-100 text-primary-700';
+            case 'upgraded': return 'bg-orange-100 text-orange-700';
+            case 'downgraded': return 'bg-orange-100 text-orange-700';
             case 'cancelled': return 'bg-red-100 text-red-700';
             case 'expired': return 'bg-gray-100 text-gray-700';
             default: return 'bg-gray-100 text-gray-700';
@@ -342,7 +342,7 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
             {/* Slide Panel */}
             <div className="absolute inset-y-0 right-0 w-full max-w-3xl bg-white shadow-2xl transform transition-transform">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-primary-600 to-amber-600 px-4 md:px-6 py-3 md:py-5">
+                <div className="bg-gradient-to-r from-orange-600 to-amber-600 px-4 md:px-6 py-3 md:py-5">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 md:gap-4">
                             <div className="w-8 h-8 md:w-12 md:h-12 bg-white/20 rounded-lg md:rounded-xl flex items-center justify-center shrink-0">
@@ -350,7 +350,7 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                             </div>
                             <div>
                                 <h2 className="text-base md:text-xl font-bold text-white leading-tight">Billing & Invoices</h2>
-                                <p className="text-primary-100 text-[10px] md:text-sm truncate max-w-[150px] md:max-w-none">{restaurant?.name || 'Restaurant'}</p>
+                                <p className="text-orange-100 text-[10px] md:text-sm truncate max-w-[150px] md:max-w-none">{restaurant?.name || 'Restaurant'}</p>
                             </div>
                         </div>
                         <button
@@ -372,7 +372,7 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`flex items-center gap-1 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === tab.id
-                                    ? 'bg-white text-primary-600'
+                                    ? 'bg-white text-orange-600'
                                     : 'bg-white/20 text-white hover:bg-white/30'
                                     }`}
                             >
@@ -387,7 +387,7 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                 <div className="overflow-y-auto h-[calc(100vh-180px)] p-6">
                     {loading ? (
                         <div className="flex items-center justify-center h-64">
-                            <RefreshCw className="w-8 h-8 text-primary-600 animate-spin" />
+                            <RefreshCw className="w-8 h-8 text-orange-600 animate-spin" />
                         </div>
                     ) : (
                         <>
@@ -395,10 +395,10 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                             {activeTab === 'overview' && (
                                 <div className="space-y-6">
                                     {/* Current Plan Card */}
-                                    <div className="bg-gradient-to-br from-primary-50 to-amber-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-primary-100 shadow-sm">
+                                    <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-orange-100 shadow-sm">
                                         <div className="flex flex-row items-center justify-between mb-3 md:mb-6 gap-2">
                                             <div>
-                                                <p className="text-[9px] md:text-sm text-primary-600 font-black mb-0.5 md:mb-1 uppercase tracking-widest">Plan</p>
+                                                <p className="text-[9px] md:text-sm text-orange-600 font-black mb-0.5 md:mb-1 uppercase tracking-widest">Plan</p>
                                                 <h3 className="text-base md:text-2xl font-black text-gray-900 capitalize leading-none">
                                                     {subscription?.plan_name || 'No Active Plan'}
                                                 </h3>
@@ -412,19 +412,19 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
 
                                         {subscription ? (
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
-                                                <div className="bg-white rounded-lg md:rounded-xl p-2 md:p-4 border border-primary-50/50 shadow-sm">
+                                                <div className="bg-white rounded-lg md:rounded-xl p-2 md:p-4 border border-orange-50/50 shadow-sm">
                                                     <p className="text-[8px] md:text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5 md:mb-1 text-center sm:text-left">Billing</p>
                                                     <p className="text-[11px] md:text-base font-black text-gray-900 capitalize text-center sm:text-left truncate">{subscription.billing_cycle}</p>
                                                 </div>
-                                                <div className="bg-white rounded-lg md:rounded-xl p-2 md:p-4 border border-primary-50/50 shadow-sm">
+                                                <div className="bg-white rounded-lg md:rounded-xl p-2 md:p-4 border border-orange-50/50 shadow-sm">
                                                     <p className="text-[8px] md:text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5 md:mb-1 text-center sm:text-left">Amount</p>
                                                     <p className="text-[11px] md:text-base font-black text-gray-900 text-center sm:text-left truncate">{formatCurrency(subscription.total_amount)}</p>
                                                 </div>
-                                                <div className="bg-white rounded-lg md:rounded-xl p-2 md:p-4 border border-primary-50/50 shadow-sm">
+                                                <div className="bg-white rounded-lg md:rounded-xl p-2 md:p-4 border border-orange-50/50 shadow-sm">
                                                     <p className="text-[8px] md:text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5 md:mb-1 text-center sm:text-left">Until</p>
                                                     <p className="text-[11px] md:text-base font-black text-gray-900 text-center sm:text-left truncate">{formatDate(subscription.end_date)}</p>
                                                 </div>
-                                                <div className="bg-white rounded-lg md:rounded-xl p-2 md:p-4 border border-primary-50/50 shadow-sm">
+                                                <div className="bg-white rounded-lg md:rounded-xl p-2 md:p-4 border border-orange-50/50 shadow-sm">
                                                     <p className="text-[8px] md:text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5 md:mb-1 text-center sm:text-left">Days</p>
                                                     <p className={`text-[11px] md:text-base font-black text-center sm:text-left truncate ${getDaysRemaining() < 7 ? 'text-red-500' : 'text-green-500'}`}>
                                                         {getDaysRemaining()}
@@ -466,8 +466,8 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
 
                                         <div className="bg-white rounded-lg md:rounded-xl p-2.5 md:p-5 border border-gray-100 shadow-sm flex flex-col items-center sm:items-start text-center sm:text-left">
                                             <div className="flex items-center gap-1.5 md:gap-3 mb-1 md:mb-3">
-                                                <div className="p-1 md:p-2 bg-primary-50 rounded-lg">
-                                                    <Calendar className="w-3 h-3 md:w-5 md:h-5 text-primary-600" />
+                                                <div className="p-1 md:p-2 bg-orange-50 rounded-lg">
+                                                    <Calendar className="w-3 h-3 md:w-5 md:h-5 text-orange-600" />
                                                 </div>
                                                 <p className="hidden sm:block text-[10px] md:text-sm text-gray-500 font-bold">Joined</p>
                                             </div>
@@ -523,13 +523,13 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                                                 placeholder="Search payments..."
                                                 value={searchTerm}
                                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                                className="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                                                className="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
                                             />
                                         </div>
                                         <select
                                             value={filterStatus}
                                             onChange={(e) => setFilterStatus(e.target.value)}
-                                            className="px-4 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-white"
+                                            className="px-4 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 bg-white"
                                         >
                                             <option value="all">All Actions</option>
                                             <option value="purchased">Purchased</option>
@@ -542,7 +542,7 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                                     {/* History List */}
                                     {historyLoading ? (
                                         <div className="flex items-center justify-center h-32">
-                                            <RefreshCw className="w-6 h-6 text-primary-600 animate-spin" />
+                                            <RefreshCw className="w-6 h-6 text-orange-600 animate-spin" />
                                         </div>
                                     ) : filteredHistory.length === 0 ? (
                                         <div className="text-center py-12 bg-gray-50 rounded-xl">
@@ -554,7 +554,7 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                                             {filteredHistory.map((item, index) => (
                                                 <div
                                                     key={item.id || index}
-                                                    className="bg-white rounded-xl p-3 md:p-4 border border-gray-200 hover:border-primary-200 transition-colors"
+                                                    className="bg-white rounded-xl p-3 md:p-4 border border-gray-200 hover:border-orange-200 transition-colors"
                                                 >
                                                     <div className="flex items-center justify-between gap-3">
                                                         <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
@@ -593,7 +593,7 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                                 <div className="space-y-4">
                                     {historyLoading ? (
                                         <div className="flex items-center justify-center h-32">
-                                            <RefreshCw className="w-6 h-6 text-primary-600 animate-spin" />
+                                            <RefreshCw className="w-6 h-6 text-orange-600 animate-spin" />
                                         </div>
                                     ) : paymentHistory.filter(p => p.amount_paid > 0).length === 0 ? (
                                         <div className="text-center py-12 bg-gray-50 rounded-xl">
@@ -618,7 +618,7 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                                                         >
                                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                                                 <div className="flex items-center gap-2 md:gap-4">
-                                                                    <div className="w-9 h-9 md:w-12 md:h-12 bg-gradient-to-br from-primary-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary-100 shrink-0">
+                                                                    <div className="w-9 h-9 md:w-12 md:h-12 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-100 shrink-0">
                                                                         <FileText className="w-4 h-4 md:w-6 md:h-6 text-white" />
                                                                     </div>
                                                                     <div className="min-w-0">
@@ -661,7 +661,7 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                                                                         <button
                                                                             onClick={() => handleSendInvoiceEmail(payment)}
                                                                             disabled={processingId === `email-${payment.id}`}
-                                                                            className="p-1.5 md:p-2.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors disabled:opacity-50"
+                                                                            className="p-1.5 md:p-2.5 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors disabled:opacity-50"
                                                                             title="Email"
                                                                         >
                                                                             {processingId === `email-${payment.id}` ? (
@@ -712,8 +712,8 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                         {/* Modal Header */}
                         <div className="flex flex-col sm:flex-row items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-gray-200 bg-gray-50 gap-3">
                             <div className="flex items-center gap-3 w-full sm:w-auto">
-                                <div className="w-9 h-9 md:w-10 md:h-10 bg-primary-100 rounded-xl flex items-center justify-center shrink-0">
-                                    <FileText className="w-5 h-5 text-primary-600" />
+                                <div className="w-9 h-9 md:w-10 md:h-10 bg-orange-100 rounded-xl flex items-center justify-center shrink-0">
+                                    <FileText className="w-5 h-5 text-orange-600" />
                                 </div>
                                 <div className="min-w-0">
                                     <h3 className="font-bold text-gray-900 text-sm md:text-base truncate">Invoice Preview</h3>
@@ -742,7 +742,7 @@ const BillingInvoice = ({ isOpen, onClose, restaurantId, restaurant }) => {
                                             // Fallback handled in function
                                         }
                                     }}
-                                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 md:px-4 py-2 text-xs md:text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors shadow-sm"
+                                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 md:px-4 py-2 text-xs md:text-sm bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors shadow-sm"
                                 >
                                     <Download className="w-3.5 h-3.5 md:w-4 md:h-4" />
                                     PDF

@@ -128,7 +128,7 @@ export default function AdminLoginPage() {
                 {/* Header */}
                 <div className="w-full px-6 py-8 relative flex items-center justify-center">
                     <button
-                        className="absolute left-4 text-primary-500 hover:text-primary-600 transition-all duration-300 p-2 rounded-full hover:bg-primary-500/10 active:bg-primary-500/20 focus:outline-none focus:ring-2 focus:ring-primary-500/30 z-10"
+                        className="absolute left-4 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-10"
                         onClick={() => navigate(-1)}
                         aria-label="Go back"
                     >
@@ -157,8 +157,8 @@ export default function AdminLoginPage() {
                         className="text-center mb-8"
                         variants={itemVariants}
                     >
-                        <div className="w-16 h-16 bg-primary-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                            <ShieldCheck className="text-primary-500" size={32} />
+                        <div className="w-16 h-16 bg-orange-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <ShieldCheck className="text-orange-500" size={32} />
                         </div>
                         <h2 className="text-black text-3xl font-semibold mb-2">
                             Welcome Back, Admin!
@@ -203,7 +203,7 @@ export default function AdminLoginPage() {
                                 }}
                                 placeholder="Enter admin email"
                                 required
-                                className="w-full p-4 bg-white rounded-xl text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 border border-gray-300"
+                                className="w-full p-4 bg-white rounded-xl text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300"
                             />
                         </motion.div>
 
@@ -217,7 +217,7 @@ export default function AdminLoginPage() {
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="Enter password"
                                     required
-                                    className="w-full p-4 bg-white rounded-xl text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 border border-gray-300 pr-12"
+                                    className="w-full p-4 bg-white rounded-xl text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 pr-12"
                                 />
                                 <button
                                     type="button"
@@ -230,7 +230,7 @@ export default function AdminLoginPage() {
                             <div className="flex justify-end mt-2">
                                 <Link
                                     to="/admin/forgot-password"
-                                    className="text-primary-500 text-sm font-medium hover:text-primary-600"
+                                    className="text-orange-500 text-sm font-medium hover:text-orange-600"
                                 >
                                     Forgot Password?
                                 </Link>

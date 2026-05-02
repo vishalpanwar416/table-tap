@@ -167,7 +167,7 @@ const Sidebar = ({
                     onClick={() => handleTabChange(item.id)}
                     title={collapsed ? item.label : undefined}
                     className={`flex items-center w-full p-3 rounded-lg transition-colors ${collapsed ? 'justify-center' : ''} ${activeTab === item.id
-                      ? 'bg-primary-500 text-white'
+                      ? 'bg-orange-500 text-white'
                       : 'hover:bg-gray-800 text-gray-300'
                       }`}
                   >
@@ -193,7 +193,7 @@ const Sidebar = ({
                   />
                 ) : (
                   <div
-                    className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center text-white font-medium cursor-pointer transition-transform group-hover:scale-105"
+                    className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-medium cursor-pointer transition-transform group-hover:scale-105"
                     onClick={onProfilePhotoClick}
                     title={collapsed ? (currentUser?.email || 'Profile') : undefined}
                   >
@@ -215,7 +215,7 @@ const Sidebar = ({
                   <p className="user-email text-xs text-gray-400 truncate">
                     {currentUser?.email}
                   </p>
-                  <p className="user-role text-xs text-primary-400 font-medium">
+                  <p className="user-role text-xs text-orange-400 font-medium">
                     {getRoleDisplayName(userRole)}
                   </p>
                 </div>

@@ -1,7 +1,0 @@
-build
-coverage
-node_modules
-public
-package-lock.json
-e2e/playwright-report
-test-results

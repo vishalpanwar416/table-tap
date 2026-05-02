@@ -224,7 +224,7 @@ export const createOrder = async (orderData) => {
         : `guest_${orderData.customerPhone.replace(/[^0-9]/g, '')}@tabletap.com`,
       customer_phone: (orderData.customerPhone || '').trim(),
       table_number: orderData.tableNumber || 'Not Specified',
-      items: (orderData.items || []).map(item => ({
+      items: orderData.items.map(item => ({
         food_item_id: item.id,
         quantity: item.quantity,
         price: item.price,
@@ -263,7 +263,7 @@ export const createOrder = async (orderData) => {
       customerPhone: order.customer_phone,
       tableNumber: order.table_number,
       total: order.total,
-      itemsCount: order.items?.length || 0,
+      itemsCount: order.items.length,
       isGuest: !orderData.userId
     });
 
@@ -969,7 +969,7 @@ const handlePaymentSuccessOrderFailure = async ({
         }
       },
       contactSupport: () => {
-        const supportPhone = restaurant.contact_phone || '1800-xxx-xxxx';
+        const supportPhone = restaurant.phone || '1800-xxx-xxxx';
         const supportEmail = restaurant.email || 'support@restaurant.com';
         const message = `Payment ID: ${paymentResponse.razorpay_payment_id}\nAmount: ₹${finalTotal}\nRestaurant: ${restaurant.name}\nTable: ${tableNumber}\nIssue: Payment successful but order creation failed`;
         if (supportPhone) {

@@ -122,7 +122,7 @@ const SubscriptionManagementV2 = () => {
     description: '',
     base_price: 0,
     features: [],
-    color: 'from-primary-500 to-cyan-500',
+    color: 'from-blue-500 to-cyan-500',
     icon: 'Zap',
     is_active: true,
     is_public: true,
@@ -319,7 +319,7 @@ const SubscriptionManagementV2 = () => {
         ...plan,
         features: Array.isArray(plan.features) ? plan.features : [],
         // Ensure other fields have defaults if missing
-        color: plan.color || 'from-primary-500 to-cyan-500',
+        color: plan.color || 'from-blue-500 to-cyan-500',
         icon: plan.icon || 'Zap',
         is_public: plan.is_public !== false, // Default to true if undefined
         is_popular: !!plan.is_popular,
@@ -339,7 +339,7 @@ const SubscriptionManagementV2 = () => {
         description: '',
         base_price: 0,
         features: [],
-        color: 'from-primary-500 to-cyan-500',
+        color: 'from-blue-500 to-cyan-500',
         icon: 'Zap',
         is_active: true,
         is_public: true,
@@ -394,7 +394,7 @@ const SubscriptionManagementV2 = () => {
         description: planForm.description?.trim(),
         base_price: isNaN(parseInt(planForm.base_price)) ? 0 : parseInt(planForm.base_price),
         features: Array.isArray(planForm.features) ? planForm.features : [],
-        color: planForm.color || 'from-primary-500 to-cyan-500',
+        color: planForm.color || 'from-blue-500 to-cyan-500',
         icon: planForm.icon || 'Zap',
         is_active: planForm.is_active !== false,
         is_public: planForm.is_public !== false,
@@ -477,7 +477,7 @@ const SubscriptionManagementV2 = () => {
             "Email support (weekdays)",
             "Self-serve onboarding"
           ],
-          color: 'from-primary-500 to-cyan-500',
+          color: 'from-blue-500 to-cyan-500',
           icon: 'Zap',
           is_active: true,
           is_public: true,
@@ -500,7 +500,7 @@ const SubscriptionManagementV2 = () => {
             "Email/In-app support (7 days)",
             "30-min guided onboarding call"
           ],
-          color: 'from-amber-500 to-orange-500',
+          color: 'from-purple-500 to-pink-500',
           icon: 'Stars',
           is_active: true,
           is_public: true,
@@ -548,7 +548,7 @@ const SubscriptionManagementV2 = () => {
             "Starting ₹2,999 - ₹5,999/mo",
             "Full migration & onboarding support"
           ],
-          color: 'from-amber-600 to-primary-700',
+          color: 'from-amber-600 to-orange-700',
           icon: 'Building2',
           is_active: true,
           is_public: true,
@@ -584,7 +584,7 @@ const SubscriptionManagementV2 = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'active': return 'text-green-600 bg-green-100';
-      case 'grace_period': return 'text-primary-600 bg-primary-100';
+      case 'grace_period': return 'text-orange-600 bg-orange-100';
       case 'expired': return 'text-red-600 bg-red-100';
       case 'cancelled': return 'text-gray-600 bg-gray-100';
       case 'suspended': return 'text-red-800 bg-red-200';
@@ -620,7 +620,7 @@ const SubscriptionManagementV2 = () => {
   if (loading && subscriptions.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
@@ -958,7 +958,7 @@ const SubscriptionManagementV2 = () => {
                             <button
                               onClick={() => handleResendEmail(txn)}
                               disabled={processingId === `email-${txn.id}`}
-                              className="flex items-center gap-1 text-[10px] font-bold text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full border border-primary-100 hover:bg-primary-100 transition-colors"
+                              className="flex items-center gap-1 text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-100 hover:bg-orange-100 transition-colors"
                             >
                               {processingId === `email-${txn.id}` ? (
                                 <RefreshCw size={10} className="animate-spin" />
@@ -1030,7 +1030,7 @@ const SubscriptionManagementV2 = () => {
                       disabled={processingId === `email-${txn.id}` || txn.email_sent}
                       className={`flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold transition-colors ${txn.email_sent
                         ? 'bg-green-50 text-green-600 cursor-default'
-                        : 'bg-primary-50 text-primary-600 hover:bg-primary-100'
+                        : 'bg-orange-50 text-orange-600 hover:bg-orange-100'
                         }`}
                     >
                       {txn.email_sent ? <CheckCircle size={10} /> : (processingId === `email-${txn.id}` ? <RefreshCw size={10} className="animate-spin" /> : <AlertCircle size={10} />)}
@@ -1104,7 +1104,7 @@ const SubscriptionManagementV2 = () => {
                   <tab.icon className={`w-3.5 h-3.5 md:w-4 md:h-4 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-600'}`} />
                   {tab.label}
                   {tab.count > 0 && (
-                    <span className={`ml-1 px-1.5 md:px-2 py-0.5 text-[9px] md:text-[10px] rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-primary-100 text-primary-600'
+                    <span className={`ml-1 px-1.5 md:px-2 py-0.5 text-[9px] md:text-[10px] rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-orange-100 text-orange-600'
                       }`}>
                       {tab.count}
                     </span>
@@ -1119,7 +1119,7 @@ const SubscriptionManagementV2 = () => {
         <div className="flex items-center gap-1.5 md:gap-2 w-full xl:w-auto pt-1 md:pt-0">
           <button
             onClick={handleProcessExpired}
-            className="flex items-center justify-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 bg-white border border-primary-200 text-primary-700 rounded-lg hover:bg-primary-50 transition-all shadow-sm text-xs md:text-sm font-bold flex-1 xl:flex-initial whitespace-nowrap"
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 bg-white border border-orange-200 text-orange-700 rounded-lg hover:bg-orange-50 transition-all shadow-sm text-xs md:text-sm font-bold flex-1 xl:flex-initial whitespace-nowrap"
             title="Process Expirations"
           >
             <CalendarClock className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0" />
@@ -1144,8 +1144,8 @@ const SubscriptionManagementV2 = () => {
           <div className="grid grid-cols-4 gap-1.5 md:gap-6 md:grid-cols-2 lg:grid-cols-4">
             {/* Total Subscriptions */}
             <div className="bg-white p-2 md:p-6 rounded-xl md:rounded-2xl shadow-sm border border-gray-100/50 flex flex-col md:flex-row items-center justify-center md:justify-start">
-              <div className="hidden md:block p-3 bg-primary-50 rounded-xl mr-4">
-                <CreditCard className="w-6 h-6 text-primary-600" />
+              <div className="hidden md:block p-3 bg-blue-50 rounded-xl mr-4">
+                <CreditCard className="w-6 h-6 text-blue-600" />
               </div>
               <div className="text-center md:text-left">
                 <p className="text-[9px] md:text-xs font-bold text-gray-400 uppercase tracking-wider md:hidden">Total</p>
@@ -1168,8 +1168,8 @@ const SubscriptionManagementV2 = () => {
 
             {/* Grace Period */}
             <div className="bg-white p-2 md:p-6 rounded-xl md:rounded-2xl shadow-sm border border-gray-100/50 flex flex-col md:flex-row items-center justify-center md:justify-start">
-              <div className="hidden md:block p-3 bg-primary-50 rounded-xl mr-4">
-                <AlertTriangle className="w-6 h-6 text-primary-600" />
+              <div className="hidden md:block p-3 bg-orange-50 rounded-xl mr-4">
+                <AlertTriangle className="w-6 h-6 text-orange-600" />
               </div>
               <div className="text-center md:text-left">
                 <p className="text-[9px] md:text-xs font-bold text-gray-400 uppercase tracking-wider md:hidden">Grace</p>
@@ -1202,11 +1202,11 @@ const SubscriptionManagementV2 = () => {
               let colorText = 'text-gray-900';
               let colorBg = 'bg-gray-50';
 
-              if (plan.key === 'lite') { Icon = Zap; colorText = 'text-primary-600'; colorBg = 'bg-primary-50'; }
-              else if (plan.key === 'standard') { Icon = Stars; colorText = 'text-amber-600'; colorBg = 'bg-amber-50'; }
+              if (plan.key === 'lite') { Icon = Zap; colorText = 'text-blue-600'; colorBg = 'bg-blue-50'; }
+              else if (plan.key === 'standard') { Icon = Stars; colorText = 'text-purple-600'; colorBg = 'bg-purple-50'; }
               else if (plan.key === 'pro') { Icon = Brain; colorText = 'text-slate-700'; colorBg = 'bg-slate-50'; }
               else if (plan.key === 'custom') { Icon = Building2; colorText = 'text-amber-600'; colorBg = 'bg-amber-50'; }
-              else if (plan.key === 'starter') { Icon = Zap; colorText = 'text-primary-600'; colorBg = 'bg-primary-50'; } // Fallback
+              else if (plan.key === 'starter') { Icon = Zap; colorText = 'text-blue-600'; colorBg = 'bg-blue-50'; } // Fallback
 
               return (
                 <div key={plan.id} className="bg-white p-2 md:p-6 rounded-xl md:rounded-2xl shadow-sm border border-gray-100/50 flex flex-col items-center md:items-stretch justify-between">
@@ -1236,18 +1236,18 @@ const SubscriptionManagementV2 = () => {
 
           {/* Expiring Soon Alert */}
           {upcomingRenewals.length > 0 && (
-            <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
               <div className="flex items-center gap-3">
-                <AlertTriangle className="w-6 h-6 text-primary-500" />
+                <AlertTriangle className="w-6 h-6 text-orange-500" />
                 <div>
-                  <h3 className="font-semibold text-primary-800">Subscriptions Expiring Soon</h3>
-                  <p className="text-primary-700 text-sm">
+                  <h3 className="font-semibold text-orange-800">Subscriptions Expiring Soon</h3>
+                  <p className="text-orange-700 text-sm">
                     {upcomingRenewals.length} subscription(s) will expire within 14 days
                   </p>
                 </div>
                 <button
                   onClick={() => setActiveTab('expiring')}
-                  className="ml-auto px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors text-sm"
+                  className="ml-auto px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm"
                 >
                   View All
                 </button>
@@ -1296,7 +1296,7 @@ const SubscriptionManagementV2 = () => {
                                   className="w-10 h-10 rounded-xl object-cover shadow-md border border-gray-100"
                                 />
                               ) : (
-                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold shadow-md shadow-primary-200 text-sm">
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md shadow-blue-200 text-sm">
                                   {subscription.restaurant?.name?.charAt(0) || 'R'}
                                 </div>
                               )}
@@ -1327,7 +1327,7 @@ const SubscriptionManagementV2 = () => {
                                 <span className="capitalize">{subscription.status.replace('_', ' ')}</span>
                               </span>
                               {subscription.status === 'active' && daysLeft !== null && daysLeft <= 14 && (
-                                <span className="text-[10px] font-bold text-primary-600 pl-1 animation-pulse">
+                                <span className="text-[10px] font-bold text-orange-600 pl-1 animation-pulse">
                                   Expires in {daysLeft} days
                                 </span>
                               )}
@@ -1344,7 +1344,7 @@ const SubscriptionManagementV2 = () => {
                             <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                               <button
                                 onClick={() => openAssignModal(subscription)}
-                                className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all"
+                                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                                 title="Edit Subscription"
                                 disabled={processingId === subscription.id}
                               >
@@ -1352,7 +1352,7 @@ const SubscriptionManagementV2 = () => {
                               </button>
                               <button
                                 onClick={() => handleViewBilling(subscription)}
-                                className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all"
+                                className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
                                 title="View Billing & Invoices"
                                 disabled={processingId === subscription.id}
                               >
@@ -1411,7 +1411,7 @@ const SubscriptionManagementV2 = () => {
                             className="w-8 h-8 rounded-lg object-cover shadow-sm border border-gray-100"
                           />
                         ) : (
-                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold shadow-sm shadow-primary-200 text-xs">
+                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-sm shadow-blue-200 text-xs">
                             {subscription.restaurant?.name?.charAt(0) || 'R'}
                           </div>
                         )}
@@ -1441,7 +1441,7 @@ const SubscriptionManagementV2 = () => {
                       <div className="text-right">
                         <p className="text-[10px] font-bold text-gray-900">Expires: {formatDate(subscription.end_date)}</p>
                         {subscription.status === 'active' && daysLeft !== null && daysLeft <= 14 && (
-                          <span className="text-[9px] font-bold text-primary-600 block animate-pulse">
+                          <span className="text-[9px] font-bold text-orange-600 block animate-pulse">
                             {daysLeft} days left
                           </span>
                         )}
@@ -1456,14 +1456,14 @@ const SubscriptionManagementV2 = () => {
                       <div className="flex gap-1.5">
                         <button
                           onClick={() => openAssignModal(subscription)}
-                          className="p-1.5 bg-gray-50 text-primary-600 rounded-lg hover:bg-primary-50 transition-colors"
+                          className="p-1.5 bg-gray-50 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
                           title="Edit"
                         >
                           <Edit size={14} />
                         </button>
                         <button
                           onClick={() => handleViewBilling(subscription)}
-                          className="p-1.5 bg-gray-50 text-primary-600 rounded-lg hover:bg-primary-50 transition-colors"
+                          className="p-1.5 bg-gray-50 text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors"
                           title="Billing"
                         >
                           <IndianRupee size={14} />
@@ -1524,16 +1524,16 @@ const SubscriptionManagementV2 = () => {
               </div>
             ) : (
               upcomingRenewals.map((sub) => (
-                <div key={sub.id} className="bg-white rounded-3xl shadow-sm border border-primary-200 p-6 flex flex-col relative overflow-hidden group hover:shadow-md transition-all">
-                  <div className={`absolute top-0 right-0 p-3 rounded-bl-2xl ${sub.daysUntilExpiry <= 3 ? 'bg-red-500 text-white' : 'bg-primary-100 text-primary-700'}`}>
+                <div key={sub.id} className="bg-white rounded-3xl shadow-sm border border-orange-200 p-6 flex flex-col relative overflow-hidden group hover:shadow-md transition-all">
+                  <div className={`absolute top-0 right-0 p-3 rounded-bl-2xl ${sub.daysUntilExpiry <= 3 ? 'bg-red-500 text-white' : 'bg-orange-100 text-orange-700'}`}>
                     <p className="text-xs font-bold uppercase tracking-wider">
                       {sub.daysUntilExpiry <= 0 ? 'Expired' : `${sub.daysUntilExpiry} days left`}
                     </p>
                   </div>
 
                   <div className="flex items-start gap-4 mb-4">
-                    <div className={`p-3 rounded-2xl ${sub.daysUntilExpiry <= 3 ? 'bg-red-50' : 'bg-primary-50'}`}>
-                      <AlertTriangle className={`w-6 h-6 ${sub.daysUntilExpiry <= 3 ? 'text-red-500' : 'text-primary-500'}`} />
+                    <div className={`p-3 rounded-2xl ${sub.daysUntilExpiry <= 3 ? 'bg-red-50' : 'bg-orange-50'}`}>
+                      <AlertTriangle className={`w-6 h-6 ${sub.daysUntilExpiry <= 3 ? 'text-red-500' : 'text-orange-500'}`} />
                     </div>
                     <div className="pt-1">
                       <h3 className="font-bold text-gray-900 text-lg leading-tight">{sub.restaurant?.name}</h3>
@@ -1549,14 +1549,14 @@ const SubscriptionManagementV2 = () => {
                     <div className="flex gap-2">
                       <button
                         onClick={() => openAssignModal(sub)}
-                        className="flex-1 py-3 bg-gradient-to-r from-primary-500 to-red-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-primary-500/20 hover:to-red-600 transition-all"
+                        className="flex-1 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-orange-500/20 hover:to-red-600 transition-all"
                       >
                         Renew
                       </button>
                       <button
                         onClick={() => handleSendRenewalReminder(sub)}
                         disabled={processingId === `remind-${sub.id}`}
-                        className="px-4 py-3 bg-primary-50 text-primary-600 border border-primary-200 rounded-xl font-bold text-sm hover:bg-primary-100 transition-all flex items-center justify-center disabled:opacity-50"
+                        className="px-4 py-3 bg-orange-50 text-orange-600 border border-orange-200 rounded-xl font-bold text-sm hover:bg-orange-100 transition-all flex items-center justify-center disabled:opacity-50"
                         title="Send Reminder Email"
                       >
                         {processingId === `remind-${sub.id}` ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
@@ -1583,7 +1583,7 @@ const SubscriptionManagementV2 = () => {
                 <div key={sub.id} className="bg-white border border-gray-100 rounded-xl p-3 shadow-sm flex flex-col gap-3">
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${sub.daysUntilExpiry <= 3 ? 'bg-red-50 text-red-500' : 'bg-primary-50 text-primary-500'}`}>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${sub.daysUntilExpiry <= 3 ? 'bg-red-50 text-red-500' : 'bg-orange-50 text-orange-500'}`}>
                         <AlertTriangle size={18} />
                       </div>
                       <div>
@@ -1591,7 +1591,7 @@ const SubscriptionManagementV2 = () => {
                         <p className="text-xs text-gray-500">{sub.plan?.name || 'Plan'}</p>
                       </div>
                     </div>
-                    <div className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${sub.daysUntilExpiry <= 3 ? 'bg-red-100 text-red-700' : 'bg-primary-100 text-primary-700'}`}>
+                    <div className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${sub.daysUntilExpiry <= 3 ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}`}>
                       {sub.daysUntilExpiry <= 0 ? 'Expired' : `${sub.daysUntilExpiry} days`}
                     </div>
                   </div>
@@ -1604,14 +1604,14 @@ const SubscriptionManagementV2 = () => {
                       <button
                         onClick={() => handleSendRenewalReminder(sub)}
                         disabled={processingId === `remind-${sub.id}`}
-                        className="p-1.5 bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100 transition-all shadow-sm disabled:opacity-50"
+                        className="p-1.5 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition-all shadow-sm disabled:opacity-50"
                         title="Remind"
                       >
                         {processingId === `remind-${sub.id}` ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
                       </button>
                       <button
                         onClick={() => openAssignModal(sub)}
-                        className="px-4 py-1.5 bg-gradient-to-r from-primary-500 to-red-500 text-white rounded-lg text-xs font-bold shadow-sm hover:to-red-600 transition-all"
+                        className="px-4 py-1.5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg text-xs font-bold shadow-sm hover:to-red-600 transition-all"
                       >
                         Renew
                       </button>
@@ -1658,7 +1658,7 @@ const SubscriptionManagementV2 = () => {
                               className="w-10 h-10 rounded-xl object-cover shadow-lg border border-gray-100"
                             />
                           ) : (
-                            <div className="w-10 h-10 rounded-xl bg-primary-500 flex items-center justify-center text-white font-bold shadow-lg shadow-primary-200">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-200">
                               {sub.restaurant?.name?.charAt(0) || 'R'}
                             </div>
                           )}
@@ -1687,7 +1687,7 @@ const SubscriptionManagementV2 = () => {
                       <td className="px-6 py-4 text-right">
                         <button
                           onClick={() => handleViewBilling(sub)}
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-xl text-xs font-bold hover:bg-primary-700 transition-all shadow-md shadow-primary-200 hover:shadow-lg"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-all shadow-md shadow-indigo-200 hover:shadow-lg"
                         >
                           <IndianRupee size={14} />
                           View Internal Invoices
@@ -1731,7 +1731,7 @@ const SubscriptionManagementV2 = () => {
                           className="w-8 h-8 rounded-lg object-cover shadow-sm border border-gray-100"
                         />
                       ) : (
-                        <div className="w-8 h-8 rounded-lg bg-primary-500 flex items-center justify-center text-white font-bold shadow-sm shadow-primary-200 text-xs">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-sm shadow-indigo-200 text-xs">
                           {sub.restaurant?.name?.charAt(0) || 'R'}
                         </div>
                       )}
@@ -1759,7 +1759,7 @@ const SubscriptionManagementV2 = () => {
 
                   <button
                     onClick={() => handleViewBilling(sub)}
-                    className="w-full py-2 bg-primary-50 text-primary-600 rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:bg-primary-100 transition-colors"
+                    className="w-full py-2 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:bg-indigo-100 transition-colors"
                   >
                     <IndianRupee size={14} />
                     View Invoices
@@ -1795,10 +1795,10 @@ const SubscriptionManagementV2 = () => {
             {/* Plan Wise Subscription Counts */}
             {plans.map(plan => (
               <div key={`stat-${plan.id}`} className="bg-white p-5 rounded-xl border shadow-sm min-w-[200px] flex-shrink-0 flex flex-col justify-center">
-                <p className="text-xs font-bold text-primary-600 uppercase tracking-wider truncate" title={`${plan.name} Users`}>
+                <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider truncate" title={`${plan.name} Users`}>
                   {plan.name} Users
                 </p>
-                <p className="text-3xl font-black text-primary-700 mt-2">
+                <p className="text-3xl font-black text-indigo-700 mt-2">
                   {stats?.planCounts?.[plan.key] || 0}
                 </p>
               </div>
@@ -1807,12 +1807,12 @@ const SubscriptionManagementV2 = () => {
             {/* Add Plan Action Card */}
             <button
               onClick={() => openPlanModal()}
-              className="bg-white p-5 rounded-xl border-dashed border-2 border-primary-300 shadow-sm min-w-[200px] flex-shrink-0 flex flex-col items-center justify-center hover:bg-primary-50 transition-all group"
+              className="bg-white p-5 rounded-xl border-dashed border-2 border-blue-300 shadow-sm min-w-[200px] flex-shrink-0 flex flex-col items-center justify-center hover:bg-blue-50 transition-all group"
             >
-              <div className="p-2 bg-primary-100 rounded-full group-hover:bg-primary-200 transition-colors mb-2">
-                <Plus className="w-5 h-5 text-primary-600" />
+              <div className="p-2 bg-blue-100 rounded-full group-hover:bg-blue-200 transition-colors mb-2">
+                <Plus className="w-5 h-5 text-blue-600" />
               </div>
-              <p className="text-xs font-bold text-primary-600 uppercase tracking-wider">Add New Plan (+)</p>
+              <p className="text-xs font-bold text-blue-600 uppercase tracking-wider">Add New Plan (+)</p>
             </button>
           </div>
 
@@ -1833,10 +1833,10 @@ const SubscriptionManagementV2 = () => {
 
             {plans.map(plan => (
               <div key={`mob-stat-${plan.id}`} className="bg-white p-2 rounded-xl border shadow-sm flex flex-col justify-center text-center">
-                <p className="text-[8px] font-bold text-primary-600 uppercase tracking-wider truncate leading-tight">
+                <p className="text-[8px] font-bold text-indigo-600 uppercase tracking-wider truncate leading-tight">
                   {plan.name}
                 </p>
-                <p className="text-lg font-black text-primary-700 mt-0.5 leading-none">
+                <p className="text-lg font-black text-indigo-700 mt-0.5 leading-none">
                   {stats?.planCounts?.[plan.key] || 0}
                 </p>
               </div>
@@ -1844,12 +1844,12 @@ const SubscriptionManagementV2 = () => {
 
             <button
               onClick={() => openPlanModal()}
-              className="col-span-4 bg-white p-2 rounded-xl border-dashed border-2 border-primary-300 shadow-sm flex flex-row items-center justify-center gap-1.5 hover:bg-primary-50 transition-all cursor-pointer"
+              className="col-span-4 bg-white p-2 rounded-xl border-dashed border-2 border-blue-300 shadow-sm flex flex-row items-center justify-center gap-1.5 hover:bg-blue-50 transition-all cursor-pointer"
             >
-              <div className="p-0.5 bg-primary-100 rounded-full">
-                <Plus className="w-3 h-3 text-primary-600" />
+              <div className="p-0.5 bg-blue-100 rounded-full">
+                <Plus className="w-3 h-3 text-blue-600" />
               </div>
-              <p className="text-[10px] font-bold text-primary-600 uppercase tracking-wider">Add New Plan</p>
+              <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Add New Plan</p>
             </button>
           </div>
 
@@ -1860,7 +1860,7 @@ const SubscriptionManagementV2 = () => {
                 <p className="text-gray-500 font-medium">No subscription plans found in the system.</p>
                 <button
                   onClick={handleInitializeDefaults}
-                  className="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors font-bold shadow-lg shadow-primary-500/20"
+                  className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-bold shadow-lg shadow-blue-500/20"
                 >
                   Initialize Default Plans
                 </button>
@@ -1871,7 +1871,7 @@ const SubscriptionManagementV2 = () => {
                   <div className={`h-2.5 bg-gradient-to-r ${plan.color || 'from-gray-400 to-gray-500'}`} />
 
                   <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => openPlanModal(plan)} className="p-2 bg-white text-primary-600 hover:bg-primary-50 rounded-full shadow-sm border border-gray-100">
+                    <button onClick={() => openPlanModal(plan)} className="p-2 bg-white text-blue-600 hover:bg-blue-50 rounded-full shadow-sm border border-gray-100">
                       <Edit size={14} />
                     </button>
                     <button onClick={() => handleDeletePlan(plan.id)} className="p-2 bg-white text-red-600 hover:bg-red-50 rounded-full shadow-sm border border-gray-100">
@@ -1918,7 +1918,7 @@ const SubscriptionManagementV2 = () => {
                 <p className="text-gray-500 text-sm font-medium">No subscription plans found.</p>
                 <button
                   onClick={handleInitializeDefaults}
-                  className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-bold shadow-sm"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold shadow-sm"
                 >
                   Initialize Default Plans
                 </button>
@@ -1977,7 +1977,7 @@ const SubscriptionManagementV2 = () => {
             {/* Modal Header */}
             <div className="px-5 py-4 md:px-8 md:py-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-gray-50 to-white">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-primary-600 flex items-center justify-center text-white shadow-lg shadow-primary-200">
+                <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-200">
                   {editingPlan ? <Edit size={24} /> : <Zap size={24} />}
                 </div>
                 <div>
@@ -2000,7 +2000,7 @@ const SubscriptionManagementV2 = () => {
               {/* SECTION: BASIC INFO */}
               <div className="space-y-6">
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-1 h-6 bg-primary-600 rounded-full" />
+                  <div className="w-1 h-6 bg-blue-600 rounded-full" />
                   <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">Plan Identity</h3>
                 </div>
 
@@ -2010,7 +2010,7 @@ const SubscriptionManagementV2 = () => {
                     <input
                       value={planForm.key}
                       onChange={(e) => setPlanForm({ ...planForm, key: e.target.value.toLowerCase() })}
-                      className="w-full bg-gray-50 border-none rounded-2xl px-5 py-3.5 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-primary-500/20 focus:bg-white transition-all outline-none"
+                      className="w-full bg-gray-50 border-none rounded-2xl px-5 py-3.5 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all outline-none"
                       placeholder="e.g. starter"
                       required
                       disabled={!!editingPlan}
@@ -2021,7 +2021,7 @@ const SubscriptionManagementV2 = () => {
                     <input
                       value={planForm.name}
                       onChange={(e) => setPlanForm({ ...planForm, name: e.target.value })}
-                      className="w-full bg-gray-50 border-none rounded-2xl px-5 py-3.5 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-primary-500/20 focus:bg-white transition-all outline-none"
+                      className="w-full bg-gray-50 border-none rounded-2xl px-5 py-3.5 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all outline-none"
                       placeholder="e.g. Growth Pro"
                       required
                     />
@@ -2033,7 +2033,7 @@ const SubscriptionManagementV2 = () => {
                   <textarea
                     value={planForm.description}
                     onChange={(e) => setPlanForm({ ...planForm, description: e.target.value })}
-                    className="w-full bg-gray-50 border-none rounded-2xl px-5 py-3.5 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-primary-500/20 focus:bg-white transition-all outline-none min-h-[80px]"
+                    className="w-full bg-gray-50 border-none rounded-2xl px-5 py-3.5 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all outline-none min-h-[80px]"
                     placeholder="Describe this plan in one sentence..."
                     required
                   />
@@ -2096,10 +2096,10 @@ const SubscriptionManagementV2 = () => {
                                 }
                               }));
                             }}
-                            className="w-full bg-primary-50/50 border-none rounded-xl px-3 py-2 text-sm font-black text-primary-600 focus:ring-2 focus:ring-primary-500/20 focus:bg-white transition-all outline-none"
+                            className="w-full bg-orange-50/50 border-none rounded-xl px-3 py-2 text-sm font-black text-orange-600 focus:ring-2 focus:ring-orange-500/20 focus:bg-white transition-all outline-none"
                             placeholder={cycle.discount_percentage}
                           />
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-primary-300 text-xs font-black">%</span>
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-orange-300 text-xs font-black">%</span>
                         </div>
                       </div>
                     ))}
@@ -2136,7 +2136,7 @@ const SubscriptionManagementV2 = () => {
                       value={planForm.color}
                       onChange={(e) => setPlanForm({ ...planForm, color: e.target.value })}
                       className="w-full bg-gray-50 border-none rounded-2xl px-5 py-3.5 text-xs font-mono font-bold text-gray-600 focus:ring-2 focus:ring-amber-500/20 focus:bg-white transition-all outline-none"
-                      placeholder="from-primary-600 to-primary-700"
+                      placeholder="from-blue-600 to-indigo-700"
                     />
                   </div>
                 </div>
@@ -2146,7 +2146,7 @@ const SubscriptionManagementV2 = () => {
                   <textarea
                     value={Array.isArray(planForm.features) ? planForm.features.join(', ') : ''}
                     onChange={(e) => setPlanForm({ ...planForm, features: e.target.value.split(',').map(f => f.trim()).filter(f => f !== '') })}
-                    className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-medium text-gray-700 focus:ring-2 focus:ring-primary-500/20 focus:bg-white transition-all outline-none min-h-[120px] leading-relaxed"
+                    className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-medium text-gray-700 focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all outline-none min-h-[120px] leading-relaxed"
                     placeholder="Unlimited Menus, QR Ordering, AI Insights, etc."
                   />
                   <p className="text-[10px] text-gray-400 font-bold ml-1 italic italic">Separate each feature with a comma</p>
@@ -2159,7 +2159,7 @@ const SubscriptionManagementV2 = () => {
                       <button
                         type="button"
                         onClick={() => setPlanForm({ ...planForm, is_public: !planForm.is_public })}
-                        className={`w-12 h-6 rounded-full transition-all duration-300 relative ${planForm.is_public ? 'bg-primary-600' : 'bg-gray-300'}`}
+                        className={`w-12 h-6 rounded-full transition-all duration-300 relative ${planForm.is_public ? 'bg-blue-600' : 'bg-gray-300'}`}
                       >
                         <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${planForm.is_public ? 'left-7' : 'left-1'}`} />
                       </button>
@@ -2181,7 +2181,7 @@ const SubscriptionManagementV2 = () => {
                       <button
                         type="button"
                         onClick={() => setPlanForm({ ...planForm, ai_features_enabled: !planForm.ai_features_enabled })}
-                        className={`w-12 h-6 rounded-full transition-all duration-300 relative ${planForm.ai_features_enabled ? 'bg-primary-600' : 'bg-gray-300'}`}
+                        className={`w-12 h-6 rounded-full transition-all duration-300 relative ${planForm.ai_features_enabled ? 'bg-indigo-600' : 'bg-gray-300'}`}
                       >
                         <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${planForm.ai_features_enabled ? 'left-7' : 'left-1'}`} />
                       </button>
@@ -2213,13 +2213,13 @@ const SubscriptionManagementV2 = () => {
               </div>
 
               {/* SECTION: CTA */}
-              <div className="p-6 bg-gradient-to-br from-primary-50 to-white rounded-[32px] border border-primary-50 space-y-4">
+              <div className="p-6 bg-gradient-to-br from-blue-50 to-white rounded-[32px] border border-blue-50 space-y-4">
                 <div className="flex items-center justify-between px-2">
-                  <span className="text-sm font-black text-primary-900 uppercase tracking-widest">Call to Action</span>
+                  <span className="text-sm font-black text-blue-900 uppercase tracking-widest">Call to Action</span>
                   <button
                     type="button"
                     onClick={() => setPlanForm({ ...planForm, use_custom_builder: !planForm.use_custom_builder })}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${planForm.use_custom_builder ? 'bg-primary-600 text-white shadow-lg shadow-primary-200' : 'bg-white text-primary-600 shadow-sm'}`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${planForm.use_custom_builder ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'bg-white text-blue-600 shadow-sm'}`}
                   >
                     <Stars size={12} />
                     Custom Builder
@@ -2228,7 +2228,7 @@ const SubscriptionManagementV2 = () => {
                 <input
                   value={planForm.button_text}
                   onChange={(e) => setPlanForm({ ...planForm, button_text: e.target.value })}
-                  className="w-full bg-white border-none rounded-2xl px-5 py-3.5 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-primary-500 transition-all outline-none shadow-sm"
+                  className="w-full bg-white border-none rounded-2xl px-5 py-3.5 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-blue-500 transition-all outline-none shadow-sm"
                   placeholder={planForm.use_custom_builder ? "Build Your Plan" : "Get Started Now"}
                 />
               </div>
@@ -2241,7 +2241,7 @@ const SubscriptionManagementV2 = () => {
                 type="submit"
                 onClick={handlePlanSubmit}
                 disabled={processingId === 'plan'}
-                className="flex-[2] bg-gradient-to-r from-primary-600 to-primary-700 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:shadow-[0_20px_40px_-15px_rgba(37,99,235,0.4)] transition-all duration-300 disabled:opacity-50 active:scale-95"
+                className="flex-[2] bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:shadow-[0_20px_40px_-15px_rgba(37,99,235,0.4)] transition-all duration-300 disabled:opacity-50 active:scale-95"
               >
                 {processingId === 'plan' ? 'Processing...' : (editingPlan ? 'Update Plan' : 'Create Plan')}
               </button>
@@ -2284,7 +2284,7 @@ const SubscriptionManagementV2 = () => {
                   <select
                     value={assignForm.restaurant_id}
                     onChange={(e) => setAssignForm({ ...assignForm, restaurant_id: e.target.value })}
-                    className="w-full border rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-primary-500 outline-none appearance-none"
+                    className="w-full border rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-blue-500 outline-none appearance-none"
                     required
                     disabled={!!editingSubscription}
                   >
@@ -2309,7 +2309,7 @@ const SubscriptionManagementV2 = () => {
                   <select
                     value={assignForm.plan_id}
                     onChange={(e) => setAssignForm({ ...assignForm, plan_id: e.target.value })}
-                    className="w-full border rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-primary-500 outline-none appearance-none"
+                    className="w-full border rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-blue-500 outline-none appearance-none"
                     required
                   >
                     <option value="">Select a plan...</option>
@@ -2334,7 +2334,7 @@ const SubscriptionManagementV2 = () => {
                     <select
                       value={assignForm.billing_cycle}
                       onChange={(e) => setAssignForm({ ...assignForm, billing_cycle: e.target.value })}
-                      className="w-full border rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-primary-500 outline-none appearance-none text-sm"
+                      className="w-full border rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-blue-500 outline-none appearance-none text-sm"
                     >
                       {billingCycles.map(cycle => (
                         <option key={cycle.id} value={cycle.key}>
@@ -2356,7 +2356,7 @@ const SubscriptionManagementV2 = () => {
                     <select
                       value={assignForm.payment_method}
                       onChange={(e) => setAssignForm({ ...assignForm, payment_method: e.target.value })}
-                      className="w-full border rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-primary-500 outline-none appearance-none text-sm"
+                      className="w-full border rounded-xl px-4 py-3 bg-white focus:ring-2 focus:ring-blue-500 outline-none appearance-none text-sm"
                     >
                       <option value="manual">Manual Entry</option>
                       <option value="razorpay">Razorpay</option>
@@ -2377,7 +2377,7 @@ const SubscriptionManagementV2 = () => {
                 <textarea
                   value={assignForm.notes}
                   onChange={(e) => setAssignForm({ ...assignForm, notes: e.target.value })}
-                  className="w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary-500 outline-none min-h-[80px]"
+                  className="w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none min-h-[80px]"
                   placeholder="Payment details, transaction ID, or other remarks..."
                 />
               </div>
@@ -2386,7 +2386,7 @@ const SubscriptionManagementV2 = () => {
                 <button
                   type="submit"
                   disabled={processingId === 'assign'}
-                  className="flex-1 bg-gradient-to-r from-primary-500 to-primary-700 text-white py-3.5 rounded-xl font-bold hover:shadow-lg hover:from-primary-600 hover:to-primary-800 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3.5 rounded-xl font-bold hover:shadow-lg hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {processingId === 'assign' ? (
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -2419,7 +2419,7 @@ const SubscriptionManagementV2 = () => {
                     className="w-10 h-10 rounded-xl object-cover shadow-sm border border-gray-100"
                   />
                 ) : (
-                  <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center text-primary-600">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
                     <IndianRupee size={20} />
                   </div>
                 )}
@@ -2451,7 +2451,7 @@ const SubscriptionManagementV2 = () => {
                       <div className="flex justify-between items-start">
                         <div className="flex items-center gap-3">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0 ${txn.action === 'created' ? 'bg-green-100 text-green-700' :
-                            txn.action === 'renewed' ? 'bg-primary-100 text-primary-700' :
+                            txn.action === 'renewed' ? 'bg-blue-100 text-blue-700' :
                               'bg-gray-100 text-gray-700'
                             }`}>
                             {idx + 1}
@@ -2484,7 +2484,7 @@ const SubscriptionManagementV2 = () => {
                             <button
                               onClick={() => handleResendEmail(txn)}
                               disabled={processingId === `email-${txn.id}`}
-                              className="flex items-center gap-1 text-[9px] font-bold text-primary-600 bg-primary-50 px-2 py-1 rounded-lg hover:bg-primary-100 transition-colors"
+                              className="flex items-center gap-1 text-[9px] font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-lg hover:bg-orange-100 transition-colors"
                             >
                               {processingId === `email-${txn.id}` ? (
                                 <RefreshCw size={10} className="animate-spin" />

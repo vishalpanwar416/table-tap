@@ -16,13 +16,6 @@ export default function DynamicGreeting() {
         return;
       }
 
-      // Show something immediately so the greeting never gets stuck on "Guest!"
-      const immediate = user.user_metadata?.full_name ||
-        user.user_metadata?.name ||
-        user.email?.split('@')?.[0] ||
-        '';
-      if (mounted && immediate) setUserName(immediate.split(' ')[0]);
-
       try {
         const { data } = await supabase
           .from('profiles')
@@ -34,12 +27,18 @@ export default function DynamicGreeting() {
           const name = data?.full_name ||
             user.user_metadata?.full_name ||
             user.user_metadata?.name ||
-            user.email?.split('@')?.[0] ||
+            user.email?.split('@')[0] ||
             '';
           setUserName(name.split(' ')[0]);
         }
-      } catch {
-        // immediate fallback already set above
+      } catch (err) {
+        if (mounted) {
+          const name = user.user_metadata?.full_name ||
+            user.user_metadata?.name ||
+            user.email?.split('@')[0] ||
+            '';
+          setUserName(name.split(' ')[0]);
+        }
       }
     };
 

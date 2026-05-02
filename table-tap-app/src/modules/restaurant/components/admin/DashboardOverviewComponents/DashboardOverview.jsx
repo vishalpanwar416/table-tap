@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import StatsCards from './StatsCards';
-import { runQuery } from '../../../../shared/api/queryClient';
 // Lazy load RevenueChart (contains heavy Recharts library ~200KB)
 const RevenueChart = React.lazy(() => import('./RevenueChart'));
 import ActiveOrders from './ActiveOrders';
@@ -32,48 +31,34 @@ const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab, restaur
       supabaseRef.current = supabase;
 
       const fetchOrders = async () => {
-        // Can't fetch orders without a restaurant — avoids a full-table scan
-        if (!restaurant?.id) {
-          setOrders([]);
-          setOrdersLoading(false);
-          return;
-        }
-
         try {
           setOrdersLoading(true);
           loadingTimeout = setTimeout(() => {
             setOrdersLoading(false);
             setOrdersError('Orders request took too long. Please try again.');
-          }, 10000);
-
-          // Always filter by restaurant + limit to last 30 days to keep the query fast
-          const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+          }, 15000);
 
           let query = supabase
             .from('orders')
-            .select('id, status, created_at, total, user_id, customer_email, customer_phone, items, restaurant_id, table_number')
-            .eq('restaurant_id', restaurant.id)
-            .gte('created_at', thirtyDaysAgo);
+            .select('*');
 
-          // Front-of-house roles only need today's orders
+          if (restaurant?.id) {
+            query = query.eq('restaurant_id', restaurant.id);
+          }
+
           if (['captain', 'waiter', 'cashier'].includes(userRole)) {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             query = query.gte('created_at', today.toISOString());
           }
 
-          const data = await runQuery(
-            'dashboard.fetchOrders',
-            () => query.order('created_at', { ascending: false }),
-            { context: { restaurantId: restaurant.id, userRole } }
-          );
+          const { data, error } = await query.order('created_at', { ascending: false });
           if (cancelled) return;
+          if (error) throw error;
           setOrders(data || []);
           setOrdersError('');
         } catch (error) {
-          if (cancelled) return;
-          if (error?.name === 'AbortError' || error?.message?.includes('aborted')) return;
-          setOrdersError('Failed to load orders: ' + (error.message || error));
+          if (!cancelled) setOrdersError('Failed to load orders: ' + (error.message || error));
         } finally {
           clearTimeout(loadingTimeout);
           if (!cancelled) setOrdersLoading(false);
@@ -210,15 +195,9 @@ const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab, restaur
       // Call upstream handler (will also trigger realtime update)
       await updateOrderStatus(orderId, status);
     } catch (e) {
-      // Revert optimistic update by re-fetching with same filters as the initial load
       const client = supabaseRef.current;
-      if (client && restaurant?.id) {
-        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-        const { data } = await client.from('orders')
-          .select('id, status, created_at, total, user_id, customer_email, customer_phone, items, restaurant_id, table_number')
-          .eq('restaurant_id', restaurant.id)
-          .gte('created_at', thirtyDaysAgo)
-          .order('created_at', { ascending: false });
+      if (client) {
+        const { data } = await client.from('orders').select('*').order('created_at', { ascending: false });
         setOrders(data || []);
       }
     }
@@ -356,7 +335,7 @@ const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab, restaur
       />
       {['admin', 'manager', 'owner'].includes(userRole) && (
         <Suspense fallback={
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-primary-100/50">
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-orange-100/50">
             <div className="flex items-center justify-between mb-4">
               <div className="h-6 bg-gray-200 rounded w-32 animate-pulse"></div>
               <div className="h-8 bg-gray-200 rounded w-24 animate-pulse"></div>

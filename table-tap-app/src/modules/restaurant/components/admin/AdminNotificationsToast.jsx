@@ -13,7 +13,7 @@ const ManagerNotificationsToast = () => {
     <div className="fixed bottom-4 right-4 z-50">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative bg-primary-600 text-white p-3 rounded-full hover:bg-primary-700 transition-colors"
+        className="relative bg-orange-600 text-white p-3 rounded-full hover:bg-orange-700 transition-colors"
       >
         <Bell className="w-6 h-6" />
         {unreadCount > 0 && (
@@ -45,13 +45,13 @@ const ManagerNotificationsToast = () => {
                 <div
                   key={notification.id}
                   className={`p-4 border-b hover:bg-gray-50 ${
-                    !notification.read ? 'bg-primary-50' : ''
+                    !notification.read ? 'bg-orange-50' : ''
                   }`}
                 >
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0">
                       {notification.type === 'order' && (
-                        <AlertCircle className="w-5 h-5 text-primary-600" />
+                        <AlertCircle className="w-5 h-5 text-orange-600" />
                       )}
                       {notification.type === 'success' && (
                         <Check className="w-5 h-5 text-green-600" />
@@ -78,7 +78,7 @@ const ManagerNotificationsToast = () => {
             <div className="p-3 border-t bg-gray-50">
               <button
                 onClick={markAllAsRead}
-                className="w-full text-sm text-primary-600 hover:text-primary-700 font-medium"
+                className="w-full text-sm text-orange-600 hover:text-orange-700 font-medium"
               >
                 Mark all as read
               </button>

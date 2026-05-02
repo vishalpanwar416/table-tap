@@ -53,7 +53,7 @@ const ManagerNotificationsToast = ({ buttonClassName = "text-gray-500 hover:bg-g
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`relative p-2.5 rounded-full transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 ${buttonClassName} ${isOpen ? 'bg-primary-50 text-primary-600 ring-2 ring-primary-100' : ''}`}
+        className={`relative p-2.5 rounded-full transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 ${buttonClassName} ${isOpen ? 'bg-orange-50 text-orange-600 ring-2 ring-orange-100' : ''}`}
         title="Notifications"
       >
         <Bell className={`w-5 h-5 ${unreadCount > 0 ? 'animate-pulse-subtle' : ''}`} />
@@ -71,7 +71,7 @@ const ManagerNotificationsToast = ({ buttonClassName = "text-gray-500 hover:bg-g
             <div className="flex items-center gap-2">
               <h3 className="font-bold text-gray-900 text-base">Notifications</h3>
               {unreadCount > 0 && (
-                <span className="bg-primary-100 text-primary-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                <span className="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-0.5 rounded-full">
                   {unreadCount} New
                 </span>
               )}
@@ -82,7 +82,7 @@ const ManagerNotificationsToast = ({ buttonClassName = "text-gray-500 hover:bg-g
                   onClick={() => {
                     markAllAsRead();
                   }}
-                  className="text-xs font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 px-2 py-1 rounded-md transition-colors mr-1"
+                  className="text-xs font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-50 px-2 py-1 rounded-md transition-colors mr-1"
                 >
                   Mark all read
                 </button>
@@ -101,8 +101,8 @@ const ManagerNotificationsToast = ({ buttonClassName = "text-gray-500 hover:bg-g
           <div className="max-h-[65vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
             {notifications.length === 0 ? (
               <div className="py-12 px-6 text-center flex flex-col items-center justify-center min-h-[300px]">
-                <div className="bg-gradient-to-br from-primary-50 to-primary-100 w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-inner">
-                  <Bell className="w-8 h-8 text-primary-300" />
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100 w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-inner">
+                  <Bell className="w-8 h-8 text-orange-300" />
                 </div>
                 <h4 className="text-gray-900 font-semibold mb-1">All caught up!</h4>
                 <p className="text-gray-500 text-sm max-w-[200px]">You don't have any new notifications at the moment.</p>
@@ -130,7 +130,7 @@ const ManagerNotificationsToast = ({ buttonClassName = "text-gray-500 hover:bg-g
                               className={`group relative p-4 transition-all duration-200 hover:bg-gray-50 ${!notification.read
                                   ? isSubExpired ? 'bg-red-50/60'
                                     : isSubExpiring ? 'bg-amber-50/60'
-                                      : 'bg-primary-50/30'
+                                      : 'bg-orange-50/30'
                                   : ''
                                 }`}
                             >
@@ -146,7 +146,7 @@ const ManagerNotificationsToast = ({ buttonClassName = "text-gray-500 hover:bg-g
                                       <Clock className="w-4 h-4" />
                                     </div>
                                   ) : notification.type === 'order' ? (
-                                    <div className="p-2 bg-primary-100 text-primary-600 rounded-xl shadow-sm group-hover:bg-primary-200 transition-colors">
+                                    <div className="p-2 bg-orange-100 text-orange-600 rounded-xl shadow-sm group-hover:bg-orange-200 transition-colors">
                                       <AlertCircle className="w-4 h-4" />
                                     </div>
                                   ) : notification.type === 'success' ? (
@@ -222,7 +222,7 @@ const ManagerNotificationsToast = ({ buttonClassName = "text-gray-500 hover:bg-g
               <span>Clear all</span>
             </button>
             <button
-              className="text-xs font-semibold text-primary-600 hover:text-primary-700 transition-colors px-2 py-1.5 rounded hover:bg-primary-50 flex items-center gap-1.5"
+              className="text-xs font-semibold text-orange-600 hover:text-orange-700 transition-colors px-2 py-1.5 rounded hover:bg-orange-50 flex items-center gap-1.5"
               onClick={() => {/* Navigate to full notifications page if exists */ setIsOpen(false); }}
             >
               <span>View History</span>

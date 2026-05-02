@@ -104,13 +104,13 @@ const RestaurantStaffGrid = ({
   const getRoleColor = (role) => {
     switch (role) {
       case 'manager':
-        return 'bg-amber-100 text-amber-800 border-amber-200';
+        return 'bg-purple-100 text-purple-800 border-purple-200';
       case 'captain':
-        return 'bg-primary-100 text-primary-800 border-primary-200';
+        return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'waiter':
         return 'bg-green-100 text-green-800 border-green-200';
       case 'chef':
-        return 'bg-primary-100 text-primary-800 border-primary-200';
+        return 'bg-orange-100 text-orange-800 border-orange-200';
       case 'cashier':
         return 'bg-red-100 text-red-800 border-red-200';
       default:
@@ -146,7 +146,7 @@ const RestaurantStaffGrid = ({
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center shadow-sm">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-400 to-purple-400 flex items-center justify-center shadow-sm">
             {member.name ? (
               <span className="text-white font-bold text-sm">
                 {member.name.split(' ').map(n => n[0]).join('').slice(0,2)}
@@ -189,7 +189,7 @@ const RestaurantStaffGrid = ({
       <div className="flex items-center justify-end space-x-2 mt-3 pt-3 border-t border-gray-100">
         <button
           onClick={() => onEdit(member)}
-          className="p-1.5 rounded-full bg-primary-50 hover:bg-primary-100 text-primary-600 hover:text-primary-800 transition-colors"
+          className="p-1.5 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-800 transition-colors"
           title="Edit staff member"
         >
           <Edit className="w-3 h-3" />

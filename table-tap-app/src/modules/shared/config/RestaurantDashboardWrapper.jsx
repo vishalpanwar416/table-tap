@@ -21,38 +21,16 @@ export default function RestaurantDashboardWrapper({ children }) {
   const { loading, error, canView, userRole, userRestaurantId, isAdmin } = useAdminRestaurant();
 
   useEffect(() => {
-    // Only redirect on error if the user's role is known and they're not an admin/owner.
-    // Admins and owners can access the dashboard even without a specific restaurant selected;
-    // redirecting them creates a login→dashboard→login loop when the context errors transiently.
-    if (!loading && error && userRole && !['admin', 'owner'].includes(userRole)) {
+    // If context says access denied, redirect to restaurant login (stays in restaurant app in dev).
+    if (!loading && error) {
       navigateWithBase('/login', { replace: true, state: { from: location.pathname } });
     }
-  }, [loading, error, userRole, navigateWithBase, location.pathname]);
+  }, [loading, error, navigateWithBase, location.pathname]);
 
   if (loading) {
     return (
       <AuthWrapper>
         <LoadingScreen message="Checking permissions..." variant="inline" size="lg" />
-      </AuthWrapper>
-    );
-  }
-
-  // If there's an error and no role resolved, show an error state instead of looping.
-  if (error && !userRole) {
-    return (
-      <AuthWrapper>
-        <div className="min-h-screen bg-black flex items-center justify-center p-6 text-center">
-          <div className="max-w-md bg-zinc-900/50 backdrop-blur-xl p-8 rounded-[32px] border border-white/10">
-            <h2 className="text-xl font-bold text-white mb-4">Unable to Load Dashboard</h2>
-            <p className="text-gray-400 mb-6">{error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-2xl font-semibold transition-all"
-            >
-              Try Again
-            </button>
-          </div>
-        </div>
       </AuthWrapper>
     );
   }
@@ -106,7 +84,7 @@ export default function RestaurantDashboardWrapper({ children }) {
       <AuthWrapper>
         <div className="min-h-screen bg-black flex items-center justify-center p-6 text-center">
           <div className="max-w-md bg-zinc-900/50 backdrop-blur-xl p-8 rounded-[32px] border border-white/10 shadow-2xl">
-            <div className="w-20 h-20 bg-primary-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-primary-500/20">
+            <div className="w-20 h-20 bg-orange-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-orange-500/20">
               <span className="text-4xl">🏪</span>
             </div>
             <h2 className="text-2xl font-bold text-white mb-4">No Restaurant Assigned</h2>
@@ -116,7 +94,7 @@ export default function RestaurantDashboardWrapper({ children }) {
             <div className="flex flex-col gap-3">
               <button
                 onClick={() => navigateWithBase('/login')}
-                className="w-full bg-primary-600 hover:bg-primary-700 text-white px-6 py-4 rounded-2xl font-semibold transition-all shadow-lg active:scale-[0.98]"
+                className="w-full bg-orange-600 hover:bg-orange-700 text-white px-6 py-4 rounded-2xl font-semibold transition-all shadow-lg active:scale-[0.98]"
               >
                 Back to Login
               </button>

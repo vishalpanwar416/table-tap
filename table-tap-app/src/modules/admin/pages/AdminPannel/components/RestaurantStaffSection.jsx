@@ -116,13 +116,13 @@ const RestaurantStaffSection = ({
     return (
       <div
         style={style}
-        className="border-b border-gray-100 hover:bg-primary-50 transition-all duration-200"
+        className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200"
         data-staff-index={`${restaurant.id}-${index}`}
       >
         <div className="grid grid-cols-5 gap-4 px-4 py-4 items-center">
           {/* Staff Member */}
           <div className="flex items-center">
-            <div className="w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center shadow-sm">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center shadow-sm">
               <Users className="w-5 h-5 text-white" />
             </div>
             <div className="ml-4">
@@ -166,7 +166,7 @@ const RestaurantStaffSection = ({
           <div className="flex items-center justify-end gap-1 sm:gap-2">
             <button
               onClick={() => onEdit(member)}
-              className="min-h-[36px] min-w-[36px] flex items-center justify-center p-2 text-primary-600 hover:text-primary-800 hover:bg-primary-50 rounded-lg transition-all duration-200 touch-manipulation"
+              className="min-h-[36px] min-w-[36px] flex items-center justify-center p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-all duration-200 touch-manipulation"
               title="Edit staff member"
             >
               <Edit className="w-4 h-4" />
@@ -205,13 +205,13 @@ const RestaurantStaffSection = ({
   const getRoleColor = (role) => {
     switch (role) {
       case 'manager':
-        return 'bg-amber-100 text-amber-800 border-amber-200';
+        return 'bg-purple-100 text-purple-800 border-purple-200';
       case 'captain':
-        return 'bg-primary-100 text-primary-800 border-primary-200';
+        return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'waiter':
         return 'bg-green-100 text-green-800 border-green-200';
       case 'chef':
-        return 'bg-primary-100 text-primary-800 border-primary-200';
+        return 'bg-orange-100 text-orange-800 border-orange-200';
       case 'cashier':
         return 'bg-red-100 text-red-800 border-red-200';
       default:
@@ -271,13 +271,13 @@ const RestaurantStaffSection = ({
                     <div
                       key={member.id || index}
                       data-staff-index={`${restaurant.id}-${index}`}
-                      className="group bg-white md:bg-transparent rounded-xl md:rounded-none border border-gray-100 md:border-0 md:border-b md:border-gray-50 p-4 md:px-6 md:py-4 md:hover:bg-primary-50/40 transition-all duration-200 shadow-sm md:shadow-none"
+                      className="group bg-white md:bg-transparent rounded-xl md:rounded-none border border-gray-100 md:border-0 md:border-b md:border-gray-50 p-4 md:px-6 md:py-4 md:hover:bg-blue-50/40 transition-all duration-200 shadow-sm md:shadow-none"
                     >
                       {/* Mobile Layout: Card Structure */}
                       <div className="md:hidden space-y-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm">
+                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm">
                               {member.name ? member.name.charAt(0) : <Users className="w-4 h-4" />}
                             </div>
                             <div>
@@ -288,7 +288,7 @@ const RestaurantStaffSection = ({
                             </div>
                           </div>
                           <div className="flex gap-1">
-                            <button onClick={() => onEdit(member)} className="p-2 bg-primary-50 text-primary-600 rounded-lg"><Edit className="w-4 h-4" /></button>
+                            <button onClick={() => onEdit(member)} className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Edit className="w-4 h-4" /></button>
                             <button onClick={() => onDelete(member.id)} className="p-2 bg-red-50 text-red-600 rounded-lg"><Trash2 className="w-4 h-4" /></button>
                           </div>
                         </div>
@@ -330,7 +330,7 @@ const RestaurantStaffSection = ({
                       <div className="hidden md:grid md:grid-cols-12 md:gap-4 md:items-center">
                         {/* Member Info */}
                         <div className="col-span-4 flex items-center min-w-0">
-                          <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white font-bold shadow-sm group-hover:scale-110 transition-transform flex-shrink-0">
+                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-sm group-hover:scale-110 transition-transform flex-shrink-0">
                             {member.name ? member.name.charAt(0) : <Users className="w-4 h-4" />}
                           </div>
                           <div className="ml-4 min-w-0">
@@ -368,7 +368,7 @@ const RestaurantStaffSection = ({
 
                         {/* Actions */}
                         <div className="col-span-1 flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => onEdit(member)} className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"><Edit className="w-4 h-4" /></button>
+                          <button onClick={() => onEdit(member)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Edit className="w-4 h-4" /></button>
                           <button onClick={() => onDelete(member.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
                         </div>
                       </div>

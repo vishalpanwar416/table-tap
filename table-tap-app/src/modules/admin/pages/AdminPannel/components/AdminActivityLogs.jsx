@@ -68,27 +68,27 @@ const AdminActivityLogs = ({ searchTerm }) => {
       { type: ACTIVITY_TYPES.EMAIL_QUEUED, label: 'Email Queued', icon: Mail, color: 'text-amber-500' }
     ],
     'Subscriptions': [
-      { type: ACTIVITY_TYPES.SUBSCRIPTION_CREATED, label: 'Created', icon: CreditCard, color: 'text-primary-500' },
+      { type: ACTIVITY_TYPES.SUBSCRIPTION_CREATED, label: 'Created', icon: CreditCard, color: 'text-blue-500' },
       { type: ACTIVITY_TYPES.SUBSCRIPTION_RENEWED, label: 'Renewed', icon: RefreshCw, color: 'text-green-500' },
       { type: ACTIVITY_TYPES.SUBSCRIPTION_CANCELLED, label: 'Cancelled', icon: XCircle, color: 'text-red-500' },
-      { type: ACTIVITY_TYPES.SUBSCRIPTION_EXPIRED, label: 'Expired', icon: AlertTriangle, color: 'text-primary-500' }
+      { type: ACTIVITY_TYPES.SUBSCRIPTION_EXPIRED, label: 'Expired', icon: AlertTriangle, color: 'text-orange-500' }
     ],
     'Restaurants': [
-      { type: ACTIVITY_TYPES.RESTAURANT_CREATED, label: 'Created', icon: Building2, color: 'text-primary-500' },
+      { type: ACTIVITY_TYPES.RESTAURANT_CREATED, label: 'Created', icon: Building2, color: 'text-purple-500' },
       { type: ACTIVITY_TYPES.RESTAURANT_ACTIVATED, label: 'Activated', icon: CheckCircle, color: 'text-green-500' },
       { type: ACTIVITY_TYPES.RESTAURANT_DEACTIVATED, label: 'Deactivated', icon: XCircle, color: 'text-gray-500' },
-      { type: ACTIVITY_TYPES.RESTAURANT_UPDATED, label: 'Updated', icon: Settings, color: 'text-primary-500' },
+      { type: ACTIVITY_TYPES.RESTAURANT_UPDATED, label: 'Updated', icon: Settings, color: 'text-blue-500' },
       { type: ACTIVITY_TYPES.RESTAURANT_DELETED, label: 'Deleted', icon: XCircle, color: 'text-red-500' }
     ],
     'Staff': [
-      { type: ACTIVITY_TYPES.STAFF_CREATED, label: 'Staff Added', icon: UserPlus, color: 'text-primary-500' },
+      { type: ACTIVITY_TYPES.STAFF_CREATED, label: 'Staff Added', icon: UserPlus, color: 'text-blue-500' },
       { type: ACTIVITY_TYPES.STAFF_UPDATED, label: 'Staff Updated', icon: User, color: 'text-amber-500' },
       { type: ACTIVITY_TYPES.STAFF_DELETED, label: 'Staff Removed', icon: XCircle, color: 'text-red-500' }
     ],
     'System': [
       { type: ACTIVITY_TYPES.SYSTEM_ALERT, label: 'Alert', icon: Bell, color: 'text-red-500' },
       { type: ACTIVITY_TYPES.CRON_JOB, label: 'Cron Job', icon: Settings, color: 'text-gray-500' },
-      { type: ACTIVITY_TYPES.AUTO_PROCESS, label: 'Auto Process', icon: Activity, color: 'text-primary-500' }
+      { type: ACTIVITY_TYPES.AUTO_PROCESS, label: 'Auto Process', icon: Activity, color: 'text-blue-500' }
     ]
   };
 
@@ -280,8 +280,8 @@ const AdminActivityLogs = ({ searchTerm }) => {
         <div className="grid grid-cols-5 gap-1 md:gap-3 px-1 md:px-0 mt-1 md:mt-2 pb-2 md:pb-0 overflow-x-auto no-scrollbar">
           {/* Total */}
           <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
-            <div className="p-1 md:p-2 bg-primary-100 rounded-lg mb-1">
-              <Activity className="w-3.5 h-3.5 md:w-5 md:h-5 text-primary-600" />
+            <div className="p-1 md:p-2 bg-blue-100 rounded-lg mb-1">
+              <Activity className="w-3.5 h-3.5 md:w-5 md:h-5 text-blue-600" />
             </div>
             <div>
               <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">{stats.total}</p>
@@ -357,7 +357,7 @@ const AdminActivityLogs = ({ searchTerm }) => {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="appearance-none pl-3 pr-8 py-2 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none shadow-sm flex-shrink-0 min-w-[110px] cursor-pointer"
+                  className="appearance-none pl-3 pr-8 py-2 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none shadow-sm flex-shrink-0 min-w-[110px] cursor-pointer"
                 >
                   <option value="all">All Status</option>
                   <option value="success">Success</option>
@@ -372,7 +372,7 @@ const AdminActivityLogs = ({ searchTerm }) => {
                 <select
                   value={dateFilter}
                   onChange={(e) => setDateFilter(e.target.value)}
-                  className="appearance-none pl-3 pr-8 py-2 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none shadow-sm flex-shrink-0 min-w-[120px] cursor-pointer"
+                  className="appearance-none pl-3 pr-8 py-2 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none shadow-sm flex-shrink-0 min-w-[120px] cursor-pointer"
                 >
                   <option value="24hours">Last 24 Hours</option>
                   <option value="7days">Last 7 Days</option>
@@ -396,7 +396,7 @@ const AdminActivityLogs = ({ searchTerm }) => {
         <div className="divide-y divide-gray-100">
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+              <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
             </div>
           ) : filteredLogs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-gray-500">

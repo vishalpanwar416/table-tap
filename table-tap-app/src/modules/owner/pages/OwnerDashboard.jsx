@@ -50,9 +50,7 @@ const OwnerDashboard = () => {
     useEffect(() => {
         const tab = searchParams.get('tab');
         if (tab) setActiveTabState(tab);
-    }, [searchParams]);
 
-    useEffect(() => {
         const fetchUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
@@ -122,7 +120,7 @@ const OwnerDashboard = () => {
     if (contextLoading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-gray-50">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-500 border-t-transparent"></div>
             </div>
         );
     }
@@ -184,19 +182,19 @@ const OwnerDashboard = () => {
                         </div>
 
                         <div className="flex items-center gap-3 pr-2">
-                            <button className="p-2.5 text-gray-400 hover:text-primary-500 hover:bg-primary-50 rounded-xl transition-all relative">
+                            <button className="p-2.5 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-xl transition-all relative">
                                 <Bell size={20} />
-                                <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary-500 border-2 border-white rounded-full"></span>
+                                <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-orange-500 border-2 border-white rounded-full"></span>
                             </button>
                             <div className="w-px h-6 bg-gray-200 mx-1"></div>
                             <div className="flex items-center gap-3 cursor-pointer group">
                                 <div className="text-right hidden sm:block">
-                                    <p className="text-sm font-bold text-gray-900 group-hover:text-primary-600 transition-colors">
-                                        {currentUser?.full_name || currentUser?.email?.split('@')?.[0]}
+                                    <p className="text-sm font-bold text-gray-900 group-hover:text-orange-600 transition-colors">
+                                        {currentUser?.full_name || currentUser?.email?.split('@')[0]}
                                     </p>
                                     <p className="text-[10px] text-gray-500 font-bold uppercase tracking-tighter">Enterprise Owner</p>
                                 </div>
-                                <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-amber-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-primary-100 group-hover:scale-105 transition-transform">
+                                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-orange-100 group-hover:scale-105 transition-transform">
                                     {currentUser?.email?.charAt(0).toUpperCase()}
                                 </div>
                             </div>

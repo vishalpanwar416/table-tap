@@ -81,8 +81,8 @@ const NotificationToast = ({
     success: 'border-green-200',
     error: 'border-red-200',
     info: 'border-blue-200',
-    warning: 'border-primary-200',
-    order: 'border-primary-200'
+    warning: 'border-orange-200',
+    order: 'border-orange-200'
   };
 
   // Animation classes

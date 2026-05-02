@@ -32,7 +32,7 @@ const FoodItemCard = ({ item, gridColumns = 3, handleEdit, handleDelete, fetchFo
   };
 
   return (
-    <div className={`group relative bg-gradient-to-br from-white via-primary-50 to-white border border-primary-100 rounded-2xl overflow-hidden shadow-md hover:shadow-2xl hover:scale-[1.025] transition-all duration-300 ${
+    <div className={`group relative bg-gradient-to-br from-white via-orange-50 to-white border border-orange-100 rounded-2xl overflow-hidden shadow-md hover:shadow-2xl hover:scale-[1.025] transition-all duration-300 ${
       !item.is_active ? 'opacity-60' : ''
     }`}>
       {/* BADGES: Elegant pill badges with gradient - scale with grid */}
@@ -73,7 +73,7 @@ const FoodItemCard = ({ item, gridColumns = 3, handleEdit, handleDelete, fetchFo
             onChange={handleToggle}
             className="sr-only peer"
           />
-          <div className={`${gridColumns === 4 ? 'w-7 h-4' : 'w-9 h-5'} bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:transition-all peer-checked:bg-primary-500 ${gridColumns === 4 ? 'after:h-3 after:w-3' : 'after:h-4 after:w-4'}`}></div>
+          <div className={`${gridColumns === 4 ? 'w-7 h-4' : 'w-9 h-5'} bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:transition-all peer-checked:bg-orange-500 ${gridColumns === 4 ? 'after:h-3 after:w-3' : 'after:h-4 after:w-4'}`}></div>
         </label>
       </div>
 
@@ -90,7 +90,7 @@ const FoodItemCard = ({ item, gridColumns = 3, handleEdit, handleDelete, fetchFo
             <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-black/20 to-transparent" />
           </>
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-primary-300 bg-primary-50">
+          <div className="w-full h-full flex items-center justify-center text-orange-300 bg-orange-50">
             <Utensils className={gridColumns === 4 ? 'w-8 h-8' : 'w-10 h-10'} />
           </div>
         )}
@@ -111,7 +111,7 @@ const FoodItemCard = ({ item, gridColumns = 3, handleEdit, handleDelete, fetchFo
               {item.description}
             </p>
             <div className={`mt-1 flex flex-wrap gap-1 items-center ${gridColumns === 4 ? 'mt-0.5' : ''}`}>
-              <span className={`inline-flex items-center bg-primary-100 text-primary-700 rounded-full font-semibold shadow-sm ${size.desc} px-2 py-0.5`}>
+              <span className={`inline-flex items-center bg-orange-100 text-orange-700 rounded-full font-semibold shadow-sm ${size.desc} px-2 py-0.5`}>
                 <Utensils className={gridColumns === 4 ? 'w-2.5 h-2.5 mr-0.5' : 'w-3 h-3 mr-1'} />
                 {item.category}
               </span>
@@ -136,13 +136,13 @@ const FoodItemCard = ({ item, gridColumns = 3, handleEdit, handleDelete, fetchFo
             {item.discounttype && item.discountvalue ? (
               <div>
                 <span className="text-gray-400 text-xs line-through block">₹{item.price.toFixed(2)}</span>
-                <div className="text-primary-600 font-extrabold text-base">₹{discountedPrice.toFixed(2)}</div>
+                <div className="text-orange-600 font-extrabold text-base">₹{discountedPrice.toFixed(2)}</div>
                 <span className="inline-block bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5 rounded-full mt-1">
                   You save ₹{(item.price - discountedPrice).toFixed(2)}
                 </span>
               </div>
             ) : (
-              <div className="text-primary-600 font-extrabold text-base">₹{item.price.toFixed(2)}</div>
+              <div className="text-orange-600 font-extrabold text-base">₹{item.price.toFixed(2)}</div>
             )}
           </div>
         </div>

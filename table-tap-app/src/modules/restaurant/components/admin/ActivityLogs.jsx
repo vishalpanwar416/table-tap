@@ -92,7 +92,7 @@ const ActivityLogs = ({ setLoading, setErrorMsg, setSuccessMsg, searchTerm }) =>
   const getTypeIcon = (type, className = "w-4 h-4") => {
     switch (type) {
       case 'inventory': return <Package className={`${className} text-blue-500`} />;
-      case 'order': return <ShoppingCart className={`${className} text-primary-500`} />;
+      case 'order': return <ShoppingCart className={`${className} text-orange-500`} />;
       case 'menu': return <Utensils className={`${className} text-green-500`} />;
       case 'email': return <Mail className={`${className} text-amber-500`} />;
       default: return <Activity className={`${className} text-gray-500`} />;
@@ -235,7 +235,7 @@ const ActivityLogs = ({ setLoading, setErrorMsg, setSuccessMsg, searchTerm }) =>
                       {new Date(log.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider ${log.action_type === 'order' ? 'bg-primary-50 text-primary-600 border border-primary-100' :
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider ${log.action_type === 'order' ? 'bg-orange-50 text-orange-600 border border-orange-100' :
                         log.action_type === 'menu' ? 'bg-green-50 text-green-600 border border-green-100' :
                           log.action_type === 'email' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
                             'bg-blue-50 text-blue-600 border border-blue-100'
@@ -320,7 +320,7 @@ const ActivityLogs = ({ setLoading, setErrorMsg, setSuccessMsg, searchTerm }) =>
             <div key={log.id} className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm active:scale-[0.98] transition-all">
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <div className={`p-1.5 rounded-lg ${log.action_type === 'order' ? 'bg-primary-50 text-primary-600' :
+                  <div className={`p-1.5 rounded-lg ${log.action_type === 'order' ? 'bg-orange-50 text-orange-600' :
                     log.action_type === 'menu' ? 'bg-green-50 text-green-600' :
                       log.action_type === 'email' ? 'bg-amber-50 text-amber-600' :
                         'bg-blue-50 text-blue-600'
@@ -330,7 +330,7 @@ const ActivityLogs = ({ setLoading, setErrorMsg, setSuccessMsg, searchTerm }) =>
                   <div>
                     <h3 className="text-[13px] font-bold text-gray-900 leading-tight truncate max-w-[150px]">{log.target_name}</h3>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className={`text-[8px] font-bold uppercase tracking-wider px-1 py-0.5 rounded ${log.action_type === 'order' ? 'bg-primary-100 text-primary-700' :
+                      <span className={`text-[8px] font-bold uppercase tracking-wider px-1 py-0.5 rounded ${log.action_type === 'order' ? 'bg-orange-100 text-orange-700' :
                         log.action_type === 'menu' ? 'bg-green-100 text-green-700' :
                           log.action_type === 'email' ? 'bg-amber-100 text-amber-700' :
                             'bg-blue-100 text-blue-700'

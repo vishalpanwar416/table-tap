@@ -181,7 +181,6 @@ const PaymentPage = () => {
   };
 
   const handlePayment = async () => {
-    if (isProcessing) return;
     setIsProcessing(true);
 
     try {
@@ -411,7 +410,7 @@ const PaymentPage = () => {
         items: cartItems,
         specialInstructions,
         paymentMethod,
-        errorMessage: originalError?.message || String(originalError),
+        errorMessage: originalError.message,
         timestamp: new Date().toISOString(),
         status: 'payment_success_order_failed'
       };
@@ -434,9 +433,7 @@ const PaymentPage = () => {
           try {
             const storedData = localStorage.getItem(`failed_order_${paymentResponse.razorpay_payment_id}`);
             if (!storedData) throw new Error('No stored order data found');
-            let failedOrderData;
-            try { failedOrderData = JSON.parse(storedData); } catch { throw new Error('Stored order data is corrupt'); }
-            if (!failedOrderData.restaurantId || !failedOrderData.paymentId) throw new Error('Stored order data is incomplete');
+            const failedOrderData = JSON.parse(storedData);
             const order = await createOrderWithRetry({
               restaurantId: failedOrderData.restaurantId,
               userId: user ? user.id : null,
@@ -445,7 +442,7 @@ const PaymentPage = () => {
               customerPhone: failedOrderData.customerPhone,
               restaurantName: restaurant.name,
               tableNumber: failedOrderData.tableNumber,
-              items: (failedOrderData.items || []).map(item => ({
+              items: failedOrderData.items.map(item => ({
                 ...item,
                 effectivePrice: item.effectivePrice || item.price
               })),
@@ -485,9 +482,9 @@ const PaymentPage = () => {
           }
         },
         contactSupport: () => {
-          const supportPhone = restaurant?.contact_phone || '1800-xxx-xxxx';
-          const supportEmail = restaurant?.email || 'support@restaurant.com';
-          const message = `Payment ID: ${paymentResponse.razorpay_payment_id}\nAmount: ₹${finalTotal}\nRestaurant: ${restaurant?.name}\nTable: ${tableNumber}\nIssue: Payment successful but order creation failed\nError: ${originalError?.message || String(originalError)}`;
+          const supportPhone = restaurant.phone || '1800-xxx-xxxx';
+          const supportEmail = restaurant.email || 'support@restaurant.com';
+          const message = `Payment ID: ${paymentResponse.razorpay_payment_id}\nAmount: ₹${finalTotal}\nRestaurant: ${restaurant.name}\nTable: ${tableNumber}\nIssue: Payment successful but order creation failed\nError: ${originalError.message}`;
           if (supportPhone) {
             window.open(`https://wa.me/${supportPhone}?text=${encodeURIComponent(message)}`, '_blank');
           } else {
@@ -604,9 +601,7 @@ const PaymentPage = () => {
     try {
       const storedData = localStorage.getItem(`failed_order_${paymentId}`);
       if (!storedData) throw new Error('No stored order data found');
-      let failedOrderData;
-      try { failedOrderData = JSON.parse(storedData); } catch { throw new Error('Stored order data is corrupt'); }
-      if (!failedOrderData.restaurantId || !failedOrderData.paymentId) throw new Error('Stored order data is incomplete');
+      const failedOrderData = JSON.parse(storedData);
       const order = await createOrderWithRetry({
         restaurantId: failedOrderData.restaurantId,
         userId: user ? user.id : null,
@@ -615,7 +610,7 @@ const PaymentPage = () => {
         customerPhone: failedOrderData.customerPhone,
         restaurantName: restaurant.name,
         tableNumber: failedOrderData.tableNumber,
-        items: (failedOrderData.items || []).map(item => ({
+        items: failedOrderData.items.map(item => ({
           ...item,
           effectivePrice: item.effectivePrice || item.price
         })),
@@ -657,9 +652,9 @@ const PaymentPage = () => {
 
   // Function to contact support
   const contactSupport = (paymentId) => {
-    const supportPhone = restaurant?.contact_phone || '1800-xxx-xxxx';
-    const supportEmail = restaurant?.email || 'support@restaurant.com';
-    const message = `Payment ID: ${paymentId}\nAmount: ₹${finalTotal}\nRestaurant: ${restaurant?.name}\nTable: ${tableNumber}\nIssue: Payment successful but order creation failed`;
+    const supportPhone = restaurant.phone || '1800-xxx-xxxx';
+    const supportEmail = restaurant.email || 'support@restaurant.com';
+    const message = `Payment ID: ${paymentId}\nAmount: ₹${finalTotal}\nRestaurant: ${restaurant.name}\nTable: ${tableNumber}\nIssue: Payment successful but order creation failed`;
     if (supportPhone) {
       window.open(`https://wa.me/${supportPhone}?text=${encodeURIComponent(message)}`, '_blank');
     } else {
@@ -693,7 +688,7 @@ const PaymentPage = () => {
   };
 
   const handleUPIPayment = async () => {
-    if (!restaurant?.upi_id) {
+    if (!restaurant.upi_id) {
       setScriptError('UPI payment is not configured for this restaurant.');
       return;
     }
@@ -745,14 +740,14 @@ const PaymentPage = () => {
         <div className="w-full px-6 py-8 relative flex items-center justify-center">
           <button
             onClick={handleGoBack}
-            className="absolute left-4 text-primary-500 hover:text-primary-600 transition-all duration-300 p-2 rounded-full hover:bg-primary-500/10 active:bg-primary-500/20 focus:outline-none focus:ring-2 focus:ring-primary-500/30 z-10"
+            className="absolute left-4 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-10"
             aria-label="Go back"
           >
             <ChevronLeft size={30} />
           </button>
           <div className="text-center">
             <h1 className="text-white text-3xl font-bold mb-2">Payment</h1>
-            <div className="flex items-center justify-center gap-2 text-primary-400">
+            <div className="flex items-center justify-center gap-2 text-orange-400">
               <Lock size={16} />
               <span className="text-sm">Secure Payment</span>
             </div>
@@ -785,8 +780,8 @@ const PaymentPage = () => {
                   <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
                     <span className="text-gray-600 font-bold text-sm">2</span>
                   </div>
-                  <div className="w-12 h-1 bg-primary-500 rounded"></div>
-                  <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
+                  <div className="w-12 h-1 bg-orange-500 rounded"></div>
+                  <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
                     <span className="text-white font-bold text-sm">3</span>
                   </div>
                 </div>
@@ -822,7 +817,7 @@ const PaymentPage = () => {
             {/* Enhanced Payment Method Selection */}
             <div className="mb-8">
               <h3 className="font-bold text-xl mb-4 flex items-center gap-2 text-gray-800">
-                <CreditCard size={20} className="text-primary-500" />
+                <CreditCard size={20} className="text-orange-500" />
                 Payment Method
               </h3>
 
@@ -881,11 +876,11 @@ const PaymentPage = () => {
                   <button
                     onClick={() => setPaymentMethod('razorpay')}
                     className={`p-6 rounded-2xl border-2 flex items-center gap-4 transition-all duration-300 hover:shadow-lg ${paymentMethod === 'razorpay'
-                      ? 'border-primary-500 bg-gradient-to-r from-primary-50 to-primary-100 shadow-md'
-                      : 'border-gray-200 bg-white hover:border-primary-300'
+                      ? 'border-orange-500 bg-gradient-to-r from-orange-50 to-orange-100 shadow-md'
+                      : 'border-gray-200 bg-white hover:border-orange-300'
                       }`}
                   >
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${paymentMethod === 'razorpay' ? 'bg-primary-500' : 'bg-gray-100'
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${paymentMethod === 'razorpay' ? 'bg-orange-500' : 'bg-gray-100'
                       }`}>
                       <CreditCard size={24} className={paymentMethod === 'razorpay' ? 'text-white' : 'text-gray-500'} />
                     </div>
@@ -898,7 +893,7 @@ const PaymentPage = () => {
                       </div>
                     </div>
                     {paymentMethod === 'razorpay' && (
-                      <CheckCircle size={20} className="text-primary-500" />
+                      <CheckCircle size={20} className="text-orange-500" />
                     )}
                   </button>
                 )}
@@ -908,11 +903,11 @@ const PaymentPage = () => {
                   <button
                     onClick={() => setPaymentMethod('upi')}
                     className={`p-6 rounded-2xl border-2 flex items-center gap-4 transition-all duration-300 hover:shadow-lg ${paymentMethod === 'upi'
-                      ? 'border-primary-500 bg-gradient-to-r from-primary-50 to-primary-100 shadow-md'
-                      : 'border-gray-200 bg-white hover:border-primary-300'
+                      ? 'border-orange-500 bg-gradient-to-r from-orange-50 to-orange-100 shadow-md'
+                      : 'border-gray-200 bg-white hover:border-orange-300'
                       }`}
                   >
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${paymentMethod === 'upi' ? 'bg-primary-500' : 'bg-gray-100'
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${paymentMethod === 'upi' ? 'bg-orange-500' : 'bg-gray-100'
                       }`}>
                       <Smartphone size={24} className={paymentMethod === 'upi' ? 'text-white' : 'text-gray-500'} />
                     </div>
@@ -925,7 +920,7 @@ const PaymentPage = () => {
                       </div>
                     </div>
                     {paymentMethod === 'upi' && (
-                      <CheckCircle size={20} className="text-primary-500" />
+                      <CheckCircle size={20} className="text-orange-500" />
                     )}
                   </button>
                 )}
@@ -934,11 +929,11 @@ const PaymentPage = () => {
                 <button
                   onClick={() => setPaymentMethod('direct')}
                   className={`p-6 rounded-2xl border-2 flex items-center gap-4 transition-all duration-300 hover:shadow-lg ${paymentMethod === 'direct'
-                    ? 'border-primary-500 bg-gradient-to-r from-primary-50 to-primary-100 shadow-md'
-                    : 'border-gray-200 bg-white hover:border-primary-300'
+                    ? 'border-orange-500 bg-gradient-to-r from-orange-50 to-orange-100 shadow-md'
+                    : 'border-gray-200 bg-white hover:border-orange-300'
                     }`}
                 >
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${paymentMethod === 'direct' ? 'bg-primary-500' : 'bg-gray-100'
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${paymentMethod === 'direct' ? 'bg-orange-500' : 'bg-gray-100'
                     }`}>
                     <QrCode size={24} className={paymentMethod === 'direct' ? 'text-white' : 'text-gray-500'} />
                   </div>
@@ -951,7 +946,7 @@ const PaymentPage = () => {
                     </div>
                   </div>
                   {paymentMethod === 'direct' && (
-                    <CheckCircle size={20} className="text-primary-500" />
+                    <CheckCircle size={20} className="text-orange-500" />
                   )}
                 </button>
               </div>
@@ -1049,7 +1044,7 @@ const PaymentPage = () => {
 
                 <div className="flex justify-between items-center">
                   <span className="text-2xl font-bold text-gray-800">Total</span>
-                  <span className="text-2xl font-bold text-primary-600">₹{finalTotal.toFixed(2)}</span>
+                  <span className="text-2xl font-bold text-orange-600">₹{finalTotal.toFixed(2)}</span>
                 </div>
               </div>
             </div>

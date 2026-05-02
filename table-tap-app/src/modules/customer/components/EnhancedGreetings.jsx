@@ -90,7 +90,7 @@ export default function EnhancedGreetings({ userName = "Guest" }) {
             {greeting}
             <motion.span
               variants={nameVariants}
-              className="text-primary-500 ml-2.5"
+              className="text-orange-500 ml-2.5"
             >
               {userName || "Guest"}!
             </motion.span>

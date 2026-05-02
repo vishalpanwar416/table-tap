@@ -146,7 +146,7 @@ const RecommendationItem = memo(({ item, onImageClick, index }) => {
                     ₹{Number(item.price).toFixed(0)}
                   </motion.span>
                   <motion.span
-                    className="text-sm font-bold text-primary-600"
+                    className="text-sm font-bold text-orange-600"
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.4 }}
@@ -179,7 +179,7 @@ const RecommendationItem = memo(({ item, onImageClick, index }) => {
                 >
                   <motion.button
                     onClick={handleDecrement}
-                    className="text-white px-1 text-xs hover:text-primary-300 transition-colors"
+                    className="text-white px-1 text-xs hover:text-orange-300 transition-colors"
                     whileHover={{ scale: 1.2 }}
                     whileTap={{ scale: 0.8 }}
                   >
@@ -430,7 +430,7 @@ const Tags = ({ foodItems = [], onItemClick }) => {
                 }}
               >
                 <motion.span
-                  className="relative text-lg font-semibold text-gray-800 capitalize hover:text-primary-500 transition-colors md:text-2xl cursor-pointer whitespace-nowrap"
+                  className="relative text-lg font-semibold text-gray-800 capitalize hover:text-orange-500 transition-colors md:text-2xl cursor-pointer whitespace-nowrap"
                   whileHover={{ color: '#f97316' }}
                   animate={{
                     scale: expandedTags.has(tagKey) ? 1.05 : 1
@@ -443,7 +443,7 @@ const Tags = ({ foodItems = [], onItemClick }) => {
                 >
                   {tagData.name}
                   <motion.div
-                    className="absolute -bottom-1 left-0 h-0.5 bg-primary-500"
+                    className="absolute -bottom-1 left-0 h-0.5 bg-orange-500"
                     initial={{ width: 0 }}
                     whileHover={{ width: '100%' }}
                     animate={{
@@ -467,7 +467,7 @@ const Tags = ({ foodItems = [], onItemClick }) => {
                   }}
                   transition={{ duration: 0.3, ease: "easeInOut" }}
                 >
-                  <ChevronDown className="w-5 h-5 md:w-6 md:h-6 text-primary-500" />
+                  <ChevronDown className="w-5 h-5 md:w-6 md:h-6 text-orange-500" />
                 </motion.div>
               </motion.button>
             </div>

@@ -112,10 +112,10 @@ const SearchResultsOverlay = ({
                         {hasDiscount ? (
                           <>
                             <span className="text-xs text-gray-400 line-through">₹{Number(item.price).toFixed(0)}</span>
-                            <span className="text-primary-400 font-semibold text-sm sm:text-base drop-shadow">₹{discountedPrice.toFixed(0)}</span>
+                            <span className="text-orange-400 font-semibold text-sm sm:text-base drop-shadow">₹{discountedPrice.toFixed(0)}</span>
                           </>
                         ) : (
-                          <span className="text-primary-400 font-semibold text-sm sm:text-base drop-shadow">₹{Number(item.price).toFixed(0)}</span>
+                          <span className="text-orange-400 font-semibold text-sm sm:text-base drop-shadow">₹{Number(item.price).toFixed(0)}</span>
                         )}
                       </span>
                     </div>
@@ -124,7 +124,7 @@ const SearchResultsOverlay = ({
                       {item.tags && item.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1">
                           {item.tags.slice(0, 2).map((tag) => (
-                            <span key={tag} className="bg-primary-900/60 text-primary-300 text-xs px-2 py-0.5 rounded-full">{tag}</span>
+                            <span key={tag} className="bg-orange-900/60 text-orange-300 text-xs px-2 py-0.5 rounded-full">{tag}</span>
                           ))}
                           {item.tags.length > 2 && (
                             <span className="text-gray-400 text-xs">+{item.tags.length - 2}</span>
@@ -140,7 +140,7 @@ const SearchResultsOverlay = ({
                       {cartQuantity > 0 ? (
                         <motion.div
                           key="quantity-controls"
-                          className="flex items-center bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-full px-2 py-1 shadow-lg"
+                          className="flex items-center bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full px-2 py-1 shadow-lg"
                           initial={{ scale: 0.8, opacity: 0 }}
                           animate={{ scale: 1, opacity: 1 }}
                           exit={{ scale: 0.8, opacity: 0 }}
@@ -148,7 +148,7 @@ const SearchResultsOverlay = ({
                         >
                           <button
                             onClick={(e) => handleDecrement(e, item)}
-                            className="text-white px-1 text-xs hover:text-primary-200 transition-colors"
+                            className="text-white px-1 text-xs hover:text-orange-200 transition-colors"
                             type="button"
                           >
                             −

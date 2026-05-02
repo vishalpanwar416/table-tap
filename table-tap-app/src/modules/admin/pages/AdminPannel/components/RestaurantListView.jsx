@@ -184,7 +184,7 @@ const RestaurantListView = ({
 
     return (
       <div
-        className={`border-b transition-all cursor-pointer group ${isInactive ? 'bg-rose-50/80 border-rose-200 hover:bg-rose-100/80' : 'border-gray-200 hover:bg-slate-50'}`}
+        className={`border-b transition-all cursor-pointer group ${isInactive ? 'bg-red-50/80 border-red-200 hover:bg-red-100/80' : 'border-gray-200 hover:bg-gray-50'}`}
         data-restaurant-index={index}
         onClick={handleRowClick}
       >
@@ -207,7 +207,7 @@ const RestaurantListView = ({
                   }}
                 />
               ) : (
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${restaurant.is_active ? 'bg-primary-500' : 'bg-rose-500'}`}>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${restaurant.is_active ? 'bg-blue-500' : 'bg-red-500'}`}>
                   <Building2 className="w-5 h-5 text-white" />
                 </div>
               )}
@@ -222,25 +222,25 @@ const RestaurantListView = ({
           <div className="col-span-1 text-center text-sm">{restaurant.staff_count || 0}</div>
           {/* Toggles */}
           <div className="col-span-1 flex justify-center"><StatusToggle restaurant={restaurant} onClick={handleToggleStatus} /></div>
-          <div className="col-span-1 flex justify-center"><FeatureIconToggle active={restaurant.ai_enabled} icon={Brain} color="primary" onClick={(e) => handleToggleAI(e, restaurant)} /></div>
-          <div className="col-span-1 flex justify-center"><FeatureIconToggle active={restaurant.aggregators_enabled} icon={ShoppingBag} color="primary" onClick={(e) => handleToggleAggregators(e, restaurant)} /></div>
-          <div className="col-span-1 flex justify-center"><FeatureIconToggle active={restaurant.billing_features_enabled !== false || restaurant.online_bill_enabled !== false} icon={FileText} color="amber" onClick={(e) => handleToggleOnlineBill(e, restaurant)} /></div>
+          <div className="col-span-1 flex justify-center"><FeatureIconToggle active={restaurant.ai_enabled} icon={Brain} color="purple" onClick={(e) => handleToggleAI(e, restaurant)} /></div>
+          <div className="col-span-1 flex justify-center"><FeatureIconToggle active={restaurant.aggregators_enabled} icon={ShoppingBag} color="orange" onClick={(e) => handleToggleAggregators(e, restaurant)} /></div>
+          <div className="col-span-1 flex justify-center"><FeatureIconToggle active={restaurant.billing_features_enabled !== false || restaurant.online_bill_enabled !== false} icon={FileText} color="blue" onClick={(e) => handleToggleOnlineBill(e, restaurant)} /></div>
           <div className="col-span-1 flex justify-center space-x-2">
             <ActionButtons restaurant={restaurant} onEdit={handleEdit} onDelete={handleDelete} />
           </div>
         </div>
 
-        {/* Mobile View (Collapsible) - Optimized for space */}
-        <div className="md:hidden p-3">
-          {/* Header Line */}
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
+        {/* Mobile View (Collapsible) */}
+        <div className="md:hidden p-2">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
               {restaurant.logo_url ? (
                 <img
                   key={restaurant.logo_url}
                   src={restaurant.logo_url}
                   alt=""
-                  className="w-10 h-10 rounded-xl object-contain bg-slate-50 border border-slate-100 shadow-sm"
+                  className="w-10 h-10 rounded-lg object-contain bg-white border border-gray-200"
                   onError={(e) => {
                     if (e.target.src !== tableTapLogo) {
                       e.target.onerror = null;
@@ -249,31 +249,20 @@ const RestaurantListView = ({
                   }}
                 />
               ) : (
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${restaurant.is_active ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
-                  <Building2 className="w-5 h-5" />
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${restaurant.is_active ? 'bg-blue-500' : 'bg-red-500'}`}>
+                  <Building2 className="w-5 h-5 text-white" />
                 </div>
               )}
-              <div className="min-w-0">
-                <h4 className={`font-bold truncate text-sm ${isInactive ? 'text-rose-900' : 'text-slate-900'}`}>{restaurant.name}</h4>
-                <div className="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5">
-                  <span className="truncate">{restaurant.cuisine_type}</span>
-                  <span className="w-1 h-1 rounded-full bg-slate-300" />
-                  <span className={restaurant.is_active ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
-                    {restaurant.is_active ? 'Active' : 'Inactive'}
-                  </span>
+              <div>
+                <h4 className={`font-medium font-spartan ${isInactive ? 'text-red-800' : 'text-gray-900'}`}>{restaurant.name}</h4>
+                <div className="flex items-center gap-2 text-xs text-gray-400">
+                  <span>{restaurant.cuisine_type}</span>
+                  <span>•</span>
+                  <span>{restaurant.is_active ? 'Active' : 'Inactive'}</span>
                 </div>
               </div>
             </div>
-            
-            <div className="flex items-center gap-2">
-              <button
-                onClick={(e) => handleToggleStatus(e, restaurant.id, restaurant.is_active)}
-                className={`p-1.5 rounded-lg border transition-all ${restaurant.is_active ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-rose-50 border-rose-100 text-rose-600'}`}
-              >
-                <Power className="w-3.5 h-3.5" />
-              </button>
-              <ChevronUp className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${expanded ? '' : 'rotate-180'}`} />
-            </div>
+            <ChevronUp className={`w-5 h-5 text-gray-400 transition-transform ${expanded ? '' : 'rotate-180'}`} />
           </div>
 
           {/* Expanded Content */}
@@ -299,15 +288,15 @@ const RestaurantListView = ({
               <div>
                 <span className="block text-xs text-gray-400 mb-2">Features</span>
                 <div className="flex gap-2">
-                  <FeatureIconToggle active={restaurant.ai_enabled} icon={Brain} color="primary" onClick={(e) => handleToggleAI(e, restaurant)} label="AI" />
-                  <FeatureIconToggle active={restaurant.aggregators_enabled} icon={ShoppingBag} color="primary" onClick={(e) => handleToggleAggregators(e, restaurant)} label="Aggr" />
-                  <FeatureIconToggle active={restaurant.billing_features_enabled !== false} icon={FileText} color="amber" onClick={(e) => handleToggleOnlineBill(e, restaurant)} label="Bill" />
+                  <FeatureIconToggle active={restaurant.ai_enabled} icon={Brain} color="purple" onClick={(e) => handleToggleAI(e, restaurant)} label="AI" />
+                  <FeatureIconToggle active={restaurant.aggregators_enabled} icon={ShoppingBag} color="orange" onClick={(e) => handleToggleAggregators(e, restaurant)} label="Aggr" />
+                  <FeatureIconToggle active={restaurant.billing_features_enabled !== false} icon={FileText} color="blue" onClick={(e) => handleToggleOnlineBill(e, restaurant)} label="Bill" />
                 </div>
               </div>
 
               {/* Actions */}
               <div className="flex justify-between items-center pt-2">
-                <button onClick={() => onClick(restaurant)} className="flex items-center gap-2 text-sm font-medium text-primary-600 bg-primary-50 px-3 py-2 rounded-lg">
+                <button onClick={() => onClick(restaurant)} className="flex items-center gap-2 text-sm font-medium text-blue-600 bg-blue-50 px-3 py-2 rounded-lg">
                   Open Dashboard <ExternalLink className="w-3 h-3" />
                 </button>
                 <div className="flex gap-2">
@@ -325,20 +314,14 @@ const RestaurantListView = ({
   const StatusToggle = ({ restaurant, onClick }) => (
     <button
       onClick={(e) => onClick(e, restaurant)}
-      className={`relative w-10 h-5.5 rounded-full transition-all duration-300 ease-in-out shadow-inner ${
-        restaurant.is_active ? 'bg-emerald-500' : 'bg-slate-300'
-      }`}
+      className={`relative w-12 h-6 rounded-full transition-colors ${restaurant.is_active ? 'bg-green-500' : 'bg-red-500'}`}
     >
-      <div
-        className={`absolute top-0.5 left-0.5 bg-white w-4.5 h-4.5 rounded-full shadow-[0_1px_3px_rgba(0,0,0,0.15)] transition-transform duration-300 ease-out ${
-          restaurant.is_active ? 'translate-x-4.5' : 'translate-x-0'
-        }`}
-      />
+      <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${restaurant.is_active ? 'translate-x-6' : 'translate-x-0'}`} />
     </button>
   );
 
   const FeatureIconToggle = ({ active, icon: Icon, color, onClick, label }) => (
-    <button onClick={onClick} className={`p-2 rounded-lg border ${active ? `bg-${color}-50 border-${color}-200 text-${color}-600` : 'bg-slate-50 border-slate-200 text-slate-400'} flex items-center gap-2 transition-all`}>
+    <button onClick={onClick} className={`p-2 rounded-lg border ${active ? `bg-${color}-50 border-${color}-200 text-${color}-600` : 'bg-gray-50 border-gray-200 text-gray-400'} flex items-center gap-2`}>
       <Icon className="w-4 h-4" />
       {label && <span className="text-xs font-medium">{label}</span>}
     </button>
@@ -346,8 +329,8 @@ const RestaurantListView = ({
 
   const ActionButtons = ({ restaurant, onEdit, onDelete }) => (
     <>
-      <button onClick={(e) => onEdit(e, restaurant)} className="p-2 text-slate-400 hover:text-primary-600 bg-slate-50 hover:bg-primary-50 rounded-lg transition-all"><Edit className="w-4 h-4" /></button>
-      <button onClick={(e) => onDelete(e, restaurant)} className="p-2 text-slate-400 hover:text-rose-600 bg-slate-50 hover:bg-rose-50 rounded-lg transition-all"><Trash2 className="w-4 h-4" /></button>
+      <button onClick={(e) => onEdit(e, restaurant)} className="p-2 text-gray-400 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 rounded-lg"><Edit className="w-4 h-4" /></button>
+      <button onClick={(e) => onDelete(e, restaurant)} className="p-2 text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
     </>
   );
 
@@ -386,7 +369,7 @@ const RestaurantListView = ({
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         {/* Table Header - Desktop Only */}
-        <div className="hidden md:grid bg-slate-50 px-6 py-4 border-b border-slate-200 grid-cols-12 gap-4 text-sm font-bold text-slate-700 font-spartan uppercase tracking-wider">
+        <div className="hidden md:grid bg-gray-50 px-6 py-4 border-b border-gray-200 grid-cols-12 gap-4 text-sm font-medium text-gray-700 font-spartan">
           <div className="col-span-2">Restaurant</div>
           <div className="col-span-2">Location</div>
           <div className="col-span-2">Contact</div>
@@ -413,7 +396,7 @@ const RestaurantListView = ({
       {displayedRestaurants.length > 20 && (
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} // Simple scroll to top
-          className="fixed bottom-6 right-6 p-3 bg-primary-600 text-white rounded-full shadow-lg z-50"
+          className="fixed bottom-6 right-6 p-3 bg-blue-600 text-white rounded-full shadow-lg z-50"
         >
           <ChevronUp className="w-5 h-5" />
         </button>

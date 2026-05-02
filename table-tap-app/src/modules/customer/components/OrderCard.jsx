@@ -59,13 +59,12 @@ const OrderCard = ({ order, onClick, restaurantName }) => {
     setExpanded(!expanded);
   };
   
-  const tableNumber = order.table_number || order.tableNumber;
-  const specialInstructions = order.special_instructions || order.specialInstructions;
-
+  console.log('OrderCard order:', order);
+  
   return (
     <div 
       onClick={handleCardClick}
-      className={`bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all border mx-auto max-w-full ${expanded ? 'border-primary-300' : 'border-gray-100'} cursor-pointer`}
+      className={`bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all border mx-auto max-w-full ${expanded ? 'border-orange-300' : 'border-gray-100'} cursor-pointer`}
       style={{ fontSize: '0.95rem' }}
     >
       <div className={`p-3 ${expanded ? 'pb-2' : ''}`}>
@@ -108,7 +107,7 @@ const OrderCard = ({ order, onClick, restaurantName }) => {
           </div>
           <button 
             onClick={handleViewDetails}
-            className={`flex items-center text-xs font-medium rounded px-2 py-0.5 ${expanded ? 'bg-primary-50 text-primary-600' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'} transition-colors`}
+            className={`flex items-center text-xs font-medium rounded px-2 py-0.5 ${expanded ? 'bg-orange-50 text-orange-600' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'} transition-colors`}
             tabIndex={0}
           >
             {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
@@ -146,7 +145,7 @@ const OrderCard = ({ order, onClick, restaurantName }) => {
                       )}
                     </div>
                     <div className="text-xs font-medium text-gray-900">
-                      ₹{((item.price || 0) * (item.quantity || 1)).toFixed(2)}
+                      ₹{(item.price * (item.quantity || 1)).toFixed(2)}
                     </div>
                   </div>
                 ))}
@@ -155,16 +154,16 @@ const OrderCard = ({ order, onClick, restaurantName }) => {
             
             {/* Additional Order Details */}
             <div className="mt-1 space-y-2">
-              {tableNumber && (
+              {order.tableNumber && (
                 <div className="bg-blue-50 text-blue-700 rounded-lg p-1.5 text-xs flex items-center justify-center">
-                  <span className="font-medium">Table {tableNumber}</span>
+                  <span className="font-medium">Table {order.tableNumber}</span>
                 </div>
               )}
-
-              {specialInstructions && (
+              
+              {order.specialInstructions && (
                 <div className="bg-gray-50 rounded-lg p-2 text-xs border border-gray-200">
                   <span className="font-medium text-[10px] uppercase text-gray-500 block mb-1">Special Instructions</span>
-                  <p className="text-gray-700">{specialInstructions}</p>
+                  <p className="text-gray-700">{order.specialInstructions}</p>
                 </div>
               )}
               
@@ -181,10 +180,10 @@ const OrderCard = ({ order, onClick, restaurantName }) => {
                     <span className="text-gray-900">-₹{order.discount?.toFixed(2) || '0.00'}</span>
                   </div>
                 )}
-                {(order.delivery_fee || order.deliveryFee) && (
+                {order.deliveryFee && (
                   <div className="flex justify-between text-xs mb-1">
                     <span className="text-gray-600">Delivery Fee</span>
-                    <span className="text-gray-900">₹{(order.delivery_fee || order.deliveryFee).toFixed(2)}</span>
+                    <span className="text-gray-900">₹{order.deliveryFee.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-xs mb-1">

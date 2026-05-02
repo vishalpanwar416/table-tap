@@ -457,9 +457,9 @@ const AIAnalyticsChat = ({ restaurantId: propRestaurantId }) => {
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
           <div className="relative">
-            <Brain className="animate-pulse h-12 w-12 text-primary-500 mx-auto mb-4" />
+            <Brain className="animate-pulse h-12 w-12 text-orange-500 mx-auto mb-4" />
             <div className="absolute inset-0 flex items-center justify-center">
-              <Loader className="animate-spin h-6 w-6 text-primary-600" />
+              <Loader className="animate-spin h-6 w-6 text-orange-600" />
             </div>
           </div>
           <p className="text-gray-600 font-medium">Analyzing your restaurant data...</p>
@@ -474,7 +474,7 @@ const AIAnalyticsChat = ({ restaurantId: propRestaurantId }) => {
       {/* Floating Top Utility Bar */}
       <div className="bg-white/80 backdrop-blur-md border border-slate-200/50 px-2 py-2 md:px-6 md:py-3 flex flex-row items-center justify-between z-20 rounded-2xl mx-1 mt-1 gap-2 transition-all duration-300">
         <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1 md:flex-none">
-          <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-amber-600 to-primary-700 flex items-center justify-center text-white border border-white/20 shadow-sm shrink-0">
+          <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-amber-600 to-orange-700 flex items-center justify-center text-white border border-white/20 shadow-sm shrink-0">
             <Brain className="h-4 w-4 md:h-6 md:w-6" />
           </div>
           <div className="ml-1 md:ml-2 min-w-0 flex-1">
@@ -527,9 +527,9 @@ const AIAnalyticsChat = ({ restaurantId: propRestaurantId }) => {
           {analyticsData && (
             <div className="grid grid-cols-4 bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-2xl overflow-hidden mb-4 mx-1 shadow-sm">
               {[
-                { label: 'Revenue', val: `₹${(analyticsData.summary.totalRevenue || 0).toLocaleString()}`, color: 'emerald' },
-                { label: 'Orders', val: analyticsData.summary.totalOrders || 0, color: 'blue' },
-                { label: 'Avg Order', val: `₹${(analyticsData.summary.avgOrderValue || 0).toFixed(0)}`, color: 'amber' },
+                { label: 'Revenue', val: `₹${analyticsData.summary.totalRevenue.toLocaleString()}`, color: 'emerald' },
+                { label: 'Orders', val: analyticsData.summary.totalOrders, color: 'blue' },
+                { label: 'Avg Order', val: `₹${analyticsData.summary.avgOrderValue.toFixed(0)}`, color: 'amber' },
                 { label: 'Peak Hour', val: analyticsData.summary.peakHour || 'N/A', color: 'orange' }
               ].map((s, i) => (
                 <div

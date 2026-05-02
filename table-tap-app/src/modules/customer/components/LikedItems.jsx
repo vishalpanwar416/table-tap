@@ -142,7 +142,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
                     ₹{Number(item.price).toFixed(0)}
                   </motion.span>
                   <motion.span
-                    className="text-sm font-bold text-primary-600"
+                    className="text-sm font-bold text-orange-600"
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.4 }}
@@ -175,7 +175,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
                 >
                   <motion.button
                     onClick={handleDecrement}
-                    className="text-white px-1 text-xs hover:text-primary-300 transition-colors"
+                    className="text-white px-1 text-xs hover:text-orange-300 transition-colors"
                     whileHover={{ scale: 1.2 }}
                     whileTap={{ scale: 0.8 }}
                     aria-label="Decrease quantity"
@@ -268,7 +268,7 @@ const LikedItems = ({ foodItems, onItemClick }) => {
     <div className="mt-6 text-black">
       <div className="flex justify-between items-center mb-3 px-4">
         <h2 className="text-xl font-bold font-spartan-bold md:text-3xl">Liked Items</h2>
-        <button onClick={() => navigate('/liked-items')} className="text-primary-500 md:text-xl text-sm flex items-center hover:underline">
+        <button onClick={() => navigate('/liked-items')} className="text-orange-500 md:text-xl text-sm flex items-center hover:underline">
           View All <span className="ml-1 md:text-xl">›</span>
         </button>
       </div>
@@ -282,7 +282,7 @@ const LikedItems = ({ foodItems, onItemClick }) => {
           />
         ))}
       </div>
-      <div className="my-4 w-full mx-auto h-px bg-gradient-to-r from-transparent via-primary-200 to-transparent"></div>
+      <div className="my-4 w-full mx-auto h-px bg-gradient-to-r from-transparent via-orange-200 to-transparent"></div>
       <OrderCard
         isOpen={isOrderCardOpen}
         onClose={handleCloseItemCard}

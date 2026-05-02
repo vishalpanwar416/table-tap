@@ -3,7 +3,7 @@ import React from 'react';
 const CategoryFilter = ({ filterCategory, setFilterCategory, categories }) => {
   return (
     <select
-      className="p-2 border rounded focus:ring-2 focus:ring-primary-500 w-full"
+      className="p-2 border rounded focus:ring-2 focus:ring-orange-500 w-full"
       value={filterCategory}
       onChange={(e) => setFilterCategory(e.target.value)}
       aria-label="Filter by category"

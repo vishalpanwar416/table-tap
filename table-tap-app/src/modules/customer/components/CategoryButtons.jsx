@@ -36,9 +36,9 @@ const CategoryButtons = ({
         >
           <div className={`${
             activeCategory === categoryName 
-              ? 'bg-primary-200 text-primary-700' 
-              : 'bg-primary-100 text-primary-600'
-          } rounded-3xl px-4 py-3 shadow-md hover:bg-primary-200 transition-all flex items-center justify-center w-16 h-16`}>
+              ? 'bg-orange-200 text-orange-700' 
+              : 'bg-orange-100 text-orange-600'
+          } rounded-3xl px-4 py-3 shadow-md hover:bg-orange-200 transition-all flex items-center justify-center w-16 h-16`}>
             {getCategoryIcon(categoryName)}
           </div>
           <span className="text-black text-xs mt-2">{categoryName}</span>

@@ -322,7 +322,7 @@ export default function MyOrders() {
           <p className="text-red-500">{error}</p>
           <button
             onClick={() => handleFetchOrders(true)}
-            className="mt-4 bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors shadow-sm"
+            className="mt-4 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors shadow-sm"
           >
             Try Again
           </button>
@@ -342,7 +342,7 @@ export default function MyOrders() {
         {/* Header */}
         <div className="w-full px-6 py-8 relative flex items-center justify-between">
           <button
-            className="text-primary-500 hover:text-primary-600 transition-all duration-300 p-2 rounded-full hover:bg-primary-500/10 active:bg-primary-500/20 focus:outline-none focus:ring-2 focus:ring-primary-500/30 z-10"
+            className="text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-10"
             onClick={() => navigate('/home')}
             aria-label="Go back to home"
           >
@@ -353,13 +353,13 @@ export default function MyOrders() {
             <h1 className="text-gray-100 text-3xl font-medium">
               My Orders
             </h1>
-            <p className="text-primary-100/60 text-sm mt-1 text-center">Track and manage your food orders</p>
+            <p className="text-orange-100/60 text-sm mt-1 text-center">Track and manage your food orders</p>
           </div>
 
           {/* Search Icon */}
           <button
             onClick={() => setIsSearchActive(!isSearchActive)}
-            className="text-white hover:text-primary-400 transition-all duration-300 p-2 rounded-full hover:bg-white/10 active:bg-white/20 focus:outline-none z-10"
+            className="text-white hover:text-orange-400 transition-all duration-300 p-2 rounded-full hover:bg-white/10 active:bg-white/20 focus:outline-none z-10"
             aria-label="Search orders"
           >
             <Search size={24} />
@@ -381,7 +381,7 @@ export default function MyOrders() {
                   placeholder="Search by order #, restaurant, items..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-white/10 backdrop-blur-md text-white placeholder-gray-400 rounded-full px-5 py-3 pl-12 pr-12 focus:outline-none focus:ring-2 focus:ring-primary-500/50 border border-white/20"
+                  className="w-full bg-white/10 backdrop-blur-md text-white placeholder-gray-400 rounded-full px-5 py-3 pl-12 pr-12 focus:outline-none focus:ring-2 focus:ring-orange-500/50 border border-white/20"
                   autoFocus
                 />
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
@@ -432,7 +432,7 @@ export default function MyOrders() {
                 {(filterPaymentMethod !== 'all' || filterDateRange !== 'all') && (
                   <div className="flex items-center gap-1">
                     {filterPaymentMethod !== 'all' && (
-                      <span className="text-[9px] sm:text-xs bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded-full">
+                      <span className="text-[9px] sm:text-xs bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-full">
                         {filterPaymentMethod}
                       </span>
                     )}
@@ -482,7 +482,7 @@ export default function MyOrders() {
                             key={method}
                             onClick={() => setFilterPaymentMethod(method)}
                             className={`text-xs px-3 py-2 rounded-lg border transition-colors ${filterPaymentMethod === method
-                              ? 'bg-primary-500 text-white border-primary-500'
+                              ? 'bg-orange-500 text-white border-orange-500'
                               : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
                               }`}
                           >
@@ -563,7 +563,7 @@ export default function MyOrders() {
                   {/* Loading indicator */}
                   {isLoadingMore && (
                     <div className="flex justify-center items-center py-4">
-                      <Loader className="animate-spin text-primary-500" size={24} />
+                      <Loader className="animate-spin text-orange-500" size={24} />
                       <span className="ml-2 text-gray-500 text-sm">Loading more orders...</span>
                     </div>
                   )}

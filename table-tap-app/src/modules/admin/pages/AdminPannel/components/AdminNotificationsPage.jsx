@@ -123,33 +123,33 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
       case NOTIFICATION_TYPES.NEW_SUBSCRIPTION:
         return <CreditCard className="w-5 h-5 text-green-500" />;
       case NOTIFICATION_TYPES.SUBSCRIPTION_RENEWED:
-        return <RefreshCw className="w-5 h-5 text-primary-500" />;
+        return <RefreshCw className="w-5 h-5 text-blue-500" />;
       case NOTIFICATION_TYPES.SUBSCRIPTION_CANCELLED:
         return <X className="w-5 h-5 text-red-500" />;
       case NOTIFICATION_TYPES.SUBSCRIPTION_EXPIRED:
-        return <AlertTriangle className="w-5 h-5 text-primary-500" />;
+        return <AlertTriangle className="w-5 h-5 text-orange-500" />;
       case NOTIFICATION_TYPES.SUBSCRIPTION_EXPIRING:
         return <Calendar className="w-5 h-5 text-amber-500" />;
       case NOTIFICATION_TYPES.SUBSCRIPTION_UPGRADED:
-        return <TrendingUp className="w-5 h-5 text-primary-500" />;
+        return <TrendingUp className="w-5 h-5 text-purple-500" />;
       case NOTIFICATION_TYPES.SUBSCRIPTION_DOWNGRADED:
         return <TrendingDown className="w-5 h-5 text-gray-500" />;
       case NOTIFICATION_TYPES.NEW_RESTAURANT:
-        return <Building2 className="w-5 h-5 text-primary-500" />;
+        return <Building2 className="w-5 h-5 text-purple-500" />;
       case NOTIFICATION_TYPES.RESTAURANT_ACTIVATED:
         return <Power className="w-5 h-5 text-green-500" />;
       case NOTIFICATION_TYPES.RESTAURANT_DEACTIVATED:
         return <PowerOff className="w-5 h-5 text-gray-500" />;
       case NOTIFICATION_TYPES.NEW_STAFF:
-        return <UserPlus className="w-5 h-5 text-primary-500" />;
+        return <UserPlus className="w-5 h-5 text-blue-500" />;
       case NOTIFICATION_TYPES.STAFF_CONNECTED:
         return <UserCheck className="w-5 h-5 text-teal-500" />;
       case NOTIFICATION_TYPES.AI_ENABLED:
-        return <Brain className="w-5 h-5 text-primary-500" />;
+        return <Brain className="w-5 h-5 text-indigo-500" />;
       case NOTIFICATION_TYPES.AI_DISABLED:
         return <Brain className="w-5 h-5 text-gray-400" />;
       case NOTIFICATION_TYPES.AGGREGATORS_ENABLED:
-        return <ShoppingBag className="w-5 h-5 text-primary-500" />;
+        return <ShoppingBag className="w-5 h-5 text-orange-500" />;
       case NOTIFICATION_TYPES.AGGREGATORS_DISABLED:
         return <ShoppingBag className="w-5 h-5 text-gray-400" />;
       case NOTIFICATION_TYPES.PAYMENT_RECEIVED:
@@ -171,11 +171,11 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
       case 'Inquiries': return 'bg-pink-100 text-pink-700';
       case 'Registrations': return 'bg-amber-100 text-amber-700';
       case 'Subscriptions': return 'bg-emerald-100 text-emerald-700';
-      case 'Restaurants': return 'bg-primary-100 text-primary-700';
+      case 'Restaurants': return 'bg-indigo-100 text-indigo-700';
       case 'Staff': return 'bg-teal-100 text-teal-700';
-      case 'Features': return 'bg-primary-100 text-primary-700';
+      case 'Features': return 'bg-blue-100 text-blue-700';
       case 'Payments': return 'bg-emerald-100 text-emerald-700';
-      case 'Emails': return 'bg-primary-100 text-primary-700';
+      case 'Emails': return 'bg-orange-100 text-orange-700';
       default: return 'bg-gray-100 text-gray-700';
     }
   };
@@ -376,8 +376,8 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
       {/* Stats Cards - Compact on Mobile */}
       <div className="grid grid-cols-4 gap-1 md:gap-3 px-1 md:px-0 mt-1 md:mt-2 pb-2 md:pb-0">
         <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
-          <div className="p-1 md:p-2 bg-primary-100 rounded-lg mb-1">
-            <Inbox className="w-3.5 h-3.5 md:w-5 md:h-5 text-primary-600" />
+          <div className="p-1 md:p-2 bg-blue-100 rounded-lg mb-1">
+            <Inbox className="w-3.5 h-3.5 md:w-5 md:h-5 text-blue-600" />
           </div>
           <div>
             <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">{stats.total}</p>
@@ -403,8 +403,8 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
           </div>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
-          <div className="p-1 md:p-2 bg-amber-100 rounded-lg mb-1">
-            <Calendar className="w-3.5 h-3.5 md:w-5 md:h-5 text-amber-600" />
+          <div className="p-1 md:p-2 bg-purple-100 rounded-lg mb-1">
+            <Calendar className="w-3.5 h-3.5 md:w-5 md:h-5 text-purple-600" />
           </div>
           <div>
             <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">{stats.thisWeek}</p>
@@ -438,7 +438,7 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
                   <div className="p-2">
                     <button
                       onClick={() => { setTypeFilter('all'); setShowTypeDropdown(false); }}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${typeFilter === 'all' ? 'bg-primary-50 text-primary-700 font-medium' : 'hover:bg-gray-50 text-gray-700'
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${typeFilter === 'all' ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-50 text-gray-700'
                         }`}
                     >
                       All Types
@@ -454,7 +454,7 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
                           <button
                             key={type}
                             onClick={() => { setTypeFilter(type); setShowTypeDropdown(false); }}
-                            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${typeFilter === type ? 'bg-primary-50 text-primary-700 font-medium' : 'hover:bg-gray-50 text-gray-700'
+                            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${typeFilter === type ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-50 text-gray-700'
                               }`}
                           >
                             {getNotificationIcon(type)}
@@ -479,7 +479,7 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
                   key={value}
                   onClick={() => setStatusFilter(value)}
                   className={`flex-1 px-1 py-1.5 md:px-4 md:py-2.5 text-[10px] md:text-sm font-medium transition-colors whitespace-nowrap text-center ${statusFilter === value
-                    ? 'bg-primary-600 text-white'
+                    ? 'bg-blue-600 text-white'
                     : 'bg-white text-gray-600 hover:bg-gray-50'
                     }`}
                 >
@@ -502,7 +502,7 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
               <button
                 onClick={() => toggleSort('date')}
                 className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border text-xs md:text-sm font-medium transition-all whitespace-nowrap ${sortBy === 'date'
-                  ? 'border-primary-200 bg-primary-50 text-primary-700'
+                  ? 'border-blue-200 bg-blue-50 text-blue-700'
                   : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
                   }`}
               >
@@ -515,7 +515,7 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
               <button
                 onClick={() => toggleSort('type')}
                 className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border text-xs md:text-sm font-medium transition-all whitespace-nowrap ${sortBy === 'type'
-                  ? 'border-primary-200 bg-primary-50 text-primary-700'
+                  ? 'border-blue-200 bg-blue-50 text-blue-700'
                   : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
                   }`}
               >
@@ -560,14 +560,14 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
 
         {/* Bulk Actions */}
         {selectedNotifications.length > 0 && (
-          <div className="px-4 py-3 bg-primary-50 border-b border-primary-100 flex items-center justify-between">
-            <span className="text-sm text-primary-700 font-medium">
+          <div className="px-4 py-3 bg-blue-50 border-b border-blue-100 flex items-center justify-between">
+            <span className="text-sm text-blue-700 font-medium">
               {selectedNotifications.length} notification{selectedNotifications.length > 1 ? 's' : ''} selected
             </span>
             <div className="flex items-center gap-2">
               <button
                 onClick={handleMarkSelectedAsRead}
-                className="px-3 py-1.5 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 transition-colors flex items-center gap-1.5"
+                className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-1.5"
               >
                 <Check className="w-4 h-4" />
                 Mark as read
@@ -590,7 +590,7 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
                 type="checkbox"
                 checked={selectedNotifications.length === filteredNotifications.length && filteredNotifications.length > 0}
                 onChange={handleSelectAll}
-                className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
               <span>Select all</span>
             </label>
@@ -604,7 +604,7 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
         <div className="divide-y divide-gray-100">
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+              <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
             </div>
           ) : filteredNotifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-gray-500">
@@ -621,7 +621,7 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
             filteredNotifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`group flex flex-col md:flex-row md:items-center gap-2 md:gap-3 p-2.5 md:py-3 md:px-3 transition-all cursor-pointer border-b border-gray-100 last:border-0 ${notification.read ? 'bg-white hover:bg-gray-50' : 'bg-primary-50/40 hover:bg-primary-50/70'
+                className={`group flex flex-col md:flex-row md:items-center gap-2 md:gap-3 p-2.5 md:py-3 md:px-3 transition-all cursor-pointer border-b border-gray-100 last:border-0 ${notification.read ? 'bg-white hover:bg-gray-50' : 'bg-blue-50/40 hover:bg-blue-50/70'
                   }`}
                 onClick={() => handleNotificationClick(notification)}
               >
@@ -639,11 +639,11 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
                             : [...prev, notification.id]
                         );
                       }}
-                      className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                   </div>
 
-                  <div className={`flex-shrink-0 p-2 rounded-xl border ${notification.read ? 'bg-gray-50 border-gray-100' : 'bg-white border-primary-100 shadow-sm'}`}>
+                  <div className={`flex-shrink-0 p-2 rounded-xl border ${notification.read ? 'bg-gray-50 border-gray-100' : 'bg-white border-blue-100 shadow-sm'}`}>
                     {React.cloneElement(getNotificationIcon(notification.type), {
                       className: "w-4 h-4 " + getNotificationIcon(notification.type).props.className.split(' ').filter(c => !c.startsWith('w-') && !c.startsWith('h-')).join(' ')
                     })}
@@ -655,7 +655,7 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
                       }`}>
                       {getCategoryForType(notification.type)}
                     </span>
-                    {!notification.read && <span className="w-2 h-2 rounded-full bg-primary-500 flex-shrink-0" />}
+                    {!notification.read && <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />}
                   </div>
                 </div>
 
@@ -663,7 +663,7 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
                 <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center gap-1 md:gap-3 pl-10 md:pl-0">
                   {/* Desktop-only tags */}
                   <div className="hidden md:flex items-center gap-2 flex-shrink-0">
-                    {!notification.read && <span className="w-2 h-2 rounded-full bg-primary-500" />}
+                    {!notification.read && <span className="w-2 h-2 rounded-full bg-blue-500" />}
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase ${getCategoryColor(getCategoryForType(notification.type))
                       }`}>
                       {getCategoryForType(notification.type)}
@@ -695,8 +695,8 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
                         notification.read ? markAsUnread(notification.id) : markAsRead(notification.id);
                       }}
                       className={`p-1.5 rounded-lg transition-colors ${notification.read
-                        ? 'text-gray-400 hover:text-primary-600 hover:bg-primary-50'
-                        : 'text-primary-600 bg-primary-50 hover:bg-primary-100'
+                        ? 'text-gray-400 hover:text-orange-600 hover:bg-orange-50'
+                        : 'text-blue-600 bg-blue-50 hover:bg-blue-100'
                         }`}
                       title={notification.read ? "Mark as unread" : "Mark as read"}
                     >

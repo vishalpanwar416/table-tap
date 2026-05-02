@@ -428,13 +428,13 @@ const RestaurantSelectionPage = () => {
           };
           return (
             <div
-              className="flex items-center justify-between gap-3 bg-white border border-primary-200 rounded-lg shadow-lg p-3 max-w-md touch-pan-y"
+              className="flex items-center justify-between gap-3 bg-white border border-orange-200 rounded-lg shadow-lg p-3 max-w-md touch-pan-y"
               style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.12)' }}
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
             >
               <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="w-9 h-9 bg-primary-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <div className="w-9 h-9 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
                   <MapPin size={18} className="text-white" />
                 </div>
                 <div className="min-w-0">
@@ -448,7 +448,7 @@ const RestaurantSelectionPage = () => {
                   getUserLocation();
                   toast.dismiss(t.id);
                 }}
-                className="bg-primary-500 hover:bg-primary-600 text-white text-xs font-medium px-3 py-2 rounded-lg flex-shrink-0 transition-colors"
+                className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium px-3 py-2 rounded-lg flex-shrink-0 transition-colors"
               >
                 Enable
               </button>
@@ -895,7 +895,7 @@ const RestaurantSelectionPage = () => {
         {/* Header */}
         <div className="w-full px-6 py-6 relative flex items-center justify-center bg-black flex-shrink-0 md:static md:bg-transparent">
           <button
-            className="absolute left-4 text-primary-500 hover:text-primary-600 transition-all duration-300 p-2 rounded-full hover:bg-primary-500/10 active:bg-primary-500/20 focus:outline-none focus:ring-2 focus:ring-primary-500/30 touch-manipulation"
+            className="absolute left-4 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 touch-manipulation"
             onClick={() => navigate(-1)}
             aria-label="Go back"
           >
@@ -955,7 +955,7 @@ const RestaurantSelectionPage = () => {
                     ) : null}
                     <button
                       onClick={handleSearchToggle}
-                      className="text-xs font-medium text-primary-500 flex-shrink-0 ml-1"
+                      className="text-xs font-medium text-orange-500 flex-shrink-0 ml-1"
                     >
                       Cancel
                     </button>
@@ -978,16 +978,16 @@ const RestaurantSelectionPage = () => {
                       aria-label="Toggle location"
                     >
                       <div className="relative flex-shrink-0">
-                        <MapPin size={16} className={userLocation ? 'text-primary-500' : 'text-gray-400'} />
+                        <MapPin size={16} className={userLocation ? 'text-orange-500' : 'text-gray-400'} />
                         {locationLoading && (
-                          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary-400 animate-ping" />
+                          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-orange-400 animate-ping" />
                         )}
                       </div>
                       <span className="text-xs font-medium text-gray-600 truncate max-w-[90px]">
                         {locationLoading
                           ? 'Locating…'
                           : userLocation
-                            ? (userLocation.address?.split(',')?.[0] || 'Located')
+                            ? (userLocation.address?.split(',')[0] || 'Located')
                             : 'Location off'}
                       </span>
                     </button>
@@ -1004,7 +1004,7 @@ const RestaurantSelectionPage = () => {
                         }}
                         className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
                           !showAllRestaurants && !showMyRestaurants
-                            ? 'bg-primary-500 text-white shadow-sm shadow-primary-200'
+                            ? 'bg-orange-500 text-white shadow-sm shadow-orange-200'
                             : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                         }`}
                       >
@@ -1114,7 +1114,7 @@ const RestaurantSelectionPage = () => {
                       </p>
                       <button
                         onClick={handleClearSearch}
-                        className="w-full bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors"
+                        className="w-full bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
                       >
                         Clear Search
                       </button>
@@ -1141,7 +1141,7 @@ const RestaurantSelectionPage = () => {
                               setShowAllRestaurants(true);
                               setShowMyRestaurants(false);
                             }}
-                            className="w-full bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors"
+                            className="w-full bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
                           >
                             View All Restaurants
                           </button>
@@ -1184,7 +1184,7 @@ const RestaurantSelectionPage = () => {
                           }}
                           className={`bg-white rounded-2xl cursor-pointer touch-manipulation flex items-center gap-3 px-3 py-3 transition-all ${
                             isSelected
-                              ? 'border-2 border-primary-500 shadow-md shadow-primary-100'
+                              ? 'border-2 border-orange-500 shadow-md shadow-orange-100'
                               : 'border border-gray-100 shadow-sm'
                           }`}
                         >
@@ -1200,7 +1200,7 @@ const RestaurantSelectionPage = () => {
                                 draggable={false}
                               />
                             ) : (
-                              <div className="w-20 h-20 bg-gradient-to-br from-primary-50 to-amber-100 rounded-xl flex items-center justify-center text-3xl">
+                              <div className="w-20 h-20 bg-gradient-to-br from-orange-50 to-amber-100 rounded-xl flex items-center justify-center text-3xl">
                                 🍽️
                               </div>
                             )}
@@ -1208,7 +1208,7 @@ const RestaurantSelectionPage = () => {
                               <motion.div
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
-                                className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-primary-500 rounded-full flex items-center justify-center shadow"
+                                className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center shadow"
                               >
                                 <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
                                   <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1224,7 +1224,7 @@ const RestaurantSelectionPage = () => {
                                 {restaurant.name}
                               </span>
                               {userLocation && restaurant.distance != null && (
-                                <span className="flex-shrink-0 text-[11px] font-medium text-primary-500 bg-primary-50 px-1.5 py-0.5 rounded-full">
+                                <span className="flex-shrink-0 text-[11px] font-medium text-orange-500 bg-orange-50 px-1.5 py-0.5 rounded-full">
                                   {formatDistance(restaurant.distance)}
                                 </span>
                               )}
@@ -1273,7 +1273,7 @@ const RestaurantSelectionPage = () => {
                   className="fixed left-0 right-0 bottom-0 z-50 flex justify-center"
                 >
                   <div
-                    className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl px-3 pt-2 pb-3 bg-white rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.12)] border-t-4 border-primary-500 overflow-hidden touch-manipulation"
+                    className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl px-3 pt-2 pb-3 bg-white rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.12)] border-t-4 border-orange-500 overflow-hidden touch-manipulation"
                     style={{
                       paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))'
                     }}
@@ -1303,8 +1303,8 @@ const RestaurantSelectionPage = () => {
                     >
                       {/* Row 1: Restaurant name (always visible) */}
                       <div className="flex items-center min-w-0 mb-2">
-                        <Store size={16} className="text-primary-500 mr-1.5 flex-shrink-0" />
-                        <span className="text-sm font-bold text-primary-600 truncate min-w-0 block">
+                        <Store size={16} className="text-orange-500 mr-1.5 flex-shrink-0" />
+                        <span className="text-sm font-bold text-orange-600 truncate min-w-0 block">
                           {selectedRestaurant.name}
                         </span>
                       </div>
@@ -1314,9 +1314,9 @@ const RestaurantSelectionPage = () => {
                           <select
                             value={tableNumber}
                             onChange={(e) => setTableNumber(e.target.value)}
-                            className={`flex-shrink-0 text-[11px] font-medium rounded-md border py-1 pl-2 pr-6 appearance-none bg-no-repeat focus:outline-none focus:ring-2 focus:ring-primary-400 cursor-pointer min-w-0 max-w-[7rem] ${isTableAutoSelected()
+                            className={`flex-shrink-0 text-[11px] font-medium rounded-md border py-1 pl-2 pr-6 appearance-none bg-no-repeat focus:outline-none focus:ring-2 focus:ring-orange-400 cursor-pointer min-w-0 max-w-[7rem] ${isTableAutoSelected()
                               ? 'bg-green-100 text-green-800 border-green-300'
-                              : 'bg-gray-50 text-gray-800 border-gray-200 hover:border-primary-300'
+                              : 'bg-gray-50 text-gray-800 border-gray-200 hover:border-orange-300'
                               }`}
                             style={{
                               backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
@@ -1344,7 +1344,7 @@ const RestaurantSelectionPage = () => {
                           transition={{ duration: 0.3, delay: 0.3 }}
                           onClick={handleContinue}
                           disabled={isSelecting || (availableTables.length > 0 && !tableNumber.trim())}
-                          className="bg-primary-500 hover:bg-primary-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-2 px-3 rounded-lg transition-colors shadow-sm touch-manipulation text-sm flex-shrink-0 flex items-center gap-1.5"
+                          className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-2 px-3 rounded-lg transition-colors shadow-sm touch-manipulation text-sm flex-shrink-0 flex items-center gap-1.5"
                           style={{ minHeight: '36px' }}
                         >
                           {isSelecting ? (
@@ -1393,7 +1393,7 @@ const RestaurantSelectionPage = () => {
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-gray-900">Opening {selectedRestaurant?.name}</p>
                     <div className="flex items-center gap-2 mt-1">
-                      <div className="animate-spin rounded-full h-3 w-3 border-2 border-primary-500 border-t-transparent"></div>
+                      <div className="animate-spin rounded-full h-3 w-3 border-2 border-orange-500 border-t-transparent"></div>
                       <span className="text-xs text-gray-500">Redirecting...</span>
                     </div>
                   </div>
@@ -1429,8 +1429,8 @@ const RestaurantSelectionPage = () => {
                   <X size={14} />
                 </button>
                 <div className="flex items-start gap-3 mb-4">
-                  <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <MapPin size={18} className="text-primary-500" />
+                  <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <MapPin size={18} className="text-orange-500" />
                   </div>
                   <div>
                     <h3 className="text-base font-semibold text-gray-900 mb-1">
@@ -1456,7 +1456,7 @@ const RestaurantSelectionPage = () => {
                       setShowLocationModal(false);
                       getUserLocation();
                     }}
-                    className="flex-1 bg-primary-500 hover:bg-primary-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
                   >
                     Try Again
                   </button>
@@ -1510,9 +1510,9 @@ const RestaurantSelectionPage = () => {
                           setTableNumber(table.tableNumber);
                           setShowTablePopup(false);
                         }}
-                        className={`w-full px-3 py-2.5 rounded-lg border transition-all duration-150 text-left focus:outline-none focus:ring-2 focus:ring-primary-400 ${table.tableNumber === tableNumber
-                          ? 'border-primary-500 bg-primary-50'
-                          : 'border-gray-200 hover:border-primary-300 hover:bg-primary-50/50'
+                        className={`w-full px-3 py-2.5 rounded-lg border transition-all duration-150 text-left focus:outline-none focus:ring-2 focus:ring-orange-400 ${table.tableNumber === tableNumber
+                          ? 'border-orange-500 bg-orange-50'
+                          : 'border-gray-200 hover:border-orange-300 hover:bg-orange-50/50'
                           }`}
                         aria-label={`Select table ${table.tableNumber}`}
                       >
@@ -1525,7 +1525,7 @@ const RestaurantSelectionPage = () => {
                             <span className="text-gray-400">{table.capacity} seats</span>
                           </div>
                           {table.tableNumber === tableNumber && (
-                            <div className="w-5 h-5 bg-primary-500 rounded-full flex items-center justify-center flex-shrink-0">
+                            <div className="w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
                               <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                               </svg>
@@ -1552,7 +1552,7 @@ const RestaurantSelectionPage = () => {
                   </button>
                   <button
                     onClick={() => setShowTablePopup(false)}
-                    className={`flex-1 px-3 py-2 text-sm rounded-lg transition-colors ${tableNumber ? 'bg-primary-500 text-white hover:bg-primary-600' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
+                    className={`flex-1 px-3 py-2 text-sm rounded-lg transition-colors ${tableNumber ? 'bg-orange-500 text-white hover:bg-orange-600' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
                     aria-label="Confirm table selection"
                     disabled={!tableNumber}
                   >
@@ -1592,8 +1592,8 @@ const RestaurantSelectionPage = () => {
                 </button>
 
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <MapPin size={18} className="text-primary-500" />
+                  <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <MapPin size={18} className="text-orange-500" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs text-gray-500">You're near</p>
@@ -1607,7 +1607,7 @@ const RestaurantSelectionPage = () => {
 
                 <div className="flex gap-2">
                   <button
-                    className="flex-1 bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                     onClick={() => {
                       setSelectedRestaurant(nearestRestaurant);
                       setShowNearestRestaurantPopup(false);

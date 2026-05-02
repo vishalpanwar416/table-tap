@@ -30,7 +30,7 @@ const HelpFAQPage = () => {
       id: 'ordering',
       title: 'Ordering & Menu',
       icon: <BookOpen className="w-5 h-5" />,
-      color: 'from-primary-400 to-red-500'
+      color: 'from-orange-400 to-red-500'
     },
     {
       id: 'payment',
@@ -54,7 +54,7 @@ const HelpFAQPage = () => {
       id: 'technical',
       title: 'Technical Support',
       icon: <Smartphone className="w-5 h-5" />,
-      color: 'from-yellow-400 to-primary-500'
+      color: 'from-yellow-400 to-orange-500'
     },
     {
       id: 'safety',
@@ -245,7 +245,7 @@ const HelpFAQPage = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleBack}
-            className="px-8 py-3 bg-gradient-to-r from-primary-500 to-red-500 text-white rounded-2xl hover:from-primary-600 hover:to-red-600 transition-all duration-300 shadow-lg"
+            className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-2xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 shadow-lg"
           >
             Go Back
           </motion.button>
@@ -261,7 +261,7 @@ const HelpFAQPage = () => {
       <div className="w-full px-6 py-6 sm:py-8 relative flex items-center justify-between">
         <button
           onClick={handleBack}
-          className="text-primary-500 hover:text-primary-600 transition-all duration-300 p-2 rounded-full hover:bg-primary-500/10 active:bg-primary-500/20 focus:outline-none focus:ring-2 focus:ring-primary-500/30 z-10"
+          className="text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-10"
           aria-label="Go back"
         >
           <ChevronLeft size={24} className="sm:w-[30px] sm:h-[30px]" />
@@ -271,13 +271,13 @@ const HelpFAQPage = () => {
           <h1 className="text-gray-100 text-2xl sm:text-3xl font-medium text-center pointer-events-auto">
             Help & FAQ's
           </h1>
-          <p className="text-primary-100/60 text-xs sm:text-sm mt-1 text-center pointer-events-auto">Everything you need to know.</p>
+          <p className="text-orange-100/60 text-xs sm:text-sm mt-1 text-center pointer-events-auto">Everything you need to know.</p>
         </div>
 
         {/* Search Icon */}
         <button
           onClick={() => setIsSearchActive(!isSearchActive)}
-          className="text-white hover:text-primary-400 transition-all duration-300 p-2 rounded-full hover:bg-white/10 active:bg-white/20 focus:outline-none z-10"
+          className="text-white hover:text-orange-400 transition-all duration-300 p-2 rounded-full hover:bg-white/10 active:bg-white/20 focus:outline-none z-10"
           aria-label="Search FAQs"
         >
           <Search size={22} className="sm:w-[24px] sm:h-[24px]" />
@@ -299,7 +299,7 @@ const HelpFAQPage = () => {
                 placeholder="Search questions..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-white/10 backdrop-blur-md text-white placeholder-gray-400 rounded-full px-5 py-3 pl-12 pr-12 focus:outline-none focus:ring-2 focus:ring-primary-500/50 border border-white/20 text-sm sm:text-base"
+                className="w-full bg-white/10 backdrop-blur-md text-white placeholder-gray-400 rounded-full px-5 py-3 pl-12 pr-12 focus:outline-none focus:ring-2 focus:ring-orange-500/50 border border-white/20 text-sm sm:text-base"
                 autoFocus
               />
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />

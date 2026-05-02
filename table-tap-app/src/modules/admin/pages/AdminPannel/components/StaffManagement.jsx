@@ -53,67 +53,64 @@ const StaffManagement = ({
 
   return (
     <div className="space-y-6 sm:space-y-8 font-spartan px-2 sm:px-0">
+      {/* Overview section with stats and Add Staff CTA */}
       {/* Action & Stats Toolbar - Premium & Mobile Friendly */}
-      <div className="flex flex-col gap-6 mb-8">
+      <div className="flex flex-col gap-4 mb-6 sm:mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-slate-900 rounded-2xl shadow-lg shadow-slate-200">
-              <Users className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight">Staff Management</h2>
-              <p className="text-sm text-slate-500 font-medium">Manage and monitor your platform personnel</p>
+            <div className="p-2 sm:p-2.5 bg-blue-50 rounded-xl">
+              <Users className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
             </div>
           </div>
 
           <button
             onClick={onAddStaff}
-            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-slate-900 text-white rounded-2xl hover:bg-slate-800 transition-all duration-300 shadow-xl shadow-slate-200 font-bold text-sm sm:text-base active:scale-95"
+            className="flex items-center justify-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg font-bold text-sm sm:text-base font-spartan touch-manipulation"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>Add New Staff</span>
           </button>
         </div>
 
-        {/* Stats Grid - Optimized for space and aesthetics */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100">
-              <Users className="w-5 h-5 text-slate-600" />
+        {/* Stats Grid - 2x2 on Mobile, 4x1 on Desk */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="bg-white p-3 sm:p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+              <Users className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
             </div>
             <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Total Staff</p>
-              <p className="text-xl font-black text-slate-900">{staff.length}</p>
+              <p className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest">Total Staff</p>
+              <p className="text-base sm:text-xl font-bold text-gray-900 font-spartan">{staff.length}</p>
             </div>
           </div>
 
-          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100">
-              <Building2 className="w-5 h-5 text-slate-600" />
+          <div className="bg-white p-3 sm:p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-purple-50 flex items-center justify-center shrink-0">
+              <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
             </div>
             <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Restaurants</p>
-              <p className="text-xl font-black text-slate-900">{restaurants.length}</p>
+              <p className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest">Restaurants</p>
+              <p className="text-base sm:text-xl font-bold text-gray-900 font-spartan">{restaurants.length}</p>
             </div>
           </div>
 
-          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0 border border-emerald-100">
-              <CheckCircle className="w-5 h-5 text-emerald-600" />
+          <div className="bg-white p-3 sm:p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-green-50 flex items-center justify-center shrink-0">
+              <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
             </div>
             <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Connected</p>
-              <p className="text-xl font-black text-emerald-700">{staff.filter(s => s.connected).length}</p>
+              <p className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest">Connected</p>
+              <p className="text-base sm:text-xl font-bold text-green-700 font-spartan">{staff.filter(s => s.connected).length}</p>
             </div>
           </div>
 
-          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-rose-50 flex items-center justify-center shrink-0 border border-rose-100">
-              <XCircle className="w-5 h-5 text-rose-600" />
+          <div className="bg-white p-3 sm:p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
+              <XCircle className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
             </div>
             <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Offline</p>
-              <p className="text-xl font-black text-rose-700">{staff.filter(s => !s.connected).length}</p>
+              <p className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest">Offline</p>
+              <p className="text-base sm:text-xl font-bold text-red-700 font-spartan">{staff.filter(s => !s.connected).length}</p>
             </div>
           </div>
         </div>
@@ -136,7 +133,7 @@ const StaffManagement = ({
                 <button
                   onClick={() => setViewMode('restaurant')}
                   className={`flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${viewMode === 'restaurant'
-                    ? 'bg-white text-primary-600 shadow-sm'
+                    ? 'bg-white text-blue-600 shadow-sm'
                     : 'text-gray-500 hover:text-gray-900'
                     }`}
                 >
@@ -147,7 +144,7 @@ const StaffManagement = ({
                 <button
                   onClick={() => setViewMode('grid')}
                   className={`flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${viewMode === 'grid'
-                    ? 'bg-white text-primary-600 shadow-sm'
+                    ? 'bg-white text-blue-600 shadow-sm'
                     : 'text-gray-500 hover:text-gray-900'
                     }`}
                 >
@@ -202,16 +199,16 @@ const StaffManagement = ({
                 })}
               </div>
             ) : (
-              <div className="text-center py-16 sm:py-20 px-6 bg-gradient-to-br from-slate-50 to-primary-50 rounded-2xl border border-slate-200">
+              <div className="text-center py-16 sm:py-20 px-6 bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl border border-slate-200">
                 {/* ... existing empty state ... */}
-                <div className="w-24 h-24 sm:w-28 sm:h-28 bg-gradient-to-r from-primary-50 to-primary-200 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
-                  <Building2 className="h-12 w-12 sm:h-14 sm:w-14 text-primary-600" />
+                <div className="w-24 h-24 sm:w-28 sm:h-28 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
+                  <Building2 className="h-12 w-12 sm:h-14 sm:w-14 text-blue-600" />
                 </div>
                 <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 font-spartan">No restaurants yet</h3>
                 <p className="text-gray-600 mb-6 max-w-sm mx-auto text-sm sm:text-base font-spartan">
                   Add restaurants first to manage staff per location
                 </p>
-                <button className="inline-flex items-center min-h-[44px] px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-700 text-white rounded-xl hover:from-primary-600 hover:to-primary-800 transition-all duration-200 shadow-md hover:shadow-lg font-semibold font-spartan touch-manipulation">
+                <button className="inline-flex items-center min-h-[44px] px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg font-semibold font-spartan touch-manipulation">
                   Add Restaurant
                 </button>
               </div>
@@ -240,11 +237,11 @@ const StaffManagement = ({
             <div className="mt-8 flex justify-center">
               <button
                 onClick={onLoadMore}
-                className="px-8 py-3 bg-white border-2 border-primary-100 text-primary-600 rounded-xl font-bold hover:bg-primary-50 transition-all shadow-sm flex items-center gap-2"
+                className="px-8 py-3 bg-white border-2 border-blue-100 text-blue-600 rounded-xl font-bold hover:bg-blue-50 transition-all shadow-sm flex items-center gap-2"
               >
                 <span>Load More Staff</span>
                 {/* Small indicator showing progress */}
-                <span className="text-xs font-normal text-primary-400">
+                <span className="text-xs font-normal text-blue-400">
                   ({staff.length} of {total})
                 </span>
               </button>
@@ -256,7 +253,7 @@ const StaffManagement = ({
       {/* No staff found overlay */}
       {restaurants.length > 0 && staff.length === 0 && (
         <div className="text-center py-16 sm:py-20 px-6 bg-white rounded-2xl border border-gray-200 shadow-sm">
-          <div className="w-24 h-24 sm:w-28 sm:h-28 bg-gradient-to-r from-slate-100 to-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
+          <div className="w-24 h-24 sm:w-28 sm:h-28 bg-gradient-to-r from-slate-100 to-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
             <Users className="h-12 w-12 sm:h-14 sm:w-14 text-slate-600" />
           </div>
           <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 font-spartan">No staff members yet</h3>
@@ -265,7 +262,7 @@ const StaffManagement = ({
           </p>
           <button
             onClick={onAddStaff}
-            className="inline-flex items-center min-h-[44px] px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-700 text-white rounded-xl hover:from-primary-600 hover:to-primary-800 transition-all duration-200 shadow-md hover:shadow-lg font-semibold font-spartan touch-manipulation"
+            className="inline-flex items-center min-h-[44px] px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg font-semibold font-spartan touch-manipulation"
           >
             <Plus className="w-5 h-5 mr-2" />
             Add Staff Member

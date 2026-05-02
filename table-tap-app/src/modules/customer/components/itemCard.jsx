@@ -136,7 +136,7 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                   initial={{ scale: 0, rotate: -180 }}
                   animate={{ scale: 1, rotate: 0 }}
                   transition={{ delay: 0.3, duration: 0.5, type: "spring" }}
-                  className="absolute top-4 right-16 bg-gradient-to-r from-primary-500 to-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-lg"
+                  className="absolute top-4 right-16 bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-lg"
                 >
                   <Flame className="h-3 w-3" />
                   Popular
@@ -220,7 +220,7 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                 className="bg-white/40 backdrop-blur-md rounded-xl p-3 mb-4 border border-gray-200/50"
               >
                 <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-1.5">
-                  <div className="w-0.5 h-4 bg-gradient-to-b from-primary-500 to-red-500 rounded-full flex-shrink-0"></div>
+                  <div className="w-0.5 h-4 bg-gradient-to-b from-orange-500 to-red-500 rounded-full flex-shrink-0"></div>
                   Order Details
                 </h3>
 
@@ -229,7 +229,7 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                   {item.preparationTime && (
                     <div className="flex justify-between items-center px-2.5 py-2 bg-white/70 rounded-lg">
                       <span className="flex items-center gap-1.5 text-gray-700 text-sm font-medium">
-                        <Clock className="h-3 w-3 text-primary-500 flex-shrink-0" /> Preparation Time
+                        <Clock className="h-3 w-3 text-orange-500 flex-shrink-0" /> Preparation Time
                       </span>
                       <span className="text-gray-900 text-sm font-semibold">{item.preparationTime}</span>
                     </div>

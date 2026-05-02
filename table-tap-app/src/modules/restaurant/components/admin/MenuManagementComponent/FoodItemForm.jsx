@@ -77,7 +77,7 @@ const FoodItemForm = ({
     setSuccessMsg('');
 
     try {
-      if (!formData.name || formData.price === '' || formData.price === null || formData.price === undefined || !formData.description) {
+      if (!formData.name || !formData.price || !formData.description) {
         throw new Error('Please fill all required fields');
       }
 
@@ -99,7 +99,7 @@ const FoodItemForm = ({
         ...rest,
         price: parseFloat(price),
         discountvalue: discountvalue ? parseFloat(discountvalue) : null,
-        tags: (tags || '').split(',').map(tag => tag.trim()).filter(tag => tag),
+        tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
         image: imageUrl,
         restaurant_id: userRestaurantId
       };
@@ -169,7 +169,7 @@ const FoodItemForm = ({
           {/* Basic Information Section */}
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm mb-4">
             <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-primary-500" />
+              <FileText className="w-5 h-5 text-orange-500" />
               Basic Information
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -180,7 +180,7 @@ const FoodItemForm = ({
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all shadow-sm"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all shadow-sm"
                   placeholder="e.g. Margherita Pizza"
                   required
                 />
@@ -191,7 +191,7 @@ const FoodItemForm = ({
                   name="category"
                   value={formData.category}
                   onChange={handleInputChange}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all shadow-sm"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all shadow-sm"
                 >
                   {categories.map(category => (
                     <option key={category.name} value={category.name}>
@@ -207,7 +207,7 @@ const FoodItemForm = ({
                   value={formData.description}
                   onChange={handleInputChange}
                   rows="3"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all shadow-sm resize-none"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all shadow-sm resize-none"
                   placeholder="Describe the food item, e.g. 'Classic Italian pizza with fresh mozzarella and basil.'"
                   required
                 ></textarea>
@@ -231,7 +231,7 @@ const FoodItemForm = ({
                     name="price"
                     value={formData.price}
                     onChange={handleInputChange}
-                    className="w-full border border-gray-200 rounded-xl pl-8 pr-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all shadow-sm"
+                    className="w-full border border-gray-200 rounded-xl pl-8 pr-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all shadow-sm"
                     placeholder="0.00"
                     min="0"
                     step="0.01"
@@ -245,7 +245,7 @@ const FoodItemForm = ({
                   name="discounttype"
                   value={formData.discounttype || ''}
                   onChange={handleInputChange}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all shadow-sm"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all shadow-sm"
                 >
                   <option value="">No Discount</option>
                   {discountTypes.map(type => (
@@ -262,7 +262,7 @@ const FoodItemForm = ({
                   name="discountvalue"
                   value={formData.discountvalue}
                   onChange={handleInputChange}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all shadow-sm"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all shadow-sm"
                   placeholder="0"
                   min="0"
                   step={formData.discounttype === 'Percentage' ? '0.1' : '0.01'}
@@ -275,7 +275,7 @@ const FoodItemForm = ({
           {/* Tags Section */}
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm mb-4">
             <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <Tag className="w-5 h-5 text-primary-500" />
+              <Tag className="w-5 h-5 text-orange-500" />
               Tags & Keywords
             </h3>
             <div>
@@ -285,13 +285,13 @@ const FoodItemForm = ({
                 name="tags"
                 value={formData.tags}
                 onChange={handleInputChange}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                 placeholder="spicy, veg, bestseller (comma separated)"
               />
               <p className="text-xs text-gray-500 mt-1">
                 Comma separated, e.g. 'spicy, veg, bestseller'
               </p>
-              <p className="text-xs text-primary-500 mt-1">
+              <p className="text-xs text-orange-500 mt-1">
                 To feature an item in the <b>Bestseller</b> or <b>Recommendation</b> tabs, add the tags <b>bestseller</b> and/or <b>recommended</b>.
               </p>
             </div>
@@ -304,7 +304,7 @@ const FoodItemForm = ({
               Food Image
             </h3>
             <div className="flex flex-col md:flex-row items-center gap-6">
-              <label className="flex items-center px-4 py-2 bg-primary-50 text-primary-700 rounded-xl cursor-pointer hover:bg-primary-100 transition-colors text-sm shadow-sm">
+              <label className="flex items-center px-4 py-2 bg-orange-50 text-orange-700 rounded-xl cursor-pointer hover:bg-orange-100 transition-colors text-sm shadow-sm">
                 <Upload className="w-5 h-5 mr-2" />
                 Choose Image
                 <input
@@ -339,8 +339,8 @@ const FoodItemForm = ({
                 </div>
               )}
               {imageProcessing && (
-                <div className="flex items-center text-sm text-primary-600 mt-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary-500 border-t-transparent mr-2"></div>
+                <div className="flex items-center text-sm text-orange-600 mt-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-orange-500 border-t-transparent mr-2"></div>
                   Optimizing...
                 </div>
               )}
@@ -361,7 +361,7 @@ const FoodItemForm = ({
           <button
             type="submit"
             disabled={imageProcessing}
-            className="flex items-center px-6 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-xl transition-colors shadow disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center px-6 py-2 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-xl transition-colors shadow disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Save className="w-5 h-5 mr-2" />
             {editItem ? 'Update Item' : 'Add Item'}

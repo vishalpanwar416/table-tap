@@ -99,7 +99,7 @@ const ContactPopup = ({ isOpen, onClose }) => {
           >
             <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
               {/* Header */}
-              <div className="bg-gradient-to-r from-primary-500 to-primary-600 p-6 relative">
+              <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 relative">
                 <button
                   onClick={onClose}
                   className="absolute top-4 right-4 text-white hover:text-gray-200 transition-colors"
@@ -107,7 +107,7 @@ const ContactPopup = ({ isOpen, onClose }) => {
                   <X size={24} />
                 </button>
                 <h2 className="text-2xl font-bold text-white text-center">Contact Us</h2>
-                <p className="text-primary-100 text-center mt-1">We'd love to hear from you!</p>
+                <p className="text-orange-100 text-center mt-1">We'd love to hear from you!</p>
               </div>
 
               {/* Content */}
@@ -123,9 +123,9 @@ const ContactPopup = ({ isOpen, onClose }) => {
                   {/* Phone */}
                   <button
                     onClick={handlePhoneClick}
-                    className="w-full flex items-center p-4 bg-gray-50 rounded-xl hover:bg-primary-50 transition-colors group"
+                    className="w-full flex items-center p-4 bg-gray-50 rounded-xl hover:bg-orange-50 transition-colors group"
                   >
-                    <div className="bg-primary-500 rounded-full p-3 mr-4 group-hover:bg-primary-600 transition-colors">
+                    <div className="bg-orange-500 rounded-full p-3 mr-4 group-hover:bg-orange-600 transition-colors">
                       <Phone className="w-5 h-5 text-white" />
                     </div>
                     <div className="text-left">
@@ -137,9 +137,9 @@ const ContactPopup = ({ isOpen, onClose }) => {
                   {/* Email */}
                   <button
                     onClick={handleEmailClick}
-                    className="w-full flex items-center p-4 bg-gray-50 rounded-xl hover:bg-primary-50 transition-colors group"
+                    className="w-full flex items-center p-4 bg-gray-50 rounded-xl hover:bg-orange-50 transition-colors group"
                   >
-                    <div className="bg-primary-500 rounded-full p-3 mr-4 group-hover:bg-primary-600 transition-colors">
+                    <div className="bg-orange-500 rounded-full p-3 mr-4 group-hover:bg-orange-600 transition-colors">
                       <Mail className="w-5 h-5 text-white" />
                     </div>
                     <div className="text-left">
@@ -151,9 +151,9 @@ const ContactPopup = ({ isOpen, onClose }) => {
                   {/* Location */}
                   <button
                     onClick={handleLocationClick}
-                    className="w-full flex items-center p-4 bg-gray-50 rounded-xl hover:bg-primary-50 transition-colors group"
+                    className="w-full flex items-center p-4 bg-gray-50 rounded-xl hover:bg-orange-50 transition-colors group"
                   >
-                    <div className="bg-primary-500 rounded-full p-3 mr-4 group-hover:bg-primary-600 transition-colors">
+                    <div className="bg-orange-500 rounded-full p-3 mr-4 group-hover:bg-orange-600 transition-colors">
                       <MapPin className="w-5 h-5 text-white" />
                     </div>
                     <div className="text-left">

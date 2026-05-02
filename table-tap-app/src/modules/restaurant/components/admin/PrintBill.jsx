@@ -41,11 +41,11 @@ const PrintBill = ({ order, restaurant }) => {
           </tr>
         </thead>
         <tbody>
-          {(order.items || []).map((item, i) => (
+          {order.items.map((item, i) => (
             <tr key={i}>
               <td>{item.name}</td>
               <td align="center">{item.quantity}</td>
-              <td align="right">₹{((item.price || 0) * (item.quantity || 1)).toFixed(2)}</td>
+              <td align="right">₹{(item.price * item.quantity).toFixed(2)}</td>
             </tr>
           ))}
         </tbody>
@@ -53,14 +53,14 @@ const PrintBill = ({ order, restaurant }) => {
 
       {/* Totals */}
       <div style={{ fontSize: 13, textAlign: "right", marginTop: 10 }}>
-        <p>Subtotal: ₹{(order.subtotal || 0).toFixed(2)}</p>
-        {order.discount > 0 && <p>Discount: -₹{(order.discount || 0).toFixed(2)}</p>}
-        <p>SGST 2.5%: ₹{((order.gst || 0) / 2).toFixed(2)}</p>
-        <p>CGST 2.5%: ₹{((order.gst || 0) / 2).toFixed(2)}</p>
-        {(order.delivery_fee || order.deliveryFee) > 0 && (
-          <p>Delivery Fee: ₹{(order.delivery_fee || order.deliveryFee || 0).toFixed(2)}</p>
+        <p>Subtotal: ₹{order.subtotal.toFixed(2)}</p>
+        {order.discount > 0 && <p>Discount: -₹{order.discount.toFixed(2)}</p>}
+        <p>SGST 2.5%: ₹{(order.gst / 2).toFixed(2)}</p>
+        <p>CGST 2.5%: ₹{(order.gst / 2).toFixed(2)}</p>
+        {order.deliveryFee > 0 && (
+          <p>Delivery Fee: ₹{order.deliveryFee.toFixed(2)}</p>
         )}
-        <p><strong>Total: ₹{(order.total || 0).toFixed(2)}</strong></p>
+        <p><strong>Total: ₹{order.total.toFixed(2)}</strong></p>
       </div>
 
       {/* Notes */}

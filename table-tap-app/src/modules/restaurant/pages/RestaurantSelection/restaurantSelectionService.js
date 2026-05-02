@@ -17,50 +17,29 @@ const markAuthError = (error) => {
  */
 export const getActiveRestaurants = async () => {
   try {
-    // Fetch all active restaurants
-    const { data: allRestaurants, error: restsError } = await supabase
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { data: subData, error: subError } = await supabase
+      .from('subscriptions')
+      .select('restaurant_id')
+      .or(`status.in.(active,grace_period),and(status.eq.expired,end_date.gte.${sevenDaysAgo})`);
+
+    if (subError) throw markAuthError(subError);
+
+    const accessibleIds = [...new Set((subData || []).map(s => s.restaurant_id))];
+    if (accessibleIds.length === 0) return [];
+
+    const { data, error } = await supabase
       .from('restaurants')
       .select(`id, name, description, address, contact_phone, opening_hours,
         logo_url, restaurant_photo_url, is_active, cuisine_type, location, tables`)
       .eq('is_active', true)
+      .in('id', accessibleIds)
       .order('name');
 
-    if (restsError) throw markAuthError(restsError);
-    if (!allRestaurants || allRestaurants.length === 0) return [];
+    if (error) throw markAuthError(error);
 
-    // Fetch subscription info to filter out hard-expired restaurants.
-    // Restaurants with no subscription record are shown (they're new/unseeded).
-    // Restaurants with active/grace_period are shown.
-    // Restaurants with expired subscriptions older than 7 days are hidden.
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-
-    const { data: subData } = await supabase
-      .from('subscriptions')
-      .select('restaurant_id, status, end_date');
-    // RLS may return partial results for anonymous users — that's fine; we just use what we get.
-
-    // Filter subscription records to find what should be blocked
-    // A restaurant is blocked ONLY if it has an expired subscription > 7 days old
-    // AND it does NOT have any active/grace_period subscription.
-    
-    const hasActiveOrGrace = new Set();
-    const hasOldExpired = new Set();
-    
-    (subData || []).forEach(s => {
-      if (['active', 'grace_period'].includes(s.status)) {
-        hasActiveOrGrace.add(s.restaurant_id);
-      } else if (s.status === 'expired' && s.end_date && s.end_date < sevenDaysAgo) {
-        hasOldExpired.add(s.restaurant_id);
-      }
-    });
-    
-    // blockedIds = hasOldExpired - hasActiveOrGrace
-    const blockedIds = new Set(
-      [...hasOldExpired].filter(id => !hasActiveOrGrace.has(id))
-    );
-
-    // Keep restaurants that are NOT in the blocked set
-    return allRestaurants.filter(r => !blockedIds.has(r.id));
+    return data || [];
   } catch (error) {
     throw markAuthError(error);
   }
@@ -450,35 +429,16 @@ async function fetchActiveRestaurantIds(restaurantIds) {
   if (!restaurantIds || restaurantIds.length === 0) return [];
 
   try {
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    
     const { data, error } = await supabase
       .from('subscriptions')
-      .select('restaurant_id, status, end_date')
-      .in('restaurant_id', restaurantIds);
+      .select('restaurant_id')
+      .in('restaurant_id', restaurantIds)
+      .in('status', ['active', 'grace_period']);
 
     if (error) throw error;
 
-    const hasActiveOrGrace = new Set();
-    const hasOldExpired = new Set();
-    
-    (data || []).forEach(s => {
-      if (['active', 'grace_period'].includes(s.status)) {
-        hasActiveOrGrace.add(s.restaurant_id);
-      } else if (s.status === 'expired' && s.end_date && s.end_date < sevenDaysAgo) {
-        hasOldExpired.add(s.restaurant_id);
-      }
-    });
-
-    // A restaurant ID is "active" for display if:
-    // 1. It has an active or grace period subscription
-    // 2. OR it has NO subscription records at all (new restaurant)
-    // 3. OR it only has expired subscriptions that are NOT older than 7 days
-    return restaurantIds.filter(id => {
-      if (hasActiveOrGrace.has(id)) return true;
-      if (!hasOldExpired.has(id)) return true;
-      return false;
-    });
+    // Return unique IDs
+    return [...new Set(data.map(item => item.restaurant_id))];
   } catch (err) {
     console.error('Error fetching active subscriptions:', err);
     return [];

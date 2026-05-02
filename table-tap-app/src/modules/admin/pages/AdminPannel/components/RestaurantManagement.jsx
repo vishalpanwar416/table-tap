@@ -90,7 +90,7 @@ const RestaurantManagement = ({
         <div className="flex justify-end items-center">
           <button
             onClick={onAddRestaurant}
-            className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all duration-200 font-spartan"
+            className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-spartan"
           >
             <Plus className="w-4 h-4" />
             <span className="font-medium font-spartan">Add Restaurant</span>
@@ -151,8 +151,8 @@ const RestaurantManagement = ({
         {/* Dynamic Plans */}
         {availablePlans.slice(0, 3).map((plan, idx) => {
           const colors = [
-            'from-primary-50 to-sky-100 border-primary-200 text-primary-700 text-primary-600',
-            'from-slate-50 to-slate-100 border-slate-200 text-slate-700 text-slate-600',
+            'from-blue-50 to-sky-100 border-blue-200 text-blue-700 text-blue-600',
+            'from-purple-50 to-violet-100 border-purple-200 text-purple-700 text-purple-600',
             'from-amber-50 to-yellow-100 border-amber-200 text-amber-700 text-amber-600'
           ];
           const [bg, border, text, subtext] = colors[idx % colors.length].split(' border-');
@@ -172,12 +172,12 @@ const RestaurantManagement = ({
         {/* Add Restaurant Action Card - Restored */}
         <button
           onClick={onAddRestaurant}
-          className="col-span-3 sm:col-span-1 bg-white p-2 md:p-4 rounded-xl border-dashed border-2 border-primary-300 shadow-sm flex flex-row md:flex-col items-center justify-center gap-2 hover:bg-primary-50 transition-all group min-h-[48px] md:min-h-[100px]"
+          className="col-span-3 sm:col-span-1 bg-white p-2 md:p-4 rounded-xl border-dashed border-2 border-blue-300 shadow-sm flex flex-row md:flex-col items-center justify-center gap-2 hover:bg-blue-50 transition-all group min-h-[48px] md:min-h-[100px]"
         >
-          <div className="hidden md:block p-1.5 md:p-2 bg-primary-100 rounded-full group-hover:bg-primary-200 transition-colors md:mb-2">
-            <Plus className="w-4 h-4 md:w-5 md:h-5 text-primary-600" />
+          <div className="hidden md:block p-1.5 md:p-2 bg-blue-100 rounded-full group-hover:bg-blue-200 transition-colors md:mb-2">
+            <Plus className="w-4 h-4 md:w-5 md:h-5 text-blue-600" />
           </div>
-          <p className="text-xs font-bold text-primary-600 uppercase tracking-wider">Add Restaurant (+)</p>
+          <p className="text-xs font-bold text-blue-600 uppercase tracking-wider">Add Restaurant (+)</p>
         </button>
       </div>
 
@@ -193,7 +193,7 @@ const RestaurantManagement = ({
               <button
                 onClick={() => setViewMode('grid')}
                 className={`p-2 rounded-lg transition-all duration-200 ${viewMode === 'grid'
-                  ? 'bg-primary-100 text-primary-700'
+                  ? 'bg-blue-100 text-blue-700'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 title="Grid View"
@@ -203,7 +203,7 @@ const RestaurantManagement = ({
               <button
                 onClick={() => setViewMode('list')}
                 className={`hidden md:block p-2 rounded-lg transition-all duration-200 ${viewMode === 'list'
-                  ? 'bg-primary-100 text-primary-700'
+                  ? 'bg-blue-100 text-blue-700'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 title="List View"
@@ -225,7 +225,7 @@ const RestaurantManagement = ({
             </p>
             <button
               onClick={onAddRestaurant}
-              className="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl font-spartan"
+              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl font-spartan"
             >
               <Plus className="w-5 h-5 mr-2" />
               Add Restaurant
@@ -264,10 +264,10 @@ const RestaurantManagement = ({
               <div className="mt-8 flex justify-center">
                 <button
                   onClick={onLoadMore}
-                  className="px-8 py-3 bg-white border-2 border-primary-100 text-primary-600 rounded-xl font-bold hover:bg-primary-50 transition-all shadow-sm flex items-center gap-2"
+                  className="px-8 py-3 bg-white border-2 border-blue-100 text-blue-600 rounded-xl font-bold hover:bg-blue-50 transition-all shadow-sm flex items-center gap-2"
                 >
                   <span>Load More Restaurants</span>
-                  <span className="text-xs font-normal text-primary-400">
+                  <span className="text-xs font-normal text-blue-400">
                     ({restaurants.length} of {total})
                   </span>
                 </button>

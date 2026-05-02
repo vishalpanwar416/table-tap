@@ -70,7 +70,7 @@ const FoodItemCard = ({ item, onItemClick }) => {
                   <span className="text-[10px] text-gray-400 line-through">
                     ₹{Number(item.price).toFixed(0)}
                   </span>
-                  <span className="text-sm font-bold text-primary-600">
+                  <span className="text-sm font-bold text-orange-600">
                     ₹{discountedPrice.toFixed(0)}
                   </span>
                 </>

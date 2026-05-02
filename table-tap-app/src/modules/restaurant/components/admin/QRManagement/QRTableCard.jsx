@@ -10,7 +10,7 @@ const QRTableCard = ({ table, restaurant, generateQRUrl, platformBranding, class
             {/* Background Layer - Rich Cyan/Orange Mesh */}
             <div className="absolute inset-0 z-0 bg-cyan-50/40">
                 <div className="absolute top-[-30%] left-[-30%] w-[160%] h-[80%] bg-gradient-to-br from-cyan-300/40 via-cyan-100/30 to-transparent blur-[100px] transform rotate-12"></div>
-                <div className="absolute bottom-[-20%] right-[-20%] w-[140%] h-[60%] bg-gradient-to-tl from-primary-300/20 via-primary-100/20 to-transparent blur-[80px] transform -rotate-12"></div>
+                <div className="absolute bottom-[-20%] right-[-20%] w-[140%] h-[60%] bg-gradient-to-tl from-orange-300/20 via-orange-100/20 to-transparent blur-[80px] transform -rotate-12"></div>
                 <div className="absolute inset-0 bg-gradient-to-b from-white/0 via-white/50 to-white/80 backdrop-blur-[1px]"></div>
             </div>
 
@@ -21,7 +21,7 @@ const QRTableCard = ({ table, restaurant, generateQRUrl, platformBranding, class
                 <div className="flex flex-col items-center text-center w-full mt-4">
                     {/* Logo with Glow */}
                     <div className="relative mb-4 group">
-                        <div className="absolute inset-0 bg-gradient-to-tr from-cyan-400 to-primary-300 rounded-[24px] blur-xl opacity-20 group-hover:opacity-30 transition-opacity duration-700"></div>
+                        <div className="absolute inset-0 bg-gradient-to-tr from-cyan-400 to-orange-300 rounded-[24px] blur-xl opacity-20 group-hover:opacity-30 transition-opacity duration-700"></div>
                         <div className="relative w-[88px] h-[88px] bg-white rounded-[24px] shadow-2xl shadow-cyan-900/5 flex items-center justify-center p-0 border border-white overflow-hidden ring-1 ring-slate-900/5">
                             {restaurant.logo_url ? (
                                 <img src={restaurant.logo_url} alt="Logo" className="w-full h-full object-cover" />

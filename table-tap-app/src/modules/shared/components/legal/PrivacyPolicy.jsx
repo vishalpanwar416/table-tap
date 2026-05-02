@@ -48,7 +48,7 @@ const PrivacyPolicy = () => {
                 <div className="sticky top-0 z-30 bg-black/80 backdrop-blur-xl px-6 py-8 flex items-center border-b border-white/10">
                     <button
                         onClick={() => navigate(-1)}
-                        className="p-2 -ml-2 text-primary-500 hover:bg-primary-500/10 rounded-full transition-colors"
+                        className="p-2 -ml-2 text-orange-500 hover:bg-orange-500/10 rounded-full transition-colors"
                     >
                         <ChevronLeft size={28} />
                     </button>
@@ -56,8 +56,8 @@ const PrivacyPolicy = () => {
                         <h1 className="text-2xl font-bold">Privacy Policy</h1>
                         <p className="text-gray-400 text-sm">Last updated: February 2026</p>
                     </div>
-                    <div className="ml-auto w-10 h-10 bg-primary-500/10 rounded-xl flex items-center justify-center border border-primary-500/20">
-                        <ShieldCheck className="text-primary-500" size={20} />
+                    <div className="ml-auto w-10 h-10 bg-orange-500/10 rounded-xl flex items-center justify-center border border-orange-500/20">
+                        <ShieldCheck className="text-orange-500" size={20} />
                     </div>
                 </div>
 
@@ -69,8 +69,8 @@ const PrivacyPolicy = () => {
                 >
                     <div className="space-y-12">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="p-6 bg-primary-500/5 rounded-3xl border border-primary-500/10 flex items-start gap-4">
-                                <Lock className="text-primary-500 shrink-0" size={24} />
+                            <div className="p-6 bg-orange-500/5 rounded-3xl border border-orange-500/10 flex items-start gap-4">
+                                <Lock className="text-orange-500 shrink-0" size={24} />
                                 <div>
                                     <h3 className="font-bold mb-1">Secure by Design</h3>
                                     <p className="text-xs text-gray-400 leading-relaxed">Your data is encrypted both in transit and at rest using banking-grade security.</p>
@@ -93,10 +93,10 @@ const PrivacyPolicy = () => {
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
                                     transition={{ delay: index * 0.05 }}
-                                    className="relative group lg:border-l-2 lg:border-white/5 lg:pl-8 lg:hover:border-primary-500/30 transition-colors"
+                                    className="relative group lg:border-l-2 lg:border-white/5 lg:pl-8 lg:hover:border-orange-500/30 transition-colors"
                                 >
                                     <h2 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
-                                        <div className="hidden lg:block absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-zinc-900 border-2 border-white/10 group-hover:border-primary-500 transition-colors" />
+                                        <div className="hidden lg:block absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-zinc-900 border-2 border-white/10 group-hover:border-orange-500 transition-colors" />
                                         {section.title}
                                     </h2>
                                     <p className="text-gray-400 text-sm leading-relaxed">

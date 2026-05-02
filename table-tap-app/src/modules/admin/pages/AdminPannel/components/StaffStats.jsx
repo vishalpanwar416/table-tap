@@ -8,17 +8,17 @@ const StaffStats = ({ staff, restaurants }) => {
       title: 'Total Staff',
       value: staff.length,
       icon: Users,
-      color: 'primary',
+      color: 'blue',
       description: 'All staff members',
-      gradient: 'from-primary-500 to-primary-600'
+      gradient: 'from-blue-500 to-blue-600'
     },
     {
       title: 'Restaurants',
       value: restaurants.length,
       icon: Building2,
-      color: 'amber',
+      color: 'purple',
       description: 'Active restaurants',
-      gradient: 'from-amber-500 to-amber-600'
+      gradient: 'from-purple-500 to-purple-600'
     },
     {
       title: 'Connected',
