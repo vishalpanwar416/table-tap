@@ -35,9 +35,10 @@ We leverage **Supabase Edge Functions (Deno runtime)** to handle heavyweight log
 *   **Context Injection**: Injects specific restaurant sales data and inventory levels into the AI prompt for "hyper-local" business recommendations.
 *   **Secure Auth**: Explicit JWT verification within the function ensures that restaurant data is never leaked to unauthorized callers.
 
-### 📩 Messaging & Notifications
+### 📩 Messaging & Integrations
 *   **WhatsApp API Integration**: Enterprise-level integration with the WhatsApp Business Platform for automated bill generation and OTP-less communication.
 *   **Email Engine**: Integration with **Resend** for high-deliverability transaction receipts and onboarding sequences.
+*   **PetPooja Integration [New]**: Real-time menu pushing, order callbacks, and stock status synchronization with PetPooja POS systems.
 
 ---
 
@@ -50,6 +51,8 @@ We leverage **Supabase Edge Functions (Deno runtime)** to handle heavyweight log
 | **Payload Throttling** | Smart Fetch Limit (200 Orders) | 75% faster initial load for high-volume outlets. |
 | **Asset Optimization** | Progressive Image Loading & WebP | Reduces bandwidth usage by 60% on mobile data. |
 | **Database Indexing** | B-Tree indexing on `restaurant_id` & `status` | Query execution consistently < 50ms. |
+| **Subscription Logic** | Priority-based active plan filtering | Prevents visibility bugs for multi-plan restaurants. |
+| **Modern Admin UX** | iPhone-style toggles & Compact Header | Optimized for speed and mobile-first management. |
 
 ---
 
@@ -75,6 +78,8 @@ Our system operates on a **Zero-Trust Frontend** model. The frontend is never tr
 - [x] Migration from Firebase to Supabase.
 - [x] AI Sales Advisor implementation.
 - [x] Next.js 15 Landing Page deployment.
+- [x] **PetPooja Integration**: Real-time POS synchronization.
+- [x] **Stability Patch**: Refactored subscription visibility logic.
 - [ ] **Next**: Multi-outlet "Chain Management" dashboard.
 - [ ] **Next**: Automated Inventory deducing via Recipe mapping.
 - [ ] **Future**: Offline-first KDS (IndexedDB sync).
