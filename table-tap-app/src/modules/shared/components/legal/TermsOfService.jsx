@@ -44,7 +44,7 @@ const TermsOfService = () => {
                 <div className="sticky top-0 z-30 bg-black/80 backdrop-blur-xl px-6 py-8 flex items-center border-b border-white/10">
                     <button
                         onClick={() => navigate(-1)}
-                        className="p-2 -ml-2 text-orange-500 hover:bg-orange-500/10 rounded-full transition-colors"
+                        className="p-2 -ml-2 text-primary-500 hover:bg-primary-500/10 rounded-full transition-colors"
                     >
                         <ChevronLeft size={28} />
                     </button>
@@ -52,8 +52,8 @@ const TermsOfService = () => {
                         <h1 className="text-2xl font-bold">Terms of Service</h1>
                         <p className="text-gray-400 text-sm">Last updated: February 2026</p>
                     </div>
-                    <div className="ml-auto w-10 h-10 bg-orange-500/10 rounded-xl flex items-center justify-center border border-orange-500/20">
-                        <FileText className="text-orange-500" size={20} />
+                    <div className="ml-auto w-10 h-10 bg-primary-500/10 rounded-xl flex items-center justify-center border border-primary-500/20">
+                        <FileText className="text-primary-500" size={20} />
                     </div>
                 </div>
 
@@ -79,8 +79,8 @@ const TermsOfService = () => {
                                 transition={{ delay: index * 0.1 }}
                                 className="space-y-4"
                             >
-                                <h2 className="text-xl font-bold text-orange-500 flex items-center gap-3">
-                                    <span className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-sm">
+                                <h2 className="text-xl font-bold text-primary-500 flex items-center gap-3">
+                                    <span className="w-8 h-8 rounded-lg bg-primary-500/10 flex items-center justify-center text-sm">
                                         {index + 1}
                                     </span>
                                     {section.title}

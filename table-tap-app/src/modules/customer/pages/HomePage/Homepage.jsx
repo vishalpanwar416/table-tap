@@ -16,7 +16,6 @@ import Tags from '../../components/Tags';
 import { useRestaurant } from '../../../restaurant/pages/RestaurantSelection/RestaurantContext';
 import { useMultiScrollLock } from '../../../shared/hooks/useScrollLock';
 import SearchResultsOverlay from '../../components/SearchResultsOverlay';
-import { authService } from '../../../shared/api/authService';
 
 // Enhanced lazy loading with preloading hints
 // Import Maincarosel directly to prevent chunk loading errors
@@ -40,7 +39,7 @@ const CarouselSkeleton = memo(() => (
   <div className="relative pt-3 pb-3 mx-2 my-2">
     <div className="w-full h-48 bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg animate-pulse"></div>
     <div className="absolute inset-0 flex items-center justify-center">
-      <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
     </div>
   </div>
 ));
@@ -268,18 +267,6 @@ const HomePage = memo(() => {
     setActiveCategory(category);
   }, []);
 
-  const handleLogout = useCallback(async () => {
-    try {
-      await authService.signOut();
-      setIsLogoutOpen(false);
-      setIsSidebarOpen(false);
-      navigate('/login');
-    } catch (error) {
-      console.error('Logout failed:', error);
-      // Still redirect to login as a fallback
-      navigate('/login');
-    }
-  }, [navigate]);
 
   // Enhanced click outside handler with performance optimization
   useEffect(() => {
@@ -331,7 +318,7 @@ const HomePage = memo(() => {
           <p className="text-gray-400 mb-4">Unable to load menu data</p>
           <button
             onClick={() => window.location.reload()}
-            className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             Try Again
           </button>
@@ -373,7 +360,6 @@ const HomePage = memo(() => {
           <LogoutPopup
             isOpen={isLogoutOpen}
             onClose={() => setIsLogoutOpen(false)}
-            onConfirm={handleLogout}
           />
 
           <AnimatePresence mode="wait">

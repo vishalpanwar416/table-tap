@@ -185,7 +185,7 @@ const AggregateAnalytics = ({ onSelectRestaurant }) => {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-500 border-t-transparent mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading aggregate analytics...</p>
         </div>
       </div>
@@ -220,7 +220,7 @@ const AggregateAnalytics = ({ onSelectRestaurant }) => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl p-6 text-white shadow-lg">
+      <div className="bg-gradient-to-r from-primary-500 to-amber-500 rounded-2xl p-6 text-white shadow-lg">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
@@ -242,7 +242,7 @@ const AggregateAnalytics = ({ onSelectRestaurant }) => {
                 onClick={() => setPeriod(p)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   period === p
-                    ? 'bg-white text-orange-600 shadow-md'
+                    ? 'bg-white text-primary-600 shadow-md'
                     : 'text-white/80 hover:text-white hover:bg-white/10'
                 }`}
               >
@@ -283,8 +283,8 @@ const AggregateAnalytics = ({ onSelectRestaurant }) => {
 
         <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-3">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <BarChart3 size={20} className="text-orange-600" />
+            <div className="p-2 bg-primary-100 rounded-lg">
+              <BarChart3 size={20} className="text-primary-600" />
             </div>
           </div>
           <p className="text-2xl font-bold text-gray-900">{formatCurrency(aggregateData?.avgOrderValue || 0)}</p>
@@ -307,7 +307,7 @@ const AggregateAnalytics = ({ onSelectRestaurant }) => {
         <div className="p-5 border-b border-gray-100">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <TrendingUp size={20} className="text-orange-500" />
+              <TrendingUp size={20} className="text-primary-500" />
               Restaurant Performance
             </h3>
             <button
@@ -334,7 +334,7 @@ const AggregateAnalytics = ({ onSelectRestaurant }) => {
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
                   index === 0 ? 'bg-amber-100 text-amber-700' :
                   index === 1 ? 'bg-gray-200 text-gray-700' :
-                  index === 2 ? 'bg-orange-100 text-orange-700' :
+                  index === 2 ? 'bg-primary-100 text-primary-700' :
                   'bg-gray-100 text-gray-500'
                 }`}>
                   {index + 1}
@@ -426,7 +426,7 @@ const AggregateAnalytics = ({ onSelectRestaurant }) => {
                       e.stopPropagation();
                       handleRestaurantClick(restaurant.id);
                     }}
-                    className="mt-4 w-full py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center justify-center gap-2 font-medium"
+                    className="mt-4 w-full py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors flex items-center justify-center gap-2 font-medium"
                   >
                     View Full Dashboard
                     <ArrowRight size={16} />
@@ -441,7 +441,7 @@ const AggregateAnalytics = ({ onSelectRestaurant }) => {
       {/* Revenue Comparison Chart Placeholder */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <BarChart3 size={20} className="text-orange-500" />
+          <BarChart3 size={20} className="text-primary-500" />
           Revenue Comparison
         </h3>
         <div className="space-y-3">
@@ -454,7 +454,7 @@ const AggregateAnalytics = ({ onSelectRestaurant }) => {
                 <div className="w-32 text-sm text-gray-600 truncate">{restaurant.name}</div>
                 <div className="flex-1 h-8 bg-gray-100 rounded-lg overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-orange-400 to-amber-400 rounded-lg flex items-center justify-end px-2 transition-all duration-500"
+                    className="h-full bg-gradient-to-r from-primary-400 to-amber-400 rounded-lg flex items-center justify-end px-2 transition-all duration-500"
                     style={{ width: `${Math.max(widthPercent, 5)}%` }}
                   >
                     <span className="text-xs font-medium text-white whitespace-nowrap">

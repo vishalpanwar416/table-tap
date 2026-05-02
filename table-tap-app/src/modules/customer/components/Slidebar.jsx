@@ -24,7 +24,10 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
   const touchEndX = useRef(0);
 
   const isAuthenticated = !!user;
-  const isLoading = authLoading || profileLoading;
+  // Only show skeleton during initial auth resolution.
+  // profileLoading covers the DB refresh, but we pre-populate from user metadata
+  // so the sidebar never needs to blank out while the DB fetch is in-progress.
+  const isLoading = authLoading;
 
   // 1. Fetch user profile data only when sidebar is opened and user is authenticated
   useEffect(() => {
@@ -37,13 +40,15 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
       return;
     }
 
-    // Immediately populate from user object so UI never stays blank
-    setUserData({
-      profileImg: user.user_metadata?.avatar_url || '',
-      userName: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User',
-      userEmail: user.email || '',
-      profile_role: (user.app_metadata?.role || user.user_metadata?.role || 'customer').toLowerCase()
-    });
+    // Immediately populate name/photo from user object so UI never stays blank.
+    // Do NOT set profile_role here — it gets reset on every token refresh (user object changes)
+    // which would wipe the DB-confirmed role. Role is set only after the DB fetch.
+    setUserData(prev => ({
+      ...prev,
+      profileImg: user.user_metadata?.avatar_url || prev.profileImg || '',
+      userName: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')?.[0] || prev.userName || 'User',
+      userEmail: user.email || prev.userEmail || '',
+    }));
 
     let cancelled = false;
     const fetchUserProfile = async () => {
@@ -55,18 +60,49 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
           .eq('id', user.id)
           .maybeSingle();
 
-        if (!cancelled && profile) {
+        if (cancelled) return;
+
+        // If no profile found by auth user ID (e.g. Google OAuth created a new identity),
+        // fall back to looking up by email so we find the correct role.
+        let resolvedProfile = profile;
+        if (!resolvedProfile && user.email) {
+          const { data: profileByEmail } = await supabase
+            .from('profiles')
+            .select('full_name, email, profile_role, avatar_url')
+            .eq('email', user.email)
+            .maybeSingle();
+          resolvedProfile = profileByEmail;
+        }
+
+        if (cancelled) return;
+
+        // profiles.profile_role is the source of truth for admin/owner.
+        // For restaurant staff, also check restaurant_staff in case profile_role wasn't synced.
+        let resolvedRole = resolvedProfile?.profile_role || user.app_metadata?.role || user.user_metadata?.profile_role || 'customer';
+
+        if (resolvedRole === 'customer') {
+          const { data: staffRow } = await supabase
+            .from('restaurant_staff')
+            .select('staff_role')
+            .eq('user_id', user.id)
+            .eq('connected', true)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (staffRow?.staff_role) resolvedRole = staffRow.staff_role;
+        }
+
+        if (!cancelled) {
           setUserData({
-            profileImg: profile.avatar_url || user.user_metadata?.avatar_url || '',
-            userName: profile.full_name || user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+            profileImg: resolvedProfile?.avatar_url || user.user_metadata?.avatar_url || '',
+            userName: resolvedProfile?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')?.[0] || 'User',
             userEmail: user.email || '',
-            profile_role: (profile.profile_role || user.app_metadata?.role || 'customer').toLowerCase()
+            profile_role: resolvedRole.toLowerCase()
           });
         }
       } catch (error) {
         console.warn('Error in fetchUserProfile:', error);
       } finally {
-        // Always clear loading — isMounted guard causes stuck skeleton in StrictMode
         setProfileLoading(false);
       }
     };
@@ -159,33 +195,19 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
   const handleNavigation = React.useCallback((path) => {
     // Handle cross-app navigation (Admin, Restaurant, or Owner dashboard)
     if (path.startsWith('/admin') || path.startsWith('/restaurant') || path.startsWith('/owner')) {
-      // Treat localhost and Vercel preview deployments as "dev" environments for path-based routing
       const isDev = window.location.hostname === 'localhost' ||
         window.location.hostname === '127.0.0.1' ||
         window.location.hostname.includes('vercel.app');
 
       if (isDev) {
-        // In dev/preview, use path-based routing
         window.location.href = path;
       } else {
-        // In production custom domain, switch subdomains
         let newSubdomain = 'app';
         if (path.startsWith('/admin')) newSubdomain = 'admin';
         else if (path.startsWith('/owner')) newSubdomain = 'owner';
         else if (path.startsWith('/restaurant')) newSubdomain = 'restaurant';
-
-        const hostParts = window.location.hostname.split('.');
-
-        // Assuming format [subdomain, domain, tld] e.g., app.table-tap.in
-        // If we are on app.table-tap.in, replace 'app' with target
-        if (hostParts.length >= 3) {
-          hostParts[0] = newSubdomain;
-          const newUrl = `${window.location.protocol}//${hostParts.join('.')}`;
-          window.location.href = newUrl;
-        } else {
-          // Fallback if domain structure is unexpected
-          window.location.href = path;
-        }
+        // Use getSubdomainUrl which correctly handles staging prefixes
+        window.location.href = getSubdomainUrl(newSubdomain);
       }
       return;
     }
@@ -334,7 +356,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
                       <h2 className="text-2xl font-bold text-white drop-shadow-lg">Guest</h2>
                       <p className="text-white/60 text-sm mt-1 drop-shadow-sm">Not signed in</p>
                       <button
-                        className="mt-2 px-4 py-2 bg-orange-500/80 backdrop-blur-md text-white rounded hover:bg-orange-600/80 transition-all border border-orange-400/30 shadow-lg"
+                        className="mt-2 px-4 py-2 bg-primary-500/80 backdrop-blur-md text-white rounded hover:bg-primary-600/80 transition-all border border-primary-400/30 shadow-lg"
                         onClick={handleLogin}
                       >
                         Login
@@ -413,7 +435,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
                           onClick={() => handleNavigation(managerOption.path)}
                           className="w-full py-3 px-6 flex items-center text-left hover:bg-white/10 transition-all duration-200 group"
                         >
-                          <div className="bg-orange-600/80 backdrop-blur-md rounded-full p-3 mr-4 group-hover:bg-orange-700/80 transition-all border border-orange-400/30 shadow-xl">
+                          <div className="bg-primary-600/80 backdrop-blur-md rounded-full p-3 mr-4 group-hover:bg-primary-700/80 transition-all border border-primary-400/30 shadow-xl">
                             <ChefHat className="w-5 h-5 text-white" />
                           </div>
                           <span className="text-lg text-white font-medium drop-shadow-sm">Kitchen Dashboard</span>

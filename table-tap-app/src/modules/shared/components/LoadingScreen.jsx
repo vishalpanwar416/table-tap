@@ -22,7 +22,7 @@ const SIZES = {
 // The actual spinner component
 const Spinner = memo(({ size = 'md', className = '' }) => (
     <div
-        className={`${SIZES[size].spinner} border-4 border-orange-500 border-t-transparent rounded-full animate-spin ${className}`}
+        className={`${SIZES[size].spinner} border-4 border-primary-500 border-t-transparent rounded-full animate-spin ${className}`}
     />
 ));
 
@@ -140,7 +140,7 @@ const RefreshIndicator = memo(({ show }) => {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.2 }}
         >
-            <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-4 h-4 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
             <span className="text-white text-xs font-medium">Refreshing...</span>
         </motion.div>
     );

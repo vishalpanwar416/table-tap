@@ -181,7 +181,7 @@ export default function AuthWrapper({ children, publicOnly = false }) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-black">
         <div className="text-center p-8">
-          <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-gray-400">Checking authentication...</p>
         </div>
       </div>

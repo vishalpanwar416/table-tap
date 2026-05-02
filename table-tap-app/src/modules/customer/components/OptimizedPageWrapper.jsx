@@ -1,6 +1,5 @@
-import React, { useState, useRef, useEffect, useMemo, useCallback, memo, Suspense, lazy } from 'react';
+import React, { useState, useRef, useEffect, useMemo, memo, Suspense, lazy } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../shared/config/CartContent';
 import Header from './Header';
 import LogoutPopup from '../auth/LogoutPopup';
@@ -16,7 +15,7 @@ const NotificationSidebar = lazy(() => import('./NotificationSlidebar'));
 const PageSkeleton = memo(() => (
   <div className="flex justify-center items-center min-h-screen bg-black">
     <div className="text-center text-white">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
       <p className="text-lg">Loading...</p>
     </div>
   </div>
@@ -92,13 +91,12 @@ const OptimizedPageWrapper = memo(({
   showBackButton = false,
   onBack,
   showHeader = true,
-  className = '",
+  className = '',
   loading = false,
   error = null,
   onRetry,
   showPadding = true // Add new prop for conditional padding
 }) => {
-  const navigate = useNavigate();
   const { cartItems, updateQuantity, removeItem } = useCart();
   
   // State management
@@ -115,11 +113,6 @@ const OptimizedPageWrapper = memo(({
     notifications: () => setIsNotificationOpen(prev => !prev)
   }), []);
 
-  const handleLogout = useCallback(() => {
-    setIsLogoutOpen(false);
-    setIsSidebarOpen(false);
-    navigate('/login');
-  }, [navigate]);
 
   // Error state
   if (error) {
@@ -136,7 +129,7 @@ const OptimizedPageWrapper = memo(({
           {onRetry && (
             <button 
               onClick={onRetry}
-              className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="bg-primary-500 text-white px-6 py-2 rounded-lg hover:bg-primary-600 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               Try Again
             </button>
@@ -172,7 +165,6 @@ const OptimizedPageWrapper = memo(({
           <LogoutPopup 
             isOpen={isLogoutOpen}
             onClose={() => setIsLogoutOpen(false)}
-            onConfirm={handleLogout}
           />
           
           <AnimatePresence mode="wait">

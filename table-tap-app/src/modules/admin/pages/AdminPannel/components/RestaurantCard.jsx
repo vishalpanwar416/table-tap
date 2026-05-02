@@ -25,6 +25,7 @@ import {
   Package,
   AlertTriangle
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const RestaurantCard = ({
   restaurant,
@@ -113,73 +114,125 @@ const RestaurantCard = ({
     }
   };
 
-  const FeatureToggle = ({ icon: Icon, label, active, onClick, colorClass, activeBg, activeText }) => (
-    <button
-      onClick={(e) => handleAction(e, onClick)}
-      className={`group flex items-center justify-between p-2 rounded-lg border transition-all duration-200 w-full hover:shadow-md
-        ${active ? `${activeBg} ${activeText} border-${colorClass}-200` : 'bg-gray-50 text-gray-500 border-gray-100 hover:bg-gray-100'}`}
-      title={active ? `Disable ${label}` : `Enable ${label}`}
-    >
-      <div className="flex items-center gap-2">
-        <div className={`p-1.5 rounded-md ${active ? 'bg-white/60' : 'bg-gray-200'} transition-colors`}>
-          <Icon className="w-3.5 h-3.5" />
+  const FeatureToggle = ({ icon: Icon, label, active, onClick, colorClass }) => {
+    const colorMap = {
+      primary: {
+        bg: 'bg-primary-500',
+        light: 'bg-primary-50',
+        text: 'text-primary-600',
+        border: 'border-primary-200',
+        shadow: 'shadow-primary-100/50'
+      },
+      amber: {
+        bg: 'bg-amber-500',
+        light: 'bg-amber-50',
+        text: 'text-amber-600',
+        border: 'border-amber-200',
+        shadow: 'shadow-amber-100/50'
+      }
+    };
+
+    const colors = colorMap[colorClass] || colorMap.primary;
+
+    return (
+      <button
+        onClick={(e) => handleAction(e, onClick)}
+        className={`group flex items-center justify-between p-2.5 md:p-3 rounded-xl border transition-all duration-300 w-full
+          ${active 
+            ? `bg-white ${colors.border} shadow-sm ${colors.shadow}` 
+            : 'bg-slate-50/50 text-slate-400 border-slate-100 hover:bg-slate-50 hover:border-slate-200'}`}
+      >
+        <div className="flex items-center gap-2 md:gap-2.5">
+          <div className={`p-1.5 md:p-2 rounded-lg transition-all duration-300 ${active ? `${colors.light} ${colors.text}` : 'bg-slate-100 text-slate-400'}`}>
+            <Icon className="w-3.5 h-3.5 md:w-4 md:h-4" />
+          </div>
+          <span className={`text-[10px] md:text-xs font-bold transition-colors ${active ? 'text-slate-900' : 'text-slate-400'}`}>{label}</span>
         </div>
-        <span className="text-xs font-semibold">{label}</span>
-      </div>
-      <div className={`w-8 h-4 rounded-full relative transition-colors ${active ? `bg-${colorClass}-500` : 'bg-gray-300'}`}>
-        <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all shadow-sm ${active ? 'left-[18px]' : 'left-0.5'}`} />
-      </div>
-    </button>
-  );
+        
+        <div className={`w-8 h-4.5 md:w-9 md:h-5 rounded-full relative transition-colors duration-300 p-1 ${active ? colors.bg : 'bg-slate-200'}`}>
+          <motion.div
+            animate={{ x: active ? (window.innerWidth < 768 ? 14 : 16) : 0 }}
+            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            className="w-2.5 h-2.5 md:w-3 md:h-3 bg-white rounded-full shadow-sm"
+          />
+        </div>
+      </button>
+    );
+  };
 
   const isInactive = !restaurant.is_active;
 
   return (
     <div
-      className={`group relative rounded-2xl shadow-lg overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-2xl hover:scale-[1.01] flex flex-col h-full ${isInactive ? 'bg-red-50/80 border-2 border-red-200' : 'bg-white border border-gray-100'} ${expanded ? 'bg-white z-10' : ''}`}
+      className={`group relative rounded-2xl shadow-lg overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-2xl hover:scale-[1.01] flex flex-col h-full ${isInactive ? 'bg-red-50/80 border-2 border-red-200' : 'bg-white border border-slate-100'} ${expanded ? 'bg-white z-10' : ''}`}
       onClick={handleClick}
     >
       {/* Status Bar (Top) */}
-      <div className={`h-1.5 w-full ${restaurant.is_active ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 'bg-gradient-to-r from-red-500 to-red-600'}`} />
+      <div className={`h-1.5 w-full transition-colors duration-500 ${restaurant.is_active ? 'bg-gradient-to-r from-emerald-500 via-teal-500 to-green-500' : 'bg-gradient-to-r from-rose-500 to-red-600'}`} />
 
-      <div className="p-2 md:p-5 flex-1 flex flex-col">
-        {/* Header content */}
-        <div className="flex justify-between items-start mb-1.5 md:mb-4">
-          <div className="flex items-center gap-3">
+      <div className="p-3 md:p-5 flex-1 flex flex-col">
+        {/* Header content - Optimized for space */}
+        <div className="flex justify-between items-center mb-2 md:mb-4">
+          <div className="flex items-center gap-3 overflow-hidden">
             {restaurant.logo_url ? (
               <img
                 src={restaurant.logo_url}
                 alt={`${restaurant.name} logo`}
-                className="w-12 h-12 rounded-xl object-contain bg-gray-50 border border-gray-100"
+                className="w-10 h-10 md:w-12 md:h-12 rounded-xl object-contain bg-slate-50 border border-slate-100 shadow-sm"
               />
             ) : (
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${restaurant.is_active ? 'bg-blue-100 text-blue-600' : 'bg-red-100 text-red-500'}`}>
-                <ChefHat className="w-6 h-6" />
+              <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center transition-colors ${restaurant.is_active ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-500 border border-rose-100'}`}>
+                <ChefHat className="w-5 h-5 md:w-6 md:h-6" />
               </div>
             )}
-            <div>
-              <h3 className={`font-bold leading-tight ${isInactive ? 'text-red-800' : 'text-gray-900'}`}>{restaurant.name}</h3>
-              <div className="flex items-center text-xs text-gray-500 mt-0.5 gap-1">
-                <span className="truncate max-w-[100px]">{restaurant.cuisine_type || 'Cuisine'}</span>
-                <span>•</span>
-                <span>{restaurant.staff_count || 0} Staff</span>
+            <div className="overflow-hidden">
+              <h3 className={`font-bold leading-tight truncate text-sm md:text-base ${isInactive ? 'text-rose-900' : 'text-slate-900'}`}>{restaurant.name}</h3>
+              <div className="flex items-center text-[10px] md:text-xs text-slate-500 mt-0.5 gap-1.5">
+                <span className="truncate max-w-[80px] md:max-w-[120px]">{restaurant.cuisine_type || 'Cuisine'}</span>
+                <span className="w-1 h-1 rounded-full bg-slate-300" />
+                <span className="flex items-center gap-1">
+                  <Users className="w-3 h-3" />
+                  {restaurant.staff_count || 0}
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Main Status Toggle (Compact) */}
-          <button
-            onClick={(e) => handleAction(e, onToggleStatus)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border transition-all ${restaurant.is_active
-              ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
-              : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
-              }`}
-          >
-            <Power className="w-3 h-3" />
-            {restaurant.is_active ? 'Active' : 'Inactive'}
-          </button>
-        </div>
+          <div className="flex items-center gap-2">
+            {/* Quick Actions - Always visible on desktop, visible on expand for mobile */}
+            <div className="hidden sm:flex items-center gap-1 mr-1">
+              <button
+                onClick={handleEdit}
+                className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-lg transition-all"
+                title="Edit Restaurant"
+              >
+                <Edit className="w-3.5 h-3.5" />
+              </button>
+            </div>
 
+            <div className="flex items-center gap-3">
+              <button
+                onClick={(e) => handleAction(e, onToggleStatus)}
+                className={`relative w-11 h-6 rounded-full transition-all duration-300 ease-in-out shadow-inner ${
+                  restaurant.is_active ? 'bg-emerald-500' : 'bg-slate-300'
+                }`}
+              >
+                <motion.div
+                  initial={false}
+                  animate={{ 
+                    x: restaurant.is_active ? 20 : 2,
+                  }}
+                  transition={{ 
+                    type: "spring", 
+                    stiffness: 600, 
+                    damping: 35
+                  }}
+                  className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.2)]"
+                />
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Expandable Content (Mobile: Hidden unless expanded, Desktop: Always visible) */}
@@ -189,24 +242,24 @@ const RestaurantCard = ({
           <div className={`mb-3 flex items-center justify-between p-2.5 rounded-xl border ${restaurant.subscription.plan_name?.toLowerCase().includes('enterprise')
               ? 'bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200'
               : restaurant.subscription.plan_name?.toLowerCase().includes('pro')
-                ? 'bg-gradient-to-r from-purple-50 to-violet-50 border-purple-200'
-                : 'bg-gradient-to-r from-blue-50 to-sky-50 border-blue-200'
+                ? 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200'
+                : 'bg-gradient-to-r from-primary-50 to-sky-50 border-primary-200'
             }`}>
             <div className="flex items-center gap-2">
               {restaurant.subscription.plan_name?.toLowerCase().includes('enterprise') ? (
                 <Crown className="w-4 h-4 text-amber-600" />
               ) : restaurant.subscription.plan_name?.toLowerCase().includes('pro') ? (
-                <Zap className="w-4 h-4 text-purple-600" />
+                <Zap className="w-4 h-4 text-amber-500" />
               ) : (
-                <Package className="w-4 h-4 text-blue-600" />
+                <Package className="w-4 h-4 text-primary-600" />
               )}
               <div className="flex flex-col">
                 <div className="flex items-center gap-1.5">
                   <span className={`text-xs font-bold capitalize ${restaurant.subscription.plan_name?.toLowerCase().includes('enterprise')
                       ? 'text-amber-700'
                       : restaurant.subscription.plan_name?.toLowerCase().includes('pro')
-                        ? 'text-purple-700'
-                        : 'text-blue-700'
+                        ? 'text-amber-700'
+                        : 'text-primary-700'
                     }`}>
                     {restaurant.subscription.plan_name} Plan
                   </span>
@@ -234,7 +287,7 @@ const RestaurantCard = ({
             </div>
           </div>
         ) : (
-          <div className="mb-3 flex items-center gap-2 p-2.5 rounded-xl bg-gray-50 border border-gray-200">
+          <div className="mb-3 flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200">
             <CreditCard className="w-4 h-4 text-gray-400" />
             <span className="text-xs font-medium text-gray-500">No active plan</span>
           </div>
@@ -250,10 +303,10 @@ const RestaurantCard = ({
           )}
           {/* Owner/Manager Info */}
           {restaurant.manager && (
-            <div className="flex flex-col gap-1 text-xs text-gray-600 bg-gray-50 p-2 rounded-lg border border-gray-100">
+            <div className="flex flex-col gap-1 text-xs text-gray-600 bg-slate-50 p-2 rounded-lg border border-slate-100">
               <div className="flex items-center gap-2">
-                <Users className="w-3.5 h-3.5 text-blue-500" />
-                <span className="font-bold text-blue-700">
+                <Users className="w-3.5 h-3.5 text-primary-500" />
+                <span className="font-bold text-primary-700">
                   {(restaurant.manager.role === 'owner' || restaurant.manager.name?.includes('(Owner)')) ? 'Owner:' : 'Manager:'}
                 </span>
                 <span className="font-medium truncate">{restaurant.manager.name}</span>
@@ -272,48 +325,42 @@ const RestaurantCard = ({
             label="AI Features"
             active={restaurant.ai_enabled}
             onClick={onToggleAI}
-            colorClass="purple"
-            activeBg="bg-purple-50"
-            activeText="text-purple-700"
+            colorClass="primary"
           />
           <FeatureToggle
             icon={ShoppingBag}
             label="Aggregators"
             active={restaurant.aggregators_enabled}
             onClick={onToggleAggregators}
-            colorClass="orange"
-            activeBg="bg-orange-50"
-            activeText="text-orange-700"
+            colorClass="primary"
           />
           <FeatureToggle
             icon={FileText}
             label="Online Bill"
             active={restaurant.billing_features_enabled !== false || restaurant.online_bill_enabled !== false}
             onClick={onToggleOnlineBill}
-            colorClass="blue"
-            activeBg="bg-blue-50"
-            activeText="text-blue-700"
+            colorClass="amber"
           />
         </div>
       </div>
 
       {/* Footer Actions */}
-      <div className={`${expanded ? 'flex' : 'hidden'} md:flex px-3 py-2 md:px-5 md:py-3 bg-gray-50 border-t border-gray-100 justify-between items-center text-xs`}>
+      <div className={`${expanded ? 'flex' : 'hidden'} md:flex px-3 py-2 md:px-5 md:py-3 bg-slate-50 border-t border-slate-100 justify-between items-center text-xs`}>
         <span className="text-gray-400">{getLastUpdated()}</span>
         <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
           {/* Add explicit navigate button for mobile expanded view */}
-          <button onClick={() => onClick(restaurant)} className="md:hidden p-1.5 hover:bg-white hover:text-blue-600 rounded-md transition-colors border border-transparent hover:border-gray-200" title="Open Dashboard">
+          <button onClick={() => onClick(restaurant)} className="md:hidden p-1.5 hover:bg-white hover:text-primary-600 rounded-md transition-colors border border-transparent hover:border-slate-200" title="Open Dashboard">
             <ExternalLink className="w-3.5 h-3.5" />
           </button>
-          <button onClick={handleEdit} className="p-1.5 hover:bg-white hover:text-blue-600 rounded-md transition-colors border border-transparent hover:border-gray-200">
+          <button onClick={handleEdit} className="p-1.5 hover:bg-white hover:text-primary-600 rounded-md transition-colors border border-transparent hover:border-slate-200">
             <Edit className="w-3.5 h-3.5" />
           </button>
           {restaurant.google_maps_link && (
-            <a href={restaurant.google_maps_link} target="_blank" rel="noopener noreferrer" className="p-1.5 hover:bg-white hover:text-green-600 rounded-md transition-colors border border-transparent hover:border-gray-200">
+            <a href={restaurant.google_maps_link} target="_blank" rel="noopener noreferrer" className="p-1.5 hover:bg-white hover:text-green-600 rounded-md transition-colors border border-transparent hover:border-slate-200">
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           )}
-          <button onClick={handleDelete} className="p-1.5 hover:bg-white hover:text-red-600 rounded-md transition-colors border border-transparent hover:border-gray-200">
+          <button onClick={handleDelete} className="p-1.5 hover:bg-white hover:text-red-600 rounded-md transition-colors border border-transparent hover:border-slate-200">
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>

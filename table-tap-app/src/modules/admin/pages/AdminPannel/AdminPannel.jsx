@@ -1,6 +1,6 @@
 import React, { useState, useEffect, lazy, Suspense, useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Loader, X, Bell } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import AdminSidebar from './components/AdminSidebar.jsx';
 import AdminHeader from './components/AdminHeader.jsx';
 import MobileAdminHeader from './components/MobileAdminHeader.jsx';
@@ -37,6 +37,7 @@ const AdminNotificationsPage = lazy(() => import('./components/AdminNotification
 const AdminActivityLogs = lazy(() => import('./components/AdminActivityLogs.jsx'));
 const SubscriptionManagement = lazy(() => import('./components/SubscriptionManagement.jsx'));
 const SystemSettings = lazy(() => import('./components/SystemSettings.jsx'));
+const PetPoojaIntegrations = lazy(() => import('./components/PetPoojaIntegrations.jsx'));
 
 const menuItems = [
   { id: 'dashboard', icon: 'LayoutDashboard', label: 'Dashboard' },
@@ -45,6 +46,7 @@ const menuItems = [
   { id: 'staff', icon: 'Users', label: 'Staff Management' },
   { id: 'inquiries', icon: 'MessageSquare', label: 'Lead Inquiries' },
   { id: 'subscriptions', icon: 'CreditCard', label: 'Subscriptions' },
+  { id: 'integrations', icon: 'Plug', label: 'Integrations' },
   { id: 'notifications', icon: 'Bell', label: 'Notifications' },
   { id: 'activity', icon: 'Activity', label: 'Activity Logs' },
   { id: 'settings', icon: 'Settings', label: 'System Settings' },
@@ -202,18 +204,16 @@ const AdminPanel = () => {
 
       if (restaurantsResponse.error) {
         console.error('[AdminPanel] getAllRestaurants error:', restaurantsResponse.error);
-        throw new Error(restaurantsResponse.error);
       }
       if (staffResponse.error) {
         console.error('[AdminPanel] getAllStaff error:', staffResponse.error);
-        throw new Error(staffResponse.error);
       }
 
-      setRestaurants(restaurantsResponse.data);
-      setTotalRestaurants(restaurantsResponse.total);
+      setRestaurants(restaurantsResponse.data || []);
+      setTotalRestaurants(restaurantsResponse.total || 0);
 
-      setStaff(staffResponse.data);
-      setTotalStaff(staffResponse.total);
+      setStaff(staffResponse.data || []);
+      setTotalStaff(staffResponse.total || 0);
     } catch (error) {
       console.error('[AdminPanel] fetchData failed:', error);
       handleError('Failed to load data: ' + error.message);
@@ -286,13 +286,18 @@ const AdminPanel = () => {
       const restaurant = restaurants.find(r => r.id === id);
       const newAIStatus = !restaurant.ai_enabled;
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('restaurants')
         .update({ ai_enabled: newAIStatus })
-        .eq('id', id);
+        .eq('id', id)
+        .select('id');
 
       if (error) {
         handleError('Failed to update AI status: ' + error.message);
+        return;
+      }
+      if (!data || data.length === 0) {
+        handleError('Permission denied — your account is not allowed to update this restaurant.');
         return;
       }
 
@@ -339,16 +344,21 @@ const AdminPanel = () => {
       const currentStatus = (restaurant.billing_features_enabled !== false || restaurant.online_bill_enabled !== false);
       const newStatus = !currentStatus;
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('restaurants')
         .update({
           online_bill_enabled: newStatus,
           billing_features_enabled: newStatus
         })
-        .eq('id', id);
+        .eq('id', id)
+        .select('id');
 
       if (error) {
         handleError('Failed to update Online Bill setting: ' + error.message);
+        return;
+      }
+      if (!data || data.length === 0) {
+        handleError('Permission denied — your account is not allowed to update this restaurant.');
         return;
       }
 
@@ -611,18 +621,6 @@ const AdminPanel = () => {
     }));
   };
 
-  // Add onLoadMore function for infinite scroll
-  const handleLoadMore = async (type, page, pageSize, restaurantId = null) => {
-    try {
-      // For now, we'll return empty array since we're loading all data at once
-      // In a real implementation, you would fetch more data from the server
-      return [];
-    } catch (error) {
-      console.error('Error loading more data:', error);
-      return [];
-    }
-  };
-
   const renderActiveTab = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -691,6 +689,12 @@ const AdminPanel = () => {
             <AdminActivityLogs searchTerm={searchTerm} />
           </Suspense>
         );
+      case 'integrations':
+        return (
+          <Suspense fallback={<LoadingSpinner />}>
+            <PetPoojaIntegrations />
+          </Suspense>
+        );
       case 'settings':
         return (
           <Suspense fallback={<LoadingSpinner />}>
@@ -710,7 +714,7 @@ const AdminPanel = () => {
   return (
     <ManagerNotificationProvider>
       <AdminNotificationProvider>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 font-spartan">
+        <div className="min-h-screen bg-gray-50 font-spartan">
           {/* Sidebar */}
           <AdminSidebar
             activeTab={activeTab}
@@ -770,8 +774,10 @@ const AdminPanel = () => {
             </div>
 
             {/* Main Content Area */}
-            <div className={activeTab === 'notifications' || activeTab === 'activity' ? 'p-0' : 'p-2 md:p-6'}>
-              {renderActiveTab()}
+            <div className={`flex-1 transition-all duration-500 ${activeTab === 'notifications' || activeTab === 'activity' ? 'p-0' : 'p-3 md:p-8 bg-slate-50/50'}`}>
+              <div className="max-w-[1600px] mx-auto h-full">
+                {renderActiveTab()}
+              </div>
             </div>
           </div>
 

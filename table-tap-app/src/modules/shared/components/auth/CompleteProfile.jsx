@@ -93,7 +93,7 @@ export default function CompleteProfile() {
     const getUserName = async () => {
       const user = await authService.getCurrentUser();
       if (user) {
-        setUserName(user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || '');
+        setUserName(user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')?.[0] || '');
       }
     };
     getUserName();
@@ -239,7 +239,7 @@ export default function CompleteProfile() {
         <div className="w-full px-6 py-8 relative flex items-center justify-center">
           <button
             onClick={() => navigate(-1)}
-            className="absolute left-4 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-10"
+            className="absolute left-4 text-primary-500 hover:text-primary-600 transition-all duration-300 p-2 rounded-full hover:bg-primary-500/10 active:bg-primary-500/20 focus:outline-none focus:ring-2 focus:ring-primary-500/30 z-10"
             aria-label="Go back"
           >
             <ChevronLeft size={30} />
@@ -267,13 +267,13 @@ export default function CompleteProfile() {
             onClick={() => fileInputRef.current && fileInputRef.current.click()}
             style={{ width: 96, height: 96 }}
           >
-            <div className="w-24 h-24 rounded-full bg-white shadow-lg flex items-center justify-center overflow-hidden border-4 border-gray-300 group-hover:border-orange-400 transition-all">
+            <div className="w-24 h-24 rounded-full bg-white shadow-lg flex items-center justify-center overflow-hidden border-4 border-gray-300 group-hover:border-primary-400 transition-all">
               {avatarLoading ? (
-                <div className="w-10 h-10 border-4 border-orange-400 border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-10 h-10 border-4 border-primary-400 border-t-transparent rounded-full animate-spin"></div>
               ) : avatarUrl ? (
                 <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
               ) : getInitials() ? (
-                <span className="text-3xl font-bold text-orange-600">{getInitials()}</span>
+                <span className="text-3xl font-bold text-primary-600">{getInitials()}</span>
               ) : (
                 <UserIcon className="w-10 h-10 text-gray-400" />
               )}

@@ -37,12 +37,12 @@ const AllRestaurantsList = ({ restaurants }) => {
                             <input
                                 type="text"
                                 placeholder="Search restaurants..."
-                                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all text-sm"
+                                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all text-sm"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
-                        <button className="w-full sm:w-auto px-4 py-2 bg-orange-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-orange-600 transition-all shadow-lg shadow-orange-100 whitespace-nowrap">
+                        <button className="w-full sm:w-auto px-4 py-2 bg-primary-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary-600 transition-all shadow-lg shadow-primary-100 whitespace-nowrap">
                             <Plus size={18} /> Connect New
                         </button>
                     </div>
@@ -54,10 +54,10 @@ const AllRestaurantsList = ({ restaurants }) => {
                 {filteredRestaurants.map((restaurant) => (
                     <div
                         key={restaurant.id}
-                        className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:border-orange-100 transition-all overflow-hidden flex flex-col"
+                        className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:border-primary-100 transition-all overflow-hidden flex flex-col"
                     >
                         {/* Status Ribbon (Mock for now) */}
-                        <div className="h-2 bg-gradient-to-r from-orange-500 to-amber-500" />
+                        <div className="h-2 bg-gradient-to-r from-primary-500 to-amber-500" />
 
                         <div className="p-6 flex-1">
                             <div className="flex items-start justify-between mb-4">
@@ -73,7 +73,7 @@ const AllRestaurantsList = ({ restaurants }) => {
                                 </div>
                             </div>
 
-                            <h3 className="text-lg font-bold text-gray-900 group-hover:text-orange-600 transition-colors mb-1">
+                            <h3 className="text-lg font-bold text-gray-900 group-hover:text-primary-600 transition-colors mb-1">
                                 {restaurant.name}
                             </h3>
 
@@ -86,13 +86,13 @@ const AllRestaurantsList = ({ restaurants }) => {
                                 <div className="flex flex-col">
                                     <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Staff</span>
                                     <span className="font-semibold text-gray-700 flex items-center gap-1">
-                                        <Users size={14} className="text-orange-400" /> Admin
+                                        <Users size={14} className="text-primary-400" /> Admin
                                     </span>
                                 </div>
                                 <div className="flex flex-col">
                                     <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Orders</span>
                                     <span className="font-semibold text-gray-700 flex items-center gap-1">
-                                        <Store size={14} className="text-orange-400" /> Live
+                                        <Store size={14} className="text-primary-400" /> Live
                                     </span>
                                 </div>
                             </div>
@@ -101,11 +101,11 @@ const AllRestaurantsList = ({ restaurants }) => {
                         <div className="p-4 bg-gray-50/50 border-t border-gray-100 flex items-center gap-2">
                             <button
                                 onClick={() => navigate(`/restaurant/${restaurant.id}/dashboard`)}
-                                className="flex-1 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl text-xs hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 transition-all flex items-center justify-center gap-2"
+                                className="flex-1 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl text-xs hover:bg-primary-50 hover:text-primary-600 hover:border-primary-200 transition-all flex items-center justify-center gap-2"
                             >
                                 <ExternalLink size={14} /> View Dashboard
                             </button>
-                            <button className="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-gray-400 hover:text-orange-600 hover:border-orange-200 transition-all">
+                            <button className="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-gray-400 hover:text-primary-600 hover:border-primary-200 transition-all">
                                 <ChevronRight size={18} />
                             </button>
                         </div>

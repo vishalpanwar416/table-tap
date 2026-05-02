@@ -136,7 +136,7 @@ const ProfilePhotoModal = ({ show, onClose, currentUser, onPhotoUpdate }) => {
                 className="w-24 h-24 rounded-full object-cover border-4 border-gray-200"
               />
             ) : (
-              <div className="w-24 h-24 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-2xl font-bold">
+              <div className="w-24 h-24 rounded-full bg-primary-500 flex items-center justify-center text-white text-2xl font-bold">
                 {currentUser?.email?.charAt(0).toUpperCase() || 'A'}
               </div>
             )}
@@ -189,7 +189,7 @@ const ProfilePhotoModal = ({ show, onClose, currentUser, onPhotoUpdate }) => {
             <button
               onClick={() => handlePhotoUpload(fileInputRef.current?.files[0])}
               disabled={!previewUrl || uploading}
-              className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+              className="flex-1 bg-primary-500 text-white py-2 px-4 rounded-lg hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
             >
               {uploading ? (
                 <>

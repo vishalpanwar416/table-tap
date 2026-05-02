@@ -10,10 +10,10 @@ const RestaurantStaffHeader = ({
   const isExpanded = selectedRestaurantId === restaurant.id;
 
   return (
-    <div className="bg-gradient-to-r from-slate-50 via-blue-50/50 to-slate-50 px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-100 font-spartan">
+    <div className="bg-gradient-to-r from-slate-50 via-primary-50/50 to-slate-50 px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-100 font-spartan">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-          <div className="w-11 h-11 sm:w-12 sm:h-12 flex-shrink-0 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-sm">
+          <div className="w-11 h-11 sm:w-12 sm:h-12 flex-shrink-0 bg-gradient-to-r from-primary-400 to-primary-600 rounded-xl flex items-center justify-center shadow-sm">
             <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </div>
           <div className="min-w-0">

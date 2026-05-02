@@ -44,6 +44,7 @@ export const uploadFoodImage = async (file) => {
       .from('food-images')
       .getPublicUrl(filePath);
 
+    if (!data?.publicUrl) throw new Error('Failed to get public URL for uploaded image');
     return data.publicUrl;
   } catch (error) {
     throw error;

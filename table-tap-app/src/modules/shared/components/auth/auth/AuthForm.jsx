@@ -15,7 +15,7 @@ AuthForm.Input = ({ type = 'text', value, onChange, placeholder, required = fals
     onChange={onChange}
     placeholder={placeholder}
     required={required}
-    className="w-full p-3 bg-white-700 rounded-xl text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+    className="w-full p-3 bg-white-700 rounded-xl text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
   />
 );
 

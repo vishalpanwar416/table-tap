@@ -195,7 +195,7 @@ const ContactUsPage = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleBack}
-            className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-2xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 shadow-lg"
+            className="px-8 py-3 bg-gradient-to-r from-primary-500 to-red-500 text-white rounded-2xl hover:from-primary-600 hover:to-red-600 transition-all duration-300 shadow-lg"
           >
             Go Back
           </motion.button>
@@ -212,8 +212,8 @@ const ContactUsPage = () => {
       icon: MapPin,
       title: 'Address',
       value: restaurant.address,
-      color: 'from-orange-400 to-orange-600',
-      textColor: 'text-orange-600',
+      color: 'from-primary-400 to-primary-600',
+      textColor: 'text-primary-600',
       link: restaurant.google_maps_link,
       action: restaurant.google_maps_link ? 'Get Directions' : 'Search on Maps',
       showAlways: true
@@ -275,7 +275,7 @@ const ContactUsPage = () => {
       <div className="w-full px-6 py-6 sm:py-8 relative flex items-center justify-center">
         <button
           onClick={handleBack}
-          className="absolute left-4 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-10 top-1/2 transform -translate-y-1/2"
+          className="absolute left-4 text-primary-500 hover:text-primary-600 transition-all duration-300 p-2 rounded-full hover:bg-primary-500/10 active:bg-primary-500/20 focus:outline-none focus:ring-2 focus:ring-primary-500/30 z-10 top-1/2 transform -translate-y-1/2"
           aria-label="Go back"
         >
           <ChevronLeft size={24} className="md:w-[30px] md:h-[30px]" />
@@ -285,7 +285,7 @@ const ContactUsPage = () => {
           <h1 className="text-gray-100 text-2xl md:text-3xl font-medium text-center">
             Contact Us
           </h1>
-          <p className="text-orange-100/60 text-xs md:text-sm mt-1 text-center">We'd love to hear from you!</p>
+          <p className="text-primary-100/60 text-xs md:text-sm mt-1 text-center">We'd love to hear from you!</p>
         </div>
       </div>
 
@@ -331,7 +331,7 @@ const ContactUsPage = () => {
                         handleGoogleMapsFeedback();
                       }
                     }}
-                    className="flex items-center px-3 py-1.5 md:px-4 md:py-2 bg-gradient-to-r from-orange-400 to-orange-600 text-white rounded-full font-spartan-medium shadow-lg border-2 border-orange-500 hover:scale-105 transition-transform duration-200 whitespace-nowrap"
+                    className="flex items-center px-3 py-1.5 md:px-4 md:py-2 bg-gradient-to-r from-primary-400 to-primary-600 text-white rounded-full font-spartan-medium shadow-lg border-2 border-primary-500 hover:scale-105 transition-transform duration-200 whitespace-nowrap"
                     animate={{ scale: [1, 1.08, 1] }}
                     transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }}
                   >
@@ -369,7 +369,7 @@ const ContactUsPage = () => {
                       {info.link && info.action && (
                         <button
                           onClick={() => window.open(info.link, '_blank')}
-                          className="ml-2 px-2 py-1.5 md:px-3 md:py-2 bg-orange-500 text-white rounded-lg md:rounded-xl font-medium hover:bg-orange-600 transition-colors text-[10px] md:text-xs shadow whitespace-nowrap"
+                          className="ml-2 px-2 py-1.5 md:px-3 md:py-2 bg-primary-500 text-white rounded-lg md:rounded-xl font-medium hover:bg-primary-600 transition-colors text-[10px] md:text-xs shadow whitespace-nowrap"
                         >
                           {info.action}
                         </button>
@@ -476,9 +476,9 @@ const ContactUsPage = () => {
                           onBlur={() => setActiveField(null)}
                           required
                           className={`w-full px-4 py-3 md:py-4 border-2 rounded-xl transition-all duration-300 text-sm md:text-base ${activeField === 'name'
-                            ? 'border-orange-500 bg-orange-50/50'
+                            ? 'border-primary-500 bg-primary-50/50'
                             : 'border-gray-200 hover:border-gray-300'
-                            } focus:outline-none focus:ring-2 focus:ring-orange-500/20`}
+                            } focus:outline-none focus:ring-2 focus:ring-primary-500/20`}
                           placeholder="Enter your name"
                         />
                       </div>
@@ -496,9 +496,9 @@ const ContactUsPage = () => {
                           onBlur={() => setActiveField(null)}
                           required
                           className={`w-full px-4 py-3 md:py-4 border-2 rounded-xl transition-all duration-300 text-sm md:text-base ${activeField === 'email'
-                            ? 'border-orange-500 bg-orange-50/50'
+                            ? 'border-primary-500 bg-primary-50/50'
                             : 'border-gray-200 hover:border-gray-300'
-                            } focus:outline-none focus:ring-2 focus:ring-orange-500/20`}
+                            } focus:outline-none focus:ring-2 focus:ring-primary-500/20`}
                           placeholder="Enter your email"
                         />
                       </div>
@@ -517,9 +517,9 @@ const ContactUsPage = () => {
                         onBlur={() => setActiveField(null)}
                         required
                         className={`w-full px-4 py-3 md:py-4 border-2 rounded-xl transition-all duration-300 text-sm md:text-base ${activeField === 'subject'
-                          ? 'border-orange-500 bg-orange-50/50'
+                          ? 'border-primary-500 bg-primary-50/50'
                           : 'border-gray-200 hover:border-gray-300'
-                          } focus:outline-none focus:ring-2 focus:ring-orange-500/20`}
+                          } focus:outline-none focus:ring-2 focus:ring-primary-500/20`}
                         placeholder="What's this about?"
                       />
                     </div>
@@ -537,9 +537,9 @@ const ContactUsPage = () => {
                         required
                         rows={5}
                         className={`w-full px-4 py-3 md:py-4 border-2 rounded-xl transition-all duration-300 resize-none text-sm md:text-base ${activeField === 'message'
-                          ? 'border-orange-500 bg-orange-50/50'
+                          ? 'border-primary-500 bg-primary-50/50'
                           : 'border-gray-200 hover:border-gray-300'
-                          } focus:outline-none focus:ring-2 focus:ring-orange-500/20`}
+                          } focus:outline-none focus:ring-2 focus:ring-primary-500/20`}
                         placeholder="Tell us more about your inquiry..."
                       />
                     </div>
@@ -575,7 +575,7 @@ const ContactUsPage = () => {
                     whileTap={{ scale: 0.98 }}
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full py-3 md:py-4 px-6 bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold rounded-xl hover:from-orange-600 hover:to-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center shadow-lg hover:shadow-xl text-sm md:text-base"
+                    className="w-full py-3 md:py-4 px-6 bg-gradient-to-r from-primary-500 to-red-500 text-white font-semibold rounded-xl hover:from-primary-600 hover:to-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center shadow-lg hover:shadow-xl text-sm md:text-base"
                   >
                     {isSubmitting ? (
                       <>

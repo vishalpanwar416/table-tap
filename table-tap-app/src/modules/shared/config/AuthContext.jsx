@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../../shared/supabase';
 import SessionExpiryModal from '../components/SessionExpiryModal';
+import { setUserContext } from '../../../sentry';
 
 const AuthContext = createContext();
 
@@ -105,6 +106,7 @@ export const AuthProvider = ({ children }) => {
         if (mounted) {
           setUser(session?.user ?? null);
           setLoading(false);
+          setUserContext(session?.user ?? null);
         }
 
         if (event === 'TOKEN_REFRESH_FAILED') {

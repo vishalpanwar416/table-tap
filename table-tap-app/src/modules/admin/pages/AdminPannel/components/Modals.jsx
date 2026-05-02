@@ -239,10 +239,10 @@ const MapPicker = ({ apiKey, onLocationSelect, initialLocation }) => {
               ref={searchInputRef}
               type="text"
               placeholder="Search for a location..."
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none bg-white shadow-sm pr-10"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none bg-white shadow-sm pr-10"
               onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
             />
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-blue-500 transition-colors">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-primary-500 transition-colors">
               <Globe className="w-4 h-4" />
             </div>
           </div>
@@ -254,13 +254,13 @@ const MapPicker = ({ apiKey, onLocationSelect, initialLocation }) => {
             />
             {isLoading && (
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mb-2"></div>
-                <span className="text-[10px] font-bold text-blue-600 uppercase tracking-tighter">Loading Map...</span>
+                <div className="w-8 h-8 border-3 border-primary-600 border-t-transparent rounded-full animate-spin mb-2"></div>
+                <span className="text-[10px] font-bold text-primary-600 uppercase tracking-tighter">Loading Map...</span>
               </div>
             )}
           </div>
           <p className="text-[10px] text-gray-500 italic flex items-center gap-1">
-            <span className="text-blue-500">TIP:</span> You can drag the marker or click anywhere on the map to set the exact location.
+            <span className="text-primary-500">TIP:</span> You can drag the marker or click anywhere on the map to set the exact location.
           </p>
         </>
       )}
@@ -464,7 +464,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
       <div className="bg-white rounded-2xl max-w-5xl w-full max-h-[92vh] overflow-hidden shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 px-8 py-6 text-white">
+        <div className="bg-gradient-to-r from-primary-600 via-amber-600 to-primary-600 px-8 py-6 text-white">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
@@ -474,7 +474,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                 <h3 className="text-2xl font-bold">
                   {isEditing ? 'Edit Restaurant' : 'Add New Restaurant'}
                 </h3>
-                <p className="text-blue-100 text-sm">
+                <p className="text-primary-100 text-sm">
                   {isEditing ? 'Update restaurant information' : 'Create a new restaurant profile'}
                 </p>
               </div>
@@ -499,11 +499,11 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
               </label>
               <div className="flex items-center gap-6">
                 <div className="relative group">
-                  <div className="w-24 h-24 bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-dashed border-blue-200 rounded-2xl flex items-center justify-center overflow-hidden transition-all duration-300 group-hover:border-blue-400">
+                  <div className="w-24 h-24 bg-gradient-to-br from-primary-50 to-amber-50 border-2 border-dashed border-primary-200 rounded-2xl flex items-center justify-center overflow-hidden transition-all duration-300 group-hover:border-primary-400">
                     {imagePreview ? (
                       <img src={imagePreview} alt="Logo preview" className="w-full h-full object-cover" />
                     ) : (
-                      <Upload className="w-8 h-8 text-blue-400" />
+                      <Upload className="w-8 h-8 text-primary-400" />
                     )}
                   </div>
                   {imagePreview && (
@@ -526,7 +526,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                   />
                   <label
                     htmlFor="logo-upload"
-                    className="cursor-pointer inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+                    className="cursor-pointer inline-flex items-center gap-3 px-6 py-3 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-all duration-300 shadow-lg hover:shadow-xl"
                   >
                     <Upload className="w-4 h-4" />
                     Upload Logo
@@ -542,7 +542,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-blue-500" />
+                  <Building2 className="w-4 h-4 text-primary-500" />
                   Restaurant Name *
                 </label>
                 <input
@@ -550,21 +550,21 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                   required
                   value={data.name || ''}
                   onChange={(e) => setData({ ...data, name: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
                   placeholder="Enter restaurant name"
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <Award className="w-4 h-4 text-purple-500" />
+                  <Award className="w-4 h-4 text-amber-500" />
                   Cuisine Type
                 </label>
                 <input
                   type="text"
                   value={data.cuisine_type || ''}
                   onChange={(e) => setData({ ...data, cuisine_type: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
                   placeholder="e.g., Italian, Indian, Chinese"
                 />
               </div>
@@ -581,7 +581,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                 value={data.address || ''}
                 onChange={(e) => setData({ ...data, address: e.target.value })}
                 rows={3}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300 resize-none"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300 resize-none"
                 placeholder="Enter full address"
               />
             </div>
@@ -598,14 +598,14 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                   required
                   value={data.contact_phone || ''}
                   onChange={(e) => setData({ ...data, contact_phone: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
                   placeholder="Enter phone number"
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-blue-500" />
+                  <Mail className="w-4 h-4 text-primary-500" />
                   Email Address *
                 </label>
                 <input
@@ -613,7 +613,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                   required
                   value={data.contact_email || ''}
                   onChange={(e) => setData({ ...data, contact_email: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
                   placeholder="Enter email address"
                 />
               </div>
@@ -623,27 +623,27 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-indigo-500" />
+                  <Globe className="w-4 h-4 text-primary-500" />
                   GST Number
                 </label>
                 <input
                   type="text"
                   value={data.gst_number || ''}
                   onChange={(e) => setData({ ...data, gst_number: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
                   placeholder="Enter GST number"
                 />
               </div>
               <div className="space-y-2">
                 <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-orange-500" />
+                  <Globe className="w-4 h-4 text-primary-500" />
                   FSSAI License
                 </label>
                 <input
                   type="text"
                   value={data.fssai_license || ''}
                   onChange={(e) => setData({ ...data, fssai_license: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
                   placeholder="Enter FSSAI License Number"
                 />
               </div>
@@ -652,7 +652,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
             {/* Owner Information */}
             <div className="space-y-4">
               <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <Users className="w-4 h-4 text-purple-500" />
+                <Users className="w-4 h-4 text-primary-500" />
                 Owner Information
               </label>
 
@@ -666,7 +666,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                     <select
                       value={selectedOwnerId}
                       onChange={(e) => handleOwnerChange(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     >
                       {owners.map(owner => (
                         <option key={owner.id} value={owner.id}>
@@ -685,7 +685,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                         type="text"
                         value={data.owner_name || ''}
                         onChange={(e) => setData({ ...data, owner_name: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         placeholder="Enter owner's name"
                       />
                     </div>
@@ -698,7 +698,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                         required
                         value={data.owner_email || ''}
                         onChange={(e) => setData({ ...data, owner_email: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         placeholder="Enter owner's email address"
                       />
                     </div>
@@ -711,7 +711,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                       type="tel"
                       value={data.owner_phone || ''}
                       onChange={(e) => setData({ ...data, owner_phone: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       placeholder="Enter owner's phone number"
                     />
                   </div>
@@ -727,7 +727,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                       type="text"
                       value={data.owner_name || ''}
                       onChange={(e) => setData({ ...data, owner_name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       placeholder="Enter owner's name"
                     />
                   </div>
@@ -740,7 +740,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                       required
                       value={data.owner_email || ''}
                       onChange={(e) => setData({ ...data, owner_email: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       placeholder="Enter owner's email address"
                     />
                   </div>
@@ -752,7 +752,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                       type="password"
                       value={data.owner_password || ''}
                       onChange={(e) => setData({ ...data, owner_password: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       placeholder={isEditing ? "Leave blank to keep current" : "Enter to create account, leave blank to invite"}
                       minLength={6}
                     />
@@ -769,7 +769,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                     type="tel"
                     value={data.owner_phone || ''}
                     onChange={(e) => setData({ ...data, owner_phone: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="Enter owner's phone number"
                   />
                 </div>
@@ -780,7 +780,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-orange-500" />
+                  <Clock className="w-4 h-4 text-primary-500" />
                   Opening Hours *
                 </label>
                 <input
@@ -788,7 +788,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                   required
                   value={data.opening_hours || ''}
                   onChange={(e) => setData({ ...data, opening_hours: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
                   placeholder="e.g., 9:00 AM - 10:00 PM"
                   list="opening-hours-suggestions"
                 />
@@ -807,14 +807,14 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
 
               <div className="space-y-2">
                 <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-indigo-500" />
+                  <Globe className="w-4 h-4 text-primary-500" />
                   GST Number
                 </label>
                 <input
                   type="text"
                   value={data.gst_number || ''}
                   onChange={(e) => setData({ ...data, gst_number: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
                   placeholder="Enter GST number"
                 />
               </div> {/* moved GST to Compliance section above */}
@@ -829,7 +829,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                 value={data.description || ''}
                 onChange={(e) => setData({ ...data, description: e.target.value })}
                 rows={4}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300 resize-none"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300 resize-none"
                 placeholder="Enter restaurant description"
               />
             </div>
@@ -852,9 +852,9 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                   }}
                   className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1.5 
                     ${showMap
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-100'
+                      ? 'bg-primary-600 text-white border-primary-600 shadow-lg shadow-primary-100'
                       : mapsApiKey
-                        ? 'bg-white text-blue-600 border-blue-100 hover:bg-blue-50'
+                        ? 'bg-white text-primary-600 border-primary-100 hover:bg-primary-50'
                         : 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed'}`}
                 >
                   <MapPin className="w-3 h-3" />
@@ -873,7 +873,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                     <button
                       type="button"
                       onClick={() => setShowMap(false)}
-                      className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
+                      className="flex items-center gap-2 px-6 py-2.5 bg-primary-600 text-white rounded-xl font-bold text-sm hover:bg-primary-700 transition-all shadow-lg shadow-primary-200"
                     >
                       <Check className="w-4 h-4" />
                       Confirm Selection
@@ -887,7 +887,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                   type="url"
                   value={data.google_maps_link || ''}
                   onChange={(e) => setData({ ...data, google_maps_link: e.target.value })}
-                  className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
+                  className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
                   placeholder="Paste Google Maps URL"
                 />
                 <button
@@ -905,7 +905,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-blue-500" />
+                  <MapPin className="w-4 h-4 text-primary-500" />
                   Latitude
                 </label>
                 <input
@@ -913,13 +913,13 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                   step="any"
                   value={data.latitude || ''}
                   onChange={(e) => setData({ ...data, latitude: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
                   placeholder="Latitude"
                 />
               </div>
               <div className="space-y-2">
                 <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-purple-500" />
+                  <MapPin className="w-4 h-4 text-primary-500" />
                   Longitude
                 </label>
                 <input
@@ -927,17 +927,17 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                   step="any"
                   value={data.longitude || ''}
                   onChange={(e) => setData({ ...data, longitude: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
                   placeholder="Longitude"
                 />
               </div>
             </div>
 
             {/* Aggregator Integrations */}
-            <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl p-6 border border-orange-100">
+            <div className="bg-gradient-to-br from-primary-50 to-red-50 rounded-2xl p-6 border border-primary-100">
               <div className="flex items-center justify-between mb-4">
                 <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-orange-500" />
+                  <Globe className="w-4 h-4 text-primary-500" />
                   Aggregator Integrations
                 </label>
                 <div className="flex items-center gap-2">
@@ -949,7 +949,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                       onChange={(e) => setData({ ...data, aggregators_enabled: e.target.checked })}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
                   </label>
                 </div>
               </div>
@@ -963,7 +963,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                     type="text"
                     value={data.swiggy_api_key || ''}
                     onChange={(e) => setData({ ...data, swiggy_api_key: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 bg-white"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 bg-white"
                     placeholder="Enter Swiggy API Key"
                   />
                 </div>
@@ -1036,14 +1036,14 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
             {/* UPI ID */}
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <Globe className="w-4 h-4 text-blue-400" />
+                <Globe className="w-4 h-4 text-primary-400" />
                 UPI ID
               </label>
               <input
                 type="text"
                 value={data.upi_id || ''}
                 onChange={(e) => setData({ ...data, upi_id: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
                 placeholder="Enter UPI ID"
               />
             </div>
@@ -1058,28 +1058,28 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                   type="text"
                   value={data.social_media?.facebook || ''}
                   onChange={(e) => setData({ ...data, social_media: { ...data.social_media, facebook: e.target.value } })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
                   placeholder="Facebook URL or handle"
                 />
                 <input
                   type="text"
                   value={data.social_media?.instagram || ''}
                   onChange={(e) => setData({ ...data, social_media: { ...data.social_media, instagram: e.target.value } })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
                   placeholder="Instagram URL or handle"
                 />
                 <input
                   type="text"
                   value={data.social_media?.twitter || ''}
                   onChange={(e) => setData({ ...data, social_media: { ...data.social_media, twitter: e.target.value } })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
                   placeholder="Twitter URL or handle"
                 />
                 <input
                   type="text"
                   value={data.social_media?.website || ''}
                   onChange={(e) => setData({ ...data, social_media: { ...data.social_media, website: e.target.value } })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
                   placeholder="Website URL"
                 />
               </div>
@@ -1101,7 +1101,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                       onChange={(e) => setData({ ...data, ai_enabled: e.target.checked })}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
                   </label>
                   <span className="text-sm font-medium text-gray-700">AI Analytics</span>
                 </div>
@@ -1122,7 +1122,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                       }}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
                   </label>
                   <span className="text-sm font-medium text-gray-700">Online Bill (WhatsApp/Email)</span>
                 </div>
@@ -1142,7 +1142,7 @@ export const RestaurantModal = ({ show, onClose, onSubmit, data, setData, isEdit
                 type="button"
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className={`px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-medium transition-all duration-300 shadow-lg hover:shadow-xl ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:from-blue-700 hover:to-purple-700'
+                className={`px-6 py-3 bg-primary-600 text-white rounded-xl font-medium transition-all duration-300 shadow-lg hover:shadow-xl ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-primary-700'
                   }`}
               >
                 {isSubmitting ? (
@@ -1175,9 +1175,9 @@ export const StaffModal = ({ show, onClose, onSubmit, data, setData, restaurants
   // Role toggle options
   const roles = [
     { value: 'owner', label: 'Owner', icon: Crown, color: 'from-amber-600 to-yellow-600' },
-    { value: 'manager', label: 'Manager', icon: UserCog, color: 'from-blue-600 to-indigo-600' },
-    { value: 'captain', label: 'Captain', icon: Users, color: 'from-purple-600 to-pink-600' },
-    { value: 'chef', label: 'Chef', icon: ChefHat, color: 'from-orange-600 to-red-600' },
+    { value: 'manager', label: 'Manager', icon: UserCog, color: 'from-primary-500 to-primary-700' },
+    { value: 'captain', label: 'Captain', icon: Users, color: 'from-amber-500 to-orange-500' },
+    { value: 'chef', label: 'Chef', icon: ChefHat, color: 'from-primary-600 to-red-600' },
     { value: 'waiter', label: 'Waiter', icon: UtensilsCrossed, color: 'from-green-600 to-emerald-600' },
     { value: 'cashier', label: 'Cashier', icon: Coins, color: 'from-yellow-600 to-amber-600' }
   ];
@@ -1294,7 +1294,7 @@ export const StaffModal = ({ show, onClose, onSubmit, data, setData, restaurants
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
       <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[92vh] overflow-hidden shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 px-8 py-6 text-white">
+        <div className="bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800 px-8 py-6 text-white">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
@@ -1304,7 +1304,7 @@ export const StaffModal = ({ show, onClose, onSubmit, data, setData, restaurants
                 <h3 className="text-2xl font-bold">
                   {isEditing ? 'Edit Staff Member' : 'Add New Staff Member'}
                 </h3>
-                <p className="text-purple-100 text-sm">
+                <p className="text-slate-300 text-sm">
                   {isEditing ? 'Update staff member information' : 'Create a new staff member profile'}
                 </p>
               </div>
@@ -1325,7 +1325,7 @@ export const StaffModal = ({ show, onClose, onSubmit, data, setData, restaurants
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <Users className="w-4 h-4 text-blue-500" />
+                  <Users className="w-4 h-4 text-primary-500" />
                   Full Name *
                 </label>
                 <input
@@ -1333,7 +1333,7 @@ export const StaffModal = ({ show, onClose, onSubmit, data, setData, restaurants
                   required
                   value={data.name || ''}
                   onChange={(e) => setData({ ...data, name: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
                   placeholder="Enter full name"
                 />
               </div>
@@ -1348,7 +1348,7 @@ export const StaffModal = ({ show, onClose, onSubmit, data, setData, restaurants
                   required
                   value={data.email || ''}
                   onChange={(e) => setData({ ...data, email: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
                   placeholder="Enter email address"
                 />
               </div>
@@ -1362,7 +1362,7 @@ export const StaffModal = ({ show, onClose, onSubmit, data, setData, restaurants
                   type="password"
                   value={data.password || ''}
                   onChange={(e) => setData({ ...data, password: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
                   placeholder={isEditing ? "Leave blank to keep current" : "Enter to create account, leave blank to invite"}
                   minLength={6}
                 />
@@ -1379,7 +1379,7 @@ export const StaffModal = ({ show, onClose, onSubmit, data, setData, restaurants
                 type="tel"
                 value={data.phone_number || ''}
                 onChange={(e) => setData({ ...data, phone_number: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
                 placeholder="Enter phone number"
               />
             </div>
@@ -1387,7 +1387,7 @@ export const StaffModal = ({ show, onClose, onSubmit, data, setData, restaurants
             {/* Role Selection */}
             <div className="space-y-4">
               <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <UserCog className="w-4 h-4 text-purple-500" />
+                <UserCog className="w-4 h-4 text-primary-500" />
                 Role *
               </label>
               <div className="flex gap-4 bg-gradient-to-r from-gray-50 to-gray-100 p-4 rounded-2xl border border-gray-200">
@@ -1414,7 +1414,7 @@ export const StaffModal = ({ show, onClose, onSubmit, data, setData, restaurants
             {/* Restaurant Assignment */}
             <div className="space-y-2 relative">
               <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-orange-500" />
+                <Building2 className="w-4 h-4 text-primary-500" />
                 Assign to Restaurant *
               </label>
               <div className="relative">
@@ -1426,7 +1426,7 @@ export const StaffModal = ({ show, onClose, onSubmit, data, setData, restaurants
                   onFocus={() => setDropdownOpen(true)}
                   onChange={handleInputChange}
                   onKeyDown={handleKeyDown}
-                  className="w-full px-4 py-3 pr-20 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
+                  className="w-full px-4 py-3 pr-20 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 bg-white hover:border-gray-300"
                   autoComplete="off"
                   required
                 />
@@ -1452,7 +1452,7 @@ export const StaffModal = ({ show, onClose, onSubmit, data, setData, restaurants
                         key={restaurant.id}
                         ref={dropdownRef}
                         className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-all duration-200 ${data.restaurant_id === restaurant.id
-                          ? 'bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-500'
+                          ? 'bg-gradient-to-r from-primary-50 to-amber-50 border-l-4 border-primary-500'
                           : ''
                           } ${highlightedIndex === idx ? 'bg-gray-50' : ''
                           } hover:bg-gray-50 first:rounded-t-xl last:rounded-b-xl`}
@@ -1460,13 +1460,13 @@ export const StaffModal = ({ show, onClose, onSubmit, data, setData, restaurants
                         onMouseEnter={() => setHighlightedIndex(idx)}
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
+                          <div className="w-8 h-8 bg-gradient-to-r from-primary-400 to-amber-400 rounded-full flex items-center justify-center">
                             <Building2 className="w-4 h-4 text-white" />
                           </div>
                           <span className="font-medium">{restaurant.name}</span>
                         </div>
                         {data.restaurant_id === restaurant.id && (
-                          <Check className="w-5 h-5 text-purple-600" />
+                          <Check className="w-5 h-5 text-primary-600" />
                         )}
                       </div>
                     ))
@@ -1488,7 +1488,7 @@ export const StaffModal = ({ show, onClose, onSubmit, data, setData, restaurants
                 type="button"
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className={`px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-medium transition-all duration-300 shadow-lg hover:shadow-xl ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:from-purple-700 hover:to-pink-700'
+                className={`px-6 py-3 bg-primary-600 text-white rounded-xl font-medium transition-all duration-300 shadow-lg hover:shadow-xl ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-primary-700'
                   }`}
               >
                 {isSubmitting ? (

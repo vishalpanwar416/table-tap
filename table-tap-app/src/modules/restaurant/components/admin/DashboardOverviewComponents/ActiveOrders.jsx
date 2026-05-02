@@ -17,13 +17,13 @@ const ActiveOrders = ({
       <div className="flex justify-between items-center p-3 md:p-4 border-b border-gray-100">
         <h3 className="text-base md:text-lg font-semibold text-gray-800 flex items-center gap-2">
           Active Orders
-          <span className="bg-orange-100 text-orange-600 text-xs px-2 py-0.5 rounded-full md:hidden">
+          <span className="bg-primary-100 text-primary-600 text-xs px-2 py-0.5 rounded-full md:hidden">
             {orders.length}
           </span>
         </h3>
         <button
           onClick={() => setActiveTab('orders')}
-          className="text-xs md:text-sm text-orange-500 hover:text-orange-600 flex items-center font-medium"
+          className="text-xs md:text-sm text-primary-500 hover:text-primary-600 flex items-center font-medium"
         >
           View all <span className="hidden md:inline">&nbsp;orders</span> <ArrowRight size={14} className="ml-1" />
         </button>
@@ -178,10 +178,10 @@ const ActiveOrders = ({
                           <span>Subtotal</span>
                           <span>₹{(order.subtotal || order.total || 0).toFixed(2)}</span>
                         </div>
-                        {order.deliveryFee > 0 && (
+                        {(order.delivery_fee || order.deliveryFee) > 0 && (
                           <div className="flex justify-between text-xs text-gray-500 mb-1">
                             <span>Delivery</span>
-                            <span>₹{order.deliveryFee?.toFixed(2) || '0.00'}</span>
+                            <span>₹{(order.delivery_fee || order.deliveryFee)?.toFixed(2) || '0.00'}</span>
                           </div>
                         )}
                         <div className="flex justify-between font-medium text-sm mt-1">
@@ -258,7 +258,7 @@ const ActiveOrders = ({
                           </button>
                           <button
                             onClick={() => updateOrderStatus(order.id, 'preparing')}
-                            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-orange-600 text-white shadow-sm"
+                            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary-600 text-white shadow-sm"
                           >
                             Accept
                           </button>

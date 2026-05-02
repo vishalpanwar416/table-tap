@@ -380,7 +380,7 @@ export const getRoleColor = (role) => {
     case 'captain':
       return 'bg-blue-100 text-blue-800';
     case 'chef':
-      return 'bg-orange-100 text-orange-800';
+      return 'bg-primary-100 text-primary-800';
     case 'waiter':
       return 'bg-green-100 text-green-800';
     case 'cashier':

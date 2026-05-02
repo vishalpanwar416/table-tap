@@ -90,25 +90,95 @@ const StaffListView = ({ staff, restaurants, onEdit, onDelete, onAddStaff, onLoa
   };
 
   const getRoleColor = (role) => {
-    switch (role) {
+    switch (role?.toLowerCase()) {
+      case 'admin':
       case 'manager':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
+        return 'bg-amber-50 text-amber-700 border-amber-200/60 shadow-sm';
       case 'captain':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-indigo-50 text-indigo-700 border-indigo-200/60 shadow-sm';
+      case 'waiter':
+        return 'bg-emerald-50 text-emerald-700 border-emerald-200/60 shadow-sm';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-slate-50 text-slate-600 border-slate-200/60 shadow-sm';
     }
+  };
+
+  const getRoleLabel = (role) => {
+    if (!role) return 'Staff';
+    return role.charAt(0).toUpperCase() + role.slice(1);
+  };
+
+  const renderStaffItem = ({ index, style }) => {
+    const member = displayedStaff[index];
+    if (!member) return null;
+
+    const restaurant = restaurants.find(r => r.id === member.restaurant_id);
+    const isInactive = !restaurant?.is_active;
+
+    return (
+      <div
+        style={style}
+        key={member.id}
+        data-staff-index={index}
+        className="px-4 py-2"
+      >
+        <div className={`group h-full flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl hover:shadow-lg hover:border-primary-100 transition-all duration-300`}>
+          <div className="flex items-center gap-4">
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 text-slate-500 group-hover:from-primary-50 group-hover:to-white group-hover:text-primary-600 transition-all duration-300 border border-slate-200/50`}>
+              <Users className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <h4 className="font-bold text-slate-900">{member.name}</h4>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getRoleColor(member.staff_role)}`}>
+                  {getRoleLabel(member.staff_role)}
+                </span>
+              </div>
+              <div className="flex items-center gap-4 text-xs text-slate-500">
+                <div className="flex items-center gap-1.5">
+                  <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="font-medium text-slate-600">{restaurant?.name || 'Loading...'}</span>
+                </div>
+                {member.phone && (
+                  <div className="flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{member.phone}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+             {getConnectionStatus(member.connected)}
+             <div className="flex items-center gap-2">
+                <button
+                  onClick={() => onEdit(member)}
+                  className="p-2 rounded-lg bg-slate-50 hover:bg-primary-50 text-slate-400 hover:text-primary-600 transition-colors"
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => onDelete(member.id)}
+                  className="p-2 rounded-lg bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+             </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const getConnectionStatus = (connected) => {
     return connected ? (
-      <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 border border-green-200 rounded-full">
-        <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
+      <span className="inline-flex items-center px-2 py-1 text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-full">
+        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-1.5 animate-pulse"></div>
         Connected
       </span>
     ) : (
-      <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200 rounded-full">
-        <div className="w-2 h-2 bg-gray-400 rounded-full mr-1"></div>
+      <span className="inline-flex items-center px-2 py-1 text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200 rounded-full">
+        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full mr-1.5"></div>
         Disconnected
       </span>
     );
@@ -127,16 +197,16 @@ const StaffListView = ({ staff, restaurants, onEdit, onDelete, onAddStaff, onLoa
     return (
       <div
         style={style}
-        className="border-b border-gray-100 hover:bg-blue-50/60 transition-colors group"
+        className="border-b border-gray-100 hover:bg-slate-50 transition-colors group"
         data-staff-index={index}
       >
         <div className="grid grid-cols-6 gap-4 px-4 py-4 min-w-[900px]">
           {/* Staff Member */}
           <div className="flex items-center min-w-[180px]">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-400 to-purple-400 flex items-center justify-center shadow-sm">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-amber-500 flex items-center justify-center shadow-md">
               {member.name ? (
-                <span className="text-white font-bold text-lg">
-                  {member.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                <span className="text-white font-black text-lg">
+                  {(member.name || '?').split(' ').map(n => n[0]).join('').slice(0, 2)}
                 </span>
               ) : (
                 <Users className="w-5 h-5 text-white" />
@@ -192,14 +262,14 @@ const StaffListView = ({ staff, restaurants, onEdit, onDelete, onAddStaff, onLoa
           <div className="flex items-center space-x-2 min-w-[100px]">
             <button
               onClick={() => onEdit(member)}
-              className="p-2 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-800 transition-colors shadow group-hover:scale-110"
+              className="p-2 rounded-full bg-primary-50 hover:bg-primary-100 text-primary-600 hover:text-primary-800 transition-colors shadow group-hover:scale-110"
               title="Edit staff member"
             >
               <Edit className="w-4 h-4" />
             </button>
             <button
               onClick={() => onDelete(member.id)}
-              className="p-2 rounded-full bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-800 transition-colors shadow group-hover:scale-110"
+              className="p-2 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-800 transition-colors shadow group-hover:scale-110"
               title="Delete staff member"
             >
               <Trash2 className="w-4 h-4" />
@@ -245,7 +315,7 @@ const StaffListView = ({ staff, restaurants, onEdit, onDelete, onAddStaff, onLoa
         <p className="text-gray-600 mb-4 font-spartan">Get started by adding your first staff member</p>
         <button
           onClick={onAddStaff}
-          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-spartan"
+          className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-spartan"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add Staff
@@ -263,7 +333,7 @@ const StaffListView = ({ staff, restaurants, onEdit, onDelete, onAddStaff, onLoa
           <p className="text-sm text-gray-500 font-spartan">
             Showing {displayedStaff.length} of {staff.length} staff members
             {hasMore && (
-              <span className="ml-2 text-blue-600">
+              <span className="ml-2 text-primary-600">
                 • Scroll to load more
               </span>
             )}
@@ -272,16 +342,16 @@ const StaffListView = ({ staff, restaurants, onEdit, onDelete, onAddStaff, onLoa
       </div>
 
       {/* Virtualized Table */}
-      <div className="bg-gradient-to-br from-white via-gray-50 to-blue-50 rounded-2xl border border-gray-100 shadow-lg overflow-hidden">
+      <div className="bg-gradient-to-br from-white via-gray-50 to-primary-50 rounded-2xl border border-gray-100 shadow-lg overflow-hidden">
         {/* Table Header - Only visible on Desktop */}
         <div className="hidden md:block bg-white/80 sticky top-0 z-10 backdrop-blur border-b border-gray-200">
           <div className="grid grid-cols-6 gap-4 px-4 py-4 min-w-[900px]">
-            <div className="text-xs font-bold text-gray-600 uppercase tracking-wider font-spartan min-w-[180px]">Staff Member</div>
-            <div className="text-xs font-bold text-gray-600 uppercase tracking-wider font-spartan min-w-[140px]">Restaurant</div>
-            <div className="text-xs font-bold text-gray-600 uppercase tracking-wider font-spartan min-w-[100px]">Role</div>
-            <div className="text-xs font-bold text-gray-600 uppercase tracking-wider font-spartan min-w-[180px]">Contact</div>
-            <div className="text-xs font-bold text-gray-600 uppercase tracking-wider font-spartan min-w-[120px]">Status</div>
-            <div className="text-xs font-bold text-gray-600 uppercase tracking-wider font-spartan min-w-[100px]">Actions</div>
+            <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] font-spartan min-w-[180px]">Staff Member</div>
+            <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] font-spartan min-w-[140px]">Restaurant</div>
+            <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] font-spartan min-w-[100px]">Role</div>
+            <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] font-spartan min-w-[180px]">Contact</div>
+            <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] font-spartan min-w-[120px]">Status</div>
+            <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] font-spartan min-w-[100px]">Actions</div>
           </div>
         </div>
 
@@ -298,10 +368,10 @@ const StaffListView = ({ staff, restaurants, onEdit, onDelete, onAddStaff, onLoa
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-400 to-purple-400 flex items-center justify-center shadow-sm mr-3">
+                  <div className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center shadow-sm mr-3">
                     {member.name ? (
                       <span className="text-white font-bold text-lg">
-                        {member.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                        {(member.name || '?').split(' ').map(n => n[0]).join('').slice(0, 2)}
                       </span>
                     ) : (
                       <Users className="w-5 h-5 text-white" />
@@ -319,7 +389,7 @@ const StaffListView = ({ staff, restaurants, onEdit, onDelete, onAddStaff, onLoa
                 <div className="flex space-x-1">
                   <button
                     onClick={() => onEdit(member)}
-                    className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100"
+                    className="p-1.5 rounded-lg bg-primary-50 text-primary-600 hover:bg-primary-100"
                   >
                     <Edit className="w-4 h-4" />
                   </button>
@@ -385,7 +455,7 @@ const StaffListView = ({ staff, restaurants, onEdit, onDelete, onAddStaff, onLoa
               listRef.current.scrollToItem(0, 'start');
             }
           }}
-          className="fixed bottom-6 right-6 p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-colors z-50"
+          className="fixed bottom-6 right-6 p-3 bg-primary-600 text-white rounded-full shadow-lg hover:bg-primary-700 transition-colors z-50"
           title="Scroll to top"
         >
           <ChevronUp className="w-5 h-5" />

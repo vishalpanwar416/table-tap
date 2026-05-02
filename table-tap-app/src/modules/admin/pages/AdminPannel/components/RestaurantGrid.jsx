@@ -130,7 +130,7 @@ const RestaurantGrid = ({
           <p className="text-sm text-gray-500 font-spartan">
             Showing {displayedRestaurants.length} of {restaurants.length} restaurants
             {hasMore && (
-              <span className="ml-2 text-blue-600">
+              <span className="ml-2 text-primary-600">
                 • Scroll to load more
               </span>
             )}
@@ -178,7 +178,7 @@ const RestaurantGrid = ({
               gridRef.current.scrollIntoView({ behavior: 'smooth' });
             }
           }}
-          className="fixed bottom-6 right-6 p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-colors z-50"
+          className="fixed bottom-6 right-6 p-3 bg-primary-600 text-white rounded-full shadow-lg hover:bg-primary-700 transition-colors z-50"
           title="Scroll to top"
         >
           <ChevronUp className="w-5 h-5" />

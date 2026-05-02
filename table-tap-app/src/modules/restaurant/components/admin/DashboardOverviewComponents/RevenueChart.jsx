@@ -31,7 +31,7 @@ const RevenueChart = ({ chartData, chartPeriod, isCollapsed, toggleCollapse, onC
       return (
         <div className="bg-white p-3 border border-gray-100 shadow-xl rounded-xl">
           <p className="text-xs text-gray-500 mb-1">{label}</p>
-          <p className={`text-sm font-bold ${mobileMetric === 'revenue' ? 'text-orange-600' : 'text-blue-600'}`}>
+          <p className={`text-sm font-bold ${mobileMetric === 'revenue' ? 'text-primary-600' : 'text-blue-600'}`}>
             {mobileMetric === 'revenue' ? `₹${payload[0].value.toFixed(2)}` : `${payload[0].value} Orders`}
           </p>
         </div>
@@ -49,7 +49,7 @@ const RevenueChart = ({ chartData, chartPeriod, isCollapsed, toggleCollapse, onC
             <h3 className="text-lg font-semibold text-gray-800">Revenue Analysis</h3>
             <div className="flex items-center space-x-2">
               <select
-                className="text-sm border rounded p-1 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                className="text-sm border rounded p-1 focus:outline-none focus:ring-1 focus:ring-primary-500"
                 value={chartPeriod}
                 onChange={(e) => onChangePeriod(e.target.value)}
               >
@@ -118,11 +118,11 @@ const RevenueChart = ({ chartData, chartPeriod, isCollapsed, toggleCollapse, onC
             <button
               onClick={() => setMobileMetric('revenue')}
               className={`flex-1 p-4 rounded-2xl border transition-all duration-200 text-left relative overflow-hidden ${mobileMetric === 'revenue'
-                ? 'bg-orange-50 border-orange-200 ring-1 ring-orange-200'
-                : 'bg-white border-gray-200 hover:border-orange-100'
+                ? 'bg-primary-50 border-primary-200 ring-1 ring-primary-200'
+                : 'bg-white border-gray-200 hover:border-primary-100'
                 }`}
             >
-              <div className={`text-xs font-semibold mb-1 ${mobileMetric === 'revenue' ? 'text-orange-600' : 'text-gray-500'}`}>
+              <div className={`text-xs font-semibold mb-1 ${mobileMetric === 'revenue' ? 'text-primary-600' : 'text-gray-500'}`}>
                 Revenue
               </div>
               <div className="text-xl font-bold text-gray-900">
@@ -130,7 +130,7 @@ const RevenueChart = ({ chartData, chartPeriod, isCollapsed, toggleCollapse, onC
               </div>
               {mobileMetric === 'revenue' && (
                 <div className="absolute right-0 top-0 p-3 opacity-10">
-                  <TrendingUp size={40} className="text-orange-600" />
+                  <TrendingUp size={40} className="text-primary-600" />
                 </div>
               )}
             </button>

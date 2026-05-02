@@ -20,6 +20,11 @@ const LoadingSpinner = () => <LoadingScreen message="Loading Restaurant Dashboar
 
 const AUTH_PATHS = ['/login', '/signup', '/forgot-password', '/reset-password', '/auth-callback'];
 
+const RedirectToPricing = () => {
+    React.useEffect(() => { window.location.href = 'https://table-tap.in/#pricing'; }, []);
+    return null;
+};
+
 const RestaurantFallbackRedirect = () => {
     const location = useLocation();
     let pathname = (location.pathname || '/').replace(/\/$/, '') || '/';
@@ -53,7 +58,7 @@ const RestaurantAppRoutes = () => {
                     </RestaurantDashboardWrapper>
                 } />
                 <Route path="login/*" element={<RestaurantLoginPage />} />
-                <Route path="signup/*" element={<div dangerouslySetInnerHTML={{ __html: '<script>window.location.href="https://table-tap.in/#pricing"</script>' }} />} />
+                <Route path="signup/*" element={<RedirectToPricing />} />
                 <Route path="forgot-password/*" element={<ForgotPassword />} />
                 <Route path="reset-password/*" element={<ResetPassword />} />
                 <Route path="auth-callback/*" element={<AuthCallback />} />

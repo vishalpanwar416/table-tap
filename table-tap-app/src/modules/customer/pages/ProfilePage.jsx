@@ -353,7 +353,7 @@ const ProfilePage = () => {
         <div className="relative flex items-center justify-center py-6 md:py-8">
           <button
             onClick={() => navigate(-1)}
-            className="absolute left-4 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-10"
+            className="absolute left-4 text-primary-500 hover:text-primary-600 transition-all duration-300 p-2 rounded-full hover:bg-primary-500/10 active:bg-primary-500/20 focus:outline-none focus:ring-2 focus:ring-primary-500/30 z-10"
             aria-label="Go back"
           >
             <ChevronLeft size={30} />
@@ -363,7 +363,7 @@ const ProfilePage = () => {
             <h1 className="text-2xl md:text-4xl text-white font-spartan-medium">
               My Profile
             </h1>
-            <p className="text-orange-100/60 mt-2 text-sm md:text-base text-center">
+            <p className="text-primary-100/60 mt-2 text-sm md:text-base text-center">
               Manage your account information
             </p>
           </div>
@@ -375,16 +375,16 @@ const ProfilePage = () => {
             <form onSubmit={handleSubmit} className="flex flex-col space-y-6">
               {/* Pending Email Verification Banner */}
               {pendingEmail && (
-                <div className="bg-orange-50 border-l-4 border-orange-500 p-4 rounded-lg">
+                <div className="bg-primary-50 border-l-4 border-primary-500 p-4 rounded-lg">
                   <div className="flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
+                    <AlertCircle className="w-5 h-5 text-primary-600 flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
-                      <h3 className="text-sm font-semibold text-orange-900">Email Verification Pending</h3>
-                      <p className="text-sm text-orange-800 mt-1">
+                      <h3 className="text-sm font-semibold text-primary-900">Email Verification Pending</h3>
+                      <p className="text-sm text-primary-800 mt-1">
                         A confirmation email has been sent to <strong>{pendingEmail}</strong>.
                         Please check your inbox and click the verification link to complete the email change.
                       </p>
-                      <p className="text-xs text-orange-700 mt-2">
+                      <p className="text-xs text-primary-700 mt-2">
                         Your email will remain <strong>{user?.email}</strong> until you verify the new address.
                       </p>
                     </div>

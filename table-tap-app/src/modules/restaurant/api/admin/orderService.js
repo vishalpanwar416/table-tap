@@ -2,6 +2,7 @@ import { supabase, SUPABASE_URL } from '../../../shared/supabase';
 import { createNotification } from '../../../shared/api/notificationService';
 import { logActivity } from '../../../shared/api/activityLogService';
 import { sendOrderStatusEmail, sendBillToCustomer } from '../../../shared/api/emailService';
+import { runQuery } from '../../../shared/api/queryClient';
 import axios from 'axios';
 
 // Note: Order creation has been moved to paymentService.js
@@ -422,7 +423,12 @@ export const syncPendingActions = async () => {
   for (const action of pendingActions) {
     try {
       if (action.type === 'UPDATE_STATUS') {
-        const { orderId, status, cancelReason, userData } = action.payload;
+        const { orderId, status, cancelReason, userData } = action.payload || {};
+        if (!orderId || !status) {
+          console.error('[syncPendingActions] Skipping malformed action:', action);
+          processedIds.push(action.id);
+          continue;
+        }
         // Pass skipQueue: true to prevent re-queuing if sync fails
         await updateOrderStatus(orderId, status, cancelReason, userData, { skipQueue: true });
         processedIds.push(action.id);
@@ -443,19 +449,21 @@ export const syncPendingActions = async () => {
 export const fetchAllOrders = async (restaurantId = null, limit = 200) => {
   try {
     // Try network fetch first
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
     let query = supabase
       .from('orders')
-      .select('*');
+      .select('*')
+      .gte('created_at', thirtyDaysAgo);
 
     if (restaurantId) {
       query = query.eq('restaurant_id', restaurantId);
     }
 
-    const { data, error } = await query
-      .order('created_at', { ascending: false })
-      .limit(limit);
-
-    if (error) throw error;
+    const data = await runQuery(
+      'fetchAllOrders',
+      () => query.order('created_at', { ascending: false }).limit(limit),
+      { context: { restaurantId, limit } }
+    );
 
     // Cache successful response
     if (data) {

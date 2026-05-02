@@ -176,7 +176,7 @@ const MenuItem = React.memo(({
               >
                 <motion.button
                   onClick={handleDecrement}
-                  className="text-white hover:text-orange-300 rounded-full w-7 h-7 flex items-center justify-center transition-colors font-bold"
+                  className="text-white hover:text-primary-300 rounded-full w-7 h-7 flex items-center justify-center transition-colors font-bold"
                   whileHover={{ scale: 1.2 }}
                   whileTap={{ scale: 0.8 }}
                   aria-label="Decrease quantity"
@@ -231,7 +231,7 @@ const MenuItem = React.memo(({
       <div className="p-5">
         <div className="flex justify-between items-start mb-2">
           <motion.h4 
-            className="text-lg font-bold text-gray-900 group-hover:text-orange-600 transition-colors line-clamp-1"
+            className="text-lg font-bold text-gray-900 group-hover:text-primary-600 transition-colors line-clamp-1"
             whileHover={{ color: '#f97316' }}
             transition={{ duration: 0.2 }}
           >
@@ -245,7 +245,7 @@ const MenuItem = React.memo(({
             <PriceDisplay
               item={item}
               className="text-xl font-bold text-gray-900 ml-2"
-              percentageClass="bg-orange-100 text-orange-800"
+              percentageClass="bg-primary-100 text-primary-800"
             />
           </motion.div>
         </div>
@@ -273,7 +273,7 @@ const MenuItem = React.memo(({
             )}
             {item.tags && item.tags.length > 0 && (
               <motion.span 
-                className="bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded-full"
+                className="bg-primary-100 text-primary-700 text-xs px-2 py-1 rounded-full"
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.6 }}
@@ -405,7 +405,7 @@ export const MenuDropdown = ({ menuOpen, handleCloseMenu, activeCategory, menuIt
     return (
       <div className="text-center text-red-500 p-4">
         <p>Sorry, we couldn't load the menu. Please check your connection and try again.</p>
-        <button onClick={refetch} className="mt-2 px-4 py-2 bg-orange-500 text-white rounded">
+        <button onClick={refetch} className="mt-2 px-4 py-2 bg-primary-500 text-white rounded">
           Retry
         </button>
       </div>
@@ -435,12 +435,12 @@ export const MenuDropdown = ({ menuOpen, handleCloseMenu, activeCategory, menuIt
           
           <div className="flex justify-center items-center max-w-7xl mx-auto relative z-10">
             <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-              <Flame className="w-6 h-6 text-orange-500" />
+              <Flame className="w-6 h-6 text-primary-500" />
               {activeCategory} Menu
             </h3>
             <button 
               onClick={handleCloseMenu} 
-              className="absolute right-0 p-2 text-orange-500 hover:text-orange-700 hover:bg-orange-100 rounded-full transition-colors"
+              className="absolute right-0 p-2 text-primary-500 hover:text-primary-700 hover:bg-primary-100 rounded-full transition-colors"
               aria-label="Close menu"
             >
               <ChevronUp className="h-6 w-6" />
@@ -488,5 +488,5 @@ export const MenuDropdown = ({ menuOpen, handleCloseMenu, activeCategory, menuIt
 
 // Simple divider component
 export const Divider = () => (
-  <div className="my-6 w-full mx-auto h-px bg-gradient-to-r from-transparent via-orange-300 to-transparent shadow-sm"></div>
+  <div className="my-6 w-full mx-auto h-px bg-gradient-to-r from-transparent via-primary-300 to-transparent shadow-sm"></div>
 );

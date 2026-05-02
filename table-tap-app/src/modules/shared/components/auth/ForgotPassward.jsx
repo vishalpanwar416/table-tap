@@ -125,7 +125,7 @@ const ForgotPassword = () => {
           {/* Header */}
           <div className="w-full px-6 py-8 relative flex items-center justify-center">
             <motion.button
-              className="absolute left-4 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-10"
+              className="absolute left-4 text-primary-500 hover:text-primary-600 transition-all duration-300 p-2 rounded-full hover:bg-primary-500/10 active:bg-primary-500/20 focus:outline-none focus:ring-2 focus:ring-primary-500/30 z-10"
               onClick={() => navigate('/login')}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
@@ -189,12 +189,12 @@ const ForgotPassword = () => {
               </motion.p>
 
               <motion.div
-                className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-8 w-full"
+                className="bg-primary-50 border border-primary-200 rounded-xl p-4 mb-8 w-full"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
               >
-                <p className="text-sm text-orange-800">
+                <p className="text-sm text-primary-800">
                   <strong>Tip:</strong> If you don't see the email, check your spam or junk folder.
                 </p>
               </motion.div>
@@ -241,7 +241,7 @@ const ForgotPassword = () => {
         {/* Header */}
         <div className="w-full px-6 py-8 relative flex items-center justify-center">
           <motion.button
-            className="absolute left-4 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-10"
+            className="absolute left-4 text-primary-500 hover:text-primary-600 transition-all duration-300 p-2 rounded-full hover:bg-primary-500/10 active:bg-primary-500/20 focus:outline-none focus:ring-2 focus:ring-primary-500/30 z-10"
             onClick={() => navigate('/login')}
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
@@ -268,12 +268,12 @@ const ForgotPassword = () => {
           exit="exit"
         >
           <motion.div
-            className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6"
+            className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-6"
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 200, damping: 15 }}
           >
-            <Mail className="w-8 h-8 text-orange-600" />
+            <Mail className="w-8 h-8 text-primary-600" />
           </motion.div>
 
           <motion.p className="text-gray-600 text-center mb-6" variants={itemVariants}>
@@ -321,7 +321,7 @@ const ForgotPassword = () => {
                 }}
                 placeholder="you@example.com"
                 required
-                className="w-full p-4 bg-white rounded-xl focus:ring-2 focus:ring-orange-500 focus:outline-none transition-all"
+                className="w-full p-4 bg-white rounded-xl focus:ring-2 focus:ring-primary-500 focus:outline-none transition-all"
               />
             </motion.div>
 

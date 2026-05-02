@@ -123,7 +123,7 @@ const Header = memo(({
       return { name: 'Loading...', address: 'Please wait...' };
     }
     if (error || !restaurant) {
-      return { name: 'Restaurant', address: 'Unable to load location' };
+      return { name: 'Restaurant', address: 'Scan a QR code to select' };
     }
     return { name: restaurant.name, address: restaurant.address };
   }, [loading, error, restaurant]);
@@ -222,7 +222,7 @@ const Header = memo(({
           title="Detect location and select restaurant"
           className="transition-transform duration-300 ease-out hover:scale-110"
         >
-          <MapPin className="w-7 h-7 sm:w-9 sm:h-9 md:w-11 md:h-11 text-orange-400 hover:text-orange-300 transition-colors" />
+          <MapPin className="w-7 h-7 sm:w-9 sm:h-9 md:w-11 md:h-11 text-primary-400 hover:text-primary-300 transition-colors" />
         </button>
 
         <button

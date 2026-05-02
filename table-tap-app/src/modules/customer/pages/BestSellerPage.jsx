@@ -168,7 +168,7 @@ const PriceDisplay = ({ item }) => {
           <span className="text-xs md:text-sm text-gray-400 line-through">
             ₹{Number(item.price).toFixed(0)}
           </span>
-          <span className="text-lg md:text-xl font-extrabold text-orange-600">
+          <span className="text-lg md:text-xl font-extrabold text-primary-600">
             ₹{discountedPrice.toFixed(0)}
           </span>
         </>
@@ -327,7 +327,7 @@ const BestSellerItem = memo(({ item, onItemClick, index = 0 }) => {
                 <span className="text-xs md:text-sm text-gray-400 line-through font-spartan">
                   ₹{Number(item.price).toFixed(0)}
                 </span>
-                <span className="text-xl md:text-2xl font-extrabold text-orange-600 leading-none font-spartan">
+                <span className="text-xl md:text-2xl font-extrabold text-primary-600 leading-none font-spartan">
                   ₹{(
                     item.discounttype === "Percentage"
                       ? item.price - (item.price * (item.discountvalue / 100))
@@ -360,7 +360,7 @@ const BestSellerItem = memo(({ item, onItemClick, index = 0 }) => {
                 >
                   <motion.button
                     onClick={handleDecrement}
-                    className="text-white hover:text-orange-300 rounded-full w-7 h-7 flex items-center justify-center text-lg font-bold transition-colors font-spartan"
+                    className="text-white hover:text-primary-300 rounded-full w-7 h-7 flex items-center justify-center text-lg font-bold transition-colors font-spartan"
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     aria-label="Decrease quantity"
@@ -409,7 +409,7 @@ const BestSellerItem = memo(({ item, onItemClick, index = 0 }) => {
             {item.tags.slice(0, 2).map((tag, tagIndex) => (
               <span
                 key={tag}
-                className="bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-1 rounded-full border border-orange-200 font-spartan"
+                className="bg-primary-100 text-primary-800 text-xs font-medium px-2.5 py-1 rounded-full border border-primary-200 font-spartan"
               >
                 {tag}
               </span>
@@ -572,12 +572,6 @@ const BestSellerPage = memo(() => {
     setSelectedItem(null);
   }, []);
 
-  const handleLogout = useCallback(() => {
-    setIsLogoutOpen(false);
-    setIsSidebarOpen(false);
-    navigate('/login');
-  }, [navigate]);
-
   // Updated filteredAndSortedItems with real-time search
   const filteredAndSortedItems = useMemo(() => {
     let items = bestSellerItems;
@@ -635,7 +629,7 @@ const BestSellerPage = memo(() => {
           <p className="text-gray-400 mb-4">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition-colors"
+            className="bg-primary-500 text-white px-6 py-2 rounded-lg hover:bg-primary-600 transition-colors"
           >
             Try Again
           </button>
@@ -658,14 +652,13 @@ const BestSellerPage = memo(() => {
           <LogoutPopup
             isOpen={isLogoutOpen}
             onClose={() => setIsLogoutOpen(false)}
-            onConfirm={handleLogout}
           />
         </Suspense>
 
         {/* Header with real-time search */}
         <div className="relative flex items-center mb-2 md:mb-3">
           <motion.button
-            className="absolute left-2 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-20"
+            className="absolute left-2 text-primary-500 hover:text-primary-600 transition-all duration-300 p-2 rounded-full hover:bg-primary-500/10 active:bg-primary-500/20 focus:outline-none focus:ring-2 focus:ring-primary-500/30 z-20"
             onClick={() => navigate(-1)}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
@@ -763,7 +756,7 @@ const BestSellerPage = memo(() => {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+              className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
             >
               <option value="popularity">Popularity</option>
               <option value="rating">Rating</option>

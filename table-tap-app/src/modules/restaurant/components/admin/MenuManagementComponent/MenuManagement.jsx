@@ -106,12 +106,12 @@ const MenuManagement = ({ foodItems, fetchFoodItems, setLoading, setErrorMsg, se
             <button
               type="button"
               onClick={() => setLeftPanelCollapsed((c) => !c)}
-              className={`flex-shrink-0 items-center justify-center w-12 h-14 bg-white hover:bg-orange-50 border border-gray-200 hover:border-orange-200 shadow-sm transition-colors ${leftPanelCollapsed ? 'hidden' : 'border-l-0 rounded-r-xl hidden md:flex'
+              className={`flex-shrink-0 items-center justify-center w-12 h-14 bg-white hover:bg-primary-50 border border-gray-200 hover:border-primary-200 shadow-sm transition-colors ${leftPanelCollapsed ? 'hidden' : 'border-l-0 rounded-r-xl hidden md:flex'
                 }`}
               title="Collapse Add Food Item"
               aria-label="Collapse form"
             >
-              <ChevronLeft className="w-5 h-5 text-gray-600 hover:text-orange-600" />
+              <ChevronLeft className="w-5 h-5 text-gray-600 hover:text-primary-600" />
             </button>
           </div>
         </div>
@@ -136,7 +136,7 @@ const MenuManagement = ({ foodItems, fetchFoodItems, setLoading, setErrorMsg, se
                       type="button"
                       onClick={() => setGridColumns(cols)}
                       className={`px-2 py-1.5 rounded-md text-xs font-medium transition-colors ${gridColumns === cols
-                        ? 'bg-orange-500 text-white shadow-sm'
+                        ? 'bg-primary-500 text-white shadow-sm'
                         : 'text-gray-600 hover:bg-gray-200'
                         }`}
                       title={`${cols} items per row`}
@@ -148,7 +148,7 @@ const MenuManagement = ({ foodItems, fetchFoodItems, setLoading, setErrorMsg, se
                 </div>
                 {/* Desktop Add Button (visible when collapsed) */}
                 <button
-                  className={`hidden md:flex flex-shrink-0 items-center gap-2 bg-orange-500 text-white px-4 py-1.5 rounded-lg hover:bg-orange-600 transition-colors shadow-sm ${!leftPanelCollapsed ? 'opacity-0 pointer-events-none w-0 px-0 overflow-hidden' : ''}`}
+                  className={`hidden md:flex flex-shrink-0 items-center gap-2 bg-primary-500 text-white px-4 py-1.5 rounded-lg hover:bg-primary-600 transition-colors shadow-sm ${!leftPanelCollapsed ? 'opacity-0 pointer-events-none w-0 px-0 overflow-hidden' : ''}`}
                   onClick={() => {
                     setLeftPanelCollapsed(false);
                     setEditItem(null); // Reset to add mode
@@ -159,7 +159,7 @@ const MenuManagement = ({ foodItems, fetchFoodItems, setLoading, setErrorMsg, se
                   <span className="whitespace-nowrap font-medium">Add New Food Item</span>
                 </button>
                 <button
-                  className="md:hidden flex-shrink-0 flex items-center gap-1.5 bg-orange-500 text-white px-3 py-2 rounded-lg hover:bg-orange-600 transition-colors shadow-sm"
+                  className="md:hidden flex-shrink-0 flex items-center gap-1.5 bg-primary-500 text-white px-3 py-2 rounded-lg hover:bg-primary-600 transition-colors shadow-sm"
                   onClick={() => setShowForm(true)}
                 >
                   <Plus size={16} />

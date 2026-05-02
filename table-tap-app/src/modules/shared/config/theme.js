@@ -140,7 +140,7 @@ export const theme = {
 // Common component styles
 export const componentStyles = {
   button: {
-    primary: 'bg-orange-500 text-white hover:bg-orange-600 transition-colors focus:ring-2 focus:ring-orange-500 focus:outline-none',
+    primary: 'bg-primary-500 text-white hover:bg-primary-600 transition-colors focus:ring-2 focus:ring-primary-500 focus:outline-none',
     secondary: 'bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors focus:ring-2 focus:ring-gray-500 focus:outline-none',
     danger: 'bg-red-500 text-white hover:bg-red-600 transition-colors focus:ring-2 focus:ring-red-500 focus:outline-none',
     success: 'bg-green-500 text-white hover:bg-green-600 transition-colors focus:ring-2 focus:ring-green-500 focus:outline-none',
@@ -153,12 +153,12 @@ export const componentStyles = {
   },
   
   input: {
-    base: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors',
+    base: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors',
     error: 'w-full px-4 py-3 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors',
   },
   
   badge: {
-    primary: 'bg-orange-100 text-orange-700 px-2 py-1 rounded-full text-xs font-medium',
+    primary: 'bg-primary-100 text-primary-700 px-2 py-1 rounded-full text-xs font-medium',
     success: 'bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium',
     warning: 'bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full text-xs font-medium',
     error: 'bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-medium',

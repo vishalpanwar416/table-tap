@@ -66,7 +66,7 @@ export default function OnboardingScreens() {
         <div className="w-full px-6 py-8 relative flex items-center justify-end">
           <button
             onClick={handleSkip}
-            className="flex items-center gap-1.5 text-orange-500 hover:text-orange-600 transition-colors font-medium font-spartan text-base"
+            className="flex items-center gap-1.5 text-primary-500 hover:text-primary-600 transition-colors font-medium font-spartan text-base"
             aria-label="Skip onboarding"
           >
             Skip
@@ -142,7 +142,7 @@ export default function OnboardingScreens() {
                     onClick={handleNext}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="w-full bg-orange-500 text-white font-medium py-3.5 rounded-xl text-lg hover:bg-orange-600 transition-colors shadow-lg font-spartan"
+                    className="w-full bg-primary-500 text-white font-medium py-3.5 rounded-xl text-lg hover:bg-primary-600 transition-colors shadow-lg font-spartan"
                   >
                     {currentScreen === screens.length - 1 ? 'Get Started' : 'Next'}
                   </motion.button>

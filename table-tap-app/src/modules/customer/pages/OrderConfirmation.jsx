@@ -54,7 +54,7 @@ const EmailExistsPopup = ({ show, onClose, onAccept, onReject, email }) => {
           />
           <motion.div
             key="popup-content"
-            className="fixed bottom-3 left-0 right-0 z-50 mx-auto p-6 shadow-2xl border border-orange-100"
+            className="fixed bottom-3 left-0 right-0 z-50 mx-auto p-6 shadow-2xl border border-primary-100"
             style={{ maxWidth: '390px', background: 'linear-gradient(135deg, rgba(255,255,255,0.85) 60%, rgba(255,240,220,0.85) 100%)', backdropFilter: 'blur(12px)', borderRadius: '3rem' }}
             variants={popupVariants}
             initial="hidden"
@@ -65,15 +65,15 @@ const EmailExistsPopup = ({ show, onClose, onAccept, onReject, email }) => {
           >
             <div className="flex flex-col items-center mb-4">
               <motion.div
-                className="w-14 h-14 rounded-full bg-orange-100 flex items-center justify-center mb-2 shadow-lg"
+                className="w-14 h-14 rounded-full bg-primary-100 flex items-center justify-center mb-2 shadow-lg"
                 initial={{ boxShadow: '0 0 0 0 rgba(255,140,0,0.3)' }}
                 animate={{ boxShadow: ['0 0 0 0 rgba(255,140,0,0.3)', '0 0 0 8px rgba(255,140,0,0.08)', '0 0 0 0 rgba(255,140,0,0.3)'] }}
                 transition={{ repeat: Infinity, duration: 2 }}
               >
-                <svg className="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z" /></svg>
+                <svg className="w-8 h-8 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z" /></svg>
               </motion.div>
               <h2 className="text-2xl font-extrabold text-gray-900 mb-1 tracking-tight">Account Found</h2>
-              <p className="text-base text-gray-700 font-medium">The email <span className="font-semibold text-orange-600">{email}</span> is already registered.</p>
+              <p className="text-base text-gray-700 font-medium">The email <span className="font-semibold text-primary-600">{email}</span> is already registered.</p>
             </div>
             <p className="text-gray-500 text-xs text-center mb-6">Would you like to login to your existing account?</p>
             <div className="flex gap-4 justify-center px-2 mb-2">
@@ -157,14 +157,14 @@ const TableSelector = ({
     )}
 
     <label className="block text-gray-800 mb-3 text-lg font-semibold flex items-center gap-2">
-      <MapPin size={20} className="text-orange-500" />
+      <MapPin size={20} className="text-primary-500" />
       Table Number
     </label>
     <div className="relative" ref={dropdownRef}>
       <button
         type="button"
         onClick={() => setShowTableDropdown(!showTableDropdown)}
-        className="w-full px-4 py-4 border-2 border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white text-left flex justify-between items-center transition-all duration-200 hover:border-orange-300"
+        className="w-full px-4 py-4 border-2 border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white text-left flex justify-between items-center transition-all duration-200 hover:border-primary-300"
         aria-haspopup="listbox"
         aria-expanded={showTableDropdown}
       >
@@ -194,7 +194,7 @@ const TableSelector = ({
                   setTableNumber(table.tableNumber);
                   setShowTableDropdown(false);
                 }}
-                className={`w-full px-4 py-4 text-left hover:bg-orange-50 border-b border-gray-100 last:border-b-0 transition-colors duration-200 ${table.tableNumber === tableNumber ? 'bg-orange-50 border-orange-200' : ''
+                className={`w-full px-4 py-4 text-left hover:bg-primary-50 border-b border-gray-100 last:border-b-0 transition-colors duration-200 ${table.tableNumber === tableNumber ? 'bg-primary-50 border-primary-200' : ''
                   }`}
               >
                 <div className="flex justify-between items-center">
@@ -209,7 +209,7 @@ const TableSelector = ({
                       {table.capacity} seats
                     </span>
                     {table.tableNumber === tableNumber && (
-                      <span className="text-orange-600 text-sm font-medium bg-orange-100 px-2 py-1 rounded-full">
+                      <span className="text-primary-600 text-sm font-medium bg-primary-100 px-2 py-1 rounded-full">
                         ✓ Selected
                       </span>
                     )}
@@ -243,16 +243,16 @@ const GuestForm = ({
   handleEmailChange,
   guestEmailInputRef
 }) => (
-  <div className="mb-8 p-6 border-2 border-gray-200 rounded-3xl bg-gradient-to-br from-orange-50 to-white animate-in slide-in-from-bottom-2 duration-500 shadow-sm">
+  <div className="mb-8 p-6 border-2 border-gray-200 rounded-3xl bg-gradient-to-br from-primary-50 to-white animate-in slide-in-from-bottom-2 duration-500 shadow-sm">
     <h3 className="font-bold text-xl mb-6 flex items-center gap-2 text-gray-800">
-      <Smartphone size={20} className="text-orange-500" />
+      <Smartphone size={20} className="text-primary-500" />
       Ordering as Guest
     </h3>
     <div className="space-y-6">
       {/* Phone Number - Now Primary and Mandatory */}
       <div>
         <label className="text-sm font-bold text-gray-700 flex items-center gap-2 mb-1" htmlFor="guestPhone">
-          <Phone size={16} className="text-orange-500" />
+          <Phone size={16} className="text-primary-500" />
           Phone Number *
         </label>
         <div className="relative">
@@ -264,7 +264,7 @@ const GuestForm = ({
             onChange={(e) => setGuestPhone(e.target.value.replace(/\D/g, ''))}
             maxLength={10}
             placeholder="nEnter mobile number"
-            className="w-full pl-14 pr-4 py-4 border-2 border-orange-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all duration-200 text-lg font-bold tracking-wider"
+            className="w-full pl-14 pr-4 py-4 border-2 border-primary-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all duration-200 text-lg font-bold tracking-wider"
             required
           />
         </div>
@@ -287,7 +287,7 @@ const GuestForm = ({
           value={guestName}
           onChange={(e) => setGuestName(e.target.value)}
           placeholder="To help us identify your order"
-          className="w-full px-4 py-3 border border-gray-100 rounded-xl focus:outline-none focus:border-orange-500 transition-all duration-200"
+          className="w-full px-4 py-3 border border-gray-100 rounded-xl focus:outline-none focus:border-primary-500 transition-all duration-200"
         />
       </div>
 
@@ -297,7 +297,7 @@ const GuestForm = ({
           <Mail size={14} />
           Email for Invoice (Optional)
           {isCheckingEmail && (
-            <div className="w-3 h-3 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-3 h-3 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
           )}
         </label>
         <input
@@ -306,18 +306,18 @@ const GuestForm = ({
           value={guestEmail}
           onChange={handleEmailChange}
           placeholder="For digital bill"
-          className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:border-orange-500 transition-all duration-200 ${emailExists ? 'border-orange-300 bg-orange-50' : 'border-gray-100'
+          className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:border-primary-500 transition-all duration-200 ${emailExists ? 'border-primary-300 bg-primary-50' : 'border-gray-100'
             }`}
           autoComplete="email"
           ref={guestEmailInputRef}
         />
         {emailExists && (
-          <div className="mt-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-            <div className="flex items-center gap-2 text-orange-700">
+          <div className="mt-2 p-3 bg-primary-50 border border-primary-200 rounded-lg">
+            <div className="flex items-center gap-2 text-primary-700">
               <Info size={14} />
               <span className="text-xs font-bold">Account Found</span>
             </div>
-            <p className="text-[10px] text-orange-600 mt-1">
+            <p className="text-[10px] text-primary-600 mt-1">
               This email is linked to an account. Login for faster checkout.
             </p>
           </div>
@@ -667,14 +667,14 @@ const OrderConfirmation = () => {
         <div className="w-full px-4 py-8 relative flex justify-center">
           <button
             onClick={handleGoBack}
-            className="absolute left-4 top-8 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-10"
+            className="absolute left-4 top-8 text-primary-500 hover:text-primary-600 transition-all duration-300 p-2 rounded-full hover:bg-primary-500/10 active:bg-primary-500/20 focus:outline-none focus:ring-2 focus:ring-primary-500/30 z-10"
             aria-label="Go back"
           >
             <ChevronLeft size={30} />
           </button>
           <div className="text-center">
             <h1 className="text-white text-3xl font-bold mb-2">Confirm Order</h1>
-            <div className="flex items-center justify-center gap-2 text-orange-400">
+            <div className="flex items-center justify-center gap-2 text-primary-400">
               <CheckCircle size={16} />
               <span className="text-sm">Review & Proceed</span>
             </div>
@@ -691,8 +691,8 @@ const OrderConfirmation = () => {
                   <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
                     <span className="text-gray-600 font-bold text-sm">1</span>
                   </div>
-                  <div className="w-12 h-1 bg-orange-500 rounded"></div>
-                  <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                  <div className="w-12 h-1 bg-primary-500 rounded"></div>
+                  <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
                     <span className="text-white font-bold text-sm">2</span>
                   </div>
                   <div className="w-12 h-1 bg-gray-300 rounded"></div>
@@ -745,7 +745,7 @@ const OrderConfirmation = () => {
                 value={specialInstructions}
                 onChange={(e) => setSpecialInstructions(e.target.value)}
                 placeholder="E.g. No onions, extra spicy, etc."
-                className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 resize-none"
+                className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 resize-none"
                 rows={3}
               />
             </div>
@@ -755,7 +755,7 @@ const OrderConfirmation = () => {
 
             {/* Enhanced Empty Cart Message */}
             {cartItems.length === 0 && (
-              <div className="my-4 p-6 bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-2xl animate-in slide-in-from-bottom-2 duration-300">
+              <div className="my-4 p-6 bg-gradient-to-r from-yellow-50 to-primary-50 border-2 border-yellow-200 rounded-2xl animate-in slide-in-from-bottom-2 duration-300">
                 <div className="text-center">
                   <div className="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-3">
                     <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -896,7 +896,7 @@ const OrderConfirmation = () => {
               <div className="border-t-2 border-gray-200 my-4"></div>
               <div className="flex justify-between items-center">
                 <span className="text-2xl font-bold text-gray-800">Total</span>
-                <span className="text-2xl font-bold text-orange-600">₹{finalTotal.toFixed(2)}</span>
+                <span className="text-2xl font-bold text-primary-600">₹{finalTotal.toFixed(2)}</span>
               </div>
             </div>
           </div>

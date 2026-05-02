@@ -15,7 +15,7 @@ const StaffSearchAndFilter = ({ searchTerm, setSearchTerm, selectedRestaurantId,
               placeholder="Search staff..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-spartan"
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-spartan"
             />
           </div>
         </div>
@@ -26,7 +26,7 @@ const StaffSearchAndFilter = ({ searchTerm, setSearchTerm, selectedRestaurantId,
             <select
               value={selectedRestaurantId}
               onChange={(e) => setSelectedRestaurantId(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-spartan"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-spartan"
             >
               <option value="" className="font-spartan">All Restaurants</option>
               {restaurants.map(restaurant => (

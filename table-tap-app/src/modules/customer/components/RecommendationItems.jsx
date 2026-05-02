@@ -132,7 +132,7 @@ const RecommendationItem = memo(({
                     ₹{Number(item.price).toFixed(0)}
                   </motion.span>
                   <motion.span
-                    className="text-lg font-bold text-orange-600"
+                    className="text-lg font-bold text-primary-600"
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.4 }}
@@ -165,7 +165,7 @@ const RecommendationItem = memo(({
                 >
                   <motion.button
                     onClick={handleDecrement}
-                    className="text-white px-2 text-base font-bold hover:text-orange-300 transition-colors"
+                    className="text-white px-2 text-base font-bold hover:text-primary-300 transition-colors"
                     whileHover={{ scale: 1.2 }}
                     whileTap={{ scale: 0.8 }}
                   >

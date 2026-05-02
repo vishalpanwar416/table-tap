@@ -101,11 +101,11 @@ const InquiryManagement = ({ searchTerm = '' }) => {
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'new': return 'bg-blue-100 text-blue-700 border-blue-200';
+            case 'new': return 'bg-primary-100 text-primary-700 border-primary-200';
             case 'contacted': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
             case 'converted': return 'bg-green-100 text-green-700 border-green-200';
-            case 'ignored': return 'bg-gray-100 text-gray-700 border-gray-200';
-            default: return 'bg-gray-100 text-gray-700 border-gray-200';
+            case 'ignored': return 'bg-slate-100 text-gray-700 border-slate-200';
+            default: return 'bg-slate-100 text-gray-700 border-slate-200';
         }
     };
 
@@ -122,8 +122,8 @@ const InquiryManagement = ({ searchTerm = '' }) => {
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
-                <RefreshCw className="w-10 h-10 text-blue-500 animate-spin mb-4" />
+            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl shadow-sm border border-slate-100">
+                <RefreshCw className="w-10 h-10 text-primary-500 animate-spin mb-4" />
                 <p className="text-gray-500 font-medium">Loading inquiries...</p>
             </div>
         );
@@ -133,9 +133,9 @@ const InquiryManagement = ({ searchTerm = '' }) => {
         <div className="w-full h-full font-spartan">
             {/* Stats Cards - Compact on Mobile */}
             <div className="grid grid-cols-4 gap-1 md:gap-3 px-1 md:px-0 mt-1 md:mt-2 pb-2 md:pb-0">
-                <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-3 shadow-sm flex flex-col items-center justify-center text-center">
-                    <div className="p-1 md:p-1.5 bg-blue-100 rounded-lg mb-0.5 md:mb-1">
-                        <User className="w-3 h-3 md:w-4 md:h-4 text-blue-600" />
+                <div className="bg-white rounded-lg border border-slate-200 p-1.5 md:p-3 shadow-sm flex flex-col items-center justify-center text-center">
+                    <div className="p-1 md:p-1.5 bg-primary-100 rounded-lg mb-0.5 md:mb-1">
+                        <User className="w-3 h-3 md:w-4 md:h-4 text-primary-600" />
                     </div>
                     <div>
                         <p className="text-xs md:text-xl font-bold text-gray-900 leading-none">{inquiries.length}</p>
@@ -143,7 +143,7 @@ const InquiryManagement = ({ searchTerm = '' }) => {
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-3 shadow-sm flex flex-col items-center justify-center text-center">
+                <div className="bg-white rounded-lg border border-slate-200 p-1.5 md:p-3 shadow-sm flex flex-col items-center justify-center text-center">
                     <div className="p-1 md:p-1.5 bg-amber-100 rounded-lg mb-0.5 md:mb-1">
                         <AlertCircle className="w-3 h-3 md:w-4 md:h-4 text-amber-600" />
                     </div>
@@ -153,7 +153,7 @@ const InquiryManagement = ({ searchTerm = '' }) => {
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-3 shadow-sm flex flex-col items-center justify-center text-center">
+                <div className="bg-white rounded-lg border border-slate-200 p-1.5 md:p-3 shadow-sm flex flex-col items-center justify-center text-center">
                     <div className="p-1 md:p-1.5 bg-green-100 rounded-lg mb-0.5 md:mb-1">
                         <CheckCircle2 className="w-3 h-3 md:w-4 md:h-4 text-green-600" />
                     </div>
@@ -163,9 +163,9 @@ const InquiryManagement = ({ searchTerm = '' }) => {
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-3 shadow-sm flex flex-col items-center justify-center text-center">
-                    <div className="p-1 md:p-1.5 bg-purple-100 rounded-lg mb-0.5 md:mb-1">
-                        <Building2 className="w-3 h-3 md:w-4 md:h-4 text-purple-600" />
+                <div className="bg-white rounded-lg border border-slate-200 p-1.5 md:p-3 shadow-sm flex flex-col items-center justify-center text-center">
+                    <div className="p-1 md:p-1.5 bg-primary-100 rounded-lg mb-0.5 md:mb-1">
+                        <Building2 className="w-3 h-3 md:w-4 md:h-4 text-primary-600" />
                     </div>
                     <div>
                         <p className="text-xs md:text-xl font-bold text-gray-900 leading-none">{new Set(inquiries.map(i => i.restaurant_name).filter(Boolean)).size}</p>
@@ -175,10 +175,10 @@ const InquiryManagement = ({ searchTerm = '' }) => {
             </div>
 
             {/* Filters */}
-            <div className="bg-white border-y md:border md:rounded-xl border-gray-200 md:shadow-sm mb-2 md:mb-3 mt-2 md:mt-4 overflow-x-auto no-scrollbar">
+            <div className="bg-white border-y md:border md:rounded-xl border-slate-200 md:shadow-sm mb-2 md:mb-3 mt-2 md:mt-4 overflow-x-auto no-scrollbar">
                 <div className="p-2 md:p-3 min-w-max flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <div className="flex bg-gray-50 rounded-lg border border-gray-200 p-0.5 overflow-hidden">
+                        <div className="flex bg-slate-50 rounded-lg border border-slate-200 p-0.5 overflow-hidden">
                             {[
                                 { value: 'all', label: 'All Status' },
                                 { value: 'new', label: 'New' },
@@ -190,7 +190,7 @@ const InquiryManagement = ({ searchTerm = '' }) => {
                                     key={value}
                                     onClick={() => setStatusFilter(value)}
                                     className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${statusFilter === value
-                                        ? 'bg-white text-blue-600 shadow-sm border border-gray-200/50'
+                                        ? 'bg-white text-primary-600 shadow-sm border border-slate-200/50'
                                         : 'text-gray-500 hover:text-gray-700'
                                         }`}
                                 >
@@ -199,10 +199,10 @@ const InquiryManagement = ({ searchTerm = '' }) => {
                             ))}
                         </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0 border-l border-gray-200 pl-2 sm:pl-3">
+                    <div className="flex items-center gap-2 shrink-0 border-l border-slate-200 pl-2 sm:pl-3">
                         <button
                             onClick={fetchInquiries}
-                            className="p-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all"
+                            className="p-1.5 rounded-lg border border-slate-200 bg-white text-gray-600 hover:bg-slate-50 hover:border-gray-300 transition-all"
                             title="Refresh"
                         >
                             <RefreshCw className={`w-4 h-4 md:w-4 md:h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -212,7 +212,7 @@ const InquiryManagement = ({ searchTerm = '' }) => {
             </div>
 
             {/* Leads List - Responsive */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                 {/* Mobile View: Cards */}
                 <div className="md:hidden">
                     {filteredInquiries.length === 0 ? (
@@ -228,7 +228,7 @@ const InquiryManagement = ({ searchTerm = '' }) => {
                                 <div key={item.id} className="p-4 space-y-3">
                                     <div className="flex justify-between items-start">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">
+                                            <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-bold text-sm">
                                                 {item.name?.charAt(0) || 'U'}
                                             </div>
                                             <div>
@@ -239,13 +239,13 @@ const InquiryManagement = ({ searchTerm = '' }) => {
                                         <div className="flex gap-1">
                                             <button
                                                 onClick={() => setSelectedInquiry(item)}
-                                                className="p-1.5 text-blue-600 bg-blue-50 rounded-lg"
+                                                className="p-1.5 text-primary-600 bg-primary-50 rounded-lg"
                                             >
                                                 <Eye size={16} />
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(item.id)}
-                                                className="p-1.5 text-red-500 bg-red-50 rounded-lg"
+                                                className="p-1.5 text-rose-500 bg-rose-50 rounded-lg"
                                             >
                                                 <Trash2 size={16} />
                                             </button>
@@ -300,7 +300,7 @@ const InquiryManagement = ({ searchTerm = '' }) => {
                 <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-gray-50/50 border-b border-gray-100">
+                            <tr className="bg-slate-50/50 border-b border-slate-100">
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Lead Details</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Restaurant & Plan</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Date</th>
@@ -320,10 +320,10 @@ const InquiryManagement = ({ searchTerm = '' }) => {
                                 </tr>
                             ) : (
                                 filteredInquiries.map((item) => (
-                                    <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
+                                    <tr key={item.id} className="hover:bg-primary-50/30 transition-colors group">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                                                <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-bold">
                                                     {item.name?.charAt(0) || 'U'}
                                                 </div>
                                                 <div>
@@ -338,7 +338,7 @@ const InquiryManagement = ({ searchTerm = '' }) => {
                                         <td className="px-6 py-4">
                                             <div>
                                                 <p className="font-medium text-gray-800">{item.restaurant_name || 'N/A'}</p>
-                                                <p className="text-xs text-blue-600 font-semibold uppercase mt-1">
+                                                <p className="text-xs text-primary-600 font-semibold uppercase mt-1">
                                                     {item.interested_plan || 'Standard'} Plan
                                                 </p>
                                             </div>
@@ -369,14 +369,14 @@ const InquiryManagement = ({ searchTerm = '' }) => {
                                             <div className="flex items-center justify-end gap-2">
                                                 <button
                                                     onClick={() => setSelectedInquiry(item)}
-                                                    className="p-2 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors"
+                                                    className="p-2 hover:bg-primary-100 text-primary-600 rounded-lg transition-colors"
                                                     title="View details"
                                                 >
                                                     <Eye size={18} />
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(item.id)}
-                                                    className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-colors"
+                                                    className="p-2 hover:bg-rose-50 text-rose-500 rounded-lg transition-colors"
                                                     title="Delete Lead"
                                                 >
                                                     <Trash2 size={18} />
@@ -395,7 +395,7 @@ const InquiryManagement = ({ searchTerm = '' }) => {
             {selectedInquiry && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={() => setSelectedInquiry(null)}>
                     <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-                        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-6 text-white flex justify-between items-center">
+                        <div className="bg-gradient-to-r from-primary-500 to-primary-700 px-8 py-6 text-white flex justify-between items-center">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-white/20 rounded-xl">
                                     <MessageSquare />
@@ -411,24 +411,24 @@ const InquiryManagement = ({ searchTerm = '' }) => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <p className="text-gray-400 text-xs uppercase font-bold tracking-wider">Contact Person</p>
-                                    <p className="font-bold text-gray-900 border-l-2 border-blue-500 pl-3">{selectedInquiry.name}</p>
+                                    <p className="font-bold text-gray-900 border-l-2 border-primary-500 pl-3">{selectedInquiry.name}</p>
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-gray-400 text-xs uppercase font-bold tracking-wider">Restaurant</p>
-                                    <p className="font-bold text-gray-900 border-l-2 border-purple-500 pl-3">{selectedInquiry.restaurant_name}</p>
+                                    <p className="font-bold text-gray-900 border-l-2 border-amber-500 pl-3">{selectedInquiry.restaurant_name}</p>
                                 </div>
                             </div>
 
                             <div className="space-y-3">
-                                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-2xl">
-                                    <Mail className="text-blue-500" size={20} />
+                                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl">
+                                    <Mail className="text-primary-500" size={20} />
                                     <div>
                                         <p className="text-xs text-gray-500">Email Address</p>
                                         <p className="text-sm font-bold text-gray-900">{selectedInquiry.email}</p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-2xl">
-                                    <Phone className="text-green-500" size={20} />
+                                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl">
+                                    <Phone className="text-emerald-500" size={20} />
                                     <div>
                                         <p className="text-xs text-gray-500">Phone Number</p>
                                         <p className="text-sm font-bold text-gray-900">{selectedInquiry.phone || 'N/A'}</p>
@@ -438,7 +438,7 @@ const InquiryManagement = ({ searchTerm = '' }) => {
 
                             <div className="space-y-2">
                                 <p className="text-gray-400 text-xs uppercase font-bold tracking-wider">Lead's Message</p>
-                                <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 italic text-gray-700 leading-relaxed shadow-inner">
+                                <div className="bg-primary-50/50 p-4 rounded-2xl border border-primary-100 italic text-gray-700 leading-relaxed shadow-inner">
                                     "{selectedInquiry.message || 'No message provided'}"
                                 </div>
                             </div>
@@ -446,14 +446,14 @@ const InquiryManagement = ({ searchTerm = '' }) => {
                             <div className="pt-4 flex gap-3">
                                 <a
                                     href={`mailto:${selectedInquiry.email}`}
-                                    className="flex-1 bg-blue-600 text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20"
+                                    className="flex-1 bg-primary-600 text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-primary-700 transition-all shadow-lg shadow-primary-500/20"
                                 >
                                     <Mail size={18} /> Reply via Email
                                 </a>
                                 {selectedInquiry.phone && (
                                     <a
                                         href={`tel:${selectedInquiry.phone}`}
-                                        className="w-14 bg-green-500 text-white rounded-2xl flex items-center justify-center hover:bg-green-600 transition-all shadow-lg shadow-green-500/20"
+                                        className="w-14 bg-emerald-500 text-white rounded-2xl flex items-center justify-center hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20"
                                     >
                                         <Phone size={20} />
                                     </a>
@@ -470,7 +470,7 @@ const InquiryManagement = ({ searchTerm = '' }) => {
                     <button
                         onClick={handleLoadMore}
                         disabled={loadingMore}
-                        className="px-8 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 transition-all flex items-center gap-2 shadow-sm disabled:opacity-50"
+                        className="px-8 py-2.5 bg-white border border-slate-200 text-gray-600 rounded-xl font-bold hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm disabled:opacity-50"
                     >
                         {loadingMore ? 'Loading...' : 'Load More Inquiries'}
                     </button>

@@ -30,10 +30,9 @@ const initSentry = () => {
         // We recommend adjusting this value in production
         tracesSampleRate: environment === 'production' ? 0.1 : 1.0,
 
-        // Integrations
+        // Integrations — Replay is lazy-loaded after window 'load' to keep main bundle lean
         integrations: [
             Sentry.browserTracingIntegration(),
-            Sentry.replayIntegration(),
         ],
 
         // Release tracking
@@ -96,6 +95,24 @@ const initSentry = () => {
     });
 
     console.log(`Sentry initialized for ${environment} environment`);
+
+    // Defer Replay until the page has fully loaded — its bundle (~50 KB gz) is the
+    // heaviest part of @sentry/react and isn't needed before the user sees content.
+    if (typeof window !== 'undefined' && environment !== 'development') {
+        const startReplay = () => {
+            import('@sentry/react')
+                .then(({ replayIntegration }) => Sentry.addIntegration(replayIntegration()))
+                .catch(() => { /* not critical */ });
+        };
+        if (document.readyState === 'complete') {
+            // Window already loaded — schedule on next idle tick
+            (window.requestIdleCallback || setTimeout)(startReplay, 1);
+        } else {
+            window.addEventListener('load', () => {
+                (window.requestIdleCallback || setTimeout)(startReplay, 1);
+            }, { once: true });
+        }
+    }
 };
 
 export default initSentry;

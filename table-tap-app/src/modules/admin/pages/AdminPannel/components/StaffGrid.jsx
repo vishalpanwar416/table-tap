@@ -97,9 +97,9 @@ const StaffGrid = ({
   const getRoleColor = (role) => {
     switch (role) {
       case 'manager':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
+        return 'bg-amber-100 text-amber-800 border-amber-200';
       case 'captain':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-primary-100 text-primary-800 border-primary-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
@@ -133,10 +133,10 @@ const StaffGrid = ({
       {/* Header */}
       <div className="flex items-center justify-between mb-3 md:mb-4">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-tr from-blue-400 to-purple-400 flex items-center justify-center shadow-sm">
+          <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary-500 flex items-center justify-center shadow-sm">
             {member.name ? (
               <span className="text-white font-bold text-sm md:text-lg">
-                {member.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                {(member.name || '?').split(' ').map(n => n[0]).join('').slice(0, 2)}
               </span>
             ) : (
               <Users className="w-5 h-5 md:w-6 md:h-6 text-white" />
@@ -185,7 +185,7 @@ const StaffGrid = ({
       <div className="flex items-center justify-end space-x-2 mt-3 pt-3 md:mt-4 md:pt-4 border-t border-gray-100">
         <button
           onClick={() => onEdit(member)}
-          className="p-1.5 md:p-2 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-800 transition-colors"
+          className="p-1.5 md:p-2 rounded-full bg-primary-50 hover:bg-primary-100 text-primary-600 hover:text-primary-800 transition-colors"
           title="Edit staff member"
         >
           <Edit className="w-3.5 h-3.5 md:w-4 md:h-4" />
@@ -237,7 +237,7 @@ const StaffGrid = ({
           <p className="text-sm text-gray-500 font-spartan">
             Showing {displayedStaff.length} of {staff.length} staff members
             {hasMore && (
-              <span className="ml-2 text-blue-600">
+              <span className="ml-2 text-primary-600">
                 • Scroll to load more
               </span>
             )}
@@ -270,7 +270,7 @@ const StaffGrid = ({
               gridRef.current.scrollIntoView({ behavior: 'smooth' });
             }
           }}
-          className="fixed bottom-6 right-6 p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-colors z-50"
+          className="fixed bottom-6 right-6 p-3 bg-primary-600 text-white rounded-full shadow-lg hover:bg-primary-700 transition-colors z-50"
           title="Scroll to top"
         >
           <ChevronUp className="w-5 h-5" />

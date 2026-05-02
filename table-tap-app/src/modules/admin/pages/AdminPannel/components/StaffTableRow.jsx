@@ -32,13 +32,13 @@ const StaffTableRow = ({ staff, restaurant, onEdit, onDelete, index }) => {
   const getRoleColor = (role) => {
     switch (role) {
       case 'manager':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
+        return 'bg-amber-100 text-amber-800 border-amber-200';
       case 'captain':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-primary-100 text-primary-800 border-primary-200';
       case 'waiter':
         return 'bg-green-100 text-green-800 border-green-200';
       case 'chef':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
+        return 'bg-primary-100 text-primary-800 border-primary-200';
       case 'cashier':
         return 'bg-red-100 text-red-800 border-red-200';
       default:
@@ -48,7 +48,7 @@ const StaffTableRow = ({ staff, restaurant, onEdit, onDelete, index }) => {
 
   return (
     <tr
-      className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 font-spartan"
+      className="hover:bg-primary-50 transition-all duration-200 font-spartan"
       style={{ animationDelay: `${index * 50}ms` }}
     >
       <td className="px-6 py-4 whitespace-nowrap">
@@ -88,7 +88,7 @@ const StaffTableRow = ({ staff, restaurant, onEdit, onDelete, index }) => {
         <div className="flex items-center space-x-2">
           <button
             onClick={handleEdit}
-            className="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-all duration-200"
+            className="p-2 text-primary-600 hover:text-primary-900 hover:bg-primary-50 rounded-lg transition-all duration-200"
             title="Edit staff member"
           >
             <Edit className="w-4 h-4" />

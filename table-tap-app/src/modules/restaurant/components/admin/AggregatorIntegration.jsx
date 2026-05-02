@@ -145,11 +145,11 @@ const AggregatorIntegration = ({ restaurantId, restaurant }) => {
                 if (notifEnabled) {
                     playNotificationSound();
                     toast.custom((t) => (
-                        <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-white shadow-2xl rounded-2xl pointer-events-auto flex ring-1 ring-black ring-opacity-5 overflow-hidden border-l-4 border-orange-500`}>
+                        <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-white shadow-2xl rounded-2xl pointer-events-auto flex ring-1 ring-black ring-opacity-5 overflow-hidden border-l-4 border-primary-500`}>
                             <div className="flex-1 w-0 p-4">
                                 <div className="flex items-start">
                                     <div className="flex-shrink-0 pt-0.5">
-                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white ${payload.new.platform === 'Swiggy' ? 'bg-orange-500' : 'bg-rose-600'}`}>
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white ${payload.new.platform === 'Swiggy' ? 'bg-primary-500' : 'bg-rose-600'}`}>
                                             <ShoppingBag size={20} />
                                         </div>
                                     </div>
@@ -169,7 +169,7 @@ const AggregatorIntegration = ({ restaurantId, restaurant }) => {
                                         toast.dismiss(t.id);
                                         setActiveView('operations');
                                     }}
-                                    className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-xs font-black text-orange-600 hover:text-orange-700 focus:outline-none"
+                                    className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-xs font-black text-primary-600 hover:text-primary-700 focus:outline-none"
                                 >
                                     VIEW
                                 </button>
@@ -305,7 +305,7 @@ const AggregatorIntegration = ({ restaurantId, restaurant }) => {
             {/* Mission Control Header */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-2">
                 <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-orange-600 flex items-center justify-center text-white shadow-xl shadow-orange-100 rotate-3">
+                    <div className="w-12 h-12 rounded-2xl bg-primary-600 flex items-center justify-center text-white shadow-xl shadow-primary-100 rotate-3">
                         <ShoppingBag size={24} />
                     </div>
                     <div>
@@ -369,7 +369,7 @@ const AggregatorIntegration = ({ restaurantId, restaurant }) => {
                             <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200 p-4 md:p-6 shadow-sm relative overflow-hidden">
                                 <div className="relative z-10">
                                     <h3 className="text-sm md:text-base font-black text-slate-900 flex items-center gap-2 mb-4">
-                                        <Clock className="text-orange-600" size={16} />
+                                        <Clock className="text-primary-600" size={16} />
                                         Smart Surge Prep Time
                                     </h3>
                                     <div className="grid grid-cols-4 gap-2 md:gap-3">
@@ -378,8 +378,8 @@ const AggregatorIntegration = ({ restaurantId, restaurant }) => {
                                                 key={mins}
                                                 onClick={() => handleSurgePrepTimeChange(mins)}
                                                 className={`py-2 md:py-3 rounded-xl border-2 transition-all font-black text-[10px] md:text-xs uppercase tracking-tighter ${surgePrepTime === mins
-                                                    ? 'bg-orange-600 border-orange-600 text-white shadow-lg'
-                                                    : 'bg-white border-slate-100 text-slate-500 hover:border-orange-100'
+                                                    ? 'bg-primary-600 border-primary-600 text-white shadow-lg'
+                                                    : 'bg-white border-slate-100 text-slate-500 hover:border-primary-100'
                                                     }`}
                                             >
                                                 {mins === 0 ? 'Normal' : `+${mins}m`}
@@ -396,7 +396,7 @@ const AggregatorIntegration = ({ restaurantId, restaurant }) => {
                                 <div className="flex justify-between items-center mb-2">
                                     <div className="flex items-center gap-3">
                                         <div className="h-9 w-9 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-md">
-                                            <Bell size={18} className="text-orange-400" />
+                                            <Bell size={18} className="text-primary-400" />
                                         </div>
                                         <div>
                                             <h4 className="font-black text-sm uppercase tracking-tight">Order Alerts</h4>
@@ -405,7 +405,7 @@ const AggregatorIntegration = ({ restaurantId, restaurant }) => {
                                     </div>
                                     <button
                                         onClick={handleNotifToggle}
-                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${notifEnabled ? 'bg-orange-500' : 'bg-white/20'
+                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${notifEnabled ? 'bg-primary-500' : 'bg-white/20'
                                             }`}
                                     >
                                         <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${notifEnabled ? 'translate-x-6' : 'translate-x-1'
@@ -422,7 +422,7 @@ const AggregatorIntegration = ({ restaurantId, restaurant }) => {
                                 <div className="p-4 md:p-5">
                                     <div className="flex justify-between items-start mb-5">
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform ${integrationStatus.swiggy.connected ? 'bg-orange-500' : 'bg-slate-400'}`}>
+                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform ${integrationStatus.swiggy.connected ? 'bg-primary-500' : 'bg-slate-400'}`}>
                                                 <ShoppingBag size={24} />
                                             </div>
                                             <div>
@@ -476,14 +476,14 @@ const AggregatorIntegration = ({ restaurantId, restaurant }) => {
                                         ))}
                                     </div>
                                 </div>
-                                <div className={`px-5 py-3 text-[10px] font-black flex justify-between items-center ${integrationStatus.swiggy.connected ? 'bg-orange-50/50 text-orange-700' : 'bg-slate-50/50 text-slate-500'}`}>
+                                <div className={`px-5 py-3 text-[10px] font-black flex justify-between items-center ${integrationStatus.swiggy.connected ? 'bg-primary-50/50 text-primary-700' : 'bg-slate-50/50 text-slate-500'}`}>
                                     <span className="flex items-center gap-2 tracking-widest uppercase">
                                         {integrationStatus.swiggy.connected ? 'ACTIVE' : 'NOT CONFIGURED'}
                                     </span>
                                     <div className="flex gap-1">
-                                        <span className={`w-1 h-1 rounded-full ${integrationStatus.swiggy.connected ? 'bg-orange-300' : 'bg-slate-300'}`}></span>
-                                        <span className={`w-1 h-1 rounded-full ${integrationStatus.swiggy.connected ? 'bg-orange-300' : 'bg-slate-300'}`}></span>
-                                        <span className={`w-1 h-1 rounded-full ${integrationStatus.swiggy.connected ? 'bg-orange-300' : 'bg-slate-300'}`}></span>
+                                        <span className={`w-1 h-1 rounded-full ${integrationStatus.swiggy.connected ? 'bg-primary-300' : 'bg-slate-300'}`}></span>
+                                        <span className={`w-1 h-1 rounded-full ${integrationStatus.swiggy.connected ? 'bg-primary-300' : 'bg-slate-300'}`}></span>
+                                        <span className={`w-1 h-1 rounded-full ${integrationStatus.swiggy.connected ? 'bg-primary-300' : 'bg-slate-300'}`}></span>
                                     </div>
                                 </div>
                             </div>
@@ -564,7 +564,7 @@ const AggregatorIntegration = ({ restaurantId, restaurant }) => {
                         <div className="bg-white rounded-3xl border border-slate-200 p-4 md:p-6 shadow-sm">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2.5 bg-orange-50 text-orange-600 rounded-xl">
+                                    <div className="p-2.5 bg-primary-50 text-primary-600 rounded-xl">
                                         <History size={20} />
                                     </div>
                                     <div>
@@ -609,7 +609,7 @@ const AggregatorIntegration = ({ restaurantId, restaurant }) => {
                                         .map((order, idx) => (
                                             <div key={order.orderId || idx} className="flex items-center justify-between p-3 md:p-4 border border-slate-100 rounded-2xl hover:bg-slate-50 transition-all group">
                                                 <div className="flex items-center gap-4">
-                                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-sm shadow-md ${order.platform === 'Swiggy' ? 'bg-orange-500 shadow-orange-100' : 'bg-rose-600 shadow-rose-100'
+                                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-sm shadow-md ${order.platform === 'Swiggy' ? 'bg-primary-500 shadow-primary-100' : 'bg-rose-600 shadow-rose-100'
                                                         }`}>
                                                         {order.platform[0]}
                                                     </div>
@@ -625,8 +625,8 @@ const AggregatorIntegration = ({ restaurantId, restaurant }) => {
                                                                 ? order.items.map(i => `${i.qty}x ${i.name}`).join(', ')
                                                                 : 'Order items'}
                                                         </p>
-                                                        {order.customerName && (
-                                                            <p className="text-xs text-slate-400 mt-0.5">{order.customerName}</p>
+                                                        {(order.customer_name || order.customerName) && (
+                                                            <p className="text-xs text-slate-400 mt-0.5">{order.customer_name || order.customerName}</p>
                                                         )}
                                                     </div>
                                                 </div>
@@ -670,7 +670,7 @@ const AggregatorIntegration = ({ restaurantId, restaurant }) => {
                                     placeholder="Search items..."
                                     value={menuSearch}
                                     onChange={(e) => setMenuSearch(e.target.value)}
-                                    className="pl-10 pr-4 py-2 bg-slate-100 rounded-xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-orange-100 w-full sm:w-64 border-none transition-all"
+                                    className="pl-10 pr-4 py-2 bg-slate-100 rounded-xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-primary-100 w-full sm:w-64 border-none transition-all"
                                 />
                                 <Utensils className="absolute left-3.5 top-2.5 text-slate-400" size={16} />
                             </div>
@@ -718,7 +718,7 @@ const AggregatorIntegration = ({ restaurantId, restaurant }) => {
                                                             className={`px-5 py-2 rounded-xl text-xs font-black transition-all ${!integrationStatus.swiggy.connected
                                                                 ? 'bg-slate-50 text-slate-300 border border-slate-100 cursor-not-allowed'
                                                                 : item.swiggy
-                                                                    ? 'bg-orange-50 text-orange-600 border border-orange-100 hover:bg-orange-100'
+                                                                    ? 'bg-primary-50 text-primary-600 border border-primary-100 hover:bg-primary-100'
                                                                     : 'bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100'
                                                                 }`}
                                                         >
@@ -799,11 +799,11 @@ const AggregatorIntegration = ({ restaurantId, restaurant }) => {
                                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 italic">{row.target}</p>
                                         </div>
                                         <div className="flex gap-4">
-                                            <div className={`px-4 py-2 rounded-xl text-center min-w-[80px] ${integrationStatus.swiggy.connected ? 'bg-orange-50' : 'bg-slate-50'}`}>
-                                                <p className={`text-sm font-black ${integrationStatus.swiggy.connected ? 'text-orange-600' : 'text-slate-400'}`}>
+                                            <div className={`px-4 py-2 rounded-xl text-center min-w-[80px] ${integrationStatus.swiggy.connected ? 'bg-primary-50' : 'bg-slate-50'}`}>
+                                                <p className={`text-sm font-black ${integrationStatus.swiggy.connected ? 'text-primary-600' : 'text-slate-400'}`}>
                                                     {integrationStatus.swiggy.connected ? row.swiggy : 'N/A'}
                                                 </p>
-                                                <p className={`text-[8px] font-black uppercase ${integrationStatus.swiggy.connected ? 'text-orange-300' : 'text-slate-300'}`}>Swiggy</p>
+                                                <p className={`text-[8px] font-black uppercase ${integrationStatus.swiggy.connected ? 'text-primary-300' : 'text-slate-300'}`}>Swiggy</p>
                                             </div>
                                             <div className={`px-4 py-2 rounded-xl text-center min-w-[80px] ${integrationStatus.zomato.connected ? 'bg-rose-50' : 'bg-slate-50'}`}>
                                                 <p className={`text-sm font-black ${integrationStatus.zomato.connected ? 'text-rose-600' : 'text-slate-400'}`}>
@@ -817,10 +817,10 @@ const AggregatorIntegration = ({ restaurantId, restaurant }) => {
                             </div>
                         </div>
 
-                        <div className="bg-gradient-to-br from-slate-900 to-orange-900 rounded-3xl p-6 md:p-8 text-white shadow-2xl relative overflow-hidden flex flex-col justify-center">
+                        <div className="bg-gradient-to-br from-slate-900 to-primary-900 rounded-3xl p-6 md:p-8 text-white shadow-2xl relative overflow-hidden flex flex-col justify-center">
                             <div className="relative z-10">
-                                <h3 className="text-xl font-black mb-3 text-orange-400 uppercase tracking-tight">Strategic Insight</h3>
-                                <p className="text-orange-100/70 text-xs leading-relaxed mb-6 max-w-sm font-medium">
+                                <h3 className="text-xl font-black mb-3 text-primary-400 uppercase tracking-tight">Strategic Insight</h3>
+                                <p className="text-primary-100/70 text-xs leading-relaxed mb-6 max-w-sm font-medium">
                                     {isAnyConnected ? (
                                         performance?.swiggy?.totalRevenue > performance?.zomato?.totalRevenue
                                             ? 'Swiggy is leading. Scale Zomato promos to balance.'
@@ -831,11 +831,11 @@ const AggregatorIntegration = ({ restaurantId, restaurant }) => {
                                 </p>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="p-4 bg-white/10 rounded-2xl backdrop-blur-xl border border-white/10">
-                                        <p className="text-[9px] font-bold text-orange-300 uppercase tracking-widest mb-1">Growth</p>
+                                        <p className="text-[9px] font-bold text-primary-300 uppercase tracking-widest mb-1">Growth</p>
                                         <p className="text-xl font-black">{performance?.weeklyGrowth || 'N/A'}</p>
                                     </div>
                                     <div className="p-4 bg-white/10 rounded-2xl backdrop-blur-xl border border-white/10">
-                                        <p className="text-[9px] font-bold text-orange-300 uppercase tracking-widest mb-1">Revenue</p>
+                                        <p className="text-[9px] font-bold text-primary-300 uppercase tracking-widest mb-1">Revenue</p>
                                         <p className="text-xl font-black">
                                             ₹{((performance?.swiggy?.totalRevenue || 0) + (performance?.zomato?.totalRevenue || 0)).toLocaleString()}
                                         </p>

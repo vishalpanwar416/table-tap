@@ -12,7 +12,6 @@ import ErrorBoundary from './modules/shared/components/ErrorBoundary';
 import InstallPrompt from './modules/shared/components/InstallPrompt';
 import { register } from './modules/shared/utils/serviceWorkerRegistration';
 import { getSubdomain, isDevelopment } from './modules/shared/utils/subdomainRouter';
-import { syncPendingActions } from './modules/restaurant/api/admin/orderService';
 import toast from 'react-hot-toast';
 
 // Eagerly load CustomerApp for immediate Splash Screen (no initial loading spinner)
@@ -67,10 +66,10 @@ const App = () => {
     }
     sessionStorage.setItem('last_reload', now.toString());
 
-    // Offline sync listener
+    // Offline sync listener — lazy-load orderService only when actually going online
     const handleOnline = async () => {
-      console.log('App is online, syncing pending actions...');
       try {
+        const { syncPendingActions } = await import('./modules/restaurant/api/admin/orderService');
         await syncPendingActions();
         toast.success('Back online! Synced offline changes.');
       } catch (error) {
@@ -151,11 +150,12 @@ const App = () => {
     }
 
     if (pathname.startsWith('/admin')) {
-      console.log('[App] Loading AdminApp for /admin path');
       return (
-        <Suspense fallback={<LoadingSpinner />}>
-          <AdminApp />
-        </Suspense>
+        <ErrorBoundary name="admin">
+          <Suspense fallback={<LoadingSpinner />}>
+            <AdminApp />
+          </Suspense>
+        </ErrorBoundary>
       );
     }
 
@@ -167,42 +167,52 @@ const App = () => {
     }
 
     if (pathname.startsWith('/restaurant')) {
-      console.log('[App] Loading RestaurantApp for /restaurant path');
       return (
-        <Suspense fallback={<LoadingSpinner />}>
-          <RestaurantApp />
-        </Suspense>
-      );
-    }
-
-    console.log('[App] Loading app based on subdomain:', subdomain);
-    switch (subdomain) {
-      case 'app':
-        return (
-          <CustomerApp />
-        );
-      case 'restaurant':
-        return (
+        <ErrorBoundary name="restaurant">
           <Suspense fallback={<LoadingSpinner />}>
             <RestaurantApp />
           </Suspense>
+        </ErrorBoundary>
+      );
+    }
+
+    switch (subdomain) {
+      case 'app':
+        return (
+          <ErrorBoundary name="customer">
+            <CustomerApp />
+          </ErrorBoundary>
+        );
+      case 'restaurant':
+        return (
+          <ErrorBoundary name="restaurant">
+            <Suspense fallback={<LoadingSpinner />}>
+              <RestaurantApp />
+            </Suspense>
+          </ErrorBoundary>
         );
       case 'owner':
         return (
-          <Suspense fallback={<LoadingSpinner />}>
-            <OwnerApp />
-          </Suspense>
+          <ErrorBoundary name="owner">
+            <Suspense fallback={<LoadingSpinner />}>
+              <OwnerApp />
+            </Suspense>
+          </ErrorBoundary>
         );
       case 'admin':
         return (
-          <Suspense fallback={<LoadingSpinner />}>
-            <AdminApp />
-          </Suspense>
+          <ErrorBoundary name="admin">
+            <Suspense fallback={<LoadingSpinner />}>
+              <AdminApp />
+            </Suspense>
+          </ErrorBoundary>
         );
       case 'landing':
       default:
         return (
-          <CustomerApp />
+          <ErrorBoundary name="landing">
+            <CustomerApp />
+          </ErrorBoundary>
         );
     }
   };
@@ -252,11 +262,11 @@ const App = () => {
                     },
                     loading: {
                       iconTheme: {
-                        primary: '#F97316', // Orange-500 (Brand color)
+                        primary: '#f97316', // Orange-500 (Brand color)
                         secondary: '#fff',
                       },
                       style: {
-                        border: '1px solid #FED7AA', // border-orange-200 warning/loading type
+                        border: '1px solid #FED7AA', // border-primary-200 warning/loading type
                       }
                     }
                   }}

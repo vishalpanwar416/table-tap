@@ -97,7 +97,7 @@ const OrderTracking = () => {
       case 'preparing':
         return <Truck className="w-8 h-8 text-purple-500" />; // Or ChefHat if available
       case 'ready':
-        return <ShoppingBag className="w-8 h-8 text-orange-500" />;
+        return <ShoppingBag className="w-8 h-8 text-primary-500" />;
       case 'completed':
         return <CheckCircle className="w-8 h-8 text-green-500" />;
       case 'rejected':
@@ -158,7 +158,7 @@ View Details: ${trackingUrl}`;
           <p className="text-red-500 mb-4">{error}</p>
           <button
             onClick={() => navigate('/home')}
-            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-full transition-colors shadow-sm font-medium"
+            className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded-full transition-colors shadow-sm font-medium"
           >
             Go Home
           </button>
@@ -175,7 +175,7 @@ View Details: ${trackingUrl}`;
           <p className="text-gray-400 mb-4">We couldn't find the order you're looking for.</p>
           <button
             onClick={() => navigate('/home')}
-            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-full transition-colors shadow-sm font-medium"
+            className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded-full transition-colors shadow-sm font-medium"
           >
             Go Home
           </button>
@@ -190,7 +190,7 @@ View Details: ${trackingUrl}`;
         {/* Header */}
         <div className="w-full px-6 py-8 relative flex items-center justify-between">
           <button
-            className="text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-10"
+            className="text-primary-500 hover:text-primary-600 transition-all duration-300 p-2 rounded-full hover:bg-primary-500/10 active:bg-primary-500/20 focus:outline-none focus:ring-2 focus:ring-primary-500/30 z-10"
             onClick={() => navigate('/home')}
             aria-label="Go back to home"
           >
@@ -201,7 +201,7 @@ View Details: ${trackingUrl}`;
             <h1 className="text-gray-100 text-2xl font-medium">
               Order Tracking
             </h1>
-            <p className="text-orange-100/60 text-xs mt-1 text-center">#{currentOrder.id.slice(0, 8).toUpperCase()}</p>
+            <p className="text-primary-100/60 text-xs mt-1 text-center">#{currentOrder.id.slice(0, 8).toUpperCase()}</p>
           </div>
 
           {/* Guest History & Login Buttons */}
@@ -209,7 +209,7 @@ View Details: ${trackingUrl}`;
             {!user && guestOrderIds.length > 1 && (
               <button
                 onClick={() => setShowHistoryModal(true)}
-                className="text-white hover:text-orange-400 p-2 rounded-full transition-colors bg-white/10 hover:bg-white/20 backdrop-blur-md z-10"
+                className="text-white hover:text-primary-400 p-2 rounded-full transition-colors bg-white/10 hover:bg-white/20 backdrop-blur-md z-10"
                 aria-label="View order history"
               >
                 <Archive size={20} />
@@ -219,7 +219,7 @@ View Details: ${trackingUrl}`;
             {!user ? (
               <button
                 onClick={() => setShowLoginModal(true)}
-                className="text-white hover:text-orange-400 p-2 rounded-full transition-colors bg-white/10 hover:bg-white/20 backdrop-blur-md z-10"
+                className="text-white hover:text-primary-400 p-2 rounded-full transition-colors bg-white/10 hover:bg-white/20 backdrop-blur-md z-10"
                 aria-label="Login to save order"
               >
                 <User size={20} />
@@ -244,7 +244,7 @@ View Details: ${trackingUrl}`;
                 >
                   {getStatusIcon(currentOrder.status)}
                 </motion.div>
-                <h2 className={`text-xl font-bold capitalize mb-1 ${['preparing', 'ready'].includes(currentOrder.status) ? 'text-orange-600 animate-pulse' : 'text-gray-800'}`}>
+                <h2 className={`text-xl font-bold capitalize mb-1 ${['preparing', 'ready'].includes(currentOrder.status) ? 'text-primary-600 animate-pulse' : 'text-gray-800'}`}>
                   {currentOrder.status}
                 </h2>
                 <p className="text-sm text-gray-500">{formatDate(currentOrder.created_at)}</p>
@@ -254,12 +254,12 @@ View Details: ${trackingUrl}`;
               <div className="relative pt-1 px-2">
                 <div className="flex mb-2 items-center justify-between">
                   <div>
-                    <span className="text-xs font-bold inline-block py-1 px-2 uppercase rounded-full bg-orange-100 text-orange-600">
+                    <span className="text-xs font-bold inline-block py-1 px-2 uppercase rounded-full bg-primary-100 text-primary-600">
                       Progress
                     </span>
                   </div>
                   <div className="text-right">
-                    <span className="text-xs font-bold inline-block text-orange-600">
+                    <span className="text-xs font-bold inline-block text-primary-600">
                       {statusPercentage}%
                     </span>
                   </div>
@@ -269,7 +269,7 @@ View Details: ${trackingUrl}`;
                     initial={{ width: 0 }}
                     animate={{ width: `${statusPercentage}%` }}
                     transition={{ duration: 0.8, ease: "easeInOut" }}
-                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-orange-500"
+                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary-500"
                   ></motion.div>
                 </div>
                 <p className="text-center text-sm text-gray-600 font-medium px-4">
@@ -283,7 +283,7 @@ View Details: ${trackingUrl}`;
               <div className="px-4 mb-4">
                 <button
                   onClick={() => setShowLoginModal(true)}
-                  className="w-full bg-orange-500 rounded-2xl p-4 flex items-center justify-between shadow-lg text-left group hover:bg-orange-600 transition-colors"
+                  className="w-full bg-primary-500 rounded-2xl p-4 flex items-center justify-between shadow-lg text-left group hover:bg-primary-600 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <div className="bg-white/20 p-2 rounded-full text-white">
@@ -291,7 +291,7 @@ View Details: ${trackingUrl}`;
                     </div>
                     <div>
                       <p className="text-white font-bold text-sm">Save this Order</p>
-                      <p className="text-orange-100 text-xs">Login to keep tracking history</p>
+                      <p className="text-primary-100 text-xs">Login to keep tracking history</p>
                     </div>
                   </div>
                   <ChevronLeft size={16} className="text-white/70 rotate-180 group-hover:text-white transition-colors" />
@@ -305,7 +305,7 @@ View Details: ${trackingUrl}`;
               {/* Order Items */}
               <div className="bg-white rounded-2xl p-4 shadow-sm">
                 <h3 className="text-gray-800 font-bold mb-3 flex items-center gap-2">
-                  <ShoppingBag size={18} className="text-orange-500" />
+                  <ShoppingBag size={18} className="text-primary-500" />
                   Order Items
                 </h3>
                 <div className="divide-y divide-gray-100">
@@ -322,14 +322,14 @@ View Details: ${trackingUrl}`;
               </div>
 
               {/* Location/Table */}
-              {currentOrder.tableNumber && (
+              {(currentOrder.table_number || currentOrder.tableNumber) && (
                 <div className="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
                     <MapPin size={20} className="text-blue-500" />
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 font-medium">Delivering to</p>
-                    <p className="text-gray-800 font-bold">Table {currentOrder.tableNumber}</p>
+                    <p className="text-gray-800 font-bold">Table {currentOrder.table_number || currentOrder.tableNumber}</p>
                   </div>
                 </div>
               )}
@@ -404,7 +404,7 @@ View Details: ${trackingUrl}`;
             >
               <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm pointer-events-auto relative overflow-hidden">
                 {/* Decorative blob */}
-                <div className="absolute -top-10 -right-10 w-32 h-32 bg-orange-100 rounded-full blur-2xl opacity-60"></div>
+                <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary-100 rounded-full blur-2xl opacity-60"></div>
 
                 <button
                   onClick={() => setShowLoginModal(false)}
@@ -414,7 +414,7 @@ View Details: ${trackingUrl}`;
                 </button>
 
                 <div className="text-center mt-2">
-                  <div className="mx-auto w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4 text-orange-500">
+                  <div className="mx-auto w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mb-4 text-primary-500">
                     <LogIn size={28} />
                   </div>
 
@@ -429,7 +429,7 @@ View Details: ${trackingUrl}`;
                   <div className="space-y-3">
                     <button
                       onClick={handleLoginRedirect}
-                      className="w-full bg-orange-500 text-white font-bold py-3.5 rounded-xl hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/30"
+                      className="w-full bg-primary-500 text-white font-bold py-3.5 rounded-xl hover:bg-primary-600 transition-all shadow-lg shadow-primary-500/30"
                     >
                       Login / Sign Up
                     </button>
@@ -474,7 +474,7 @@ View Details: ${trackingUrl}`;
                 </button>
 
                 <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <Archive className="text-orange-500" size={24} />
+                  <Archive className="text-primary-500" size={24} />
                   Recent Orders
                 </h3>
 
@@ -487,19 +487,19 @@ View Details: ${trackingUrl}`;
                         setShowHistoryModal(false);
                       }}
                       className={`w-full p-3 rounded-xl flex items-center justify-between transition-colors ${guestId === currentOrder?.id
-                        ? 'bg-orange-50 border border-orange-200'
+                        ? 'bg-primary-50 border border-primary-200'
                         : 'bg-gray-50 hover:bg-gray-100'
                         }`}
                     >
                       <div className="text-left">
-                        <p className={`font-medium text-sm ${guestId === currentOrder?.id ? 'text-orange-700' : 'text-gray-800'}`}>
+                        <p className={`font-medium text-sm ${guestId === currentOrder?.id ? 'text-primary-700' : 'text-gray-800'}`}>
                           Order #{guestId.slice(0, 8).toUpperCase()}
                         </p>
                         <p className="text-xs text-gray-500">
                           {index === 0 ? 'Latest' : 'Previous'}
                         </p>
                       </div>
-                      <ChevronLeft size={16} className={`rotate-180 ${guestId === currentOrder?.id ? 'text-orange-500' : 'text-gray-400'}`} />
+                      <ChevronLeft size={16} className={`rotate-180 ${guestId === currentOrder?.id ? 'text-primary-500' : 'text-gray-400'}`} />
                     </button>
                   ))}
                 </div>

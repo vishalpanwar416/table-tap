@@ -142,9 +142,9 @@ const RestaurantInformation = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50 p-6 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-primary-50 p-6 flex items-center justify-center">
         <div className="flex items-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-200 border-t-orange-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-200 border-t-primary-600"></div>
           <span className="ml-4 text-gray-600 font-medium text-lg">Loading restaurant information...</span>
         </div>
       </div>
@@ -170,7 +170,7 @@ const RestaurantInformation = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50/30 to-amber-50/50 p-3 md:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-primary-50/30 to-amber-50/50 p-3 md:p-6">
       <div className="max-w-6xl mx-auto space-y-3 md:space-y-8">
         {/* Removed redundant header */}
 
@@ -178,18 +178,18 @@ const RestaurantInformation = () => {
 
         {/* Success Message */}
         {saveSuccess && (
-          <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-2xl p-4 shadow-sm">
+          <div className="bg-gradient-to-r from-primary-50 to-amber-50 border border-primary-200 rounded-2xl p-4 shadow-sm">
             <div className="flex items-center">
-              <div className="w-9 h-9 bg-orange-100 rounded-xl flex items-center justify-center mr-4">
-                <Award className="w-5 h-5 text-orange-600" />
+              <div className="w-9 h-9 bg-primary-100 rounded-xl flex items-center justify-center mr-4">
+                <Award className="w-5 h-5 text-primary-600" />
               </div>
-              <p className="text-orange-800 font-semibold">Restaurant information updated successfully!</p>
+              <p className="text-primary-800 font-semibold">Restaurant information updated successfully!</p>
             </div>
           </div>
         )}
 
         {/* Main Content */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl md:rounded-3xl shadow-xl border border-orange-100/50 overflow-hidden">
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl md:rounded-3xl shadow-xl border border-primary-100/50 overflow-hidden">
           {isEditing && (userRole === 'admin' || userRole === 'owner' || userRole === 'manager') ? (
             // --- EDITING FORM ---
             <form onSubmit={handleSubmit} className="p-4 md:p-8">
@@ -208,7 +208,7 @@ const RestaurantInformation = () => {
                 {/* Basic Information */}
                 <div>
                   <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-6 flex items-center">
-                    <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-lg md:rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                    <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-primary-500 to-amber-600 rounded-lg md:rounded-xl flex items-center justify-center mr-3 shadow-lg">
                       <Building className="w-4 h-4 md:w-5 md:h-5 text-white" />
                     </div>
                     Basic Information
@@ -216,11 +216,11 @@ const RestaurantInformation = () => {
                   <div className="grid grid-cols-2 gap-3 md:gap-6">
                     <div className="space-y-1 md:space-y-2">
                       <label className="block text-[10px] md:text-sm font-semibold text-gray-700">Restaurant Name</label>
-                      <input type="text" name="name" value={formData.name || ''} onChange={handleChange} className="w-full px-3 py-2 md:px-4 md:py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all text-xs md:text-base" required />
+                      <input type="text" name="name" value={formData.name || ''} onChange={handleChange} className="w-full px-3 py-2 md:px-4 md:py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all text-xs md:text-base" required />
                     </div>
                     <div className="space-y-1 md:space-y-2">
                       <label className="block text-[10px] md:text-sm font-semibold text-gray-700">Cuisine Type</label>
-                      <input type="text" name="cuisine_type" value={formData.cuisine_type || ''} onChange={handleChange} className="w-full px-3 py-2 md:px-4 md:py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all text-xs md:text-base" />
+                      <input type="text" name="cuisine_type" value={formData.cuisine_type || ''} onChange={handleChange} className="w-full px-3 py-2 md:px-4 md:py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all text-xs md:text-base" />
                     </div>
                   </div>
                 </div>
@@ -228,7 +228,7 @@ const RestaurantInformation = () => {
                 {/* Restaurant Assets */}
                 <div>
                   <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                    <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
                       <ImageIcon className="w-5 h-5 text-white" />
                     </div>
                     Restaurant Assets
@@ -291,7 +291,7 @@ const RestaurantInformation = () => {
                 {/* Contact Information */}
                 <div>
                   <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-amber-500 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                    <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-amber-500 rounded-xl flex items-center justify-center mr-3 shadow-lg">
                       <Phone className="w-5 h-5 text-white" />
                     </div>
                     Contact Information
@@ -299,11 +299,11 @@ const RestaurantInformation = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                     <div className="space-y-1 md:space-y-2">
                       <label className="block text-xs md:text-sm font-semibold text-gray-700">Contact Phone</label>
-                      <input type="text" name="contact_phone" value={formData.contact_phone || ''} onChange={handleChange} className="w-full px-4 py-2.5 md:py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base" />
+                      <input type="text" name="contact_phone" value={formData.contact_phone || ''} onChange={handleChange} className="w-full px-4 py-2.5 md:py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 transition-all text-sm md:text-base" />
                     </div>
                     <div className="space-y-1 md:space-y-2">
                       <label className="block text-xs md:text-sm font-semibold text-gray-700">Contact Email</label>
-                      <input type="email" name="contact_email" value={formData.contact_email || ''} onChange={handleChange} className="w-full px-4 py-2.5 md:py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base" />
+                      <input type="email" name="contact_email" value={formData.contact_email || ''} onChange={handleChange} className="w-full px-4 py-2.5 md:py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 transition-all text-sm md:text-base" />
                     </div>
                   </div>
                 </div>
@@ -311,7 +311,7 @@ const RestaurantInformation = () => {
                 {/* Business Details */}
                 <div>
                   <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-4 md:mb-6 flex items-center">
-                    <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg md:rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                    <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-amber-500 to-primary-600 rounded-lg md:rounded-xl flex items-center justify-center mr-3 shadow-lg">
                       <Clock className="w-4 h-4 md:w-5 md:h-5 text-white" />
                     </div>
                     Business Details
@@ -319,11 +319,11 @@ const RestaurantInformation = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-gray-700">Opening Hours</label>
-                      <input type="text" name="opening_hours" value={formData.opening_hours || ''} onChange={handleChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all" placeholder="e.g., Mon-Sun: 9:00 AM - 10:00 PM" />
+                      <input type="text" name="opening_hours" value={formData.opening_hours || ''} onChange={handleChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all" placeholder="e.g., Mon-Sun: 9:00 AM - 10:00 PM" />
                     </div>
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-gray-700">Time Zone</label>
-                      <select name="timezone" value={formData.timezone || 'Asia/Kolkata'} onChange={handleChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all">
+                      <select name="timezone" value={formData.timezone || 'Asia/Kolkata'} onChange={handleChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all">
                         <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
                         <option value="UTC">UTC</option>
                         <option value="America/New_York">America/New_York (EST)</option>
@@ -335,13 +335,13 @@ const RestaurantInformation = () => {
                 {/* Features & Settings */}
                 <div>
                   <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                    <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-primary-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
                       <Zap className="w-5 h-5 text-white" />
                     </div>
                     Features & Settings
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                    <div className="bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-100 p-4 md:p-5 rounded-xl flex items-center justify-between">
+                    <div className="bg-gradient-to-br from-primary-50 to-amber-50 border border-primary-100 p-4 md:p-5 rounded-xl flex items-center justify-between">
                       <div>
                         <span className="block text-sm font-bold text-gray-800">AI Analytics</span>
                         <span className="text-[10px] md:text-xs text-gray-500">Enable AI-powered insights</span>
@@ -354,7 +354,7 @@ const RestaurantInformation = () => {
                           onChange={handleChange}
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
                       </label>
                     </div>
 
@@ -381,16 +381,16 @@ const RestaurantInformation = () => {
                 {(restaurant?.billing_features_enabled !== false) && (
                   <div>
                     <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                      <div className="w-10 h-10 bg-gradient-to-br from-orange-600 to-amber-700 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                      <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-amber-700 rounded-xl flex items-center justify-center mr-3 shadow-lg">
                         <Receipt className="w-5 h-5 text-white" />
                       </div>
                       Online Bill Delivery
                     </h3>
                     <p className="text-sm text-gray-500 mb-4">Enable or disable digital bill delivery options (WhatsApp & Email)</p>
-                    <div className="bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-100 p-4 md:p-6 rounded-2xl flex items-center justify-between">
+                    <div className="bg-gradient-to-br from-primary-50 to-amber-50 border border-primary-100 p-4 md:p-6 rounded-2xl flex items-center justify-between">
                       <div className="flex items-center gap-3 md:gap-4">
-                        <div className="w-10 h-10 md:w-12 md:h-12 bg-orange-100 rounded-xl flex items-center justify-center shrink-0">
-                          <Send className="w-5 h-5 md:w-6 md:h-6 text-orange-600" />
+                        <div className="w-10 h-10 md:w-12 md:h-12 bg-primary-100 rounded-xl flex items-center justify-center shrink-0">
+                          <Send className="w-5 h-5 md:w-6 md:h-6 text-primary-600" />
                         </div>
                         <div>
                           <span className="block text-sm md:text-base font-bold text-gray-800">Online Bill</span>
@@ -411,13 +411,13 @@ const RestaurantInformation = () => {
                           }}
                           className="sr-only peer"
                         />
-                        <div className="w-11 md:w-14 h-6 md:h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 md:after:h-6 after:w-5 md:after:w-6 after:transition-all peer-checked:bg-orange-600"></div>
+                        <div className="w-11 md:w-14 h-6 md:h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 md:after:h-6 after:w-5 md:after:w-6 after:transition-all peer-checked:bg-primary-600"></div>
                       </label>
                     </div>
                     <div className="mt-3 md:mt-4 bg-gradient-to-br from-slate-50 to-gray-50 border border-slate-100 p-4 md:p-6 rounded-2xl flex items-center justify-between">
                       <div className="flex items-center gap-3 md:gap-4">
-                        <div className="w-10 h-10 md:w-12 md:h-12 bg-orange-100 rounded-xl flex items-center justify-center shrink-0">
-                          <Mail className="w-5 h-5 md:w-6 md:h-6 text-orange-600" />
+                        <div className="w-10 h-10 md:w-12 md:h-12 bg-primary-100 rounded-xl flex items-center justify-center shrink-0">
+                          <Mail className="w-5 h-5 md:w-6 md:h-6 text-primary-600" />
                         </div>
                         <div>
                           <span className="block text-sm md:text-base font-bold text-gray-800">Auto email billing</span>
@@ -438,7 +438,7 @@ const RestaurantInformation = () => {
                           }}
                           className="sr-only peer"
                         />
-                        <div className="w-11 md:w-14 h-6 md:h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 md:after:h-6 after:w-5 md:after:w-6 after:transition-all peer-checked:bg-orange-600"></div>
+                        <div className="w-11 md:w-14 h-6 md:h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 md:after:h-6 after:w-5 md:after:w-6 after:transition-all peer-checked:bg-primary-600"></div>
                       </label>
                     </div>
                   </div>
@@ -455,20 +455,20 @@ const RestaurantInformation = () => {
                   <div className="space-y-6">
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-gray-700">Address</label>
-                      <input type="text" name="address" value={formData.address || ''} onChange={handleChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all" />
+                      <input type="text" name="address" value={formData.address || ''} onChange={handleChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all" />
                     </div>
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-gray-700">Google Maps Link</label>
-                      <input type="url" name="google_maps_link" value={formData.google_maps_link || ''} onChange={handleChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all" placeholder="https://maps.google.com/..." />
+                      <input type="url" name="google_maps_link" value={formData.google_maps_link || ''} onChange={handleChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all" placeholder="https://maps.google.com/..." />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <label className="block text-sm font-semibold text-gray-700">Instagram Handle</label>
-                        <input type="text" name="instagram" value={formData.social_media?.instagram || ""} onChange={handleSocialMediaChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all" placeholder="@restaurant" />
+                        <input type="text" name="instagram" value={formData.social_media?.instagram || ""} onChange={handleSocialMediaChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all" placeholder="@restaurant" />
                       </div>
                       <div className="space-y-2">
                         <label className="block text-sm font-semibold text-gray-700">Facebook Page</label>
-                        <input type="text" name="facebook" value={formData.social_media?.facebook || ""} onChange={handleSocialMediaChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all" placeholder="RestaurantOfficial" />
+                        <input type="text" name="facebook" value={formData.social_media?.facebook || ""} onChange={handleSocialMediaChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all" placeholder="RestaurantOfficial" />
                       </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -526,7 +526,7 @@ const RestaurantInformation = () => {
                   <div className="bg-gradient-to-br from-slate-50 to-gray-50/50 rounded-2xl p-4 md:p-8 border border-slate-200/60 shadow-inner">
                     <h3 className="text-base md:text-xl font-black text-gray-900 mb-4 md:mb-8 flex items-center group">
                       <div className="w-9 h-9 md:w-12 md:h-12 bg-white rounded-xl flex items-center justify-center mr-3 shadow-md group-hover:scale-110 transition-transform">
-                        <ShoppingBag className="w-5 h-5 text-orange-600" />
+                        <ShoppingBag className="w-5 h-5 text-primary-600" />
                       </div>
                       Aggregator Integration
                     </h3>
@@ -536,7 +536,7 @@ const RestaurantInformation = () => {
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <label className="text-[11px] md:text-sm font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                            <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+                            <span className="w-2 h-2 bg-primary-500 rounded-full animate-pulse"></span>
                             Swiggy API Portal
                           </label>
                           {formData.swiggy_api_key && (
@@ -545,8 +545,8 @@ const RestaurantInformation = () => {
                         </div>
                         <div className="relative group">
                           <div className="absolute inset-y-0 left-0 pl-3 md:pl-4 flex items-center pointer-events-none">
-                            <div className="w-7 h-7 md:w-8 md:h-8 bg-orange-50 rounded-lg flex items-center justify-center">
-                              <ShoppingBag className="w-4 h-4 text-orange-600" />
+                            <div className="w-7 h-7 md:w-8 md:h-8 bg-primary-50 rounded-lg flex items-center justify-center">
+                              <ShoppingBag className="w-4 h-4 text-primary-600" />
                             </div>
                           </div>
                           <input
@@ -554,13 +554,13 @@ const RestaurantInformation = () => {
                             name="swiggy_api_key"
                             value={formData.swiggy_api_key || ''}
                             onChange={handleChange}
-                            className="w-full pl-12 md:pl-16 pr-12 py-3 md:py-4 bg-white border-2 border-slate-100 rounded-xl focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all font-mono text-sm shadow-sm"
+                            className="w-full pl-12 md:pl-16 pr-12 py-3 md:py-4 bg-white border-2 border-slate-100 rounded-xl focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-mono text-sm shadow-sm"
                             placeholder="Add Swiggy Key"
                           />
                           <button
                             type="button"
                             onClick={() => setShowSwiggyKey(!showSwiggyKey)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all"
                           >
                             {showSwiggyKey ? <EyeOff className="w-4 h-4 md:w-5 md:h-5" /> : <Eye className="w-4 h-4 md:w-5 md:h-5" />}
                           </button>
@@ -617,16 +617,16 @@ const RestaurantInformation = () => {
                     </div>
                     Description
                   </h3>
-                  <textarea name="description" value={formData.description || ''} onChange={handleChange} rows="4" className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all resize-none" placeholder="Tell customers about your restaurant..."></textarea>
+                  <textarea name="description" value={formData.description || ''} onChange={handleChange} rows="4" className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all resize-none" placeholder="Tell customers about your restaurant..."></textarea>
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-4 mt-12 pt-8 border-t border-orange-100">
+              <div className="flex justify-end space-x-4 mt-12 pt-8 border-t border-primary-100">
                 <button type="button" onClick={handleReset} className="px-8 py-3.5 bg-white border border-gray-300 rounded-xl text-gray-700 font-semibold hover:bg-gray-50 transition-all shadow-sm flex items-center"><RefreshCw className="w-4 h-4 mr-2" /> Cancel</button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`px-8 py-3.5 bg-gradient-to-r from-orange-600 to-amber-600 rounded-xl text-white font-bold hover:from-orange-700 hover:to-amber-700 transition-all shadow-lg flex items-center ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`px-8 py-3.5 bg-gradient-to-r from-primary-600 to-amber-600 rounded-xl text-white font-bold hover:from-primary-700 hover:to-amber-700 transition-all shadow-lg flex items-center ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <Save className="w-4 h-4 mr-2" />
                   {loading ? 'Saving...' : 'Save Changes'}
@@ -640,18 +640,18 @@ const RestaurantInformation = () => {
                 {/* Basic Information */}
                 <div>
                   <h3 className="text-xl font-bold text-gray-900 mb-4 md:mb-6 flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                    <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-amber-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
                       <Building className="w-5 h-5 text-white" />
                     </div>
                     Basic Information
                   </h3>
                   <div className="grid grid-cols-2 gap-3 md:gap-6">
-                    <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-orange-100">
-                      <h4 className="text-[10px] md:text-sm font-semibold text-orange-600 mb-0.5 md:mb-2">Restaurant Name</h4>
+                    <div className="bg-gradient-to-br from-primary-50 to-amber-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-primary-100">
+                      <h4 className="text-[10px] md:text-sm font-semibold text-primary-600 mb-0.5 md:mb-2">Restaurant Name</h4>
                       <p className="text-sm md:text-lg font-bold text-gray-900 truncate">{restaurant?.name || 'N/A'}</p>
                     </div>
-                    <div className="bg-gradient-to-br from-orange-50 to-orange-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-orange-100">
-                      <h4 className="text-[10px] md:text-sm font-semibold text-orange-600 mb-0.5 md:mb-2">Cuisine Type</h4>
+                    <div className="bg-gradient-to-br from-primary-50 to-primary-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-primary-100">
+                      <h4 className="text-[10px] md:text-sm font-semibold text-primary-600 mb-0.5 md:mb-2">Cuisine Type</h4>
                       <p className="text-sm md:text-lg font-bold text-gray-900 truncate">{restaurant?.cuisine_type || 'N/A'}</p>
                     </div>
                   </div>
@@ -660,7 +660,7 @@ const RestaurantInformation = () => {
                 {/* Restaurant Assets Display */}
                 <div>
                   <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                    <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
                       <ImageIcon className="w-5 h-5 text-white" />
                     </div>
                     Restaurant Assets
@@ -708,29 +708,29 @@ const RestaurantInformation = () => {
                     </div>
                     Description
                   </h3>
-                  <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl md:rounded-2xl p-4 md:p-6 border border-amber-100">
+                  <div className="bg-gradient-to-br from-amber-50 to-primary-50 rounded-xl md:rounded-2xl p-4 md:p-6 border border-amber-100">
                     <p className="text-sm md:text-lg leading-relaxed text-gray-700">{restaurant?.description || 'No description provided.'}</p>
                   </div>
                 </div>
 
                 <div>
                   <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-6 flex items-center">
-                    <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-lg md:rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                    <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-primary-500 to-amber-600 rounded-lg md:rounded-xl flex items-center justify-center mr-3 shadow-lg">
                       <Globe className="w-4 h-4 md:w-5 md:h-5 text-white" />
                     </div>
                     Contact & Social Media
                   </h3>
                   <div className="grid grid-cols-2 gap-3 md:gap-6">
-                    <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-orange-100">
-                      <h4 className="text-[10px] md:text-sm font-semibold text-orange-600 mb-1 md:mb-2 flex items-center"><Phone className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" /> Phone</h4>
+                    <div className="bg-gradient-to-br from-primary-50 to-amber-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-primary-100">
+                      <h4 className="text-[10px] md:text-sm font-semibold text-primary-600 mb-1 md:mb-2 flex items-center"><Phone className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" /> Phone</h4>
                       <p className="text-xs md:text-lg font-bold text-gray-900 truncate">{restaurant?.contact_phone || 'N/A'}</p>
                     </div>
                     <div className="bg-gradient-to-br from-slate-50 to-gray-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-slate-100">
                       <h4 className="text-[10px] md:text-sm font-semibold text-slate-600 mb-1 md:mb-2 flex items-center"><Mail className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" /> Email</h4>
                       <p className="text-xs md:text-lg font-bold text-gray-900 truncate">{restaurant?.contact_email || 'N/A'}</p>
                     </div>
-                    <div className="bg-gradient-to-br from-orange-50 to-orange-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-orange-100">
-                      <h4 className="text-[10px] md:text-sm font-semibold text-orange-600 mb-1 md:mb-2 flex items-center"><Instagram className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" /> Instagram</h4>
+                    <div className="bg-gradient-to-br from-primary-50 to-primary-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-primary-100">
+                      <h4 className="text-[10px] md:text-sm font-semibold text-primary-600 mb-1 md:mb-2 flex items-center"><Instagram className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" /> Instagram</h4>
                       <p className="text-xs md:text-lg font-bold text-gray-900 truncate">{restaurant?.social_media?.instagram || 'N/A'}</p>
                     </div>
                     <div className="bg-gradient-to-br from-slate-50 to-gray-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-slate-100">
@@ -757,33 +757,33 @@ const RestaurantInformation = () => {
               {/* Features Status Display */}
               <div className="mt-5 md:mt-8">
                 <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-6 flex items-center">
-                  <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-lg md:rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                  <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-primary-500 to-amber-600 rounded-lg md:rounded-xl flex items-center justify-center mr-3 shadow-lg">
                     <Zap className="w-4 h-4 md:w-5 md:h-5 text-white" />
                   </div>
                   Features & Status
                 </h3>
                 <div className="grid grid-cols-2 gap-3 md:gap-6">
-                  <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-orange-100 flex items-center justify-between">
+                  <div className="bg-gradient-to-br from-primary-50 to-amber-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-primary-100 flex items-center justify-between">
                     <div>
-                      <h4 className="text-[10px] md:text-sm font-semibold text-orange-600 mb-0.5 md:mb-1">AI Analytics</h4>
-                      <p className={`text-xs md:text-lg font-bold ${restaurant?.ai_enabled ? 'text-orange-600' : 'text-gray-500'}`}>
+                      <h4 className="text-[10px] md:text-sm font-semibold text-primary-600 mb-0.5 md:mb-1">AI Analytics</h4>
+                      <p className={`text-xs md:text-lg font-bold ${restaurant?.ai_enabled ? 'text-primary-600' : 'text-gray-500'}`}>
                         {restaurant?.ai_enabled ? 'Enabled' : 'Disabled'}
                       </p>
                     </div>
-                    <div className={`p-1.5 md:p-3 rounded-lg md:rounded-xl ${restaurant?.ai_enabled ? 'bg-orange-100' : 'bg-gray-100'}`}>
-                      <Zap className={`w-3.5 h-3.5 md:w-6 md:h-6 ${restaurant?.ai_enabled ? 'text-orange-600' : 'text-gray-400'}`} />
+                    <div className={`p-1.5 md:p-3 rounded-lg md:rounded-xl ${restaurant?.ai_enabled ? 'bg-primary-100' : 'bg-gray-100'}`}>
+                      <Zap className={`w-3.5 h-3.5 md:w-6 md:h-6 ${restaurant?.ai_enabled ? 'text-primary-600' : 'text-gray-400'}`} />
                     </div>
                   </div>
 
-                  <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-orange-100 flex items-center justify-between">
+                  <div className="bg-gradient-to-br from-primary-50 to-amber-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-primary-100 flex items-center justify-between">
                     <div>
-                      <h4 className="text-[10px] md:text-sm font-semibold text-orange-600 mb-0.5 md:mb-1">Restaurant Status</h4>
-                      <p className={`text-xs md:text-lg font-bold ${restaurant?.is_active ? 'text-orange-600' : 'text-slate-500'}`}>
+                      <h4 className="text-[10px] md:text-sm font-semibold text-primary-600 mb-0.5 md:mb-1">Restaurant Status</h4>
+                      <p className={`text-xs md:text-lg font-bold ${restaurant?.is_active ? 'text-primary-600' : 'text-slate-500'}`}>
                         {restaurant?.is_active ? 'Active' : 'Inactive'}
                       </p>
                     </div>
-                    <div className={`p-1.5 md:p-3 rounded-lg md:rounded-xl ${restaurant?.is_active ? 'bg-orange-100' : 'bg-slate-100'}`}>
-                      <Power className={`w-3.5 h-3.5 md:w-6 md:h-6 ${restaurant?.is_active ? 'text-orange-600' : 'text-slate-500'}`} />
+                    <div className={`p-1.5 md:p-3 rounded-lg md:rounded-xl ${restaurant?.is_active ? 'bg-primary-100' : 'bg-slate-100'}`}>
+                      <Power className={`w-3.5 h-3.5 md:w-6 md:h-6 ${restaurant?.is_active ? 'text-primary-600' : 'text-slate-500'}`} />
                     </div>
                   </div>
                 </div>
@@ -792,7 +792,7 @@ const RestaurantInformation = () => {
               {/* Online Bill Delivery Status Display with Toggles */}
               <div className="mt-5 md:mt-8">
                 <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-6 flex items-center">
-                  <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-orange-600 to-amber-700 rounded-lg md:rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                  <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-primary-600 to-amber-700 rounded-lg md:rounded-xl flex items-center justify-center mr-3 shadow-lg">
                     <Receipt className="w-4 h-4 md:w-5 md:h-5 text-white" />
                   </div>
                   Online Bill Delivery
@@ -801,8 +801,8 @@ const RestaurantInformation = () => {
                 {(restaurant?.billing_features_enabled !== false) ? (
                   <>
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl md:rounded-2xl p-2.5 md:p-6 border border-orange-100 flex flex-col items-center justify-center text-center shadow-sm">
-                        <div className={`w-9 h-9 md:w-16 md:h-16 rounded-xl flex items-center justify-center mb-2 ${localOnlineBill ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                      <div className="bg-gradient-to-br from-primary-50 to-amber-50 rounded-xl md:rounded-2xl p-2.5 md:p-6 border border-primary-100 flex flex-col items-center justify-center text-center shadow-sm">
+                        <div className={`w-9 h-9 md:w-16 md:h-16 rounded-xl flex items-center justify-center mb-2 ${localOnlineBill ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
                           <Send className="w-4 h-4 md:w-8 md:h-8" />
                         </div>
                         <h4 className="text-[10px] md:text-lg font-bold text-gray-800 mb-0.5">Online Bill</h4>
@@ -826,12 +826,12 @@ const RestaurantInformation = () => {
                             className="sr-only peer"
                             disabled={!canEdit()}
                           />
-                          <div className={`w-10 h-5 md:w-14 md:h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 md:after:h-6 after:w-4 md:after:w-6 after:transition-all peer-checked:bg-orange-600 ${!canEdit() ? 'opacity-50 cursor-not-allowed' : ''}`}></div>
+                          <div className={`w-10 h-5 md:w-14 md:h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 md:after:h-6 after:w-4 md:after:w-6 after:transition-all peer-checked:bg-primary-600 ${!canEdit() ? 'opacity-50 cursor-not-allowed' : ''}`}></div>
                         </label>
                       </div>
 
                       <div className="bg-gradient-to-br from-slate-50 to-gray-50 rounded-xl md:rounded-2xl p-2.5 md:p-6 border border-slate-100 flex flex-col items-center justify-center text-center shadow-sm">
-                        <div className={`w-9 h-9 md:w-16 md:h-16 rounded-xl flex items-center justify-center mb-2 ${localAutoEmail ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                        <div className={`w-9 h-9 md:w-16 md:h-16 rounded-xl flex items-center justify-center mb-2 ${localAutoEmail ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
                           <Mail className="w-4 h-4 md:w-8 md:h-8" />
                         </div>
                         <h4 className="text-[10px] md:text-lg font-bold text-gray-800 mb-0.5">Auto Email</h4>
@@ -855,7 +855,7 @@ const RestaurantInformation = () => {
                             className="sr-only peer"
                             disabled={!canEdit()}
                           />
-                          <div className={`w-10 h-5 md:w-14 md:h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 md:after:h-6 after:w-4 md:after:w-6 after:transition-all peer-checked:bg-orange-600 ${!canEdit() ? 'opacity-50 cursor-not-allowed' : ''}`}></div>
+                          <div className={`w-10 h-5 md:w-14 md:h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 md:after:h-6 after:w-4 md:after:w-6 after:transition-all peer-checked:bg-primary-600 ${!canEdit() ? 'opacity-50 cursor-not-allowed' : ''}`}></div>
                         </label>
                       </div>
                     </div>
@@ -880,15 +880,15 @@ const RestaurantInformation = () => {
                 <div className="mt-5 md:mt-8">
                   <h3 className="text-lg md:text-xl font-black text-gray-900 mb-4 md:mb-6 flex items-center">
                     <div className="w-9 h-9 md:w-11 md:h-11 bg-white rounded-xl flex items-center justify-center mr-3 shadow-md border border-slate-50">
-                      <ShoppingBag className="w-5 h-5 text-orange-600" />
+                      <ShoppingBag className="w-5 h-5 text-primary-600" />
                     </div>
                     Marketplace Integration
                   </h3>
                   <div className="grid grid-cols-2 gap-3 md:gap-6">
                     {/* Swiggy Card */}
-                    <div className={`relative group overflow-hidden rounded-2xl md:rounded-3xl p-3 md:p-6 border transition-all duration-500 ${restaurant?.swiggy_api_key ? 'bg-gradient-to-br from-orange-500/5 to-amber-500/5 border-orange-100 shadow-sm' : 'bg-slate-50 border-slate-100'}`}>
+                    <div className={`relative group overflow-hidden rounded-2xl md:rounded-3xl p-3 md:p-6 border transition-all duration-500 ${restaurant?.swiggy_api_key ? 'bg-gradient-to-br from-primary-500/5 to-amber-500/5 border-primary-100 shadow-sm' : 'bg-slate-50 border-slate-100'}`}>
                       <div className="flex flex-col items-center text-center relative z-10">
-                        <div className={`w-12 h-12 md:w-16 md:h-16 rounded-2xl mb-3 flex items-center justify-center transition-transform group-hover:scale-110 duration-300 ${restaurant?.swiggy_api_key ? 'bg-orange-100 text-orange-600 shadow-lg shadow-orange-100' : 'bg-white text-slate-300 shadow-sm'}`}>
+                        <div className={`w-12 h-12 md:w-16 md:h-16 rounded-2xl mb-3 flex items-center justify-center transition-transform group-hover:scale-110 duration-300 ${restaurant?.swiggy_api_key ? 'bg-primary-100 text-primary-600 shadow-lg shadow-primary-100' : 'bg-white text-slate-300 shadow-sm'}`}>
                           <ShoppingBag className="w-6 h-6 md:w-8 md:h-8" />
                         </div>
                         <h4 className="text-[10px] md:text-sm font-black text-gray-900 uppercase tracking-widest mb-1">Swiggy</h4>
@@ -902,7 +902,7 @@ const RestaurantInformation = () => {
                       {canSeeApiKeys() && (
                         <button
                           onClick={() => setIsEditing(true)}
-                          className="mt-4 w-full py-2 bg-white/80 backdrop-blur-md rounded-xl text-[10px] md:text-xs font-black text-orange-600 border border-orange-100 hover:bg-orange-600 hover:text-white transition-all shadow-sm"
+                          className="mt-4 w-full py-2 bg-white/80 backdrop-blur-md rounded-xl text-[10px] md:text-xs font-black text-primary-600 border border-primary-100 hover:bg-primary-600 hover:text-white transition-all shadow-sm"
                         >
                           {restaurant?.swiggy_api_key ? 'CONFIGURE' : 'CONNECT'}
                         </button>
@@ -936,13 +936,13 @@ const RestaurantInformation = () => {
                 </div>
               )}
 
-              <div className="flex flex-col md:flex-row justify-end gap-3 mt-4 md:mt-12 pt-4 md:pt-8 border-t border-orange-100">
+              <div className="flex flex-col md:flex-row justify-end gap-3 mt-4 md:mt-12 pt-4 md:pt-8 border-t border-primary-100">
                 {(userRole === 'admin' || userRole === 'owner' || userRole === 'manager') ? (
-                  <button onClick={() => setIsEditing(true)} className="group w-full md:w-auto px-6 py-2.5 md:px-8 md:py-3.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-sm md:text-base font-bold rounded-xl hover:from-orange-700 hover:to-amber-700 transition-all duration-200 flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-[1.02] md:hover:scale-105">
+                  <button onClick={() => setIsEditing(true)} className="group w-full md:w-auto px-6 py-2.5 md:px-8 md:py-3.5 bg-gradient-to-r from-primary-600 to-amber-600 text-white text-sm md:text-base font-bold rounded-xl hover:from-primary-700 hover:to-amber-700 transition-all duration-200 flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-[1.02] md:hover:scale-105">
                     <Edit3 className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" /> Edit Information
                   </button>
                 ) : (
-                  <div className="flex items-center justify-center text-orange-600 bg-orange-50 px-4 py-2 md:px-6 md:py-3 rounded-xl border border-orange-200 text-xs md:text-sm">
+                  <div className="flex items-center justify-center text-primary-600 bg-primary-50 px-4 py-2 md:px-6 md:py-3 rounded-xl border border-primary-200 text-xs md:text-sm">
                     <Lock className="w-3 h-3 md:w-4 md:h-4 mr-2" />
                     <span className="font-semibold">View only access</span>
                   </div>
@@ -953,15 +953,15 @@ const RestaurantInformation = () => {
         </div>
 
         {/* Subscription Section */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl md:rounded-3xl shadow-xl border border-orange-100/50 overflow-hidden p-3 md:p-8">
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl md:rounded-3xl shadow-xl border border-primary-100/50 overflow-hidden p-3 md:p-8">
           <SubscriptionSection restaurantId={restaurant?.id} />
         </div>
 
         {/* Billing & Invoice Section */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl md:rounded-3xl shadow-xl border border-orange-100/50 overflow-hidden p-3 md:p-8">
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl md:rounded-3xl shadow-xl border border-primary-100/50 overflow-hidden p-3 md:p-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 md:gap-4">
             <div className="flex items-center gap-3 md:gap-4 w-full sm:w-auto text-left">
-              <div className="w-10 h-10 md:w-14 md:h-14 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg shrink-0">
+              <div className="w-10 h-10 md:w-14 md:h-14 bg-gradient-to-br from-primary-500 to-amber-600 rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg shrink-0">
                 <Receipt className="w-5 h-5 md:w-7 md:h-7 text-white" />
               </div>
               <div>
@@ -971,7 +971,7 @@ const RestaurantInformation = () => {
             </div>
             <button
               onClick={() => setShowBillingPanel(true)}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 md:py-3.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-xs md:text-sm font-bold rounded-xl hover:from-orange-700 hover:to-amber-700 transition-all shadow-md hover:shadow-lg"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 md:py-3.5 bg-gradient-to-r from-primary-600 to-amber-600 text-white text-xs md:text-sm font-bold rounded-xl hover:from-primary-700 hover:to-amber-700 transition-all shadow-md hover:shadow-lg"
             >
               <FileText className="w-4 h-4 md:w-5 md:h-5" />
               View Billing

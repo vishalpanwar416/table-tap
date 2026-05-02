@@ -67,7 +67,7 @@ const StaffMobileView = ({
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                    <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
                       <Users className="h-4 w-4 text-white" />
                     </div>
                     <div>
@@ -106,8 +106,8 @@ const StaffMobileView = ({
                     ))
                   ) : restaurantStaff.length === 0 ? (
                     <div className="text-center py-8">
-                      <div className="w-16 h-16 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <UserPlus className="h-8 w-8 text-blue-600" />
+                      <div className="w-16 h-16 bg-gradient-to-r from-primary-100 to-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <UserPlus className="h-8 w-8 text-primary-600" />
                       </div>
                       <h4 className="text-lg font-semibold text-gray-900 mb-2">
                         No staff members
@@ -117,7 +117,7 @@ const StaffMobileView = ({
                       </p>
                       <button
                         onClick={() => onAddStaff(restaurant.id)}
-                        className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
+                        className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all duration-200"
                       >
                         <UserPlus className="h-4 w-4 mr-2" />
                         Add Staff Member

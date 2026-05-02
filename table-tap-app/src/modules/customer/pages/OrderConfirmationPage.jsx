@@ -98,7 +98,7 @@ const OrderConfirmationPage = () => {
       <div className="min-h-screen bg-black flex items-center justify-center text-white">
         <div className="text-center">
           <p className="text-red-400 mb-4">{error}</p>
-          <button onClick={() => navigate('/home')} className="text-orange-500 mt-4">
+          <button onClick={() => navigate('/home')} className="text-primary-500 mt-4">
             Go Home
           </button>
         </div>
@@ -111,7 +111,7 @@ const OrderConfirmationPage = () => {
       <div className="min-h-screen bg-black flex items-center justify-center text-white">
         <div className="text-center">
           <p>Order not found</p>
-          <button onClick={handleGoHome} className="text-orange-500 mt-4">
+          <button onClick={handleGoHome} className="text-primary-500 mt-4">
             Go Home
           </button>
         </div>
@@ -125,7 +125,7 @@ const OrderConfirmationPage = () => {
       <div className="px-6 py-8">
         <button
           onClick={handleGoHome}
-          className="text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+          className="text-primary-500 hover:text-primary-600 transition-all duration-300 p-2 rounded-full hover:bg-primary-500/10 active:bg-primary-500/20 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
           aria-label="Go back to home"
         >
           <ChevronLeft size={30} />
@@ -170,13 +170,13 @@ const OrderConfirmationPage = () => {
           {orderDetails.order_number && (
             <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 mb-4 shadow-lg border border-white/10">
               <p className="text-xs text-gray-400">Order Number</p>
-              <p className="text-lg font-semibold text-orange-400 tracking-wider">{orderDetails.order_number}</p>
+              <p className="text-lg font-semibold text-primary-400 tracking-wider">{orderDetails.order_number}</p>
             </div>
           )}
 
           {orderDetails.table_number && (
             <div className="flex items-center justify-center gap-2 mb-4">
-              <MapPin className="w-5 h-5 text-orange-400" />
+              <MapPin className="w-5 h-5 text-primary-400" />
               <span className="font-medium">Table {orderDetails.table_number}</span>
             </div>
           )}
@@ -192,7 +192,7 @@ const OrderConfirmationPage = () => {
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={handleTrackOrder}
-            className="w-full bg-orange-500 text-white py-3 px-6 rounded-lg font-semibold shadow-lg hover:bg-orange-600 transition-colors"
+            className="w-full bg-primary-500 text-white py-3 px-6 rounded-lg font-semibold shadow-lg hover:bg-primary-600 transition-colors"
           >
             Track My Order
           </motion.button>
@@ -200,7 +200,7 @@ const OrderConfirmationPage = () => {
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={handleGoHome}
-            className="w-full border border-orange-500 text-orange-400 py-3 px-6 rounded-lg font-semibold hover:bg-orange-500 hover:text-white transition-colors"
+            className="w-full border border-primary-500 text-primary-400 py-3 px-6 rounded-lg font-semibold hover:bg-primary-500 hover:text-white transition-colors"
           >
             Order More
           </motion.button>

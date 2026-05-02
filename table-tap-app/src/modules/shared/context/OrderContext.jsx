@@ -46,26 +46,26 @@ export const OrderProvider = ({ children }) => {
 
   const navigate = useNavigate();
 
-  // Fetch user orders from Supabase with pagination support
-  const fetchUserOrders = useCallback(async (page = 1, pageSize = 10) => {
+  // Fetch the user's orders. Server returns up to MAX_ORDERS rows; the UI
+  // does its own client-side filtering/pagination.
+  const fetchUserOrders = useCallback(async () => {
     if (!user?.id) {
       setUserOrders([]);
       setLoading(false);
       return;
     }
 
+    const MAX_ORDERS = 200;
+
     try {
       setLoading(true);
-
-      const from = (page - 1) * pageSize;
-      const to = from + pageSize - 1;
 
       const { data, count, error } = await supabase
         .from('orders')
         .select('*', { count: 'exact' })
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .range(from, to);
+        .limit(MAX_ORDERS);
 
       if (error) throw error;
 
@@ -73,6 +73,7 @@ export const OrderProvider = ({ children }) => {
       setOrdersTotal(count || 0);
       setError(null);
     } catch (err) {
+      if (err?.name === 'AbortError' || err?.message?.includes('aborted')) return;
       setError('Failed to load orders');
     } finally {
       setLoading(false);

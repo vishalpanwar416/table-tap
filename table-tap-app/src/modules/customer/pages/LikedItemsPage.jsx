@@ -168,7 +168,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
                 <span className="text-xs md:text-sm text-gray-400 line-through font-spartan">
                   ₹{Number(item.price).toFixed(0)}
                 </span>
-                <span className="text-xl md:text-2xl font-extrabold text-orange-600 leading-none font-spartan">
+                <span className="text-xl md:text-2xl font-extrabold text-primary-600 leading-none font-spartan">
                   ₹{(
                     item.discounttype === "Percentage"
                       ? item.price - (item.price * (item.discountvalue / 100))
@@ -201,7 +201,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
                 >
                   <motion.button
                     onClick={handleDecrement}
-                    className="text-white hover:text-orange-300 rounded-full w-7 h-7 flex items-center justify-center text-lg font-bold transition-colors font-spartan"
+                    className="text-white hover:text-primary-300 rounded-full w-7 h-7 flex items-center justify-center text-lg font-bold transition-colors font-spartan"
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     aria-label="Decrease quantity"
@@ -250,7 +250,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
             {item.tags.slice(0, 2).map((tag, tagIndex) => (
               <span
                 key={tag}
-                className="bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-1 rounded-full border border-orange-200 font-spartan"
+                className="bg-primary-100 text-primary-800 text-xs font-medium px-2.5 py-1 rounded-full border border-primary-200 font-spartan"
               >
                 {tag}
               </span>
@@ -347,7 +347,7 @@ const LikedItemsPage = () => {
       <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col relative">
         <div className="relative flex items-center mb-2 md:mb-3">
           <motion.button
-            className="absolute left-2 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-20"
+            className="absolute left-2 text-primary-500 hover:text-primary-600 transition-all duration-300 p-2 rounded-full hover:bg-primary-500/10 active:bg-primary-500/20 focus:outline-none focus:ring-2 focus:ring-primary-500/30 z-20"
             onClick={() => navigate(-1)}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}

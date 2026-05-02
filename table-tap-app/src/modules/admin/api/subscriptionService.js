@@ -276,6 +276,9 @@ export const assignSubscriptionToRestaurant = async (subscriptionData) => {
       .maybeSingle();
 
     if (error) throw error;
+    if (!data) {
+      throw new Error('Subscription was not created. This usually means RLS denied the insert — confirm your account has the admin role and that the subscriptions write policies migration has been applied.');
+    }
 
     // Also update AI status based on plan
     if (plan.ai_features_enabled) {
@@ -542,29 +545,31 @@ export const getSubscriptionStats = async () => {
       supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'cancelled')
     ]);
 
-    // 2. Get counts for each plan (only for active subscriptions)
+    // 2. Get plan distribution (all non-cancelled subscriptions for chart)
     const { data: plansData } = await supabase
       .from('subscriptions')
       .select('plan_name')
-      .eq('status', 'active');
+      .not('status', 'eq', 'cancelled');
 
     const planCounts = {};
     (plansData || []).forEach(s => {
       planCounts[s.plan_name] = (planCounts[s.plan_name] || 0) + 1;
     });
 
-    // 3. Get revenue (only for active subscriptions)
-    // Note: In a real large scale app, you'd use a RPC or specialized view for this.
-    // For now, we'll fetch the sum of active subscriptions.
-    const { data: revenueData } = await supabase
-      .from('subscriptions')
-      .select('total_amount, billing_cycle')
-      .eq('status', 'active');
+    // 3. Total revenue = sum of all actual payments in history
+    // MRR = only active subscriptions (forward-looking recurring metric)
+    const [
+      { data: historyRevenueData },
+      { data: activeRevenueData }
+    ] = await Promise.all([
+      supabase.from('subscription_history').select('amount_paid'),
+      supabase.from('subscriptions').select('total_amount, billing_cycle').eq('status', 'active'),
+    ]);
 
-    const totalRevenue = (revenueData || []).reduce((sum, s) => sum + (s.total_amount || 0), 0);
+    const totalRevenue = (historyRevenueData || []).reduce((sum, h) => sum + (h.amount_paid || 0), 0);
 
-    // MRR Calculation
-    const mrr = (revenueData || []).reduce((sum, s) => {
+    // MRR from active subscriptions only
+    const mrr = (activeRevenueData || []).reduce((sum, s) => {
       if (s.billing_cycle === 'monthly') return sum + (s.total_amount || 0);
       if (s.billing_cycle === 'yearly') return sum + ((s.total_amount || 0) / 12);
       return sum;

@@ -526,7 +526,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
         <div className="flex overflow-x-auto pb-2 gap-2 no-scrollbar md:flex-wrap md:pb-0">
           <button
             onClick={() => openModal('add')}
-            className="flex items-center gap-1.5 md:gap-2 bg-orange-500 text-white px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm rounded-lg hover:bg-orange-600 transition-colors whitespace-nowrap flex-shrink-0"
+            className="flex items-center gap-1.5 md:gap-2 bg-primary-500 text-white px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm rounded-lg hover:bg-primary-600 transition-colors whitespace-nowrap flex-shrink-0"
           >
             <Plus className="w-3.5 h-3.5 md:w-4 md:h-4" />
             Add Item
@@ -534,7 +534,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
 
           <button
             onClick={() => openModal('takeOut')}
-            className="flex items-center gap-1.5 md:gap-2 bg-orange-500 text-white px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm rounded-lg hover:bg-orange-600 transition-colors whitespace-nowrap flex-shrink-0"
+            className="flex items-center gap-1.5 md:gap-2 bg-primary-500 text-white px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm rounded-lg hover:bg-primary-600 transition-colors whitespace-nowrap flex-shrink-0"
           >
             <Minus className="w-3.5 h-3.5 md:w-4 md:h-4" />
             Take Out
@@ -591,7 +591,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
         <StatsCard className="min-w-[120px] flex-shrink-0 snap-start" icon={TrendingDown} value={stats.lowStock} label="Low Stock" colorClass="text-yellow-600" />
         <StatsCard className="min-w-[120px] flex-shrink-0 snap-start" icon={AlertTriangle} value={stats.outOfStock} label="No Stock" colorClass="text-red-600" />
         <StatsCard className="min-w-[120px] flex-shrink-0 snap-start" icon={IndianRupee} value={`₹${stats.totalValue.toFixed(2)}`} label="Value" colorClass="text-green-600" />
-        <StatsCard className="min-w-[120px] flex-shrink-0 snap-start" icon={Clock} value={stats.expiringSoon} label="Expiring" colorClass="text-orange-600" />
+        <StatsCard className="min-w-[120px] flex-shrink-0 snap-start" icon={Clock} value={stats.expiringSoon} label="Expiring" colorClass="text-primary-600" />
       </div>
 
       {/* Filters and Search */}
@@ -601,7 +601,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
             <select
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
-              className="w-full px-2 py-1.5 md:px-4 md:py-2 text-xs md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              className="w-full px-2 py-1.5 md:px-4 md:py-2 text-xs md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             >
               <option value="all">All Cats</option>
               {INVENTORY_CATEGORIES.map(category => (
@@ -612,7 +612,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full px-2 py-1.5 md:px-4 md:py-2 text-xs md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              className="w-full px-2 py-1.5 md:px-4 md:py-2 text-xs md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             >
               <option value="all">All Status</option>
               <option value={STOCK_STATUS.IN_STOCK}>In Stock</option>
@@ -627,7 +627,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                 setSortBy(field);
                 setSortOrder(order);
               }}
-              className="w-full px-2 py-1.5 md:px-4 md:py-2 text-xs md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              className="w-full px-2 py-1.5 md:px-4 md:py-2 text-xs md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             >
               <option value="name-asc">Name</option>
               <option value="name-desc">Name (Z-A)</option>
@@ -643,7 +643,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
             <button
               onClick={() => setViewMode('table')}
               className={`px-3 py-1.5 md:px-3 md:py-2 rounded-lg border transition-colors ${viewMode === 'table'
-                ? 'bg-orange-500 text-white border-orange-500'
+                ? 'bg-primary-500 text-white border-primary-500'
                 : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                 }`}
             >
@@ -652,7 +652,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
             <button
               onClick={() => setViewMode('grid')}
               className={`px-3 py-1.5 md:px-3 md:py-2 rounded-lg border transition-colors ${viewMode === 'grid'
-                ? 'bg-orange-500 text-white border-orange-500'
+                ? 'bg-primary-500 text-white border-primary-500'
                 : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                 }`}
             >
@@ -665,7 +665,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
       {/* Loading State */}
       {isLoadingData && (
         <div className="flex justify-center py-8">
-          <RefreshCw className="w-8 h-8 text-orange-500 animate-spin" />
+          <RefreshCw className="w-8 h-8 text-primary-500 animate-spin" />
         </div>
       )}
 
@@ -706,7 +706,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                     <div className="flex items-center gap-2 text-xs">
                       <span className="font-medium text-gray-700">₹{item.cost_per_unit}</span>
                       {isExpiringSoon && (
-                        <span className="flex items-center gap-1 text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">
+                        <span className="flex items-center gap-1 text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded">
                           <AlertCircle size={10} /> {daysUntilExpiry}d
                         </span>
                       )}
@@ -736,7 +736,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       type="checkbox"
                       checked={selectedItems.length === filteredItems.length && filteredItems.length > 0}
                       onChange={handleSelectAll}
-                      className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                      className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                     />
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -784,7 +784,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                             type="checkbox"
                             checked={selectedItems.includes(item.id)}
                             onChange={() => handleItemSelect(item.id)}
-                            className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                            className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                           />
                         </td>
                         <td className="px-6 py-4">
@@ -818,14 +818,14 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                           </div>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
-                          ₹{item.cost_per_unit.toFixed(2)}
+                          ₹{(item.cost_per_unit || 0).toFixed(2)}
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900">
                             {new Date(item.expiry_date).toLocaleDateString()}
                           </div>
                           {isExpiringSoon && (
-                            <div className="text-xs text-orange-600 flex items-center gap-1">
+                            <div className="text-xs text-primary-600 flex items-center gap-1">
                               <AlertCircle className="w-3 h-3" />
                               {daysUntilExpiry}d
                             </div>
@@ -855,7 +855,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                             {(status === STOCK_STATUS.LOW_STOCK || status === STOCK_STATUS.OUT_OF_STOCK) && (
                               <button
                                 onClick={() => openModal('reorder', item)}
-                                className="text-orange-600 hover:text-orange-800"
+                                className="text-primary-600 hover:text-primary-800"
                                 title="Reorder"
                               >
                                 <ShoppingCart className="w-4 h-4" />
@@ -863,7 +863,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                             )}
                             <button
                               onClick={() => openModal('edit', item)}
-                              className="text-orange-600 hover:text-orange-800"
+                              className="text-primary-600 hover:text-primary-800"
                               title="Edit"
                             >
                               <Settings className="w-4 h-4" />
@@ -921,7 +921,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                         type="checkbox"
                         checked={selectedItems.includes(item.id)}
                         onChange={() => handleItemSelect(item.id)}
-                        className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                       />
                     </div>
 
@@ -941,7 +941,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-gray-500">Cost</span>
                         <span className="text-xs font-medium text-gray-900">
-                          ₹{item.cost_per_unit.toFixed(2)}
+                          ₹{(item.cost_per_unit || 0).toFixed(2)}
                         </span>
                       </div>
 
@@ -959,7 +959,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                           {status.replace('-', ' ')}
                         </span>
                         {isExpiringSoon && (
-                          <span className="text-xs text-orange-600 flex items-center gap-1">
+                          <span className="text-xs text-primary-600 flex items-center gap-1">
                             <AlertCircle className="w-3 h-3" />
                             {daysUntilExpiry}d
                           </span>
@@ -981,7 +981,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                         </button>
                         <button
                           onClick={() => openModal('edit', item)}
-                          className="flex-1 text-xs bg-orange-50 text-orange-600 py-1 rounded hover:bg-orange-100 transition-colors"
+                          className="flex-1 text-xs bg-primary-50 text-primary-600 py-1 rounded hover:bg-primary-100 transition-colors"
                         >
                           Edit
                         </button>
@@ -1107,7 +1107,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost</label>
                     <p className="text-sm text-gray-900">
-                      ₹{selectedItem.cost_per_unit.toFixed(2)}
+                      ₹{(selectedItem.cost_per_unit || 0).toFixed(2)}
                     </p>
                   </div>
 
@@ -1120,7 +1120,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       {(() => {
                         const daysUntilExpiry = Math.ceil((new Date(selectedItem.expiry_date) - new Date()) / (1000 * 60 * 60 * 24));
                         return (
-                          <span className="ml-2 text-orange-600">
+                          <span className="ml-2 text-primary-600">
                             (Expires in {daysUntilExpiry} days)
                           </span>
                         );
@@ -1204,7 +1204,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       required
                       value={formData.name}
                       onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
                   </div>
 
@@ -1216,7 +1216,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       required
                       value={formData.category}
                       onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     >
                       <option value="">Select Category</option>
                       {INVENTORY_CATEGORIES.map(category => (
@@ -1233,7 +1233,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       type="text"
                       value={formData.barcode}
                       onChange={(e) => setFormData(prev => ({ ...prev, barcode: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="Optional barcode"
                     />
                   </div>
@@ -1246,7 +1246,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       type="text"
                       value={formData.location}
                       onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="e.g., Refrigerator A1"
                     />
                   </div>
@@ -1271,7 +1271,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       min="0"
                       value={formData.current_stock}
                       onChange={(e) => setFormData(prev => ({ ...prev, current_stock: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
                   </div>
 
@@ -1283,7 +1283,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       required
                       value={formData.unit}
                       onChange={(e) => setFormData(prev => ({ ...prev, unit: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     >
                       <option value="">Select Unit</option>
                       {INVENTORY_UNITS.map(unit => (
@@ -1303,7 +1303,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       min="0"
                       value={formData.min_stock_level}
                       onChange={(e) => setFormData(prev => ({ ...prev, min_stock_level: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
                   </div>
 
@@ -1318,7 +1318,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       min="0"
                       value={formData.max_stock_level}
                       onChange={(e) => setFormData(prev => ({ ...prev, max_stock_level: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
                   </div>
 
@@ -1332,7 +1332,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       min="0"
                       value={formData.reorder_point}
                       onChange={(e) => setFormData(prev => ({ ...prev, reorder_point: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="Auto-reorder threshold"
                     />
                   </div>
@@ -1346,7 +1346,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       min="0"
                       value={formData.lead_time_days}
                       onChange={(e) => setFormData(prev => ({ ...prev, lead_time_days: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="Days to receive order"
                     />
                   </div>
@@ -1371,7 +1371,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       min="0"
                       value={formData.cost_per_unit}
                       onChange={(e) => setFormData(prev => ({ ...prev, cost_per_unit: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
                   </div>
 
@@ -1383,7 +1383,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       type="date"
                       value={formData.expiry_date}
                       onChange={(e) => setFormData(prev => ({ ...prev, expiry_date: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
                   </div>
                 </div>
@@ -1405,7 +1405,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       required
                       value={formData.supplier}
                       onChange={(e) => setFormData(prev => ({ ...prev, supplier: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
                   </div>
 
@@ -1417,7 +1417,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       type="text"
                       value={formData.supplier_contact}
                       onChange={(e) => setFormData(prev => ({ ...prev, supplier_contact: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="Phone number"
                     />
                   </div>
@@ -1430,7 +1430,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       type="email"
                       value={formData.supplier_email}
                       onChange={(e) => setFormData(prev => ({ ...prev, supplier_email: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="Email address"
                     />
                   </div>
@@ -1451,7 +1451,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                     rows="3"
                     value={formData.description}
                     onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     placeholder="Optional description or notes about this item..."
                   />
                 </div>
@@ -1467,7 +1467,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                 </button>
                 <button
                   type="submit"
-                  className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
                 >
                   <Save className="w-4 h-4" />
                   {activeModal === 'edit' ? 'Update Item' : 'Add Item'}
@@ -1520,7 +1520,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                   min="0"
                   value={stockUpdateData.newStockLevel}
                   onChange={(e) => setStockUpdateData(prev => ({ ...prev, newStockLevel: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 />
               </div>
 
@@ -1531,7 +1531,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                 <select
                   value={stockUpdateData.reason}
                   onChange={(e) => setStockUpdateData(prev => ({ ...prev, reason: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 >
                   <option value="">Select Reason</option>
                   <option value="received">Received from supplier</option>
@@ -1550,7 +1550,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                   rows="2"
                   value={stockUpdateData.notes}
                   onChange={(e) => setStockUpdateData(prev => ({ ...prev, notes: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="Optional notes about this stock update..."
                 />
               </div>
@@ -1625,7 +1625,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                   min="0.01"
                   value={reorderData.quantity}
                   onChange={(e) => setReorderData(prev => ({ ...prev, quantity: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 />
               </div>
 
@@ -1637,7 +1637,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                   type="date"
                   value={reorderData.expectedDelivery}
                   onChange={(e) => setReorderData(prev => ({ ...prev, expectedDelivery: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 />
               </div>
 
@@ -1649,7 +1649,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                   rows="2"
                   value={reorderData.notes}
                   onChange={(e) => setReorderData(prev => ({ ...prev, notes: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="Any special instructions or notes..."
                 />
               </div>
@@ -1664,7 +1664,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                 </button>
                 <button
                   type="submit"
-                  className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
                 >
                   <ShoppingCart className="w-4 h-4" />
                   Place Order
@@ -1702,7 +1702,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                     const item = inventoryItems.find(i => i.id.toString() === itemId);
                     setSelectedItem(item || null);
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 >
                   <option value="">Select an item to take out</option>
                   {inventoryItems
@@ -1739,7 +1739,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       required
                       value={takeOutData.quantity}
                       onChange={(e) => setTakeOutData(prev => ({ ...prev, quantity: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder={`Max: ${selectedItem.current_stock} ${selectedItem.unit}`}
                     />
                   </div>
@@ -1752,7 +1752,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       required
                       value={takeOutData.reason}
                       onChange={(e) => setTakeOutData(prev => ({ ...prev, reason: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     >
                       <option value="">Select Reason</option>
                       <option value="production">Used in production</option>
@@ -1769,7 +1769,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       rows="2"
                       value={takeOutData.notes}
                       onChange={(e) => setTakeOutData(prev => ({ ...prev, notes: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="Optional notes about this take out..."
                     />
                   </div>

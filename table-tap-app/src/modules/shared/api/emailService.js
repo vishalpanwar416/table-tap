@@ -663,7 +663,7 @@ const generateWhatsAppBillMessage = (order, restaurant) => {
         minute: '2-digit'
     });
 
-    const items = order.items.map(item =>
+    const items = (order.items || []).map(item =>
         `• ${item.name} x${item.quantity} - ${formatCurrency(item.price * item.quantity)}`
     ).join('\n');
 

@@ -99,14 +99,14 @@ const FloorPlanView = ({ searchTerm, onViewOrders, onCreateOrder }) => {
         },
         paid: {
             label: "Paid Table",
-            color: "bg-orange-100 border-orange-300 text-orange-800",
-            legendColor: "bg-orange-400",
+            color: "bg-primary-100 border-primary-300 text-primary-800",
+            legendColor: "bg-primary-400",
             shortLabel: "Paid"
         },
         reserved: {
             label: "Reserved",
-            color: "bg-orange-100 border-orange-300 text-orange-800",
-            legendColor: "bg-orange-400",
+            color: "bg-primary-100 border-primary-300 text-primary-800",
+            legendColor: "bg-primary-400",
             shortLabel: "Reserved"
         },
         cleaning: {
@@ -295,7 +295,7 @@ const FloorPlanView = ({ searchTerm, onViewOrders, onCreateOrder }) => {
     if (loading && tables.length === 0) {
         return (
             <div className="flex flex-col justify-center items-center min-h-[320px] gap-4">
-                <Loader className="animate-spin text-orange-500" size={40} />
+                <Loader className="animate-spin text-primary-500" size={40} />
                 <p className="text-gray-500 text-sm">Loading floor plan…</p>
             </div>
         );
@@ -361,7 +361,7 @@ const FloorPlanView = ({ searchTerm, onViewOrders, onCreateOrder }) => {
                             fetchOrders(true);
                         }}
                         disabled={refreshing}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-600 text-white shadow-sm hover:bg-orange-700 disabled:opacity-70 disabled:cursor-not-allowed transition-colors text-xs font-semibold"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-600 text-white shadow-sm hover:bg-primary-700 disabled:opacity-70 disabled:cursor-not-allowed transition-colors text-xs font-semibold"
                     >
                         <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
                         Refresh
@@ -374,7 +374,7 @@ const FloorPlanView = ({ searchTerm, onViewOrders, onCreateOrder }) => {
                 {Object.entries(filteredLocations).map(([location, locTables]) => (
                     <div key={location}>
                         <h3 className="text-sm md:text-base font-bold text-gray-800 mb-3 flex items-center gap-2 uppercase tracking-wide">
-                            <span className="w-1.5 h-1.5 bg-orange-500 rounded-full" />
+                            <span className="w-1.5 h-1.5 bg-primary-500 rounded-full" />
                             {location}
                         </h3>
 
@@ -398,7 +398,7 @@ const FloorPlanView = ({ searchTerm, onViewOrders, onCreateOrder }) => {
                                     >
                                         {/* Status Badge - Top Right */}
                                         {orderCount > 0 && (
-                                            <span className={`absolute top-2 right-2 min-w-[20px] h-5 px-1 flex items-center justify-center rounded-full bg-white text-orange-600 text-[10px] font-bold shadow-sm z-10`}>
+                                            <span className={`absolute top-2 right-2 min-w-[20px] h-5 px-1 flex items-center justify-center rounded-full bg-white text-primary-600 text-[10px] font-bold shadow-sm z-10`}>
                                                 {orderCount}
                                             </span>
                                         )}
@@ -450,7 +450,7 @@ const FloorPlanView = ({ searchTerm, onViewOrders, onCreateOrder }) => {
                                 <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                                     Table {selectedTable.table.tableNumber}
                                     {selectedTable.orders.length > 0 && (
-                                        <span className="bg-orange-100 text-orange-700 text-xs px-2 py-0.5 rounded-full">
+                                        <span className="bg-primary-100 text-primary-700 text-xs px-2 py-0.5 rounded-full">
                                             {selectedTable.orders.length} orders
                                         </span>
                                     )}
@@ -488,7 +488,7 @@ const FloorPlanView = ({ searchTerm, onViewOrders, onCreateOrder }) => {
                                         onClick={() => handleUpdateTableStatus('reserved')}
                                         disabled={updatingStatus}
                                         className={`px-1 py-2 rounded-lg text-[10px] sm:text-xs font-medium border transition-all ${selectedTable.table.manualStatus === 'reserved'
-                                            ? 'bg-orange-600 text-white border-orange-600'
+                                            ? 'bg-primary-600 text-white border-primary-600'
                                             : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                                             }`}
                                     >
@@ -593,7 +593,7 @@ const FloorPlanView = ({ searchTerm, onViewOrders, onCreateOrder }) => {
                                             setSelectedTable(null);
                                             onViewOrders();
                                         }}
-                                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-orange-600 text-white font-bold text-sm shadow-md hover:bg-orange-700 active:scale-95 transition-all"
+                                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-primary-600 text-white font-bold text-sm shadow-md hover:bg-primary-700 active:scale-95 transition-all"
                                     >
                                         <ExternalLink className="w-4 h-4" />
                                         Manage Orders

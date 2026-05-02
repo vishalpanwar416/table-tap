@@ -80,7 +80,7 @@ export const getStatusIcon = (status) => {
     case 'pending':
       return <Clock className="h-5 w-5 text-yellow-500" />;
     case 'preparing':
-      return <Truck className="h-5 w-5 text-orange-500" />;
+      return <Truck className="h-5 w-5 text-primary-500" />;
     case 'ready':
       return <CheckCircle className="h-5 w-5 text-green-500" />;
     case 'rejected':
@@ -97,7 +97,7 @@ export const getStatusIcon = (status) => {
 export const getStatusBadge = (status) => {
   const statusClasses = {
     pending: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
-    preparing: 'bg-orange-100 text-orange-800 border border-orange-200',
+    preparing: 'bg-primary-100 text-primary-800 border border-primary-200',
     ready: 'bg-green-100 text-green-800 border border-green-200',
     rejected: 'bg-red-100 text-red-800 border border-red-200',
     cancelled: 'bg-gray-100 text-gray-800 border border-gray-200',

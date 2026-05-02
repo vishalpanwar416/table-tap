@@ -73,34 +73,41 @@ const AdminDashboard = ({
     return 'Good Evening';
   }, [currentTime]);
 
-  // Fetch all dashboard data
+  // Prop-derived stats — update immediately when parent data arrives, no network call
+  const restaurantStats = useMemo(() => ({
+    total: totalRestaurants || restaurants?.length || 0,
+    active: restaurants?.filter(r => r.is_active).length || 0,
+    inactive: restaurants?.filter(r => !r.is_active).length || 0,
+    withAI: restaurants?.filter(r => r.ai_enabled).length || 0,
+    withAggregators: restaurants?.filter(r => r.aggregators_enabled).length || 0
+  }), [restaurants, totalRestaurants]);
+
+  const staffStats = useMemo(() => ({
+    total: totalStaff || staff?.length || 0,
+    connected: staff?.filter(s => s.connected).length || 0,
+    pending: staff?.filter(s => !s.connected).length || 0,
+    managers: staff?.filter(s => s.role === 'manager').length || 0,
+    captains: staff?.filter(s => s.role === 'captain').length || 0,
+    chefs: staff?.filter(s => s.role === 'chef').length || 0,
+    waiters: staff?.filter(s => s.role === 'waiter').length || 0
+  }), [staff, totalStaff]);
+
+  // Sync prop-derived stats into the stats state so all JSX stays consistent
+  useEffect(() => {
+    setStats(prev => ({ ...prev, restaurants: restaurantStats, staff: staffStats }));
+    setTopRestaurants([...(restaurants || [])].filter(r => r.is_active).slice(0, 5));
+  }, [restaurantStats, staffStats, restaurants]);
+
+  // Fetch network data only once on mount
   useEffect(() => {
     fetchDashboardData();
-  }, [restaurants, staff]);
+  }, []);
 
   const fetchDashboardData = async () => {
     setLoading(true);
     // Safety net — never hang longer than 8s regardless of network
     const safetyTimer = setTimeout(() => setLoading(false), 8000);
     try {
-      // Stats derived from already-loaded props — no network call
-      const restaurantStats = {
-        total: totalRestaurants || restaurants?.length || 0,
-        active: restaurants?.filter(r => r.is_active).length || 0,
-        inactive: restaurants?.filter(r => !r.is_active).length || 0,
-        withAI: restaurants?.filter(r => r.ai_enabled).length || 0,
-        withAggregators: restaurants?.filter(r => r.aggregators_enabled).length || 0
-      };
-      const staffStats = {
-        total: totalStaff || staff?.length || 0,
-        connected: staff?.filter(s => s.connected).length || 0,
-        pending: staff?.filter(s => !s.connected).length || 0,
-        managers: staff?.filter(s => s.role === 'manager').length || 0,
-        captains: staff?.filter(s => s.role === 'captain').length || 0,
-        chefs: staff?.filter(s => s.role === 'chef').length || 0,
-        waiters: staff?.filter(s => s.role === 'waiter').length || 0
-      };
-
       // Fire ALL network requests in parallel
       const now = new Date();
       const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
@@ -166,9 +173,8 @@ const AdminDashboard = ({
       const lastMonthTotal = (lastMonthRes?.data || []).reduce((s, r) => s + (r.amount_paid || 0), 0);
       const growth = lastMonthTotal > 0 ? ((thisMonthTotal - lastMonthTotal) / lastMonthTotal * 100) : 0;
 
-      setStats({
-        restaurants: restaurantStats,
-        staff: staffStats,
+      setStats(prev => ({
+        ...prev,
         subscriptions: {
           total: subStats?.totalSubscriptions || 0,
           active: subStats?.activeSubscriptions || 0,
@@ -184,11 +190,9 @@ const AdminDashboard = ({
           lastMonth: lastMonthTotal
         },
         plans: subStats?.planCounts || {}
-      });
+      }));
 
       if (plansRes?.data) setAvailablePlans(plansRes.data);
-
-      setTopRestaurants([...(restaurants || [])].filter(r => r.is_active).slice(0, 5));
 
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -246,8 +250,8 @@ const AdminDashboard = ({
     switch (action) {
       case 'created': return <CheckCircle className="text-green-500" {...iconProps} />;
       case 'cancelled': return <XCircle className="text-red-500" {...iconProps} />;
-      case 'renewed': return <RefreshCw className="text-blue-500" {...iconProps} />;
-      case 'upgraded': return <TrendingUp className="text-purple-500" {...iconProps} />;
+      case 'renewed': return <RefreshCw className="text-primary-500" {...iconProps} />;
+      case 'upgraded': return <TrendingUp className="text-green-500" {...iconProps} />;
       case 'reactivated': return <Zap className="text-amber-500" {...iconProps} />;
       default: return <Activity className="text-gray-500" {...iconProps} />;
     }
@@ -257,10 +261,10 @@ const AdminDashboard = ({
     switch (action) {
       case 'created': return 'bg-green-50 text-green-700 border-green-200';
       case 'cancelled': return 'bg-red-50 text-red-700 border-red-200';
-      case 'renewed': return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 'upgraded': return 'bg-purple-50 text-purple-700 border-purple-200';
+      case 'renewed': return 'bg-primary-50 text-primary-700 border-primary-200';
+      case 'upgraded': return 'bg-primary-50 text-primary-700 border-primary-200';
       case 'reactivated': return 'bg-amber-50 text-amber-700 border-amber-200';
-      default: return 'bg-gray-50 text-gray-700 border-gray-200';
+      default: return 'bg-slate-50 text-gray-700 border-gray-200';
     }
   };
 
@@ -275,7 +279,7 @@ const AdminDashboard = ({
 
   // Donut chart data - Dynamic from available plans
   const planTotal = Object.values(stats.plans).reduce((sum, count) => sum + count, 0);
-  const planColors = ['#3B82F6', '#8B5CF6', '#F59E0B', '#10B981', '#6366F1', '#EC4899'];
+  const planColors = ['#f59e0b', '#fbbf24', '#f97316', '#ea580c', '#334155', '#1e293b'];
   const planData = useMemo(() => {
     return availablePlans.map((plan, index) => ({
       name: plan.name,
@@ -288,8 +292,8 @@ const AdminDashboard = ({
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
         <div className="relative mb-4">
-          <div className="w-12 h-12 md:w-16 md:h-16 border-4 border-purple-200 rounded-full animate-pulse"></div>
-          <div className="absolute top-0 left-0 w-12 h-12 md:w-16 md:h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-12 h-12 md:w-16 md:h-16 border-4 border-primary-200 rounded-full animate-pulse"></div>
+          <div className="absolute top-0 left-0 w-12 h-12 md:w-16 md:h-16 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
         <div className="text-center">
           <p className="text-gray-900 font-semibold text-lg">Loading Dashboard...</p>
@@ -302,22 +306,22 @@ const AdminDashboard = ({
   return (
     <div className="space-y-2 md:space-y-6 pb-4 md:pb-8">
       {/* Welcome Header - Compact */}
-      <div className="bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 rounded-2xl p-2.5 md:p-5 text-white relative overflow-hidden shadow-lg shadow-indigo-200 mb-1.5 md:mb-6">
+      <div className="bg-slate-900 rounded-2xl p-2.5 md:p-5 text-white relative overflow-hidden shadow-lg mb-1.5 md:mb-6">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl"></div>
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <Calendar size={12} className="text-yellow-300" />
-              <span className="text-indigo-100 font-bold uppercase text-[9px] md:text-[10px] tracking-widest">{currentTime.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+              <span className="text-slate-400 font-bold uppercase text-[9px] md:text-[10px] tracking-widest">{currentTime.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
             </div>
             <h1 className="text-xl md:text-3xl font-black tracking-tight flex items-center gap-2">
               {greeting},
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-purple-100">
-                {currentUser?.full_name?.split(' ')[0] || 'Admin'}
+              <span className="text-primary-400">
+                {currentUser?.full_name?.split(' ')?.[0] || 'Admin'}
               </span>
             </h1>
-            <p className="text-indigo-100 text-xs md:text-sm opacity-90 mt-1 md:mt-0">Here's your platform overview.</p>
+            <p className="text-slate-400 text-xs md:text-sm opacity-90 mt-1 md:mt-0">Here's your platform overview.</p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -329,10 +333,10 @@ const AdminDashboard = ({
               <RefreshCw size={14} className={refreshing ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'} />
               <span>Refresh</span>
             </button>
-            <div className="flex-1 md:flex-none justify-center flex items-center gap-2 px-3 py-1.5 md:py-2 bg-indigo-950/30 backdrop-blur-md rounded-xl border border-white/10">
+            <div className="flex-1 md:flex-none justify-center flex items-center gap-2 px-3 py-1.5 md:py-2 bg-white/5 backdrop-blur-md rounded-xl border border-white/10">
               <div className={`w-2 h-2 rounded-full ${healthScore >= 70 ? 'bg-green-400' : 'bg-amber-400'} animate-pulse`}></div>
               <div className="flex flex-col leading-none">
-                <span className="text-[8px] md:text-[9px] uppercase font-bold text-indigo-300">Health</span>
+                <span className="text-[8px] md:text-[9px] uppercase font-bold text-slate-400">Health</span>
                 <span className="text-[10px] md:text-xs font-bold">{healthScore}%</span>
               </div>
             </div>
@@ -343,16 +347,16 @@ const AdminDashboard = ({
       {/* Quick Actions */}
       <div className="grid grid-cols-3 gap-2 md:gap-4 mb-2 md:mb-8">
         {[
-          { id: 'staff', label: 'Add Staff', fullLabel: 'Add Staff Member', icon: UserPlus, color: 'text-blue-600', hoverBg: 'hover:bg-blue-50', hoverBorder: 'hover:border-blue-200' },
+          { id: 'staff', label: 'Add Staff', fullLabel: 'Add Staff Member', icon: UserPlus, color: 'text-primary-600', hoverBg: 'hover:bg-primary-50', hoverBorder: 'hover:border-primary-200' },
           { id: 'registrations', label: 'Registrations', fullLabel: 'Pending Registrations', icon: ClipboardList, color: 'text-amber-600', hoverBg: 'hover:bg-amber-50', hoverBorder: 'hover:border-amber-200', count: registrationStats.pending },
-          { id: 'subscriptions', label: 'Subscriptions', fullLabel: 'Manage Subscriptions', icon: CreditCard, color: 'text-emerald-600', hoverBg: 'hover:bg-emerald-50', hoverBorder: 'hover:border-emerald-200' }
+          { id: 'subscriptions', label: 'Subscriptions', fullLabel: 'Manage Subscriptions', icon: CreditCard, color: 'text-slate-600', hoverBg: 'hover:bg-slate-50', hoverBorder: 'hover:border-slate-200' }
         ].map((action) => (
           <button
             key={action.id}
             onClick={() => onTabChange?.(action.id)}
             className={`group flex flex-col md:flex-row items-center md:justify-start gap-2 md:gap-3 p-3 md:px-6 md:py-4 bg-white border border-gray-100 rounded-2xl text-[10px] md:text-sm font-bold text-gray-600 ${action.hoverBg} ${action.hoverBorder} hover:shadow-lg transition-all hover:scale-105 duration-200`}
           >
-            <div className={`p-1.5 md:p-2 rounded-xl bg-gray-50 group-hover:bg-white transition-colors relative`}>
+            <div className={`p-1.5 md:p-2 rounded-xl bg-slate-50 group-hover:bg-white transition-colors relative`}>
               <action.icon size={16} className={`${action.color} md:w-[18px] md:h-[18px]`} />
               {action.count > 0 && (
                 <span className="md:hidden absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-sm animate-pulse">
@@ -380,7 +384,7 @@ const AdminDashboard = ({
         <div className="bg-white rounded-3xl p-4 md:p-5 shadow-sm border border-gray-100 hover:shadow-xl transition-all col-span-2 md:col-span-6 xl:col-span-5 flex flex-col justify-between group">
           <div className="flex items-start justify-between mb-3 md:mb-4">
             <div className="flex items-center gap-3 md:gap-4">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-200 group-hover:scale-110 transition-transform duration-300">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-primary-500 rounded-2xl flex items-center justify-center shadow-lg shadow-primary-200 group-hover:scale-110 transition-transform duration-300">
                 <Building2 className="text-white" size={20} />
               </div>
               <div>
@@ -390,7 +394,7 @@ const AdminDashboard = ({
             </div>
             <button
               onClick={() => onTabChange?.('restaurants')}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-600 rounded-lg text-xs font-bold uppercase hover:bg-purple-100 transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 text-primary-600 rounded-lg text-xs font-bold uppercase hover:bg-primary-100 transition-all"
             >
               <Plus size={14} />
               Add
@@ -399,20 +403,20 @@ const AdminDashboard = ({
 
           {/* Stats Grid - Dynamic Plans */}
           <div className="flex flex-wrap gap-1 mb-2">
-            <div className="flex-1 min-w-[60px] bg-green-50 rounded-xl p-2 text-center">
-              <p className="text-base font-black text-green-600">{stats.restaurants.active}</p>
-              <p className="text-[9px] font-bold text-green-700/60 uppercase">Active</p>
+            <div className="flex-1 min-w-[60px] bg-emerald-50 rounded-xl p-2 text-center">
+              <p className="text-base font-black text-emerald-600">{stats.restaurants.active}</p>
+              <p className="text-[9px] font-bold text-emerald-700/60 uppercase">Active</p>
             </div>
-            <div className="flex-1 min-w-[60px] bg-red-50 rounded-xl p-2 text-center">
-              <p className="text-base font-black text-red-500">{stats.restaurants.inactive}</p>
-              <p className="text-[9px] font-bold text-red-700/60 uppercase">Inactive</p>
+            <div className="flex-1 min-w-[60px] bg-rose-50 rounded-xl p-2 text-center">
+              <p className="text-base font-black text-rose-500">{stats.restaurants.inactive}</p>
+              <p className="text-[9px] font-bold text-rose-700/60 uppercase">Inactive</p>
             </div>
             {availablePlans.filter(p => p.key !== 'demo').slice(0, 5).map((plan, idx) => (
-              <div key={plan.key} className={`flex-1 min-w-[70px] rounded-xl p-2 text-center ${idx === 0 ? 'bg-blue-50' : idx === 1 ? 'bg-purple-50' : idx === 2 ? 'bg-orange-50' : 'bg-indigo-50'}`}>
-                <p className={`text-base font-black ${idx === 0 ? 'text-blue-600' : idx === 1 ? 'text-purple-600' : idx === 2 ? 'text-orange-600' : 'text-indigo-600'}`}>
+              <div key={plan.key} className={`flex-1 min-w-[70px] rounded-xl p-2 text-center ${idx === 0 ? 'bg-primary-50' : idx === 1 ? 'bg-amber-50' : idx === 2 ? 'bg-primary-50' : 'bg-primary-50'}`}>
+                <p className={`text-base font-black ${idx === 0 ? 'text-primary-600' : idx === 1 ? 'text-amber-600' : idx === 2 ? 'text-primary-600' : 'text-primary-600'}`}>
                   {stats.plans[plan.key] || 0}
                 </p>
-                <p className={`text-[9px] font-bold uppercase ${idx === 0 ? 'text-blue-700/60' : idx === 1 ? 'text-purple-700/60' : idx === 2 ? 'text-orange-700/60' : 'text-indigo-700/60'}`}>
+                <p className={`text-[9px] font-bold uppercase ${idx === 0 ? 'text-primary-700/60' : idx === 1 ? 'text-amber-700/60' : idx === 2 ? 'text-primary-700/60' : 'text-primary-700/60'}`}>
                   {plan.name.split(' ')[0]}
                 </p>
               </div>
@@ -432,7 +436,7 @@ const AdminDashboard = ({
             </div>
             <button
               onClick={() => onTabChange?.('restaurants')}
-              className="text-xs text-purple-600 hover:text-purple-700 font-bold flex items-center gap-1 group/btn"
+              className="text-xs text-primary-600 hover:text-primary-700 font-bold flex items-center gap-1 group/btn"
             >
               View All <ChevronRight size={14} className="group-hover/btn:translate-x-0.5 transition-transform" />
             </button>
@@ -441,16 +445,16 @@ const AdminDashboard = ({
 
         {/* Total Staff */}
         <div
-          className="bg-white rounded-3xl p-4 md:p-5 shadow-sm border border-gray-100 hover:shadow-xl hover:border-blue-200 transition-all cursor-pointer group col-span-1 md:col-span-2 xl:col-span-2 flex flex-col justify-between"
+          className="bg-white rounded-3xl p-4 md:p-5 shadow-sm border border-gray-100 hover:shadow-xl hover:border-primary-200 transition-all cursor-pointer group col-span-1 md:col-span-2 xl:col-span-2 flex flex-col justify-between"
           onClick={() => onTabChange?.('staff')}
         >
           <div>
             <div className="flex items-start justify-between mb-2 md:mb-3">
-              <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200 group-hover:scale-110 transition-transform">
-                <Users className="text-white" size={16} />
+              <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-slate-800 to-slate-950 rounded-xl flex items-center justify-center shadow-lg shadow-slate-200 group-hover:scale-110 transition-transform">
+                <Users className="text-amber-500" size={16} />
               </div>
-              <div className="w-6 h-6 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors">
-                <ChevronRight size={14} className="text-gray-300 group-hover:text-blue-500" />
+              <div className="w-6 h-6 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-primary-50 group-hover:text-primary-500 transition-colors">
+                <ChevronRight size={14} className="text-gray-300 group-hover:text-primary-500" />
               </div>
             </div>
 
@@ -458,13 +462,13 @@ const AdminDashboard = ({
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mt-1">Staff Members</p>
           </div>
           <div className="mt-4 flex items-center gap-2">
-            <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-blue-400 to-blue-500 rounded-full transition-all duration-500"
+                className="h-full bg-gradient-to-r from-primary-400 to-primary-500 rounded-full transition-all duration-500"
                 style={{ width: `${stats.staff.total > 0 ? (stats.staff.connected / stats.staff.total * 100) : 0}%` }}
               />
             </div>
-            <span className="text-[10px] font-bold text-blue-600 whitespace-nowrap">{stats.staff.connected} linked</span>
+            <span className="text-[10px] font-bold text-primary-600 whitespace-nowrap">{stats.staff.connected} linked</span>
           </div>
         </div>
 
@@ -475,11 +479,11 @@ const AdminDashboard = ({
         >
           <div>
             <div className="flex items-start justify-between mb-2 md:mb-3">
-              <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200 group-hover:scale-110 transition-transform">
+              <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-amber-400 to-primary-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary-200 group-hover:scale-110 transition-transform">
                 <CreditCard className="text-white" size={16} />
               </div>
-              <div className="w-6 h-6 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-emerald-50 group-hover:text-emerald-500 transition-colors">
-                <ChevronRight size={14} className="text-gray-300 group-hover:text-emerald-500" />
+              <div className="w-6 h-6 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-amber-50 group-hover:text-amber-500 transition-colors">
+                <ChevronRight size={14} className="text-gray-300 group-hover:text-amber-500" />
               </div>
             </div>
 
@@ -499,10 +503,10 @@ const AdminDashboard = ({
         <div className="bg-white rounded-3xl p-3 md:p-5 shadow-sm border border-gray-100 hover:shadow-xl hover:border-amber-200 transition-all group col-span-2 md:col-span-2 xl:col-span-3 flex flex-col justify-between">
           <div>
             <div className="flex items-start justify-between mb-2 md:mb-3">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-amber-200 group-hover:scale-110 transition-transform">
-                <IndianRupee className="text-white" size={20} />
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-slate-900 to-black rounded-xl flex items-center justify-center shadow-lg shadow-slate-300 group-hover:scale-110 transition-transform">
+                <IndianRupee className="text-primary-500" size={20} />
               </div>
-              <div className={`flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider ${stats.revenue.growth >= 0 ? 'text-green-700 bg-green-50' : 'text-red-700 bg-red-50'
+              <div className={`flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider ${stats.revenue.growth >= 0 ? 'text-emerald-700 bg-emerald-50' : 'text-rose-700 bg-rose-50'
                 }`}>
                 {stats.revenue.growth >= 0 ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
                 {Math.abs(stats.revenue.growth).toFixed(1)}%
@@ -523,7 +527,7 @@ const AdminDashboard = ({
         <div className="lg:col-span-4 bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100" >
           <div className="flex items-center justify-between mb-4 md:mb-6">
             <h3 className="text-base md:text-lg font-semibold text-gray-900">Plan Distribution</h3>
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">{planTotal} total</span>
+            <span className="text-xs text-gray-500 bg-slate-100 px-2 py-1 rounded-full">{planTotal} total</span>
           </div>
 
           {/* Visual Donut Chart */}
@@ -588,7 +592,7 @@ const AdminDashboard = ({
           <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">Platform Health</h3>
 
           {/* Health Score */}
-          <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-3 md:p-4 mb-4">
+          <div className="bg-primary-50 rounded-xl p-3 md:p-4 mb-4 border border-primary-100">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-700">Overall Health Score</span>
               <span className={`text-lg font-bold ${healthScore >= 70 ? 'text-green-600' : healthScore >= 40 ? 'text-yellow-600' : 'text-red-600'
@@ -607,23 +611,23 @@ const AdminDashboard = ({
 
           {/* Metrics */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-2 md:p-3 bg-gray-50 rounded-xl">
+            <div className="flex items-center justify-between p-2 md:p-3 bg-slate-50 rounded-xl">
               <div className="flex items-center gap-2">
-                <Zap size={16} className="text-indigo-500" />
+                <Zap size={16} className="text-primary-500" />
                 <span className="text-sm text-gray-600">AI Enabled</span>
               </div>
               <span className="text-sm font-bold text-gray-900">{stats.restaurants.withAI}/{stats.restaurants.active}</span>
             </div>
-            <div className="flex items-center justify-between p-2 md:p-3 bg-gray-50 rounded-xl">
+            <div className="flex items-center justify-between p-2 md:p-3 bg-slate-50 rounded-xl">
               <div className="flex items-center gap-2">
-                <ShoppingBag size={16} className="text-orange-500" />
+                <ShoppingBag size={16} className="text-primary-500" />
                 <span className="text-sm text-gray-600">Aggregators</span>
               </div>
               <span className="text-sm font-bold text-gray-900">{stats.restaurants.withAggregators}/{stats.restaurants.active}</span>
             </div>
-            <div className="flex items-center justify-between p-2 md:p-3 bg-gray-50 rounded-xl">
+            <div className="flex items-center justify-between p-2 md:p-3 bg-slate-50 rounded-xl">
               <div className="flex items-center gap-2">
-                <Users size={16} className="text-blue-500" />
+                <Users size={16} className="text-primary-500" />
                 <span className="text-sm text-gray-600">Staff Connected</span>
               </div>
               <span className="text-sm font-bold text-gray-900">{stats.staff.connected}/{stats.staff.total}</span>
@@ -637,7 +641,7 @@ const AdminDashboard = ({
 
           {/* Registrations */}
           <div
-            className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-3 md:p-4 mb-3 md:mb-4 cursor-pointer hover:shadow-md transition-all"
+            className="bg-gradient-to-br from-amber-50 to-primary-50 rounded-xl p-3 md:p-4 mb-3 md:mb-4 cursor-pointer hover:shadow-md transition-all"
             onClick={() => onTabChange?.('registrations')}
           >
             <div className="flex items-center justify-between mb-2">
@@ -669,33 +673,33 @@ const AdminDashboard = ({
 
           {/* Inquiries */}
           <div
-            className="bg-gradient-to-br from-pink-50 to-rose-50 rounded-xl p-3 md:p-4 cursor-pointer hover:shadow-md transition-all"
+            className="bg-gradient-to-br from-primary-50 to-orange-50 rounded-xl p-3 md:p-4 cursor-pointer hover:shadow-md transition-all"
             onClick={() => onTabChange?.('inquiries')}
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <MessageSquare size={18} className="text-pink-600" />
+                <MessageSquare size={18} className="text-primary-600" />
                 <span className="font-medium text-gray-900">Lead Inquiries</span>
               </div>
               <span className="text-xs text-gray-500">{inquiryStats.total} total</span>
             </div>
             <div className="mt-4 flex flex-col md:flex-row gap-4">
               <div className="grid grid-cols-3 gap-2 flex-1">
-                <div className="text-center p-2 bg-white/50 rounded-lg border border-pink-100/50">
+                <div className="text-center p-2 bg-white/50 rounded-lg border border-primary-100/50">
                   <p className="text-base md:text-lg font-bold text-amber-600">{inquiryStats.pending}</p>
                   <p className="text-[10px] md:text-xs text-gray-500 uppercase tracking-wide">Pending</p>
                 </div>
-                <div className="text-center p-2 bg-white/50 rounded-lg border border-pink-100/50">
-                  <p className="text-base md:text-lg font-bold text-blue-600">{inquiryStats.contacted}</p>
+                <div className="text-center p-2 bg-white/50 rounded-lg border border-primary-100/50">
+                  <p className="text-base md:text-lg font-bold text-primary-600">{inquiryStats.contacted}</p>
                   <p className="text-[10px] md:text-xs text-gray-500 uppercase tracking-wide">Contacted</p>
                 </div>
-                <div className="text-center p-2 bg-white/50 rounded-lg border border-pink-100/50">
+                <div className="text-center p-2 bg-white/50 rounded-lg border border-primary-100/50">
                   <p className="text-base md:text-lg font-bold text-green-600">{inquiryStats.converted}</p>
                   <p className="text-[10px] md:text-xs text-gray-500 uppercase tracking-wide">Converted</p>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between md:block md:text-right p-3 md:p-0 bg-white/60 md:bg-transparent rounded-xl md:rounded-none border border-pink-100 md:border-0">
+              <div className="flex items-center justify-between md:block md:text-right p-3 md:p-0 bg-white/60 md:bg-transparent rounded-xl md:rounded-none border border-primary-100 md:border-0">
                 <span className="md:hidden text-xs font-semibold text-gray-600">Conversion Rate</span>
                 <div>
                   <p className="text-lg font-bold text-emerald-600">
@@ -737,7 +741,7 @@ const AdminDashboard = ({
                     key={renewal.id}
                     className={`flex items-center justify-between p-2 md:p-3 rounded-xl border transition-all hover:shadow-sm ${renewal.daysUntilExpiry <= 2
                       ? 'bg-red-50 border-red-100'
-                      : 'bg-gray-50 border-gray-100'
+                      : 'bg-slate-50 border-gray-100'
                       }`}
                   >
                     <div className="flex items-center gap-3">
@@ -761,7 +765,7 @@ const AdminDashboard = ({
                 {upcomingRenewals.length > 5 && (
                   <button
                     onClick={() => onTabChange?.('subscriptions')}
-                    className="w-full mt-2 py-2.5 text-sm text-purple-600 hover:bg-purple-50 rounded-xl transition-colors flex items-center justify-center gap-1 font-medium"
+                    className="w-full mt-2 py-2.5 text-sm text-primary-600 hover:bg-primary-50 rounded-xl transition-colors flex items-center justify-center gap-1 font-medium"
                   >
                     View all {upcomingRenewals.length} renewals
                     <ChevronRight size={16} />
@@ -776,7 +780,7 @@ const AdminDashboard = ({
         <div className="bg-white rounded-3xl p-3 md:p-6 shadow-sm border border-gray-100 flex flex-col" >
           <div className="flex items-center justify-between mb-4 md:mb-6">
             <h3 className="text-base md:text-lg font-bold text-gray-900 flex items-center gap-2">
-              <div className="p-2 bg-blue-50 rounded-lg"><Activity size={20} className="text-blue-500" /></div>
+              <div className="p-2 bg-primary-50 rounded-lg"><Activity size={20} className="text-primary-500" /></div>
               Recent Activity
             </h3>
             <span className="flex items-center gap-1.5 text-xs font-bold text-green-600 bg-green-50 px-2.5 py-1 rounded-full animate-pulse">
@@ -786,7 +790,7 @@ const AdminDashboard = ({
 
           {
             recentActivity.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center py-10 text-gray-400 border border-dashed border-gray-100 rounded-2xl bg-gray-50/50">
+              <div className="flex-1 flex flex-col items-center justify-center py-10 text-gray-400 border border-dashed border-gray-100 rounded-2xl bg-slate-50/50">
                 <Activity size={48} className="mx-auto mb-3 opacity-20" />
                 <p className="font-bold">No activity yet</p>
                 <p className="text-sm">Recent subscription changes will appear here</p>
@@ -797,11 +801,11 @@ const AdminDashboard = ({
                   <div key={activity.id} className="relative pl-6 pb-6 last:pb-0 group">
                     {/* Timeline Dot */}
                     <div className={`absolute left-0 top-1.5 -translate-x-[5px] w-3 h-3 rounded-full border-2 border-white shadow-sm z-10 ${activity.action === 'created' ? 'bg-green-500' :
-                      activity.action === 'renewed' ? 'bg-blue-500' :
+                      activity.action === 'renewed' ? 'bg-primary-500' :
                         activity.action === 'cancelled' ? 'bg-red-500' : 'bg-gray-400'
                       } group-hover:scale-125 transition-transform duration-300`}></div>
 
-                    <div className="flex items-start justify-between gap-4 p-3 md:p-4 bg-gray-50/50 rounded-2xl border border-transparent hover:bg-white hover:border-gray-100 hover:shadow-md transition-all duration-300">
+                    <div className="flex items-start justify-between gap-4 p-3 md:p-4 bg-slate-50/50 rounded-2xl border border-transparent hover:bg-white hover:border-gray-100 hover:shadow-md transition-all duration-300">
                       <div className="flex items-start gap-4">
                         <div className={`mt-1 p-2 rounded-xl flex items-center justify-center shadow-sm ${getActionColor(activity.action)}`}>
                           {getActionIcon(activity.action)}
@@ -840,18 +844,18 @@ const AdminDashboard = ({
       <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100" >
         <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">Staff Distribution</h3>
         <div className="grid grid-cols-3 md:grid-cols-5 gap-2 md:gap-4">
-          <div className="bg-purple-50 rounded-xl p-2 md:p-4 text-center">
-            <Briefcase size={16} className="mx-auto mb-1 md:mb-2 text-purple-500 md:w-6 md:h-6" />
+          <div className="bg-amber-50 rounded-xl p-2 md:p-4 text-center">
+            <Briefcase size={16} className="mx-auto mb-1 md:mb-2 text-amber-500 md:w-6 md:h-6" />
             <p className="text-lg md:text-2xl font-bold text-gray-900">{stats.staff.managers}</p>
             <p className="text-[10px] md:text-xs text-gray-600">Managers</p>
           </div>
-          <div className="bg-blue-50 rounded-xl p-2 md:p-4 text-center">
-            <ClipboardList size={16} className="mx-auto mb-1 md:mb-2 text-blue-500 md:w-6 md:h-6" />
+          <div className="bg-primary-50 rounded-xl p-2 md:p-4 text-center">
+            <ClipboardList size={16} className="mx-auto mb-1 md:mb-2 text-primary-500 md:w-6 md:h-6" />
             <p className="text-lg md:text-2xl font-bold text-gray-900">{stats.staff.captains}</p>
             <p className="text-[10px] md:text-xs text-gray-600">Captains</p>
           </div>
-          <div className="bg-orange-50 rounded-xl p-2 md:p-4 text-center">
-            <ChefHat size={16} className="mx-auto mb-1 md:mb-2 text-orange-500 md:w-6 md:h-6" />
+          <div className="bg-primary-50 rounded-xl p-2 md:p-4 text-center">
+            <ChefHat size={16} className="mx-auto mb-1 md:mb-2 text-primary-500 md:w-6 md:h-6" />
             <p className="text-lg md:text-2xl font-bold text-gray-900">{stats.staff.chefs || 0}</p>
             <p className="text-[10px] md:text-xs text-gray-600">Chefs</p>
           </div>
@@ -873,7 +877,7 @@ const AdminDashboard = ({
         <div className="grid grid-cols-4 gap-2 md:gap-6 divide-x divide-gray-700 md:divide-x-0">
           <div className="text-center px-1">
             <div className="flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 mb-1">
-              <Target size={16} className="text-purple-400 hidden md:block" />
+              <Target size={16} className="text-amber-400 hidden md:block" />
               <span className="text-gray-400 text-[9px] md:text-sm whitespace-nowrap">Active Rate</span>
             </div>
             <p className="text-sm md:text-3xl font-bold">{stats.restaurants.total > 0 ? ((stats.restaurants.active / stats.restaurants.total) * 100).toFixed(0) : 0}%</p>
@@ -887,7 +891,7 @@ const AdminDashboard = ({
           </div>
           <div className="text-center px-1">
             <div className="flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 mb-1">
-              <Percent size={16} className="text-blue-400 hidden md:block" />
+              <Percent size={16} className="text-primary-400 hidden md:block" />
               <span className="text-gray-400 text-[9px] md:text-sm whitespace-nowrap">Conversion</span>
             </div>
             <p className="text-sm md:text-3xl font-bold">

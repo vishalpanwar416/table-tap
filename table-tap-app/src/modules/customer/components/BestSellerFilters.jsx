@@ -70,10 +70,10 @@ const BestSellerFilters = memo(({
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
               <div className="flex items-center gap-2">
-                <Sliders className="w-5 h-5 text-orange-500" />
+                <Sliders className="w-5 h-5 text-primary-500" />
                 <h3 className="text-lg font-semibold">Filters</h3>
                 {activeFiltersCount > 0 && (
-                  <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
+                  <span className="bg-primary-500 text-white text-xs px-2 py-1 rounded-full">
                     {activeFiltersCount}
                   </span>
                 )}
@@ -102,7 +102,7 @@ const BestSellerFilters = memo(({
                       value="all"
                       checked={localFilters.category === 'all'}
                       onChange={(e) => handleFilterChange('category', e.target.value)}
-                      className="text-orange-500 focus:ring-orange-500"
+                      className="text-primary-500 focus:ring-primary-500"
                     />
                     <span>All Categories</span>
                   </label>
@@ -114,7 +114,7 @@ const BestSellerFilters = memo(({
                         value={category}
                         checked={localFilters.category === category}
                         onChange={(e) => handleFilterChange('category', e.target.value)}
-                        className="text-orange-500 focus:ring-orange-500"
+                        className="text-primary-500 focus:ring-primary-500"
                       />
                       <span>{category}</span>
                     </label>
@@ -166,7 +166,7 @@ const BestSellerFilters = memo(({
                         value={rating}
                         checked={localFilters.rating === rating}
                         onChange={(e) => handleFilterChange('rating', parseInt(e.target.value))}
-                        className="text-orange-500 focus:ring-orange-500"
+                        className="text-primary-500 focus:ring-primary-500"
                       />
                       <div className="flex items-center gap-1">
                         {[...Array(5)].map((_, i) => (
@@ -186,7 +186,7 @@ const BestSellerFilters = memo(({
                       value={null}
                       checked={localFilters.rating === null}
                       onChange={() => handleFilterChange('rating', null)}
-                      className="text-orange-500 focus:ring-orange-500"
+                      className="text-primary-500 focus:ring-primary-500"
                     />
                     <span className="text-sm text-gray-600">Any rating</span>
                   </label>
@@ -200,7 +200,7 @@ const BestSellerFilters = memo(({
                     type="checkbox"
                     checked={localFilters.discountOnly}
                     onChange={(e) => handleFilterChange('discountOnly', e.target.checked)}
-                    className="text-orange-500 focus:ring-orange-500 rounded"
+                    className="text-primary-500 focus:ring-primary-500 rounded"
                   />
                   <span className="font-medium">Show only discounted items</span>
                 </label>
@@ -217,7 +217,7 @@ const BestSellerFilters = memo(({
               </button>
               <button
                 onClick={handleApplyFilters}
-                className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                className="flex-1 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
               >
                 Apply Filters
               </button>

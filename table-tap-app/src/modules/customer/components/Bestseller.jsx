@@ -139,7 +139,7 @@ const FoodItem = memo(({
                     ₹{price.toFixed(0)}
                   </motion.span>
                   <motion.span
-                    className="text-sm font-bold text-orange-600"
+                    className="text-sm font-bold text-primary-600"
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.4 }}
@@ -172,7 +172,7 @@ const FoodItem = memo(({
                 >
                   <motion.button
                     onClick={handleDecrement}
-                    className="text-white px-1 text-xs hover:text-orange-300 transition-colors"
+                    className="text-white px-1 text-xs hover:text-primary-300 transition-colors"
                     whileHover={{ scale: 1.2 }}
                     whileTap={{ scale: 0.8 }}
                   >
@@ -280,7 +280,7 @@ const BestSellers = ({ foodItems = [] }) => { // Default to empty array
         <h2 className="text-xl font-thick font-spartan-bold md:text-3xl">Best Seller</h2>
         <button
           onClick={handleViewAll}
-          className="text-orange-500 text-sm flex items-center md:text-xl hover:underline"
+          className="text-primary-500 text-sm flex items-center md:text-xl hover:underline"
         >
           View All <span className="ml-1 md:text-xl">›</span>
         </button>

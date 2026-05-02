@@ -71,9 +71,9 @@ const StaffManagement = ({
   const [viewMode, setViewMode] = useState('table');
 
   const roleConfig = useMemo(() => ({
-    manager: { color: 'bg-orange-100 text-orange-800 border-orange-200', icon: '' },
+    manager: { color: 'bg-primary-100 text-primary-800 border-primary-200', icon: '' },
     captain: { color: 'bg-blue-100 text-blue-800 border-blue-200', icon: '' },
-    chef: { color: 'bg-orange-100 text-orange-800 border-orange-200', icon: '' },
+    chef: { color: 'bg-primary-100 text-primary-800 border-primary-200', icon: '' },
     waiter: { color: 'bg-green-100 text-green-800 border-green-200', icon: '' },
     cashier: { color: 'bg-yellow-100 text-yellow-800 border-yellow-200', icon: '' }
   }), []);
@@ -255,7 +255,7 @@ const StaffManagement = ({
     <div className="space-y-6 sm:space-y-8 px-1 sm:px-0">
       {/* Overview card: title, subtitle, Add Staff, and stat cards */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-amber-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-100 bg-gradient-to-r from-primary-50 to-amber-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="hidden md:block">
             <h2 className="text-xl font-bold text-gray-900">Staff</h2>
             <p className="text-sm text-gray-500 mt-0.5">Manage your restaurant team</p>
@@ -267,7 +267,7 @@ const StaffManagement = ({
                 setIsEditing(false);
                 setFormData({ name: '', email: '', phone_number: '', role: 'captain' });
               }}
-              className="w-full sm:w-auto inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl hover:from-orange-600 hover:to-amber-600 shadow-md hover:shadow-lg font-semibold transition-all touch-manipulation shrink-0"
+              className="w-full sm:w-auto inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 bg-gradient-to-r from-primary-500 to-amber-500 text-white rounded-xl hover:from-primary-600 hover:to-amber-600 shadow-md hover:shadow-lg font-semibold transition-all touch-manipulation shrink-0"
             >
               <Plus className="w-5 h-5 mr-2" />
               Add Staff
@@ -276,7 +276,7 @@ const StaffManagement = ({
         </div>
         <div className="p-4 sm:p-6">
           <div className="grid grid-cols-4 gap-1.5 md:gap-4">
-            <div className="min-w-0 rounded-lg md:rounded-xl border border-gray-100 bg-gray-50/50 p-1.5 md:p-4 border-l-2 md:border-l-4 border-l-orange-400">
+            <div className="min-w-0 rounded-lg md:rounded-xl border border-gray-100 bg-gray-50/50 p-1.5 md:p-4 border-l-2 md:border-l-4 border-l-primary-400">
               <p className="text-[9px] md:text-xs font-medium text-gray-500 uppercase tracking-wide truncate">Total</p>
               <p className="text-lg md:text-2xl font-bold text-gray-900 mt-0.5 tabular-nums leading-none">{stats.total}</p>
               <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 truncate">Members</p>
@@ -323,8 +323,8 @@ const StaffManagement = ({
       {(isCreating || isEditing) && (userRole === 'admin' || userRole === 'manager') && (
         <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
           <div className="px-4 sm:px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
-              <User className="h-5 w-5 text-orange-600" />
+            <div className="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center">
+              <User className="h-5 w-5 text-primary-600" />
             </div>
             <h3 className="text-lg font-bold text-gray-900">
               {isEditing ? 'Edit Staff Member' : 'Add New Staff Member'}
@@ -338,7 +338,7 @@ const StaffManagement = ({
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                   placeholder="Full name"
                   required
                 />
@@ -349,7 +349,7 @@ const StaffManagement = ({
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                   placeholder="email@example.com"
                   required
                 />
@@ -360,7 +360,7 @@ const StaffManagement = ({
                   type="tel"
                   value={formData.phone_number}
                   onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                   placeholder="Phone number"
                 />
               </div>
@@ -369,7 +369,7 @@ const StaffManagement = ({
                 <select
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900 bg-white"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 bg-white"
                   required
                 >
                   {Object.keys(roleConfig).map(role => (
@@ -382,7 +382,7 @@ const StaffManagement = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="min-h-[44px] px-5 py-2.5 bg-orange-500 text-white rounded-xl hover:bg-orange-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2 touch-manipulation"
+                className="min-h-[44px] px-5 py-2.5 bg-primary-500 text-white rounded-xl hover:bg-primary-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2 touch-manipulation"
               >
                 {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 {loading ? (isEditing ? 'Updating...' : 'Adding...') : (isEditing ? 'Update' : 'Add Staff')}
@@ -406,7 +406,7 @@ const StaffManagement = ({
           <div className="hidden md:flex items-center bg-gray-100 rounded-lg p-0.5">
             <button
               onClick={() => setViewMode('table')}
-              className={`flex items-center min-h-[40px] px-3 py-2 rounded-md text-sm font-medium transition-all ${viewMode === 'table' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-600 hover:text-orange-600'
+              className={`flex items-center min-h-[40px] px-3 py-2 rounded-md text-sm font-medium transition-all ${viewMode === 'table' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-600 hover:text-primary-600'
                 }`}
             >
               <List className="w-4 h-4 mr-2" />
@@ -414,7 +414,7 @@ const StaffManagement = ({
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={`flex items-center min-h-[40px] px-3 py-2 rounded-md text-sm font-medium transition-all ${viewMode === 'grid' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-600 hover:text-orange-600'
+              className={`flex items-center min-h-[40px] px-3 py-2 rounded-md text-sm font-medium transition-all ${viewMode === 'grid' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-600 hover:text-primary-600'
                 }`}
             >
               <LayoutGrid className="w-4 h-4 mr-2" />
@@ -425,20 +425,20 @@ const StaffManagement = ({
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-16">
-            <RefreshCw className="h-10 w-10 animate-spin text-orange-500 mb-4" />
+            <RefreshCw className="h-10 w-10 animate-spin text-primary-500 mb-4" />
             <p className="text-sm text-gray-500">Loading staff...</p>
           </div>
         ) : filteredStaff.length === 0 ? (
           <div className="text-center py-16 px-6">
-            <div className="w-20 h-20 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center mx-auto mb-4">
-              <Users className="h-10 w-10 text-orange-400" />
+            <div className="w-20 h-20 rounded-2xl bg-primary-50 border border-primary-100 flex items-center justify-center mx-auto mb-4">
+              <Users className="h-10 w-10 text-primary-400" />
             </div>
             <h3 className="text-lg font-bold text-gray-900 mb-2">No team members yet</h3>
             <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">Add your first staff member to get started.</p>
             {(userRole === 'admin' || userRole === 'manager') && (
               <button
                 onClick={() => { setIsCreating(true); setIsEditing(false); setFormData({ name: '', email: '', phone_number: '', role: 'captain' }); }}
-                className="inline-flex items-center min-h-[44px] px-5 py-2.5 bg-orange-500 text-white rounded-xl hover:bg-orange-600 font-semibold touch-manipulation"
+                className="inline-flex items-center min-h-[44px] px-5 py-2.5 bg-primary-500 text-white rounded-xl hover:bg-primary-600 font-semibold touch-manipulation"
               >
                 <Plus className="w-5 h-5 mr-2" />
                 Add Staff
@@ -460,7 +460,7 @@ const StaffManagement = ({
                   <div className="flex-1 min-w-0 ml-1">
                     <div className="font-semibold text-sm text-gray-900 truncate flex items-center gap-1.5">
                       {member.connected && member.profiles ? member.profiles.full_name : member.staff_name}
-                      {member.user_id === currentUserId && <span className="text-[10px] text-orange-600 font-medium bg-orange-50 px-1.5 py-0.5 rounded-full">You</span>}
+                      {member.user_id === currentUserId && <span className="text-[10px] text-primary-600 font-medium bg-primary-50 px-1.5 py-0.5 rounded-full">You</span>}
                     </div>
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
                       <span className={`inline-flex px-1.5 py-0.5 text-[10px] font-medium rounded-md border ${roleConfig[member.staff_role]?.color || 'bg-gray-100 text-gray-800 border-gray-200'}`}>
@@ -519,7 +519,7 @@ const StaffManagement = ({
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-50">
                       {filteredStaff.map((member) => (
-                        <tr key={member.id} className="hover:bg-orange-50/30 transition-colors">
+                        <tr key={member.id} className="hover:bg-primary-50/30 transition-colors">
                           <td className="px-6 py-3">
                             <div className="flex items-center gap-3">
                               <StaffAvatar
@@ -530,7 +530,7 @@ const StaffManagement = ({
                               <div>
                                 <div className="font-medium text-gray-900">
                                   {member.connected && member.profiles ? member.profiles.full_name : member.staff_name}
-                                  {member.user_id === currentUserId && <span className="ml-1 text-xs text-orange-600 font-medium">(You)</span>}
+                                  {member.user_id === currentUserId && <span className="ml-1 text-xs text-primary-600 font-medium">(You)</span>}
                                 </div>
                                 <div className="text-xs text-gray-500 flex items-center gap-1">
                                   <Mail className="w-3 h-3" />
@@ -585,7 +585,7 @@ const StaffManagement = ({
               ) : (
                 <div className="p-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                   {filteredStaff.map((member) => (
-                    <div key={member.id} className="rounded-xl border border-gray-100 bg-gray-50/30 hover:bg-orange-50/20 hover:border-orange-100 p-4 transition-all shadow-sm">
+                    <div key={member.id} className="rounded-xl border border-gray-100 bg-gray-50/30 hover:bg-primary-50/20 hover:border-primary-100 p-4 transition-all shadow-sm">
                       <div className="flex flex-col items-center text-center">
                         <StaffAvatar
                           src={member.connected && member.profiles?.avatar_url ? member.profiles.avatar_url : ''}
@@ -594,7 +594,7 @@ const StaffManagement = ({
                         />
                         <div className="mt-3 font-semibold text-gray-900">
                           {member.connected && member.profiles ? member.profiles.full_name : member.staff_name}
-                          {member.user_id === currentUserId && <span className="ml-1 text-xs text-orange-600">(You)</span>}
+                          {member.user_id === currentUserId && <span className="ml-1 text-xs text-primary-600">(You)</span>}
                         </div>
                         <div className="text-xs text-gray-500 mt-0.5">{member.staff_email}</div>
                         <div className="text-xs text-gray-500">{member.staff_phone_number || 'No phone'}</div>

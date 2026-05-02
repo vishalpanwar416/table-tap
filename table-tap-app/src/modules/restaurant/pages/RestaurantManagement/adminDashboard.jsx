@@ -346,6 +346,8 @@ const AdminDashboard = () => {
       setFoodItems(data || []);
       return data;
     } catch (error) {
+      // AbortError is transient (component unmounted or token refresh) — don't surface to user
+      if (error?.name === 'AbortError' || error?.message?.includes('aborted')) return [];
       setErrorMsg('Failed to load menu items: ' + (error.message || error));
       return [];
     }
@@ -609,7 +611,7 @@ const AdminDashboard = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-500 border-t-transparent mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading dashboard...</p>
         </div>
       </div>
@@ -765,7 +767,7 @@ const AdminDashboard = () => {
               <div className="hidden md:flex items-center">
                 <button
                   onClick={() => navigate(-1)}
-                  className="mr-4 p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
+                  className="mr-4 p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
                   aria-label="Go back"
                 >
                   <ChevronLeft size={30} />
@@ -781,7 +783,7 @@ const AdminDashboard = () => {
                   <button
                     type="button"
                     onClick={() => setShowRestaurantSelector(!showRestaurantSelector)}
-                    className="restaurant-selector-trigger flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white shadow-sm hover:border-orange-300 hover:bg-orange-50/50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                    className="restaurant-selector-trigger flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white shadow-sm hover:border-primary-300 hover:bg-primary-50/50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
                   >
                     {contextIsAdmin() ? <Building2 size={18} className="text-gray-600" /> : <Crown size={18} className="text-amber-600" />}
                     <span className="text-sm font-medium text-gray-700">
@@ -799,7 +801,7 @@ const AdminDashboard = () => {
                         </div>
                         {loadingRestaurants ? (
                           <div className="flex items-center justify-center py-4">
-                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-orange-500 border-t-transparent"></div>
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary-500 border-t-transparent"></div>
                             <span className="ml-2 text-sm text-gray-500">Loading...</span>
                           </div>
                         ) : selectorRestaurants.length === 0 ? (
@@ -812,14 +814,14 @@ const AdminDashboard = () => {
                               key={rest.id}
                               onClick={() => handleRestaurantSelect(rest.id)}
                               className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${rest.id === userRestaurantId
-                                ? 'bg-orange-100 text-orange-700'
-                                : 'hover:bg-orange-50 text-gray-700'
+                                ? 'bg-primary-100 text-primary-700'
+                                : 'hover:bg-primary-50 text-gray-700'
                                 }`}
                             >
                               <div className="flex items-center justify-between">
                                 <span className="truncate">{rest.name}</span>
                                 {rest.id === userRestaurantId && (
-                                  <span className="text-orange-600">✓</span>
+                                  <span className="text-primary-600">✓</span>
                                 )}
                               </div>
                             </button>
@@ -838,7 +840,7 @@ const AdminDashboard = () => {
                     type="search"
                     name="search"
                     placeholder="Search..."
-                    className="bg-gray-100 h-10 px-5 pr-10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
+                    className="bg-gray-100 h-10 px-5 pr-10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -864,7 +866,7 @@ const AdminDashboard = () => {
                     <button
                       type="button"
                       onClick={() => setShowRestaurantSelector(!showRestaurantSelector)}
-                      className="restaurant-selector-trigger w-full flex items-center justify-between gap-2 px-3 py-3 rounded-xl border border-gray-200 bg-white shadow-sm hover:border-orange-300 hover:bg-orange-50/50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                      className="restaurant-selector-trigger w-full flex items-center justify-between gap-2 px-3 py-3 rounded-xl border border-gray-200 bg-white shadow-sm hover:border-primary-300 hover:bg-primary-50/50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
                     >
                       <div className="flex items-center gap-2">
                         {contextIsAdmin() ? <Building2 size={18} className="text-gray-600" /> : <Crown size={18} className="text-amber-600" />}
@@ -884,7 +886,7 @@ const AdminDashboard = () => {
                           </div>
                           {loadingRestaurants ? (
                             <div className="flex items-center justify-center py-4">
-                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-orange-500 border-t-transparent"></div>
+                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary-500 border-t-transparent"></div>
                               <span className="ml-2 text-sm text-gray-500">Loading...</span>
                             </div>
                           ) : selectorRestaurants.length === 0 ? (
@@ -897,14 +899,14 @@ const AdminDashboard = () => {
                                 key={rest.id}
                                 onClick={() => handleRestaurantSelect(rest.id)}
                                 className={`w-full text-left px-2 py-3 rounded-lg text-sm font-medium transition-colors ${rest.id === userRestaurantId
-                                  ? 'bg-orange-100 text-orange-700'
-                                  : 'hover:bg-orange-50 text-gray-700'
+                                  ? 'bg-primary-100 text-primary-700'
+                                  : 'hover:bg-primary-50 text-gray-700'
                                   }`}
                               >
                                 <div className="flex items-center justify-between">
                                   <span className="truncate">{rest.name}</span>
                                   {rest.id === userRestaurantId && (
-                                    <span className="text-orange-600">✓</span>
+                                    <span className="text-primary-600">✓</span>
                                   )}
                                 </div>
                               </button>
@@ -940,15 +942,15 @@ const AdminDashboard = () => {
               {activeTab !== 'aggregate-analytics' && !userRestaurantId ? (
                 <div className="flex justify-center items-center min-h-[50vh]">
                   <div className="text-center p-8 max-w-md bg-white rounded-2xl border border-gray-100 shadow-sm">
-                    <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <StoreIcon className="text-orange-500" size={32} />
+                    <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <StoreIcon className="text-primary-500" size={32} />
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 mb-2">Select a Restaurant</h3>
                     <p className="text-gray-500 mb-6">You need to select a restaurant from the top menu to view its dashboard.</p>
                     {(contextIsOwner() || contextIsAdmin()) && ownedRestaurants?.length > 1 && (
                       <button
                         onClick={() => setActiveTab('aggregate-analytics')}
-                        className="w-full py-3 bg-orange-500 text-white rounded-xl font-medium hover:bg-orange-600 transition-colors shadow-sm"
+                        className="w-full py-3 bg-primary-500 text-white rounded-xl font-medium hover:bg-primary-600 transition-colors shadow-sm"
                       >
                         View All Restaurants
                       </button>

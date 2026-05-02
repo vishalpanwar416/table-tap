@@ -28,7 +28,7 @@ export const LoadingSpinner = ({ size = 'md', color = 'orange' }) => {
   };
 
   const colorClasses = {
-    orange: 'text-orange-500',
+    orange: 'text-primary-500',
     white: 'text-white',
     gray: 'text-gray-500'
   };
@@ -55,7 +55,7 @@ export const ErrorState = ({ message, onRetry, showRetry = true }) => (
     {showRetry && onRetry && (
       <button
         onClick={onRetry}
-        className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition-colors"
+        className="bg-primary-500 text-white px-6 py-2 rounded-lg hover:bg-primary-600 transition-colors"
       >
         Try Again
       </button>

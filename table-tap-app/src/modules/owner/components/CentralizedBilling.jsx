@@ -115,7 +115,7 @@ const CentralizedBilling = ({ restaurants }) => {
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center py-20 animate-pulse">
-                <Loader2 size={40} className="text-orange-500 animate-spin mb-4" />
+                <Loader2 size={40} className="text-primary-500 animate-spin mb-4" />
                 <p className="text-gray-500 font-medium">Consolidating billing records...</p>
             </div>
         );
@@ -139,7 +139,7 @@ const CentralizedBilling = ({ restaurants }) => {
                 </div>
                 <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Needs Attention</p>
-                    <h3 className="text-2xl font-black text-orange-600">
+                    <h3 className="text-2xl font-black text-primary-600">
                         {Object.values(subscriptions).filter(s => s.status === 'expired' || s.status === 'grace_period').length}
                     </h3>
                 </div>
@@ -153,7 +153,7 @@ const CentralizedBilling = ({ restaurants }) => {
                         <input
                             type="text"
                             placeholder="Find restaurant..."
-                            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all text-sm"
+                            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all text-sm"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -164,7 +164,7 @@ const CentralizedBilling = ({ restaurants }) => {
                                 key={status}
                                 onClick={() => setFilterStatus(status)}
                                 className={`px-4 py-2 rounded-xl text-xs font-bold capitalize transition-all whitespace-nowrap ${filterStatus === status
-                                    ? 'bg-orange-500 text-white shadow-lg shadow-orange-100'
+                                    ? 'bg-primary-500 text-white shadow-lg shadow-primary-100'
                                     : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
                                     }`}
                             >
@@ -211,7 +211,7 @@ const CentralizedBilling = ({ restaurants }) => {
                                         {plan ? (
                                             <div>
                                                 <div className="flex items-center gap-2">
-                                                    <ShieldCheck size={14} className="text-orange-500" />
+                                                    <ShieldCheck size={14} className="text-primary-500" />
                                                     <span className="font-bold text-gray-800 text-xs uppercase">{plan.name}</span>
                                                 </div>
                                                 <p className="text-[10px] text-gray-500 font-bold uppercase tracking-tighter mt-0.5">{formatCurrency(sub.total_amount)} / {sub.billing_cycle}</p>
@@ -246,7 +246,7 @@ const CentralizedBilling = ({ restaurants }) => {
                                     <td className="px-6 py-4 text-right">
                                         <button
                                             onClick={() => navigate(`/restaurant/${restaurant.id}/dashboard?tab=billing`)}
-                                            className="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-black rounded-xl text-[10px] hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 transition-all uppercase tracking-wider flex items-center justify-center gap-2 ml-auto"
+                                            className="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-black rounded-xl text-[10px] hover:bg-primary-50 hover:text-primary-600 hover:border-primary-200 transition-all uppercase tracking-wider flex items-center justify-center gap-2 ml-auto"
                                         >
                                             Manage Billing <ChevronRight size={14} />
                                         </button>
@@ -268,13 +268,13 @@ const CentralizedBilling = ({ restaurants }) => {
                 )}
             </div>
 
-            <div className="bg-orange-600 rounded-2xl p-8 text-white shadow-xl shadow-orange-100 flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative">
-                <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-orange-500/20 rounded-full blur-3xl"></div>
+            <div className="bg-primary-600 rounded-2xl p-8 text-white shadow-xl shadow-primary-100 flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative">
+                <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-primary-500/20 rounded-full blur-3xl"></div>
                 <div className="relative z-10">
                     <h3 className="text-xl font-black mb-2">Bulk Renewal Notice</h3>
-                    <p className="text-orange-100 text-sm max-w-md">You have {Object.values(subscriptions).filter(s => s.status !== 'active').length} restaurants with inactive or expiring subscriptions. Manage them individually or contact support for corporate enterprise billing.</p>
+                    <p className="text-primary-100 text-sm max-w-md">You have {Object.values(subscriptions).filter(s => s.status !== 'active').length} restaurants with inactive or expiring subscriptions. Manage them individually or contact support for corporate enterprise billing.</p>
                 </div>
-                <button className="relative z-10 px-8 py-4 bg-white text-orange-600 font-black rounded-2xl shadow-xl hover:scale-105 transition-all flex items-center gap-3 active:scale-95">
+                <button className="relative z-10 px-8 py-4 bg-white text-primary-600 font-black rounded-2xl shadow-xl hover:scale-105 transition-all flex items-center gap-3 active:scale-95">
                     Contact Billing Support <ExternalLink size={20} />
                 </button>
             </div>

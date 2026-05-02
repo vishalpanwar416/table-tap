@@ -117,12 +117,27 @@ export const RestaurantProvider = ({ children }) => {
             setError('AUTH_ERROR');
             return;
           }
+          // .single() with no matching row returns PGRST116 — treat as stale selection,
+          // not a hard error. Clear the cached restaurant so the wrapper redirects to
+          // /restaurant-selection on the next render instead of showing an error screen.
+          if (restaurantError.code === 'PGRST116') {
+            localStorageStore.clear();
+            setRestaurantId(null);
+            setTableNumber(null);
+            setRestaurant(null);
+            setError(null);
+            return;
+          }
           setError(restaurantError.message);
           return;
         }
 
         if (!restaurantData) {
-          setError('Restaurant not found or inactive');
+          localStorageStore.clear();
+          setRestaurantId(null);
+          setTableNumber(null);
+          setRestaurant(null);
+          setError(null);
           return;
         }
 
@@ -257,6 +272,13 @@ export const RestaurantProvider = ({ children }) => {
           restaurantError.message?.includes('Refresh Token Not Found') ||
           restaurantError.status === 401) {
           setError('AUTH_ERROR');
+        } else if (restaurantError.code === 'PGRST116') {
+          // Stale selection — clear and let the wrapper redirect to /restaurant-selection.
+          localStorageStore.clear();
+          setRestaurantId(null);
+          setTableNumber(null);
+          setRestaurant(null);
+          setError(null);
         } else {
           setError(restaurantError.message);
         }

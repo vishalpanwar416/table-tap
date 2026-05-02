@@ -215,7 +215,7 @@ const MultiRestaurantOverview = ({ ownedRestaurants, period, setPeriod, formatCu
         );
     }
 
-    const COLORS = ['#F97316', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+    const COLORS = ['#f97316', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
     return (
         <div className="space-y-6 animate-in fade-in duration-700">
@@ -223,7 +223,7 @@ const MultiRestaurantOverview = ({ ownedRestaurants, period, setPeriod, formatCu
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
                     <div>
-                        <div className="flex items-center gap-2 text-orange-600 mb-1">
+                        <div className="flex items-center gap-2 text-primary-600 mb-1">
                             <Briefcase size={18} />
                             <span className="text-xs font-bold uppercase tracking-widest">Enterprise Dashboard</span>
                         </div>
@@ -236,7 +236,7 @@ const MultiRestaurantOverview = ({ ownedRestaurants, period, setPeriod, formatCu
                                 key={p}
                                 onClick={() => setPeriod(p)}
                                 className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${period === p
-                                    ? 'bg-white text-orange-600 shadow-lg'
+                                    ? 'bg-white text-primary-600 shadow-lg'
                                     : 'text-gray-500 hover:text-gray-900'
                                     }`}
                             >
@@ -289,7 +289,7 @@ const MultiRestaurantOverview = ({ ownedRestaurants, period, setPeriod, formatCu
                 <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                            <TrendingUp size={18} className="text-orange-500" />
+                            <TrendingUp size={18} className="text-primary-500" />
                             Revenue Trend
                         </h3>
                     </div>
@@ -298,8 +298,8 @@ const MultiRestaurantOverview = ({ ownedRestaurants, period, setPeriod, formatCu
                             <AreaChart data={chartData}>
                                 <defs>
                                     <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#F97316" stopOpacity={0.1} />
-                                        <stop offset="95%" stopColor="#F97316" stopOpacity={0} />
+                                        <stop offset="5%" stopColor="#f97316" stopOpacity={0.1} />
+                                        <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
@@ -309,7 +309,7 @@ const MultiRestaurantOverview = ({ ownedRestaurants, period, setPeriod, formatCu
                                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
                                     formatter={(value) => [formatCurrency(value), 'Revenue']}
                                 />
-                                <Area type="monotone" dataKey="revenue" stroke="#F97316" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
+                                <Area type="monotone" dataKey="revenue" stroke="#f97316" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
@@ -349,7 +349,7 @@ const MultiRestaurantOverview = ({ ownedRestaurants, period, setPeriod, formatCu
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                     <div className="p-5 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
                         <h3 className="font-bold text-gray-900 flex items-center gap-2 text-sm uppercase tracking-wider">
-                            <Store size={18} className="text-orange-500" />
+                            <Store size={18} className="text-primary-500" />
                             Leaderboard
                         </h3>
                     </div>
@@ -363,7 +363,7 @@ const MultiRestaurantOverview = ({ ownedRestaurants, period, setPeriod, formatCu
                                     {i + 1}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="font-bold text-gray-900 truncate group-hover:text-orange-600 transition-colors uppercase text-xs tracking-tight">{r.name}</p>
+                                    <p className="font-bold text-gray-900 truncate group-hover:text-primary-600 transition-colors uppercase text-xs tracking-tight">{r.name}</p>
                                     <p className="text-[10px] text-gray-500 font-bold uppercase tracking-tighter">{r.orders} TOTAL ORDERS</p>
                                 </div>
                                 <div className="text-right">
@@ -374,7 +374,7 @@ const MultiRestaurantOverview = ({ ownedRestaurants, period, setPeriod, formatCu
                                 </div>
                                 <button
                                     onClick={() => navigate(`/restaurant/${r.id}/dashboard`)}
-                                    className="p-2 opacity-0 group-hover:opacity-100 transition-opacity bg-orange-50 text-orange-600 rounded-lg"
+                                    className="p-2 opacity-0 group-hover:opacity-100 transition-opacity bg-primary-50 text-primary-600 rounded-lg"
                                 >
                                     <ArrowRight size={16} />
                                 </button>
@@ -403,7 +403,7 @@ const MultiRestaurantOverview = ({ ownedRestaurants, period, setPeriod, formatCu
                                         </div>
                                         <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
                                             <div
-                                                className="bg-orange-500 h-full rounded-full transition-all duration-1000"
+                                                className="bg-primary-500 h-full rounded-full transition-all duration-1000"
                                                 style={{ width: `${(item.count / globalTopItems[0].count) * 100}%` }}
                                             />
                                         </div>
@@ -419,7 +419,7 @@ const MultiRestaurantOverview = ({ ownedRestaurants, period, setPeriod, formatCu
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="p-5 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
                     <h3 className="font-bold text-gray-900 flex items-center gap-2 text-sm uppercase tracking-wider">
-                        <Clock size={18} className="text-orange-500" />
+                        <Clock size={18} className="text-primary-500" />
                         Global Activity Feed
                     </h3>
                 </div>
@@ -427,9 +427,9 @@ const MultiRestaurantOverview = ({ ownedRestaurants, period, setPeriod, formatCu
                     {recentOrders.map((order) => (
                         <div key={order.id} className="p-4 flex items-center justify-between text-sm">
                             <div className="flex items-center gap-4">
-                                <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></div>
+                                <div className="w-2 h-2 rounded-full bg-primary-500 animate-pulse"></div>
                                 <div>
-                                    <p className="font-bold text-gray-900 text-xs uppercase tracking-tight">#{order.order_id?.slice(-6).toUpperCase()} - {order.restaurants?.name}</p>
+                                    <p className="font-bold text-gray-900 text-xs uppercase tracking-tight">#{order.order_id?.slice(-6)?.toUpperCase()} - {order.restaurants?.name}</p>
                                     <p className="text-[10px] text-gray-500 font-medium">
                                         {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} •
                                         {order.items?.length || 0} items
@@ -439,7 +439,7 @@ const MultiRestaurantOverview = ({ ownedRestaurants, period, setPeriod, formatCu
                             <div className="text-right">
                                 <p className="font-black text-gray-900">{formatCurrency(order.total)}</p>
                                 <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${order.status === 'completed' ? 'bg-green-100 text-green-700' :
-                                    order.status === 'pending' ? 'bg-orange-100 text-orange-700' :
+                                    order.status === 'pending' ? 'bg-primary-100 text-primary-700' :
                                         'bg-gray-100 text-gray-600'
                                     }`}>
                                     {order.status}
@@ -455,7 +455,7 @@ const MultiRestaurantOverview = ({ ownedRestaurants, period, setPeriod, formatCu
 
 const StatCard = ({ label, value, subValue, trend, icon, color }) => {
     const colorClasses = {
-        orange: 'bg-orange-50 text-orange-600',
+        orange: 'bg-primary-50 text-primary-600',
         blue: 'bg-blue-50 text-blue-600',
         green: 'bg-green-50 text-green-600',
         amber: 'bg-amber-50 text-amber-600',

@@ -42,11 +42,11 @@ export const ManagerNotificationProvider = ({ children }) => {
         setNotifications(prev => [payload.new, ...prev]);
         setUnreadCount(prev => prev + 1);
       } else if (payload.eventType === 'UPDATE') {
-        setNotifications(prev =>
-          prev.map(n => n.id === payload.new.id ? payload.new : n)
-        );
-        const count = notifications.filter(n => !n.read && n.is_admin_notification).length;
-        setUnreadCount(count);
+        setNotifications(prev => {
+          const updated = prev.map(n => n.id === payload.new.id ? payload.new : n);
+          setUnreadCount(updated.filter(n => !n.read && n.is_admin_notification).length);
+          return updated;
+        });
       }
     }, restaurantId);
 

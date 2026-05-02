@@ -85,7 +85,7 @@ const OptimizedFoodItem = memo(({
       return (
         <div className="flex flex-col items-end">
           <span className="line-through text-gray-300 text-xs">₹{priceInfo.originalPrice}</span>
-          <span className="text-orange-400 font-semibold text-sm">₹{priceInfo.finalPrice}</span>
+          <span className="text-primary-400 font-semibold text-sm">₹{priceInfo.finalPrice}</span>
         </div>
       );
     }

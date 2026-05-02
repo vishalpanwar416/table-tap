@@ -109,10 +109,10 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
     preparing: {
       label: "Preparing",
       color: "orange",
-      icon: <Truck className="h-4 w-4 text-orange-600" />,
-      badge: "bg-orange-100 text-orange-800 border border-orange-200",
-      bgColor: "bg-orange-50",
-      borderColor: "border-orange-200"
+      icon: <Truck className="h-4 w-4 text-primary-600" />,
+      badge: "bg-primary-100 text-primary-800 border border-primary-200",
+      bgColor: "bg-primary-50",
+      borderColor: "border-primary-200"
     },
     ready: {
       label: "Ready",

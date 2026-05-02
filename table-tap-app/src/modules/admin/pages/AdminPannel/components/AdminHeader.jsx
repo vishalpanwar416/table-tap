@@ -86,19 +86,19 @@ const AdminHeader = ({
   });
 
   return (
-    <div className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 shadow-sm z-20 p-4 md:p-6 relative font-spartan">
+    <div className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 shadow-sm z-20 p-3 md:p-4 relative font-spartan">
       <div className="flex justify-between items-center">
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-3">
           <button
             onClick={() => navigate(-1)}
-            className="text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+            className="text-primary-500 hover:text-primary-600 transition-all duration-300 p-1.5 rounded-full hover:bg-primary-500/10 active:bg-primary-500/20 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
             title="Go Back"
             aria-label="Go back"
           >
-            <ChevronLeft size={30} />
+            <ChevronLeft size={24} />
           </button>
           <div>
-            <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-spartan">
+            <h2 className="text-lg md:text-xl font-bold text-gray-900 font-spartan leading-tight">
               {{
                 restaurants: 'Restaurants',
                 registrations: 'Registrations',
@@ -110,14 +110,14 @@ const AdminHeader = ({
                 settings: 'System Settings'
               }[activeTab] || 'Admin Panel'}
             </h2>
-            <p className="text-sm text-gray-600 mt-1 font-spartan">
+            <p className="text-[11px] md:text-xs text-gray-500 mt-0.5 font-spartan">
               {activeTab === 'restaurants' && `${stats.totalRestaurants} restaurants • ${stats.activeRestaurants} active`}
               {activeTab === 'staff' && `${stats.totalStaff} staff members • ${stats.connectedStaff} connected`}
-              {activeTab === 'registrations' && 'Manage incoming restaurant registration requests'}
-              {activeTab === 'inquiries' && 'View and manage lead inquiries'}
-              {activeTab === 'subscriptions' && 'Manage subscription plans and features'}
-              {activeTab === 'activity' && 'Track all automated emails, system events, and admin activities'}
-              {activeTab === 'settings' && 'Manage API keys, content, and global configuration'}
+              {activeTab === 'registrations' && 'Manage registration requests'}
+              {activeTab === 'inquiries' && 'View lead inquiries'}
+              {activeTab === 'subscriptions' && 'Manage subscription plans'}
+              {activeTab === 'activity' && 'Track system events & activities'}
+              {activeTab === 'settings' && 'Manage global configuration'}
             </p>
           </div>
         </div>
@@ -135,7 +135,7 @@ const AdminHeader = ({
                 <input
                   type="search"
                   placeholder={`Search ${activeTab === 'restaurants' ? 'restaurants' : activeTab === 'staff' ? 'staff' : activeTab === 'registrations' ? 'registrations' : activeTab === 'notifications' ? 'notifications' : activeTab === 'activity' ? 'activities' : 'leads'}...`}
-                  className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50 backdrop-blur-sm transition-all duration-200 hover:bg-white/70 font-spartan"
+                  className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent bg-white/50 backdrop-blur-sm transition-all duration-200 hover:bg-white/70 font-spartan"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -154,14 +154,14 @@ const AdminHeader = ({
                 <button
                   onClick={() => setShowFilters(!showFilters)}
                   className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 font-spartan ${hasFilters
-                    ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                    ? 'bg-primary-100 text-primary-700 hover:bg-primary-200'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                     }`}
                 >
                   <Filter className="h-4 w-4" />
                   <span className="text-sm font-medium font-spartan">Filter</span>
                   {hasFilters && (
-                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                    <span className="w-2 h-2 bg-primary-500 rounded-full"></span>
                   )}
                   <ChevronDown className={`h-4 w-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
                 </button>
@@ -188,7 +188,7 @@ const AdminHeader = ({
                         {hasFilters && (
                           <button
                             onClick={handleClearFilters}
-                            className="text-sm text-blue-600 hover:text-blue-700 font-spartan"
+                            className="text-sm text-primary-600 hover:text-primary-700 font-spartan"
                           >
                             Clear all
                           </button>
@@ -204,7 +204,7 @@ const AdminHeader = ({
                           <select
                             value={selectedRestaurantId}
                             onChange={(e) => setSelectedRestaurantId(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-spartan"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-spartan"
                           >
                             <option value="" className="font-spartan">
                               {activeTab === 'restaurants' ? 'All Status' : 'All Restaurants'}
@@ -233,7 +233,7 @@ const AdminHeader = ({
                             <select
                               value={selectedCuisineType}
                               onChange={(e) => setSelectedCuisineType(e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-spartan"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 focus:border-transparent font-spartan"
                             >
                               <option value="" className="font-spartan">All Cuisines</option>
                               {cuisineTypes.map(cuisine => (
@@ -254,7 +254,7 @@ const AdminHeader = ({
                             <select
                               value={selectedStaffRole}
                               onChange={(e) => setSelectedStaffRole(e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-spartan"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 focus:border-transparent font-spartan"
                             >
                               <option value="" className="font-spartan">All Roles</option>
                               <option value="manager" className="font-spartan">Manager</option>
@@ -272,7 +272,7 @@ const AdminHeader = ({
                             <select
                               value={selectedConnectionStatus}
                               onChange={(e) => setSelectedConnectionStatus(e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-spartan"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 focus:border-transparent font-spartan"
                             >
                               <option value="" className="font-spartan">All Status</option>
                               <option value="connected" className="font-spartan">Connected</option>
@@ -292,12 +292,12 @@ const AdminHeader = ({
           <div className="hidden md:flex items-center space-x-4">
             {activeTab === 'restaurants' ? (
               <div className="flex items-center space-x-2 text-sm text-gray-600">
-                <Building2 className="h-4 w-4 text-blue-500" />
+                <Building2 className="h-4 w-4 text-primary-500" />
                 <span>{stats.activeRestaurants}/{stats.totalRestaurants} Active</span>
               </div>
             ) : (
               <div className="flex items-center space-x-2 text-sm text-gray-600">
-                <Users className="h-4 w-4 text-purple-500" />
+                <Users className="h-4 w-4 text-primary-500" />
                 <span>{stats.connectedStaff}/{stats.totalStaff} Connected</span>
               </div>
             )}

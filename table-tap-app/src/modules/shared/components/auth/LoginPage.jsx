@@ -256,7 +256,7 @@ export default function LoginPage() {
         <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col z-10">
           <div className="w-full px-6 py-8 relative flex items-center justify-center">
             <button
-              className="absolute left-4 text-orange-500 p-2"
+              className="absolute left-4 text-primary-500 p-2"
               onClick={() => navigate(-1)}
             >
               <ChevronLeft size={30} />
@@ -281,7 +281,7 @@ export default function LoginPage() {
             <div className="w-full max-w-xs space-y-4">
               <button
                 onClick={handleContinue}
-                className="w-full bg-orange-500 text-white py-3.5 rounded-xl font-medium text-lg flex items-center justify-center gap-2 hover:bg-orange-600 transition-colors shadow-lg"
+                className="w-full bg-primary-500 text-white py-3.5 rounded-xl font-medium text-lg flex items-center justify-center gap-2 hover:bg-primary-600 transition-colors shadow-lg"
               >
                 <Home size={20} />
                 Go to Home
@@ -307,7 +307,7 @@ export default function LoginPage() {
           {/* Header */}
           <div className="w-full px-6 py-8 relative flex items-center justify-center">
             <button
-              className="absolute left-4 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-10"
+              className="absolute left-4 text-primary-500 hover:text-primary-600 transition-all duration-300 p-2 rounded-full hover:bg-primary-500/10 active:bg-primary-500/20 focus:outline-none focus:ring-2 focus:ring-primary-500/30 z-10"
               onClick={() => navigate(-1)}
               aria-label="Go back"
             >
@@ -354,7 +354,7 @@ export default function LoginPage() {
                     <motion.span
                       animate={{ opacity: [0, 1, 0] }}
                       transition={{ repeat: Infinity, duration: 0.8 }}
-                      className="inline-block w-[3px] h-6 bg-orange-500 ml-1 mb-[-2px]"
+                      className="inline-block w-[3px] h-6 bg-primary-500 ml-1 mb-[-2px]"
                     />
                   </motion.h2>
                 )}

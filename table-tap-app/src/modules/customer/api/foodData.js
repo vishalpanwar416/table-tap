@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../shared/supabase';
 import { useRestaurant } from '../../restaurant/pages/RestaurantSelection/RestaurantContext';
 import { processFoodItems, getFallbackImage } from '../../shared/utils/imageOptimization';
+import { runQuery } from '../../shared/api/queryClient';
 
 export const categories = [
   { name: 'Snacks', icon: 'Sandwich' },
@@ -47,17 +48,16 @@ export const RECOMMENDED_TAGS = [
 export const fetchFoodItems = async (restaurantId) => {
   if (!restaurantId) return [];
   try {
-    const { data, error } = await supabase
-      .from('fooditems')
-      .select('*')
-      .eq('restaurant_id', restaurantId)
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-
-    // Process items to ensure they have valid images
-    const processedItems = processFoodItems(data || []);
-    return processedItems;
+    const data = await runQuery(
+      'fetchFoodItems',
+      () => supabase
+        .from('fooditems')
+        .select('*')
+        .eq('restaurant_id', restaurantId)
+        .order('created_at', { ascending: false }),
+      { context: { restaurantId } }
+    );
+    return processFoodItems(data || []);
   } catch (error) {
     return [];
   }
@@ -160,7 +160,7 @@ export const fetchMaincaroselData = async (restaurantId = null) => {
     }
 
     // Transform the data to match the expected format
-    return data.map(item => ({
+    return (data || []).map(item => ({
       id: item.id,
       restaurant_id: item.restaurant_id, // <-- add this!
       imade: item.image, // Note: keeping 'imade' to match existing component
@@ -267,28 +267,6 @@ const formatDiscount = (item) => {
       return `${item.discountvalue}% OFF`;
   }
 };
-
-// Fallback static data (in case of network issues or empty database)
-export const fallbackMaincaroselData = [
-  {
-    id: 'fallback-1',
-    imade: null,
-    discount: '30% OFF',
-    message: 'Experience our delicious new dish',
-  },
-  {
-    id: 'fallback-2',
-    imade: null,
-    discount: 'BUY 1 GET 1',
-    message: 'Try our spicy treat today',
-  },
-  {
-    id: 'fallback-3',
-    imade: null,
-    discount: "Chef's Choice",
-    message: 'Tastier than ever before!',
-  }
-];
 
 // Function that automatically gets restaurant ID from context and fetches food items
 // This is what you should use in your components

@@ -238,7 +238,7 @@ export const getAllRestaurants = async (page = 1, pageSize = 50) => {
       .range(from, to));
 
     if (error || !data || data.length === 0) {
-      // Fallback: query restaurants table directly with staff join
+      // Fallback 1: restaurants table with staff+profiles join
       ({ data, error, count } = await supabase
         .from('restaurants')
         .select(`
@@ -246,6 +246,15 @@ export const getAllRestaurants = async (page = 1, pageSize = 50) => {
           restaurant_staff (id, staff_role, connected, staff_name, staff_email,
             profiles (id, full_name, email, avatar_url))
         `, { count: 'estimated' })
+        .order('created_at', { ascending: false })
+        .range(from, to));
+    }
+
+    if (error || !data || data.length === 0) {
+      // Fallback 2: restaurants table only — no nested relations
+      ({ data, error, count } = await supabase
+        .from('restaurants')
+        .select('*', { count: 'estimated' })
         .order('created_at', { ascending: false })
         .range(from, to));
     }
@@ -494,15 +503,28 @@ export const createRestaurant = async (restaurantData) => {
  */
 export const toggleRestaurantStatus = async (restaurantId, newStatus) => {
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('restaurants')
-      .update({ is_active: newStatus })
-      .eq('id', restaurantId);
+      .update({
+        is_active: newStatus,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', restaurantId)
+      .select();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase update error:', error);
+      throw error;
+    }
+
+    if (!data || data.length === 0) {
+      throw new Error('Permission denied or restaurant not found.');
+    }
+
     return { success: true, error: null };
   } catch (error) {
-    return { success: false, error: error.message };
+    console.error('toggleRestaurantStatus catch error:', error);
+    return { success: false, error: error.message || 'An unknown error occurred' };
   }
 };
 
@@ -511,12 +533,16 @@ export const toggleRestaurantStatus = async (restaurantId, newStatus) => {
  */
 export const toggleRestaurantAggregators = async (restaurantId, newStatus) => {
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('restaurants')
       .update({ aggregators_enabled: newStatus })
-      .eq('id', restaurantId);
+      .eq('id', restaurantId)
+      .select('id');
 
     if (error) throw error;
+    if (!data || data.length === 0) {
+      throw new Error('Permission denied — your account is not allowed to update this restaurant.');
+    }
     return { success: true, error: null };
   } catch (error) {
     return { success: false, error: error.message };
@@ -625,7 +651,6 @@ export const deleteRestaurant = async (restaurantId) => {
       .delete()
       .eq('id', restaurantId);
 
-    if (error) throw error;
     if (error) throw error;
 
     await logAdminActivity({
@@ -1269,24 +1294,27 @@ export const getEmailTemplate = async (key) => {
 export const getPaginatedRegistrations = async (page = 1, pageSize = 20, status = 'all') => {
   try {
     const from = (page - 1) * pageSize;
-    const to = from + pageSize - 1;
+    // Fetch one extra row to detect hasMore without paying for COUNT(*)
+    const to = from + pageSize;
 
     let query = supabase
       .from('restaurant_registrations')
-      .select('*', { count: 'exact' });
+      .select('*');
 
     if (status !== 'all') {
       query = query.eq('status', status);
     }
 
-    const { data, count, error } = await query
+    const { data, error } = await query
       .order('created_at', { ascending: false })
       .range(from, to);
 
     if (error) throw error;
-    return { data: data || [], totalCount: count || 0, error: null };
+    const rows = data || [];
+    const hasMore = rows.length > pageSize;
+    return { data: rows.slice(0, pageSize), hasMore, error: null };
   } catch (error) {
     console.error('Error fetching paginated registrations:', error);
-    return { data: [], totalCount: 0, error: error.message };
+    return { data: [], hasMore: false, error: error.message };
   }
 };

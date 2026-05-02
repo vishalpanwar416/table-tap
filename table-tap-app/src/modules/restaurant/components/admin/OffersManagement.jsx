@@ -3,6 +3,7 @@ import { Tag, Plus, X, Edit, Trash2, Check, ShoppingBag, Eye, AlertCircle, Packa
 import { createOffer, updateOffer, deleteOffer, getAllOffers, setCarouselOffer, getRestaurantOffers, getCarouselOffers, getRestaurantCarouselOffers, getRestaurantOfferStats } from '../../../customer/api/offerService';
 import { getAllFoodItems, getRestaurantFoodItems } from '../../../customer/api/foodService';
 import { useAdminRestaurant } from '../../../shared/context/AdminRestaurantContext';
+import { supabase } from '../../../shared/supabase';
 
 const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
   const [foodItems, setFoodItems] = useState([]);
@@ -15,6 +16,8 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
   const [carouselOffers, setCarouselOffers] = useState([]);
   const [viewingOffer, setViewingOffer] = useState(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [carouselEnabled, setCarouselEnabled] = useState(true);
+  const [isTogglingCarousel, setIsTogglingCarousel] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -66,10 +69,49 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
     }
   }, [setLoading, setErrorMsg, userRestaurantId]);
 
+  // Load carousel_enabled setting from the restaurant
+  const loadCarouselEnabled = useCallback(async () => {
+    if (!userRestaurantId) return;
+    try {
+      const { data, error } = await supabase
+        .from('restaurants')
+        .select('carousel_enabled')
+        .eq('id', userRestaurantId)
+        .single();
+      if (!error && data) {
+        // Default to true if column doesn't exist yet (before migration runs)
+        setCarouselEnabled(data.carousel_enabled ?? true);
+      }
+    } catch {
+      // silently ignore — column may not exist before migration
+    }
+  }, [userRestaurantId]);
+
+  // Toggle the master carousel on/off
+  const handleToggleCarouselEnabled = async () => {
+    if (!userRestaurantId || isTogglingCarousel) return;
+    try {
+      setIsTogglingCarousel(true);
+      const newValue = !carouselEnabled;
+      const { error } = await supabase
+        .from('restaurants')
+        .update({ carousel_enabled: newValue })
+        .eq('id', userRestaurantId);
+      if (error) throw error;
+      setCarouselEnabled(newValue);
+      setSuccessMsg(`Offer carousel ${newValue ? 'enabled' : 'disabled'} for customers.`);
+    } catch (error) {
+      setErrorMsg('Failed to update carousel setting: ' + error.message);
+    } finally {
+      setIsTogglingCarousel(false);
+    }
+  };
+
   // Load data on component mount
   useEffect(() => {
     loadData();
-  }, [loadData]);
+    loadCarouselEnabled();
+  }, [loadData, loadCarouselEnabled]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -343,20 +385,37 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-6">
           <div>
             <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-              Your Offers <span className="bg-orange-100 text-orange-700 text-xs px-2 py-0.5 rounded-full">{offers.length}</span>
+              Your Offers <span className="bg-primary-100 text-primary-700 text-xs px-2 py-0.5 rounded-full">{offers.length}</span>
             </h2>
             <p className="text-sm text-gray-500 mt-1 hidden md:block">
               Manage special offers and promotional deals for your customers
             </p>
           </div>
           {!showForm && (
-            <button
-              onClick={() => setShowForm(true)}
-              className="w-full md:w-auto bg-orange-600 text-white px-5 py-2.5 rounded-xl hover:bg-orange-700 transition-all shadow-sm shadow-orange-200 flex items-center justify-center gap-2 font-medium active:scale-95"
-            >
-              <Plus size={18} />
-              Create New Offer
-            </button>
+            <div className="w-full md:w-auto flex flex-col md:flex-row gap-2">
+              <button
+                onClick={handleToggleCarouselEnabled}
+                disabled={isTogglingCarousel || !userRestaurantId}
+                title={carouselEnabled
+                  ? 'Carousel is visible to customers — click to hide it'
+                  : 'Carousel is hidden — click to show it to customers'}
+                className={`w-full md:w-auto px-5 py-2.5 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 font-medium active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  carouselEnabled
+                    ? 'bg-green-600 hover:bg-green-700 text-white shadow-green-200'
+                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                }`}
+              >
+                <span className={`inline-block w-2 h-2 rounded-full ${carouselEnabled ? 'bg-white' : 'bg-gray-500'}`} />
+                Carousel: {carouselEnabled ? 'On' : 'Off'}
+              </button>
+              <button
+                onClick={() => setShowForm(true)}
+                className="w-full md:w-auto bg-primary-600 text-white px-5 py-2.5 rounded-xl hover:bg-primary-700 transition-all shadow-sm shadow-primary-200 flex items-center justify-center gap-2 font-medium active:scale-95"
+              >
+                <Plus size={18} />
+                Create New Offer
+              </button>
+            </div>
           )}
         </div>
 
@@ -382,11 +441,11 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
             </div>
           </div>
 
-          <div className="min-w-[85px] flex-1 bg-orange-50 p-2 md:p-4 rounded-xl border border-orange-100 snap-start">
+          <div className="min-w-[85px] flex-1 bg-primary-50 p-2 md:p-4 rounded-xl border border-primary-100 snap-start">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-1">
               <div>
-                <p className="text-[10px] md:text-sm text-orange-600 font-medium uppercase tracking-wide">Avg. Disc</p>
-                <p className="text-lg md:text-2xl font-bold text-orange-800 leading-tight">
+                <p className="text-[10px] md:text-sm text-primary-600 font-medium uppercase tracking-wide">Avg. Disc</p>
+                <p className="text-lg md:text-2xl font-bold text-primary-800 leading-tight">
                   {offers.length > 0
                     ? Math.round(offers.reduce((sum, offer) => {
                       const savings = calculateSavings(offer.price, offer.discounted_price);
@@ -395,7 +454,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                     : 0}%
                 </p>
               </div>
-              <Percent className="text-orange-500 w-4 h-4 md:w-6 md:h-6" />
+              <Percent className="text-primary-500 w-4 h-4 md:w-6 md:h-6" />
             </div>
           </div>
 
@@ -445,7 +504,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
-                    className="w-full border-gray-200 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                    className="w-full border-gray-200 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
                     placeholder="E.g., Family Combo, Student Special"
                     required
                   />
@@ -460,7 +519,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                     name="description"
                     value={formData.description}
                     onChange={handleInputChange}
-                    className="w-full border-gray-200 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                    className="w-full border-gray-200 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
                     placeholder="Brief description of the offer"
                     required
                   />
@@ -479,7 +538,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                       name="price"
                       value={formData.price}
                       onChange={handleInputChange}
-                      className="w-full border-gray-200 rounded-lg shadow-sm p-3 bg-white focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                      className="w-full border-gray-200 rounded-lg shadow-sm p-3 bg-white focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
                       placeholder="0.00"
                       min="0"
                       step="0.01"
@@ -497,7 +556,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                     name="discounted_price"
                     value={formData.discounted_price}
                     onChange={handleInputChange}
-                    className="w-full border-gray-200 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm font-semibold text-gray-800"
+                    className="w-full border-gray-200 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm font-semibold text-gray-800"
                     placeholder="0.00"
                     min="0.01"
                     step="0.01"
@@ -572,7 +631,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   <button
                     type="button"
                     onClick={() => setShowItemSelector(!showItemSelector)}
-                    className="text-xs font-bold text-orange-600 hover:text-orange-700 bg-orange-50 px-3 py-1.5 rounded-full transition-colors"
+                    className="text-xs font-bold text-primary-600 hover:text-primary-700 bg-primary-50 px-3 py-1.5 rounded-full transition-colors"
                   >
                     {showItemSelector ? 'Finish Selection' : '+ Add Items'}
                   </button>
@@ -622,7 +681,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                       placeholder="Search items..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full border-gray-200 rounded-lg shadow-sm p-2.5 focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm bg-gray-50"
+                      className="w-full border-gray-200 rounded-lg shadow-sm p-2.5 focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm bg-gray-50"
                     />
                   </div>
 
@@ -641,12 +700,12 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                             <div
                               key={item.id}
                               onClick={() => handleAddItem(item)}
-                              className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all hover:bg-orange-50 border ${isSelected
-                                ? 'border-orange-200 bg-orange-50/50'
+                              className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all hover:bg-primary-50 border ${isSelected
+                                ? 'border-primary-200 bg-primary-50/50'
                                 : 'border-transparent'
                                 }`}
                             >
-                              <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'bg-orange-500 border-orange-500' : 'border-gray-300'}`}>
+                              <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'bg-primary-500 border-primary-500' : 'border-gray-300'}`}>
                                 {count > 0 ? (
                                   <span className="text-[9px] text-white font-bold">{count}</span>
                                 ) : (
@@ -654,7 +713,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                                 )}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <div className={`text-sm font-medium truncate ${isSelected ? 'text-orange-900' : 'text-gray-700'}`}>{item.name}</div>
+                                <div className={`text-sm font-medium truncate ${isSelected ? 'text-primary-900' : 'text-gray-700'}`}>{item.name}</div>
                                 <div className="text-xs text-gray-500">₹{parseFloat(item.price).toFixed(2)}</div>
                               </div>
                             </div>
@@ -708,7 +767,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                 <button
                   type="submit"
                   disabled={isUpdating}
-                  className="px-5 py-2.5 text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 rounded-lg transition-colors disabled:opacity-50 shadow-sm shadow-orange-200"
+                  className="px-5 py-2.5 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors disabled:opacity-50 shadow-sm shadow-primary-200"
                 >
                   {isUpdating ? 'Saving...' : (editingOffer ? 'Save Changes' : 'Create Offer')}
                 </button>
@@ -721,12 +780,48 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4 px-1">
             <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-              <ShoppingBag size={20} className="text-orange-500" />
+              <ShoppingBag size={20} className="text-primary-500" />
               Featured Offers
             </h3>
-            <span className="text-xs font-medium px-2 py-1 bg-gray-100 rounded-full text-gray-600">
-              {carouselOffers.length}/3 Active
-            </span>
+
+            <div className="flex items-center gap-3">
+              {/* Slot counter badge */}
+              <span className="text-xs font-medium px-2.5 py-1 bg-primary-50 text-primary-600 border border-primary-100 rounded-full">
+                {carouselOffers.length}/3 slots
+              </span>
+
+              {/* iOS-style master carousel toggle */}
+              <div
+                className="flex items-center gap-2 cursor-pointer select-none"
+                onClick={!isTogglingCarousel ? handleToggleCarouselEnabled : undefined}
+                title={carouselEnabled ? 'Carousel ON — click to hide from customers' : 'Carousel OFF — click to show to customers'}
+              >
+                <span className={`text-xs font-semibold transition-colors duration-200 ${
+                  carouselEnabled ? 'text-green-600' : 'text-gray-400'
+                }`}>
+                  {carouselEnabled ? 'ON' : 'OFF'}
+                </span>
+
+                {/* Switch track */}
+                <div
+                  className={`relative w-11 h-6 rounded-full transition-all duration-300 ${
+                    carouselEnabled
+                      ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]'
+                      : 'bg-gray-300'
+                  } ${
+                    isTogglingCarousel ? 'opacity-50 cursor-wait' : 'cursor-pointer'
+                  }`}
+                >
+                  {/* Knob */}
+                  <div
+                    className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-md transform transition-all duration-300 ${
+                      carouselEnabled ? 'translate-x-5' : 'translate-x-0.5'
+                    } ${isTogglingCarousel ? 'scale-90' : 'scale-100'}`}
+                    style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.25)' }}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           {carouselOffers.length === 0 ? (
@@ -742,7 +837,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
               </p>
               <button
                 onClick={() => setShowForm(true)}
-                className="text-sm font-medium text-orange-600 hover:text-orange-700"
+                className="text-sm font-medium text-primary-600 hover:text-primary-700"
               >
                 + Create Offer
               </button>
@@ -761,7 +856,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-orange-500 to-amber-500 flex flex-col justify-center items-center p-6 text-white text-center">
+                        <div className="w-full h-full bg-gradient-to-br from-primary-500 to-amber-500 flex flex-col justify-center items-center p-6 text-white text-center">
                           <h3 className="font-bold text-lg leading-tight mb-1 opacity-90">{offer.name}</h3>
                           <div className="text-4xl font-extrabold tracking-tight drop-shadow-sm">{savings.percentage.toFixed(0)}% <span className="text-lg align-top font-medium opacity-80">OFF</span></div>
                         </div>
@@ -783,7 +878,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                       </div>
 
                       <div className="absolute bottom-3 left-3">
-                        <span className="px-2 py-1 bg-white/95 backdrop-blur-md rounded-lg text-xs font-bold shadow-sm text-orange-600 flex items-center gap-1">
+                        <span className="px-2 py-1 bg-white/95 backdrop-blur-md rounded-lg text-xs font-bold shadow-sm text-primary-600 flex items-center gap-1">
                           <Check size={10} strokeWidth={4} /> Featured
                         </span>
                       </div>
@@ -793,7 +888,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                       <div className="flex justify-between items-start mb-1">
                         <h4 className="font-bold text-gray-900 line-clamp-1">{offer.name}</h4>
                         <div className="text-right shrink-0 ml-2">
-                          <span className="block text-lg font-bold text-orange-600 leading-none">₹{parseFloat(offer.discounted_price).toFixed(0)}</span>
+                          <span className="block text-lg font-bold text-primary-600 leading-none">₹{parseFloat(offer.discounted_price).toFixed(0)}</span>
                           <span className="text-xs text-gray-400 line-through decoration-gray-300">₹{parseFloat(offer.price).toFixed(0)}</span>
                         </div>
                       </div>
@@ -828,7 +923,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-orange-600 text-white text-xl font-bold">
+                          <div className="w-full h-full flex items-center justify-center bg-primary-600 text-white text-xl font-bold">
                             {savings.percentage.toFixed(0)}%
                           </div>
                         )}
@@ -840,7 +935,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                             <span className="text-gray-400 text-xs line-through mr-1">
                               ₹{parseFloat(offer.price).toFixed(2)}
                             </span>
-                            <span className="text-orange-500 font-semibold">
+                            <span className="text-primary-500 font-semibold">
                               ₹{parseFloat(offer.discounted_price).toFixed(2)}
                             </span>
                           </div>
@@ -918,7 +1013,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-2xl shadow-md mb-4 ring-4 ring-gray-50"
                 />
               ) : (
-                <div className="w-24 h-24 md:w-32 md:h-32 flex items-center justify-center bg-gradient-to-br from-orange-400 to-orange-600 text-white rounded-2xl shadow-md mb-4 ring-4 ring-orange-100">
+                <div className="w-24 h-24 md:w-32 md:h-32 flex items-center justify-center bg-gradient-to-br from-primary-400 to-primary-600 text-white rounded-2xl shadow-md mb-4 ring-4 ring-primary-100">
                   <span className="text-3xl font-bold">
                     {calculateSavings(viewingOffer.price, viewingOffer.discounted_price).percentage.toFixed(0)}%
                   </span>
@@ -937,8 +1032,8 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                 </div>
                 <div className="h-8 w-px bg-gray-200 mx-1"></div>
                 <div className="flex flex-col items-start">
-                  <span className="text-xs text-orange-600 font-medium uppercase">Deal Price</span>
-                  <span className="text-orange-600 font-bold text-xl leading-none">
+                  <span className="text-xs text-primary-600 font-medium uppercase">Deal Price</span>
+                  <span className="text-primary-600 font-bold text-xl leading-none">
                     ₹{parseFloat(viewingOffer.discounted_price).toFixed(0)}
                   </span>
                 </div>

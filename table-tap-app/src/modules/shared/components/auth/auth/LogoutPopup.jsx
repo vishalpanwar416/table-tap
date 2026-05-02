@@ -1,14 +1,10 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
 import { supabase } from '../../../supabase';
 import { clearRestaurantSelection } from '../../../utils/restaurantCheck';
 
 
-const LogoutPopup = ({ isOpen, onClose, onConfirm }) => {
-
-  const navigate = useNavigate();
+const LogoutPopup = ({ isOpen, onClose }) => {
 
   const popupVariants = {
     hidden: { y: 100, opacity: 0 },
@@ -28,18 +24,14 @@ const LogoutPopup = ({ isOpen, onClose, onConfirm }) => {
 
   const handleLogout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      
-      // Clear restaurant selection on logout
+      await supabase.auth.signOut();
+    } catch {
+      // ignore — clear local state regardless
+    } finally {
       clearRestaurantSelection();
-      
-      // Call onConfirm if provided, which should handle navigation and closing the popup
-      if (onConfirm) onConfirm();
-    } catch (error) {
-      toast.error('Failed to log out. Please try again.');
-      // Call onClose if provided, to allow parent to close popup on error
-      if (onClose) onClose();
+      // Use full page navigation to avoid the session-expired modal
+      // that AuthContext shows on SIGNED_OUT events
+      window.location.href = '/login';
     }
   };
 
@@ -70,7 +62,7 @@ const LogoutPopup = ({ isOpen, onClose, onConfirm }) => {
           >
             <div className="flex justify-center items-center mb-4">
               <div className="flex items-center gap-3">
-                <div className="bg-orange-500/20 p-2 rounded-full">
+                <div className="bg-primary-500/20 p-2 rounded-full">
                   <LogOut className="w-6 h-6 text-red-500" />
                 </div>
                 <h2 className="text-xl font-bold text-black">Log Out</h2>
