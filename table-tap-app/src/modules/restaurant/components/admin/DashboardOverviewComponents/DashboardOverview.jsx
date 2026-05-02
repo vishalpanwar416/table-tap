@@ -33,10 +33,11 @@ const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab, restaur
       const fetchOrders = async () => {
         try {
           setOrdersLoading(true);
+          // Increase timeout to 30s but optimize query
           loadingTimeout = setTimeout(() => {
             setOrdersLoading(false);
-            setOrdersError('Orders request took too long. Please try again.');
-          }, 15000);
+            setOrdersError('Orders request took too long. The restaurant data might be too large. Please refresh or try again.');
+          }, 30000);
 
           let query = supabase
             .from('orders')
@@ -46,10 +47,18 @@ const DashboardOverview = ({ foodItems, updateOrderStatus, setActiveTab, restaur
             query = query.eq('restaurant_id', restaurant.id);
           }
 
+          // Optimization: By default, only fetch last 90 days of data to prevent timeouts
+          // Dashboard overview usually only needs recent stats.
+          const ninetyDaysAgo = new Date();
+          ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+          
           if (['captain', 'waiter', 'cashier'].includes(userRole)) {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             query = query.gte('created_at', today.toISOString());
+          } else {
+            // Admins/Managers get 90 days to keep dashboard snappy
+            query = query.gte('created_at', ninetyDaysAgo.toISOString());
           }
 
           const { data, error } = await query.order('created_at', { ascending: false });
