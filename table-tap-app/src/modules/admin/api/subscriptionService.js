@@ -5,7 +5,6 @@ import { supabase } from '../../shared/supabase';
 
 // Master data is now fetched from database tables: subscription_plans and billing_cycles
 
-
 /**
  * Get all subscription plans from database
  */
@@ -74,7 +73,10 @@ export const updateSubscriptionPlan = async (id, planData) => {
       .maybeSingle();
 
     if (error) throw error;
-    if (!data) throw new Error('Update failed - no data returned. Check admin permissions or if plan exists.');
+    if (!data)
+      throw new Error(
+        'Update failed - no data returned. Check admin permissions or if plan exists.',
+      );
 
     return { data, error: null };
   } catch (error) {
@@ -108,9 +110,8 @@ export const getPaginatedSubscriptions = async (page = 1, pageSize = 20, status 
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
-    let query = supabase
-      .from('subscriptions')
-      .select(`
+    let query = supabase.from('subscriptions').select(
+      `
         *,
         restaurant:restaurants (
           id,
@@ -120,7 +121,9 @@ export const getPaginatedSubscriptions = async (page = 1, pageSize = 20, status 
           logo_url,
           is_active
         )
-      `, { count: 'exact' });
+      `,
+      { count: 'exact' },
+    );
 
     if (status !== 'all') {
       query = query.eq('status', status);
@@ -146,7 +149,8 @@ export const getRestaurantSubscriptions = async () => {
   try {
     const { data, error } = await supabase
       .from('subscriptions')
-      .select(`
+      .select(
+        `
         *,
         restaurant:restaurants (
           id,
@@ -156,7 +160,8 @@ export const getRestaurantSubscriptions = async () => {
           logo_url,
           is_active
         )
-      `)
+      `,
+      )
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -173,7 +178,8 @@ export const getRestaurantSubscription = async (restaurantId) => {
   try {
     const { data: subscription, error } = await supabase
       .from('subscriptions')
-      .select(`
+      .select(
+        `
         *,
         restaurant:restaurants (
           id,
@@ -183,7 +189,8 @@ export const getRestaurantSubscription = async (restaurantId) => {
           logo_url,
           is_active
         )
-      `)
+      `,
+      )
       .eq('restaurant_id', restaurantId)
       .in('status', ['active', 'grace_period'])
       .maybeSingle();
@@ -193,7 +200,7 @@ export const getRestaurantSubscription = async (restaurantId) => {
     if (subscription) {
       return {
         data: subscription,
-        error: null
+        error: null,
       };
     }
 
@@ -211,7 +218,7 @@ export const assignSubscriptionToRestaurant = async (subscriptionData) => {
   try {
     // Fetch plan from DB instead of constant
     const { data: dbPlans } = await getSubscriptionPlans();
-    const plan = dbPlans?.find(p => p.key === subscriptionData.plan_id);
+    const plan = dbPlans?.find((p) => p.key === subscriptionData.plan_id);
 
     if (!plan) {
       throw new Error('Invalid plan selected');
@@ -219,7 +226,7 @@ export const assignSubscriptionToRestaurant = async (subscriptionData) => {
 
     // Calculate end date based on billing cycle
     const { data: cycles } = await getBillingCycles();
-    const cycle = cycles?.find(c => c.key === subscriptionData.billing_cycle);
+    const cycle = cycles?.find((c) => c.key === subscriptionData.billing_cycle);
     if (!cycle) throw new Error('Invalid billing cycle');
 
     const startDate = new Date();
@@ -241,29 +248,34 @@ export const assignSubscriptionToRestaurant = async (subscriptionData) => {
       .maybeSingle();
 
     if (existingSub) {
-      throw new Error('Restaurant already has an active subscription. Please cancel or expire it first.');
+      throw new Error(
+        'Restaurant already has an active subscription. Please cancel or expire it first.',
+      );
     }
 
     // Create subscription - the database trigger will activate the restaurant
     const { data, error } = await supabase
       .from('subscriptions')
-      .insert([{
-        restaurant_id: subscriptionData.restaurant_id,
-        plan_name: plan.key,
-        billing_cycle: subscriptionData.billing_cycle || 'monthly',
-        plan_price: price,
-        gst_amount: gstAmount,
-        total_amount: totalAmount,
-        start_date: startDate.toISOString(),
-        end_date: endDate.toISOString(),
-        next_payment_date: endDate.toISOString(),
-        last_payment_date: startDate.toISOString(),
-        payment_method: subscriptionData.payment_method || 'manual',
-        status: 'active',
-        auto_renew: true,
-        grace_period_days: 7
-      }])
-      .select(`
+      .insert([
+        {
+          restaurant_id: subscriptionData.restaurant_id,
+          plan_name: plan.key,
+          billing_cycle: subscriptionData.billing_cycle || 'monthly',
+          plan_price: price,
+          gst_amount: gstAmount,
+          total_amount: totalAmount,
+          start_date: startDate.toISOString(),
+          end_date: endDate.toISOString(),
+          next_payment_date: endDate.toISOString(),
+          last_payment_date: startDate.toISOString(),
+          payment_method: subscriptionData.payment_method || 'manual',
+          status: 'active',
+          auto_renew: true,
+          grace_period_days: 7,
+        },
+      ])
+      .select(
+        `
         *,
         restaurant:restaurants (
           id,
@@ -272,7 +284,8 @@ export const assignSubscriptionToRestaurant = async (subscriptionData) => {
           contact_phone,
           is_active
         )
-      `)
+      `,
+      )
       .maybeSingle();
 
     if (error) throw error;
@@ -285,10 +298,9 @@ export const assignSubscriptionToRestaurant = async (subscriptionData) => {
         .eq('id', subscriptionData.restaurant_id);
     }
 
-    // Log to subscription history
-    await supabase
-      .from('subscription_history')
-      .insert([{
+    // Log to subscription history (non-fatal: subscription is already created)
+    const { error: historyError } = await supabase.from('subscription_history').insert([
+      {
         subscription_id: data.id,
         restaurant_id: subscriptionData.restaurant_id,
         action: 'created',
@@ -296,15 +308,19 @@ export const assignSubscriptionToRestaurant = async (subscriptionData) => {
         new_status: 'active',
         amount_paid: totalAmount,
         gst_amount: gstAmount,
-        notes: subscriptionData.notes || 'Subscription created'
-      }]);
+        notes: subscriptionData.notes || 'Subscription created',
+      },
+    ]);
+    if (historyError) {
+      console.error('subscription_history insert failed (audit trail missing):', historyError);
+    }
 
     return {
       data: {
         ...data,
-        plan: plan
+        plan: plan,
       },
-      error: null
+      error: null,
     };
   } catch (error) {
     console.error('Error assigning subscription:', error);
@@ -319,7 +335,7 @@ export const updateRestaurantSubscription = async (subscriptionId, updates) => {
   try {
     // Fetch plan from DB instead of constant
     const { data: dbPlans } = await getSubscriptionPlans();
-    const plan = dbPlans?.find(p => p.key === updates.plan_id);
+    const plan = dbPlans?.find((p) => p.key === updates.plan_id);
 
     if (!plan) {
       throw new Error('Invalid plan selected');
@@ -327,7 +343,7 @@ export const updateRestaurantSubscription = async (subscriptionId, updates) => {
 
     // Calculate price based on billing cycle and database configuration
     const { data: cycles } = await getBillingCycles();
-    const cycle = cycles?.find(c => c.key === updates.billing_cycle);
+    const cycle = cycles?.find((c) => c.key === updates.billing_cycle);
     if (!cycle) throw new Error('Invalid billing cycle');
 
     const totalBase = plan.base_price * cycle.duration_months;
@@ -354,10 +370,11 @@ export const updateRestaurantSubscription = async (subscriptionId, updates) => {
         total_amount: totalAmount,
         payment_method: updates.payment_method || 'manual',
         status: updates.status || 'active',
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('id', subscriptionId)
-      .select(`
+      .select(
+        `
         *,
         restaurant:restaurants (
           id,
@@ -366,7 +383,8 @@ export const updateRestaurantSubscription = async (subscriptionId, updates) => {
           contact_phone,
           is_active
         )
-      `)
+      `,
+      )
       .maybeSingle();
 
     if (error) throw error;
@@ -378,9 +396,8 @@ export const updateRestaurantSubscription = async (subscriptionId, updates) => {
       .eq('id', data.restaurant_id);
 
     // Log to history
-    await supabase
-      .from('subscription_history')
-      .insert([{
+    await supabase.from('subscription_history').insert([
+      {
         subscription_id: subscriptionId,
         restaurant_id: data.restaurant_id,
         action: currentSub?.plan_name !== plan.key ? 'upgraded' : 'renewed',
@@ -390,15 +407,16 @@ export const updateRestaurantSubscription = async (subscriptionId, updates) => {
         new_status: updates.status || 'active',
         amount_paid: totalAmount,
         gst_amount: gstAmount,
-        notes: updates.notes || 'Subscription updated'
-      }]);
+        notes: updates.notes || 'Subscription updated',
+      },
+    ]);
 
     return {
       data: {
         ...data,
-        plan: plan
+        plan: plan,
       },
-      error: null
+      error: null,
     };
   } catch (error) {
     return { data: null, error: error.message };
@@ -428,10 +446,11 @@ export const cancelRestaurantSubscription = async (subscriptionId, reason = '') 
         cancelled_at: new Date().toISOString(),
         cancellation_reason: reason,
         auto_renew: false,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('id', subscriptionId)
-      .select(`
+      .select(
+        `
         *,
         restaurant:restaurants (
           id,
@@ -440,22 +459,23 @@ export const cancelRestaurantSubscription = async (subscriptionId, reason = '') 
           contact_phone,
           is_active
         )
-      `)
+      `,
+      )
       .maybeSingle();
 
     if (error) throw error;
 
     // Log to history
-    await supabase
-      .from('subscription_history')
-      .insert([{
+    await supabase.from('subscription_history').insert([
+      {
         subscription_id: subscriptionId,
         restaurant_id: data.restaurant_id,
         action: 'cancelled',
         old_status: currentSub?.status,
         new_status: 'cancelled',
-        notes: reason || 'Subscription cancelled by admin'
-      }]);
+        notes: reason || 'Subscription cancelled by admin',
+      },
+    ]);
 
     return { data, error: null };
   } catch (error) {
@@ -487,10 +507,11 @@ export const reactivateSubscription = async (subscriptionId, durationMonths = 1)
         cancelled_at: null,
         cancellation_reason: null,
         auto_renew: true,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('id', subscriptionId)
-      .select(`
+      .select(
+        `
         *,
         restaurant:restaurants (
           id,
@@ -499,22 +520,23 @@ export const reactivateSubscription = async (subscriptionId, durationMonths = 1)
           contact_phone,
           is_active
         )
-      `)
+      `,
+      )
       .maybeSingle();
 
     if (error) throw error;
 
     // Log to history
-    await supabase
-      .from('subscription_history')
-      .insert([{
+    await supabase.from('subscription_history').insert([
+      {
         subscription_id: subscriptionId,
         restaurant_id: data.restaurant_id,
         action: 'reactivated',
         old_status: currentSub?.status,
         new_status: 'active',
-        notes: 'Subscription reactivated'
-      }]);
+        notes: 'Subscription reactivated',
+      },
+    ]);
 
     return { data, error: null };
   } catch (error) {
@@ -533,13 +555,25 @@ export const getSubscriptionStats = async () => {
       { count: activeSubscriptions },
       { count: gracePeriodSubscriptions },
       { count: expiredSubscriptions },
-      { count: cancelledSubscriptions }
+      { count: cancelledSubscriptions },
     ] = await Promise.all([
       supabase.from('subscriptions').select('*', { count: 'exact', head: true }),
-      supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-      supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'grace_period'),
-      supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'expired'),
-      supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'cancelled')
+      supabase
+        .from('subscriptions')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'active'),
+      supabase
+        .from('subscriptions')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'grace_period'),
+      supabase
+        .from('subscriptions')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'expired'),
+      supabase
+        .from('subscriptions')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'cancelled'),
     ]);
 
     // 2. Get counts for each plan (only for active subscriptions)
@@ -549,7 +583,7 @@ export const getSubscriptionStats = async () => {
       .eq('status', 'active');
 
     const planCounts = {};
-    (plansData || []).forEach(s => {
+    (plansData || []).forEach((s) => {
       planCounts[s.plan_name] = (planCounts[s.plan_name] || 0) + 1;
     });
 
@@ -566,7 +600,7 @@ export const getSubscriptionStats = async () => {
     // MRR Calculation
     const mrr = (revenueData || []).reduce((sum, s) => {
       if (s.billing_cycle === 'monthly') return sum + (s.total_amount || 0);
-      if (s.billing_cycle === 'yearly') return sum + ((s.total_amount || 0) / 12);
+      if (s.billing_cycle === 'yearly') return sum + (s.total_amount || 0) / 12;
       return sum;
     }, 0);
 
@@ -584,10 +618,12 @@ export const getSubscriptionStats = async () => {
         premiumSubscriptions: (planCounts['professional'] || 0) + (planCounts['enterprise'] || 0),
         totalRevenue,
         monthlyRecurringRevenue: mrr,
-        cancellationRate: totalSubscriptions > 0 ?
-          ((cancelledSubscriptions / totalSubscriptions) * 100).toFixed(2) : 0
+        cancellationRate:
+          totalSubscriptions > 0
+            ? ((cancelledSubscriptions / totalSubscriptions) * 100).toFixed(2)
+            : 0,
       },
-      error: null
+      error: null,
     };
   } catch (error) {
     console.error('Error fetching subscription stats:', error);
@@ -605,7 +641,8 @@ export const getUpcomingRenewals = async (days = 7) => {
 
     const { data: subscriptions, error } = await supabase
       .from('subscriptions')
-      .select(`
+      .select(
+        `
         *,
         restaurant:restaurants (
           id,
@@ -614,16 +651,17 @@ export const getUpcomingRenewals = async (days = 7) => {
           contact_phone,
           logo_url
         )
-      `)
+      `,
+      )
       .in('status', ['active', 'grace_period'])
       .lte('end_date', futureDate.toISOString())
       .order('end_date', { ascending: true });
 
     if (error) throw error;
 
-    const enriched = subscriptions.map(sub => ({
+    const enriched = subscriptions.map((sub) => ({
       ...sub,
-      daysUntilExpiry: Math.ceil((new Date(sub.end_date) - new Date()) / (1000 * 60 * 60 * 24))
+      daysUntilExpiry: Math.ceil((new Date(sub.end_date) - new Date()) / (1000 * 60 * 60 * 24)),
     }));
 
     return { data: enriched, error: null };
@@ -681,22 +719,22 @@ export const processExpiredSubscriptions = async () => {
         .from('subscriptions')
         .update({
           status: 'expired',
-          updated_at: now
+          updated_at: now,
         })
         .eq('id', sub.id);
 
       if (!updateError) {
         // Log to history
-        await supabase
-          .from('subscription_history')
-          .insert([{
+        await supabase.from('subscription_history').insert([
+          {
             subscription_id: sub.id,
             restaurant_id: sub.restaurant_id,
             action: 'expired',
             old_status: sub.status,
             new_status: 'expired',
-            notes: 'Subscription expired - restaurant hidden from customers until renewed'
-          }]);
+            notes: 'Subscription expired - restaurant hidden from customers until renewed',
+          },
+        ]);
         processedCount++;
       }
     }

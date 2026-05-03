@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { supabase } from '../../../shared/supabase';
 import { useAuth } from '../../../shared/config/AuthContext';
+import { offlineStorage } from '../../../shared/utils/offlineStorage';
 
 const RestaurantContext = createContext();
 
@@ -9,7 +10,7 @@ const getUrlParams = () => {
   const urlParams = new URLSearchParams(window.location.search);
   return {
     restaurantId: urlParams.get('restaurant'),
-    tableNumber: urlParams.get('table')
+    tableNumber: urlParams.get('table'),
   };
 };
 
@@ -18,8 +19,7 @@ const localStorageStore = {
   set: (key, value) => {
     try {
       localStorage.setItem(key, value);
-    } catch (error) {
-    }
+    } catch (error) {}
   },
   get: (key) => {
     try {
@@ -31,16 +31,14 @@ const localStorageStore = {
   remove: (key) => {
     try {
       localStorage.removeItem(key);
-    } catch (error) {
-    }
+    } catch (error) {}
   },
   clear: () => {
     try {
       localStorage.removeItem('restaurantId');
       localStorage.removeItem('tableNumber');
-    } catch (error) {
-    }
-  }
+    } catch (error) {}
+  },
 };
 
 export const RestaurantProvider = ({ children }) => {
@@ -97,23 +95,31 @@ export const RestaurantProvider = ({ children }) => {
         setLoading(true);
         setError(null);
 
-        // First fetch the restaurant
+        // Instant load from cache if available
+        const cachedRestaurant = await offlineStorage.getRestaurant(restaurantId);
+        if (cachedRestaurant && !abortController.signal.aborted) {
+          setRestaurant(cachedRestaurant);
+          // Keep loading=true so background fetch can finish
+        }
+
+        // Fetch restaurant
         const { data: restaurantData, error: restaurantError } = await supabase
           .from('restaurants')
           .select('*')
           .eq('id', restaurantId)
-          .eq('is_active', true)
           .single();
 
         if (abortController.signal.aborted) return;
 
         if (restaurantError) {
-          if (restaurantError.code === 'PGRST301' ||
+          if (
+            restaurantError.code === 'PGRST301' ||
             restaurantError.message?.includes('JWT') ||
             restaurantError.message?.includes('expired') ||
             restaurantError.message?.includes('Invalid Refresh Token') ||
             restaurantError.message?.includes('Refresh Token Not Found') ||
-            restaurantError.status === 401) {
+            restaurantError.status === 401
+          ) {
             setError('AUTH_ERROR');
             return;
           }
@@ -121,7 +127,7 @@ export const RestaurantProvider = ({ children }) => {
           return;
         }
 
-        if (!restaurantData) {
+        if (!restaurantData || !restaurantData.is_active) {
           setError('Restaurant not found or inactive');
           return;
         }
@@ -138,12 +144,14 @@ export const RestaurantProvider = ({ children }) => {
         if (abortController.signal.aborted) return;
 
         if (subscriptionError) {
-          if (subscriptionError.code === 'PGRST301' ||
+          if (
+            subscriptionError.code === 'PGRST301' ||
             subscriptionError.message?.includes('JWT') ||
             subscriptionError.message?.includes('expired') ||
             subscriptionError.message?.includes('Invalid Refresh Token') ||
             subscriptionError.message?.includes('Refresh Token Not Found') ||
-            subscriptionError.status === 401) {
+            subscriptionError.status === 401
+          ) {
             setError('AUTH_ERROR');
             return;
           }
@@ -158,10 +166,11 @@ export const RestaurantProvider = ({ children }) => {
           // No subscription row — could be RLS blocking an expired sub, or genuinely no sub.
           // Trust is_active flag on the restaurant; the SubscriptionExpiredBanner will warn owners.
           if (!subscription) return true;
-          if (subscription.status === 'active' || subscription.status === 'grace_period') return true;
+          if (subscription.status === 'active' || subscription.status === 'grace_period')
+            return true;
           if (subscription.status === 'expired' && subscription.end_date) {
             const daysSinceExpiry = Math.ceil(
-              (Date.now() - new Date(subscription.end_date).getTime()) / (1000 * 60 * 60 * 24)
+              (Date.now() - new Date(subscription.end_date).getTime()) / (1000 * 60 * 60 * 24),
             );
             return daysSinceExpiry <= 7;
           }
@@ -177,18 +186,19 @@ export const RestaurantProvider = ({ children }) => {
         setRestaurant({
           ...restaurantData,
           subscription_status: subscription?.status ?? null,
-          subscription_end_date: subscription?.end_date ?? null
+          subscription_end_date: subscription?.end_date ?? null,
         });
-
       } catch (err) {
         // AbortError is expected on unmount / re-render — suppress it silently
         if (abortController.signal.aborted || err?.name === 'AbortError') return;
 
-        if (err?.code === 'PGRST301' ||
+        if (
+          err?.code === 'PGRST301' ||
           err?.message?.includes('JWT') ||
           err?.message?.includes('Invalid Refresh Token') ||
           err?.message?.includes('Refresh Token Not Found') ||
-          err?.status === 401) {
+          err?.status === 401
+        ) {
           setError('AUTH_ERROR');
         } else {
           setError(err?.message || 'Failed to load restaurant data');
@@ -216,7 +226,7 @@ export const RestaurantProvider = ({ children }) => {
         .from('restaurants')
         .update({
           ...updates,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq('id', restaurantId)
         .select()
@@ -228,7 +238,6 @@ export const RestaurantProvider = ({ children }) => {
 
       setRestaurant(data);
       return true;
-
     } catch (err) {
       return false;
     }
@@ -245,20 +254,21 @@ export const RestaurantProvider = ({ children }) => {
         .from('restaurants')
         .select('*')
         .eq('id', restaurantId)
-        .eq('is_active', true)
         .single();
 
-      if (restaurantError) {
+      if (restaurantError || !restaurantData || !restaurantData.is_active) {
         // Check if it's an authentication error
-        if (restaurantError.code === 'PGRST301' ||
-          restaurantError.message?.includes('JWT') ||
-          restaurantError.message?.includes('expired') ||
-          restaurantError.message?.includes('Invalid Refresh Token') ||
-          restaurantError.message?.includes('Refresh Token Not Found') ||
-          restaurantError.status === 401) {
+        if (
+          restaurantError?.code === 'PGRST301' ||
+          restaurantError?.message?.includes('JWT') ||
+          restaurantError?.message?.includes('expired') ||
+          restaurantError?.message?.includes('Invalid Refresh Token') ||
+          restaurantError?.message?.includes('Refresh Token Not Found') ||
+          restaurantError?.status === 401
+        ) {
           setError('AUTH_ERROR');
         } else {
-          setError(restaurantError.message);
+          setError(restaurantError?.message || 'Restaurant not found or inactive');
         }
         return false;
       }
@@ -273,11 +283,13 @@ export const RestaurantProvider = ({ children }) => {
         .maybeSingle();
 
       if (subscriptionError) {
-        if (subscriptionError.code === 'PGRST301' ||
+        if (
+          subscriptionError.code === 'PGRST301' ||
           subscriptionError.message?.includes('JWT') ||
           subscriptionError.message?.includes('Invalid Refresh Token') ||
           subscriptionError.message?.includes('Refresh Token Not Found') ||
-          subscriptionError.status === 401) {
+          subscriptionError.status === 401
+        ) {
           setError('AUTH_ERROR');
           return false;
         }
@@ -290,7 +302,7 @@ export const RestaurantProvider = ({ children }) => {
         if (subscription.status === 'active' || subscription.status === 'grace_period') return true;
         if (subscription.status === 'expired' && subscription.end_date) {
           const daysSinceExpiry = Math.ceil(
-            (Date.now() - new Date(subscription.end_date).getTime()) / (1000 * 60 * 60 * 24)
+            (Date.now() - new Date(subscription.end_date).getTime()) / (1000 * 60 * 60 * 24),
           );
           return daysSinceExpiry <= 7;
         }
@@ -305,18 +317,19 @@ export const RestaurantProvider = ({ children }) => {
       setRestaurant({
         ...restaurantData,
         subscription_status: subscription?.status ?? null,
-        subscription_end_date: subscription?.end_date ?? null
+        subscription_end_date: subscription?.end_date ?? null,
       });
       setError(null);
       return true;
-
     } catch (err) {
       if (err?.name === 'AbortError') return false;
-      if (err?.code === 'PGRST301' ||
+      if (
+        err?.code === 'PGRST301' ||
         err?.message?.includes('JWT') ||
         err?.message?.includes('Invalid Refresh Token') ||
         err?.message?.includes('Refresh Token Not Found') ||
-        err?.status === 401) {
+        err?.status === 401
+      ) {
         setError('AUTH_ERROR');
       } else {
         setError('Failed to refresh restaurant data');
@@ -329,7 +342,6 @@ export const RestaurantProvider = ({ children }) => {
 
   // Function to manually set restaurant and table
   const setRestaurantAndTable = (newRestaurantId, newTableNumber) => {
-
     // Clear old restaurant data
     setRestaurant(null);
     setError(null);
@@ -351,9 +363,8 @@ export const RestaurantProvider = ({ children }) => {
           keysToRemove.push(key);
         }
       }
-      keysToRemove.forEach(key => sessionStorage.removeItem(key));
-    } catch (error) {
-    }
+      keysToRemove.forEach((key) => sessionStorage.removeItem(key));
+    } catch (error) {}
   };
 
   // Function to clear session data
@@ -374,14 +385,10 @@ export const RestaurantProvider = ({ children }) => {
     setRestaurantAndTable,
     clearSession,
     loading,
-    error
+    error,
   };
 
-  return (
-    <RestaurantContext.Provider value={value}>
-      {children}
-    </RestaurantContext.Provider>
-  );
+  return <RestaurantContext.Provider value={value}>{children}</RestaurantContext.Provider>;
 };
 
 export const useRestaurant = () => {
