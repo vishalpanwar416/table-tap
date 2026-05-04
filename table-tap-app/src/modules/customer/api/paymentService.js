@@ -60,7 +60,7 @@ export const initializeRazorpayPayment = ({
   themeColor,
   onSuccess,
   onDismiss,
-  onFailure
+  onFailure,
 }) => {
   try {
     const rzp = new window.Razorpay({
@@ -74,17 +74,17 @@ export const initializeRazorpayPayment = ({
       prefill: {
         name: customerName || 'Valued Customer',
         email: customerEmail,
-        contact: customerPhone
+        contact: customerPhone,
       },
       theme: { color: themeColor || '#F37254' },
       modal: {
-        ondismiss: onDismiss
+        ondismiss: onDismiss,
       },
       notes: {
         restaurant_id: restaurantId || '1',
         table_number: tableNumber || 'N/A',
-        special_instructions: specialInstructions
-      }
+        special_instructions: specialInstructions,
+      },
     });
 
     rzp.on('payment.failed', (response) => {
@@ -108,8 +108,8 @@ export const verifyRazorpaySignature = async (paymentId, orderId, signature) => 
       body: {
         payment_id: paymentId,
         order_id: orderId,
-        signature: signature
-      }
+        signature: signature,
+      },
     });
 
     if (error) {
@@ -126,7 +126,6 @@ export const verifyRazorpaySignature = async (paymentId, orderId, signature) => 
 
 // ========= ORDER CREATION AND MANAGEMENT =========
 
-
 /**
  * Calculate order totals with GST and discounts
  */
@@ -135,14 +134,12 @@ export const calculateOrderTotals = (items, discountValue = 0, discountType = 'p
   let discountAmount = 0;
   let taxableAmount = 0;
 
-  items.forEach(item => {
+  items.forEach((item) => {
     const originalItemTotal = item.price * item.quantity;
     originalTotal += originalItemTotal;
 
     // Calculate effective price after item-level discounts
-    const effectivePrice = item.effectivePrice !== undefined ?
-      item.effectivePrice :
-      item.price; // Use original price if no item-level discount
+    const effectivePrice = item.effectivePrice !== undefined ? item.effectivePrice : item.price; // Use original price if no item-level discount
 
     const itemDiscount = (item.price - effectivePrice) * item.quantity;
     discountAmount += itemDiscount;
@@ -150,9 +147,9 @@ export const calculateOrderTotals = (items, discountValue = 0, discountType = 'p
     const itemSubtotal = effectivePrice * item.quantity;
 
     // Check if the item is water (exempt from GST)
-    const isWater = item.name &&
-      (item.name.toLowerCase().includes('water') ||
-        item.category?.toLowerCase() === 'water');
+    const isWater =
+      item.name &&
+      (item.name.toLowerCase().includes('water') || item.category?.toLowerCase() === 'water');
 
     if (!isWater) {
       taxableAmount += itemSubtotal;
@@ -187,7 +184,7 @@ export const calculateOrderTotals = (items, discountValue = 0, discountType = 'p
     subtotalAfterDiscount,
     cgst,
     sgst,
-    finalTotal
+    finalTotal,
   };
 };
 
@@ -198,7 +195,8 @@ export const createOrder = async (orderData) => {
   try {
     // FIX: Add robust, final validation for guest user data before insertion.
     // This acts as a final guard against invalid data, regardless of frontend state.
-    if (!orderData.userId && !orderData.isAdmin) { // Strict validation only for non-admin guest orders
+    if (!orderData.userId && !orderData.isAdmin) {
+      // Strict validation only for non-admin guest orders
       if (!orderData.customerName || orderData.customerName.trim() === '') {
         throw new Error('Customer name is required.');
       }
@@ -219,19 +217,20 @@ export const createOrder = async (orderData) => {
       // Ensure data is trimmed to prevent whitespace issues with RLS
       customer_name: (orderData.customerName || 'Walk-in Customer').trim(),
       // Use provided email or generate a placeholder based on phone
-      customer_email: (orderData.customerEmail && orderData.customerEmail.trim() !== '')
-        ? orderData.customerEmail.trim()
-        : `guest_${orderData.customerPhone.replace(/[^0-9]/g, '')}@tabletap.com`,
+      customer_email:
+        orderData.customerEmail && orderData.customerEmail.trim() !== ''
+          ? orderData.customerEmail.trim()
+          : `guest_${orderData.customerPhone.replace(/[^0-9]/g, '')}@tabletap.com`,
       customer_phone: (orderData.customerPhone || '').trim(),
       table_number: orderData.tableNumber || 'Not Specified',
-      items: orderData.items.map(item => ({
+      items: orderData.items.map((item) => ({
         food_item_id: item.id,
         quantity: item.quantity,
         price: item.price,
         name: item.name,
         category: item.category,
         image: item.image,
-        note: item.note || null
+        note: item.note || null,
       })),
       subtotal: totals.subtotalAfterDiscount,
       gst: totals.cgst + totals.sgst,
@@ -249,10 +248,10 @@ export const createOrder = async (orderData) => {
         confirmed: { status: true, timestamp: new Date().toISOString() },
         preparing: { status: false, timestamp: null },
         ready: { status: false, timestamp: null },
-        completed: { status: false, timestamp: null }
+        completed: { status: false, timestamp: null },
       },
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
 
     console.log('Attempting to create order with validated data:', {
@@ -264,14 +263,10 @@ export const createOrder = async (orderData) => {
       tableNumber: order.table_number,
       total: order.total,
       itemsCount: order.items.length,
-      isGuest: !orderData.userId
+      isGuest: !orderData.userId,
     });
 
-    const { data, error } = await supabase
-      .from('orders')
-      .insert([order])
-      .select()
-      .single();
+    const { data, error } = await supabase.from('orders').insert([order]).select().single();
 
     if (error) {
       console.error('Supabase order creation error:', error);
@@ -280,7 +275,7 @@ export const createOrder = async (orderData) => {
         code: error.code,
         message: error.message,
         details: error.details,
-        hint: error.hint
+        hint: error.hint,
       });
       throw error;
     }
@@ -310,8 +305,8 @@ const createManagerOrderNotification = async (order) => {
         order_id: order.id,
         order_number: order.order_number,
         table_number: order.table_number,
-        total_amount: order.total
-      }
+        total_amount: order.total,
+      },
     });
   } catch (error) {
     console.error('Failed to create manager notification:', error);
@@ -326,7 +321,7 @@ export const updatePaymentStatus = async (orderId, paymentData) => {
     const updateData = {
       payment_status: paymentData.status,
       payment_timestamp: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
 
     // Add Razorpay specific fields if available
@@ -364,7 +359,8 @@ export const getOrderById = async (orderId) => {
   try {
     const { data, error } = await supabase
       .from('orders')
-      .select(`
+      .select(
+        `
         *,
         restaurant:restaurants(
           id,
@@ -372,7 +368,8 @@ export const getOrderById = async (orderId) => {
           logo_url,
           contact_phone
         )
-      `)
+      `,
+      )
       .eq('id', orderId)
       .single();
 
@@ -390,14 +387,16 @@ export const getUserOrders = async (userId) => {
   try {
     const { data, error } = await supabase
       .from('orders')
-      .select(`
+      .select(
+        `
         *,
         restaurant:restaurants(
           id,
           name,
           logo_url
         )
-      `)
+      `,
+      )
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
@@ -415,14 +414,16 @@ export const getRestaurantOrders = async (restaurantId, filters = {}) => {
   try {
     let query = supabase
       .from('orders')
-      .select(`
+      .select(
+        `
         *,
         user:users(
           id,
           email,
           user_metadata
         )
-      `)
+      `,
+      )
       .eq('restaurant_id', restaurantId)
       .order('created_at', { ascending: false });
 
@@ -474,7 +475,7 @@ export const processDirectPayment = async (orderData) => {
       razorpay_order_id: 'DIRECT-ORDER-' + Date.now(),
       razorpay_signature: 'NA',
       payment_method: 'direct',
-      payment_status: 'completed'
+      payment_status: 'completed',
     });
 
     return result;
@@ -489,13 +490,15 @@ export const processDirectPayment = async (orderData) => {
 export const completePayment = async (paymentResponse, orderData) => {
   try {
     // Verify payment if using Razorpay
-    if (paymentResponse.razorpay_payment_id &&
+    if (
+      paymentResponse.razorpay_payment_id &&
       !paymentResponse.razorpay_payment_id.startsWith('DIRECT-') &&
-      !paymentResponse.razorpay_payment_id.startsWith('UPI-')) {
+      !paymentResponse.razorpay_payment_id.startsWith('UPI-')
+    ) {
       const isValid = await verifyRazorpaySignature(
         paymentResponse.razorpay_payment_id,
         paymentResponse.razorpay_order_id,
-        paymentResponse.razorpay_signature
+        paymentResponse.razorpay_signature,
       );
 
       if (!isValid) {
@@ -509,7 +512,7 @@ export const completePayment = async (paymentResponse, orderData) => {
       razorpay_payment_id: paymentResponse.razorpay_payment_id,
       razorpay_order_id: paymentResponse.razorpay_order_id,
       razorpay_signature: paymentResponse.razorpay_signature,
-      payment_status: 'completed'
+      payment_status: 'completed',
     });
 
     // Create success notification
@@ -522,8 +525,8 @@ export const completePayment = async (paymentResponse, orderData) => {
       metadata: {
         order_id: order.id,
         payment_id: paymentResponse.razorpay_payment_id,
-        amount: orderData.total
-      }
+        amount: orderData.total,
+      },
     });
 
     return order;
@@ -537,8 +540,8 @@ export const completePayment = async (paymentResponse, orderData) => {
       restaurant_id: orderData.restaurantId,
       metadata: {
         error: error.message,
-        amount: orderData.total
-      }
+        amount: orderData.total,
+      },
     });
 
     throw error;
@@ -553,7 +556,7 @@ export const completePayment = async (paymentResponse, orderData) => {
 export const formatCurrency = (amount, currency = 'INR') => {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
-    currency: currency
+    currency: currency,
   }).format(amount);
 };
 
@@ -591,11 +594,11 @@ export const validatePaymentData = (paymentData) => {
  */
 export const getPaymentMethodDisplayName = (method) => {
   const methods = {
-    'razorpay': 'Online Payment',
-    'direct': 'Pay at Restaurant',
-    'card': 'Credit/Debit Card',
-    'upi': 'UPI',
-    'netbanking': 'Net Banking'
+    razorpay: 'Online Payment',
+    direct: 'Pay at Restaurant',
+    card: 'Credit/Debit Card',
+    upi: 'UPI',
+    netbanking: 'Net Banking',
   };
 
   return methods[method] || method;
@@ -613,11 +616,11 @@ export const isPaymentCompleted = (paymentStatus) => {
  */
 export const getPaymentStatusColor = (status) => {
   const colors = {
-    'pending': 'text-yellow-600',
-    'completed': 'text-green-600',
-    'failed': 'text-red-600',
-    'cancelled': 'text-gray-600',
-    'refunded': 'text-blue-600'
+    pending: 'text-yellow-600',
+    completed: 'text-green-600',
+    failed: 'text-red-600',
+    cancelled: 'text-gray-600',
+    refunded: 'text-blue-600',
   };
 
   return colors[status?.toLowerCase()] || 'text-gray-600';
@@ -639,7 +642,7 @@ const createOrderWithRetry = async (orderData, maxRetries = 3) => {
         throw new Error(`Order creation failed after ${maxRetries} attempts: ${error.message}`);
       }
       const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 };
@@ -650,7 +653,7 @@ const notifyPaymentOrderMismatch = async (failedOrderData, restaurantName) => {
   console.warn('PAYMENT MISMATCH ALERT:', {
     message: 'Payment succeeded but order creation failed',
     data: failedOrderData,
-    restaurant: restaurantName
+    restaurant: restaurantName,
   });
 
   // Try to invoke the function, but catch safely
@@ -665,8 +668,8 @@ const notifyPaymentOrderMismatch = async (failedOrderData, restaurantName) => {
         restaurantName: restaurantName,
         paymentId: failedOrderData.paymentId,
         amount: failedOrderData.amount,
-        tableNumber: failedOrderData.tableNumber
-      }
+        tableNumber: failedOrderData.tableNumber,
+      },
     });
     if (error) console.error('Alert function error:', error);
   } catch (e) {
@@ -682,13 +685,13 @@ const sendOrderFailureNotification = async (failedOrderData, restaurant) => {
 };
 
 // Helper: Show recovery options to user
-const showPaymentRecoveryOptions = (paymentId, {
-  retryOrderCreation,
-  contactSupport,
-  closeRecoveryDialog
-}) => {
+const showPaymentRecoveryOptions = (
+  paymentId,
+  { retryOrderCreation, contactSupport, closeRecoveryDialog },
+) => {
   const recoveryDialog = document.createElement('div');
-  recoveryDialog.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+  recoveryDialog.className =
+    'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
   recoveryDialog.innerHTML = `
     <div class="bg-white p-6 rounded-2xl max-w-md mx-4">
       <h3 class="text-lg font-bold mb-4 text-red-600">Payment Successful, Order Issue</h3>
@@ -782,35 +785,40 @@ export const processOrderWithPayment = async ({
       timestamp: new Date().toISOString(),
       customerEmail: finalCustomerEmail.trim(),
       customerPhone: finalCustomerPhone.trim(),
-      restaurantId: restaurant.id
+      restaurantId: restaurant.id,
     };
-    localStorage.setItem(`payment_${paymentResponse.razorpay_payment_id}`, JSON.stringify(paymentData));
+    localStorage.setItem(
+      `payment_${paymentResponse.razorpay_payment_id}`,
+      JSON.stringify(paymentData),
+    );
 
     // Try to create order with retry mechanism
     const order = await createOrderWithRetry({
       restaurantId: restaurant.id,
       userId: user ? user.id : null,
       customerName: (finalCustomerName || 'Guest').trim(),
-      customerEmail: (finalCustomerEmail && finalCustomerEmail.trim() !== '')
-        ? finalCustomerEmail.trim()
-        : `guest_${finalCustomerPhone.replace(/[^0-9]/g, '')}@tabletap.com`,
+      customerEmail:
+        finalCustomerEmail && finalCustomerEmail.trim() !== ''
+          ? finalCustomerEmail.trim()
+          : `guest_${finalCustomerPhone.replace(/[^0-9]/g, '')}@tabletap.com`,
       customerPhone: (finalCustomerPhone || '').trim(),
       tableNumber,
-      items: cartItems.map(item => ({
+      items: cartItems.map((item) => ({
         id: item.id,
         quantity: item.quantity,
         price: item.price,
         name: item.name,
         category: item.category,
-        image: item.image
+        image: item.image,
       })),
       razorpayOrderId: paymentResponse.razorpay_order_id || null,
       razorpayPaymentId: paymentResponse.razorpay_payment_id || null,
       razorpaySignature: paymentResponse.razorpay_signature || null,
-      paymentMethod: paymentMethod === 'razorpay' ? 'razorpay' : paymentMethod === 'upi' ? 'upi' : 'direct',
+      paymentMethod:
+        paymentMethod === 'razorpay' ? 'razorpay' : paymentMethod === 'upi' ? 'upi' : 'direct',
       paymentStatus: 'completed',
       specialInstructions,
-      totalAmount: finalTotal
+      totalAmount: finalTotal,
     });
 
     // Order created successfully - clear backup payment data
@@ -830,14 +838,16 @@ export const processOrderWithPayment = async ({
         customerEmail: finalCustomerEmail,
         customerPhone: finalCustomerPhone,
         specialInstructions,
-        paymentId: paymentResponse.razorpay_payment_id
-      }
+        paymentId: paymentResponse.razorpay_payment_id,
+      },
     });
     return true;
-
   } catch (error) {
     // Handle payment success but order creation failure
-    if (paymentResponse.razorpay_payment_id && !paymentResponse.razorpay_payment_id.startsWith('DIRECT-')) {
+    if (
+      paymentResponse.razorpay_payment_id &&
+      !paymentResponse.razorpay_payment_id.startsWith('DIRECT-')
+    ) {
       await handlePaymentSuccessOrderFailure({
         paymentResponse,
         restaurant,
@@ -853,7 +863,7 @@ export const processOrderWithPayment = async ({
         setIsProcessing,
         user,
         navigate,
-        clearCart
+        clearCart,
       });
     } else {
       setScriptError(`Order creation failed: ${error.message}`);
@@ -878,13 +888,13 @@ const handlePaymentSuccessOrderFailure = async ({
   setIsProcessing,
   user,
   navigate,
-  clearCart
+  clearCart,
 }) => {
   try {
     setScriptError(
       `IMPORTANT: Your payment was successful but there was an issue creating your order. ` +
-      `Please don't worry - your money is safe. Our team has been notified and will contact you shortly. ` +
-      `Payment ID: ${paymentResponse.razorpay_payment_id}`
+        `Please don't worry - your money is safe. Our team has been notified and will contact you shortly. ` +
+        `Payment ID: ${paymentResponse.razorpay_payment_id}`,
     );
     // 1. Store the failed order attempt for manual processing
     const failedOrderData = {
@@ -903,64 +913,110 @@ const handlePaymentSuccessOrderFailure = async ({
       paymentMethod,
       errorMessage: 'Order creation failed after payment',
       timestamp: new Date().toISOString(),
-      status: 'payment_success_order_failed'
+      status: 'payment_success_order_failed',
     };
-    localStorage.setItem(`failed_order_${paymentResponse.razorpay_payment_id}`, JSON.stringify(failedOrderData));
-    // 2. Try to notify the backend about the failure
+    // 1. Persist failed order to DB so it survives browser close/refresh
+    try {
+      await supabase.from('failed_payment_orders').insert({
+        razorpay_payment_id: failedOrderData.paymentId,
+        razorpay_order_id: failedOrderData.orderId,
+        razorpay_signature: failedOrderData.signature,
+        restaurant_id: failedOrderData.restaurantId,
+        user_id: user ? user.id : null,
+        customer_name: failedOrderData.customerName,
+        customer_email: failedOrderData.customerEmail,
+        customer_phone: failedOrderData.customerPhone,
+        table_number: failedOrderData.tableNumber,
+        items: failedOrderData.items,
+        amount: failedOrderData.amount,
+        payment_method: failedOrderData.paymentMethod,
+        special_instructions: failedOrderData.specialInstructions,
+        error_message: failedOrderData.errorMessage,
+        status: 'pending_recovery',
+      });
+    } catch (dbError) {
+      // DB insert failed — fall back to sessionStorage as last resort
+      console.error('Failed to persist failed order to DB:', dbError);
+      sessionStorage.setItem(
+        `failed_order_${failedOrderData.paymentId}`,
+        JSON.stringify(failedOrderData),
+      );
+    }
+    // 2. Notify backend
     try {
       await notifyPaymentOrderMismatch(failedOrderData, restaurant.name);
     } catch (notifyError) {
-      // log error
+      console.error('Notify failed:', notifyError);
     }
-    // 3. Send email notification to customer
-    try {
-      await sendOrderFailureNotification(failedOrderData, restaurant);
-    } catch (emailError) {
-      // log error
-    }
-    // 4. Show recovery options to user
+    // 3. Show recovery options to user
     showPaymentRecoveryOptions(paymentResponse.razorpay_payment_id, {
       retryOrderCreation: async () => {
         try {
-          const storedData = localStorage.getItem(`failed_order_${paymentResponse.razorpay_payment_id}`);
-          if (!storedData) throw new Error('No stored order data found');
-          const failedOrderData = JSON.parse(storedData);
+          // Prefer DB record; fall back to sessionStorage
+          let recoveryData = failedOrderData;
+          const { data: dbRecord } = await supabase
+            .from('failed_payment_orders')
+            .select('*')
+            .eq('razorpay_payment_id', paymentResponse.razorpay_payment_id)
+            .eq('status', 'pending_recovery')
+            .single();
+          if (dbRecord) {
+            recoveryData = {
+              paymentId: dbRecord.razorpay_payment_id,
+              orderId: dbRecord.razorpay_order_id,
+              signature: dbRecord.razorpay_signature,
+              restaurantId: dbRecord.restaurant_id,
+              customerName: dbRecord.customer_name,
+              customerEmail: dbRecord.customer_email,
+              customerPhone: dbRecord.customer_phone,
+              tableNumber: dbRecord.table_number,
+              items: dbRecord.items,
+              amount: dbRecord.amount,
+              paymentMethod: dbRecord.payment_method,
+              specialInstructions: dbRecord.special_instructions,
+            };
+          }
           const order = await createOrderWithRetry({
-            restaurantId: failedOrderData.restaurantId,
+            restaurantId: recoveryData.restaurantId,
             userId: user ? user.id : null,
-            customerName: failedOrderData.customerName,
-            customerEmail: failedOrderData.customerEmail,
-            customerPhone: failedOrderData.customerPhone,
-            tableNumber: failedOrderData.tableNumber,
-            items: failedOrderData.items,
-            razorpayOrderId: failedOrderData.orderId,
-            razorpayPaymentId: failedOrderData.paymentId,
-            razorpaySignature: failedOrderData.signature,
-            paymentMethod: failedOrderData.paymentMethod,
+            customerName: recoveryData.customerName,
+            customerEmail: recoveryData.customerEmail,
+            customerPhone: recoveryData.customerPhone,
+            tableNumber: recoveryData.tableNumber,
+            items: recoveryData.items,
+            razorpayOrderId: recoveryData.orderId,
+            razorpayPaymentId: recoveryData.paymentId,
+            razorpaySignature: recoveryData.signature,
+            paymentMethod: recoveryData.paymentMethod,
             paymentStatus: 'completed',
-            specialInstructions: failedOrderData.specialInstructions,
-            totalAmount: failedOrderData.amount,
-            isRetry: true
+            specialInstructions: recoveryData.specialInstructions,
+            totalAmount: recoveryData.amount,
+            isRetry: true,
           });
           if (order) {
-            localStorage.removeItem(`failed_order_${paymentResponse.razorpay_payment_id}`);
+            // Mark DB record as recovered
+            await supabase
+              .from('failed_payment_orders')
+              .update({ status: 'recovered', recovered_order_id: order.id })
+              .eq('razorpay_payment_id', paymentResponse.razorpay_payment_id);
+            sessionStorage.removeItem(`failed_order_${paymentResponse.razorpay_payment_id}`);
             clearCart();
             navigate('/order-confirmation-page', {
               state: {
                 orderId: order.id,
                 orderNumber: order.order_number,
-                restaurantId: failedOrderData.restaurantId,
+                restaurantId: recoveryData.restaurantId,
                 restaurantName: restaurant.name,
                 totalAmount: order.total,
-                tableNumber: failedOrderData.tableNumber,
-                paymentMethod: failedOrderData.paymentMethod,
-                customerName: failedOrderData.customerName,
-                customerEmail: failedOrderData.customerEmail,
-                customerPhone: failedOrderData.customerPhone,
-                specialInstructions: failedOrderData.specialInstructions,
+                tableNumber: recoveryData.tableNumber,
+                paymentMethod: recoveryData.paymentMethod,
+                customerName: recoveryData.customerName,
+                customerEmail: recoveryData.customerEmail,
+                customerPhone: recoveryData.customerPhone,
+                specialInstructions: recoveryData.specialInstructions,
                 paymentId: paymentResponse.razorpay_payment_id,
-                wasRetry: true
-              }
+                wasRetry: true,
+              },
             });
             closeRecoveryDialog();
           }
@@ -973,32 +1029,60 @@ const handlePaymentSuccessOrderFailure = async ({
         const supportEmail = restaurant.email || 'support@restaurant.com';
         const message = `Payment ID: ${paymentResponse.razorpay_payment_id}\nAmount: ₹${finalTotal}\nRestaurant: ${restaurant.name}\nTable: ${tableNumber}\nIssue: Payment successful but order creation failed`;
         if (supportPhone) {
-          window.open(`https://wa.me/${supportPhone}?text=${encodeURIComponent(message)}`, '_blank');
+          window.open(
+            `https://wa.me/${supportPhone}?text=${encodeURIComponent(message)}`,
+            '_blank',
+          );
         } else {
-          window.open(`mailto:${supportEmail}?subject=Payment Issue - ${paymentResponse.razorpay_payment_id}&body=${encodeURIComponent(message)}`, '_blank');
+          window.open(
+            `mailto:${supportEmail}?subject=Payment Issue - ${paymentResponse.razorpay_payment_id}&body=${encodeURIComponent(message)}`,
+            '_blank',
+          );
         }
       },
-      closeRecoveryDialog
+      closeRecoveryDialog,
     });
   } catch (error) {
     setScriptError(
       `Payment successful but order creation failed. Payment ID: ${paymentResponse.razorpay_payment_id}. ` +
-      `Please contact customer support immediately.`
+        `Please contact customer support immediately.`,
     );
   }
   setIsProcessing(false);
 };
 
-// Optionally, add a function to check for pending failed orders on load
-export const checkPendingFailedOrders = (showPaymentRecoveryOptions) => {
-  const keys = Object.keys(localStorage);
-  const failedOrderKeys = keys.filter(key => key.startsWith('failed_order_'));
-  if (failedOrderKeys.length > 0) {
-    const latestFailedOrder = failedOrderKeys[0];
-    const paymentId = latestFailedOrder.replace('failed_order_', '');
-    setTimeout(() => {
-      showPaymentRecoveryOptions(paymentId);
-    }, 1000);
+// Check for pending failed orders on app load — queries DB first, falls back to sessionStorage
+export const checkPendingFailedOrders = async (userId, showPaymentRecoveryOptions) => {
+  try {
+    // 1. Check DB for unrecovered failed orders belonging to this user
+    if (userId) {
+      const { data: dbRecords } = await supabase
+        .from('failed_payment_orders')
+        .select('razorpay_payment_id')
+        .eq('user_id', userId)
+        .eq('status', 'pending_recovery')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (dbRecords && dbRecords.length > 0) {
+        setTimeout(() => {
+          showPaymentRecoveryOptions(dbRecords[0].razorpay_payment_id);
+        }, 1000);
+        return;
+      }
+    }
+
+    // 2. Fall back to sessionStorage (for guest users or DB failures)
+    const keys = Object.keys(sessionStorage);
+    const failedOrderKeys = keys.filter((key) => key.startsWith('failed_order_'));
+    if (failedOrderKeys.length > 0) {
+      const paymentId = failedOrderKeys[0].replace('failed_order_', '');
+      setTimeout(() => {
+        showPaymentRecoveryOptions(paymentId);
+      }, 1000);
+    }
+  } catch (err) {
+    console.error('checkPendingFailedOrders error:', err);
   }
 };
 
@@ -1028,5 +1112,5 @@ export default {
   isPaymentCompleted,
   getPaymentStatusColor,
   processOrderWithPayment,
-  checkPendingFailedOrders
+  checkPendingFailedOrders,
 };
