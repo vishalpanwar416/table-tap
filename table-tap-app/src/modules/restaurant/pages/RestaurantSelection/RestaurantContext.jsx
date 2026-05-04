@@ -174,12 +174,10 @@ export const RestaurantProvider = ({ children }) => {
         // Determine if restaurant is accessible:
         // - active / grace_period: always accessible
         // - expired: allow 7-day grace window after end_date before blocking
-        // - null (no subscription row or RLS blocked read): allow access, banner handles messaging
+        // - no subscription row: block (matches getActiveRestaurants selection page behaviour)
         // - cancelled: block
         const isAccessible = (() => {
-          // No subscription row — could be RLS blocking an expired sub, or genuinely no sub.
-          // Trust is_active flag on the restaurant; the SubscriptionExpiredBanner will warn owners.
-          if (!subscription) return true;
+          if (!subscription) return false;
           if (subscription.status === 'active' || subscription.status === 'grace_period')
             return true;
           if (subscription.status === 'expired' && subscription.end_date) {
