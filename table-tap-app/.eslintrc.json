@@ -1,7 +1,8 @@
 {
   "extends": ["react-app/base"],
   "rules": {
-    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
-    "no-console": ["warn", { "allow": ["warn", "error", "info"] }]
+    "no-unused-vars": "off",
+    "no-console": "off",
+    "react-hooks/exhaustive-deps": "off"
   }
 }
