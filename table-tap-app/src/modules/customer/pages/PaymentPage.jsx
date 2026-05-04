@@ -1,7 +1,21 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../../shared/config/CartContent';
-import { ChevronLeft, CreditCard, QrCode, CheckCircle, AlertCircle, Clock, MapPin, User, Mail, Phone, Shield, Lock, Smartphone } from 'lucide-react';
+import {
+  ChevronLeft,
+  CreditCard,
+  QrCode,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  MapPin,
+  User,
+  Mail,
+  Phone,
+  Shield,
+  Lock,
+  Smartphone,
+} from 'lucide-react';
 import { useRestaurant } from '../../restaurant/pages/RestaurantSelection/RestaurantContext';
 import { useAuth } from '../../shared/config/AuthContext';
 import {
@@ -11,7 +25,7 @@ import {
   createOrder,
   validatePaymentData,
   processOrderWithPayment,
-  checkPendingFailedOrders
+  checkPendingFailedOrders,
 } from '../api/paymentService';
 import LoadingScreen from '../../shared/components/LoadingScreen';
 
@@ -33,7 +47,6 @@ const PaymentPage = () => {
   const { restaurant } = useRestaurant();
   const { user, loading: authLoading } = useAuth();
 
-
   // Customer contact info state
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
@@ -41,9 +54,12 @@ const PaymentPage = () => {
   const [showCopySuccess, setShowCopySuccess] = useState(false);
 
   // Computed customer details with fallbacks
-  const finalCustomerName = customerName || user?.user_metadata?.full_name || guestDetails?.name || 'Guest Customer';
-  const finalCustomerEmail = customerEmail || user?.email || guestDetails?.email || 'guest@example.com';
-  const finalCustomerPhone = customerPhone || user?.user_metadata?.phone || guestDetails?.phone || '';
+  const finalCustomerName =
+    customerName || user?.user_metadata?.full_name || guestDetails?.name || 'Guest Customer';
+  const finalCustomerEmail =
+    customerEmail || user?.email || guestDetails?.email || 'guest@example.com';
+  const finalCustomerPhone =
+    customerPhone || user?.user_metadata?.phone || guestDetails?.phone || '';
   // Available payment methods based on restaurant settings
   const availablePaymentMethods = [];
   if (restaurant?.razorpay_key_id) {
@@ -62,8 +78,6 @@ const PaymentPage = () => {
     return () => clearTimeout(timer);
   }, []);
 
-
-
   if (!restaurant) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -81,22 +95,21 @@ const PaymentPage = () => {
     let discountAmount = 0;
     let taxableAmount = 0;
 
-    cartItems.forEach(item => {
+    cartItems.forEach((item) => {
       const originalItemTotal = item.price * item.quantity;
       originalTotal += originalItemTotal;
 
-      const effectivePrice = item.effectivePrice !== undefined ?
-        item.effectivePrice :
-        calculateEffectivePrice(item);
+      const effectivePrice =
+        item.effectivePrice !== undefined ? item.effectivePrice : calculateEffectivePrice(item);
 
       const itemDiscount = (item.price - effectivePrice) * item.quantity;
       discountAmount += itemDiscount;
 
       const itemSubtotal = effectivePrice * item.quantity;
 
-      const isWater = item.name &&
-        (item.name.toLowerCase().includes('water') ||
-          item.category?.toLowerCase() === 'water');
+      const isWater =
+        item.name &&
+        (item.name.toLowerCase().includes('water') || item.category?.toLowerCase() === 'water');
 
       if (!isWater) {
         taxableAmount += itemSubtotal;
@@ -114,18 +127,12 @@ const PaymentPage = () => {
       subtotalAfterDiscount,
       cgst,
       sgst,
-      finalTotal
+      finalTotal,
     };
   }, [cartItems, calculateEffectivePrice]);
 
-  const {
-    originalTotal,
-    discountAmount,
-    subtotalAfterDiscount,
-    cgst,
-    sgst,
-    finalTotal
-  } = calculatePriceDetails();
+  const { originalTotal, discountAmount, subtotalAfterDiscount, cgst, sgst, finalTotal } =
+    calculatePriceDetails();
 
   useEffect(() => {
     const loadPaymentScript = async () => {
@@ -135,7 +142,9 @@ const PaymentPage = () => {
         setScriptError(null);
       } catch (error) {
         console.error('Failed to load Razorpay script:', error);
-        setScriptError('Payment gateway failed to load. Please try again later or choose Pay At Restaurant.');
+        setScriptError(
+          'Payment gateway failed to load. Please try again later or choose Pay At Restaurant.',
+        );
       }
     };
 
@@ -188,7 +197,7 @@ const PaymentPage = () => {
         await processOrder({
           razorpay_payment_id: 'DIRECT-' + Date.now(),
           razorpay_order_id: 'DIRECT-ORDER-' + Date.now(),
-          razorpay_signature: 'NA'
+          razorpay_signature: 'NA',
         });
         return;
       }
@@ -211,7 +220,7 @@ const PaymentPage = () => {
             setIsProcessing(true);
             await processOrder({
               ...response,
-              payment_method: 'razorpay'
+              payment_method: 'razorpay',
             });
           },
           onDismiss: () => {
@@ -220,7 +229,7 @@ const PaymentPage = () => {
           onFailure: (error) => {
             setScriptError(error || 'Payment failed');
             setIsProcessing(false);
-          }
+          },
         });
 
         rzp.open();
@@ -238,7 +247,10 @@ const PaymentPage = () => {
   // Enhanced processOrder function with proper error handling
   const processOrder = async (paymentResponse) => {
     // Basic guard: avoid duplicate order creation for the same payment in a single session
-    if (paymentResponse?.razorpay_payment_id && lastPaymentIdRef.current === paymentResponse.razorpay_payment_id) {
+    if (
+      paymentResponse?.razorpay_payment_id &&
+      lastPaymentIdRef.current === paymentResponse.razorpay_payment_id
+    ) {
       console.warn('Duplicate payment callback ignored', paymentResponse.razorpay_payment_id);
       return true;
     }
@@ -274,18 +286,20 @@ const PaymentPage = () => {
           const isVerified = await verifyRazorpaySignature(
             paymentResponse.razorpay_payment_id,
             paymentResponse.razorpay_order_id,
-            paymentResponse.razorpay_signature
+            paymentResponse.razorpay_signature,
           );
 
           if (!isVerified) {
-            throw new Error('Payment verification failed. If you have already paid, please contact support with your payment ID.');
+            throw new Error(
+              'Payment verification failed. If you have already paid, please contact support with your payment ID.',
+            );
           }
         } else {
           // Some gateways return only payment_id when no server-side order was created.
           // Don't block order creation; we will log and proceed so the order isn't lost.
           console.warn('Skipping signature verification: missing order_id or signature', {
             hasOrderId,
-            hasSignature
+            hasSignature,
           });
         }
       }
@@ -320,9 +334,12 @@ const PaymentPage = () => {
         timestamp: new Date().toISOString(),
         customerEmail: finalCustomerEmail.trim(),
         customerPhone: finalCustomerPhone.trim(),
-        restaurantId: restaurant.id
+        restaurantId: restaurant.id,
       };
-      localStorage.setItem(`payment_${paymentResponse.razorpay_payment_id}`, JSON.stringify(paymentData));
+      sessionStorage.setItem(
+        `payment_${paymentResponse.razorpay_payment_id}`,
+        JSON.stringify(paymentData),
+      );
 
       // Try to create order with retry mechanism
       const order = await createOrderWithRetry({
@@ -333,26 +350,27 @@ const PaymentPage = () => {
         customerPhone: finalCustomerPhone.trim(),
         tableNumber,
         restaurantName: restaurant.name,
-        items: cartItems.map(item => ({
+        items: cartItems.map((item) => ({
           id: item.id,
           quantity: item.quantity,
           price: item.price,
           effectivePrice: item.effectivePrice,
           name: item.name,
           category: item.category,
-          image: item.image
+          image: item.image,
         })),
         razorpayOrderId: paymentResponse.razorpay_order_id || null,
         razorpayPaymentId: paymentResponse.razorpay_payment_id || null,
         razorpaySignature: paymentResponse.razorpay_signature || null,
-        paymentMethod: paymentMethod === 'razorpay' ? 'razorpay' : paymentMethod === 'upi' ? 'upi' : 'direct',
+        paymentMethod:
+          paymentMethod === 'razorpay' ? 'razorpay' : paymentMethod === 'upi' ? 'upi' : 'direct',
         paymentStatus: 'completed',
         specialInstructions,
-        totalAmount: finalTotal
+        totalAmount: finalTotal,
       });
 
       // Order created successfully - clear backup payment data
-      localStorage.removeItem(`payment_${paymentResponse.razorpay_payment_id}`);
+      sessionStorage.removeItem(`payment_${paymentResponse.razorpay_payment_id}`);
 
       clearCart();
       navigate('/order-confirmation-page', {
@@ -368,15 +386,17 @@ const PaymentPage = () => {
           customerEmail: finalCustomerEmail,
           customerPhone: finalCustomerPhone,
           specialInstructions,
-          paymentId: paymentResponse.razorpay_payment_id
-        }
+          paymentId: paymentResponse.razorpay_payment_id,
+        },
       });
       return true;
-
     } catch (error) {
       console.error('processOrder error:', error);
       // CRITICAL: Handle payment success but order creation failure
-      if (paymentResponse.razorpay_payment_id && !paymentResponse.razorpay_payment_id.startsWith('DIRECT-')) {
+      if (
+        paymentResponse.razorpay_payment_id &&
+        !paymentResponse.razorpay_payment_id.startsWith('DIRECT-')
+      ) {
         await handlePaymentSuccessOrderFailure(paymentResponse, error);
       } else {
         setScriptError(`Order creation failed: ${error.message}`);
@@ -392,8 +412,8 @@ const PaymentPage = () => {
     try {
       setScriptError(
         `IMPORTANT: Your payment was successful but there was an issue creating your order. ` +
-        `Please don't worry - your money is safe. Our team has been notified and will contact you shortly. ` +
-        `Payment ID: ${paymentResponse.razorpay_payment_id}`
+          `Please don't worry - your money is safe. Our team has been notified and will contact you shortly. ` +
+          `Payment ID: ${paymentResponse.razorpay_payment_id}`,
       );
       // 1. Store the failed order attempt for manual processing
       const failedOrderData = {
@@ -412,9 +432,12 @@ const PaymentPage = () => {
         paymentMethod,
         errorMessage: originalError.message,
         timestamp: new Date().toISOString(),
-        status: 'payment_success_order_failed'
+        status: 'payment_success_order_failed',
       };
-      localStorage.setItem(`failed_order_${paymentResponse.razorpay_payment_id}`, JSON.stringify(failedOrderData));
+      sessionStorage.setItem(
+        `failed_order_${paymentResponse.razorpay_payment_id}`,
+        JSON.stringify(failedOrderData),
+      );
       // 2. Try to notify the backend about the failure
       try {
         await notifyPaymentOrderMismatch(failedOrderData);
@@ -431,7 +454,9 @@ const PaymentPage = () => {
       showPaymentRecoveryOptions(paymentResponse.razorpay_payment_id, originalError.message, {
         retryOrderCreation: async () => {
           try {
-            const storedData = localStorage.getItem(`failed_order_${paymentResponse.razorpay_payment_id}`);
+            const storedData = sessionStorage.getItem(
+              `failed_order_${paymentResponse.razorpay_payment_id}`,
+            );
             if (!storedData) throw new Error('No stored order data found');
             const failedOrderData = JSON.parse(storedData);
             const order = await createOrderWithRetry({
@@ -442,9 +467,9 @@ const PaymentPage = () => {
               customerPhone: failedOrderData.customerPhone,
               restaurantName: restaurant.name,
               tableNumber: failedOrderData.tableNumber,
-              items: failedOrderData.items.map(item => ({
+              items: failedOrderData.items.map((item) => ({
                 ...item,
-                effectivePrice: item.effectivePrice || item.price
+                effectivePrice: item.effectivePrice || item.price,
               })),
               razorpayOrderId: failedOrderData.orderId,
               razorpayPaymentId: failedOrderData.paymentId,
@@ -453,10 +478,10 @@ const PaymentPage = () => {
               paymentStatus: 'completed',
               specialInstructions: failedOrderData.specialInstructions,
               totalAmount: failedOrderData.amount,
-              isRetry: true
+              isRetry: true,
             });
             if (order) {
-              localStorage.removeItem(`failed_order_${paymentResponse.razorpay_payment_id}`);
+              sessionStorage.removeItem(`failed_order_${paymentResponse.razorpay_payment_id}`);
               clearCart();
               navigate('/order-confirmation-page', {
                 state: {
@@ -472,8 +497,8 @@ const PaymentPage = () => {
                   customerPhone: failedOrderData.customerPhone,
                   specialInstructions: failedOrderData.specialInstructions,
                   paymentId: paymentResponse.razorpay_payment_id,
-                  wasRetry: true
-                }
+                  wasRetry: true,
+                },
               });
               closeRecoveryDialog();
             }
@@ -486,18 +511,24 @@ const PaymentPage = () => {
           const supportEmail = restaurant.email || 'support@restaurant.com';
           const message = `Payment ID: ${paymentResponse.razorpay_payment_id}\nAmount: ₹${finalTotal}\nRestaurant: ${restaurant.name}\nTable: ${tableNumber}\nIssue: Payment successful but order creation failed\nError: ${originalError.message}`;
           if (supportPhone) {
-            window.open(`https://wa.me/${supportPhone}?text=${encodeURIComponent(message)}`, '_blank');
+            window.open(
+              `https://wa.me/${supportPhone}?text=${encodeURIComponent(message)}`,
+              '_blank',
+            );
           } else {
-            window.open(`mailto:${supportEmail}?subject=Payment Issue - ${paymentResponse.razorpay_payment_id}&body=${encodeURIComponent(message)}`, '_blank');
+            window.open(
+              `mailto:${supportEmail}?subject=Payment Issue - ${paymentResponse.razorpay_payment_id}&body=${encodeURIComponent(message)}`,
+              '_blank',
+            );
           }
         },
-        closeRecoveryDialog
+        closeRecoveryDialog,
       });
     } catch (error) {
       console.error('Error handling payment success order failure:', error);
       setScriptError(
         `Payment successful but order creation failed. Payment ID: ${paymentResponse.razorpay_payment_id}. ` +
-        `Please contact customer support immediately.`
+          `Please contact customer support immediately.`,
       );
     }
     setIsProcessing(false);
@@ -519,7 +550,7 @@ const PaymentPage = () => {
           throw new Error(`Order creation failed after ${maxRetries} attempts: ${error.message}`);
         }
         const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
   };
@@ -532,8 +563,8 @@ const PaymentPage = () => {
       body: JSON.stringify({
         type: 'payment_success_order_failed',
         data: failedOrderData,
-        urgency: 'high'
-      })
+        urgency: 'high',
+      }),
     });
     if (!response.ok) throw new Error('Failed to notify backend');
   };
@@ -549,20 +580,21 @@ const PaymentPage = () => {
         paymentId: failedOrderData.paymentId,
         amount: failedOrderData.amount,
         restaurantName: restaurant.name,
-        tableNumber: failedOrderData.tableNumber
-      })
+        tableNumber: failedOrderData.tableNumber,
+      }),
     });
     if (!response.ok) throw new Error('Failed to send notification email');
   };
 
   // Function to show recovery options to user
-  const showPaymentRecoveryOptions = (paymentId, errorMessage, {
-    retryOrderCreation,
-    contactSupport,
-    closeRecoveryDialog
-  }) => {
+  const showPaymentRecoveryOptions = (
+    paymentId,
+    errorMessage,
+    { retryOrderCreation, contactSupport, closeRecoveryDialog },
+  ) => {
     const recoveryDialog = document.createElement('div');
-    recoveryDialog.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    recoveryDialog.className =
+      'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
     recoveryDialog.innerHTML = `
       <div class="bg-white p-6 rounded-2xl max-w-md mx-4">
         <h3 class="text-lg font-bold mb-4 text-red-600">Payment Successful, Order Issue</h3>
@@ -599,7 +631,7 @@ const PaymentPage = () => {
   // Function to retry order creation with stored payment data
   const retryOrderCreation = async (paymentId) => {
     try {
-      const storedData = localStorage.getItem(`failed_order_${paymentId}`);
+      const storedData = sessionStorage.getItem(`failed_order_${paymentId}`);
       if (!storedData) throw new Error('No stored order data found');
       const failedOrderData = JSON.parse(storedData);
       const order = await createOrderWithRetry({
@@ -610,9 +642,9 @@ const PaymentPage = () => {
         customerPhone: failedOrderData.customerPhone,
         restaurantName: restaurant.name,
         tableNumber: failedOrderData.tableNumber,
-        items: failedOrderData.items.map(item => ({
+        items: failedOrderData.items.map((item) => ({
           ...item,
-          effectivePrice: item.effectivePrice || item.price
+          effectivePrice: item.effectivePrice || item.price,
         })),
         razorpayOrderId: failedOrderData.orderId,
         razorpayPaymentId: failedOrderData.paymentId,
@@ -621,10 +653,10 @@ const PaymentPage = () => {
         paymentStatus: 'completed',
         specialInstructions: failedOrderData.specialInstructions,
         totalAmount: failedOrderData.amount,
-        isRetry: true
+        isRetry: true,
       });
       if (order) {
-        localStorage.removeItem(`failed_order_${paymentId}`);
+        sessionStorage.removeItem(`failed_order_${paymentId}`);
         clearCart();
         navigate('/order-confirmation-page', {
           state: {
@@ -640,8 +672,8 @@ const PaymentPage = () => {
             customerPhone: failedOrderData.customerPhone,
             specialInstructions: failedOrderData.specialInstructions,
             paymentId: paymentId,
-            wasRetry: true
-          }
+            wasRetry: true,
+          },
         });
         closeRecoveryDialog();
       }
@@ -658,7 +690,10 @@ const PaymentPage = () => {
     if (supportPhone) {
       window.open(`https://wa.me/${supportPhone}?text=${encodeURIComponent(message)}`, '_blank');
     } else {
-      window.open(`mailto:${supportEmail}?subject=Payment Issue - ${paymentId}&body=${encodeURIComponent(message)}`, '_blank');
+      window.open(
+        `mailto:${supportEmail}?subject=Payment Issue - ${paymentId}&body=${encodeURIComponent(message)}`,
+        '_blank',
+      );
     }
   };
 
@@ -707,7 +742,7 @@ const PaymentPage = () => {
       // Show confirmation dialog instead of auto-processing
       const confirmed = window.confirm(
         'UPI payment app should have opened. Please complete the payment and then click OK to confirm your order.\n\n' +
-        'If you cancelled the payment, click Cancel to go back.'
+          'If you cancelled the payment, click Cancel to go back.',
       );
 
       if (confirmed) {
@@ -717,21 +752,18 @@ const PaymentPage = () => {
           razorpay_order_id: 'UPI-ORDER-' + Date.now(),
           razorpay_signature: 'NA',
           upi_id: restaurant.upi_id,
-          payment_method: 'upi'
+          payment_method: 'upi',
         });
 
         if (!result) {
           setIsProcessing(false);
         }
       }
-
     } catch (error) {
       setScriptError(`Failed to open UPI payment: ${error.message}`);
       setIsProcessing(false);
     }
   };
-
-
 
   return (
     <div className="flex justify-center items-start min-h-screen bg-black">
@@ -767,8 +799,9 @@ const PaymentPage = () => {
 
         {/* Enhanced Main content */}
         <div className="bg-gradient-to-br from-gray-50 to-white w-full flex-1 rounded-t-3xl px-6 pt-10 pb-6 flex flex-col font-spartan overflow-y-auto shadow-2xl">
-          <div className={`transition-all duration-700 ${animateItems ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-
+          <div
+            className={`transition-all duration-700 ${animateItems ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+          >
             {/* Enhanced Header with Progress Indicator */}
             <div className="mb-8">
               <div className="flex items-center justify-center gap-2 mb-4">
@@ -789,7 +822,9 @@ const PaymentPage = () => {
               <h2 className="justify-center text-center text-gray-800 text-3xl font-bold mb-2">
                 Complete Your Payment
               </h2>
-              <p className="text-center text-gray-600 text-sm">Choose your preferred payment method</p>
+              <p className="text-center text-gray-600 text-sm">
+                Choose your preferred payment method
+              </p>
             </div>
 
             {/* Enhanced Error Display */}
@@ -844,8 +879,18 @@ const PaymentPage = () => {
                           className="text-green-600 hover:text-green-800 transition-colors"
                           title="Copy UPI ID"
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                            />
                           </svg>
                         </button>
                       </div>
@@ -858,13 +903,13 @@ const PaymentPage = () => {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-700 font-medium">Merchant:</span>
-                      <span className="font-bold text-green-800">
-                        {restaurant.name}
-                      </span>
+                      <span className="font-bold text-green-800">{restaurant.name}</span>
                     </div>
                     <div className="mt-3 p-3 bg-blue-50 rounded-xl border border-blue-200">
                       <p className="text-sm text-blue-800 text-center">
-                        💡 <strong>Tip:</strong> After completing the UPI payment, you'll be asked to confirm your order. Make sure to complete the payment in your UPI app first.
+                        💡 <strong>Tip:</strong> After completing the UPI payment, you'll be asked
+                        to confirm your order. Make sure to complete the payment in your UPI app
+                        first.
                       </p>
                     </div>
                   </div>
@@ -875,18 +920,27 @@ const PaymentPage = () => {
                 {availablePaymentMethods.includes('razorpay') && (
                   <button
                     onClick={() => setPaymentMethod('razorpay')}
-                    className={`p-6 rounded-2xl border-2 flex items-center gap-4 transition-all duration-300 hover:shadow-lg ${paymentMethod === 'razorpay'
-                      ? 'border-orange-500 bg-gradient-to-r from-orange-50 to-orange-100 shadow-md'
-                      : 'border-gray-200 bg-white hover:border-orange-300'
-                      }`}
+                    className={`p-6 rounded-2xl border-2 flex items-center gap-4 transition-all duration-300 hover:shadow-lg ${
+                      paymentMethod === 'razorpay'
+                        ? 'border-orange-500 bg-gradient-to-r from-orange-50 to-orange-100 shadow-md'
+                        : 'border-gray-200 bg-white hover:border-orange-300'
+                    }`}
                   >
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${paymentMethod === 'razorpay' ? 'bg-orange-500' : 'bg-gray-100'
-                      }`}>
-                      <CreditCard size={24} className={paymentMethod === 'razorpay' ? 'text-white' : 'text-gray-500'} />
+                    <div
+                      className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
+                        paymentMethod === 'razorpay' ? 'bg-orange-500' : 'bg-gray-100'
+                      }`}
+                    >
+                      <CreditCard
+                        size={24}
+                        className={paymentMethod === 'razorpay' ? 'text-white' : 'text-gray-500'}
+                      />
                     </div>
                     <div className="text-left flex-1">
                       <div className="font-bold text-lg">Online Payment</div>
-                      <div className="text-sm text-gray-600">Credit/Debit Card, UPI, Net Banking</div>
+                      <div className="text-sm text-gray-600">
+                        Credit/Debit Card, UPI, Net Banking
+                      </div>
                       <div className="flex items-center gap-1 mt-1">
                         <Shield size={12} className="text-green-500" />
                         <span className="text-xs text-green-600">Secure & Encrypted</span>
@@ -902,14 +956,21 @@ const PaymentPage = () => {
                 {availablePaymentMethods.includes('upi') && (
                   <button
                     onClick={() => setPaymentMethod('upi')}
-                    className={`p-6 rounded-2xl border-2 flex items-center gap-4 transition-all duration-300 hover:shadow-lg ${paymentMethod === 'upi'
-                      ? 'border-orange-500 bg-gradient-to-r from-orange-50 to-orange-100 shadow-md'
-                      : 'border-gray-200 bg-white hover:border-orange-300'
-                      }`}
+                    className={`p-6 rounded-2xl border-2 flex items-center gap-4 transition-all duration-300 hover:shadow-lg ${
+                      paymentMethod === 'upi'
+                        ? 'border-orange-500 bg-gradient-to-r from-orange-50 to-orange-100 shadow-md'
+                        : 'border-gray-200 bg-white hover:border-orange-300'
+                    }`}
                   >
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${paymentMethod === 'upi' ? 'bg-orange-500' : 'bg-gray-100'
-                      }`}>
-                      <Smartphone size={24} className={paymentMethod === 'upi' ? 'text-white' : 'text-gray-500'} />
+                    <div
+                      className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
+                        paymentMethod === 'upi' ? 'bg-orange-500' : 'bg-gray-100'
+                      }`}
+                    >
+                      <Smartphone
+                        size={24}
+                        className={paymentMethod === 'upi' ? 'text-white' : 'text-gray-500'}
+                      />
                     </div>
                     <div className="text-left flex-1">
                       <div className="font-bold text-lg">UPI Payment</div>
@@ -928,14 +989,21 @@ const PaymentPage = () => {
                 {/* Pay At Restaurant - Always available */}
                 <button
                   onClick={() => setPaymentMethod('direct')}
-                  className={`p-6 rounded-2xl border-2 flex items-center gap-4 transition-all duration-300 hover:shadow-lg ${paymentMethod === 'direct'
-                    ? 'border-orange-500 bg-gradient-to-r from-orange-50 to-orange-100 shadow-md'
-                    : 'border-gray-200 bg-white hover:border-orange-300'
-                    }`}
+                  className={`p-6 rounded-2xl border-2 flex items-center gap-4 transition-all duration-300 hover:shadow-lg ${
+                    paymentMethod === 'direct'
+                      ? 'border-orange-500 bg-gradient-to-r from-orange-50 to-orange-100 shadow-md'
+                      : 'border-gray-200 bg-white hover:border-orange-300'
+                  }`}
                 >
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${paymentMethod === 'direct' ? 'bg-orange-500' : 'bg-gray-100'
-                    }`}>
-                    <QrCode size={24} className={paymentMethod === 'direct' ? 'text-white' : 'text-gray-500'} />
+                  <div
+                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
+                      paymentMethod === 'direct' ? 'bg-orange-500' : 'bg-gray-100'
+                    }`}
+                  >
+                    <QrCode
+                      size={24}
+                      className={paymentMethod === 'direct' ? 'text-white' : 'text-gray-500'}
+                    />
                   </div>
                   <div className="text-left flex-1">
                     <div className="font-bold text-lg">Pay At Restaurant</div>
@@ -970,10 +1038,16 @@ const PaymentPage = () => {
               {/* Cart Items */}
               <div className="space-y-3 mb-4">
                 {cartItems.map((item, index) => {
-                  const isWater = item.name && (item.name.toLowerCase().includes('water') || item.category?.toLowerCase() === 'water');
+                  const isWater =
+                    item.name &&
+                    (item.name.toLowerCase().includes('water') ||
+                      item.category?.toLowerCase() === 'water');
                   const hasDiscount = item.discounttype && item.discountvalue;
                   const originalTotal = (item.price * item.quantity).toFixed(2);
-                  const discountedPrice = item.effectivePrice !== undefined ? Number(item.effectivePrice).toFixed(2) : Number(calculateEffectivePrice(item)).toFixed(2);
+                  const discountedPrice =
+                    item.effectivePrice !== undefined
+                      ? Number(item.effectivePrice).toFixed(2)
+                      : Number(calculateEffectivePrice(item)).toFixed(2);
                   const discountedTotal = (Number(discountedPrice) * item.quantity).toFixed(2);
 
                   return (
@@ -983,11 +1057,14 @@ const PaymentPage = () => {
                       style={{ animationDelay: `${index * 100}ms` }}
                     >
                       <div className="flex-1">
-                        <div className="font-semibold text-gray-800">{item.name} × {item.quantity}</div>
+                        <div className="font-semibold text-gray-800">
+                          {item.name} × {item.quantity}
+                        </div>
                         {hasDiscount && (
                           <div className="text-green-600 text-sm font-medium bg-green-100 px-2 py-1 rounded-full inline-block mt-1">
                             {item.discounttype === 'Percentage' && `${item.discountvalue}% off`}
-                            {item.discounttype === 'Fixed' && `₹${item.discountvalue * item.quantity} off`}
+                            {item.discounttype === 'Fixed' &&
+                              `₹${item.discountvalue * item.quantity} off`}
                           </div>
                         )}
                         {isWater && (
@@ -1021,13 +1098,17 @@ const PaymentPage = () => {
                 {discountAmount > 0 && (
                   <div className="flex justify-between items-center">
                     <span className="text-green-600 font-medium">Discount</span>
-                    <span className="text-green-600 font-semibold">- ₹{discountAmount.toFixed(2)}</span>
+                    <span className="text-green-600 font-semibold">
+                      - ₹{discountAmount.toFixed(2)}
+                    </span>
                   </div>
                 )}
 
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 font-medium">Subtotal</span>
-                  <span className="font-semibold text-gray-800">₹{subtotalAfterDiscount.toFixed(2)}</span>
+                  <span className="font-semibold text-gray-800">
+                    ₹{subtotalAfterDiscount.toFixed(2)}
+                  </span>
                 </div>
 
                 <div className="flex justify-between items-center">
@@ -1044,7 +1125,9 @@ const PaymentPage = () => {
 
                 <div className="flex justify-between items-center">
                   <span className="text-2xl font-bold text-gray-800">Total</span>
-                  <span className="text-2xl font-bold text-orange-600">₹{finalTotal.toFixed(2)}</span>
+                  <span className="text-2xl font-bold text-orange-600">
+                    ₹{finalTotal.toFixed(2)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -1077,22 +1160,17 @@ const PaymentPage = () => {
           <div className="pb-32"></div>
         </div>
 
-
-
         {/* Floating Payment Button */}
         <div className="fixed bottom-0 left-0 right-0 px-6 py-4 z-50">
           <div className="max-w-[390px] md:max-w-4xl lg:max-w-6xl mx-auto">
             <button
-              onClick={
-                paymentMethod === 'upi'
-                  ? handleUPIPayment
-                  : handlePayment
-              }
+              onClick={paymentMethod === 'upi' ? handleUPIPayment : handlePayment}
               disabled={isProcessing || cartItems.length === 0}
-              className={`w-full py-4 rounded-full font-bold text-lg transition-all duration-300 transform hover:scale-105 ${isProcessing || cartItems.length === 0
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-gray-600 text-white hover:bg-gray-700 shadow-lg hover:shadow-xl'
-                }`}
+              className={`w-full py-4 rounded-full font-bold text-lg transition-all duration-300 transform hover:scale-105 ${
+                isProcessing || cartItems.length === 0
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-gray-600 text-white hover:bg-gray-700 shadow-lg hover:shadow-xl'
+              }`}
             >
               {isProcessing ? (
                 <span className="flex items-center justify-center gap-2">
