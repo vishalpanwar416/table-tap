@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 // Validation rules
 export const VALIDATION_RULES = {
   required: (value) => value && value.toString().trim().length > 0,
@@ -11,7 +13,7 @@ export const VALIDATION_RULES = {
     const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
     const maxSize = 5 * 1024 * 1024; // 5MB
     return validTypes.includes(file.type) && file.size <= maxSize;
-  }
+  },
 };
 
 // Validation messages
@@ -22,14 +24,14 @@ export const VALIDATION_MESSAGES = {
   minLength: (min) => `Must be at least ${min} characters`,
   maxLength: (max) => `Must be no more than ${max} characters`,
   price: 'Please enter a valid price',
-  imageFile: 'Please select a valid image file (JPEG, PNG, WebP) under 5MB'
+  imageFile: 'Please select a valid image file (JPEG, PNG, WebP) under 5MB',
 };
 
 // Validation function
 export const validate = (value, rules) => {
   const errors = [];
 
-  rules.forEach(rule => {
+  rules.forEach((rule) => {
     if (typeof rule === 'string') {
       if (!VALIDATION_RULES[rule](value)) {
         errors.push(VALIDATION_MESSAGES[rule]);
@@ -59,9 +61,9 @@ export const useFormValidation = (initialValues, validationSchema) => {
   const validateField = (name, value) => {
     if (validationSchema[name]) {
       const fieldErrors = validate(value, validationSchema[name]);
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [name]: fieldErrors
+        [name]: fieldErrors,
       }));
       return fieldErrors;
     }
@@ -69,27 +71,27 @@ export const useFormValidation = (initialValues, validationSchema) => {
   };
 
   const handleChange = (name, value) => {
-    setValues(prev => ({
+    setValues((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
-    
+
     if (touched[name]) {
       validateField(name, value);
     }
   };
 
   const handleBlur = (name) => {
-    setTouched(prev => ({
+    setTouched((prev) => ({
       ...prev,
-      [name]: true
+      [name]: true,
     }));
     validateField(name, values[name]);
   };
 
   const validateForm = () => {
     const newErrors = {};
-    Object.keys(validationSchema).forEach(field => {
+    Object.keys(validationSchema).forEach((field) => {
       const fieldErrors = validateField(field, values[field]);
       if (fieldErrors.length > 0) {
         newErrors[field] = fieldErrors;
@@ -106,6 +108,6 @@ export const useFormValidation = (initialValues, validationSchema) => {
     handleChange,
     handleBlur,
     validateForm,
-    setValues
+    setValues,
   };
 };

@@ -60,10 +60,11 @@ const AdminPanel = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const tabFromUrl = searchParams.get('tab');
-  const tabFromStorage = typeof window !== 'undefined' ? localStorage.getItem(ADMIN_TAB_STORAGE_KEY) : null;
+  const tabFromStorage =
+    typeof window !== 'undefined' ? localStorage.getItem(ADMIN_TAB_STORAGE_KEY) : null;
   const activeTab = useMemo(
     () => getValidTab(tabFromUrl || tabFromStorage || 'dashboard'),
-    [tabFromUrl, tabFromStorage]
+    [tabFromUrl, tabFromStorage],
   );
 
   const setActiveTab = useCallback(
@@ -72,9 +73,9 @@ const AdminPanel = () => {
       setSearchParams({ tab: id }, { replace: true });
       try {
         localStorage.setItem(ADMIN_TAB_STORAGE_KEY, id);
-      } catch (_) { }
+      } catch (_) {}
     },
-    [setSearchParams]
+    [setSearchParams],
   );
 
   useEffect(() => {
@@ -128,13 +129,13 @@ const AdminPanel = () => {
       facebook: '',
       instagram: '',
       twitter: '',
-      website: ''
+      website: '',
     },
     manager_name: '',
     manager_email: '',
     manager_phone: '',
     swiggy_api_key: '',
-    zomato_api_key: ''
+    zomato_api_key: '',
   });
 
   const [newStaff, setNewStaff] = useState({
@@ -142,7 +143,7 @@ const AdminPanel = () => {
     email: '',
     phone_number: '',
     role: 'captain',
-    restaurant_id: ''
+    restaurant_id: '',
   });
 
   const [showProfilePhotoModal, setShowProfilePhotoModal] = useState(false);
@@ -197,7 +198,7 @@ const AdminPanel = () => {
 
       const [restaurantsResponse, staffResponse] = await Promise.all([
         getAllRestaurants(1, 40),
-        getAllStaff(1, 40)
+        getAllStaff(1, 40),
       ]);
 
       if (restaurantsResponse.error) {
@@ -231,7 +232,7 @@ const AdminPanel = () => {
       const response = await getAllRestaurants(nextPage, 40);
       if (response.error) throw new Error(response.error);
 
-      setRestaurants(prev => [...prev, ...response.data]);
+      setRestaurants((prev) => [...prev, ...response.data]);
       setRestaurantPage(nextPage);
     } catch (err) {
       handleError('Failed to load more restaurants');
@@ -248,7 +249,7 @@ const AdminPanel = () => {
       const response = await getAllStaff(nextPage, 40);
       if (response.error) throw new Error(response.error);
 
-      setStaff(prev => [...prev, ...response.data]);
+      setStaff((prev) => [...prev, ...response.data]);
       setStaffPage(nextPage);
     } catch (err) {
       handleError('Failed to load more staff');
@@ -259,7 +260,7 @@ const AdminPanel = () => {
 
   const handleToggleRestaurantStatus = async (id) => {
     try {
-      const restaurant = restaurants.find(r => r.id === id);
+      const restaurant = restaurants.find((r) => r.id === id);
       const newStatus = !restaurant.is_active;
 
       const { error } = await toggleRestaurantStatus(id, newStatus);
@@ -268,13 +269,7 @@ const AdminPanel = () => {
         return;
       }
 
-      setRestaurants(prev =>
-        prev.map(r =>
-          r.id === id
-            ? { ...r, is_active: newStatus }
-            : r
-        )
-      );
+      setRestaurants((prev) => prev.map((r) => (r.id === id ? { ...r, is_active: newStatus } : r)));
       handleSuccess(`Restaurant ${newStatus ? 'activated' : 'deactivated'} successfully`);
     } catch (err) {
       handleError('Failed to toggle restaurant status: ' + err.message);
@@ -283,7 +278,7 @@ const AdminPanel = () => {
 
   const handleToggleRestaurantAI = async (id) => {
     try {
-      const restaurant = restaurants.find(r => r.id === id);
+      const restaurant = restaurants.find((r) => r.id === id);
       const newAIStatus = !restaurant.ai_enabled;
 
       const { error } = await supabase
@@ -296,12 +291,8 @@ const AdminPanel = () => {
         return;
       }
 
-      setRestaurants(prev =>
-        prev.map(r =>
-          r.id === id
-            ? { ...r, ai_enabled: newAIStatus }
-            : r
-        )
+      setRestaurants((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, ai_enabled: newAIStatus } : r)),
       );
       handleSuccess(`AI analytics ${newAIStatus ? 'enabled' : 'disabled'} successfully`);
     } catch (err) {
@@ -311,7 +302,7 @@ const AdminPanel = () => {
 
   const handleToggleRestaurantAggregators = async (id) => {
     try {
-      const restaurant = restaurants.find(r => r.id === id);
+      const restaurant = restaurants.find((r) => r.id === id);
       const newStatus = !restaurant.aggregators_enabled;
 
       const { error } = await toggleRestaurantAggregators(id, newStatus);
@@ -320,12 +311,8 @@ const AdminPanel = () => {
         return;
       }
 
-      setRestaurants(prev =>
-        prev.map(r =>
-          r.id === id
-            ? { ...r, aggregators_enabled: newStatus }
-            : r
-        )
+      setRestaurants((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, aggregators_enabled: newStatus } : r)),
       );
       handleSuccess(`Online aggregators ${newStatus ? 'enabled' : 'disabled'} successfully`);
     } catch (err) {
@@ -335,15 +322,16 @@ const AdminPanel = () => {
 
   const handleToggleOnlineBill = async (id) => {
     try {
-      const restaurant = restaurants.find(r => r.id === id);
-      const currentStatus = (restaurant.billing_features_enabled !== false || restaurant.online_bill_enabled !== false);
+      const restaurant = restaurants.find((r) => r.id === id);
+      const currentStatus =
+        restaurant.billing_features_enabled !== false || restaurant.online_bill_enabled !== false;
       const newStatus = !currentStatus;
 
       const { error } = await supabase
         .from('restaurants')
         .update({
           online_bill_enabled: newStatus,
-          billing_features_enabled: newStatus
+          billing_features_enabled: newStatus,
         })
         .eq('id', id);
 
@@ -352,12 +340,12 @@ const AdminPanel = () => {
         return;
       }
 
-      setRestaurants(prev =>
-        prev.map(r =>
+      setRestaurants((prev) =>
+        prev.map((r) =>
           r.id === id
             ? { ...r, online_bill_enabled: newStatus, billing_features_enabled: newStatus }
-            : r
-        )
+            : r,
+        ),
       );
       handleSuccess(`Online Bill ${newStatus ? 'enabled' : 'disabled'} successfully`);
     } catch (err) {
@@ -375,7 +363,7 @@ const AdminPanel = () => {
         return;
       }
 
-      setRestaurants(prev => [...prev, data]);
+      setRestaurants((prev) => [...prev, data]);
       handleSuccess('Restaurant created successfully');
       setShowAddRestaurant(false);
       setNewRestaurant({
@@ -397,13 +385,13 @@ const AdminPanel = () => {
           facebook: '',
           instagram: '',
           twitter: '',
-          website: ''
+          website: '',
         },
         manager_name: '',
         manager_email: '',
         manager_phone: '',
         swiggy_api_key: '',
-        zomato_api_key: ''
+        zomato_api_key: '',
       });
     } catch (err) {
       handleError('Failed to create restaurant: ' + err.message);
@@ -427,12 +415,8 @@ const AdminPanel = () => {
         return;
       }
 
-      setRestaurants(prev =>
-        prev.map(r =>
-          r.id === selectedRestaurant.id
-            ? { ...r, ...data }
-            : r
-        )
+      setRestaurants((prev) =>
+        prev.map((r) => (r.id === selectedRestaurant.id ? { ...r, ...data } : r)),
       );
       handleSuccess('Restaurant updated successfully');
       setShowEditRestaurant(false);
@@ -454,7 +438,7 @@ const AdminPanel = () => {
         return;
       }
 
-      setStaff(prev => [...prev, data]);
+      setStaff((prev) => [...prev, data]);
       handleSuccess('Staff member created successfully');
       setShowAddStaff(false);
       setNewStaff({
@@ -462,7 +446,7 @@ const AdminPanel = () => {
         email: '',
         phone_number: '',
         role: 'captain',
-        restaurant_id: ''
+        restaurant_id: '',
       });
     } catch (err) {
       handleError('Failed to create staff member: ' + err.message);
@@ -479,7 +463,7 @@ const AdminPanel = () => {
         return;
       }
 
-      setRestaurants(prev => prev.filter(r => r.id !== restaurantId));
+      setRestaurants((prev) => prev.filter((r) => r.id !== restaurantId));
       handleSuccess('Restaurant deleted successfully');
     } catch (err) {
       handleError('Failed to delete restaurant: ' + err.message);
@@ -494,7 +478,7 @@ const AdminPanel = () => {
         return;
       }
 
-      setStaff(prev => prev.filter(s => s.id !== staffId));
+      setStaff((prev) => prev.filter((s) => s.id !== staffId));
       handleSuccess('Staff member deleted successfully');
     } catch (err) {
       handleError('Failed to delete staff member: ' + err.message);
@@ -511,13 +495,7 @@ const AdminPanel = () => {
         return;
       }
 
-      setStaff(prev =>
-        prev.map(s =>
-          s.id === editingStaff.id
-            ? { ...s, ...data }
-            : s
-        )
-      );
+      setStaff((prev) => prev.map((s) => (s.id === editingStaff.id ? { ...s, ...data } : s)));
       handleSuccess('Staff member updated successfully');
       setShowEditStaff(false);
       setEditingStaff(null);
@@ -530,35 +508,40 @@ const AdminPanel = () => {
   };
 
   // Filter restaurants and staff based on search and filters
-  const filteredRestaurants = restaurants.filter(restaurant => {
-    const searchMatch = !searchTerm ||
+  const filteredRestaurants = restaurants.filter((restaurant) => {
+    const searchMatch =
+      !searchTerm ||
       restaurant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       restaurant.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       restaurant.contact_phone?.includes(searchTerm) ||
       restaurant.contact_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       restaurant.cuisine_type?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const statusMatch = !selectedRestaurantId ||
+    const statusMatch =
+      !selectedRestaurantId ||
       (selectedRestaurantId === 'active' && restaurant.is_active) ||
       (selectedRestaurantId === 'inactive' && !restaurant.is_active);
 
     return searchMatch && statusMatch;
   });
 
-  const filteredStaff = staff.filter(staffMember => {
-    const searchMatch = !searchTerm ||
+  const filteredStaff = staff.filter((staffMember) => {
+    const searchMatch =
+      !searchTerm ||
       staffMember.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       staffMember.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (staffMember.phone_number && typeof staffMember.phone_number === 'string' && staffMember.phone_number.includes(searchTerm)) ||
+      (staffMember.phone_number &&
+        typeof staffMember.phone_number === 'string' &&
+        staffMember.phone_number.includes(searchTerm)) ||
       staffMember.role?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const restaurantMatch = !selectedRestaurantId ||
-      staffMember.restaurant_id === selectedRestaurantId;
+    const restaurantMatch =
+      !selectedRestaurantId || staffMember.restaurant_id === selectedRestaurantId;
 
-    const roleMatch = !selectedStaffRole ||
-      staffMember.role === selectedStaffRole;
+    const roleMatch = !selectedStaffRole || staffMember.role === selectedStaffRole;
 
-    const connectionMatch = !selectedConnectionStatus ||
+    const connectionMatch =
+      !selectedConnectionStatus ||
       (selectedConnectionStatus === 'connected' && staffMember.connected) ||
       (selectedConnectionStatus === 'disconnected' && !staffMember.connected);
 
@@ -594,7 +577,7 @@ const AdminPanel = () => {
 
   const handleAddStaffClick = (restaurantId = null) => {
     if (restaurantId) {
-      setNewStaff(prev => ({ ...prev, restaurant_id: restaurantId }));
+      setNewStaff((prev) => ({ ...prev, restaurant_id: restaurantId }));
     }
     setShowAddStaff(true);
   };
@@ -605,9 +588,9 @@ const AdminPanel = () => {
   };
 
   const handleProfilePhotoUpdate = (newAvatarUrl) => {
-    setCurrentUserProfile(prev => ({
+    setCurrentUserProfile((prev) => ({
       ...prev,
-      avatar_url: newAvatarUrl
+      avatar_url: newAvatarUrl,
     }));
   };
 
@@ -710,7 +693,7 @@ const AdminPanel = () => {
   return (
     <ManagerNotificationProvider>
       <AdminNotificationProvider>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 font-spartan">
+        <div className="min-h-screen bg-gray-50 font-spartan">
           {/* Sidebar */}
           <AdminSidebar
             activeTab={activeTab}
@@ -727,7 +710,9 @@ const AdminPanel = () => {
           />
 
           {/* Main Content */}
-          <div className={`${sidebarCollapsed ? 'md:ml-20' : 'md:ml-56'} transition-all duration-300 font-spartan`}>
+          <div
+            className={`${sidebarCollapsed ? 'md:ml-20' : 'md:ml-56'} transition-all duration-300 font-spartan`}
+          >
             {/* Mobile Header */}
             <MobileAdminHeader
               activeTab={activeTab}
@@ -770,7 +755,11 @@ const AdminPanel = () => {
             </div>
 
             {/* Main Content Area */}
-            <div className={activeTab === 'notifications' || activeTab === 'activity' ? 'p-0' : 'p-2 md:p-6'}>
+            <div
+              className={
+                activeTab === 'notifications' || activeTab === 'activity' ? 'p-0' : 'p-3 md:p-6'
+              }
+            >
               {renderActiveTab()}
             </div>
           </div>
@@ -802,33 +791,35 @@ const AdminPanel = () => {
               setSelectedRestaurant(null);
             }}
             onSubmit={handleUpdateRestaurant}
-            data={selectedRestaurant || {
-              name: '',
-              address: '',
-              contact_phone: '',
-              contact_email: '',
-              cuisine_type: '',
-              description: '',
-              opening_hours: '',
-              latitude: '',
-              longitude: '',
-              logo_url: '',
-              razorpay_key_id: '',
-              google_maps_link: '',
-              gst_number: '',
-              fssai_license: '',
-              social_media: {
-                facebook: '',
-                instagram: '',
-                twitter: '',
-                website: ''
-              },
-              manager_name: '',
-              manager_email: '',
-              manager_phone: '',
-              swiggy_api_key: '',
-              zomato_api_key: ''
-            }}
+            data={
+              selectedRestaurant || {
+                name: '',
+                address: '',
+                contact_phone: '',
+                contact_email: '',
+                cuisine_type: '',
+                description: '',
+                opening_hours: '',
+                latitude: '',
+                longitude: '',
+                logo_url: '',
+                razorpay_key_id: '',
+                google_maps_link: '',
+                gst_number: '',
+                fssai_license: '',
+                social_media: {
+                  facebook: '',
+                  instagram: '',
+                  twitter: '',
+                  website: '',
+                },
+                manager_name: '',
+                manager_email: '',
+                manager_phone: '',
+                swiggy_api_key: '',
+                zomato_api_key: '',
+              }
+            }
             setData={setSelectedRestaurant}
             isEditing={true}
           />
@@ -850,13 +841,15 @@ const AdminPanel = () => {
               setEditingStaff(null);
             }}
             onSubmit={handleUpdateStaff}
-            data={editingStaff || {
-              name: '',
-              email: '',
-              phone_number: '',
-              role: 'captain',
-              restaurant_id: ''
-            }}
+            data={
+              editingStaff || {
+                name: '',
+                email: '',
+                phone_number: '',
+                role: 'captain',
+                restaurant_id: '',
+              }
+            }
             setData={setEditingStaff}
             restaurants={restaurants}
             isEditing={true}

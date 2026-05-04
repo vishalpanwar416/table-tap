@@ -14,7 +14,7 @@ const RestaurantStaffSection = ({
   onEdit,
   onDelete,
   onAddStaff,
-  onLoadMore
+  onLoadMore,
 }) => {
   const isExpanded = selectedRestaurantId === restaurant.id;
 
@@ -52,7 +52,7 @@ const RestaurantStaffSection = ({
       // If we have local data, use it
       if (filteredRestaurantStaff.length >= endIndex) {
         const newStaff = filteredRestaurantStaff.slice(startIndex, endIndex);
-        setDisplayedStaff(prev => [...prev, ...newStaff]);
+        setDisplayedStaff((prev) => [...prev, ...newStaff]);
         setCurrentPage(nextPage);
         setHasMore(endIndex < filteredRestaurantStaff.length);
       } else {
@@ -60,7 +60,7 @@ const RestaurantStaffSection = ({
         if (onLoadMore) {
           const newStaff = await onLoadMore(restaurant.id, nextPage, itemsPerPage);
           if (newStaff && newStaff.length > 0) {
-            setDisplayedStaff(prev => [...prev, ...newStaff]);
+            setDisplayedStaff((prev) => [...prev, ...newStaff]);
             setCurrentPage(nextPage);
             setHasMore(newStaff.length === itemsPerPage);
           } else {
@@ -73,7 +73,16 @@ const RestaurantStaffSection = ({
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, hasMore, isExpanded, currentPage, itemsPerPage, filteredRestaurantStaff, restaurant.id, onLoadMore]);
+  }, [
+    isLoading,
+    hasMore,
+    isExpanded,
+    currentPage,
+    itemsPerPage,
+    filteredRestaurantStaff,
+    restaurant.id,
+    onLoadMore,
+  ]);
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
@@ -86,7 +95,7 @@ const RestaurantStaffSection = ({
           loadMore();
         }
       },
-      { threshold: 0.1, rootMargin: '50px' }
+      { threshold: 0.1, rootMargin: '50px' },
     );
 
     observerRef.current = observer;
@@ -94,95 +103,99 @@ const RestaurantStaffSection = ({
   }, [loadMore, hasMore, isLoading, isExpanded]);
 
   // Observe the last item for infinite scroll
-  const observeLastItem = useCallback((index) => {
-    if (index === displayedStaff.length - 1 && hasMore && !isLoading && isExpanded) {
-      const lastItem = document.querySelector(`[data-staff-index="${restaurant.id}-${index}"]`);
-      if (lastItem && observerRef.current) {
-        observerRef.current.observe(lastItem);
+  const observeLastItem = useCallback(
+    (index) => {
+      if (index === displayedStaff.length - 1 && hasMore && !isLoading && isExpanded) {
+        const lastItem = document.querySelector(`[data-staff-index="${restaurant.id}-${index}"]`);
+        if (lastItem && observerRef.current) {
+          observerRef.current.observe(lastItem);
+        }
       }
-    }
-  }, [displayedStaff.length, hasMore, isLoading, isExpanded, restaurant.id]);
+    },
+    [displayedStaff.length, hasMore, isLoading, isExpanded, restaurant.id],
+  );
 
   // Virtualized row component
-  const VirtualizedRow = useCallback(({ index, style }) => {
-    const member = displayedStaff[index];
-    if (!member) return null;
+  const VirtualizedRow = useCallback(
+    ({ index, style }) => {
+      const member = displayedStaff[index];
+      if (!member) return null;
 
-    // Observe the last item for infinite scroll
-    useEffect(() => {
+      // Trigger observation synchronously during render (no hook needed)
       observeLastItem(index);
-    }, [index, observeLastItem]);
 
-    return (
-      <div
-        style={style}
-        className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200"
-        data-staff-index={`${restaurant.id}-${index}`}
-      >
-        <div className="grid grid-cols-5 gap-4 px-4 py-4 items-center">
-          {/* Staff Member */}
-          <div className="flex items-center">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center shadow-sm">
-              <Users className="w-5 h-5 text-white" />
-            </div>
-            <div className="ml-4">
-              <div className="text-sm font-semibold text-gray-900 font-spartan">
-                {member.name || 'Unnamed Staff'}
+      return (
+        <div
+          style={style}
+          className="border-b border-gray-100 hover:bg-orange-50 transition-all duration-200"
+          data-staff-index={`${restaurant.id}-${index}`}
+        >
+          <div className="grid grid-cols-5 gap-4 px-4 py-4 items-center">
+            {/* Staff Member */}
+            <div className="flex items-center">
+              <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center shadow-sm">
+                <Users className="w-5 h-5 text-white" />
               </div>
-              <div className="text-sm text-gray-500 font-spartan">
-                {member.email}
+              <div className="ml-4">
+                <div className="text-sm font-semibold text-gray-900 font-spartan">
+                  {member.name || 'Unnamed Staff'}
+                </div>
+                <div className="text-sm text-gray-500 font-spartan">{member.email}</div>
               </div>
             </div>
-          </div>
 
-          {/* Role */}
-          <div>
-            <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border font-spartan ${getRoleColor(member.role)}`}>
-              {getRoleDisplayName(member.role)}
-            </span>
-          </div>
-
-          {/* Contact */}
-          <div className="text-sm text-gray-600 font-spartan">
-            {member.phone_number || 'No phone'}
-          </div>
-
-          {/* Status */}
-          <div className="flex items-center">
-            {member.connected ? (
-              <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 border border-green-200 rounded-full">
-                <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
-                Connected
+            {/* Role */}
+            <div>
+              <span
+                className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border font-spartan ${getRoleColor(member.role)}`}
+              >
+                {getRoleDisplayName(member.role)}
               </span>
-            ) : (
-              <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200 rounded-full">
-                <div className="w-2 h-2 bg-gray-400 rounded-full mr-1"></div>
-                Disconnected
-              </span>
-            )}
-          </div>
+            </div>
 
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-1 sm:gap-2">
-            <button
-              onClick={() => onEdit(member)}
-              className="min-h-[36px] min-w-[36px] flex items-center justify-center p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-all duration-200 touch-manipulation"
-              title="Edit staff member"
-            >
-              <Edit className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => onDelete(member.id)}
-              className="min-h-[36px] min-w-[36px] flex items-center justify-center p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-all duration-200 touch-manipulation"
-              title="Delete staff member"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+            {/* Contact */}
+            <div className="text-sm text-gray-600 font-spartan">
+              {member.phone_number || 'No phone'}
+            </div>
+
+            {/* Status */}
+            <div className="flex items-center">
+              {member.connected ? (
+                <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 border border-green-200 rounded-full">
+                  <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
+                  Connected
+                </span>
+              ) : (
+                <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200 rounded-full">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full mr-1"></div>
+                  Disconnected
+                </span>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-1 sm:gap-2">
+              <button
+                onClick={() => onEdit(member)}
+                className="min-h-[36px] min-w-[36px] flex items-center justify-center p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-all duration-200 touch-manipulation"
+                title="Edit staff member"
+              >
+                <Edit className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => onDelete(member.id)}
+                className="min-h-[36px] min-w-[36px] flex items-center justify-center p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-all duration-200 touch-manipulation"
+                title="Delete staff member"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    );
-  }, [displayedStaff, restaurant.id, onEdit, onDelete, observeLastItem]);
+      );
+    },
+    [displayedStaff, restaurant.id, onEdit, onDelete, observeLastItem],
+  );
 
   // Helper functions
   const getRoleDisplayName = (role) => {
@@ -205,9 +218,9 @@ const RestaurantStaffSection = ({
   const getRoleColor = (role) => {
     switch (role) {
       case 'manager':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
+        return 'bg-orange-100 text-orange-800 border-orange-200';
       case 'captain':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
       case 'waiter':
         return 'bg-green-100 text-green-800 border-green-200';
       case 'chef':
@@ -220,25 +233,31 @@ const RestaurantStaffSection = ({
   };
 
   // Loading indicator component
-  const LoadingIndicator = useCallback(() => (
-    <div className="flex items-center justify-center py-5 border-t border-gray-50">
-      <div className="flex items-center gap-2 text-gray-500">
-        <Loader2 className="w-4 h-4 animate-spin shrink-0" />
-        <span className="text-sm font-spartan">Loading more...</span>
+  const LoadingIndicator = useCallback(
+    () => (
+      <div className="flex items-center justify-center py-5 border-t border-gray-50">
+        <div className="flex items-center gap-2 text-gray-500">
+          <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+          <span className="text-sm font-spartan">Loading more...</span>
+        </div>
       </div>
-    </div>
-  ), []);
+    ),
+    [],
+  );
 
   // End of list indicator
-  const EndOfListIndicator = useCallback(() => (
-    <div className="flex items-center justify-center py-5 border-t border-gray-50 bg-gray-50/30">
-      <div className="text-center">
-        <p className="text-xs font-medium text-gray-500 font-spartan">
-          {displayedStaff.length} of {filteredRestaurantStaff.length} staff shown
-        </p>
+  const EndOfListIndicator = useCallback(
+    () => (
+      <div className="flex items-center justify-center py-5 border-t border-gray-50 bg-gray-50/30">
+        <div className="text-center">
+          <p className="text-xs font-medium text-gray-500 font-spartan">
+            {displayedStaff.length} of {filteredRestaurantStaff.length} staff shown
+          </p>
+        </div>
       </div>
-    </div>
-  ), [displayedStaff.length, filteredRestaurantStaff.length]);
+    ),
+    [displayedStaff.length, filteredRestaurantStaff.length],
+  );
 
   return (
     <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300 font-spartan">
@@ -271,25 +290,39 @@ const RestaurantStaffSection = ({
                     <div
                       key={member.id || index}
                       data-staff-index={`${restaurant.id}-${index}`}
-                      className="group bg-white md:bg-transparent rounded-xl md:rounded-none border border-gray-100 md:border-0 md:border-b md:border-gray-50 p-4 md:px-6 md:py-4 md:hover:bg-blue-50/40 transition-all duration-200 shadow-sm md:shadow-none"
+                      className="group bg-white md:bg-transparent rounded-xl md:rounded-none border border-gray-100 md:border-0 md:border-b md:border-gray-50 p-4 md:px-6 md:py-4 md:hover:bg-gray-50/40 transition-all duration-200 shadow-sm md:shadow-none"
                     >
                       {/* Mobile Layout: Card Structure */}
                       <div className="md:hidden space-y-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm">
+                            <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm">
                               {member.name ? member.name.charAt(0) : <Users className="w-4 h-4" />}
                             </div>
                             <div>
-                              <h4 className="font-bold text-gray-900 leading-tight">{member.name || 'Unnamed Staff'}</h4>
-                              <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${getRoleColor(member.role)}`}>
+                              <h4 className="font-bold text-gray-900 leading-tight">
+                                {member.name || 'Unnamed Staff'}
+                              </h4>
+                              <span
+                                className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${getRoleColor(member.role)}`}
+                              >
                                 {getRoleDisplayName(member.role).toUpperCase()}
                               </span>
                             </div>
                           </div>
                           <div className="flex gap-1">
-                            <button onClick={() => onEdit(member)} className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Edit className="w-4 h-4" /></button>
-                            <button onClick={() => onDelete(member.id)} className="p-2 bg-red-50 text-red-600 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                            <button
+                              onClick={() => onEdit(member)}
+                              className="p-2 bg-gray-50 text-gray-600 rounded-lg"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => onDelete(member.id)}
+                              className="p-2 bg-red-50 text-red-600 rounded-lg"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
 
@@ -330,25 +363,31 @@ const RestaurantStaffSection = ({
                       <div className="hidden md:grid md:grid-cols-12 md:gap-4 md:items-center">
                         {/* Member Info */}
                         <div className="col-span-4 flex items-center min-w-0">
-                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-sm group-hover:scale-110 transition-transform flex-shrink-0">
+                          <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold shadow-sm group-hover:scale-110 transition-transform flex-shrink-0">
                             {member.name ? member.name.charAt(0) : <Users className="w-4 h-4" />}
                           </div>
                           <div className="ml-4 min-w-0">
-                            <div className="text-sm font-bold text-gray-900 truncate font-spartan">{member.name || 'Unnamed Staff'}</div>
+                            <div className="text-sm font-bold text-gray-900 truncate font-spartan">
+                              {member.name || 'Unnamed Staff'}
+                            </div>
                             <div className="text-xs text-gray-500 truncate">{member.email}</div>
                           </div>
                         </div>
 
                         {/* Role */}
                         <div className="col-span-2 text-center">
-                          <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold border shadow-sm ${getRoleColor(member.role)}`}>
+                          <span
+                            className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold border shadow-sm ${getRoleColor(member.role)}`}
+                          >
                             {getRoleDisplayName(member.role).toUpperCase()}
                           </span>
                         </div>
 
                         {/* Contact */}
                         <div className="col-span-3 text-sm text-gray-600 font-medium truncate">
-                          {member.phone_number || <span className="text-gray-300 italic">No contact info</span>}
+                          {member.phone_number || (
+                            <span className="text-gray-300 italic">No contact info</span>
+                          )}
                         </div>
 
                         {/* Status */}
@@ -368,8 +407,18 @@ const RestaurantStaffSection = ({
 
                         {/* Actions */}
                         <div className="col-span-1 flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => onEdit(member)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Edit className="w-4 h-4" /></button>
-                          <button onClick={() => onDelete(member.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
+                          <button
+                            onClick={() => onEdit(member)}
+                            className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => onDelete(member.id)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -382,10 +431,7 @@ const RestaurantStaffSection = ({
               {!hasMore && displayedStaff.length > 0 && <EndOfListIndicator />}
             </div>
           ) : (
-            <EmptyStaffState
-              restaurantName={restaurant.name}
-              onAddStaff={onAddStaff}
-            />
+            <EmptyStaffState restaurantName={restaurant.name} onAddStaff={onAddStaff} />
           )}
         </div>
       )}
@@ -393,4 +439,4 @@ const RestaurantStaffSection = ({
   );
 };
 
-export default RestaurantStaffSection; 
+export default RestaurantStaffSection;

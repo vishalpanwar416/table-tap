@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 // SEO metadata generator
 export const generateSEOData = (pageData) => {
   const {
@@ -7,7 +9,7 @@ export const generateSEOData = (pageData) => {
     url,
     type = 'website',
     restaurantName,
-    menuItems = []
+    menuItems = [],
   } = pageData;
 
   // Basic meta tags
@@ -22,7 +24,7 @@ export const generateSEOData = (pageData) => {
     { property: 'twitter:card', content: 'summary_large_image' },
     { property: 'twitter:title', content: title },
     { property: 'twitter:description', content: description },
-    { property: 'twitter:image', content: image }
+    { property: 'twitter:image', content: image },
   ];
 
   // Structured data for restaurant
@@ -33,35 +35,37 @@ export const generateSEOData = (pageData) => {
     url: url,
     description: description,
     image: image,
-    servesCuisine: menuItems.map(item => item.category).filter((v, i, a) => a.indexOf(v) === i),
+    servesCuisine: menuItems.map((item) => item.category).filter((v, i, a) => a.indexOf(v) === i),
     hasMenu: {
       '@type': 'Menu',
       hasMenuSection: menuItems.reduce((sections, item) => {
-        const section = sections.find(s => s.name === item.category);
+        const section = sections.find((s) => s.name === item.category);
         if (section) {
           section.hasMenuItem.push({
             '@type': 'MenuItem',
             name: item.name,
             description: item.description,
             price: `₹${item.price}`,
-            image: item.image
+            image: item.image,
           });
         } else {
           sections.push({
             '@type': 'MenuSection',
             name: item.category,
-            hasMenuItem: [{
-              '@type': 'MenuItem',
-              name: item.name,
-              description: item.description,
-              price: `₹${item.price}`,
-              image: item.image
-            }]
+            hasMenuItem: [
+              {
+                '@type': 'MenuItem',
+                name: item.name,
+                description: item.description,
+                price: `₹${item.price}`,
+                image: item.image,
+              },
+            ],
           });
         }
         return sections;
-      }, [])
-    }
+      }, []),
+    },
   };
 
   return { metaTags, structuredData };
@@ -76,8 +80,10 @@ export const useSEO = (pageData) => {
     document.title = pageData.title;
 
     // Update meta tags
-    metaTags.forEach(tag => {
-      let element = document.querySelector(`meta[${tag.name ? 'name' : 'property'}="${tag.name || tag.property}"]`);
+    metaTags.forEach((tag) => {
+      let element = document.querySelector(
+        `meta[${tag.name ? 'name' : 'property'}="${tag.name || tag.property}"]`,
+      );
       if (!element) {
         element = document.createElement('meta');
         if (tag.name) element.name = tag.name;
@@ -96,4 +102,4 @@ export const useSEO = (pageData) => {
     }
     script.textContent = JSON.stringify(structuredData);
   }, [pageData]);
-}; 
+};

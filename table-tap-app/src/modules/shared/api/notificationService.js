@@ -22,7 +22,7 @@ export const createNotification = async (notification) => {
       'subscription_expiring',
       'subscription_renewed',
       'subscription_cancelled',
-      'system'
+      'system',
     ];
 
     if (!allowedTypes.includes(notification.type)) {
@@ -34,7 +34,7 @@ export const createNotification = async (notification) => {
       ...notification,
       read: notification.read || false,
       is_admin_notification: notification.is_admin_notification || false,
-      metadata: notification.metadata || {}
+      metadata: notification.metadata || {},
     };
 
     const { data, error } = await supabase
@@ -53,10 +53,7 @@ export const createNotification = async (notification) => {
 // Delete notification
 export const deleteNotification = async (notificationId) => {
   try {
-    const { error } = await supabase
-      .from('notifications')
-      .delete()
-      .eq('id', notificationId);
+    const { error } = await supabase.from('notifications').delete().eq('id', notificationId);
 
     if (error) throw error;
     return { success: true, error: null };
@@ -78,7 +75,7 @@ export const formatNotificationForDisplay = (notification) => {
     order_id: notification.order_id,
     user_id: notification.user_id,
     metadata: notification.metadata || {},
-    is_admin_notification: notification.is_admin_notification || false
+    is_admin_notification: notification.is_admin_notification || false,
   };
 };
 
@@ -207,15 +204,19 @@ export const markAllManagerNotificationsAsRead = async () => {
 // Subscribe to user notifications
 export const subscribeToUserNotifications = (userId, callback) => {
   return supabase
-    .channel(`user-notifications-${userId}`)
-    .on('postgres_changes', {
-      event: 'INSERT',
-      schema: 'public',
-      table: 'notifications',
-      filter: `user_id=eq.${userId}`
-    }, payload => {
-      callback(payload.new);
-    })
+    .channel(`user-notifications-${userId}-${Date.now()}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'notifications',
+        filter: `user_id=eq.${userId}`,
+      },
+      (payload) => {
+        callback(payload.new);
+      },
+    )
     .subscribe();
 };
 
@@ -226,20 +227,25 @@ export const subscribeToManagerNotifications = (callback, restaurantId = null) =
     filter += `&restaurant_id=eq.${restaurantId}`;
   }
 
+  const channelId = `admin-notifications-${restaurantId || 'all'}-${Date.now()}`;
   return supabase
-    .channel(`admin-notifications-${restaurantId || 'all'}`)
-    .on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'notifications',
-      filter: restaurantId ? `restaurant_id=eq.${restaurantId}` : 'is_admin_notification=eq.true'
-      // Note: Supabase realtime filters are simple equality checks usually. 
-      // If restaurantId is provided, filtering just by restaurant_id AND is_admin code-side might be safer or using the filter string carefully.
-      // However, realtime only supports single column filter in the config object usually unless using logical replication slots which is complex.
-      // Standard way: filter by restaurant_id, then check is_admin in callback.
-    }, (payload) => {
-      if (payload.new && !payload.new.is_admin_notification) return; // Client-side filter for admin type if we only filter by restaurant
-      callback(payload);
-    })
+    .channel(channelId)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'notifications',
+        filter: restaurantId ? `restaurant_id=eq.${restaurantId}` : 'is_admin_notification=eq.true',
+        // Note: Supabase realtime filters are simple equality checks usually.
+        // If restaurantId is provided, filtering just by restaurant_id AND is_admin code-side might be safer or using the filter string carefully.
+        // However, realtime only supports single column filter in the config object usually unless using logical replication slots which is complex.
+        // Standard way: filter by restaurant_id, then check is_admin in callback.
+      },
+      (payload) => {
+        if (payload.new && !payload.new.is_admin_notification) return; // Client-side filter for admin type if we only filter by restaurant
+        callback(payload);
+      },
+    )
     .subscribe();
 };

@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { Search, Bell, Building2, Users, X, Filter, ChevronDown, RefreshCw, ChevronLeft } from 'lucide-react';
+import {
+  Search,
+  Bell,
+  Building2,
+  Users,
+  X,
+  Filter,
+  ChevronDown,
+  RefreshCw,
+  ChevronLeft,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AdminNotificationBell from './AdminNotificationBell';
 
@@ -18,7 +28,7 @@ const AdminHeader = ({
   setSelectedStaffRole,
   selectedConnectionStatus,
   setSelectedConnectionStatus,
-  onTabChange
+  onTabChange,
 }) => {
   const [showFilters, setShowFilters] = useState(false);
   const navigate = useNavigate();
@@ -26,15 +36,15 @@ const AdminHeader = ({
   // Calculate real-time statistics
   const getStats = () => {
     const totalRestaurants = restaurants.length;
-    const activeRestaurants = restaurants.filter(r => r.is_active).length;
+    const activeRestaurants = restaurants.filter((r) => r.is_active).length;
     const totalStaff = staff.length;
-    const connectedStaff = staff.filter(s => s.connected).length;
+    const connectedStaff = staff.filter((s) => s.connected).length;
 
     return {
       totalRestaurants,
       activeRestaurants,
       totalStaff,
-      connectedStaff
+      connectedStaff,
     };
   };
 
@@ -52,53 +62,63 @@ const AdminHeader = ({
     }
   };
 
-  const hasFilters = searchTerm || selectedRestaurantId || selectedCuisineType || selectedStaffRole || selectedConnectionStatus;
+  const hasFilters =
+    searchTerm ||
+    selectedRestaurantId ||
+    selectedCuisineType ||
+    selectedStaffRole ||
+    selectedConnectionStatus;
 
   // Get unique cuisine types from restaurants
-  const cuisineTypes = [...new Set(restaurants.map(r => r.cuisine_type).filter(Boolean))];
+  const cuisineTypes = [...new Set(restaurants.map((r) => r.cuisine_type).filter(Boolean))];
 
-  const filteredRestaurants = restaurants.filter(restaurant => {
-    const searchMatch = !searchTerm ||
+  const filteredRestaurants = restaurants.filter((restaurant) => {
+    const searchMatch =
+      !searchTerm ||
       restaurant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       restaurant.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       restaurant.contact_phone?.includes(searchTerm) ||
       restaurant.contact_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       restaurant.cuisine_type?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const statusMatch = !selectedRestaurantId ||
+    const statusMatch =
+      !selectedRestaurantId ||
       (selectedRestaurantId === 'active' && restaurant.is_active) ||
       (selectedRestaurantId === 'inactive' && !restaurant.is_active);
 
     return searchMatch && statusMatch;
   });
 
-  const filteredStaff = staff.filter(staffMember => {
-    const searchMatch = !searchTerm ||
+  const filteredStaff = staff.filter((staffMember) => {
+    const searchMatch =
+      !searchTerm ||
       staffMember.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       staffMember.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (staffMember.phone_number && typeof staffMember.phone_number === 'string' && staffMember.phone_number.includes(searchTerm)) ||
+      (staffMember.phone_number &&
+        typeof staffMember.phone_number === 'string' &&
+        staffMember.phone_number.includes(searchTerm)) ||
       staffMember.role?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const restaurantMatch = !selectedRestaurantId ||
-      staffMember.restaurant_id === selectedRestaurantId;
+    const restaurantMatch =
+      !selectedRestaurantId || staffMember.restaurant_id === selectedRestaurantId;
 
     return searchMatch && restaurantMatch;
   });
 
   return (
-    <div className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 shadow-sm z-20 p-4 md:p-6 relative font-spartan">
+    <div className="bg-white border-b border-gray-200 z-20 px-4 py-3 relative font-spartan">
       <div className="flex justify-between items-center">
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-3">
           <button
             onClick={() => navigate(-1)}
-            className="text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+            className="text-gray-400 hover:text-orange-500 transition-colors p-1.5 rounded-lg hover:bg-orange-50"
             title="Go Back"
             aria-label="Go back"
           >
-            <ChevronLeft size={30} />
+            <ChevronLeft size={20} />
           </button>
           <div>
-            <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-spartan">
+            <h2 className="text-lg font-bold text-gray-900 font-spartan leading-tight">
               {{
                 restaurants: 'Restaurants',
                 registrations: 'Registrations',
@@ -107,17 +127,19 @@ const AdminHeader = ({
                 subscriptions: 'Subscriptions',
                 notifications: 'Notifications',
                 activity: 'Activity Logs',
-                settings: 'System Settings'
+                settings: 'System Settings',
               }[activeTab] || 'Admin Panel'}
             </h2>
-            <p className="text-sm text-gray-600 mt-1 font-spartan">
-              {activeTab === 'restaurants' && `${stats.totalRestaurants} restaurants • ${stats.activeRestaurants} active`}
-              {activeTab === 'staff' && `${stats.totalStaff} staff members • ${stats.connectedStaff} connected`}
-              {activeTab === 'registrations' && 'Manage incoming restaurant registration requests'}
+            <p className="text-xs text-gray-500 font-spartan">
+              {activeTab === 'restaurants' &&
+                `${stats.totalRestaurants} restaurants • ${stats.activeRestaurants} active`}
+              {activeTab === 'staff' &&
+                `${stats.totalStaff} staff • ${stats.connectedStaff} connected`}
+              {activeTab === 'registrations' && 'Manage registration requests'}
               {activeTab === 'inquiries' && 'View and manage lead inquiries'}
-              {activeTab === 'subscriptions' && 'Manage subscription plans and features'}
-              {activeTab === 'activity' && 'Track all automated emails, system events, and admin activities'}
-              {activeTab === 'settings' && 'Manage API keys, content, and global configuration'}
+              {activeTab === 'subscriptions' && 'Manage subscription plans'}
+              {activeTab === 'activity' && 'System events and admin activities'}
+              {activeTab === 'settings' && 'API keys and global configuration'}
             </p>
           </div>
         </div>
@@ -125,26 +147,31 @@ const AdminHeader = ({
         <div className="flex items-center space-x-4">
           {/* Unified Search and Filter Section */}
           {/* Unified Search and Filter Section - Only for Restaurants, Staff, Registrations, Inquiries, Notifications and Activity */}
-          {(activeTab === 'restaurants' || activeTab === 'staff' || activeTab === 'registrations' || activeTab === 'inquiries' || activeTab === 'notifications' || activeTab === 'activity') && (
-            <div className="flex items-center space-x-3">
+          {(activeTab === 'restaurants' ||
+            activeTab === 'staff' ||
+            activeTab === 'registrations' ||
+            activeTab === 'inquiries' ||
+            activeTab === 'notifications' ||
+            activeTab === 'activity') && (
+            <div className="flex items-center space-x-2">
               {/* Search Bar */}
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-5 w-5 text-gray-400" />
+                <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                  <Search className="h-4 w-4 text-gray-400" />
                 </div>
                 <input
                   type="search"
                   placeholder={`Search ${activeTab === 'restaurants' ? 'restaurants' : activeTab === 'staff' ? 'staff' : activeTab === 'registrations' ? 'registrations' : activeTab === 'notifications' ? 'notifications' : activeTab === 'activity' ? 'activities' : 'leads'}...`}
-                  className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50 backdrop-blur-sm transition-all duration-200 hover:bg-white/70 font-spartan"
+                  className="block w-full pl-8 pr-8 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-orange-400 focus:border-orange-400 bg-gray-50 transition-all duration-200 font-spartan"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
                 {searchTerm && (
                   <button
                     onClick={() => setSearchTerm('')}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                    className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-400 hover:text-gray-600"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>
@@ -153,26 +180,24 @@ const AdminHeader = ({
               <div className="relative">
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 font-spartan ${hasFilters
-                    ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                    }`}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all duration-200 font-spartan ${
+                    hasFilters
+                      ? 'bg-orange-50 text-orange-700 border border-orange-200'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 border border-gray-200'
+                  }`}
                 >
-                  <Filter className="h-4 w-4" />
-                  <span className="text-sm font-medium font-spartan">Filter</span>
-                  {hasFilters && (
-                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                  )}
-                  <ChevronDown className={`h-4 w-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+                  <Filter className="h-3.5 w-3.5" />
+                  <span className="font-medium font-spartan">Filter</span>
+                  {hasFilters && <span className="w-1.5 h-1.5 bg-orange-500 rounded-full"></span>}
+                  <ChevronDown
+                    className={`h-4 w-4 transition-transform ${showFilters ? 'rotate-180' : ''}`}
+                  />
                 </button>
 
                 {/* Filter Dropdown */}
                 {showFilters && (
                   <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setShowFilters(false)}
-                    />
+                    <div className="fixed inset-0 z-40" onClick={() => setShowFilters(false)} />
                     <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50 p-4 font-spartan">
                       <div className="flex justify-between items-center mb-4">
                         <h3 className="font-semibold text-gray-900 font-spartan">
@@ -182,13 +207,13 @@ const AdminHeader = ({
                             registrations: 'Search Registrations',
                             inquiries: 'Search Leads',
                             notifications: 'Filter Notifications',
-                            activity: 'Filter Activities'
+                            activity: 'Filter Activities',
                           }[activeTab] || 'Filters'}
                         </h3>
                         {hasFilters && (
                           <button
                             onClick={handleClearFilters}
-                            className="text-sm text-blue-600 hover:text-blue-700 font-spartan"
+                            className="text-sm text-gray-600 hover:text-gray-700 font-spartan"
                           >
                             Clear all
                           </button>
@@ -204,19 +229,27 @@ const AdminHeader = ({
                           <select
                             value={selectedRestaurantId}
                             onChange={(e) => setSelectedRestaurantId(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-spartan"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent font-spartan"
                           >
                             <option value="" className="font-spartan">
                               {activeTab === 'restaurants' ? 'All Status' : 'All Restaurants'}
                             </option>
                             {activeTab === 'restaurants' ? (
                               <>
-                                <option value="active" className="font-spartan">Active Only</option>
-                                <option value="inactive" className="font-spartan">Inactive Only</option>
+                                <option value="active" className="font-spartan">
+                                  Active Only
+                                </option>
+                                <option value="inactive" className="font-spartan">
+                                  Inactive Only
+                                </option>
                               </>
                             ) : (
-                              restaurants.map(restaurant => (
-                                <option key={restaurant.id} value={restaurant.id} className="font-spartan">
+                              restaurants.map((restaurant) => (
+                                <option
+                                  key={restaurant.id}
+                                  value={restaurant.id}
+                                  className="font-spartan"
+                                >
                                   {restaurant.name}
                                 </option>
                               ))
@@ -233,10 +266,12 @@ const AdminHeader = ({
                             <select
                               value={selectedCuisineType}
                               onChange={(e) => setSelectedCuisineType(e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-spartan"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent font-spartan"
                             >
-                              <option value="" className="font-spartan">All Cuisines</option>
-                              {cuisineTypes.map(cuisine => (
+                              <option value="" className="font-spartan">
+                                All Cuisines
+                              </option>
+                              {cuisineTypes.map((cuisine) => (
                                 <option key={cuisine} value={cuisine} className="font-spartan">
                                   {cuisine}
                                 </option>
@@ -254,11 +289,17 @@ const AdminHeader = ({
                             <select
                               value={selectedStaffRole}
                               onChange={(e) => setSelectedStaffRole(e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-spartan"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent font-spartan"
                             >
-                              <option value="" className="font-spartan">All Roles</option>
-                              <option value="manager" className="font-spartan">Manager</option>
-                              <option value="captain" className="font-spartan">Captain</option>
+                              <option value="" className="font-spartan">
+                                All Roles
+                              </option>
+                              <option value="manager" className="font-spartan">
+                                Manager
+                              </option>
+                              <option value="captain" className="font-spartan">
+                                Captain
+                              </option>
                             </select>
                           </div>
                         )}
@@ -272,11 +313,17 @@ const AdminHeader = ({
                             <select
                               value={selectedConnectionStatus}
                               onChange={(e) => setSelectedConnectionStatus(e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-spartan"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent font-spartan"
                             >
-                              <option value="" className="font-spartan">All Status</option>
-                              <option value="connected" className="font-spartan">Connected</option>
-                              <option value="disconnected" className="font-spartan">Disconnected</option>
+                              <option value="" className="font-spartan">
+                                All Status
+                              </option>
+                              <option value="connected" className="font-spartan">
+                                Connected
+                              </option>
+                              <option value="disconnected" className="font-spartan">
+                                Disconnected
+                              </option>
                             </select>
                           </div>
                         )}
@@ -289,17 +336,21 @@ const AdminHeader = ({
           )}
 
           {/* Quick Stats */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 rounded-lg border border-gray-200 text-xs text-gray-500 font-spartan">
             {activeTab === 'restaurants' ? (
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                <Building2 className="h-4 w-4 text-blue-500" />
-                <span>{stats.activeRestaurants}/{stats.totalRestaurants} Active</span>
-              </div>
+              <>
+                <Building2 className="h-3.5 w-3.5 text-gray-400" />
+                <span>
+                  {stats.activeRestaurants}/{stats.totalRestaurants} Active
+                </span>
+              </>
             ) : (
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                <Users className="h-4 w-4 text-purple-500" />
-                <span>{stats.connectedStaff}/{stats.totalStaff} Connected</span>
-              </div>
+              <>
+                <Users className="h-3.5 w-3.5 text-orange-400" />
+                <span>
+                  {stats.connectedStaff}/{stats.totalStaff} Connected
+                </span>
+              </>
             )}
           </div>
 
@@ -311,4 +362,4 @@ const AdminHeader = ({
   );
 };
 
-export default AdminHeader; 
+export default AdminHeader;

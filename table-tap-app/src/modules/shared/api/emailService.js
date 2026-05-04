@@ -11,33 +11,39 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || '';
  * Log email activity to admin_activity_logs table
  */
 const logEmailActivity = async (emailData, status, errorMessage = null) => {
-    try {
-        await supabase
-            .from('admin_activity_logs')
-            .insert([{
-                activity_type: status === 'failed' ? 'email_failed' : status === 'queued' ? 'email_queued' : 'email_sent',
-                activity_name: `Email: ${emailData.email_type || 'bill'}`,
-                restaurant_id: emailData.restaurant_id || null,
-                user_id: emailData.triggered_by || null,
-                user_name: emailData.triggered_by_name || 'System (Automated)',
-                target_type: 'email',
-                target_id: emailData.order_id || null,
-                target_name: emailData.to,
-                status: status,
-                details: {
-                    email_type: emailData.email_type || 'bill',
-                    recipient_email: emailData.to,
-                    subject: emailData.subject,
-                    amount: emailData.amount || null,
-                    order_id: emailData.order_id || null,
-                    error_message: errorMessage
-                },
-                description: `${emailData.email_type || 'Bill'} email ${status === 'failed' ? 'failed to send' : status === 'queued' ? 'queued' : 'sent'} to ${emailData.to}`,
-                created_at: new Date().toISOString()
-            }]);
-    } catch (error) {
-        console.error('Failed to log email activity:', error);
-    }
+  try {
+    await supabase.from('admin_activity_logs').insert([
+      {
+        activity_type:
+          status === 'failed'
+            ? 'email_failed'
+            : status === 'queued'
+              ? 'email_queued'
+              : 'email_sent',
+        activity_name: `Email: ${emailData.email_type || 'bill'}`,
+        restaurant_id: emailData.restaurant_id || null,
+        user_id: emailData.triggeredBy?.user_id || emailData.triggered_by || null,
+        user_name:
+          emailData.triggeredBy?.user_name || emailData.triggered_by_name || 'System (Automated)',
+        target_type: 'email',
+        target_id: emailData.order_id || null,
+        target_name: emailData.to,
+        status: status,
+        details: {
+          email_type: emailData.email_type || 'bill',
+          recipient_email: emailData.to,
+          subject: emailData.subject,
+          amount: emailData.amount || null,
+          order_id: emailData.order_id || null,
+          error_message: errorMessage,
+        },
+        description: `${emailData.email_type || 'Bill'} email ${status === 'failed' ? 'failed to send' : status === 'queued' ? 'queued' : 'sent'} to ${emailData.to}`,
+        created_at: new Date().toISOString(),
+      },
+    ]);
+  } catch (error) {
+    console.error('Failed to log email activity:', error);
+  }
 };
 
 // TableTap logo URL
@@ -47,17 +53,20 @@ const TABLETAP_LOGO_URL = 'https://table-tap.in/logo.png';
  * Generate bill HTML for email
  */
 const generateBillHTML = (order, restaurant) => {
-    const formatCurrency = (amount) => `₹${(amount || 0).toFixed(2)}`;
-    const formatDate = (date) => new Date(date).toLocaleString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+  const formatCurrency = (amount) => `₹${(amount || 0).toFixed(2)}`;
+  const formatDate = (date) =>
+    new Date(date).toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
 
-    const items = Array.isArray(order.items) ? order.items : [];
-    const itemsHTML = items.map(item => `
+  const items = Array.isArray(order.items) ? order.items : [];
+  const itemsHTML = items
+    .map(
+      (item) => `
         <tr>
             <td style="padding: 12px 0; border-bottom: 1px solid #eee;">
                 <div style="font-weight: 600; color: #333;">${item.name}</div>
@@ -68,9 +77,11 @@ const generateBillHTML = (order, restaurant) => {
             <td style="padding: 12px 0; border-bottom: 1px solid #eee; text-align: center; color: #666;">${formatCurrency(item.price)}</td>
             <td style="padding: 12px 0; border-bottom: 1px solid #eee; text-align: right; font-weight: 600;">${formatCurrency(item.price * item.quantity)}</td>
         </tr>
-    `).join('');
+    `,
+    )
+    .join('');
 
-    return `
+  return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -142,14 +153,18 @@ const generateBillHTML = (order, restaurant) => {
                             </table>
                             
                             <!-- Customer Info -->
-                            ${order.customer_name || order.customer_email ? `
+                            ${
+                              order.customer_name || order.customer_email
+                                ? `
                             <div style="margin-top: 20px; padding: 15px; background: #fff8f3; border-radius: 8px; border-left: 4px solid #f97316;">
                                 <p style="margin: 0 0 4px; color: #999; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Bill To</p>
                                 <p style="margin: 0; color: #333; font-weight: 600;">${order.customer_name || 'Guest'}</p>
                                 ${order.customer_email ? `<p style="margin: 4px 0 0; color: #666; font-size: 14px;">${order.customer_email}</p>` : ''}
                                 ${order.customer_phone ? `<p style="margin: 4px 0 0; color: #666; font-size: 14px;">${order.customer_phone}</p>` : ''}
                             </div>
-                            ` : ''}
+                            `
+                                : ''
+                            }
                         </td>
                     </tr>
                     
@@ -180,12 +195,16 @@ const generateBillHTML = (order, restaurant) => {
                                                 <td style="padding: 8px 0; color: #666;">Subtotal</td>
                                                 <td style="padding: 8px 0; text-align: right; font-weight: 600;">${formatCurrency(order.subtotal)}</td>
                                             </tr>
-                                            ${order.discount > 0 ? `
+                                            ${
+                                              order.discount > 0
+                                                ? `
                                             <tr>
                                                 <td style="padding: 8px 0; color: #22c55e;">Discount</td>
                                                 <td style="padding: 8px 0; text-align: right; color: #22c55e; font-weight: 600;">-${formatCurrency(order.discount)}</td>
                                             </tr>
-                                            ` : ''}
+                                            `
+                                                : ''
+                                            }
                                             <tr>
                                                 <td style="padding: 8px 0; color: #666;">SGST (2.5%)</td>
                                                 <td style="padding: 8px 0; text-align: right;">${formatCurrency((order.gst || 0) / 2)}</td>
@@ -194,12 +213,16 @@ const generateBillHTML = (order, restaurant) => {
                                                 <td style="padding: 8px 0; color: #666;">CGST (2.5%)</td>
                                                 <td style="padding: 8px 0; text-align: right;">${formatCurrency((order.gst || 0) / 2)}</td>
                                             </tr>
-                                            ${order.deliveryFee > 0 ? `
+                                            ${
+                                              order.deliveryFee > 0
+                                                ? `
                                             <tr>
                                                 <td style="padding: 8px 0; color: #666;">Delivery Fee</td>
                                                 <td style="padding: 8px 0; text-align: right;">${formatCurrency(order.deliveryFee)}</td>
                                             </tr>
-                                            ` : ''}
+                                            `
+                                                : ''
+                                            }
                                             <tr style="border-top: 2px solid #333;">
                                                 <td style="padding: 15px 0 0; font-size: 18px; font-weight: 800; color: #333;">Total</td>
                                                 <td style="padding: 15px 0 0; text-align: right; font-size: 24px; font-weight: 800; color: #f97316;">${formatCurrency(order.total)}</td>
@@ -212,7 +235,9 @@ const generateBillHTML = (order, restaurant) => {
                     </tr>
                     
                     <!-- Special Instructions -->
-                    ${order.special_instructions ? `
+                    ${
+                      order.special_instructions
+                        ? `
                     <tr>
                         <td style="padding: 0 30px 30px;">
                             <div style="background: #fef3c7; border-radius: 8px; padding: 15px;">
@@ -221,7 +246,9 @@ const generateBillHTML = (order, restaurant) => {
                             </div>
                         </td>
                     </tr>
-                    ` : ''}
+                    `
+                        : ''
+                    }
                     
                     <!-- Footer -->
                     <tr>
@@ -233,11 +260,15 @@ const generateBillHTML = (order, restaurant) => {
                                 We hope to see you again soon.
                             </p>
                             
-                            ${restaurant.contact_phone ? `
+                            ${
+                              restaurant.contact_phone
+                                ? `
                             <p style="margin: 20px 0 0; color: #999; font-size: 13px;">
                                 Questions? Call us at ${restaurant.contact_phone}
                             </p>
-                            ` : ''}
+                            `
+                                : ''
+                            }
                             
                             <!-- Legal Info -->
                             <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
@@ -272,13 +303,13 @@ const generateBillHTML = (order, restaurant) => {
  * Generate plain text version of bill
  */
 const generateBillText = (order, restaurant) => {
-    const formatCurrency = (amount) => `₹${(amount || 0).toFixed(2)}`;
-    const orderItems = Array.isArray(order.items) ? order.items : [];
-    const items = orderItems.map(item =>
-        `${item.name} x${item.quantity} - ${formatCurrency(item.price * item.quantity)}`
-    ).join('\n');
+  const formatCurrency = (amount) => `₹${(amount || 0).toFixed(2)}`;
+  const orderItems = Array.isArray(order.items) ? order.items : [];
+  const items = orderItems
+    .map((item) => `${item.name} x${item.quantity} - ${formatCurrency(item.price * item.quantity)}`)
+    .join('\n');
 
-    return `
+  return `
 ${restaurant.name}
 ${restaurant.address || ''}
 ${'='.repeat(40)}
@@ -320,9 +351,11 @@ Powered by Table Tap - tabletap.in
  * Build template variables for bill email (for backend template replacement)
  */
 const buildBillTemplateVars = (order, restaurant) => {
-    const formatCurrency = (amount) => `₹${(amount || 0).toFixed(2)}`;
-    const orderItems = Array.isArray(order.items) ? order.items : [];
-    const itemsRows = orderItems.map(item => `
+  const formatCurrency = (amount) => `₹${(amount || 0).toFixed(2)}`;
+  const orderItems = Array.isArray(order.items) ? order.items : [];
+  const itemsRows = orderItems
+    .map(
+      (item) => `
         <tr>
             <td style="padding: 12px 0; border-bottom: 1px solid #eee;">
                 <div style="font-weight: 600; color: #333;">${item.name || 'Item'}</div>
@@ -332,52 +365,76 @@ const buildBillTemplateVars = (order, restaurant) => {
             <td style="padding: 12px 0; border-bottom: 1px solid #eee; text-align: center; color: #666;">${formatCurrency(item.price)}</td>
             <td style="padding: 12px 0; border-bottom: 1px solid #eee; text-align: right; font-weight: 600;">${formatCurrency((item.price || 0) * (item.quantity || 1))}</td>
         </tr>
-    `).join('');
-    const dateStr = order.created_at ? new Date(order.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
-    const gst = order.gst || 0;
-    const sgst = formatCurrency(gst / 2);
-    const cgst = formatCurrency(gst / 2);
-    return {
-        restaurant_name: restaurant.name || '',
-        restaurant_address: restaurant.address || '',
-        order_id: order.id?.slice(0, 8) || 'N/A',
-        date: dateStr,
-        table_number: order.table_number ? `T${order.table_number}` : 'N/A',
-        payment_method: (order.payment_method || 'N/A').toUpperCase(),
-        customer_name: order.customer_name || 'Guest',
-        customer_email: order.customer_email || '',
-        customer_phone: order.customer_phone || '',
-        items_rows: itemsRows,
-        subtotal: formatCurrency(order.subtotal),
-        discount: formatCurrency(order.discount || 0),
-        gst: formatCurrency(gst),
-        sgst,
-        cgst,
-        delivery_fee: formatCurrency(order.deliveryFee || 0),
-        total: formatCurrency(order.total),
-        special_instructions: order.special_instructions || '',
-        discount_row: (order.discount > 0) ? `<tr><td style="padding: 8px 0; color: #22c55e;">Discount</td><td style="padding: 8px 0; text-align: right; color: #22c55e; font-weight: 600;">-${formatCurrency(order.discount)}</td></tr>` : '',
-        delivery_row: (order.deliveryFee > 0) ? `<tr><td style="padding: 8px 0; color: #666;">Delivery Fee</td><td style="padding: 8px 0; text-align: right;">${formatCurrency(order.deliveryFee)}</td></tr>` : '',
-        special_instructions_block: order.special_instructions ? `<div style="margin-top: 20px; background: #fef3c7; border-radius: 8px; padding: 15px;"><p style="margin: 0 0 5px; color: #92400e; font-size: 11px; font-weight: 600;">Special Instructions</p><p style="margin: 0; color: #78350f;">${order.special_instructions}</p></div>` : '',
-        restaurant_contact: restaurant.contact_phone ? `Questions? Call us at ${restaurant.contact_phone}` : 'We hope to see you again soon.',
-        restaurant_gst: restaurant.gst_number ? `<p style="margin: 0; color: #999; font-size: 11px;">GST: ${restaurant.gst_number}</p>` : '',
-        year: new Date().getFullYear().toString()
-    };
+    `,
+    )
+    .join('');
+  const dateStr = order.created_at
+    ? new Date(order.created_at).toLocaleString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : '';
+  const gst = order.gst || 0;
+  const sgst = formatCurrency(gst / 2);
+  const cgst = formatCurrency(gst / 2);
+  return {
+    restaurant_name: restaurant.name || '',
+    restaurant_address: restaurant.address || '',
+    order_id: order.id?.slice(0, 8) || 'N/A',
+    date: dateStr,
+    table_number: order.table_number ? `T${order.table_number}` : 'N/A',
+    payment_method: (order.payment_method || 'N/A').toUpperCase(),
+    customer_name: order.customer_name || 'Guest',
+    customer_email: order.customer_email || '',
+    customer_phone: order.customer_phone || '',
+    items_rows: itemsRows,
+    subtotal: formatCurrency(order.subtotal),
+    discount: formatCurrency(order.discount || 0),
+    gst: formatCurrency(gst),
+    sgst,
+    cgst,
+    delivery_fee: formatCurrency(order.deliveryFee || 0),
+    total: formatCurrency(order.total),
+    special_instructions: order.special_instructions || '',
+    restaurant_contact:
+      `${restaurant.contact_phone ? `📞 ${restaurant.contact_phone} ` : ''}${restaurant.email ? `✉️ ${restaurant.email}` : ''}`.trim(),
+    discount_row:
+      order.discount > 0
+        ? `<tr><td style="padding: 8px 0; color: #22c55e;">Discount</td><td style="padding: 8px 0; text-align: right; color: #22c55e; font-weight: 600;">-${formatCurrency(order.discount)}</td></tr>`
+        : '',
+    delivery_row:
+      order.deliveryFee > 0
+        ? `<tr><td style="padding: 8px 0; color: #666;">Delivery Fee</td><td style="padding: 8px 0; text-align: right;">${formatCurrency(order.deliveryFee)}</td></tr>`
+        : '',
+    special_instructions_block: order.special_instructions
+      ? `<div style="margin-top: 20px; background: #fef3c7; border-radius: 8px; padding: 15px;"><p style="margin: 0 0 5px; color: #92400e; font-size: 11px; font-weight: 600;">Special Instructions</p><p style="margin: 0; color: #78350f;">${order.special_instructions}</p></div>`
+      : '',
+    restaurant_contact: restaurant.contact_phone
+      ? `Questions? Call us at ${restaurant.contact_phone}`
+      : 'We hope to see you again soon.',
+    restaurant_gst: restaurant.gst_number
+      ? `<p style="margin: 0; color: #999; font-size: 11px;">GST: ${restaurant.gst_number}</p>`
+      : '',
+    year: new Date().getFullYear().toString(),
+  };
 };
 
 /**
  * Apply template variables to subject and html (replace {{key}} with value)
  */
 export const applyTemplate = (subject, html, vars) => {
-    let outSubject = subject;
-    let outHtml = html;
-    Object.keys(vars).forEach(key => {
-        const regex = new RegExp(`{{${key}}}`, 'g');
-        const val = vars[key] != null ? String(vars[key]) : '';
-        outSubject = outSubject.replace(regex, val);
-        outHtml = outHtml.replace(regex, val);
-    });
-    return { subject: outSubject, html: outHtml };
+  let outSubject = subject;
+  let outHtml = html;
+  Object.keys(vars).forEach((key) => {
+    const regex = new RegExp(`{{${key}}}`, 'g');
+    const val = vars[key] != null ? String(vars[key]) : '';
+    outSubject = outSubject.replace(regex, val);
+    outHtml = outHtml.replace(regex, val);
+  });
+  return { subject: outSubject, html: outHtml };
 };
 
 /**
@@ -389,135 +446,116 @@ export const applyTemplate = (subject, html, vars) => {
  * @returns {Promise<Object>} - Result of email send operation
  */
 export const sendBillEmail = async (order, restaurant, recipientEmail, options = {}) => {
-    if (!order || !restaurant || !recipientEmail) {
-        throw new Error('Missing required parameters: order, restaurant, or recipientEmail');
+  if (!order || !restaurant || !recipientEmail) {
+    throw new Error('Missing required parameters: order, restaurant, or recipientEmail');
+  }
+
+  let emailHtml;
+  let emailText;
+  let subject = `Your Bill from ${restaurant.name} - Order #${order.id?.slice(0, 8) || 'N/A'}`;
+
+  const vars = buildBillTemplateVars(order, restaurant);
+
+  // Prepare data for the edge function
+  // We now pass the templateKey and templateVars directly to the function
+  // which handles template fetching and replacement server-side for better reliability.
+  const emailData = {
+    to: recipientEmail,
+    templateKey: 'email_template_bill',
+    templateVars: vars,
+    replyTo: restaurant.email || undefined,
+    // Fallback subject just in case template loading fails on server
+    subject: `Your Bill from ${restaurant.name || 'Table Tap'} - Order #${order.id?.slice(0, 8)}`,
+  };
+
+  // Email metadata for logging
+  const emailLogData = {
+    to: recipientEmail,
+    subject: emailData.subject,
+    email_type: 'bill',
+    restaurant_id: restaurant.id,
+    order_id: order.id,
+    amount: order.total,
+    triggeredBy: options.triggeredBy,
+  };
+
+  try {
+    // Use supabase.functions.invoke to automatically handle auth headers with the current user's session
+    const { data, error } = await supabase.functions.invoke('send-email', {
+      body: emailData,
+    });
+
+    if (error) {
+      const errMsg = error.message || 'Supabase email function unavailable';
+      await logEmailActivity(emailLogData, 'failed', errMsg);
+      throw new Error(errMsg);
     }
 
-    let emailHtml;
-    let emailText;
-    let subject = `Your Bill from ${restaurant.name} - Order #${order.id?.slice(0, 8) || 'N/A'}`;
-
-    try {
-        const { data: templateData } = await supabase
-            .from('email_templates')
-            .select('subject, html')
-            .eq('key', 'email_template_bill')
-            .maybeSingle();
-
-        const template = templateData || null;
-        if (template && template.subject && template.html) {
-            const vars = buildBillTemplateVars(order, restaurant);
-            const applied = applyTemplate(template.subject, template.html, vars);
-            subject = applied.subject;
-            emailHtml = applied.html;
-            emailText = generateBillText(order, restaurant);
-        } else {
-            emailHtml = generateBillHTML(order, restaurant);
-            emailText = generateBillText(order, restaurant);
-        }
-    } catch (e) {
-        console.warn('Failed to fetch bill template, using default:', e);
-        emailHtml = generateBillHTML(order, restaurant);
-        emailText = generateBillText(order, restaurant);
-    }
-
-    // Do not set 'from' here — the send-email function uses from_email from system_settings (resend_config),
-    // which must be your verified domain (e.g. TableTap <noreply@table-tap.in>). Hardcoding a from address
-    // caused "domain not verified" when it didn't match the verified domain in Resend.
-    const emailData = {
-        to: recipientEmail,
-        subject,
-        html: emailHtml,
-        text: emailText,
-        replyTo: restaurant.email || undefined
-    };
-
-    // Email metadata for logging
-    const emailLogData = {
-        to: recipientEmail,
-        subject: emailData.subject,
-        email_type: 'bill',
+    // Log successful email to admin_activity_logs
+    await logEmailActivity(emailLogData, 'success');
+    // Log to restaurant activity_logs (Activity tab) for every bill email sent
+    if (restaurant?.id) {
+      const triggeredBy = options.triggeredBy;
+      await logActivity({
         restaurant_id: restaurant.id,
-        order_id: order.id,
-        amount: order.total
-    };
-
-    try {
-        // Use supabase.functions.invoke to automatically handle auth headers with the current user's session
-        const { data, error } = await supabase.functions.invoke('send-email', {
-            body: emailData
-        });
-
-        if (error) {
-            const errMsg = error.message || 'Supabase email function unavailable';
-            await logEmailActivity(emailLogData, 'failed', errMsg);
-            throw new Error(errMsg);
-        }
-
-        // Log successful email to admin_activity_logs
-        await logEmailActivity(emailLogData, 'success');
-        // Log to restaurant activity_logs (Activity tab) for every bill email sent
-        if (restaurant?.id) {
-            const triggeredBy = options.triggeredBy;
-            await logActivity({
-                restaurant_id: restaurant.id,
-                user_id: triggeredBy?.user_id ?? null,
-                user_name: triggeredBy?.user_name || 'System (Automated)',
-                user_role: triggeredBy?.user_role || 'system',
-                action_type: 'email',
-                action_name: 'bill_sent',
-                target_id: order.id,
-                target_name: `Order #${order.order_number || order.id?.slice(0, 8) || 'N/A'}`,
-                details: { recipient_email: recipientEmail, amount: order.total },
-                description: `Bill email sent to ${recipientEmail}`
-            });
-        }
-        return { success: true, ...data };
-    } catch (error) {
-        console.warn('Primary email service failed:', error);
-        const message = error.message || 'Email failed to send';
-        await logEmailActivity(emailLogData, 'failed', message);
-        const storedEmails = JSON.parse(localStorage.getItem('pendingBillEmails') || '[]');
-        storedEmails.push({
-            ...emailData,
-            timestamp: new Date().toISOString(),
-            orderId: order.id,
-            error: message
-        });
-        localStorage.setItem('pendingBillEmails', JSON.stringify(storedEmails.slice(-10)));
-        throw new Error(message);
+        user_id: triggeredBy?.user_id ?? null,
+        user_name: triggeredBy?.user_name || 'System (Automated)',
+        user_role: triggeredBy?.user_role || 'system',
+        action_type: 'email',
+        action_name: 'bill_sent',
+        target_id: order.id,
+        target_name: `Order #${order.order_number || order.id?.slice(0, 8) || 'N/A'}`,
+        details: { recipient_email: recipientEmail, amount: order.total },
+        description: `Bill email sent to ${recipientEmail}`,
+      });
     }
+    return { success: true, ...data };
+  } catch (error) {
+    console.warn('Primary email service failed:', error);
+    const message = error.message || 'Email failed to send';
+    await logEmailActivity(emailLogData, 'failed', message);
+    const storedEmails = JSON.parse(localStorage.getItem('pendingBillEmails') || '[]');
+    storedEmails.push({
+      ...emailData,
+      timestamp: new Date().toISOString(),
+      orderId: order.id,
+      error: message,
+    });
+    localStorage.setItem('pendingBillEmails', JSON.stringify(storedEmails.slice(-10)));
+    throw new Error(message);
+  }
 };
 
 /**
  * Send bill to customer's registered email
  */
 export const sendBillToCustomer = async (order, restaurant) => {
-    const customerEmail = order.customer_email;
+  const customerEmail = order.customer_email;
 
-    if (!customerEmail) {
-        throw new Error('Customer email not available for this order');
-    }
+  if (!customerEmail) {
+    throw new Error('Customer email not available for this order');
+  }
 
-    return sendBillEmail(order, restaurant, customerEmail);
+  return sendBillEmail(order, restaurant, customerEmail);
 };
 
 /**
  * Generate HTML for order status notification emails (accepted / rejected)
  */
 const generateOrderStatusEmailHTML = (order, restaurant, status) => {
-    const orderNum = order.order_number || order.id?.slice(0, 8) || 'N/A';
-    const isRejected = status === 'rejected';
-    const title = isRejected ? 'Order Rejected' : 'Order Accepted';
-    const heading = isRejected
-        ? `Your order #${orderNum} has been rejected`
-        : `Your order #${orderNum} has been accepted and is being prepared`;
-    const body = isRejected
-        ? (order.cancel_reason ? `Reason: ${order.cancel_reason}.` : '') + ' If you had paid online, refund will be processed to your account.'
-        : `We are preparing your order. You will be notified when it's ready.`;
-    const bgColor = isRejected ? '#fef2f2' : '#f0fdf4';
-    const accentColor = isRejected ? '#dc2626' : '#16a34a';
-    return `
+  const orderNum = order.order_number || order.id?.slice(0, 8) || 'N/A';
+  const isRejected = status === 'rejected';
+  const title = isRejected ? 'Order Rejected' : 'Order Accepted';
+  const heading = isRejected
+    ? `Your order #${orderNum} has been rejected`
+    : `Your order #${orderNum} has been accepted and is being prepared`;
+  const body = isRejected
+    ? (order.cancel_reason ? `Reason: ${order.cancel_reason}.` : '') +
+      ' If you had paid online, refund will be processed to your account.'
+    : `We are preparing your order. You will be notified when it's ready.`;
+  const bgColor = isRejected ? '#fef2f2' : '#f0fdf4';
+  const accentColor = isRejected ? '#dc2626' : '#16a34a';
+  return `
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
@@ -549,29 +587,32 @@ const generateOrderStatusEmailHTML = (order, restaurant, status) => {
  * @param {'accepted'|'rejected'} status - Status type for email content
  */
 export const sendOrderStatusEmail = async (order, restaurant, status) => {
-    const email = order.customer_email;
-    if (!email || !order || !restaurant) return;
-    if (status !== 'accepted' && status !== 'rejected') return;
+  const email = order.customer_email;
+  if (!email || !order || !restaurant) return;
+  if (status !== 'accepted' && status !== 'rejected') return;
 
-    const orderNum = order.order_number || order.id?.slice(0, 8) || 'N/A';
-    const templateKey = status === 'rejected' ? 'order_rejected' : 'order_accepted';
+  const orderNum = order.order_number || order.id?.slice(0, 8) || 'N/A';
+  const templateKey = status === 'rejected' ? 'order_rejected' : 'order_accepted';
 
-    let subject = status === 'rejected'
-        ? `Order #${orderNum} has been rejected - ${restaurant.name}`
-        : `Order #${orderNum} accepted - ${restaurant.name}`;
-    let html;
+  let subject =
+    status === 'rejected'
+      ? `Order #${orderNum} has been rejected - ${restaurant.name}`
+      : `Order #${orderNum} accepted - ${restaurant.name}`;
+  let html;
 
-    try {
-        const { data: template } = await supabase
-            .from('email_templates')
-            .select('subject, html')
-            .eq('key', templateKey)
-            .maybeSingle();
+  try {
+    const { data: template } = await supabase
+      .from('email_templates')
+      .select('subject, html')
+      .eq('key', templateKey)
+      .maybeSingle();
 
-        if (template) {
-            const formatCurrency = (amount) => `₹${(amount || 0).toFixed(2)}`;
-            const orderItems = Array.isArray(order.items) ? order.items : [];
-            const itemsRows = orderItems.map(item => `
+    if (template) {
+      const formatCurrency = (amount) => `₹${(amount || 0).toFixed(2)}`;
+      const orderItems = Array.isArray(order.items) ? order.items : [];
+      const itemsRows = orderItems
+        .map(
+          (item) => `
                 <tr>
                     <td style="padding: 12px 0; border-bottom: 1px solid #edf2f7;">
                         <span style="font-weight: 600; color: #0f172a;">${item.name || item.title || 'Item'}</span>
@@ -580,94 +621,105 @@ export const sendOrderStatusEmail = async (order, restaurant, status) => {
                     <td style="padding: 12px 0; border-bottom: 1px solid #edf2f7; text-align: center; color: #64748b;">x${item.quantity || 1}</td>
                     <td style="padding: 12px 0; border-bottom: 1px solid #edf2f7; text-align: right; color: #0f172a; font-weight: 600;">${formatCurrency((item.price || 0) * (item.quantity || 1))}</td>
                 </tr>
-            `).join('');
+            `,
+        )
+        .join('');
 
-            const vars = {
-                order_number: orderNum,
-                restaurant_name: restaurant.name,
-                reason: order.cancel_reason || 'N/A',
-                customer_name: order.customer_name || 'Guest',
-                table_number: order.table_number ? `T${order.table_number}` : 'N/A',
-                items_rows: itemsRows,
-                total_amount: formatCurrency(order.total),
-                payment_method: (order.payment_method || 'N/A').toUpperCase(),
-                year: new Date().getFullYear().toString()
-            };
-            const applied = applyTemplate(template.subject, template.html, vars);
-            subject = applied.subject;
-            html = applied.html;
-        } else {
-            html = generateOrderStatusEmailHTML(order, restaurant, status);
-        }
-    } catch (e) {
-        console.warn('Failed to fetch order status template:', e);
-        html = generateOrderStatusEmailHTML(order, restaurant, status);
+      const vars = {
+        order_number: orderNum,
+        restaurant_name: restaurant.name,
+        reason: order.cancel_reason || 'N/A',
+        customer_name: order.customer_name || 'Guest',
+        table_number: order.table_number ? `T${order.table_number}` : 'N/A',
+        items_rows: itemsRows,
+        total_amount: formatCurrency(order.total),
+        payment_method: (order.payment_method || 'N/A').toUpperCase(),
+        year: new Date().getFullYear().toString(),
+      };
+      const applied = applyTemplate(template.subject, template.html, vars);
+      subject = applied.subject;
+      html = applied.html;
+    } else {
+      html = generateOrderStatusEmailHTML(order, restaurant, status);
+    }
+  } catch (e) {
+    console.warn('Failed to fetch order status template:', e);
+    html = generateOrderStatusEmailHTML(order, restaurant, status);
+  }
+
+  const emailData = { to: email, subject, html, text: subject };
+  const emailLogData = {
+    to: email,
+    subject,
+    email_type: `order_${status}`,
+    restaurant_id: restaurant.id,
+    order_id: order.id,
+  };
+
+  try {
+    const { data, error } = await supabase.functions.invoke('send-email', {
+      body: emailData,
+    });
+
+    if (error) {
+      const errMsg = error.message || 'Email failed';
+      await logEmailActivity(emailLogData, 'failed', errMsg);
+      return { success: false, error: errMsg };
     }
 
-    const emailData = { to: email, subject, html, text: subject };
-    const emailLogData = { to: email, subject, email_type: `order_${status}`, restaurant_id: restaurant.id, order_id: order.id };
-
-    try {
-        const { data, error } = await supabase.functions.invoke('send-email', {
-            body: emailData
-        });
-
-        if (error) {
-            const errMsg = error.message || 'Email failed';
-            await logEmailActivity(emailLogData, 'failed', errMsg);
-            return { success: false, error: errMsg };
-        }
-
-        await logEmailActivity(emailLogData, 'success');
-        // Log to restaurant activity_logs (Activity tab) for every order status email sent
-        if (restaurant?.id) {
-            const orderLabel = `Order #${order.order_number || order.id?.slice(0, 8) || 'N/A'}`;
-            await logActivity({
-                restaurant_id: restaurant.id,
-                user_id: null,
-                user_name: 'System (Auto)',
-                user_role: 'system',
-                action_type: 'email',
-                action_name: 'auto_email_sent',
-                target_id: order.id,
-                target_name: orderLabel,
-                details: { email_kind: status, recipient_email: email },
-                description: `Auto email (order ${status === 'rejected' ? 'rejected' : 'accepted'}) sent to ${email}`
-            });
-        }
-        return { success: true };
-    } catch (error) {
-        console.warn('[Auto email] Order status email failed:', error);
-        await logEmailActivity(emailLogData, 'failed', error.message || 'Network error');
-        return { success: false, error: error.message || 'Network error' };
+    await logEmailActivity(emailLogData, 'success');
+    // Log to restaurant activity_logs (Activity tab) for every order status email sent
+    if (restaurant?.id) {
+      const orderLabel = `Order #${order.order_number || order.id?.slice(0, 8) || 'N/A'}`;
+      await logActivity({
+        restaurant_id: restaurant.id,
+        user_id: null,
+        user_name: 'System (Auto)',
+        user_role: 'system',
+        action_type: 'email',
+        action_name: 'auto_email_sent',
+        target_id: order.id,
+        target_name: orderLabel,
+        details: { email_kind: status, recipient_email: email },
+        description: `Auto email (order ${status === 'rejected' ? 'rejected' : 'accepted'}) sent to ${email}`,
+      });
     }
+    return { success: true };
+  } catch (error) {
+    console.warn('[Auto email] Order status email failed:', error);
+    await logEmailActivity(emailLogData, 'failed', error.message || 'Network error');
+    return { success: false, error: error.message || 'Network error' };
+  }
 };
 
 /**
  * Get the bill HTML for preview
  */
 export const getBillPreviewHTML = (order, restaurant) => {
-    return generateBillHTML(order, restaurant);
+  return generateBillHTML(order, restaurant);
 };
 
 /**
  * Generate WhatsApp bill message
  */
 const generateWhatsAppBillMessage = (order, restaurant) => {
-    const formatCurrency = (amount) => `₹${(amount || 0).toFixed(2)}`;
-    const formatDate = (date) => new Date(date).toLocaleString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+  const formatCurrency = (amount) => `₹${(amount || 0).toFixed(2)}`;
+  const formatDate = (date) =>
+    new Date(date).toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
 
-    const items = order.items.map(item =>
-        `• ${item.name} x${item.quantity} - ${formatCurrency(item.price * item.quantity)}`
-    ).join('\n');
+  const items = order.items
+    .map(
+      (item) => `• ${item.name} x${item.quantity} - ${formatCurrency(item.price * item.quantity)}`,
+    )
+    .join('\n');
 
-    const message = `
+  const message = `
 🧾 *BILL FROM ${restaurant.name?.toUpperCase()}*
 ━━━━━━━━━━━━━━━━━━━━
 
@@ -703,7 +755,7 @@ ${restaurant.address ? `📍 ${restaurant.address}` : ''}
 _Powered by Table Tap_
     `.trim();
 
-    return message;
+  return message;
 };
 
 /**
@@ -713,72 +765,72 @@ _Powered by Table Tap_
  * @returns {string} WhatsApp URL
  */
 export const generateWhatsAppURL = (phoneNumber, message) => {
-    // Clean the phone number - remove spaces, dashes, and +
-    const cleanPhone = phoneNumber.replace(/[\s\-\+]/g, '');
+  // Clean the phone number - remove spaces, dashes, and +
+  const cleanPhone = phoneNumber.replace(/[\s\-\+]/g, '');
 
-    // Add country code if not present (default to India +91)
-    const phoneWithCode = cleanPhone.startsWith('91') ? cleanPhone : `91${cleanPhone}`;
+  // Add country code if not present (default to India +91)
+  const phoneWithCode = cleanPhone.startsWith('91') ? cleanPhone : `91${cleanPhone}`;
 
-    // Encode the message for URL
-    const encodedMessage = encodeURIComponent(message);
+  // Encode the message for URL
+  const encodedMessage = encodeURIComponent(message);
 
-    return `https://wa.me/${phoneWithCode}?text=${encodedMessage}`;
+  return `https://wa.me/${phoneWithCode}?text=${encodedMessage}`;
 };
 
 /**
  * Send bill via WhatsApp
  * Opens WhatsApp with pre-filled bill message
  * @param {Object} order - Order details
- * @param {Object} restaurant - Restaurant details  
+ * @param {Object} restaurant - Restaurant details
  * @param {string} phoneNumber - Customer phone number
  * @returns {Object} - Result with WhatsApp URL
  */
 export const sendWhatsAppBill = (order, restaurant, phoneNumber) => {
-    if (!order || !restaurant || !phoneNumber) {
-        throw new Error('Missing required parameters: order, restaurant, or phoneNumber');
-    }
+  if (!order || !restaurant || !phoneNumber) {
+    throw new Error('Missing required parameters: order, restaurant, or phoneNumber');
+  }
 
-    const message = generateWhatsAppBillMessage(order, restaurant);
-    const whatsappURL = generateWhatsAppURL(phoneNumber, message);
+  const message = generateWhatsAppBillMessage(order, restaurant);
+  const whatsappURL = generateWhatsAppURL(phoneNumber, message);
 
-    // Open WhatsApp in new tab
-    window.open(whatsappURL, '_blank');
+  // Open WhatsApp in new tab
+  window.open(whatsappURL, '_blank');
 
-    return {
-        success: true,
-        url: whatsappURL,
-        message: 'WhatsApp opened with bill'
-    };
+  return {
+    success: true,
+    url: whatsappURL,
+    message: 'WhatsApp opened with bill',
+  };
 };
 
 /**
  * Get WhatsApp bill message for preview
  */
 export const getWhatsAppBillMessage = (order, restaurant) => {
-    return generateWhatsAppBillMessage(order, restaurant);
+  return generateWhatsAppBillMessage(order, restaurant);
 };
 
 /**
  * Copy bill to clipboard for manual sharing
  */
 export const copyBillToClipboard = async (order, restaurant) => {
-    const message = generateWhatsAppBillMessage(order, restaurant);
+  const message = generateWhatsAppBillMessage(order, restaurant);
 
-    try {
-        await navigator.clipboard.writeText(message);
-        return { success: true, message: 'Bill copied to clipboard' };
-    } catch (error) {
-        console.error('Failed to copy:', error);
-        throw new Error('Failed to copy bill to clipboard');
-    }
+  try {
+    await navigator.clipboard.writeText(message);
+    return { success: true, message: 'Bill copied to clipboard' };
+  } catch (error) {
+    console.error('Failed to copy:', error);
+    throw new Error('Failed to copy bill to clipboard');
+  }
 };
 
 export default {
-    sendBillEmail,
-    sendBillToCustomer,
-    getBillPreviewHTML,
-    sendWhatsAppBill,
-    getWhatsAppBillMessage,
-    generateWhatsAppURL,
-    copyBillToClipboard
+  sendBillEmail,
+  sendBillToCustomer,
+  getBillPreviewHTML,
+  sendWhatsAppBill,
+  getWhatsAppBillMessage,
+  generateWhatsAppURL,
+  copyBillToClipboard,
 };

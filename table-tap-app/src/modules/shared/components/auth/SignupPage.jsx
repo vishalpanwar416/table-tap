@@ -1,14 +1,52 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronLeft, Eye, EyeOff, CheckCircle, XCircle, LogOut, Home } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  ChevronLeft,
+  Eye,
+  EyeOff,
+  CheckCircle,
+  XCircle,
+  LogOut,
+  Home,
+  User as UserIcon,
+} from 'lucide-react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { authService } from '../../api/authService';
+import { authService, DEFAULT_AVATAR_URL } from '../../api/authService';
 import GoogleButton from './auth/GoogleButton';
 import { toast, ToastContainer, Slide } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { optimizeProfileImage } from '../../../shared/utils/imageOptimization';
-import { User as UserIcon } from 'lucide-react';
-import { validatePassword, validateEmail, validatePhoneNumber, sanitizeInput, rateLimiter } from '../../../shared/utils/security';
+import {
+  validatePassword,
+  validateEmail,
+  validatePhoneNumber,
+  sanitizeInput,
+  rateLimiter,
+} from '../../../shared/utils/security';
+
+const cardVariants = {
+  initial: { y: 40, opacity: 0 },
+  animate: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 60, damping: 16 } },
+  exit: { y: 40, opacity: 0, transition: { duration: 0.2 } },
+};
+const stagger = {
+  animate: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
+};
+const itemVariants = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 80, damping: 18 } },
+};
+const errorVariants = {
+  initial: { opacity: 0, x: 0 },
+  animate: { opacity: 1, x: [0, -8, 8, -6, 6, -4, 4, 0], transition: { duration: 0.5 } },
+  exit: { opacity: 0 },
+};
+const buttonVariants = {
+  initial: { scale: 1 },
+  hover: { scale: 1.04 },
+  tap: { scale: 0.97 },
+  loading: { scale: 1, opacity: 0.7 },
+};
 
 export default function SignUpPage() {
   const navigate = useNavigate();
@@ -22,12 +60,12 @@ export default function SignUpPage() {
     confirmPassword: '',
     email: '',
     mobileNumber: '+91 ',
-    dateOfBirth: ''
+    dateOfBirth: '',
   });
   const [avatarUrl, setAvatarUrl] = useState('');
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [existingSession, setExistingSession] = useState(null);
-  const fileInputRef = React.useRef();
+  const fileInputRef = useRef(null);
 
   // Get URL parameters
   const urlParams = new URLSearchParams(location.search);
@@ -61,7 +99,8 @@ export default function SignUpPage() {
     // Logic from LoginPage
     // Check if user has restaurant selection is not imported here directly?
     // But we can just navigate to restaurant-selection and let it handle
-    const params = urlRestaurant && urlTable ? `?restaurant=${urlRestaurant}&table=${urlTable}` : '';
+    const params =
+      urlRestaurant && urlTable ? `?restaurant=${urlRestaurant}&table=${urlTable}` : '';
     navigate(`/restaurant-selection${params}`);
   };
 
@@ -114,24 +153,25 @@ export default function SignUpPage() {
     if (name === 'mobileNumber') {
       if (e.nativeEvent.inputType === 'deleteContentBackward') {
         if (value.length <= 4) {
-          setFormData(prev => ({ ...prev, [name]: '+91 ' }));
+          setFormData((prev) => ({ ...prev, [name]: '+91 ' }));
           return;
         }
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData((prev) => ({ ...prev, [name]: value }));
         return;
       }
       const digits = value.replace(/\D/g, '');
       if (!value.startsWith('+91') && digits.length > 0) {
         const newDigits = digits.slice(0, 10);
-        setFormData(prev => ({ ...prev, [name]: `+91 ${newDigits}` }));
+        setFormData((prev) => ({ ...prev, [name]: `+91 ${newDigits}` }));
         return;
       }
       const newDigits = digits.slice(2, 12);
-      const formatted = newDigits.length > 5
-        ? `+91 ${newDigits.slice(0, 5)} ${newDigits.slice(5)}`
-        : `+91 ${newDigits}`;
+      const formatted =
+        newDigits.length > 5
+          ? `+91 ${newDigits.slice(0, 5)} ${newDigits.slice(5)}`
+          : `+91 ${newDigits}`;
 
-      setFormData(prev => ({ ...prev, [name]: formatted }));
+      setFormData((prev) => ({ ...prev, [name]: formatted }));
       return;
     }
 
@@ -219,7 +259,7 @@ export default function SignUpPage() {
           boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
           fontFamily: 'inherit',
           fontSize: '15px',
-          padding: '12px 20px'
+          padding: '12px 20px',
         },
         icon: false,
         transition: Slide,
@@ -249,7 +289,11 @@ export default function SignUpPage() {
         password: formData.password,
         mobileNumber: formData.mobileNumber,
         dateOfBirth: formData.dateOfBirth,
-        avatar_url: avatarUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(formData.fullName) + '&background=random'
+        avatar_url:
+          avatarUrl ||
+          'https://ui-avatars.com/api/?name=' +
+            encodeURIComponent(formData.fullName) +
+            '&background=random',
       });
 
       // Mark that we just signed up to prevent auto-redirect
@@ -272,7 +316,7 @@ export default function SignUpPage() {
           boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
           fontFamily: 'inherit',
           fontSize: '15px',
-          padding: '12px 20px'
+          padding: '12px 20px',
         },
         icon: false,
         transition: Slide,
@@ -284,7 +328,7 @@ export default function SignUpPage() {
         confirmPassword: '',
         email: '',
         mobileNumber: '+91 ',
-        dateOfBirth: ''
+        dateOfBirth: '',
       });
 
       // Do NOT navigate to /home here.
@@ -297,8 +341,7 @@ export default function SignUpPage() {
       if (err.message.includes('duplicate')) {
         if (err.message.includes('email')) {
           errorMessage = 'Email is already registered';
-        }
-        else if (err.message.includes('profiles_mobile_number_key')) {
+        } else if (err.message.includes('profiles_mobile_number_key')) {
           errorMessage = 'Mobile number is already registered';
         }
       }
@@ -319,7 +362,7 @@ export default function SignUpPage() {
           boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
           fontFamily: 'inherit',
           fontSize: '15px',
-          padding: '12px 20px'
+          padding: '12px 20px',
         },
         icon: false,
         transition: Slide,
@@ -329,13 +372,13 @@ export default function SignUpPage() {
     }
   };
 
-
   const handleGoogleSignup = async () => {
     try {
       setLoading(true);
       setError('');
       // Preserve URL parameters for Google auth
-      const params = urlRestaurant && urlTable ? `?restaurant=${urlRestaurant}&table=${urlTable}` : '';
+      const params =
+        urlRestaurant && urlTable ? `?restaurant=${urlRestaurant}&table=${urlTable}` : '';
       const redirectTo = `/auth-callback${params}`;
       await authService.signUpWithGoogle(redirectTo);
     } catch (error) {
@@ -343,31 +386,6 @@ export default function SignUpPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Animation variants
-  const cardVariants = {
-    initial: { y: 40, opacity: 0 },
-    animate: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 60, damping: 16 } },
-    exit: { y: 40, opacity: 0, transition: { duration: 0.2 } }
-  };
-  const stagger = {
-    animate: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } }
-  };
-  const itemVariants = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 80, damping: 18 } }
-  };
-  const errorVariants = {
-    initial: { opacity: 0, x: 0 },
-    animate: { opacity: 1, x: [0, -8, 8, -6, 6, -4, 4, 0], transition: { duration: 0.5 } },
-    exit: { opacity: 0 }
-  };
-  const buttonVariants = {
-    initial: { scale: 1 },
-    hover: { scale: 1.04 },
-    tap: { scale: 0.97 },
-    loading: { scale: 1, opacity: 0.7 }
   };
 
   return (
@@ -381,10 +399,7 @@ export default function SignUpPage() {
         {existingSession ? (
           <div className="w-full h-full flex flex-col">
             <div className="w-full px-6 py-8 relative flex items-center justify-center">
-              <button
-                className="absolute left-4 text-orange-500 p-2"
-                onClick={() => navigate(-1)}
-              >
+              <button className="absolute left-4 text-orange-500 p-2" onClick={() => navigate(-1)}>
                 <ChevronLeft size={30} />
               </button>
               <h1 className="text-white text-3xl font-medium font-spartan">Account</h1>
@@ -399,9 +414,12 @@ export default function SignUpPage() {
                 <LogOut size={48} className="text-green-600" />
               </div>
 
-              <h2 className="text-2xl font-semibold text-gray-800 mb-2">You are already logged in</h2>
+              <h2 className="text-2xl font-semibold text-gray-800 mb-2">
+                You are already logged in
+              </h2>
               <p className="text-gray-600 mb-8 max-w-xs">
-                You are currently signed in as <span className="font-semibold">{existingSession.email}</span>.
+                You are currently signed in as{' '}
+                <span className="font-semibold">{existingSession.email}</span>.
               </p>
 
               <div className="w-full max-w-xs space-y-4">
@@ -418,7 +436,9 @@ export default function SignUpPage() {
                   disabled={loading}
                   className="w-full bg-gray-300 text-gray-800 py-3.5 rounded-xl font-medium text-lg flex items-center justify-center gap-2 hover:bg-gray-400 transition-colors"
                 >
-                  {loading ? 'Logging out...' : (
+                  {loading ? (
+                    'Logging out...'
+                  ) : (
                     <>
                       <LogOut size={20} />
                       Log Out
@@ -467,17 +487,22 @@ export default function SignUpPage() {
                     <div className="w-10 h-10 border-4 border-orange-400 border-t-transparent rounded-full animate-spin"></div>
                   ) : avatarUrl ? (
                     <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
-                  ) : formData.fullName ? (
-                    <span className="text-3xl font-bold text-orange-600">{getInitials(formData.fullName)}</span>
                   ) : (
-                    <UserIcon className="w-10 h-10 text-gray-400" />
+                    <img
+                      src={DEFAULT_AVATAR_URL}
+                      alt="Default Profile"
+                      className="w-full h-full object-cover opacity-60"
+                    />
                   )}
                 </div>
                 {/* Remove button */}
                 {avatarUrl && !avatarLoading && (
                   <button
                     type="button"
-                    onClick={e => { e.stopPropagation(); handleRemoveAvatar(); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveAvatar();
+                    }}
                     className="absolute -bottom-2 right-0 bg-white border border-gray-300 rounded-full px-2 py-0.5 text-xs text-gray-600 shadow hover:bg-red-100 hover:text-red-600 transition-all"
                   >
                     Remove
@@ -491,7 +516,9 @@ export default function SignUpPage() {
                   onChange={handleAvatarChange}
                   aria-label="Choose profile photo"
                 />
-                <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-gray-500 bg-white/80 px-2 py-0.5 rounded shadow mt-1 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">Change Photo</span>
+                <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-gray-500 bg-white/80 px-2 py-0.5 rounded shadow mt-1 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+                  Change Photo
+                </span>
               </motion.div>
             </motion.div>
             {/* Form Container */}
@@ -525,7 +552,9 @@ export default function SignUpPage() {
               >
                 {/* Full Name */}
                 <motion.div variants={itemVariants}>
-                  <label className="block text-black mb-2 font-medium font-spartan">Full Name</label>
+                  <label className="block text-black mb-2 font-medium font-spartan">
+                    Full Name
+                  </label>
                   <input
                     type="text"
                     name="fullName"
@@ -541,7 +570,7 @@ export default function SignUpPage() {
                   <label className="block text-black mb-2 font-medium font-spartan">Password</label>
                   <div className="relative">
                     <input
-                      type={showPassword ? "text" : "password"}
+                      type={showPassword ? 'text' : 'password'}
                       name="password"
                       value={formData.password}
                       onChange={handleChange}
@@ -561,10 +590,12 @@ export default function SignUpPage() {
                 </motion.div>
                 {/* Confirm Password */}
                 <motion.div variants={itemVariants}>
-                  <label className="block text-black mb-2 font-medium font-spartan">Confirm Password</label>
+                  <label className="block text-black mb-2 font-medium font-spartan">
+                    Confirm Password
+                  </label>
                   <div className="relative">
                     <input
-                      type={showPassword ? "text" : "password"}
+                      type={showPassword ? 'text' : 'password'}
                       name="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={handleChange}
@@ -597,7 +628,9 @@ export default function SignUpPage() {
                 </motion.div>
                 {/* Mobile Number */}
                 <motion.div className="mb-4" variants={itemVariants}>
-                  <label className="block text-black mb-2 font-medium font-spartan">Mobile Number</label>
+                  <label className="block text-black mb-2 font-medium font-spartan">
+                    Mobile Number
+                  </label>
                   <div className="relative">
                     <input
                       type="tel"
@@ -612,7 +645,9 @@ export default function SignUpPage() {
                 </motion.div>
                 {/* Date of Birth */}
                 <motion.div variants={itemVariants}>
-                  <label className="block text-black mb-2 font-medium font-spartan">Date of Birth</label>
+                  <label className="block text-black mb-2 font-medium font-spartan">
+                    Date of Birth
+                  </label>
                   <input
                     type="date"
                     name="dateOfBirth"
@@ -698,7 +733,7 @@ export default function SignUpPage() {
                 boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
                 fontFamily: 'inherit',
                 fontSize: '15px',
-                padding: '12px 20px'
+                padding: '12px 20px',
               }}
               transition={Slide}
               closeButton={false}

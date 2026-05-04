@@ -5,9 +5,19 @@ import GoogleButton from './auth/GoogleButton';
 import AuthForm from './auth/AuthForm';
 import { authService } from '../../api/authService';
 import { useAuth } from '../../../shared/config/AuthContext';
-import { hasValidRestaurantSelection, getStoredRestaurantSelection } from '../../../shared/utils/restaurantCheck';
+import {
+  hasValidRestaurantSelection,
+  getStoredRestaurantSelection,
+} from '../../../shared/utils/restaurantCheck';
 import { motion, AnimatePresence } from 'framer-motion';
-import { validateEmail, sanitizeInput, rateLimiter, sessionManager } from '../../../shared/utils/security';
+import {
+  validateEmail,
+  sanitizeInput,
+  rateLimiter,
+  sessionManager,
+} from '../../../shared/utils/security';
+
+const RESTAURANT_ROLES = ['owner', 'manager', 'captain', 'chef', 'staff', 'waiter', 'cashier'];
 
 export default function LoginPage() {
   const { refreshUser } = useAuth();
@@ -18,11 +28,11 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [existingSession, setExistingSession] = useState(null);
   const [showWelcome, setShowWelcome] = useState(true);
-  const [typingText, setTypingText] = useState("");
+  const [typingText, setTypingText] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
 
-  const welcomeText = "Welcome to Table-Tap";
+  const welcomeText = 'Welcome to Table-Tap';
   const missionText = "We missed you! Let's get you in.";
 
   useEffect(() => {
@@ -68,7 +78,8 @@ export default function LoginPage() {
     if (hasValidRestaurantSelection()) {
       navigate('/home');
     } else {
-      const params = urlRestaurant && urlTable ? `?restaurant=${urlRestaurant}&table=${urlTable}` : '';
+      const params =
+        urlRestaurant && urlTable ? `?restaurant=${urlRestaurant}&table=${urlTable}` : '';
       navigate(`/restaurant-selection${params}`);
     }
   };
@@ -149,7 +160,6 @@ export default function LoginPage() {
 
       // 2. Restaurant/Partner Portal
       if (h.startsWith('restaurant.') || h.startsWith('manager.') || h.startsWith('owner.')) {
-        const RESTAURANT_ROLES = ['owner', 'manager', 'captain', 'chef', 'staff', 'waiter', 'cashier'];
         if (!RESTAURANT_ROLES.includes(role)) {
           await authService.signOut();
           throw new Error('Access Denied: Restricted to restaurant staff.');
@@ -172,7 +182,8 @@ export default function LoginPage() {
       if (hasValidRestaurantSelection()) {
         navigate('/home');
       } else {
-        const params = urlRestaurant && urlTable ? `?restaurant=${urlRestaurant}&table=${urlTable}` : '';
+        const params =
+          urlRestaurant && urlTable ? `?restaurant=${urlRestaurant}&table=${urlTable}` : '';
         navigate(`/restaurant-selection${params}`);
       }
     } catch (err) {
@@ -196,7 +207,8 @@ export default function LoginPage() {
 
     try {
       // Preserve URL parameters for Google auth callback
-      const params = urlRestaurant && urlTable ? `?restaurant=${urlRestaurant}&table=${urlTable}` : '';
+      const params =
+        urlRestaurant && urlTable ? `?restaurant=${urlRestaurant}&table=${urlTable}` : '';
       const redirectTo = `/auth-callback${params}`;
       await authService.signInWithGoogle(redirectTo);
     } catch (err) {
@@ -208,7 +220,7 @@ export default function LoginPage() {
   // Animation variants
   const bgVariants = {
     initial: { opacity: 0, scale: 1.1 },
-    animate: { opacity: 1, scale: 1, transition: { duration: 1.2, ease: "easeOut" } }
+    animate: { opacity: 1, scale: 1, transition: { duration: 1.2, ease: 'easeOut' } },
   };
   const cardVariants = {
     initial: { y: 120, opacity: 0, scale: 0.95 },
@@ -220,28 +232,28 @@ export default function LoginPage() {
         type: 'spring',
         stiffness: 70,
         damping: 15,
-        mass: 0.8
-      }
+        mass: 0.8,
+      },
     },
-    exit: { y: 100, opacity: 0, transition: { duration: 0.3 } }
+    exit: { y: 100, opacity: 0, transition: { duration: 0.3 } },
   };
   const stagger = {
-    animate: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } }
+    animate: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
   };
   const itemVariants = {
     initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 80, damping: 18 } }
+    animate: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 80, damping: 18 } },
   };
   const errorVariants = {
     initial: { opacity: 0, x: 0 },
     animate: { opacity: 1, x: [0, -8, 8, -6, 6, -4, 4, 0], transition: { duration: 0.5 } },
-    exit: { opacity: 0 }
+    exit: { opacity: 0 },
   };
   const buttonVariants = {
     initial: { scale: 1 },
     hover: { scale: 1.04 },
     tap: { scale: 0.98 },
-    loading: { scale: 1, opacity: 0.7 }
+    loading: { scale: 1, opacity: 0.7 },
   };
 
   return (
@@ -255,10 +267,7 @@ export default function LoginPage() {
       {existingSession ? (
         <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col z-10">
           <div className="w-full px-6 py-8 relative flex items-center justify-center">
-            <button
-              className="absolute left-4 text-orange-500 p-2"
-              onClick={() => navigate(-1)}
-            >
+            <button className="absolute left-4 text-orange-500 p-2" onClick={() => navigate(-1)}>
               <ChevronLeft size={30} />
             </button>
             <h1 className="text-gray-100 text-3xl font-medium font-spartan">Account</h1>
@@ -275,7 +284,8 @@ export default function LoginPage() {
 
             <h2 className="text-2xl font-semibold text-gray-800 mb-2">You are already logged in</h2>
             <p className="text-gray-600 mb-8 max-w-xs">
-              You are currently signed in as <span className="font-semibold">{existingSession.email}</span>.
+              You are currently signed in as{' '}
+              <span className="font-semibold">{existingSession.email}</span>.
             </p>
 
             <div className="w-full max-w-xs space-y-4">
@@ -292,7 +302,9 @@ export default function LoginPage() {
                 disabled={loading}
                 className="w-full bg-gray-300 text-gray-800 py-3.5 rounded-xl font-medium text-lg flex items-center justify-center gap-2 hover:bg-gray-400 transition-colors"
               >
-                {loading ? 'Logging out...' : (
+                {loading ? (
+                  'Logging out...'
+                ) : (
                   <>
                     <LogOut size={20} />
                     Log Out
@@ -413,7 +425,9 @@ export default function LoginPage() {
                   </button>
                 </div>
                 <div className="flex justify-end mt-1">
-                  <Link to="/forgot-password" className="text-black text-sm">Forget Password?</Link>
+                  <Link to="/forgot-password" className="text-black text-sm">
+                    Forget Password?
+                  </Link>
                 </div>
               </motion.div>
               {/* Login Button */}
@@ -438,7 +452,9 @@ export default function LoginPage() {
                       >
                         Logging In...
                       </motion.span>
-                    ) : 'Log In'}
+                    ) : (
+                      'Log In'
+                    )}
                   </AuthForm.Button>
                 </motion.div>
               </motion.div>
@@ -447,9 +463,7 @@ export default function LoginPage() {
             <motion.div className="mt-4 text-center" variants={itemVariants}>
               <p className="text-gray-600 text-sm">or sign up with</p>
               <div className="flex justify-center mt-4">
-                <GoogleButton
-                  loading={loading}
-                />
+                <GoogleButton loading={loading} />
               </div>
             </motion.div>
             {/* Sign Up Link */}

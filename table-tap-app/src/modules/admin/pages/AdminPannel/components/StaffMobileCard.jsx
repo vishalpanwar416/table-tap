@@ -5,9 +5,9 @@ const StaffMobileCard = ({ member, onEdit, onDelete }) => {
   const getRoleIcon = (role) => {
     switch (role) {
       case 'manager':
-        return <Shield className="h-4 w-4 text-purple-600" />;
+        return <Shield className="h-4 w-4 text-orange-600" />;
       case 'captain':
-        return <ChefHat className="h-4 w-4 text-blue-600" />;
+        return <ChefHat className="h-4 w-4 text-gray-600" />;
       default:
         return <User className="h-4 w-4 text-gray-600" />;
     }
@@ -16,9 +16,9 @@ const StaffMobileCard = ({ member, onEdit, onDelete }) => {
   const getRoleColor = (role) => {
     switch (role) {
       case 'manager':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-orange-100 text-orange-800';
       case 'captain':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -37,7 +37,7 @@ const StaffMobileCard = ({ member, onEdit, onDelete }) => {
                 alt={member.name}
               />
             ) : (
-              <div className="h-12 w-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center border-2 border-white shadow-sm">
+              <div className="h-12 w-12 rounded-full bg-orange-500 flex items-center justify-center border-2 border-white shadow-sm">
                 <User className="h-6 w-6 text-white" />
               </div>
             )}
@@ -46,19 +46,21 @@ const StaffMobileCard = ({ member, onEdit, onDelete }) => {
             <h4 className="text-lg font-semibold text-gray-900 truncate">{member.name}</h4>
             <div className="flex items-center space-x-2 mt-1">
               {getRoleIcon(member.role)}
-              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(member.role)}`}>
+              <span
+                className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(member.role)}`}
+              >
                 {member.role}
               </span>
             </div>
           </div>
         </div>
-        
+
         {/* Status Badge */}
-        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-          member.connected 
-            ? 'bg-green-100 text-green-800' 
-            : 'bg-gray-100 text-gray-800'
-        }`}>
+        <span
+          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+            member.connected ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+          }`}
+        >
           {member.connected ? 'Connected' : 'Standalone'}
         </span>
       </div>
@@ -81,7 +83,7 @@ const StaffMobileCard = ({ member, onEdit, onDelete }) => {
       <div className="flex space-x-2">
         <button
           onClick={() => onEdit(member)}
-          className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+          className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
         >
           <Edit className="h-4 w-4" />
           <span className="text-sm font-medium">Edit</span>
@@ -98,4 +100,4 @@ const StaffMobileCard = ({ member, onEdit, onDelete }) => {
   );
 };
 
-export default StaffMobileCard; 
+export default StaffMobileCard;

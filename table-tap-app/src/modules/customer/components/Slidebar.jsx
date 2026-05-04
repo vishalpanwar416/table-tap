@@ -1,6 +1,19 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, ShoppingBag, User, CreditCard, Phone, HelpCircle, Shield, Globe, ChefHat, UtensilsCrossed, Coins, Crown } from 'lucide-react';
+import {
+  LogOut,
+  ShoppingBag,
+  User,
+  CreditCard,
+  Phone,
+  HelpCircle,
+  Shield,
+  Globe,
+  ChefHat,
+  UtensilsCrossed,
+  Coins,
+  Crown,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../shared/supabase';
 import { useAuth } from '../../shared/config/AuthContext';
@@ -15,7 +28,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
     profileImg: '',
     userName: '',
     userEmail: '',
-    profile_role: 'customer'
+    profile_role: 'customer',
   });
   const [profileLoading, setProfileLoading] = useState(false);
   const [isContactPopupOpen, setIsContactPopupOpen] = useState(false);
@@ -40,9 +53,17 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
     // Immediately populate from user object so UI never stays blank
     setUserData({
       profileImg: user.user_metadata?.avatar_url || '',
-      userName: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+      userName:
+        user.user_metadata?.full_name ||
+        user.user_metadata?.name ||
+        user.email?.split('@')[0] ||
+        'User',
       userEmail: user.email || '',
-      profile_role: (user.app_metadata?.role || user.user_metadata?.role || 'customer').toLowerCase()
+      profile_role: (
+        user.app_metadata?.role ||
+        user.user_metadata?.role ||
+        'customer'
+      ).toLowerCase(),
     });
 
     let cancelled = false;
@@ -58,9 +79,18 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
         if (!cancelled && profile) {
           setUserData({
             profileImg: profile.avatar_url || user.user_metadata?.avatar_url || '',
-            userName: profile.full_name || user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+            userName:
+              profile.full_name ||
+              user.user_metadata?.full_name ||
+              user.user_metadata?.name ||
+              user.email?.split('@')[0] ||
+              'User',
             userEmail: user.email || '',
-            profile_role: (profile.profile_role || user.app_metadata?.role || 'customer').toLowerCase()
+            profile_role: (
+              profile.profile_role ||
+              user.app_metadata?.role ||
+              'customer'
+            ).toLowerCase(),
           });
         }
       } catch (error) {
@@ -72,64 +102,78 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
     };
 
     fetchUserProfile();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [isSidebarOpen, user]);
 
   // 4. Only subscribe to real-time updates when sidebar is open and user is authenticated
   useEffect(() => {
     if (!isSidebarOpen || !isAuthenticated) return;
     let channel;
-    channel = supabase.channel('sidebar-profile')
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'profiles',
-      }, (payload) => {
-        if (userData.userEmail === payload.old.email) {
-          setUserData(prev => ({
-            ...prev,
-            userName: payload.new.full_name,
-            userEmail: payload.new.email,
-            profileImg: payload.new.avatar_url,
-            profile_role: payload.new.profile_role
-          }));
-        }
-      })
+    channel = supabase
+      .channel('sidebar-profile')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+        },
+        (payload) => {
+          if (userData.userEmail === payload.old.email) {
+            setUserData((prev) => ({
+              ...prev,
+              userName: payload.new.full_name,
+              userEmail: payload.new.email,
+              profileImg: payload.new.avatar_url,
+              profile_role: payload.new.profile_role,
+            }));
+          }
+        },
+      )
       .subscribe();
     return () => {
-      if (channel) channel.unsubscribe();
+      if (channel) supabase.removeChannel(channel);
     };
   }, [isSidebarOpen, isAuthenticated, userData.userEmail]);
 
   // 2. Memoize menu options and handlers
-  const menuOptions = React.useMemo(() => [
-    {
-      name: isAuthenticated ? 'My Orders' : 'Track Order',
-      icon: <ShoppingBag className="w-6 h-6" />,
-      path: isAuthenticated ? '/my-orders' : '/order-tracking'
-    },
-    { name: 'My Profile', icon: <User className="w-6 h-6" />, path: '/profile' },
-    { name: 'Change Restaurant', icon: <Globe className="w-6 h-6" />, path: '/restaurant-selection' },
-    { name: 'Contact Us', icon: <Phone className="w-6 h-6" />, path: '/contact' },
-    { name: 'Help & FAQs', icon: <HelpCircle className="w-6 h-6" />, path: '/help' },
-  ], [isAuthenticated]);
+  const menuOptions = React.useMemo(
+    () => [
+      {
+        name: isAuthenticated ? 'My Orders' : 'Track Order',
+        icon: <ShoppingBag className="w-6 h-6" />,
+        path: isAuthenticated ? '/my-orders' : '/order-tracking',
+      },
+      { name: 'My Profile', icon: <User className="w-6 h-6" />, path: '/profile' },
+      {
+        name: 'Change Restaurant',
+        icon: <Globe className="w-6 h-6" />,
+        path: '/restaurant-selection',
+      },
+      { name: 'Contact Us', icon: <Phone className="w-6 h-6" />, path: '/contact' },
+      { name: 'Help & FAQs', icon: <HelpCircle className="w-6 h-6" />, path: '/help' },
+    ],
+    [isAuthenticated],
+  );
 
   const managerOption = {
     name: 'Manager Dashboard',
     icon: <Shield className="w-6 h-6" />,
-    path: '/restaurant'
+    path: '/restaurant',
   };
 
   const adminOption = {
     name: 'Admin Dashboard',
     icon: <Shield className="w-6 h-6" />,
-    path: '/admin'
+    path: '/admin',
   };
 
   const ownerOption = {
     name: 'Owner Dashboard',
     icon: <Crown className="w-6 h-6" />,
-    path: '/owner'
+    path: '/owner',
   };
 
   // Smooth slide-only animation (right to left), no spring
@@ -137,70 +181,78 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
     hidden: { x: '100%' },
     visible: {
       x: 0,
-      transition: { duration: 0.3, ease: [0.32, 0.72, 0, 1] }
+      transition: { duration: 0.3, ease: [0.32, 0.72, 0, 1] },
     },
     exit: {
       x: '100%',
-      transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] }
-    }
+      transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] },
+    },
   };
   const overlayVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: { duration: 0.25, ease: 'easeOut' }
+      transition: { duration: 0.25, ease: 'easeOut' },
     },
     exit: {
       opacity: 0,
-      transition: { duration: 0.2, ease: 'easeOut' }
-    }
+      transition: { duration: 0.2, ease: 'easeOut' },
+    },
   };
 
-  const handleNavigation = React.useCallback((path) => {
-    // Handle cross-app navigation (Admin, Restaurant, or Owner dashboard)
-    if (path.startsWith('/admin') || path.startsWith('/restaurant') || path.startsWith('/owner')) {
-      // Treat localhost and Vercel preview deployments as "dev" environments for path-based routing
-      const isDev = window.location.hostname === 'localhost' ||
-        window.location.hostname === '127.0.0.1' ||
-        window.location.hostname.includes('vercel.app');
+  const handleNavigation = React.useCallback(
+    (path) => {
+      // Handle cross-app navigation (Admin, Restaurant, or Owner dashboard)
+      if (
+        path.startsWith('/admin') ||
+        path.startsWith('/restaurant') ||
+        path.startsWith('/owner')
+      ) {
+        // Treat localhost and Vercel preview deployments as "dev" environments for path-based routing
+        const isDev =
+          window.location.hostname === 'localhost' ||
+          window.location.hostname === '127.0.0.1' ||
+          window.location.hostname.includes('vercel.app');
 
-      if (isDev) {
-        // In dev/preview, use path-based routing
-        window.location.href = path;
-      } else {
-        // In production custom domain, switch subdomains
-        let newSubdomain = 'app';
-        if (path.startsWith('/admin')) newSubdomain = 'admin';
-        else if (path.startsWith('/owner')) newSubdomain = 'owner';
-        else if (path.startsWith('/restaurant')) newSubdomain = 'restaurant';
-
-        const hostParts = window.location.hostname.split('.');
-
-        // Assuming format [subdomain, domain, tld] e.g., app.table-tap.in
-        // If we are on app.table-tap.in, replace 'app' with target
-        if (hostParts.length >= 3) {
-          hostParts[0] = newSubdomain;
-          const newUrl = `${window.location.protocol}//${hostParts.join('.')}`;
-          window.location.href = newUrl;
-        } else {
-          // Fallback if domain structure is unexpected
+        if (isDev) {
+          // In dev/preview, use path-based routing
           window.location.href = path;
+        } else {
+          // In production custom domain, switch subdomains
+          let newSubdomain = 'app';
+          if (path.startsWith('/admin')) newSubdomain = 'admin';
+          else if (path.startsWith('/owner')) newSubdomain = 'owner';
+          else if (path.startsWith('/restaurant')) newSubdomain = 'restaurant';
+
+          const hostParts = window.location.hostname.split('.');
+
+          // Assuming format [subdomain, domain, tld] e.g., app.table-tap.in
+          // If we are on app.table-tap.in, replace 'app' with target
+          if (hostParts.length >= 3) {
+            hostParts[0] = newSubdomain;
+            const newUrl = `${window.location.protocol}//${hostParts.join('.')}`;
+            window.location.href = newUrl;
+          } else {
+            // Fallback if domain structure is unexpected
+            window.location.href = path;
+          }
         }
+        return;
       }
-      return;
-    }
 
-    // List of paths allowed for guests without login
-    const publicPaths = ['/order-tracking', '/restaurant-selection', '/contact', '/help'];
-    const isPublic = publicPaths.some(publicPath => path.startsWith(publicPath));
+      // List of paths allowed for guests without login
+      const publicPaths = ['/order-tracking', '/restaurant-selection', '/contact', '/help'];
+      const isPublic = publicPaths.some((publicPath) => path.startsWith(publicPath));
 
-    if (isAuthenticated || isPublic) {
-      navigate(path);
-    } else {
-      navigate('/login', { state: { from: path } });
-    }
-    toggleSidebar();
-  }, [isAuthenticated, navigate, toggleSidebar]);
+      if (isAuthenticated || isPublic) {
+        navigate(path);
+      } else {
+        navigate('/login', { state: { from: path } });
+      }
+      toggleSidebar();
+    },
+    [isAuthenticated, navigate, toggleSidebar],
+  );
 
   const handleLogin = React.useCallback(() => {
     navigate('/login');
@@ -249,7 +301,9 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
 
   // Skeleton shimmer style
   const Skeleton = ({ className }) => (
-    <div className={`bg-gradient-to-r from-white/10 via-white/20 to-white/10 animate-pulse ${className}`}></div>
+    <div
+      className={`bg-gradient-to-r from-white/10 via-white/20 to-white/10 animate-pulse ${className}`}
+    ></div>
   );
 
   return (
@@ -344,37 +398,48 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
                 </div>
 
                 {/* Scrollable menu section */}
-                <div className="flex-1 overflow-y-auto" style={{
-                  scrollbarWidth: 'thin',
-                  scrollbarColor: '#4B5563 transparent',
-                  msOverflowStyle: 'auto'
-                }}>
+                <div
+                  className="flex-1 overflow-y-auto"
+                  style={{
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: '#4B5563 transparent',
+                    msOverflowStyle: 'auto',
+                  }}
+                >
                   <div className="py-4">
                     {/* Show relevant dashboard based on role */}
-                    {isAuthenticated && (userData.profile_role === 'admin') && (
+                    {isAuthenticated && userData.profile_role === 'admin' && (
                       <div>
                         <button
                           onClick={() => handleNavigation(adminOption.path)}
                           className="w-full py-3 px-6 flex items-center text-left hover:bg-white/10 transition-all duration-200 group"
                         >
                           <div className="bg-red-600/80 backdrop-blur-md rounded-full p-3 mr-4 group-hover:bg-red-700/80 transition-all border border-red-400/30 shadow-xl">
-                            {React.cloneElement(adminOption.icon, { className: "w-5 h-5 text-white" })}
+                            {React.cloneElement(adminOption.icon, {
+                              className: 'w-5 h-5 text-white',
+                            })}
                           </div>
-                          <span className="text-lg text-white font-medium drop-shadow-sm">{adminOption.name}</span>
+                          <span className="text-lg text-white font-medium drop-shadow-sm">
+                            {adminOption.name}
+                          </span>
                         </button>
                       </div>
                     )}
 
-                    {isAuthenticated && (userData.profile_role === 'manager') && (
+                    {isAuthenticated && userData.profile_role === 'manager' && (
                       <div>
                         <button
                           onClick={() => handleNavigation(managerOption.path)}
                           className="w-full py-3 px-6 flex items-center text-left hover:bg-white/10 transition-all duration-200 group"
                         >
                           <div className="bg-purple-600/80 backdrop-blur-md rounded-full p-3 mr-4 group-hover:bg-purple-700/80 transition-all border border-purple-400/30 shadow-xl">
-                            {React.cloneElement(managerOption.icon, { className: "w-5 h-5 text-white" })}
+                            {React.cloneElement(managerOption.icon, {
+                              className: 'w-5 h-5 text-white',
+                            })}
                           </div>
-                          <span className="text-lg text-white font-medium drop-shadow-sm">{managerOption.name}</span>
+                          <span className="text-lg text-white font-medium drop-shadow-sm">
+                            {managerOption.name}
+                          </span>
                         </button>
                       </div>
                     )}
@@ -388,7 +453,9 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
                           <div className="bg-yellow-600/80 backdrop-blur-md rounded-full p-3 mr-4 group-hover:bg-yellow-700/80 transition-all border border-yellow-400/30 shadow-xl">
                             <Shield className="w-5 h-5 text-white" />
                           </div>
-                          <span className="text-lg text-white font-medium drop-shadow-sm">Captain Dashboard</span>
+                          <span className="text-lg text-white font-medium drop-shadow-sm">
+                            Captain Dashboard
+                          </span>
                         </button>
                       </div>
                     )}
@@ -402,7 +469,9 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
                           <div className="bg-gradient-to-r from-amber-500 to-yellow-600 backdrop-blur-md rounded-full p-3 mr-4 group-hover:from-amber-600 group-hover:to-yellow-700 transition-all border border-amber-400/30 shadow-xl">
                             <Crown className="w-5 h-5 text-white" />
                           </div>
-                          <span className="text-lg text-white font-medium drop-shadow-sm">{ownerOption.name}</span>
+                          <span className="text-lg text-white font-medium drop-shadow-sm">
+                            {ownerOption.name}
+                          </span>
                         </button>
                       </div>
                     )}
@@ -416,7 +485,9 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
                           <div className="bg-orange-600/80 backdrop-blur-md rounded-full p-3 mr-4 group-hover:bg-orange-700/80 transition-all border border-orange-400/30 shadow-xl">
                             <ChefHat className="w-5 h-5 text-white" />
                           </div>
-                          <span className="text-lg text-white font-medium drop-shadow-sm">Kitchen Dashboard</span>
+                          <span className="text-lg text-white font-medium drop-shadow-sm">
+                            Kitchen Dashboard
+                          </span>
                         </button>
                       </div>
                     )}
@@ -430,7 +501,9 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
                           <div className="bg-green-600/80 backdrop-blur-md rounded-full p-3 mr-4 group-hover:bg-green-700/80 transition-all border border-green-400/30 shadow-xl">
                             <UtensilsCrossed className="w-5 h-5 text-white" />
                           </div>
-                          <span className="text-lg text-white font-medium drop-shadow-sm">Waiter Dashboard</span>
+                          <span className="text-lg text-white font-medium drop-shadow-sm">
+                            Waiter Dashboard
+                          </span>
                         </button>
                       </div>
                     )}
@@ -444,7 +517,9 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
                           <div className="bg-amber-600/80 backdrop-blur-md rounded-full p-3 mr-4 group-hover:bg-amber-700/80 transition-all border border-amber-400/30 shadow-xl">
                             <Coins className="w-5 h-5 text-white" />
                           </div>
-                          <span className="text-lg text-white font-medium drop-shadow-sm">Cashier Dashboard</span>
+                          <span className="text-lg text-white font-medium drop-shadow-sm">
+                            Cashier Dashboard
+                          </span>
                         </button>
                       </div>
                     )}
@@ -457,7 +532,9 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
                           className="w-full py-3 px-6 flex items-center text-left hover:bg-white/10 transition-all duration-200 group"
                         >
                           <div className="bg-white/20 backdrop-blur-md rounded-full p-3 mr-4 group-hover:bg-purple-500/80 transition-all border border-white/30 shadow-xl">
-                            {React.cloneElement(option.icon, { className: "w-5 h-5 text-white/80 group-hover:text-white" })}
+                            {React.cloneElement(option.icon, {
+                              className: 'w-5 h-5 text-white/80 group-hover:text-white',
+                            })}
                           </div>
                           <span className="text-lg text-white/80 group-hover:text-white drop-shadow-sm">
                             {option.name}
@@ -479,7 +556,9 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
                           <div className="bg-white/20 backdrop-blur-md rounded-full p-3 mr-4 group-hover:bg-red-500/80 transition-all border border-white/30 shadow-xl">
                             <LogOut className="w-5 h-5 text-white/80 group-hover:text-white" />
                           </div>
-                          <span className="text-lg text-white/80 group-hover:text-white drop-shadow-sm">Log Out</span>
+                          <span className="text-lg text-white/80 group-hover:text-white drop-shadow-sm">
+                            Log Out
+                          </span>
                         </button>
                       </div>
                     )}
@@ -502,10 +581,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {
       </AnimatePresence>
 
       {/* Contact Popup - outside sidebar AnimatePresence */}
-      <ContactPopup
-        isOpen={isContactPopupOpen}
-        onClose={handleCloseContactPopup}
-      />
+      <ContactPopup isOpen={isContactPopupOpen} onClose={handleCloseContactPopup} />
     </>
   );
 };

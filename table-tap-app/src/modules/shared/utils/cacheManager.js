@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 // Cache management utilities
 class CacheManager {
   constructor() {
@@ -5,7 +7,8 @@ class CacheManager {
     this.maxSize = 100; // Maximum number of cached items
   }
 
-  set(key, value, ttl = 5 * 60 * 1000) { // Default 5 minutes
+  set(key, value, ttl = 5 * 60 * 1000) {
+    // Default 5 minutes
     if (this.cache.size >= this.maxSize) {
       // Remove oldest entry
       const firstKey = this.cache.keys().next().value;
@@ -15,7 +18,7 @@ class CacheManager {
     this.cache.set(key, {
       value,
       timestamp: Date.now(),
-      ttl
+      ttl,
     });
   }
 
@@ -57,4 +60,4 @@ export const useCache = () => {
   }, []);
 
   return { setCache, getCache, clearCache };
-}; 
+};

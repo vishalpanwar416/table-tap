@@ -36,25 +36,23 @@ const ProfilePhotoModal = ({ show, onClose, currentUser, onPhotoUpdate }) => {
 
     try {
       setUploading(true);
-      
+
       // Create a unique file name
       const fileExt = file.name.split('.').pop();
       const fileName = `${currentUser.id}-${Date.now()}.${fileExt}`;
       const filePath = `profile-photos/${currentUser.id}/${fileName}`;
 
       // Upload the file
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file);
+      const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file);
 
       if (uploadError) {
         throw uploadError;
       }
 
       // Get the public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from('avatars').getPublicUrl(filePath);
 
       // Update the user's profile
       const { error: updateError } = await supabase
@@ -78,7 +76,7 @@ const ProfilePhotoModal = ({ show, onClose, currentUser, onPhotoUpdate }) => {
   const handleRemovePhoto = async () => {
     try {
       setUploading(true);
-      
+
       // Remove the old photo from storage if it exists
       if (currentUser?.avatar_url) {
         const oldFilePath = currentUser.avatar_url.split('/').pop();
@@ -115,13 +113,8 @@ const ProfilePhotoModal = ({ show, onClose, currentUser, onPhotoUpdate }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-xl max-w-md w-full p-6">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">
-            Profile Photo
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
+          <h3 className="text-lg font-semibold text-gray-900">Profile Photo</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -136,23 +129,19 @@ const ProfilePhotoModal = ({ show, onClose, currentUser, onPhotoUpdate }) => {
                 className="w-24 h-24 rounded-full object-cover border-4 border-gray-200"
               />
             ) : (
-              <div className="w-24 h-24 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-2xl font-bold">
+              <div className="w-24 h-24 rounded-full bg-orange-500 flex items-center justify-center text-white text-2xl font-bold">
                 {currentUser?.email?.charAt(0).toUpperCase() || 'A'}
               </div>
             )}
-            
+
             {/* Preview overlay */}
             {previewUrl && (
               <div className="absolute inset-0 rounded-full overflow-hidden">
-                <img
-                  src={previewUrl}
-                  alt="Preview"
-                  className="w-full h-full object-cover"
-                />
+                <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
               </div>
             )}
           </div>
-          
+
           <p className="text-sm text-gray-600 mt-2">
             {currentUser?.avatar_url ? 'Current Profile Photo' : 'No Profile Photo'}
           </p>
@@ -161,9 +150,7 @@ const ProfilePhotoModal = ({ show, onClose, currentUser, onPhotoUpdate }) => {
         {/* Upload Section */}
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Upload New Photo
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Upload New Photo</label>
             <div className="flex items-center justify-center w-full">
               <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -189,7 +176,7 @@ const ProfilePhotoModal = ({ show, onClose, currentUser, onPhotoUpdate }) => {
             <button
               onClick={() => handlePhotoUpload(fileInputRef.current?.files[0])}
               disabled={!previewUrl || uploading}
-              className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+              className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
             >
               {uploading ? (
                 <>
@@ -203,7 +190,7 @@ const ProfilePhotoModal = ({ show, onClose, currentUser, onPhotoUpdate }) => {
                 </>
               )}
             </button>
-            
+
             {currentUser?.avatar_url && (
               <button
                 onClick={handleRemovePhoto}
@@ -221,4 +208,4 @@ const ProfilePhotoModal = ({ show, onClose, currentUser, onPhotoUpdate }) => {
   );
 };
 
-export default ProfilePhotoModal; 
+export default ProfilePhotoModal;

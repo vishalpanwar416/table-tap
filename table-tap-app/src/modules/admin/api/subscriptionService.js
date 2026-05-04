@@ -634,33 +634,36 @@ export const getSubscriptionStats = async () => {
 /**
  * Get subscriptions expiring soon (within X days)
  */
-export const getUpcomingRenewals = async (days = 7) => {
+export const getUpcomingRenewals = async (days = 30) => {
   try {
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + days);
 
     const { data: subscriptions, error } = await supabase
       .from('subscriptions')
-      .select(
-        `
-        *,
-        restaurant:restaurants (
-          id,
-          name,
-          contact_email,
-          contact_phone,
-          logo_url
-        )
-      `,
-      )
+      .select('*')
       .in('status', ['active', 'grace_period'])
       .lte('end_date', futureDate.toISOString())
       .order('end_date', { ascending: true });
 
     if (error) throw error;
 
+    // Fetch restaurant details separately to avoid join RLS issues
+    const restaurantIds = [...new Set(subscriptions.map((s) => s.restaurant_id).filter(Boolean))];
+    let restaurantMap = {};
+    if (restaurantIds.length > 0) {
+      const { data: restaurantRows } = await supabase
+        .from('restaurants')
+        .select('id, name, contact_email, contact_phone, logo_url')
+        .in('id', restaurantIds);
+      (restaurantRows || []).forEach((r) => {
+        restaurantMap[r.id] = r;
+      });
+    }
+
     const enriched = subscriptions.map((sub) => ({
       ...sub,
+      restaurant: restaurantMap[sub.restaurant_id] || null,
       daysUntilExpiry: Math.ceil((new Date(sub.end_date) - new Date()) / (1000 * 60 * 60 * 24)),
     }));
 

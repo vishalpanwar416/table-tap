@@ -15,7 +15,7 @@ import {
   ShoppingBag,
   FileText,
   Loader2,
-  ChevronUp
+  ChevronUp,
 } from 'lucide-react';
 
 import tableTapLogo from '../../../../../assets/icons/logott.png';
@@ -29,7 +29,7 @@ const RestaurantListView = ({
   onEdit,
   onDelete,
   onClick,
-  onLoadMore
+  onLoadMore,
 }) => {
   // Infinite scroll state
   const [displayedRestaurants, setDisplayedRestaurants] = useState([]);
@@ -63,7 +63,7 @@ const RestaurantListView = ({
       // If we have local data, use it
       if (restaurants.length >= endIndex) {
         const newRestaurants = restaurants.slice(startIndex, endIndex);
-        setDisplayedRestaurants(prev => [...prev, ...newRestaurants]);
+        setDisplayedRestaurants((prev) => [...prev, ...newRestaurants]);
         setCurrentPage(nextPage);
         setHasMore(endIndex < restaurants.length);
       } else {
@@ -71,7 +71,7 @@ const RestaurantListView = ({
         if (onLoadMore) {
           const newRestaurants = await onLoadMore(nextPage, itemsPerPage);
           if (newRestaurants && newRestaurants.length > 0) {
-            setDisplayedRestaurants(prev => [...prev, ...newRestaurants]);
+            setDisplayedRestaurants((prev) => [...prev, ...newRestaurants]);
             setCurrentPage(nextPage);
             setHasMore(newRestaurants.length === itemsPerPage);
           } else {
@@ -95,7 +95,7 @@ const RestaurantListView = ({
           loadMore();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     observerRef.current = observer;
@@ -103,14 +103,17 @@ const RestaurantListView = ({
   }, [loadMore, hasMore, isLoading]);
 
   // Observe the last item for infinite scroll
-  const observeLastItem = useCallback((index) => {
-    if (index === displayedRestaurants.length - 1 && hasMore && !isLoading) {
-      const lastItem = document.querySelector(`[data-restaurant-index="${index}"]`);
-      if (lastItem && observerRef.current) {
-        observerRef.current.observe(lastItem);
+  const observeLastItem = useCallback(
+    (index) => {
+      if (index === displayedRestaurants.length - 1 && hasMore && !isLoading) {
+        const lastItem = document.querySelector(`[data-restaurant-index="${index}"]`);
+        if (lastItem && observerRef.current) {
+          observerRef.current.observe(lastItem);
+        }
       }
-    }
-  }, [displayedRestaurants.length, hasMore, isLoading]);
+    },
+    [displayedRestaurants.length, hasMore, isLoading],
+  );
 
   // Function to format time ago
   const getTimeAgo = (timestamp) => {
@@ -207,24 +210,60 @@ const RestaurantListView = ({
                   }}
                 />
               ) : (
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${restaurant.is_active ? 'bg-blue-500' : 'bg-red-500'}`}>
+                <div
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center ${restaurant.is_active ? 'bg-gray-600' : 'bg-red-500'}`}
+                >
                   <Building2 className="w-5 h-5 text-white" />
                 </div>
               )}
               <div>
-                <h4 className={`font-medium font-spartan truncate ${isInactive ? 'text-red-800' : 'text-gray-900'}`}>{restaurant.name}</h4>
+                <h4
+                  className={`font-medium font-spartan truncate ${isInactive ? 'text-red-800' : 'text-gray-900'}`}
+                >
+                  {restaurant.name}
+                </h4>
                 <p className="text-xs text-gray-500 font-spartan">{restaurant.cuisine_type}</p>
               </div>
             </div>
           </div>
-          <div className="col-span-2 text-sm text-gray-600 font-spartan truncate">{restaurant.address}</div>
-          <div className="col-span-2 text-sm text-gray-600 font-spartan truncate">{restaurant.contact_phone}</div>
+          <div className="col-span-2 text-sm text-gray-600 font-spartan truncate">
+            {restaurant.address}
+          </div>
+          <div className="col-span-2 text-sm text-gray-600 font-spartan truncate">
+            {restaurant.contact_phone}
+          </div>
           <div className="col-span-1 text-center text-sm">{restaurant.staff_count || 0}</div>
           {/* Toggles */}
-          <div className="col-span-1 flex justify-center"><StatusToggle restaurant={restaurant} onClick={handleToggleStatus} /></div>
-          <div className="col-span-1 flex justify-center"><FeatureIconToggle active={restaurant.ai_enabled} icon={Brain} color="purple" onClick={(e) => handleToggleAI(e, restaurant)} /></div>
-          <div className="col-span-1 flex justify-center"><FeatureIconToggle active={restaurant.aggregators_enabled} icon={ShoppingBag} color="orange" onClick={(e) => handleToggleAggregators(e, restaurant)} /></div>
-          <div className="col-span-1 flex justify-center"><FeatureIconToggle active={restaurant.billing_features_enabled !== false || restaurant.online_bill_enabled !== false} icon={FileText} color="blue" onClick={(e) => handleToggleOnlineBill(e, restaurant)} /></div>
+          <div className="col-span-1 flex justify-center">
+            <StatusToggle restaurant={restaurant} onClick={handleToggleStatus} />
+          </div>
+          <div className="col-span-1 flex justify-center">
+            <FeatureIconToggle
+              active={restaurant.ai_enabled}
+              icon={Brain}
+              color="purple"
+              onClick={(e) => handleToggleAI(e, restaurant)}
+            />
+          </div>
+          <div className="col-span-1 flex justify-center">
+            <FeatureIconToggle
+              active={restaurant.aggregators_enabled}
+              icon={ShoppingBag}
+              color="orange"
+              onClick={(e) => handleToggleAggregators(e, restaurant)}
+            />
+          </div>
+          <div className="col-span-1 flex justify-center">
+            <FeatureIconToggle
+              active={
+                restaurant.billing_features_enabled !== false ||
+                restaurant.online_bill_enabled !== false
+              }
+              icon={FileText}
+              color="blue"
+              onClick={(e) => handleToggleOnlineBill(e, restaurant)}
+            />
+          </div>
           <div className="col-span-1 flex justify-center space-x-2">
             <ActionButtons restaurant={restaurant} onEdit={handleEdit} onDelete={handleDelete} />
           </div>
@@ -249,12 +288,18 @@ const RestaurantListView = ({
                   }}
                 />
               ) : (
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${restaurant.is_active ? 'bg-blue-500' : 'bg-red-500'}`}>
+                <div
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center ${restaurant.is_active ? 'bg-gray-600' : 'bg-red-500'}`}
+                >
                   <Building2 className="w-5 h-5 text-white" />
                 </div>
               )}
               <div>
-                <h4 className={`font-medium font-spartan ${isInactive ? 'text-red-800' : 'text-gray-900'}`}>{restaurant.name}</h4>
+                <h4
+                  className={`font-medium font-spartan ${isInactive ? 'text-red-800' : 'text-gray-900'}`}
+                >
+                  {restaurant.name}
+                </h4>
                 <div className="flex items-center gap-2 text-xs text-gray-400">
                   <span>{restaurant.cuisine_type}</span>
                   <span>•</span>
@@ -262,12 +307,14 @@ const RestaurantListView = ({
                 </div>
               </div>
             </div>
-            <ChevronUp className={`w-5 h-5 text-gray-400 transition-transform ${expanded ? '' : 'rotate-180'}`} />
+            <ChevronUp
+              className={`w-5 h-5 text-gray-400 transition-transform ${expanded ? '' : 'rotate-180'}`}
+            />
           </div>
 
           {/* Expanded Content */}
           {expanded && (
-            <div className="mt-2 space-y-3 border-t border-dashed border-gray-200 pt-2 animate-in fade-in slide-in-from-top-1">
+            <div className="mt-2 space-y-3 border-t border-dashed border-gray-200 pt-2 animate-in fade-in slide-in-">
               {/* Details */}
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
@@ -288,19 +335,44 @@ const RestaurantListView = ({
               <div>
                 <span className="block text-xs text-gray-400 mb-2">Features</span>
                 <div className="flex gap-2">
-                  <FeatureIconToggle active={restaurant.ai_enabled} icon={Brain} color="purple" onClick={(e) => handleToggleAI(e, restaurant)} label="AI" />
-                  <FeatureIconToggle active={restaurant.aggregators_enabled} icon={ShoppingBag} color="orange" onClick={(e) => handleToggleAggregators(e, restaurant)} label="Aggr" />
-                  <FeatureIconToggle active={restaurant.billing_features_enabled !== false} icon={FileText} color="blue" onClick={(e) => handleToggleOnlineBill(e, restaurant)} label="Bill" />
+                  <FeatureIconToggle
+                    active={restaurant.ai_enabled}
+                    icon={Brain}
+                    color="purple"
+                    onClick={(e) => handleToggleAI(e, restaurant)}
+                    label="AI"
+                  />
+                  <FeatureIconToggle
+                    active={restaurant.aggregators_enabled}
+                    icon={ShoppingBag}
+                    color="orange"
+                    onClick={(e) => handleToggleAggregators(e, restaurant)}
+                    label="Aggr"
+                  />
+                  <FeatureIconToggle
+                    active={restaurant.billing_features_enabled !== false}
+                    icon={FileText}
+                    color="blue"
+                    onClick={(e) => handleToggleOnlineBill(e, restaurant)}
+                    label="Bill"
+                  />
                 </div>
               </div>
 
               {/* Actions */}
               <div className="flex justify-between items-center pt-2">
-                <button onClick={() => onClick(restaurant)} className="flex items-center gap-2 text-sm font-medium text-blue-600 bg-blue-50 px-3 py-2 rounded-lg">
+                <button
+                  onClick={() => onClick(restaurant)}
+                  className="flex items-center gap-2 text-sm font-medium text-gray-600 bg-gray-50 px-3 py-2 rounded-lg"
+                >
                   Open Dashboard <ExternalLink className="w-3 h-3" />
                 </button>
                 <div className="flex gap-2">
-                  <ActionButtons restaurant={restaurant} onEdit={handleEdit} onDelete={handleDelete} />
+                  <ActionButtons
+                    restaurant={restaurant}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                  />
                 </div>
               </div>
             </div>
@@ -316,12 +388,17 @@ const RestaurantListView = ({
       onClick={(e) => onClick(e, restaurant)}
       className={`relative w-12 h-6 rounded-full transition-colors ${restaurant.is_active ? 'bg-green-500' : 'bg-red-500'}`}
     >
-      <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${restaurant.is_active ? 'translate-x-6' : 'translate-x-0'}`} />
+      <div
+        className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${restaurant.is_active ? 'translate-x-6' : 'translate-x-0'}`}
+      />
     </button>
   );
 
   const FeatureIconToggle = ({ active, icon: Icon, color, onClick, label }) => (
-    <button onClick={onClick} className={`p-2 rounded-lg border ${active ? `bg-${color}-50 border-${color}-200 text-${color}-600` : 'bg-gray-50 border-gray-200 text-gray-400'} flex items-center gap-2`}>
+    <button
+      onClick={onClick}
+      className={`p-2 rounded-lg border ${active ? `bg-${color}-50 border-${color}-200 text-${color}-600` : 'bg-gray-50 border-gray-200 text-gray-400'} flex items-center gap-2`}
+    >
       <Icon className="w-4 h-4" />
       {label && <span className="text-xs font-medium">{label}</span>}
     </button>
@@ -329,8 +406,18 @@ const RestaurantListView = ({
 
   const ActionButtons = ({ restaurant, onEdit, onDelete }) => (
     <>
-      <button onClick={(e) => onEdit(e, restaurant)} className="p-2 text-gray-400 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 rounded-lg"><Edit className="w-4 h-4" /></button>
-      <button onClick={(e) => onDelete(e, restaurant)} className="p-2 text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+      <button
+        onClick={(e) => onEdit(e, restaurant)}
+        className="p-2 text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-50 rounded-lg"
+      >
+        <Edit className="w-4 h-4" />
+      </button>
+      <button
+        onClick={(e) => onDelete(e, restaurant)}
+        className="p-2 text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 rounded-lg"
+      >
+        <Trash2 className="w-4 h-4" />
+      </button>
     </>
   );
 
@@ -347,12 +434,13 @@ const RestaurantListView = ({
   // End of list indicator - hidden
   const EndOfListIndicator = () => null;
 
-
   if (restaurants.length === 0) {
     return (
       <div className="text-center py-12">
         <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2 font-spartan">No restaurants found</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-2 font-spartan">
+          No restaurants found
+        </h3>
       </div>
     );
   }
@@ -363,7 +451,9 @@ const RestaurantListView = ({
       <div className="flex items-center justify-between">
         <div>
           <h4 className="text-md font-medium text-gray-700 font-spartan">All Restaurants</h4>
-          <p className="text-sm text-gray-500 font-spartan">Showing {displayedRestaurants.length} of {restaurants.length}</p>
+          <p className="text-sm text-gray-500 font-spartan">
+            Showing {displayedRestaurants.length} of {restaurants.length}
+          </p>
         </div>
       </div>
 
@@ -396,7 +486,7 @@ const RestaurantListView = ({
       {displayedRestaurants.length > 20 && (
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} // Simple scroll to top
-          className="fixed bottom-6 right-6 p-3 bg-blue-600 text-white rounded-full shadow-lg z-50"
+          className="fixed bottom-6 right-6 p-3 bg-gray-600 text-white rounded-full shadow-lg z-50"
         >
           <ChevronUp className="w-5 h-5" />
         </button>
@@ -405,4 +495,4 @@ const RestaurantListView = ({
   );
 };
 
-export default RestaurantListView; 
+export default RestaurantListView;

@@ -32,9 +32,9 @@ const StaffTableRow = ({ staff, restaurant, onEdit, onDelete, index }) => {
   const getRoleColor = (role) => {
     switch (role) {
       case 'manager':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
+        return 'bg-orange-100 text-orange-800 border-orange-200';
       case 'captain':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
       case 'waiter':
         return 'bg-green-100 text-green-800 border-green-200';
       case 'chef':
@@ -48,24 +48,22 @@ const StaffTableRow = ({ staff, restaurant, onEdit, onDelete, index }) => {
 
   return (
     <tr
-      className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 font-spartan"
+      className="hover:bg-orange-50 transition-all duration-200 font-spartan"
       style={{ animationDelay: `${index * 50}ms` }}
     >
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center">
           <div className="">
-            <div className="text-sm font-semibold text-gray-900 font-spartan">
-              {staff.name}
-            </div>
-            <div className="text-sm text-gray-500 font-spartan">
-              {staff.email}
-            </div>
+            <div className="text-sm font-semibold text-gray-900 font-spartan">{staff.name}</div>
+            <div className="text-sm text-gray-500 font-spartan">{staff.email}</div>
           </div>
         </div>
       </td>
 
       <td className="px-6 py-4 whitespace-nowrap">
-        <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border font-spartan ${getRoleColor(staff.role)}`}>
+        <span
+          className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border font-spartan ${getRoleColor(staff.role)}`}
+        >
           {getRoleDisplayName(staff.role)}
         </span>
       </td>
@@ -77,8 +75,11 @@ const StaffTableRow = ({ staff, restaurant, onEdit, onDelete, index }) => {
           ) : (
             <XCircle className="w-4 h-4 text-red-500 mr-2" />
           )}
-          <span className={`text-sm font-medium font-spartan ${staff.connected ? 'text-green-800' : 'text-red-800'
-            }`}>
+          <span
+            className={`text-sm font-medium font-spartan ${
+              staff.connected ? 'text-green-800' : 'text-red-800'
+            }`}
+          >
             {staff.connected ? 'Connected' : 'Disconnected'}
           </span>
         </div>
@@ -88,7 +89,7 @@ const StaffTableRow = ({ staff, restaurant, onEdit, onDelete, index }) => {
         <div className="flex items-center space-x-2">
           <button
             onClick={handleEdit}
-            className="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-all duration-200"
+            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all duration-200"
             title="Edit staff member"
           >
             <Edit className="w-4 h-4" />
@@ -106,4 +107,4 @@ const StaffTableRow = ({ staff, restaurant, onEdit, onDelete, index }) => {
   );
 };
 
-export default StaffTableRow; 
+export default StaffTableRow;

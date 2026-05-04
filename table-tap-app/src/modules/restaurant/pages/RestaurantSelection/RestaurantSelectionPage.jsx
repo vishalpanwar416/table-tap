@@ -2,23 +2,45 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { ChevronLeft, MapPin, Phone, Clock, RefreshCw, Store, ArrowRight, Navigation, Crosshair, ChevronDown, Edit3, Search, X } from 'lucide-react';
-import { getActiveRestaurants, getClosestRestaurants, getAllRestaurants, searchRestaurants } from './restaurantSelectionService';
+import {
+  ChevronLeft,
+  MapPin,
+  Phone,
+  Clock,
+  RefreshCw,
+  Store,
+  ArrowRight,
+  Navigation,
+  Crosshair,
+  ChevronDown,
+  Edit3,
+  Search,
+  X,
+} from 'lucide-react';
+import {
+  getActiveRestaurants,
+  getClosestRestaurants,
+  getAllRestaurants,
+  searchRestaurants,
+} from './restaurantSelectionService';
 import { useRestaurant } from './RestaurantContext';
 import { useAuth } from '../../../shared/config/AuthContext';
 import { supabase } from '../../../shared/supabase';
-import { getStoredRestaurantSelection, storeRestaurantSelection } from '../../../shared/utils/restaurantCheck';
+import {
+  getStoredRestaurantSelection,
+  storeRestaurantSelection,
+} from '../../../shared/utils/restaurantCheck';
 
 const pageVariants = {
   initial: { opacity: 0 },
   animate: { opacity: 1 },
-  exit: { opacity: 0 }
+  exit: { opacity: 0 },
 };
 
 const slideUp = {
   initial: { y: 20, opacity: 0 },
   animate: { y: 0, opacity: 1 },
-  transition: { duration: 0.4, ease: "easeOut" }
+  transition: { duration: 0.4, ease: 'easeOut' },
 };
 
 // Location cache: avoid asking for location on every refresh (TTL 30 min)
@@ -30,12 +52,13 @@ const getCachedLocation = () => {
     const raw = localStorage.getItem(LOCATION_CACHE_KEY);
     if (!raw) return null;
     const data = JSON.parse(raw);
-    if (!data || typeof data.latitude !== 'number' || typeof data.longitude !== 'number') return null;
+    if (!data || typeof data.latitude !== 'number' || typeof data.longitude !== 'number')
+      return null;
     if (Date.now() - (data.timestamp || 0) > LOCATION_CACHE_TTL_MS) return null;
     return {
       latitude: data.latitude,
       longitude: data.longitude,
-      address: data.address || undefined
+      address: data.address || undefined,
     };
   } catch {
     return null;
@@ -45,21 +68,24 @@ const getCachedLocation = () => {
 const setCachedLocation = (loc) => {
   if (!loc || typeof loc.latitude !== 'number' || typeof loc.longitude !== 'number') return;
   try {
-    localStorage.setItem(LOCATION_CACHE_KEY, JSON.stringify({
-      latitude: loc.latitude,
-      longitude: loc.longitude,
-      address: loc.address,
-      timestamp: Date.now()
-    }));
-  } catch { }
+    localStorage.setItem(
+      LOCATION_CACHE_KEY,
+      JSON.stringify({
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+        address: loc.address,
+        timestamp: Date.now(),
+      }),
+    );
+  } catch {}
 };
 
 const staggerItems = {
   animate: {
     transition: {
-      staggerChildren: 0.1
-    }
-  }
+      staggerChildren: 0.1,
+    },
+  },
 };
 
 const RestaurantSelectionPage = () => {
@@ -144,11 +170,12 @@ const RestaurantSelectionPage = () => {
       setSearchError(null);
       return;
     }
-    const filtered = restaurants.filter(r =>
-      r.name?.toLowerCase().includes(term) ||
-      r.cuisine_type?.toLowerCase().includes(term) ||
-      r.description?.toLowerCase().includes(term) ||
-      r.address?.toLowerCase().includes(term)
+    const filtered = restaurants.filter(
+      (r) =>
+        r.name?.toLowerCase().includes(term) ||
+        r.cuisine_type?.toLowerCase().includes(term) ||
+        r.description?.toLowerCase().includes(term) ||
+        r.address?.toLowerCase().includes(term),
     );
     setSearchResults(filtered);
     setSearchError(null);
@@ -170,6 +197,7 @@ const RestaurantSelectionPage = () => {
   const scrollYRef = useRef(0); // Add this near your other refs
   const scrollTimeoutRef = useRef(null);
   const locationToastShownRef = useRef(false);
+  const abortControllerRef = useRef(null);
   const floatingCardTouchStartY = useRef(0);
 
   const navigate = useNavigate();
@@ -200,12 +228,23 @@ const RestaurantSelectionPage = () => {
     checkUrlParameters();
   }, [location.search, navigate, setRestaurantAndTable]);
 
-  // Check for stored selection on component mount
+  // Check for stored selection and load cached restaurants for instant UI
   useEffect(() => {
-    const storedSelection = getStoredRestaurantSelection();
-    if (storedSelection?.tableNumber) {
-      setTableNumber(storedSelection.tableNumber);
-    }
+    const init = async () => {
+      const storedSelection = getStoredRestaurantSelection();
+      if (storedSelection?.tableNumber) {
+        setTableNumber(storedSelection.tableNumber);
+      }
+
+      // Load from IndexedDB cache immediately
+      const { offlineStorage } = await import('../../../shared/utils/offlineStorage');
+      const cached = await offlineStorage.getRestaurants();
+      if (cached && cached.length > 0) {
+        setRestaurants(cached);
+        setLoading(false);
+      }
+    };
+    init();
   }, []);
 
   // Restore location from cache on mount so we don't ask again after refresh
@@ -247,7 +286,7 @@ const RestaurantSelectionPage = () => {
   useEffect(() => {
     const storedSelection = getStoredRestaurantSelection();
     if (storedSelection?.restaurantId && restaurants.length > 0 && !selectedRestaurant) {
-      const currentRestaurant = restaurants.find(r => r.id === storedSelection.restaurantId);
+      const currentRestaurant = restaurants.find((r) => r.id === storedSelection.restaurantId);
       if (currentRestaurant) {
         setSelectedRestaurant(currentRestaurant);
       }
@@ -298,7 +337,7 @@ const RestaurantSelectionPage = () => {
   useEffect(() => {
     if (userLocation && restaurants.length > 0) {
       // Find the closest restaurant within 100 meters (0.1 km)
-      const closest = restaurants.find(r => r.distance !== null && r.distance < 0.1);
+      const closest = restaurants.find((r) => r.distance !== null && r.distance < 0.1);
       if (closest && !selectedRestaurant && !showNearestRestaurantPopup) {
         setNearestRestaurant(closest);
         setShowNearestRestaurantPopup(true);
@@ -342,7 +381,7 @@ const RestaurantSelectionPage = () => {
     const options = {
       enableHighAccuracy: true,
       timeout: 15000,
-      maximumAge: 300000 // 5 minutes
+      maximumAge: 300000, // 5 minutes
     };
 
     navigator.geolocation.getCurrentPosition(
@@ -381,7 +420,7 @@ const RestaurantSelectionPage = () => {
             setLocationError('An unknown error occurred while getting location.');
         }
       },
-      options
+      options,
     );
   };
 
@@ -389,14 +428,14 @@ const RestaurantSelectionPage = () => {
   const getAddressFromCoordinates = async (latitude, longitude) => {
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
       );
       const data = await response.json();
 
       if (data.display_name) {
         const address = data.display_name.split(',').slice(0, 3).join(',');
         setCachedLocation({ latitude, longitude, address });
-        setUserLocation(prev => ({ ...prev, address }));
+        setUserLocation((prev) => ({ ...prev, address }));
       }
     } catch (error) {
       // Don't set error here as coordinates are still useful
@@ -455,7 +494,7 @@ const RestaurantSelectionPage = () => {
             </div>
           );
         },
-        { position: 'top-center', duration: 8000 }
+        { position: 'top-center', duration: 8000 },
       );
     }, 500);
     return () => clearTimeout(timer);
@@ -464,12 +503,14 @@ const RestaurantSelectionPage = () => {
   // Calculate distance between two points
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371; // Radius of the Earth in kilometers
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c; // Distance in kilometers
     return distance;
@@ -481,7 +522,8 @@ const RestaurantSelectionPage = () => {
       const currentScrollY = window.scrollY;
 
       // Only trigger scroll state if there's significant movement
-      if (Math.abs(currentScrollY - scrollY) > 10) { // Increased threshold from 5 to 10
+      if (Math.abs(currentScrollY - scrollY) > 10) {
+        // Increased threshold from 5 to 10
         setIsScrolling(true);
 
         // Clear scroll state after a delay
@@ -518,15 +560,15 @@ const RestaurantSelectionPage = () => {
     return baseScale;
   };
 
-  const fetchInProgressRef = useRef(false);
-
   // Update fetchRestaurants to use and update cache
   const fetchRestaurants = async (showRefreshAnimation = false, force = false, retryCount = 0) => {
-    if (fetchInProgressRef.current && !force) return;
+    // Abort previous request if one exists
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
 
-    let failedWithAbort = false;
     try {
-      fetchInProgressRef.current = true;
       if (showRefreshAnimation) {
         setIsRefreshing(true);
       } else if (restaurants.length === 0) {
@@ -537,7 +579,7 @@ const RestaurantSelectionPage = () => {
       let data = [];
 
       if (showAllRestaurants) {
-        // Use cache if available and not forcing
+        // Use memory cache if available and not forcing
         if (cachedAll && !force) {
           setRestaurants(cachedAll);
           setLoading(false);
@@ -546,7 +588,7 @@ const RestaurantSelectionPage = () => {
         }
         data = await getAllRestaurants();
         if (userLocation) {
-          data = data.map(restaurant => {
+          data = data.map((restaurant) => {
             let distance = null;
             if (restaurant.location) {
               const match = restaurant.location.match(/POINT\(([^)]+)\)/);
@@ -556,7 +598,7 @@ const RestaurantSelectionPage = () => {
                   userLocation.latitude,
                   userLocation.longitude,
                   parseFloat(lat), // restaurant latitude
-                  parseFloat(lng)  // restaurant longitude
+                  parseFloat(lng), // restaurant longitude
                 );
               }
             }
@@ -571,7 +613,7 @@ const RestaurantSelectionPage = () => {
         }
         setCachedAll(data);
       } else if (userLocation && userLocation.latitude && userLocation.longitude) {
-        // Use cache if available and not forcing
+        // Use memory cache if available and not forcing
         if (cachedNearby && !force) {
           setRestaurants(cachedNearby);
           setLoading(false);
@@ -579,9 +621,9 @@ const RestaurantSelectionPage = () => {
           return;
         }
         data = await getClosestRestaurants(userLocation.latitude, userLocation.longitude, 5000);
-        data = (data || []).map(restaurant => ({
+        data = (data || []).map((restaurant) => ({
           ...restaurant,
-          distance: typeof restaurant.distance === 'number' ? restaurant.distance / 1000 : null
+          distance: typeof restaurant.distance === 'number' ? restaurant.distance / 1000 : null,
         }));
         // Sort by distance (closest first)
         data.sort((a, b) => {
@@ -599,7 +641,7 @@ const RestaurantSelectionPage = () => {
           .eq('user_id', user.id);
 
         if (!staffError && staffData && staffData.length > 0) {
-          const ids = staffData.map(item => item.restaurant_id);
+          const ids = staffData.map((item) => item.restaurant_id);
           const { data: restaurantsData, error: restsError } = await supabase
             .from('restaurants')
             .select('*')
@@ -609,8 +651,6 @@ const RestaurantSelectionPage = () => {
         } else {
           data = [];
         }
-
-
       } else {
         data = await getActiveRestaurants();
       }
@@ -618,40 +658,27 @@ const RestaurantSelectionPage = () => {
       const restaurantsData = data || [];
       setRestaurants(restaurantsData);
 
-      // Log for debugging
-      if (restaurantsData.length === 0) {
-        console.warn('No restaurants found. Filters:', {
-          showAllRestaurants,
-          showMyRestaurants,
-          isOwner,
-          hasUserLocation: !!userLocation,
-          userId: user?.id
+      // Save to persistent IndexedDB cache for next refresh
+      if (restaurantsData.length > 0) {
+        import('../../../shared/utils/offlineStorage').then(({ offlineStorage }) => {
+          offlineStorage.saveRestaurants(restaurantsData);
         });
-      } else {
-        console.log(`Loaded ${restaurantsData.length} restaurant(s)`);
       }
     } catch (err) {
+      // Ignore abort errors as they are intentional
+      if (err.name === 'AbortError' || err.message?.includes('aborted')) return;
+
       console.error('Error fetching restaurants:', err);
 
-      // Handle AbortError (common after migration/session mismatch)
-      const isAbort = err?.name === 'AbortError' || err?.message?.includes('aborted');
-      if (isAbort && retryCount < 1) {
-        failedWithAbort = true;
-        console.warn('[RestaurantSelection] AbortError detected — clearing stale storage and retrying once...');
-        try {
-          // Clear all supabase session keys from localStorage
-          Object.keys(localStorage)
-            .filter(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
-            .forEach(k => { console.log('[RestaurantSelection] Removing stale key:', k); localStorage.removeItem(k); });
-        } catch (e) { /* ignore */ }
-
-        // Wait a moment and retry
-        await new Promise(r => setTimeout(r, 300));
+      // Handle retry for transient errors
+      if (retryCount < 1) {
+        await new Promise((r) => setTimeout(r, 300));
         return fetchRestaurants(showRefreshAnimation, force, retryCount + 1);
       }
 
       // Check if it's an authentication error
-      const isAuthError = err?.isAuthError ||
+      const isAuthError =
+        err?.isAuthError ||
         err?.code === 'PGRST301' ||
         err?.message?.includes('JWT') ||
         err?.message?.includes('expired') ||
@@ -663,33 +690,25 @@ const RestaurantSelectionPage = () => {
         err?.error?.isAuthError;
 
       if (isAuthError) {
-        // Redirect to login on auth error
         const returnUrl = window.location.pathname + window.location.search;
         navigate(`/login?redirect=${encodeURIComponent(returnUrl)}`, { replace: true });
         return;
       }
 
-      const errorMessage = err?.message || err?.error?.message || 'Failed to load restaurants. Please check your connection and try again.';
+      const errorMessage = err?.message || err?.error?.message || 'Failed to load restaurants.';
       setError(errorMessage);
     } finally {
-      if (!failedWithAbort) {
-        setLoading(false);
-      }
-
-
-
+      // Only clear loading states if this is still the active request
+      setLoading(false);
       if (showRefreshAnimation) {
         setTimeout(() => setIsRefreshing(false), 500);
       }
-      fetchInProgressRef.current = false;
+      abortControllerRef.current = null;
     }
-
   };
 
-
-  // Effect was consolidated above. 
+  // Effect was consolidated above.
   // No longer needed to prevent double-firing on mount while auth loads.
-
 
   // Invalidate nearby cache when userLocation changes so next fetch gets fresh nearby list
   useEffect(() => {
@@ -708,17 +727,20 @@ const RestaurantSelectionPage = () => {
   // Helper function to get default restaurant images based on cuisine type
   const getDefaultRestaurantImage = (cuisineType) => {
     const defaultImages = {
-      'Italian': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop',
-      'Japanese': 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop',
-      'American': 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=400&h=300&fit=crop',
-      'Indian': 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400&h=300&fit=crop',
-      'Seafood': 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400&h=300&fit=crop',
-      'Chinese': 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop',
-      'Mexican': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop',
-      'Thai': 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop'
+      Italian: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop',
+      Japanese: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop',
+      American: 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=400&h=300&fit=crop',
+      Indian: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400&h=300&fit=crop',
+      Seafood: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400&h=300&fit=crop',
+      Chinese: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop',
+      Mexican: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop',
+      Thai: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop',
     };
 
-    return defaultImages[cuisineType] || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop';
+    return (
+      defaultImages[cuisineType] ||
+      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop'
+    );
   };
 
   const handleRestaurantClick = (restaurant) => {
@@ -755,9 +777,7 @@ const RestaurantSelectionPage = () => {
     const stored = getStoredRestaurantSelection();
     const inputTable = tableNumber.trim();
     const finalTableNumber =
-      inputTable ||
-      stored?.tableNumber ||
-      (availableTables.length === 0 ? 'N/A' : '');
+      inputTable || stored?.tableNumber || (availableTables.length === 0 ? 'N/A' : '');
 
     if (availableTables.length > 0 && !finalTableNumber) {
       alert('Please enter a table number');
@@ -777,7 +797,6 @@ const RestaurantSelectionPage = () => {
       setTimeout(() => {
         navigate('/home');
       }, 1000);
-
     } catch (err) {
       alert('Failed to select restaurant. Please try again.');
     } finally {
@@ -832,7 +851,7 @@ const RestaurantSelectionPage = () => {
 
   // Get selected table details
   const getSelectedTableDetails = () => {
-    return availableTables.find(table => table.tableNumber === tableNumber);
+    return availableTables.find((table) => table.tableNumber === tableNumber);
   };
 
   // Check if table number input should be shown
@@ -872,8 +891,8 @@ const RestaurantSelectionPage = () => {
     const storedSelection = getStoredRestaurantSelection();
     if (storedSelection?.tableNumber && availableTables.length > 0) {
       // Check if the stored table number exists in available tables
-      const matchingTable = availableTables.find(table =>
-        table.tableNumber === storedSelection.tableNumber
+      const matchingTable = availableTables.find(
+        (table) => table.tableNumber === storedSelection.tableNumber,
       );
 
       if (matchingTable) {
@@ -906,7 +925,9 @@ const RestaurantSelectionPage = () => {
               {userLocation ? 'Restaurants Near You' : 'Select Restaurant'}
             </h1>
             <p className="text-gray-400 text-xs md:text-sm mt-1">
-              {userLocation ? 'Showing restaurants sorted by distance' : 'Choose a restaurant to view the menu'}
+              {userLocation
+                ? 'Showing restaurants sorted by distance'
+                : 'Choose a restaurant to view the menu'}
             </p>
           </div>
         </div>
@@ -920,7 +941,6 @@ const RestaurantSelectionPage = () => {
           className="flex-1 flex flex-col"
         >
           <div className="flex-1 flex flex-col bg-gray-200 rounded-t-3xl overflow-hidden min-h-[500px] px-4 pt-4 pb-6">
-
             {/* Filter / Search bar */}
             <div className={`${isOwner ? 'mb-2' : 'mb-3'}`}>
               <AnimatePresence mode="wait">
@@ -978,7 +998,10 @@ const RestaurantSelectionPage = () => {
                       aria-label="Toggle location"
                     >
                       <div className="relative flex-shrink-0">
-                        <MapPin size={16} className={userLocation ? 'text-orange-500' : 'text-gray-400'} />
+                        <MapPin
+                          size={16}
+                          className={userLocation ? 'text-orange-500' : 'text-gray-400'}
+                        />
                         {locationLoading && (
                           <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-orange-400 animate-ping" />
                         )}
@@ -987,7 +1010,7 @@ const RestaurantSelectionPage = () => {
                         {locationLoading
                           ? 'Locating…'
                           : userLocation
-                            ? (userLocation.address?.split(',')[0] || 'Located')
+                            ? userLocation.address?.split(',')[0] || 'Located'
                             : 'Location off'}
                       </span>
                     </button>
@@ -1000,7 +1023,10 @@ const RestaurantSelectionPage = () => {
                       <button
                         onClick={() => {
                           if (!userLocation) getUserLocation();
-                          else { setShowAllRestaurants(false); setShowMyRestaurants(false); }
+                          else {
+                            setShowAllRestaurants(false);
+                            setShowMyRestaurants(false);
+                          }
                         }}
                         className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
                           !showAllRestaurants && !showMyRestaurants
@@ -1011,7 +1037,10 @@ const RestaurantSelectionPage = () => {
                         Near me
                       </button>
                       <button
-                        onClick={() => { setShowAllRestaurants(true); setShowMyRestaurants(false); }}
+                        onClick={() => {
+                          setShowAllRestaurants(true);
+                          setShowMyRestaurants(false);
+                        }}
                         className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
                           showAllRestaurants
                             ? 'bg-gray-800 text-white shadow-sm'
@@ -1040,16 +1069,25 @@ const RestaurantSelectionPage = () => {
               <div className="mt-0 mb-1.5">
                 <button
                   type="button"
-                  onClick={() => { setShowMyRestaurants(true); setShowAllRestaurants(false); }}
-                  className={`w-full rounded-lg py-2 px-3 font-medium text-sm transition-all flex items-center justify-between gap-2 border ${showMyRestaurants
-                    ? 'bg-amber-500 border-amber-600 text-white shadow-sm'
-                    : 'bg-white border-amber-200 text-amber-800 hover:bg-amber-50 hover:border-amber-300'
-                    }`}
+                  onClick={() => {
+                    setShowMyRestaurants(true);
+                    setShowAllRestaurants(false);
+                  }}
+                  className={`w-full rounded-lg py-2 px-3 font-medium text-sm transition-all flex items-center justify-between gap-2 border ${
+                    showMyRestaurants
+                      ? 'bg-amber-500 border-amber-600 text-white shadow-sm'
+                      : 'bg-white border-amber-200 text-amber-800 hover:bg-amber-50 hover:border-amber-300'
+                  }`}
                 >
                   <span className="flex-1 min-w-0" aria-hidden="true" />
                   <span className="flex items-center gap-2 flex-shrink-0">
-                    <span className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${showMyRestaurants ? 'bg-amber-400' : 'bg-amber-100'}`}>
-                      <Store size={16} className={showMyRestaurants ? 'text-amber-900' : 'text-amber-600'} />
+                    <span
+                      className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${showMyRestaurants ? 'bg-amber-400' : 'bg-amber-100'}`}
+                    >
+                      <Store
+                        size={16}
+                        className={showMyRestaurants ? 'text-amber-900' : 'text-amber-600'}
+                      />
                     </span>
                     <span>My Restaurants</span>
                   </span>
@@ -1076,8 +1114,10 @@ const RestaurantSelectionPage = () => {
                 {(loading || authLoading) && restaurants.length === 0 ? (
                   <div className="flex flex-col items-center w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl">
                     {[...Array(5)].map((_, i) => (
-
-                      <div key={i} className="animate-pulse bg-white/10 rounded-2xl border-2 border-gray-800 shadow-sm mb-4 flex items-center px-2 py-3 md:px-4 md:py-4 w-full max-w-xl">
+                      <div
+                        key={i}
+                        className="animate-pulse bg-white/10 rounded-2xl border-2 border-gray-800 shadow-sm mb-4 flex items-center px-2 py-3 md:px-4 md:py-4 w-full max-w-xl"
+                      >
                         <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-300 rounded-lg mr-3" />
                         <div className="flex-1 space-y-2">
                           <div className="h-4 bg-gray-300 rounded w-1/2" />
@@ -1091,7 +1131,9 @@ const RestaurantSelectionPage = () => {
                   <div className="flex flex-col items-center justify-center h-full p-6">
                     <div className="bg-red-50 border border-red-200 rounded-xl p-6 max-w-md shadow-lg text-center">
                       <div className="text-red-500 text-6xl mb-4">⚠️</div>
-                      <h3 className="text-red-600 text-xl font-semibold mb-2">Error Loading Restaurants</h3>
+                      <h3 className="text-red-600 text-xl font-semibold mb-2">
+                        Error Loading Restaurants
+                      </h3>
                       <p className="text-red-500 text-sm mb-4">{error}</p>
                       <button
                         onClick={() => {
@@ -1104,7 +1146,10 @@ const RestaurantSelectionPage = () => {
                       </button>
                     </div>
                   </div>
-                ) : showSearch && searchResults !== null && searchResults.length === 0 && !searchLoading ? (
+                ) : showSearch &&
+                  searchResults !== null &&
+                  searchResults.length === 0 &&
+                  !searchLoading ? (
                   <div className="flex flex-col items-center justify-center h-full p-6">
                     <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 max-w-md shadow-lg text-center">
                       <div className="text-gray-400 text-6xl mb-4">🔍</div>
@@ -1120,19 +1165,23 @@ const RestaurantSelectionPage = () => {
                       </button>
                     </div>
                   </div>
-                ) : !loading && restaurants.length === 0 && !(showSearch && searchResults !== null) ? (
+                ) : !loading &&
+                  restaurants.length === 0 &&
+                  !(showSearch && searchResults !== null) ? (
                   <div className="flex flex-col items-center justify-center h-full p-6">
                     <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 max-w-md shadow-lg text-center">
                       <div className="text-gray-400 text-6xl mb-4">🍽️</div>
-                      <h3 className="text-gray-700 text-xl font-semibold mb-2">No Restaurants Available</h3>
+                      <h3 className="text-gray-700 text-xl font-semibold mb-2">
+                        No Restaurants Available
+                      </h3>
                       <p className="text-gray-500 text-sm mb-4">
                         {showMyRestaurants
                           ? "You don't have any restaurants assigned to your account."
                           : showAllRestaurants
-                            ? "There are no restaurants available at the moment. This may be because no restaurants have active subscriptions."
+                            ? 'There are no restaurants available at the moment. This may be because no restaurants have active subscriptions.'
                             : userLocation
-                              ? "No restaurants found nearby. Try enabling location or viewing all restaurants."
-                              : "No restaurants found. Try enabling location to see nearby restaurants or view all restaurants."}
+                              ? 'No restaurants found nearby. Try enabling location or viewing all restaurants.'
+                              : 'No restaurants found. Try enabling location to see nearby restaurants or view all restaurants.'}
                       </p>
                       <div className="flex flex-col gap-2">
                         {!showAllRestaurants && (
@@ -1165,94 +1214,108 @@ const RestaurantSelectionPage = () => {
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2.5">
-                    {((showSearch && searchResults) ? searchResults : restaurants).map((restaurant, index) => {
-                      const isSelected = selectedRestaurant?.id === restaurant.id;
-                      const imgSrc = restaurant.restaurant_photo_url?.trim() ||
-                        restaurant.logo_url?.trim() ||
-                        getDefaultRestaurantImage(restaurant.cuisine_type) || null;
+                    {(showSearch && searchResults ? searchResults : restaurants).map(
+                      (restaurant, index) => {
+                        const isSelected = selectedRestaurant?.id === restaurant.id;
+                        const imgSrc =
+                          restaurant.restaurant_photo_url?.trim() ||
+                          restaurant.logo_url?.trim() ||
+                          getDefaultRestaurantImage(restaurant.cuisine_type) ||
+                          null;
 
-                      return (
-                        <motion.div
-                          key={restaurant.id}
-                          whileTap={{ scale: 0.975 }}
-                          onClick={() => handleRestaurantClick(restaurant)}
-                          tabIndex={0}
-                          aria-label={`Select ${restaurant.name}`}
-                          role="button"
-                          onKeyDown={e => {
-                            if (e.key === 'Enter' || e.key === ' ') handleRestaurantClick(restaurant);
-                          }}
-                          className={`bg-white rounded-2xl cursor-pointer touch-manipulation flex items-center gap-3 px-3 py-3 transition-all ${
-                            isSelected
-                              ? 'border-2 border-orange-500 shadow-md shadow-orange-100'
-                              : 'border border-gray-100 shadow-sm'
-                          }`}
-                        >
-                          {/* Image */}
-                          <div className="relative flex-shrink-0">
-                            {imgSrc ? (
-                              <img
-                                src={imgSrc}
-                                alt={restaurant.name}
-                                className="w-20 h-20 object-cover rounded-xl"
-                                loading={index > 2 ? 'lazy' : 'eager'}
-                                onError={e => { e.target.onerror = null; e.target.style.display = 'none'; }}
-                                draggable={false}
-                              />
-                            ) : (
-                              <div className="w-20 h-20 bg-gradient-to-br from-orange-50 to-amber-100 rounded-xl flex items-center justify-center text-3xl">
-                                🍽️
-                              </div>
-                            )}
-                            {isSelected && (
-                              <motion.div
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center shadow"
-                              >
-                                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                                  <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
-                              </motion.div>
-                            )}
-                          </div>
-
-                          {/* Info */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-1 mb-1">
-                              <span className="font-semibold text-sm text-gray-900 truncate leading-tight">
-                                {restaurant.name}
-                              </span>
-                              {userLocation && restaurant.distance != null && (
-                                <span className="flex-shrink-0 text-[11px] font-medium text-orange-500 bg-orange-50 px-1.5 py-0.5 rounded-full">
-                                  {formatDistance(restaurant.distance)}
-                                </span>
+                        return (
+                          <motion.div
+                            key={restaurant.id}
+                            whileTap={{ scale: 0.975 }}
+                            onClick={() => handleRestaurantClick(restaurant)}
+                            tabIndex={0}
+                            aria-label={`Select ${restaurant.name}`}
+                            role="button"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ')
+                                handleRestaurantClick(restaurant);
+                            }}
+                            className={`bg-white rounded-2xl cursor-pointer touch-manipulation flex items-center gap-3 px-3 py-3 transition-all ${
+                              isSelected
+                                ? 'border-2 border-orange-500 shadow-md shadow-orange-100'
+                                : 'border border-gray-100 shadow-sm'
+                            }`}
+                          >
+                            {/* Image */}
+                            <div className="relative flex-shrink-0">
+                              {imgSrc ? (
+                                <img
+                                  src={imgSrc}
+                                  alt={restaurant.name}
+                                  className="w-20 h-20 object-cover rounded-xl"
+                                  loading={index > 2 ? 'lazy' : 'eager'}
+                                  onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.style.display = 'none';
+                                  }}
+                                  draggable={false}
+                                />
+                              ) : (
+                                <div className="w-20 h-20 bg-gradient-to-br from-orange-50 to-amber-100 rounded-xl flex items-center justify-center text-3xl">
+                                  🍽️
+                                </div>
+                              )}
+                              {isSelected && (
+                                <motion.div
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center shadow"
+                                >
+                                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                                    <path
+                                      d="M1 4L3.5 6.5L9 1"
+                                      stroke="white"
+                                      strokeWidth="1.8"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    />
+                                  </svg>
+                                </motion.div>
                               )}
                             </div>
 
-                            <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                              {restaurant.cuisine_type && (
-                                <span className="text-[11px] font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full capitalize">
-                                  {restaurant.cuisine_type}
+                            {/* Info */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-1 mb-1">
+                                <span className="font-semibold text-sm text-gray-900 truncate leading-tight">
+                                  {restaurant.name}
                                 </span>
-                              )}
-                              {restaurant.description?.trim() && (
-                                <span className="text-[11px] text-gray-400 truncate max-w-[140px]">
-                                  {restaurant.description}
-                                </span>
-                              )}
-                            </div>
-
-                            {restaurant.address?.trim() ? (
-                              <div className="flex items-center gap-1 text-[11px] text-gray-400">
-                                <MapPin size={11} className="flex-shrink-0 text-gray-300" />
-                                <span className="truncate">{restaurant.address}</span>
+                                {userLocation && restaurant.distance != null && (
+                                  <span className="flex-shrink-0 text-[11px] font-medium text-orange-500 bg-orange-50 px-1.5 py-0.5 rounded-full">
+                                    {formatDistance(restaurant.distance)}
+                                  </span>
+                                )}
                               </div>
-                            ) : null}
-                          </div>
-                        </motion.div>
-                      );
-                    })}
+
+                              <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                                {restaurant.cuisine_type && (
+                                  <span className="text-[11px] font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full capitalize">
+                                    {restaurant.cuisine_type}
+                                  </span>
+                                )}
+                                {restaurant.description?.trim() && (
+                                  <span className="text-[11px] text-gray-400 truncate max-w-[140px]">
+                                    {restaurant.description}
+                                  </span>
+                                )}
+                              </div>
+
+                              {restaurant.address?.trim() ? (
+                                <div className="flex items-center gap-1 text-[11px] text-gray-400">
+                                  <MapPin size={11} className="flex-shrink-0 text-gray-300" />
+                                  <span className="truncate">{restaurant.address}</span>
+                                </div>
+                              ) : null}
+                            </div>
+                          </motion.div>
+                        );
+                      },
+                    )}
                   </div>
                 )}
               </div>
@@ -1267,7 +1330,7 @@ const RestaurantSelectionPage = () => {
                   exit={{
                     opacity: 0,
                     y: 80,
-                    transition: { duration: 0.25, ease: 'easeIn' }
+                    transition: { duration: 0.25, ease: 'easeIn' },
                   }}
                   transition={{ duration: 0.3, ease: 'easeOut' }}
                   className="fixed left-0 right-0 bottom-0 z-50 flex justify-center"
@@ -1275,9 +1338,11 @@ const RestaurantSelectionPage = () => {
                   <div
                     className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl px-3 pt-2 pb-3 bg-white rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.12)] border-t-4 border-orange-500 overflow-hidden touch-manipulation"
                     style={{
-                      paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))'
+                      paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))',
                     }}
-                    onTouchStart={(e) => { floatingCardTouchStartY.current = e.touches[0].clientY; }}
+                    onTouchStart={(e) => {
+                      floatingCardTouchStartY.current = e.touches[0].clientY;
+                    }}
                     onTouchEnd={(e) => {
                       const dy = e.changedTouches[0].clientY - floatingCardTouchStartY.current;
                       if (dy > 60) {
@@ -1287,7 +1352,13 @@ const RestaurantSelectionPage = () => {
                       }
                     }}
                     tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === 'Escape') { setSelectedRestaurant(null); setShowTableSelection(false); setTableNumber(''); } }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') {
+                        setSelectedRestaurant(null);
+                        setShowTableSelection(false);
+                        setTableNumber('');
+                      }
+                    }}
                     aria-label="Swipe down to cancel selection"
                   >
                     <motion.div
@@ -1297,7 +1368,7 @@ const RestaurantSelectionPage = () => {
                       exit={{
                         opacity: 0,
                         y: 20,
-                        transition: { duration: 0.2, delay: 0.1 }
+                        transition: { duration: 0.2, delay: 0.1 },
                       }}
                       transition={{ duration: 0.3, delay: 0.1 }}
                     >
@@ -1314,13 +1385,14 @@ const RestaurantSelectionPage = () => {
                           <select
                             value={tableNumber}
                             onChange={(e) => setTableNumber(e.target.value)}
-                            className={`flex-shrink-0 text-[11px] font-medium rounded-md border py-1 pl-2 pr-6 appearance-none bg-no-repeat focus:outline-none focus:ring-2 focus:ring-orange-400 cursor-pointer min-w-0 max-w-[7rem] ${isTableAutoSelected()
-                              ? 'bg-green-100 text-green-800 border-green-300'
-                              : 'bg-gray-50 text-gray-800 border-gray-200 hover:border-orange-300'
-                              }`}
+                            className={`flex-shrink-0 text-[11px] font-medium rounded-md border py-1 pl-2 pr-6 appearance-none bg-no-repeat focus:outline-none focus:ring-2 focus:ring-orange-400 cursor-pointer min-w-0 max-w-[7rem] ${
+                              isTableAutoSelected()
+                                ? 'bg-green-100 text-green-800 border-green-300'
+                                : 'bg-gray-50 text-gray-800 border-gray-200 hover:border-orange-300'
+                            }`}
                             style={{
                               backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-                              backgroundPosition: 'right 6px center'
+                              backgroundPosition: 'right 6px center',
                             }}
                             aria-label="Select table"
                           >
@@ -1339,11 +1411,13 @@ const RestaurantSelectionPage = () => {
                           exit={{
                             opacity: 0,
                             y: 20,
-                            transition: { duration: 0.2 }
+                            transition: { duration: 0.2 },
                           }}
                           transition={{ duration: 0.3, delay: 0.3 }}
                           onClick={handleContinue}
-                          disabled={isSelecting || (availableTables.length > 0 && !tableNumber.trim())}
+                          disabled={
+                            isSelecting || (availableTables.length > 0 && !tableNumber.trim())
+                          }
                           className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-2 px-3 rounded-lg transition-colors shadow-sm touch-manipulation text-sm flex-shrink-0 flex items-center gap-1.5"
                           style={{ minHeight: '36px' }}
                         >
@@ -1386,12 +1460,24 @@ const RestaurantSelectionPage = () => {
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    <svg
+                      className="w-5 h-5 text-green-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2.5}
+                        d="M5 13l4 4L19 7"
+                      />
                     </svg>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-900">Opening {selectedRestaurant?.name}</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      Opening {selectedRestaurant?.name}
+                    </p>
                     <div className="flex items-center gap-2 mt-1">
                       <div className="animate-spin rounded-full h-3 w-3 border-2 border-orange-500 border-t-transparent"></div>
                       <span className="text-xs text-gray-500">Redirecting...</span>
@@ -1442,7 +1528,8 @@ const RestaurantSelectionPage = () => {
                   </div>
                 </div>
                 <p className="text-xs text-gray-400 mb-4 bg-gray-50 p-2 rounded-lg">
-                  <span className="font-medium">Tip:</span> Click the lock icon in address bar → Site settings → Allow location
+                  <span className="font-medium">Tip:</span> Click the lock icon in address bar →
+                  Site settings → Allow location
                 </p>
                 <div className="flex gap-2">
                   <button
@@ -1490,9 +1577,7 @@ const RestaurantSelectionPage = () => {
                 aria-label="Select Table Number"
               >
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-base font-semibold text-gray-900">
-                    Select Table
-                  </h3>
+                  <h3 className="text-base font-semibold text-gray-900">Select Table</h3>
                   <button
                     onClick={() => setShowTablePopup(false)}
                     className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
@@ -1510,24 +1595,37 @@ const RestaurantSelectionPage = () => {
                           setTableNumber(table.tableNumber);
                           setShowTablePopup(false);
                         }}
-                        className={`w-full px-3 py-2.5 rounded-lg border transition-all duration-150 text-left focus:outline-none focus:ring-2 focus:ring-orange-400 ${table.tableNumber === tableNumber
-                          ? 'border-orange-500 bg-orange-50'
-                          : 'border-gray-200 hover:border-orange-300 hover:bg-orange-50/50'
-                          }`}
+                        className={`w-full px-3 py-2.5 rounded-lg border transition-all duration-150 text-left focus:outline-none focus:ring-2 focus:ring-orange-400 ${
+                          table.tableNumber === tableNumber
+                            ? 'border-orange-500 bg-orange-50'
+                            : 'border-gray-200 hover:border-orange-300 hover:bg-orange-50/50'
+                        }`}
                         aria-label={`Select table ${table.tableNumber}`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="text-sm text-gray-900">
                             <span className="font-medium">Table {table.tableNumber}</span>
                             {table.location && <span className="mx-1 text-gray-400">•</span>}
-                            {table.location && <span className="text-gray-500">{table.location}</span>}
+                            {table.location && (
+                              <span className="text-gray-500">{table.location}</span>
+                            )}
                             <span className="mx-1 text-gray-400">•</span>
                             <span className="text-gray-400">{table.capacity} seats</span>
                           </div>
                           {table.tableNumber === tableNumber && (
                             <div className="w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
-                              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                              <svg
+                                className="w-3 h-3 text-white"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2.5}
+                                  d="M5 13l4 4L19 7"
+                                />
                               </svg>
                             </div>
                           )}
@@ -1565,69 +1663,71 @@ const RestaurantSelectionPage = () => {
         </AnimatePresence>
 
         {/* Nearest Restaurant Popup */}
-        {
-          showNearestRestaurantPopup && nearestRestaurant && (
+        {showNearestRestaurantPopup && nearestRestaurant && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 px-4"
+            onClick={() => setShowNearestRestaurantPopup(false)}
+          >
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 px-4"
-              onClick={() => setShowNearestRestaurantPopup(false)}
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="bg-white rounded-xl p-5 shadow-xl max-w-xs w-full relative"
+              onClick={(e) => e.stopPropagation()}
             >
-              <motion.div
-                initial={{ scale: 0.9, y: 20 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.9, y: 20 }}
-                transition={{ duration: 0.2, ease: 'easeOut' }}
-                className="bg-white rounded-xl p-5 shadow-xl max-w-xs w-full relative"
-                onClick={(e) => e.stopPropagation()}
+              <button
+                className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                onClick={() => setShowNearestRestaurantPopup(false)}
+                aria-label="Close"
               >
+                <X size={14} />
+              </button>
+
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <MapPin size={18} className="text-orange-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs text-gray-500">You're near</p>
+                  <h3 className="text-base font-semibold text-gray-900 truncate">
+                    {nearestRestaurant.name}
+                  </h3>
+                </div>
+              </div>
+
+              {nearestRestaurant.address && (
+                <p className="text-xs text-gray-500 mb-4 line-clamp-2">
+                  {nearestRestaurant.address}
+                </p>
+              )}
+
+              <div className="flex gap-2">
                 <button
-                  className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-                  onClick={() => setShowNearestRestaurantPopup(false)}
-                  aria-label="Close"
+                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  onClick={() => {
+                    setSelectedRestaurant(nearestRestaurant);
+                    setShowNearestRestaurantPopup(false);
+                  }}
                 >
-                  <X size={14} />
+                  Yes, select
                 </button>
-
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <MapPin size={18} className="text-orange-500" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs text-gray-500">You're near</p>
-                    <h3 className="text-base font-semibold text-gray-900 truncate">{nearestRestaurant.name}</h3>
-                  </div>
-                </div>
-
-                {nearestRestaurant.address && (
-                  <p className="text-xs text-gray-500 mb-4 line-clamp-2">{nearestRestaurant.address}</p>
-                )}
-
-                <div className="flex gap-2">
-                  <button
-                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                    onClick={() => {
-                      setSelectedRestaurant(nearestRestaurant);
-                      setShowNearestRestaurantPopup(false);
-                    }}
-                  >
-                    Yes, select
-                  </button>
-                  <button
-                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                    onClick={() => setShowNearestRestaurantPopup(false)}
-                  >
-                    No, skip
-                  </button>
-                </div>
-              </motion.div>
+                <button
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  onClick={() => setShowNearestRestaurantPopup(false)}
+                >
+                  No, skip
+                </button>
+              </div>
             </motion.div>
-          )
-        }
-      </div >
-    </div >
+          </motion.div>
+        )}
+      </div>
+    </div>
   );
 };
 

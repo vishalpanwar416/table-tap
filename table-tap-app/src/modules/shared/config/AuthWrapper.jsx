@@ -7,6 +7,7 @@ import { hasValidRestaurantSelection } from '../../shared/utils/restaurantCheck'
 import { authService } from '../../shared/api/authService';
 
 const AUTH_CHECK_TIMEOUT_MS = 10000;
+const PORTAL_ROLES = ['admin', 'owner', 'manager', 'captain', 'chef', 'staff', 'waiter', 'cashier'];
 
 /**
  * True when on admin or restaurant subdomain — handles both production and staging.
@@ -17,10 +18,12 @@ function isAdminOrRestaurantOrigin() {
   const h = (window.location.hostname || '').toLowerCase();
   // Strip optional staging/preview prefix before checking app type
   const withoutPrefix = h.replace(/^(staging|preview)\./i, '');
-  return withoutPrefix.startsWith('admin.') ||
+  return (
+    withoutPrefix.startsWith('admin.') ||
     withoutPrefix.startsWith('restaurant.') ||
     withoutPrefix.startsWith('manager.') ||
-    withoutPrefix.startsWith('owner.');
+    withoutPrefix.startsWith('owner.')
+  );
 }
 
 export default function AuthWrapper({ children, publicOnly = false }) {
@@ -35,7 +38,8 @@ export default function AuthWrapper({ children, publicOnly = false }) {
   const urlTable = urlParams.get('table');
 
   const navigateWithParams = (path) => {
-    const params = urlRestaurant && urlTable ? `?restaurant=${urlRestaurant}&table=${urlTable}` : '';
+    const params =
+      urlRestaurant && urlTable ? `?restaurant=${urlRestaurant}&table=${urlTable}` : '';
     navigate(`${path}${params}`);
   };
 
@@ -57,7 +61,8 @@ export default function AuthWrapper({ children, publicOnly = false }) {
       if (authLoading) return;
 
       const onAdminOrRestaurant = isAdminOrRestaurantOrigin();
-      const pathIsAdminOrRestaurant = location.pathname.startsWith('/admin') ||
+      const pathIsAdminOrRestaurant =
+        location.pathname.startsWith('/admin') ||
         location.pathname.startsWith('/restaurant') ||
         location.pathname.startsWith('/owner');
 
@@ -67,7 +72,9 @@ export default function AuthWrapper({ children, publicOnly = false }) {
         if (!user && !publicOnly) {
           const loginPath = onAdminOrRestaurant
             ? '/login'
-            : (location.pathname.startsWith('/admin') ? '/admin/login' : '/restaurant/login');
+            : location.pathname.startsWith('/admin')
+              ? '/admin/login'
+              : '/restaurant/login';
           navigateWithParams(loginPath);
           stopChecking();
           return;
@@ -87,11 +94,10 @@ export default function AuthWrapper({ children, publicOnly = false }) {
           try {
             const profile = await authService.getProfile(user.id);
             const role = profile?.profile_role || profile?.role || 'customer';
-            const PORTAL_ROLES = ['admin', 'owner', 'manager', 'captain', 'chef', 'staff', 'waiter', 'cashier'];
 
             if (PORTAL_ROLES.includes(role)) {
               // Redirect to appropriate dashboard instead of customer pages
-              const redirect = (role === 'admin') ? '/admin' : '/restaurant';
+              const redirect = role === 'admin' ? '/admin' : '/restaurant';
               navigateWithParams(redirect);
             } else {
               if (hasValidRestaurantSelection()) {
@@ -132,7 +138,9 @@ export default function AuthWrapper({ children, publicOnly = false }) {
         const loginPath = onAdminOrRestaurant
           ? '/login'
           : pathIsAdminOrRestaurant
-            ? (location.pathname.startsWith('/admin') ? '/admin/login' : '/restaurant/login')
+            ? location.pathname.startsWith('/admin')
+              ? '/admin/login'
+              : '/restaurant/login'
             : '/login';
 
         console.log('[AuthWrapper] Redirecting to login:', loginPath);

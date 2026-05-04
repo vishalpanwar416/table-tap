@@ -1,10 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { X, Heart, ShoppingBag, Minus, Plus, Star, Clock, Flame, Tag, Leaf } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { useCart } from '../../shared/config/CartContent';
 import { useLikes } from '../../shared/config/LikesContent';
 import PriceDisplay from './PriceDisplay';
-import { useMotionValue, useTransform } from 'framer-motion';
 
 const OrderCard = ({ isOpen, onClose, item }) => {
   const { cartItems, addToCart, updateQuantity, removeItem } = useCart();
@@ -13,9 +12,9 @@ const OrderCard = ({ isOpen, onClose, item }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
 
   const isLiked = item
-    ? likedItems.some(likedItem => String(likedItem.id) === String(item.id))
+    ? likedItems.some((likedItem) => String(likedItem.id) === String(item.id))
     : false;
-  const cartItem = item ? cartItems.find(i => String(i.id) === String(item.id)) : null;
+  const cartItem = item ? cartItems.find((i) => String(i.id) === String(item.id)) : null;
   const quantity = cartItem?.quantity || 0;
 
   const y = useMotionValue(0);
@@ -82,7 +81,7 @@ const OrderCard = ({ isOpen, onClose, item }) => {
               type: 'spring',
               duration: 0.5,
               bounce: 0.3,
-              ease: [0.25, 0.46, 0.45, 0.94]
+              ease: [0.25, 0.46, 0.45, 0.94],
             }}
             className="fixed bottom-0 left-0 right-0 bg-gradient-to-br from-white via-gray-50 to-white rounded-t-[32px] z-50 shadow-2xl overflow-hidden max-h-[75vh] max-w-[450px] md:max-w-4xl mx-auto border border-gray-100"
             drag="y"
@@ -123,7 +122,7 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                 className="w-full h-full object-cover"
                 initial={{ scale: 1.1 }}
                 animate={{ scale: imageLoaded ? 1 : 1.1 }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
+                transition={{ duration: 0.6, ease: 'easeOut' }}
                 onLoad={() => setImageLoaded(true)}
               />
 
@@ -135,7 +134,7 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                 <motion.div
                   initial={{ scale: 0, rotate: -180 }}
                   animate={{ scale: 1, rotate: 0 }}
-                  transition={{ delay: 0.3, duration: 0.5, type: "spring" }}
+                  transition={{ delay: 0.3, duration: 0.5, type: 'spring' }}
                   className="absolute top-4 right-16 bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-lg"
                 >
                   <Flame className="h-3 w-3" />
@@ -148,7 +147,7 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                 <motion.div
                   initial={{ scale: 0, rotate: 180 }}
                   animate={{ scale: 1, rotate: 0 }}
-                  transition={{ delay: 0.4, duration: 0.5, type: "spring" }}
+                  transition={{ delay: 0.4, duration: 0.5, type: 'spring' }}
                   className="absolute top-4 right-4 bg-white/90 backdrop-blur-md text-gray-800 px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-lg border border-gray-200/50"
                 >
                   <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
@@ -164,15 +163,22 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                 onClick={handleLikeClick}
               >
                 <motion.div
-                  animate={isLikedAnimating ? {
-                    scale: [1, 1.4, 1],
-                    rotate: [0, 15, -15, 0]
-                  } : {}}
+                  animate={
+                    isLikedAnimating
+                      ? {
+                          scale: [1, 1.4, 1],
+                          rotate: [0, 15, -15, 0],
+                        }
+                      : {}
+                  }
                   transition={{ duration: 0.6 }}
                 >
                   <Heart
-                    className={`h-6 w-6 transition-all duration-300 ${isLiked ? "text-red-500 fill-red-500 drop-shadow-lg" : "text-gray-600 hover:text-red-400"
-                      }`}
+                    className={`h-6 w-6 transition-all duration-300 ${
+                      isLiked
+                        ? 'text-red-500 fill-red-500 drop-shadow-lg'
+                        : 'text-gray-600 hover:text-red-400'
+                    }`}
                   />
                 </motion.div>
               </motion.button>
@@ -187,7 +193,9 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                 className="flex justify-between items-start mb-2"
               >
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-xl font-bold text-gray-900 mb-0.5 leading-tight">{item.name}</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-0.5 leading-tight">
+                    {item.name}
+                  </h2>
                   <div className="flex items-center gap-2 text-xs text-gray-500">
                     {item.preparationTime && (
                       <div className="flex items-center gap-1">
@@ -231,7 +239,9 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                       <span className="flex items-center gap-1.5 text-gray-700 text-sm font-medium">
                         <Clock className="h-3 w-3 text-orange-500 flex-shrink-0" /> Preparation Time
                       </span>
-                      <span className="text-gray-900 text-sm font-semibold">{item.preparationTime}</span>
+                      <span className="text-gray-900 text-sm font-semibold">
+                        {item.preparationTime}
+                      </span>
                     </div>
                   )}
                   {/* Description (no label) */}
@@ -246,7 +256,9 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                       <span className="flex items-center gap-1.5 text-gray-700 text-sm font-medium">
                         <Tag className="h-3 w-3 text-purple-500 flex-shrink-0" /> Category
                       </span>
-                      <span className="text-gray-900 text-sm font-semibold capitalize">{item.category}</span>
+                      <span className="text-gray-900 text-sm font-semibold capitalize">
+                        {item.category}
+                      </span>
                     </div>
                   )}
                   {/* Tags */}
@@ -255,11 +267,17 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                       <div className="flex flex-wrap gap-1.5">
                         {item.tags.map((tag, idx) => {
                           const tagLower = tag.toLowerCase();
-                          let tagClass = "bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800";
-                          if (tagLower === "veg") {
-                            tagClass = "bg-green-100 text-green-700 border-green-200";
-                          } else if (tagLower === "non veg" || tagLower === "non-veg" || tagLower === "nonvegetarian" || tagLower === "non vegetarian") {
-                            tagClass = "bg-red-100 text-red-700 border-red-200";
+                          let tagClass =
+                            'bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800';
+                          if (tagLower === 'veg') {
+                            tagClass = 'bg-green-100 text-green-700 border-green-200';
+                          } else if (
+                            tagLower === 'non veg' ||
+                            tagLower === 'non-veg' ||
+                            tagLower === 'nonvegetarian' ||
+                            tagLower === 'non vegetarian'
+                          ) {
+                            tagClass = 'bg-red-100 text-red-700 border-red-200';
                           }
                           return (
                             <span
@@ -323,12 +341,12 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                     initial={{ scale: 0.8, opacity: 0, y: 20 }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
                     exit={{ scale: 0.8, opacity: 0, y: -20 }}
-                    transition={{ duration: 0.3, type: "spring" }}
+                    transition={{ duration: 0.3, type: 'spring' }}
                   >
                     <motion.button
                       onClick={handleDecrementQuantity}
                       className="bg-white/20 backdrop-blur-sm rounded-full h-8 w-8 flex items-center justify-center text-white border border-white/30"
-                      whileHover={{ scale: 1.15, backgroundColor: "rgba(255,255,255,0.3)" }}
+                      whileHover={{ scale: 1.15, backgroundColor: 'rgba(255,255,255,0.3)' }}
                       whileTap={{ scale: 0.9 }}
                       transition={{ duration: 0.2 }}
                     >
@@ -339,14 +357,14 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                       key={quantity}
                       initial={{ scale: 1.3, y: -10 }}
                       animate={{ scale: 1, y: 0 }}
-                      transition={{ duration: 0.3, type: "spring" }}
+                      transition={{ duration: 0.3, type: 'spring' }}
                     >
                       {quantity}
                     </motion.span>
                     <motion.button
                       onClick={handleAddToCart}
                       className="bg-white/20 backdrop-blur-sm rounded-full h-8 w-8 flex items-center justify-center text-white border border-white/30"
-                      whileHover={{ scale: 1.15, backgroundColor: "rgba(255,255,255,0.3)" }}
+                      whileHover={{ scale: 1.15, backgroundColor: 'rgba(255,255,255,0.3)' }}
                       whileTap={{ scale: 0.9 }}
                       transition={{ duration: 0.2 }}
                     >
@@ -360,13 +378,13 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                     className="bg-gradient-to-r from-black via-gray-900 to-black hover:from-gray-900 hover:via-black hover:to-gray-900 text-white rounded-2xl w-full py-2.5 flex items-center justify-center gap-2 text-base font-semibold shadow-2xl transition-all duration-300 group"
                     whileHover={{
                       scale: 1.02,
-                      boxShadow: "0 20px 40px rgba(0,0,0,0.3)"
+                      boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
                     }}
                     whileTap={{ scale: 0.98 }}
                     initial={{ scale: 0.8, opacity: 0, y: 20 }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
                     exit={{ scale: 0.8, opacity: 0, y: -20 }}
-                    transition={{ duration: 0.3, type: "spring" }}
+                    transition={{ duration: 0.3, type: 'spring' }}
                   >
                     <motion.div
                       className="flex-shrink-0"

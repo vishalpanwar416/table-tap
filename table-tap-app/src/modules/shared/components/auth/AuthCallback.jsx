@@ -5,6 +5,8 @@ import { hasValidRestaurantSelection } from '../../../shared/utils/restaurantChe
 import { authService, syncProfile } from '../../api/authService';
 import LoadingScreen from '../LoadingScreen';
 
+const RESTAURANT_ROLES = ['owner', 'manager', 'captain', 'chef', 'staff', 'waiter', 'cashier'];
+
 function getDefaultRedirectPath() {
   if (typeof window === 'undefined') return '/home';
   const h = (window.location.hostname || '').toLowerCase();
@@ -13,12 +15,16 @@ function getDefaultRedirectPath() {
     return h.startsWith('admin.') ? '/' : '/admin';
   }
   if (
-    h.startsWith('restaurant.') || h.startsWith('manager.') ||
-    p.startsWith('/restaurant') || p.startsWith('/owner')
+    h.startsWith('restaurant.') ||
+    h.startsWith('manager.') ||
+    p.startsWith('/restaurant') ||
+    p.startsWith('/owner')
   ) {
-    return (h.startsWith('restaurant.') || h.startsWith('owner.') || h.startsWith('manager.'))
+    return h.startsWith('restaurant.') || h.startsWith('owner.') || h.startsWith('manager.')
       ? '/'
-      : (p.startsWith('/owner') ? '/owner' : '/restaurant');
+      : p.startsWith('/owner')
+        ? '/owner'
+        : '/restaurant';
   }
   return '/home';
 }
@@ -55,7 +61,7 @@ const AuthCallback = () => {
       try {
         const [profile] = await Promise.all([
           authService.getProfile(user.id),
-          syncProfile(user).catch(e => console.warn('[AuthCallback] Sync non-critical:', e)),
+          syncProfile(user).catch((e) => console.warn('[AuthCallback] Sync non-critical:', e)),
         ]);
 
         clearTimeout(fallbackTimer);
@@ -68,16 +74,16 @@ const AuthCallback = () => {
           !h.startsWith('manager.') &&
           !h.startsWith('owner.');
 
-        const RESTAURANT_ROLES = ['owner', 'manager', 'captain', 'chef', 'staff', 'waiter', 'cashier'];
-
         if (isCustomerOrigin) {
           setStatus('Finding your table...');
           const isComplete = Boolean(profile?.mobile_number && profile?.date_of_birth);
           navigate(
             isComplete
-              ? (hasValidRestaurantSelection() ? '/home' : '/restaurant-selection')
+              ? hasValidRestaurantSelection()
+                ? '/home'
+                : '/restaurant-selection'
               : '/complete-profile',
-            { replace: true }
+            { replace: true },
           );
         } else if (h.startsWith('admin.')) {
           if (role === 'admin') navigate('/', { replace: true });

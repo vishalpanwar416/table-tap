@@ -6,6 +6,8 @@ import LoadingScreen from '../components/LoadingScreen';
 import { useBasePathNavigate } from './BasePathContext';
 import SubscriptionExpiredBanner from '../components/SubscriptionExpiredBanner';
 
+const PORTAL_ROLES = ['admin', 'owner', 'manager', 'captain', 'chef', 'waiter', 'cashier'];
+
 /**
  * RestaurantDashboardWrapper
  * - Ensures user is authenticated + profile is complete (via AuthWrapper)
@@ -37,10 +39,9 @@ export default function RestaurantDashboardWrapper({ children }) {
 
   // If user is admin or owner but hasn't selected a restaurant yet, still allow the dashboard
   // (the dashboard component itself handles the selector for these roles).
-  const hasRestaurant = Boolean(userRestaurantId) || isAdmin() || (userRole === 'owner');
+  const hasRestaurant = Boolean(userRestaurantId) || isAdmin() || userRole === 'owner';
 
   // Explicitly allow all portal-specific roles to prevent premature redirects
-  const PORTAL_ROLES = ['admin', 'owner', 'manager', 'captain', 'chef', 'waiter', 'cashier'];
   const allowed = typeof canView === 'function' ? canView() : PORTAL_ROLES.includes(userRole);
 
   // Don't redirect while context is still initializing (userRole not set yet)
@@ -65,8 +66,8 @@ export default function RestaurantDashboardWrapper({ children }) {
     );
   }
 
-  // If allowed but no restaurant selected, we stay on children (AdminDashboard) 
-  // because AdminDashboard has its own logic to show a restaurant selector 
+  // If allowed but no restaurant selected, we stay on children (AdminDashboard)
+  // because AdminDashboard has its own logic to show a restaurant selector
   // for admins/owners. For lower roles with no selection, we show a message.
   if (!hasRestaurant && !['admin', 'owner'].includes(userRole)) {
     const handleLogout = async () => {
@@ -89,7 +90,8 @@ export default function RestaurantDashboardWrapper({ children }) {
             </div>
             <h2 className="text-2xl font-bold text-white mb-4">No Restaurant Assigned</h2>
             <p className="text-gray-400 mb-8 leading-relaxed">
-              You don't have an active restaurant assignment. Please contact your manager to be added to a restaurant.
+              You don't have an active restaurant assignment. Please contact your manager to be
+              added to a restaurant.
             </p>
             <div className="flex flex-col gap-3">
               <button
@@ -117,13 +119,9 @@ export default function RestaurantDashboardWrapper({ children }) {
   return (
     <AuthWrapper>
       {showSubscriptionBanner && (
-        <SubscriptionExpiredBanner
-          restaurantId={userRestaurantId}
-          userRole={userRole}
-        />
+        <SubscriptionExpiredBanner restaurantId={userRestaurantId} userRole={userRole} />
       )}
       {children}
     </AuthWrapper>
   );
 }
-

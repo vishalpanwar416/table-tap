@@ -84,6 +84,7 @@ const HelpFAQPage = lazy(() => import('./pages/HelpFAQPage'));
 const TermsOfService = lazy(() => import('../shared/components/legal/TermsOfService'));
 const PrivacyPolicy = lazy(() => import('../shared/components/legal/PrivacyPolicy'));
 const RequireAuth = lazy(() => import('../shared/components/auth/RequireAuth'));
+const NotFoundPage = lazy(() => import('../shared/components/NotFoundPage'));
 const LoadingSpinner = () => <LoadingScreen message="Loading..." />;
 
 /** Auth paths that must never be redirected to /. Fallback only sends unknown paths to /. */
@@ -100,7 +101,7 @@ const AUTH_PATHS = [
   '/privacy',
 ];
 
-const FallbackRedirect = () => {
+const FallbackRedirect = ({ NotFound }) => {
   const location = useLocation();
   const pathname = location.pathname.replace(/\/$/, '') || '/'; // normalize trailing slash
   const isAuthPath = AUTH_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'));
@@ -124,6 +125,8 @@ const FallbackRedirect = () => {
     if (pathname === '/privacy' || pathname.startsWith('/privacy')) return <PrivacyPolicy />;
     return <Navigate to={pathname} replace />;
   }
+  // Unknown path — show 404 instead of silently redirecting to /
+  if (NotFound) return <NotFound />;
   return <Navigate to="/" replace />;
 };
 
@@ -249,7 +252,7 @@ const CustomerApp = () => {
                   />
 
                   {/* Fallback: never redirect /login etc. to / — show login if we landed on /login */}
-                  <Route path="*" element={<FallbackRedirect />} />
+                  <Route path="*" element={<FallbackRedirect NotFound={NotFoundPage} />} />
                 </Routes>
               </Suspense>
             </FoodDataProvider>

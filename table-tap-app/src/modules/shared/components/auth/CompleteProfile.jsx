@@ -1,13 +1,56 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft } from 'lucide-react';
-import { authService } from '../../api/authService';
+import { ChevronLeft, User as UserIcon } from 'lucide-react';
+import { authService, DEFAULT_AVATAR_URL } from '../../api/authService';
+import { supabase } from '../../supabase';
 import { toast, ToastContainer, Slide } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { optimizeProfileImage } from '../../../shared/utils/imageOptimization';
-import { User as UserIcon } from 'lucide-react';
 
+const PORTAL_ROLES = ['admin', 'owner', 'manager', 'captain', 'chef', 'staff', 'waiter', 'cashier'];
+
+function getRoleRedirect(role, hostname, pathname) {
+  const isAdminContext = hostname.startsWith('admin.') || pathname.startsWith('/admin');
+  const isRestaurantContext =
+    hostname.startsWith('restaurant.') ||
+    hostname.startsWith('manager.') ||
+    pathname.startsWith('/restaurant') ||
+    pathname.startsWith('/owner');
+
+  if (role === 'admin' && isAdminContext) {
+    return hostname.startsWith('admin.') ? '/' : '/admin';
+  }
+  if (PORTAL_ROLES.includes(role) && isRestaurantContext) {
+    if (hostname.startsWith('restaurant.') || hostname.startsWith('manager.')) return '/';
+    return pathname.startsWith('/owner') ? '/owner' : '/restaurant';
+  }
+  return null;
+}
+
+const cardVariants = {
+  initial: { y: 40, opacity: 0 },
+  animate: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 60, damping: 16 } },
+  exit: { y: 40, opacity: 0, transition: { duration: 0.2 } },
+};
+const stagger = {
+  animate: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
+};
+const itemVariants = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 80, damping: 18 } },
+};
+const errorVariants = {
+  initial: { opacity: 0, x: 0 },
+  animate: { opacity: 1, x: [0, -8, 8, -6, 6, -4, 4, 0], transition: { duration: 0.5 } },
+  exit: { opacity: 0 },
+};
+const buttonVariants = {
+  initial: { scale: 1 },
+  hover: { scale: 1.04 },
+  tap: { scale: 0.97 },
+  loading: { scale: 1, opacity: 0.7 },
+};
 
 export default function CompleteProfile() {
   const [mobileNumber, setMobileNumber] = useState('+91 ');
@@ -15,47 +58,36 @@ export default function CompleteProfile() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [userName, setUserName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [avatarFile, setAvatarFile] = useState(null);
   const [avatarLoading, setAvatarLoading] = useState(false);
-  const fileInputRef = React.useRef();
-
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const checkProfile = async () => {
       try {
         const user = await authService.getCurrentUser();
-
         if (user) {
+          setUserName(
+            user.user_metadata?.full_name ||
+              user.user_metadata?.name ||
+              user.email?.split('@')[0] ||
+              '',
+          );
           const profile = await authService.getProfile(user.id);
           const isComplete = Boolean(profile?.mobile_number && profile?.date_of_birth);
-
           if (isComplete) {
             const role = profile?.profile_role || profile?.role || 'customer';
-            const h = (typeof window !== 'undefined' && window.location.hostname || '').toLowerCase();
-            const path = window.location.pathname;
-
-            const isAdminContext = h.startsWith('admin.') || path.startsWith('/admin');
-            const isRestaurantContext = h.startsWith('restaurant.') || h.startsWith('manager.') || path.startsWith('/restaurant') || path.startsWith('/owner');
-            const PORTAL_ROLES = ['admin', 'owner', 'manager', 'captain', 'chef', 'staff', 'waiter', 'cashier'];
-
-            if (role === 'admin' && isAdminContext) {
-              navigate(h.startsWith('admin.') ? '/' : '/admin', { replace: true });
-            } else if (PORTAL_ROLES.includes(role) && isRestaurantContext) {
-              const redirect = (h.startsWith('restaurant.') || h.startsWith('manager.')) ? '/' : (path.startsWith('/owner') ? '/owner' : '/restaurant');
-              navigate(redirect, { replace: true });
-            } else {
-              navigate('/restaurant-selection');
-            }
+            const hostname = window.location.hostname.toLowerCase();
+            const redirect = getRoleRedirect(role, hostname, window.location.pathname);
+            navigate(redirect || '/restaurant-selection', { replace: true });
           }
         }
       } catch (err) {
         console.error('Error checking profile:', err);
-      } finally {
-        setIsCheckingAuth(false);
       }
     };
-
     checkProfile();
   }, [navigate]);
 
@@ -78,42 +110,28 @@ export default function CompleteProfile() {
     }
 
     const newDigits = digits.slice(2, 12);
-    const formatted = newDigits.length > 5
-      ? `+91 ${newDigits.slice(0, 5)} ${newDigits.slice(5)}`
-      : `+91 ${newDigits}`;
+    const formatted =
+      newDigits.length > 5
+        ? `+91 ${newDigits.slice(0, 5)} ${newDigits.slice(5)}`
+        : `+91 ${newDigits}`;
 
     setMobileNumber(formatted);
   };
 
-  // Helper: get initials from name only (not mobile)
-  // Assume user's name is available as userName (if not, fallback to UserIcon)
-  const [userName, setUserName] = useState('');
-
-  useEffect(() => {
-    const getUserName = async () => {
-      const user = await authService.getCurrentUser();
-      if (user) {
-        setUserName(user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || '');
-      }
-    };
-    getUserName();
-  }, []);
-
-  const getInitials = () => {
+  const initials = (() => {
     if (!userName) return '';
     const parts = userName.trim().split(' ');
-    if (parts.length === 1) return parts[0][0].toUpperCase();
-    return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
-  };
+    return (parts[0][0] + (parts[1]?.[0] ?? '')).toUpperCase();
+  })();
 
-  // Handle avatar file select
   const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     setAvatarLoading(true);
     try {
-      const optimized = await optimizeProfileImage(file, { maxSize: 256, quality: 0.7 });
-      setAvatarUrl(optimized);
+      const preview = await optimizeProfileImage(file, { maxSize: 256, quality: 0.7 });
+      setAvatarUrl(preview);
+      setAvatarFile(file);
     } catch (err) {
       toast('Failed to process image', { type: 'error' });
     } finally {
@@ -121,38 +139,16 @@ export default function CompleteProfile() {
     }
   };
 
-  // Remove avatar
-  const handleRemoveAvatar = () => setAvatarUrl('');
-
-  // Animation variants
-  const cardVariants = {
-    initial: { y: 40, opacity: 0 },
-    animate: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 60, damping: 16 } },
-    exit: { y: 40, opacity: 0, transition: { duration: 0.2 } }
-  };
-  const stagger = {
-    animate: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } }
-  };
-  const itemVariants = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 80, damping: 18 } }
-  };
-  const errorVariants = {
-    initial: { opacity: 0, x: 0 },
-    animate: { opacity: 1, x: [0, -8, 8, -6, 6, -4, 4, 0], transition: { duration: 0.5 } },
-    exit: { opacity: 0 }
-  };
-  const buttonVariants = {
-    initial: { scale: 1 },
-    hover: { scale: 1.04 },
-    tap: { scale: 0.97 },
-    loading: { scale: 1, opacity: 0.7 }
+  const handleRemoveAvatar = () => {
+    setAvatarUrl('');
+    setAvatarFile(null);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (mobileNumber.length < 12) {
-      setError('Please enter a valid mobile number');
+    const digits = mobileNumber.replace(/\D/g, '');
+    if (digits.length !== 12) {
+      setError('Please enter a valid 10-digit mobile number');
       return;
     }
     if (!dateOfBirth) {
@@ -170,22 +166,6 @@ export default function CompleteProfile() {
     if (actualAge < 13) {
       toast('You must be at least 13 years old to sign up.', {
         type: 'error',
-        position: 'top-center',
-        autoClose: 2000,
-        hideProgressBar: true,
-        closeOnClick: true,
-        pauseOnHover: false,
-        draggable: false,
-        style: {
-          background: '#fff',
-          color: '#e53e3e',
-          borderRadius: '8px',
-          fontWeight: 500,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
-          fontFamily: 'inherit',
-          fontSize: '15px',
-          padding: '12px 20px'
-        },
         icon: false,
         transition: Slide,
       });
@@ -196,30 +176,33 @@ export default function CompleteProfile() {
       setLoading(true);
       setError('');
 
+      const user = await authService.getCurrentUser();
+      let finalAvatarUrl = DEFAULT_AVATAR_URL;
+
+      if (avatarFile) {
+        const ext = avatarFile.name.split('.').pop() || 'jpg';
+        const filePath = `profile-photos/${user.id}/${user.id}-${Date.now()}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(filePath, avatarFile, { upsert: true });
+        if (uploadError) throw uploadError;
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from('avatars').getPublicUrl(filePath);
+        finalAvatarUrl = publicUrl;
+      }
+
       await authService.updateProfile({
         mobile_number: mobileNumber,
         date_of_birth: dateOfBirth,
-        avatar_url: avatarUrl || 'https://ui-avatars.com/api/?name=User&background=random'
+        avatar_url: finalAvatarUrl,
       });
 
-      const user = await authService.getCurrentUser();
       const profile = await authService.getProfile(user.id);
       const role = profile?.profile_role || profile?.role || 'customer';
-      const h = (typeof window !== 'undefined' && window.location.hostname || '').toLowerCase();
-      const path = window.location.pathname;
-
-      const isAdminContext = h.startsWith('admin.') || path.startsWith('/admin');
-      const isRestaurantContext = h.startsWith('restaurant.') || h.startsWith('manager.') || path.startsWith('/restaurant') || path.startsWith('/owner');
-      const PORTAL_ROLES = ['admin', 'owner', 'manager', 'captain', 'chef', 'staff', 'waiter', 'cashier'];
-
-      if (role === 'admin' && isAdminContext) {
-        navigate(h.startsWith('admin.') ? '/' : '/admin', { replace: true });
-      } else if (PORTAL_ROLES.includes(role) && isRestaurantContext) {
-        const redirect = (h.startsWith('restaurant.') || h.startsWith('manager.')) ? '/' : (path.startsWith('/owner') ? '/owner' : '/restaurant');
-        navigate(redirect, { replace: true });
-      } else {
-        navigate('/home');
-      }
+      const hostname = window.location.hostname.toLowerCase();
+      const redirect = getRoleRedirect(role, hostname, window.location.pathname);
+      navigate(redirect || '/home', { replace: true });
     } catch (err) {
       setError(err.message || 'Profile update failed');
     } finally {
@@ -269,11 +252,11 @@ export default function CompleteProfile() {
           >
             <div className="w-24 h-24 rounded-full bg-white shadow-lg flex items-center justify-center overflow-hidden border-4 border-gray-300 group-hover:border-orange-400 transition-all">
               {avatarLoading ? (
-                <div className="w-10 h-10 border-4 border-orange-400 border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-10 h-10 border-4 border-orange-400 border-t-transparent rounded-full animate-spin" />
               ) : avatarUrl ? (
                 <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
-              ) : getInitials() ? (
-                <span className="text-3xl font-bold text-orange-600">{getInitials()}</span>
+              ) : initials ? (
+                <span className="text-3xl font-bold text-orange-600">{initials}</span>
               ) : (
                 <UserIcon className="w-10 h-10 text-gray-400" />
               )}
@@ -282,7 +265,10 @@ export default function CompleteProfile() {
             {avatarUrl && !avatarLoading && (
               <button
                 type="button"
-                onClick={e => { e.stopPropagation(); handleRemoveAvatar(); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveAvatar();
+                }}
                 className="absolute -bottom-2 right-0 bg-white border border-gray-300 rounded-full px-2 py-0.5 text-xs text-gray-600 shadow hover:bg-red-100 hover:text-red-600 transition-all"
               >
                 Remove
@@ -296,7 +282,9 @@ export default function CompleteProfile() {
               onChange={handleAvatarChange}
               aria-label="Choose profile photo"
             />
-            <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-gray-500 bg-white/80 px-2 py-0.5 rounded shadow mt-1 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">Change Photo</span>
+            <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-gray-500 bg-white/80 px-2 py-0.5 rounded shadow mt-1 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+              Change Photo
+            </span>
           </motion.div>
         </motion.div>
         {/* Card/Form Container */}
@@ -384,7 +372,7 @@ export default function CompleteProfile() {
             boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
             fontFamily: 'inherit',
             fontSize: '15px',
-            padding: '12px 20px'
+            padding: '12px 20px',
           }}
           transition={Slide}
           closeButton={false}

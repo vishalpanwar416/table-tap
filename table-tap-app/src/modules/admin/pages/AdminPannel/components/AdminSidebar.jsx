@@ -20,7 +20,7 @@ import {
   ChevronRight,
   Bell,
   Activity,
-  Settings
+  Settings,
 } from 'lucide-react';
 import { supabase } from '../../../../shared/supabase';
 // Import the existing TableTap logo
@@ -37,7 +37,7 @@ const AdminSidebar = ({
   showMobileNav,
   setShowMobileNav,
   collapsed = false,
-  onToggleCollapsed
+  onToggleCollapsed,
 }) => {
   const navigate = useNavigate();
 
@@ -114,20 +114,22 @@ const AdminSidebar = ({
       {/* Mobile menu button removed - handled by MobileAdminHeader */}
 
       {/* Sidebar - Fixed position */}
-      <div className={`
+      <div
+        className={`
         fixed inset-y-0 left-0 z-40
-        ${collapsed ? 'md:w-20' : 'md:w-56'} w-64 md:w-56 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white
+        ${collapsed ? 'md:w-20' : 'md:w-56'} w-64 md:w-56 bg-slate-900 text-white
         transform transition-all duration-300 ease-in-out
         ${showMobileNav ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         shadow-2xl font-spartan
-      `}>
+      `}
+      >
         <div className="flex flex-col h-full">
           {/* Logo & Collapse Toggle */}
           <div className="p-3 border-b border-slate-700/50">
-
-
             {/* Collapse toggle button (desktop only) */}
-            <div className={`flex items-center ${collapsed ? 'justify-center' : 'justify-end'} mb-2 hidden md:flex`}>
+            <div
+              className={`flex items-center ${collapsed ? 'justify-center' : 'justify-end'} mb-2 hidden md:flex`}
+            >
               <button
                 type="button"
                 onClick={() => onToggleCollapsed?.()}
@@ -135,12 +137,20 @@ const AdminSidebar = ({
                 aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                 title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               >
-                {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+                {collapsed ? (
+                  <ChevronRight className="w-5 h-5" />
+                ) : (
+                  <ChevronLeft className="w-5 h-5" />
+                )}
               </button>
             </div>
 
-            <div className={`flex ${collapsed ? 'flex-col items-center' : 'items-center space-x-3'}`}>
-              <div className={`${collapsed ? 'w-12 h-12' : 'w-10 h-10'} bg-white rounded-xl flex items-center justify-center overflow-hidden transition-all duration-200`}>
+            <div
+              className={`flex ${collapsed ? 'flex-col items-center' : 'items-center space-x-3'}`}
+            >
+              <div
+                className={`${collapsed ? 'w-12 h-12' : 'w-10 h-10'} bg-white rounded-xl flex items-center justify-center overflow-hidden transition-all duration-200`}
+              >
                 <img
                   src={tableTapLogo}
                   alt="TableTap Logo"
@@ -149,9 +159,7 @@ const AdminSidebar = ({
               </div>
               {!collapsed && (
                 <div>
-                  <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent font-spartan">
-                    TableTap
-                  </h1>
+                  <h1 className="text-xl font-bold text-orange-500 font-spartan">TableTap</h1>
                   <p className="text-xs text-slate-400 font-spartan">Admin Console</p>
                 </div>
               )}
@@ -166,18 +174,24 @@ const AdminSidebar = ({
                   <button
                     onClick={() => handleTabChange(item.id)}
                     title={collapsed ? item.label : undefined}
-                    className={`flex items-center w-full ${collapsed ? 'justify-center p-2.5' : 'p-2.5 md:p-3'} rounded-xl transition-all duration-200 group font-spartan ${activeTab === item.id
-                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
-                      : 'hover:bg-slate-700/50 text-slate-300 hover:text-white'
-                      }`}
+                    className={`flex items-center w-full ${collapsed ? 'justify-center p-2.5' : 'p-2.5 md:p-3'} rounded-xl transition-all duration-200 group font-spartan ${
+                      activeTab === item.id
+                        ? 'bg-orange-100 text-orange-700'
+                        : 'hover:bg-slate-700/50 text-slate-300 hover:text-white'
+                    }`}
                   >
-                    <div className={`p-1.5 md:p-2 rounded-lg transition-all duration-200 ${activeTab === item.id
-                      ? 'bg-white/20'
-                      : 'group-hover:bg-slate-600/50'
-                      }`}>
+                    <div
+                      className={`p-1.5 md:p-2 rounded-lg transition-all duration-200 ${
+                        activeTab === item.id ? 'bg-orange-200/60' : 'group-hover:bg-slate-600/50'
+                      }`}
+                    >
                       {getIcon(item.icon)}
                     </div>
-                    {!collapsed && <span className="ml-2 md:ml-3 text-sm font-medium font-spartan">{item.label}</span>}
+                    {!collapsed && (
+                      <span className="ml-2 md:ml-3 text-sm font-medium font-spartan">
+                        {item.label}
+                      </span>
+                    )}
                   </button>
                 </li>
               ))}
@@ -186,7 +200,9 @@ const AdminSidebar = ({
 
           {/* User profile and logout */}
           <div className="p-3 border-t border-slate-700/50">
-            <div className={`admin-profile flex items-center ${collapsed ? 'justify-center' : 'gap-3'} p-2.5 bg-slate-800/50 rounded-xl`}>
+            <div
+              className={`admin-profile flex items-center ${collapsed ? 'justify-center' : 'gap-3'} p-2.5 bg-slate-800/50 rounded-xl`}
+            >
               <div className="relative group">
                 {currentUser?.avatar_url ? (
                   <img
@@ -194,20 +210,20 @@ const AdminSidebar = ({
                     alt="User avatar"
                     className={`${collapsed ? 'w-10 h-10' : 'w-12 h-12'} rounded-xl object-cover border-2 border-slate-600 cursor-pointer transition-transform group-hover:scale-105`}
                     onClick={onProfilePhotoClick}
-                    title={collapsed ? (currentUser?.email || 'Profile') : undefined}
+                    title={collapsed ? currentUser?.email || 'Profile' : undefined}
                   />
                 ) : (
                   <div
-                    className={`${collapsed ? 'w-10 h-10 text-base' : 'w-12 h-12 text-lg'} rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold cursor-pointer transition-transform group-hover:scale-105 font-spartan`}
+                    className={`${collapsed ? 'w-10 h-10 text-base' : 'w-12 h-12 text-lg'} rounded-xl bg-orange-500 flex items-center justify-center text-white font-bold cursor-pointer transition-transform group-hover:scale-105 font-spartan`}
                     onClick={onProfilePhotoClick}
-                    title={collapsed ? (currentUser?.email || 'Profile') : undefined}
+                    title={collapsed ? currentUser?.email || 'Profile' : undefined}
                   >
                     {currentUser?.email?.charAt(0).toUpperCase() || 'A'}
                   </div>
                 )}
 
                 {/* Camera icon overlay */}
-                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-gray-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <Camera className="w-3 h-3 text-white" />
                 </div>
               </div>
@@ -220,7 +236,7 @@ const AdminSidebar = ({
                   <p className="user-email text-xs text-slate-400 truncate font-spartan">
                     {currentUser?.email || 'No email available'}
                   </p>
-                  <p className="user-role text-xs text-blue-400 font-medium font-spartan">
+                  <p className="user-role text-xs text-gray-500 font-medium font-spartan">
                     {getRoleDisplayName(userRole)}
                   </p>
                 </div>

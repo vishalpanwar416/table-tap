@@ -13,21 +13,33 @@ import InventoryManagement from '../../components/admin/InventoryManagement';
 import LogoutPopup from '../../../shared/components/auth/auth/LogoutPopup';
 import NotificationSound from '../../components/admin/NotificationSound';
 import NotificationToast from '../../components/admin/NotificationToast';
-// Lazy load AI Analytics (contains heavy Recharts library)
-const AIAnalyticsChat = React.lazy(() => import('../../components/admin/AIAnalyticsChat'));
 import ManagerNotificationsToast from '../../components/admin/ManagerNotificationsToast';
 import QRManagement from '../../components/admin/QRManagement/QRManagement';
 import ActivityLogs from '../../components/admin/ActivityLogs';
 import AggregatorIntegration from '../../components/admin/AggregatorIntegration';
-import { X, ChevronLeft, Package, BarChart3, Sparkles, Plus, Building2, ChevronDown, Clock, Grid, Crown } from 'lucide-react';
-// Use Building2 as a fallback for Store icon if it's missing from the version of lucide-react
-const StoreIcon = Building2;
+import {
+  X,
+  ChevronLeft,
+  Package,
+  BarChart3,
+  Sparkles,
+  Plus,
+  Building2,
+  ChevronDown,
+  Clock,
+  Grid,
+  Crown,
+} from 'lucide-react';
 
 import FloorPlanView from '../../components/admin/FloorPlan/FloorPlanView';
 import { getAllFoodItems, getRestaurantFoodItems } from '../../../customer/api/foodService';
 // Use dynamic import in effects to avoid "Can't find variable: supabase" when chunk loads before shared module
 import { updateOrderStatus as updateOrderStatusService } from '../../api/admin/orderService';
 import { useAdminRestaurant } from '../../../shared/context/AdminRestaurantContext';
+// Lazy load AI Analytics (contains heavy Recharts library)
+const AIAnalyticsChat = React.lazy(() => import('../../components/admin/AIAnalyticsChat'));
+// Use Building2 as a fallback for Store icon if it's missing from the version of lucide-react
+const StoreIcon = Building2;
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -40,12 +52,15 @@ const AdminDashboard = () => {
   // Keep URL in sync with active tab and provide a single setter for tab changes
   const setActiveTab = (tab) => {
     setActiveTabState(tab);
-    setSearchParams(params => {
-      const next = new URLSearchParams(params);
-      if (tab && tab !== 'dashboard') next.set('tab', tab);
-      else next.delete('tab');
-      return next;
-    }, { replace: true });
+    setSearchParams(
+      (params) => {
+        const next = new URLSearchParams(params);
+        if (tab && tab !== 'dashboard') next.set('tab', tab);
+        else next.delete('tab');
+        return next;
+      },
+      { replace: true },
+    );
   };
   const [foodItems, setFoodItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -73,7 +88,7 @@ const AdminDashboard = () => {
     items: [],
     notes: '',
     address: '',
-    total: 0
+    total: 0,
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -88,7 +103,7 @@ const AdminDashboard = () => {
     isAdmin: contextIsAdmin,
     isOwner: contextIsOwner,
     ownedRestaurants,
-    setOwnerRestaurant
+    setOwnerRestaurant,
   } = useAdminRestaurant();
 
   // State for restaurant selector
@@ -121,36 +136,48 @@ const AdminDashboard = () => {
       // Add Multi-Restaurant Overview for owners with multiple restaurants
       if (contextIsOwner() && ownedRestaurants && ownedRestaurants.length > 1) {
         // Insert at the beginning for easy access
-        filteredItems.unshift({ id: 'aggregate-analytics', icon: 'Building2', label: 'All Restaurants' });
+        filteredItems.unshift({
+          id: 'aggregate-analytics',
+          icon: 'Building2',
+          label: 'All Restaurants',
+        });
       }
 
       // Add AI Analytics and Aggregators only for managers, owners and admins if enabled for the restaurant
       if (restaurant?.ai_enabled) {
-        const insertIdx = filteredItems.findIndex(i => i.id === 'qr');
-        if (insertIdx !== -1) filteredItems.splice(insertIdx, 0, { id: 'analytics', icon: 'BarChart3', label: 'AI Analytics' });
+        const insertIdx = filteredItems.findIndex((i) => i.id === 'qr');
+        if (insertIdx !== -1)
+          filteredItems.splice(insertIdx, 0, {
+            id: 'analytics',
+            icon: 'BarChart3',
+            label: 'AI Analytics',
+          });
       }
       if (restaurant?.aggregators_enabled) {
-        const insertIdx = filteredItems.findIndex(i => i.id === 'settings');
-        if (insertIdx !== -1) filteredItems.splice(insertIdx, 0, { id: 'aggregators', icon: 'ShoppingBag', label: 'Aggregators' });
+        const insertIdx = filteredItems.findIndex((i) => i.id === 'settings');
+        if (insertIdx !== -1)
+          filteredItems.splice(insertIdx, 0, {
+            id: 'aggregators',
+            icon: 'ShoppingBag',
+            label: 'Aggregators',
+          });
       }
     } else if (contextUserRole === 'captain') {
-      filteredItems = allItems.filter(item =>
-        ['dashboard', 'floor-plan', 'menu', 'orders', 'qr'].includes(item.id)
+      filteredItems = allItems.filter((item) =>
+        ['dashboard', 'floor-plan', 'menu', 'orders', 'qr'].includes(item.id),
       );
     } else if (contextUserRole === 'chef') {
-      filteredItems = allItems.filter(item =>
-        ['orders', 'menu', 'inventory'].includes(item.id)
-      );
+      filteredItems = allItems.filter((item) => ['orders', 'menu', 'inventory'].includes(item.id));
       // Rename for clarity
-      const orderItem = filteredItems.find(i => i.id === 'orders');
+      const orderItem = filteredItems.find((i) => i.id === 'orders');
       if (orderItem) orderItem.label = 'Kitchen Orders';
     } else if (contextUserRole === 'waiter') {
-      filteredItems = allItems.filter(item =>
-        ['dashboard', 'floor-plan', 'menu', 'orders'].includes(item.id)
+      filteredItems = allItems.filter((item) =>
+        ['dashboard', 'floor-plan', 'menu', 'orders'].includes(item.id),
       );
     } else if (contextUserRole === 'cashier') {
-      filteredItems = allItems.filter(item =>
-        ['dashboard', 'orders', 'offers', 'activity-logs'].includes(item.id)
+      filteredItems = allItems.filter((item) =>
+        ['dashboard', 'orders', 'offers', 'activity-logs'].includes(item.id),
       );
     }
 
@@ -160,7 +187,9 @@ const AdminDashboard = () => {
   const menuItems = getMenuItems();
 
   const [notificationPermission, setNotificationPermission] = useState(
-    typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'unsupported'
+    typeof window !== 'undefined' && 'Notification' in window
+      ? Notification.permission
+      : 'unsupported',
   );
 
   // New state for authentication loading
@@ -197,8 +226,12 @@ const AdminDashboard = () => {
   };
 
   // Determine which list to show in selector
-  const selectorRestaurants = contextIsAdmin() ? allRestaurants : (contextIsOwner() ? ownedRestaurants : []);
-  const showSelector = (contextIsAdmin() || (contextIsOwner() && ownedRestaurants.length > 1));
+  const selectorRestaurants = contextIsAdmin()
+    ? allRestaurants
+    : contextIsOwner()
+      ? ownedRestaurants
+      : [];
+  const showSelector = contextIsAdmin() || (contextIsOwner() && ownedRestaurants.length > 1);
 
   // Load restaurants when component mounts for admin users
   useEffect(() => {
@@ -256,7 +289,9 @@ const AdminDashboard = () => {
       if (cancelled || !supabase) return;
       try {
         setAuthLoading(true);
-        const { data: { session } } = await supabase.auth.getSession();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         const user = session?.user;
         if (cancelled) return;
         if (!user) {
@@ -308,7 +343,7 @@ const AdminDashboard = () => {
           setUserRole(role);
 
           // Merge profile fields onto auth user for UI (e.g., sidebar avatar)
-          setCurrentUser(prev => ({
+          setCurrentUser((prev) => ({
             ...(prev || {}),
             avatar_url: profileData.avatar_url ?? prev?.avatar_url ?? null,
           }));
@@ -318,7 +353,15 @@ const AdminDashboard = () => {
           setIsAdmin(role === 'admin' || role === 'owner');
 
           // Allowed roles
-          const allowedRoles = ['manager', 'admin', 'captain', 'owner', 'chef', 'waiter', 'cashier'];
+          const allowedRoles = [
+            'manager',
+            'admin',
+            'captain',
+            'owner',
+            'chef',
+            'waiter',
+            'cashier',
+          ];
 
           // If user is not in allowed roles, redirect to restaurant login (stay in restaurant app)
           if (!allowedRoles.includes(role)) {
@@ -330,7 +373,9 @@ const AdminDashboard = () => {
         if (!cancelled) console.error('Dashboard: failed to load profile', error);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [currentUser, navigate]);
 
   // Fetch food items with restaurant filter (no global loading overlay to avoid "Processing..." popup on dashboard open)
@@ -346,6 +391,10 @@ const AdminDashboard = () => {
       setFoodItems(data || []);
       return data;
     } catch (error) {
+      // Ignore abort errors as they are usually intentional (e.g. unmount or duplicate request)
+      if (error.name === 'AbortError' || error.message?.toLowerCase().includes('aborted')) {
+        return [];
+      }
       setErrorMsg('Failed to load menu items: ' + (error.message || error));
       return [];
     }
@@ -354,16 +403,22 @@ const AdminDashboard = () => {
   // Restore active tab from URL on load (e.g. after refresh) so user stays on the same page
   useEffect(() => {
     if (menuItems.length === 0 || tabFromUrlInitialized.current) return;
-    const allowedIds = menuItems.map(item => item.id);
+    const allowedIds = menuItems.map((item) => item.id);
     const tabFromUrl = searchParams.get('tab');
     const restaurantFromUrl = searchParams.get('restaurant');
 
     // Check if we need to force aggregate analytics as landing
-    const isOwnerWithMultiple = (contextIsOwner() || contextIsAdmin()) && ownedRestaurants && ownedRestaurants.length > 1;
+    const isOwnerWithMultiple =
+      (contextIsOwner() || contextIsAdmin()) && ownedRestaurants && ownedRestaurants.length > 1;
 
-    // Only land on aggregate if there's no tab specified, NO specific restaurant requested in URL, 
+    // Only land on aggregate if there's no tab specified, NO specific restaurant requested in URL,
     // and they haven't picked one yet
-    const shouldLandOnAggregate = !tabFromUrl && !restaurantFromUrl && isOwnerWithMultiple && !userRestaurantId && allowedIds.includes('aggregate-analytics');
+    const shouldLandOnAggregate =
+      !tabFromUrl &&
+      !restaurantFromUrl &&
+      isOwnerWithMultiple &&
+      !userRestaurantId &&
+      allowedIds.includes('aggregate-analytics');
 
     if (shouldLandOnAggregate) {
       setActiveTab('aggregate-analytics');
@@ -378,7 +433,7 @@ const AdminDashboard = () => {
   // Redirect to first allowed tab if current activeTab is restricted
   useEffect(() => {
     if (menuItems.length > 0) {
-      const allowedIds = menuItems.map(item => item.id);
+      const allowedIds = menuItems.map((item) => item.id);
       if (!allowedIds.includes(activeTab)) {
         setActiveTab(allowedIds[0]);
       }
@@ -412,21 +467,23 @@ const AdminDashboard = () => {
             event: '*',
             schema: 'public',
             table: 'orders',
-            filter: userRestaurantId ? `restaurant_id=eq.${userRestaurantId}` : undefined
+            filter: userRestaurantId ? `restaurant_id=eq.${userRestaurantId}` : undefined,
           },
           (payload) => {
             const { eventType, new: newRecord } = payload;
             if (!newRecord) return;
             if (eventType === 'INSERT') {
               setOrderToastTitle('New Order Received! 🔔');
-              setOrderToastMessage(`Order #${newRecord.order_number || newRecord.id.slice(0, 8)} - Table ${newRecord.table_number || 'Takeaway'}`);
+              setOrderToastMessage(
+                `Order #${newRecord.order_number || newRecord.id.slice(0, 8)} - Table ${newRecord.table_number || 'Takeaway'}`,
+              );
               setOrderSoundType('new_order');
               setPlayOrderSound(true);
               setShowOrderToast(true);
             }
-          }
+          },
         )
-        .subscribe(() => { });
+        .subscribe(() => {});
       orderChannelRef.current = channel;
     })();
     return () => {
@@ -463,12 +520,18 @@ const AdminDashboard = () => {
       // Pass user info for logging
       const userData = {
         id: currentUser.id,
-        user_name: restaurant?.staff?.find(s => s.user_id === currentUser.id)?.full_name ||
+        user_name:
+          restaurant?.staff?.find((s) => s.user_id === currentUser.id)?.full_name ||
           currentUser.user_metadata?.full_name ||
           currentUser.email,
-        role: contextUserRole
+        role: contextUserRole,
       };
-      const updatedOrder = await updateOrderStatusService(orderId, newStatus, cancelReason, userData);
+      const updatedOrder = await updateOrderStatusService(
+        orderId,
+        newStatus,
+        cancelReason,
+        userData,
+      );
 
       // Show success notification
       setOrderToastTitle('✅ Status Updated');
@@ -477,11 +540,20 @@ const AdminDashboard = () => {
       if (autoEmail) {
         if (autoEmail.sent && autoEmail.to) {
           toastMsg += `. Acceptance email sent to ${autoEmail.to}`;
-        } else if (autoEmail.skippedReason === 'no_customer_email' && ['preparing', 'rejected', 'completed'].includes(newStatus)) {
+        } else if (
+          autoEmail.skippedReason === 'no_customer_email' &&
+          ['preparing', 'rejected', 'completed'].includes(newStatus)
+        ) {
           toastMsg += `. No auto email: add customer email on the order to receive status emails.`;
-        } else if (autoEmail.skippedReason === 'auto_email_disabled' && ['preparing', 'rejected', 'completed'].includes(newStatus)) {
+        } else if (
+          autoEmail.skippedReason === 'auto_email_disabled' &&
+          ['preparing', 'rejected', 'completed'].includes(newStatus)
+        ) {
           toastMsg += `. Enable "Auto email billing" in Settings → Online Bill Delivery to send emails.`;
-        } else if (autoEmail.skippedReason === 'online_billing_disabled' && ['preparing', 'rejected', 'completed'].includes(newStatus)) {
+        } else if (
+          autoEmail.skippedReason === 'online_billing_disabled' &&
+          ['preparing', 'rejected', 'completed'].includes(newStatus)
+        ) {
           toastMsg += `. Enable "Online Bill" in Settings and ensure admin has online billing enabled for this restaurant.`;
         } else if (autoEmail.error) {
           toastMsg += `. Auto email failed: ${autoEmail.error}`;
@@ -505,13 +577,13 @@ const AdminDashboard = () => {
 
   const handleRequestNotification = () => {
     if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission().then(permission => {
+      Notification.requestPermission().then((permission) => {
         setNotificationPermission(permission);
         if (permission === 'granted') {
           new Notification('Admin Dashboard Ready!', {
             body: 'You will receive notifications for new orders.',
             icon: '/favicon.ico',
-            tag: 'welcome'
+            tag: 'welcome',
           });
         }
       });
@@ -525,12 +597,12 @@ const AdminDashboard = () => {
   const handleCreateOrder = async () => {
     setIsLoading(true);
     try {
-      // Dynamic import to avoid top-level relative path issues if possible, or just standard import. 
+      // Dynamic import to avoid top-level relative path issues if possible, or just standard import.
       // Since I'm editing the middle, I'll use inline requirement if I could, but ES modules don't support that easily.
       // I will add the import at the top in a separate tool call first.
 
       // Checking if restaurant ID is available
-      const targetRestaurantId = userRestaurantId || (restaurant?.id);
+      const targetRestaurantId = userRestaurantId || restaurant?.id;
 
       if (!targetRestaurantId) {
         throw new Error('Restaurant ID is missing. Please select a restaurant.');
@@ -543,18 +615,21 @@ const AdminDashboard = () => {
         customerEmail: createOrderData.customer_email || 'walkin@customer.com',
         customerPhone: createOrderData.customer_phone || '0000000000',
         tableNumber: createOrderData.table_number || 'Walk-in',
-        items: createOrderData.items.map(item => ({
+        items: createOrderData.items.map((item) => ({
           id: item.id || null, // Will be null for manual items
           name: item.name,
           price: parseFloat(item.price),
           quantity: parseInt(item.quantity),
           category: 'Manual',
-          image: null
+          image: null,
         })),
-        total: createOrderData.items.reduce((sum, item) => sum + (parseFloat(item.price) * parseInt(item.quantity)), 0),
+        total: createOrderData.items.reduce(
+          (sum, item) => sum + parseFloat(item.price) * parseInt(item.quantity),
+          0,
+        ),
         paymentMethod: 'cash',
         paymentStatus: 'pending',
-        specialInstructions: createOrderData.notes || ''
+        specialInstructions: createOrderData.notes || '',
       };
 
       // Import strictly for this function if not at top
@@ -572,7 +647,7 @@ const AdminDashboard = () => {
           items: [],
           notes: '',
           address: '',
-          total: 0
+          total: 0,
         });
         setSuccessMsg('Order created successfully!');
         // Notification is handled by createOrder -> createManagerOrderNotification
@@ -588,20 +663,21 @@ const AdminDashboard = () => {
   };
 
   const addItemToOrder = () => {
-    setCreateOrderData(prev => ({ ...prev, items: [...prev.items, { name: '', quantity: 1, price: 0 }] }));
+    setCreateOrderData((prev) => ({
+      ...prev,
+      items: [...prev.items, { name: '', quantity: 1, price: 0 }],
+    }));
   };
 
   const removeItemFromOrder = (index) => {
     const newItems = createOrderData.items.filter((_, i) => i !== index);
-    setCreateOrderData(prev => ({ ...prev, items: newItems }));
+    setCreateOrderData((prev) => ({ ...prev, items: newItems }));
   };
 
   const updateOrderItem = (index, field, value) => {
-    setCreateOrderData(prev => ({
+    setCreateOrderData((prev) => ({
       ...prev,
-      items: prev.items.map((item, i) =>
-        i === index ? { ...item, [field]: value } : item
-      )
+      items: prev.items.map((item, i) => (i === index ? { ...item, [field]: value } : item)),
     }));
   };
 
@@ -675,7 +751,10 @@ const AdminDashboard = () => {
             <strong className="block">Success</strong>
             <span className="text-sm">{successMsg}</span>
           </div>
-          <button onClick={() => setSuccessMsg('')} className="ml-4 text-green-700 hover:text-green-900">
+          <button
+            onClick={() => setSuccessMsg('')}
+            className="ml-4 text-green-700 hover:text-green-900"
+          >
             <X size={18} />
           </button>
         </div>
@@ -690,8 +769,6 @@ const AdminDashboard = () => {
         onClose={() => setShowOrderToast(false)}
         duration={6000} // Show for 6 seconds
       />
-
-
 
       <NotificationSound play={playOrderSound} soundType={orderSoundType} />
 
@@ -724,7 +801,7 @@ const AdminDashboard = () => {
           userRole={contextUserRole}
           collapsed={isSidebarCollapsed}
           onToggleCollapsed={() => {
-            setIsSidebarCollapsed(prev => {
+            setIsSidebarCollapsed((prev) => {
               const next = !prev;
               try {
                 localStorage.setItem('restaurant_sidebar_collapsed', next ? '1' : '0');
@@ -751,10 +828,7 @@ const AdminDashboard = () => {
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
         />
-        <LogoutPopup
-          isOpen={showLogoutPopup}
-          onClose={() => setShowLogoutPopup(false)}
-        />
+        <LogoutPopup isOpen={showLogoutPopup} onClose={() => setShowLogoutPopup(false)} />
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
@@ -771,7 +845,7 @@ const AdminDashboard = () => {
                   <ChevronLeft size={30} />
                 </button>
                 <h2 className="text-xl md:text-2xl font-semibold text-gray-800">
-                  {menuItems.find(item => item.id === activeTab)?.label || 'Dashboard'}
+                  {menuItems.find((item) => item.id === activeTab)?.label || 'Dashboard'}
                 </h2>
               </div>
 
@@ -783,7 +857,11 @@ const AdminDashboard = () => {
                     onClick={() => setShowRestaurantSelector(!showRestaurantSelector)}
                     className="restaurant-selector-trigger flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white shadow-sm hover:border-orange-300 hover:bg-orange-50/50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
                   >
-                    {contextIsAdmin() ? <Building2 size={18} className="text-gray-600" /> : <Crown size={18} className="text-amber-600" />}
+                    {contextIsAdmin() ? (
+                      <Building2 size={18} className="text-gray-600" />
+                    ) : (
+                      <Crown size={18} className="text-amber-600" />
+                    )}
                     <span className="text-sm font-medium text-gray-700">
                       {restaurant?.name || 'Select Restaurant'}
                     </span>
@@ -811,10 +889,11 @@ const AdminDashboard = () => {
                             <button
                               key={rest.id}
                               onClick={() => handleRestaurantSelect(rest.id)}
-                              className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${rest.id === userRestaurantId
-                                ? 'bg-orange-100 text-orange-700'
-                                : 'hover:bg-orange-50 text-gray-700'
-                                }`}
+                              className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                                rest.id === userRestaurantId
+                                  ? 'bg-orange-100 text-orange-700'
+                                  : 'hover:bg-orange-50 text-gray-700'
+                              }`}
                             >
                               <div className="flex items-center justify-between">
                                 <span className="truncate">{rest.name}</span>
@@ -843,7 +922,11 @@ const AdminDashboard = () => {
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                   <span className="absolute right-0 top-0 mt-3 mr-4">
-                    <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                    <svg
+                      className="h-4 w-4 fill-current"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                    >
                       <path d="M12.9 14.32a8 8 0 1 1 1.41-1.41l5.35 5.33-1.42 1.42-5.33-5.34zM8 14A6 6 0 1 0 8 2a6 6 0 0 0 0 12z"></path>
                     </svg>
                   </span>
@@ -852,10 +935,11 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-
           {/* Main Content Body */}
           <div className="flex-1 overflow-y-auto pt-4 md:pt-0">
-            <div className={`px-2 ${activeTab === 'analytics' ? 'py-0 h-full' : 'py-6 md:py-8'} md:px-8 w-full mx-auto`}>
+            <div
+              className={`px-2 ${activeTab === 'analytics' ? 'py-0 h-full' : 'py-6 md:py-8'} md:px-8 w-full mx-auto`}
+            >
               {/* Mobile Search */}
               <div className="md:hidden mb-4">
                 {/* Mobile Restaurant Selector for Admin Users and Owners with multiple restaurants */}
@@ -867,7 +951,11 @@ const AdminDashboard = () => {
                       className="restaurant-selector-trigger w-full flex items-center justify-between gap-2 px-3 py-3 rounded-xl border border-gray-200 bg-white shadow-sm hover:border-orange-300 hover:bg-orange-50/50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
                     >
                       <div className="flex items-center gap-2">
-                        {contextIsAdmin() ? <Building2 size={18} className="text-gray-600" /> : <Crown size={18} className="text-amber-600" />}
+                        {contextIsAdmin() ? (
+                          <Building2 size={18} className="text-gray-600" />
+                        ) : (
+                          <Crown size={18} className="text-amber-600" />
+                        )}
                         <span className="text-sm font-medium text-gray-700">
                           {restaurant?.name || 'Select Restaurant'}
                         </span>
@@ -896,10 +984,11 @@ const AdminDashboard = () => {
                               <button
                                 key={rest.id}
                                 onClick={() => handleRestaurantSelect(rest.id)}
-                                className={`w-full text-left px-2 py-3 rounded-lg text-sm font-medium transition-colors ${rest.id === userRestaurantId
-                                  ? 'bg-orange-100 text-orange-700'
-                                  : 'hover:bg-orange-50 text-gray-700'
-                                  }`}
+                                className={`w-full text-left px-2 py-3 rounded-lg text-sm font-medium transition-colors ${
+                                  rest.id === userRestaurantId
+                                    ? 'bg-orange-100 text-orange-700'
+                                    : 'hover:bg-orange-50 text-gray-700'
+                                }`}
                               >
                                 <div className="flex items-center justify-between">
                                   <span className="truncate">{rest.name}</span>
@@ -915,27 +1004,28 @@ const AdminDashboard = () => {
                     )}
                   </div>
                 )}
-
-
               </div>
 
               {/* Content Components - Removed redundant padding */}
-              {activeTab === 'aggregate-analytics' && (contextIsOwner() || contextIsAdmin()) && ownedRestaurants && ownedRestaurants.length > 1 && (
-                <AggregateAnalytics
-                  onSelectRestaurant={async (restaurantId) => {
-                    let success;
-                    if (contextIsAdmin()) {
-                      success = await setAdminRestaurant(restaurantId);
-                    } else {
-                      success = await setOwnerRestaurant(restaurantId);
-                    }
-                    if (success) {
-                      setActiveTab('dashboard');
-                      setSuccessMsg('Switched to restaurant dashboard');
-                    }
-                  }}
-                />
-              )}
+              {activeTab === 'aggregate-analytics' &&
+                (contextIsOwner() || contextIsAdmin()) &&
+                ownedRestaurants &&
+                ownedRestaurants.length > 1 && (
+                  <AggregateAnalytics
+                    onSelectRestaurant={async (restaurantId) => {
+                      let success;
+                      if (contextIsAdmin()) {
+                        success = await setAdminRestaurant(restaurantId);
+                      } else {
+                        success = await setOwnerRestaurant(restaurantId);
+                      }
+                      if (success) {
+                        setActiveTab('dashboard');
+                        setSuccessMsg('Switched to restaurant dashboard');
+                      }
+                    }}
+                  />
+                )}
 
               {activeTab !== 'aggregate-analytics' && !userRestaurantId ? (
                 <div className="flex justify-center items-center min-h-[50vh]">
@@ -944,7 +1034,9 @@ const AdminDashboard = () => {
                       <StoreIcon className="text-orange-500" size={32} />
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 mb-2">Select a Restaurant</h3>
-                    <p className="text-gray-500 mb-6">You need to select a restaurant from the top menu to view its dashboard.</p>
+                    <p className="text-gray-500 mb-6">
+                      You need to select a restaurant from the top menu to view its dashboard.
+                    </p>
                     {(contextIsOwner() || contextIsAdmin()) && ownedRestaurants?.length > 1 && (
                       <button
                         onClick={() => setActiveTab('aggregate-analytics')}
@@ -972,7 +1064,7 @@ const AdminDashboard = () => {
                       searchTerm={searchTerm}
                       onViewOrders={() => setActiveTab('orders')}
                       onCreateOrder={(tableNum) => {
-                        setCreateOrderData(prev => ({ ...prev, table_number: tableNum }));
+                        setCreateOrderData((prev) => ({ ...prev, table_number: tableNum }));
                         setShowCreateOrderModal(true);
                       }}
                     />
@@ -1009,10 +1101,7 @@ const AdminDashboard = () => {
                   )}
 
                   {activeTab === 'users' && (
-                    <StaffManagement
-                      searchTerm={searchTerm}
-                      setSearchTerm={setSearchTerm}
-                    />
+                    <StaffManagement searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
                   )}
 
                   {activeTab === 'offers' && (
@@ -1032,46 +1121,46 @@ const AdminDashboard = () => {
                     />
                   )}
 
-                  {activeTab === 'analytics' && (contextUserRole === 'manager' || contextUserRole === 'admin' || contextUserRole === 'owner' || restaurant?.ai_enabled == true || contextIsAdmin()) && (
-                    <div className="h-full flex flex-col">
-                      {restaurant?.ai_enabled ? (
-                        <Suspense fallback={
-                          <div className="bg-white rounded-2xl p-6 shadow-sm">
-                            <div className="flex items-center gap-3 mb-4">
-                              <div className="h-8 w-8 bg-purple-100 rounded-lg animate-pulse"></div>
-                              <div className="h-6 bg-gray-200 rounded w-40 animate-pulse"></div>
-                            </div>
-                            <div className="space-y-3">
-                              <div className="h-4 bg-gray-100 rounded w-3/4 animate-pulse"></div>
-                              <div className="h-4 bg-gray-100 rounded w-1/2 animate-pulse"></div>
-                              <div className="h-32 bg-gray-50 rounded animate-pulse"></div>
-                            </div>
+                  {activeTab === 'analytics' &&
+                    (contextUserRole === 'manager' ||
+                      contextUserRole === 'admin' ||
+                      contextUserRole === 'owner' ||
+                      restaurant?.ai_enabled == true ||
+                      contextIsAdmin()) && (
+                      <div className="h-full flex flex-col">
+                        {restaurant?.ai_enabled ? (
+                          <Suspense
+                            fallback={
+                              <div className="bg-white rounded-2xl p-6 shadow-sm">
+                                <div className="flex items-center gap-3 mb-4">
+                                  <div className="h-8 w-8 bg-purple-100 rounded-lg animate-pulse"></div>
+                                  <div className="h-6 bg-gray-200 rounded w-40 animate-pulse"></div>
+                                </div>
+                                <div className="space-y-3">
+                                  <div className="h-4 bg-gray-100 rounded w-3/4 animate-pulse"></div>
+                                  <div className="h-4 bg-gray-100 rounded w-1/2 animate-pulse"></div>
+                                  <div className="h-32 bg-gray-50 rounded animate-pulse"></div>
+                                </div>
+                              </div>
+                            }
+                          >
+                            <AIAnalyticsChat restaurantId={restaurant?.id} />
+                          </Suspense>
+                        ) : (
+                          <div className="p-4 mb-8 bg-yellow-50 border border-yellow-200 rounded">
+                            <p className="text-yellow-800 font-medium">
+                              AI Analytics is disabled for this restaurant.
+                            </p>
                           </div>
-                        }>
-                          <AIAnalyticsChat restaurantId={restaurant?.id} />
-                        </Suspense>
-                      ) : (
-                        <div className="p-4 mb-8 bg-yellow-50 border border-yellow-200 rounded">
-                          <p className="text-yellow-800 font-medium">
-                            AI Analytics is disabled for this restaurant.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                        )}
+                      </div>
+                    )}
 
                   {activeTab === 'aggregators' && restaurant && (
-                    <AggregatorIntegration
-                      restaurantId={restaurant.id}
-                      restaurant={restaurant}
-                    />
+                    <AggregatorIntegration restaurantId={restaurant.id} restaurant={restaurant} />
                   )}
 
-                  {activeTab === 'settings' && (
-                    <SettingsManagement
-                      currentUser={currentUser}
-                    />
-                  )}
+                  {activeTab === 'settings' && <SettingsManagement currentUser={currentUser} />}
 
                   {activeTab === 'activity-logs' && (
                     <ActivityLogs
@@ -1090,147 +1179,161 @@ const AdminDashboard = () => {
       </div>
 
       {/* Create Order Modal */}
-      {
-        showCreateOrderModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-            <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-6 relative">
-              <button
-                className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
-                onClick={() => setShowCreateOrderModal(false)}
-              >
-                <X size={20} />
-              </button>
-              <h3 className="text-lg font-semibold mb-4">Create New Order</h3>
-              <form
-                onSubmit={e => {
-                  e.preventDefault();
-                  handleCreateOrder();
-                }}
-                className="space-y-4"
-              >
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name *</label>
-                  <input
-                    type="text"
-                    className="w-full border border-gray-300 rounded p-2"
-                    value={createOrderData.customer_name}
-                    onChange={e => setCreateOrderData(prev => ({ ...prev, customer_name: e.target.value }))}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                  <input
-                    type="text"
-                    className="w-full border border-gray-300 rounded p-2"
-                    value={createOrderData.customer_phone}
-                    onChange={e => setCreateOrderData(prev => ({ ...prev, customer_phone: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                  <input
-                    type="email"
-                    className="w-full border border-gray-300 rounded p-2"
-                    value={createOrderData.customer_email}
-                    onChange={e => setCreateOrderData(prev => ({ ...prev, customer_email: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Table Number</label>
-                  <input
-                    type="text"
-                    className="w-full border border-gray-300 rounded p-2"
-                    value={createOrderData.table_number}
-                    onChange={e => setCreateOrderData(prev => ({ ...prev, table_number: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Order Items *</label>
-                  {createOrderData.items.map((item, idx) => (
-                    <div key={idx} className="flex gap-2 mb-2">
-                      <input
-                        type="text"
-                        placeholder="Item name"
-                        className="flex-1 border border-gray-300 rounded p-2"
-                        value={item.name}
-                        onChange={e => updateOrderItem(idx, 'name', e.target.value)}
-                        required
-                      />
-                      <input
-                        type="number"
-                        placeholder="Qty"
-                        className="w-16 border border-gray-300 rounded p-2"
-                        value={item.quantity}
-                        min={1}
-                        onChange={e => updateOrderItem(idx, 'quantity', e.target.value)}
-                        required
-                      />
-                      <input
-                        type="number"
-                        placeholder="Price"
-                        className="w-24 border border-gray-300 rounded p-2"
-                        value={item.price}
-                        min={0}
-                        step="0.01"
-                        onChange={e => updateOrderItem(idx, 'price', e.target.value)}
-                        required
-                      />
-                      <button
-                        type="button"
-                        className="text-red-500 hover:text-red-700"
-                        onClick={() => removeItemFromOrder(idx)}
-                        title="Remove item"
-                      >
-                        <X size={16} />
-                      </button>
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    className="mt-2 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm flex items-center"
-                    onClick={addItemToOrder}
-                  >
-                    <Plus size={14} className="mr-1" />
-                    Add Item
-                  </button>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                  <textarea
-                    className="w-full border border-gray-300 rounded p-2"
-                    value={createOrderData.notes}
-                    onChange={e => setCreateOrderData(prev => ({ ...prev, notes: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                  <input
-                    type="text"
-                    className="w-full border border-gray-300 rounded p-2"
-                    value={createOrderData.address}
-                    onChange={e => setCreateOrderData(prev => ({ ...prev, address: e.target.value }))}
-                  />
-                </div>
-                <div className="flex justify-between items-center mt-4">
-                  <span className="font-semibold text-lg">
-                    Total: ₹{createOrderData.total.toFixed(2)}
-                  </span>
-                  <button
-                    type="submit"
-                    className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? 'Creating...' : 'Create Order'}
-                  </button>
-                </div>
-              </form>
-            </div>
+      {showCreateOrderModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-6 relative">
+            <button
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+              onClick={() => setShowCreateOrderModal(false)}
+            >
+              <X size={20} />
+            </button>
+            <h3 className="text-lg font-semibold mb-4">Create New Order</h3>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleCreateOrder();
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Customer Name *
+                </label>
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 rounded p-2"
+                  value={createOrderData.customer_name}
+                  onChange={(e) =>
+                    setCreateOrderData((prev) => ({ ...prev, customer_name: e.target.value }))
+                  }
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 rounded p-2"
+                  value={createOrderData.customer_phone}
+                  onChange={(e) =>
+                    setCreateOrderData((prev) => ({ ...prev, customer_phone: e.target.value }))
+                  }
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  className="w-full border border-gray-300 rounded p-2"
+                  value={createOrderData.customer_email}
+                  onChange={(e) =>
+                    setCreateOrderData((prev) => ({ ...prev, customer_email: e.target.value }))
+                  }
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Table Number</label>
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 rounded p-2"
+                  value={createOrderData.table_number}
+                  onChange={(e) =>
+                    setCreateOrderData((prev) => ({ ...prev, table_number: e.target.value }))
+                  }
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Order Items *
+                </label>
+                {createOrderData.items.map((item, idx) => (
+                  <div key={idx} className="flex gap-2 mb-2">
+                    <input
+                      type="text"
+                      placeholder="Item name"
+                      className="flex-1 border border-gray-300 rounded p-2"
+                      value={item.name}
+                      onChange={(e) => updateOrderItem(idx, 'name', e.target.value)}
+                      required
+                    />
+                    <input
+                      type="number"
+                      placeholder="Qty"
+                      className="w-16 border border-gray-300 rounded p-2"
+                      value={item.quantity}
+                      min={1}
+                      onChange={(e) => updateOrderItem(idx, 'quantity', e.target.value)}
+                      required
+                    />
+                    <input
+                      type="number"
+                      placeholder="Price"
+                      className="w-24 border border-gray-300 rounded p-2"
+                      value={item.price}
+                      min={0}
+                      step="0.01"
+                      onChange={(e) => updateOrderItem(idx, 'price', e.target.value)}
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="text-red-500 hover:text-red-700"
+                      onClick={() => removeItemFromOrder(idx)}
+                      title="Remove item"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="mt-2 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm flex items-center"
+                  onClick={addItemToOrder}
+                >
+                  <Plus size={14} className="mr-1" />
+                  Add Item
+                </button>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <textarea
+                  className="w-full border border-gray-300 rounded p-2"
+                  value={createOrderData.notes}
+                  onChange={(e) =>
+                    setCreateOrderData((prev) => ({ ...prev, notes: e.target.value }))
+                  }
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 rounded p-2"
+                  value={createOrderData.address}
+                  onChange={(e) =>
+                    setCreateOrderData((prev) => ({ ...prev, address: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="flex justify-between items-center mt-4">
+                <span className="font-semibold text-lg">
+                  Total: ₹{createOrderData.total.toFixed(2)}
+                </span>
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Creating...' : 'Create Order'}
+                </button>
+              </div>
+            </form>
           </div>
-        )
-      }
-    </div >
-  )
-}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default AdminDashboard;

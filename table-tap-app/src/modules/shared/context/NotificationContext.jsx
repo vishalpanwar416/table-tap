@@ -3,15 +3,15 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../shared/config/AuthContext';
+import { supabase } from '../supabase';
 import {
   getUserNotifications,
   getUnreadNotifications,
   markNotificationAsRead,
   markAllNotificationsAsRead,
   deleteNotification as deleteNotificationService,
-  subscribeToUserNotifications
+  subscribeToUserNotifications,
 } from '../api/notificationService';
-
 
 const NotificationContext = createContext();
 
@@ -32,11 +32,11 @@ export const NotificationProvider = ({ children }) => {
       const subscription = subscribeToUserNotifications(user.id, (newNotification) => {
         console.log('[Realtime] New notification received:', newNotification);
         // Add notification to state
-        setNotifications(prev => [newNotification, ...prev]);
+        setNotifications((prev) => [newNotification, ...prev]);
 
         // Increment unread count
         if (!newNotification.read) {
-          setUnreadCount(prevCount => prevCount + 1);
+          setUnreadCount((prevCount) => prevCount + 1);
 
           // Show browser notification
           showBrowserNotification(newNotification);
@@ -44,22 +44,14 @@ export const NotificationProvider = ({ children }) => {
           // Show in-app toast
           toast.success(newNotification.title || 'New Notification', {
             duration: 4000,
-            icon: '🔔'
+            icon: '🔔',
           });
         }
       });
 
-      if (subscription && subscription.on) {
-        subscription.on('status', (status) => {
-          console.log('[Supabase Realtime] Channel status:', status);
-        });
-      }
-      console.log('[Realtime] Subscribed to notifications for user:', user.id);
-
       return () => {
         if (subscription) {
-          subscription.unsubscribe();
-          console.log('[Realtime] Unsubscribed from notifications for user:', user.id);
+          supabase.removeChannel(subscription);
         }
       };
     }
@@ -96,14 +88,14 @@ export const NotificationProvider = ({ children }) => {
       await markNotificationAsRead(notificationId);
 
       // Update local state
-      setNotifications(prev =>
-        prev.map(notification =>
-          notification.id === notificationId ? { ...notification, read: true } : notification
-        )
+      setNotifications((prev) =>
+        prev.map((notification) =>
+          notification.id === notificationId ? { ...notification, read: true } : notification,
+        ),
       );
 
       // Update unread count
-      setUnreadCount(prevCount => Math.max(0, prevCount - 1));
+      setUnreadCount((prevCount) => Math.max(0, prevCount - 1));
       console.log('[Debug] Notification marked as read:', notificationId);
     } catch (err) {
       console.error('[NotificationContext] Error marking as read:', err);
@@ -118,14 +110,11 @@ export const NotificationProvider = ({ children }) => {
       await markAllNotificationsAsRead(user.id);
 
       // Update local state
-      setNotifications(prev =>
-        prev.map(notification => ({ ...notification, read: true }))
-      );
+      setNotifications((prev) => prev.map((notification) => ({ ...notification, read: true })));
 
       // Reset unread count
       setUnreadCount(0);
-    } catch (err) {
-    }
+    } catch (err) {}
   };
 
   // Delete notification
@@ -135,12 +124,14 @@ export const NotificationProvider = ({ children }) => {
 
       if (result.success) {
         // Remove notification from local state
-        setNotifications(prev => prev.filter(notification => notification.id !== notificationId));
+        setNotifications((prev) =>
+          prev.filter((notification) => notification.id !== notificationId),
+        );
 
         // Update unread count if the deleted notification was unread
-        const deletedNotification = notifications.find(n => n.id === notificationId);
+        const deletedNotification = notifications.find((n) => n.id === notificationId);
         if (deletedNotification && !deletedNotification.read) {
-          setUnreadCount(prevCount => Math.max(0, prevCount - 1));
+          setUnreadCount((prevCount) => Math.max(0, prevCount - 1));
         }
         console.log('[Debug] Notification deleted:', notificationId);
       }
@@ -151,7 +142,7 @@ export const NotificationProvider = ({ children }) => {
 
   // Show browser notification if supported
   const showBrowserNotification = (notification) => {
-    if (!("Notification" in window)) {
+    if (!('Notification' in window)) {
       return;
     }
 
@@ -175,13 +166,13 @@ export const NotificationProvider = ({ children }) => {
     };
 
     // Check if permission is granted
-    if (Notification.permission === "granted") {
+    if (Notification.permission === 'granted') {
       showNotif();
     }
     // If permission is not denied, ask for it
-    else if (Notification.permission !== "denied") {
-      Notification.requestPermission().then(permission => {
-        if (permission === "granted") {
+    else if (Notification.permission !== 'denied') {
+      Notification.requestPermission().then((permission) => {
+        if (permission === 'granted') {
           showNotif();
         }
       });
@@ -196,14 +187,10 @@ export const NotificationProvider = ({ children }) => {
     fetchNotifications,
     markAsRead,
     markAllAsRead,
-    deleteNotification
+    deleteNotification,
   };
 
-  return (
-    <NotificationContext.Provider value={value}>
-      {children}
-    </NotificationContext.Provider>
-  );
+  return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;
 };
 
 export const useNotifications = () => {

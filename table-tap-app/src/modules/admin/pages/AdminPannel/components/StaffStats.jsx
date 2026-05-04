@@ -10,7 +10,7 @@ const StaffStats = ({ staff, restaurants }) => {
       icon: Users,
       color: 'blue',
       description: 'All staff members',
-      gradient: 'from-blue-500 to-blue-600'
+      gradient: ' ',
     },
     {
       title: 'Restaurants',
@@ -18,24 +18,24 @@ const StaffStats = ({ staff, restaurants }) => {
       icon: Building2,
       color: 'purple',
       description: 'Active restaurants',
-      gradient: 'from-purple-500 to-purple-600'
+      gradient: ' ',
     },
     {
       title: 'Connected',
-      value: staff.filter(s => s.connected).length,
+      value: staff.filter((s) => s.connected).length,
       icon: CheckCircle,
       color: 'green',
       description: 'Online staff',
-      gradient: 'from-green-500 to-green-600'
+      gradient: ' ',
     },
     {
       title: 'Disconnected',
-      value: staff.filter(s => !s.connected).length,
+      value: staff.filter((s) => !s.connected).length,
       icon: XCircle,
       color: 'red',
       description: 'Offline staff',
-      gradient: 'from-red-500 to-red-600'
-    }
+      gradient: ' ',
+    },
   ];
 
   return (
@@ -49,4 +49,4 @@ const StaffStats = ({ staff, restaurants }) => {
   );
 };
 
-export default StaffStats; 
+export default StaffStats;

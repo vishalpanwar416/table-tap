@@ -25,21 +25,18 @@ import {
   XCircle,
   CheckCircle,
   MailCheck,
-  MailX
+  MailX,
 } from 'lucide-react';
-import { useAdminNotifications, NOTIFICATION_TYPES } from '../../../context/AdminNotificationContext';
+import {
+  useAdminNotifications,
+  NOTIFICATION_TYPES,
+} from '../../../context/AdminNotificationContext';
 
 const AdminNotificationBell = ({ onTabChange }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const {
-    notifications,
-    unreadCount,
-    loading,
-    markAsRead,
-    markAllAsRead,
-    refreshNotifications
-  } = useAdminNotifications();
+  const { notifications, unreadCount, loading, markAsRead, markAllAsRead, refreshNotifications } =
+    useAdminNotifications();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -73,7 +70,7 @@ const AdminNotificationBell = ({ onTabChange }) => {
       case NOTIFICATION_TYPES.NEW_SUBSCRIPTION:
         return <CreditCard className="w-4 h-4 text-green-500" />;
       case NOTIFICATION_TYPES.SUBSCRIPTION_RENEWED:
-        return <RefreshCw className="w-4 h-4 text-blue-500" />;
+        return <RefreshCw className="w-4 h-4 text-gray-600" />;
       case NOTIFICATION_TYPES.SUBSCRIPTION_CANCELLED:
         return <X className="w-4 h-4 text-red-500" />;
       case NOTIFICATION_TYPES.SUBSCRIPTION_EXPIRED:
@@ -81,13 +78,13 @@ const AdminNotificationBell = ({ onTabChange }) => {
       case NOTIFICATION_TYPES.SUBSCRIPTION_EXPIRING:
         return <Calendar className="w-4 h-4 text-amber-500" />;
       case NOTIFICATION_TYPES.SUBSCRIPTION_UPGRADED:
-        return <TrendingUp className="w-4 h-4 text-purple-500" />;
+        return <TrendingUp className="w-4 h-4 text-orange-500" />;
       case NOTIFICATION_TYPES.SUBSCRIPTION_DOWNGRADED:
         return <TrendingDown className="w-4 h-4 text-gray-500" />;
 
       // Restaurant notifications
       case NOTIFICATION_TYPES.NEW_RESTAURANT:
-        return <Building2 className="w-4 h-4 text-purple-500" />;
+        return <Building2 className="w-4 h-4 text-orange-500" />;
       case NOTIFICATION_TYPES.RESTAURANT_ACTIVATED:
         return <Power className="w-4 h-4 text-green-500" />;
       case NOTIFICATION_TYPES.RESTAURANT_DEACTIVATED:
@@ -95,13 +92,13 @@ const AdminNotificationBell = ({ onTabChange }) => {
 
       // Staff notifications
       case NOTIFICATION_TYPES.NEW_STAFF:
-        return <UserPlus className="w-4 h-4 text-blue-500" />;
+        return <UserPlus className="w-4 h-4 text-gray-600" />;
       case NOTIFICATION_TYPES.STAFF_CONNECTED:
         return <UserCheck className="w-4 h-4 text-teal-500" />;
 
       // Feature notifications
       case NOTIFICATION_TYPES.AI_ENABLED:
-        return <Brain className="w-4 h-4 text-indigo-500" />;
+        return <Brain className="w-4 h-4 text-orange-500" />;
       case NOTIFICATION_TYPES.AI_DISABLED:
         return <Brain className="w-4 h-4 text-gray-400" />;
       case NOTIFICATION_TYPES.AGGREGATORS_ENABLED:
@@ -146,19 +143,19 @@ const AdminNotificationBell = ({ onTabChange }) => {
       case NOTIFICATION_TYPES.NEW_SUBSCRIPTION:
         return 'bg-green-50 border-green-200';
       case NOTIFICATION_TYPES.SUBSCRIPTION_RENEWED:
-        return 'bg-blue-50 border-blue-200';
+        return 'bg-gray-50 border-gray-200';
       case NOTIFICATION_TYPES.SUBSCRIPTION_CANCELLED:
         return 'bg-red-50 border-red-200';
       case NOTIFICATION_TYPES.SUBSCRIPTION_EXPIRED:
         return 'bg-orange-50 border-orange-200';
       case NOTIFICATION_TYPES.SUBSCRIPTION_UPGRADED:
-        return 'bg-purple-50 border-purple-200';
+        return 'bg-orange-50 border-orange-200';
       case NOTIFICATION_TYPES.SUBSCRIPTION_DOWNGRADED:
         return 'bg-gray-50 border-gray-200';
 
       // Restaurant
       case NOTIFICATION_TYPES.NEW_RESTAURANT:
-        return 'bg-purple-50 border-purple-200';
+        return 'bg-orange-50 border-orange-200';
       case NOTIFICATION_TYPES.RESTAURANT_ACTIVATED:
         return 'bg-green-50 border-green-200';
       case NOTIFICATION_TYPES.RESTAURANT_DEACTIVATED:
@@ -166,13 +163,13 @@ const AdminNotificationBell = ({ onTabChange }) => {
 
       // Staff
       case NOTIFICATION_TYPES.NEW_STAFF:
-        return 'bg-blue-50 border-blue-200';
+        return 'bg-gray-50 border-gray-200';
       case NOTIFICATION_TYPES.STAFF_CONNECTED:
         return 'bg-teal-50 border-teal-200';
 
       // Features
       case NOTIFICATION_TYPES.AI_ENABLED:
-        return 'bg-indigo-50 border-indigo-200';
+        return 'bg-orange-50 border-orange-200';
       case NOTIFICATION_TYPES.AI_DISABLED:
         return 'bg-gray-50 border-gray-200';
       case NOTIFICATION_TYPES.AGGREGATORS_ENABLED:
@@ -287,7 +284,7 @@ const AdminNotificationBell = ({ onTabChange }) => {
 
         {/* Unread Badge */}
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[20px] h-5 flex items-center justify-center px-1.5 text-[10px] font-bold text-white bg-red-500 rounded-full shadow-lg animate-pulse">
+          <span className="absolute -top-1 -right-1 min-w-[20px] h-5 flex items-center justify-center px-1.5 text-[10px] font-bold text-white bg-red-500 rounded-full shadow-lg">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -295,9 +292,9 @@ const AdminNotificationBell = ({ onTabChange }) => {
 
       {/* Dropdown Panel */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 md:w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute right-0 mt-2 w-80 md:w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in- duration-200">
           {/* Header */}
-          <div className="px-4 py-3 bg-gradient-to-r from-slate-900 to-slate-800 text-white">
+          <div className="px-4 py-3 bg-slate-900 text-white">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Bell className="w-5 h-5" />
@@ -353,24 +350,30 @@ const AdminNotificationBell = ({ onTabChange }) => {
                   <div
                     key={notification.id}
                     onClick={() => handleNotificationClick(notification)}
-                    className={`px-3 py-2 hover:bg-gray-50 cursor-pointer transition-colors ${!notification.read ? 'bg-blue-50/50' : ''
-                      }`}
+                    className={`px-3 py-2 hover:bg-gray-50 cursor-pointer transition-colors ${
+                      !notification.read ? 'bg-gray-50/50' : ''
+                    }`}
                   >
                     <div className="flex items-start gap-2">
                       {/* Icon */}
-                      <div className={`p-1.5 rounded-xl border ${getNotificationColor(notification.type)}`}>
+                      <div
+                        className={`p-1.5 rounded-xl border ${getNotificationColor(notification.type)}`}
+                      >
                         {getNotificationIcon(notification.type)}
                       </div>
 
                       {/* Content */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <p className={`text-[13px] font-semibold text-gray-900 truncate ${!notification.read ? 'text-blue-900' : ''
-                            }`}>
+                          <p
+                            className={`text-[13px] font-semibold text-gray-900 truncate ${
+                              !notification.read ? 'text-gray-900' : ''
+                            }`}
+                          >
                             {notification.title}
                           </p>
                           {!notification.read && (
-                            <span className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0"></span>
+                            <span className="w-1.5 h-1.5 bg-gray-600 rounded-full flex-shrink-0"></span>
                           )}
                         </div>
                         <p className="text-[11px] text-gray-600 mt-0 line-clamp-2">
@@ -399,7 +402,7 @@ const AdminNotificationBell = ({ onTabChange }) => {
                 }
                 setIsOpen(false);
               }}
-              className="w-full py-2 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-2"
+              className="w-full py-2 px-4 bg-orange-500 text-white text-sm font-medium rounded-xl hover:bg-orange-600 transition-all flex items-center justify-center gap-2"
             >
               View All Notifications
               <ChevronRight className="w-4 h-4" />

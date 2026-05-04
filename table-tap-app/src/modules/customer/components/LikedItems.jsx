@@ -1,6 +1,6 @@
-import React, { useMemo, useCallback, useState } from "react";
-import { ShoppingBag, Heart } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useMemo, useCallback, useState } from 'react';
+import { ShoppingBag, Heart } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../../shared/config/CartContent';
 import { useLikes } from '../../shared/config/LikesContent';
 import { useNavigate } from 'react-router-dom';
@@ -12,7 +12,7 @@ const ImageWithFallback = ({ src, alt, ...props }) => {
   const [error, setError] = useState(false);
   return (
     <img
-      src={error ? "/public/images/Food/default.jpg" : src}
+      src={error ? '/public/images/Food/default.jpg' : src}
       alt={alt}
       onError={() => setError(true)}
       {...props}
@@ -25,9 +25,12 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
   const { toggleLike, likedItems } = useLikes();
   const [isLikedAnimating, setIsLikedAnimating] = useState(false);
 
-  const cartItem = useMemo(() => cartItems.find(i => i.id === item.id), [cartItems, item.id]);
+  const cartItem = useMemo(() => cartItems.find((i) => i.id === item.id), [cartItems, item.id]);
   const quantity = cartItem?.quantity || 0;
-  const isLiked = useMemo(() => likedItems.some(likedItem => likedItem.id === item.id), [likedItems, item.id]);
+  const isLiked = useMemo(
+    () => likedItems.some((likedItem) => likedItem.id === item.id),
+    [likedItems, item.id],
+  );
 
   const handleAddClick = useCallback(() => addToCart(item), [addToCart, item]);
   const handleIncrement = useCallback(() => addToCart(item), [addToCart, item]);
@@ -39,12 +42,15 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
     }
   }, [quantity, removeItem, updateQuantity, item.id, item.category]);
 
-  const handleLikeClick = useCallback((e) => {
-    e.stopPropagation();
-    setIsLikedAnimating(true);
-    toggleLike(item);
-    setTimeout(() => setIsLikedAnimating(false), 600);
-  }, [toggleLike, item]);
+  const handleLikeClick = useCallback(
+    (e) => {
+      e.stopPropagation();
+      setIsLikedAnimating(true);
+      toggleLike(item);
+      setTimeout(() => setIsLikedAnimating(false), 600);
+    },
+    [toggleLike, item],
+  );
 
   // Discount tag
   const DiscountTag = () =>
@@ -65,29 +71,24 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
   const discountedPrice = useMemo(() => {
     if (!item.discounttype || !item.discountvalue) return item.price;
     return item.discounttype === 'Percentage'
-      ? (item.price - (item.price * (item.discountvalue / 100)))
+      ? item.price - item.price * (item.discountvalue / 100)
       : Math.max(0, item.price - item.discountvalue);
   }, [item.price, item.discounttype, item.discountvalue]);
 
   return (
-    <div
-      className="group bg-white rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1.5 hover:scale-[1.03] transition-all duration-300 overflow-hidden border border-gray-100 min-w-[140px] max-w-[150px] flex flex-col relative"
-    >
+    <div className="group bg-white rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1.5 hover:scale-[1.03] transition-all duration-300 overflow-hidden border border-gray-100 min-w-[140px] max-w-[150px] flex flex-col relative">
       <div className="relative h-28 overflow-hidden bg-gray-100">
         {/* Discount badge in top right with animation */}
         <motion.div
           className="absolute top-1 right-2 z-10"
           initial={{ scale: 0.5, opacity: 0, rotate: -15 }}
           animate={{ scale: 1, opacity: 1, rotate: 0 }}
-          transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.2 }}
           whileHover={{ scale: 1.15, rotate: 5 }}
         >
           <DiscountTag />
         </motion.div>
-        <motion.div
-          whileHover={{ scale: 1.1 }}
-          transition={{ duration: 0.3 }}
-        >
+        <motion.div whileHover={{ scale: 1.1 }} transition={{ duration: 0.3 }}>
           <ImageWithFallback
             src={item.image}
             alt={item.name}
@@ -103,18 +104,23 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={handleLikeClick}
-          aria-label={isLiked ? "Unlike item" : "Like item"}
+          aria-label={isLiked ? 'Unlike item' : 'Like item'}
         >
           <motion.div
-            animate={isLikedAnimating ? {
-              scale: [1, 1.3, 1],
-              rotate: [0, 10, -10, 0]
-            } : {}}
+            animate={
+              isLikedAnimating
+                ? {
+                    scale: [1, 1.3, 1],
+                    rotate: [0, 10, -10, 0],
+                  }
+                : {}
+            }
             transition={{ duration: 0.6 }}
           >
             <Heart
-              className={`h-4 w-4 transition-colors duration-200 ${isLiked ? "text-red-500 fill-red-500" : "text-gray-400 hover:text-red-400"
-                }`}
+              className={`h-4 w-4 transition-colors duration-200 ${
+                isLiked ? 'text-red-500 fill-red-500' : 'text-gray-400 hover:text-red-400'
+              }`}
             />
           </motion.div>
         </motion.button>
@@ -208,7 +214,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
                   className="bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white rounded-full px-2 py-1.5 flex items-center space-x-1 text-xs shadow-lg transition-all duration-200"
                   whileHover={{
                     scale: 1.05,
-                    boxShadow: "0 10px 25px rgba(0,0,0,0.2)"
+                    boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
                   }}
                   whileTap={{ scale: 0.95 }}
                   initial={{ scale: 0.8, opacity: 0 }}
@@ -246,14 +252,17 @@ const LikedItems = ({ foodItems, onItemClick }) => {
     setSelectedItem(null);
   };
 
-  if (!foodItems || !Array.isArray(foodItems)) return null;
-
-  // Performance: Use Set for O(1) lookup
-  const likedIds = useMemo(() => new Set(likedItems.map(i => i.id)), [likedItems]);
+  // Performance: Use Set for O(1) lookup — hooks must come before any early returns
+  const likedIds = useMemo(() => new Set(likedItems.map((i) => i.id)), [likedItems]);
   const likedFoodItems = useMemo(
-    () => foodItems.filter(item => likedIds.has(item.id)),
-    [foodItems, likedIds]
+    () =>
+      foodItems && Array.isArray(foodItems)
+        ? foodItems.filter((item) => likedIds.has(item.id))
+        : [],
+    [foodItems, likedIds],
   );
+
+  if (!foodItems || !Array.isArray(foodItems)) return null;
 
   if (likedFoodItems.length === 0) {
     return (
@@ -268,26 +277,20 @@ const LikedItems = ({ foodItems, onItemClick }) => {
     <div className="mt-6 text-black">
       <div className="flex justify-between items-center mb-3 px-4">
         <h2 className="text-xl font-bold font-spartan-bold md:text-3xl">Liked Items</h2>
-        <button onClick={() => navigate('/liked-items')} className="text-orange-500 md:text-xl text-sm flex items-center hover:underline">
+        <button
+          onClick={() => navigate('/liked-items')}
+          className="text-orange-500 md:text-xl text-sm flex items-center hover:underline"
+        >
           View All <span className="ml-1 md:text-xl">›</span>
         </button>
       </div>
       <div className="flex space-x-4 overflow-x-auto overflow-y-hidden pb-4 pt-2 scroll-smooth px-4">
         {likedFoodItems.map((item, idx) => (
-          <LikedItemCard
-            key={item.id}
-            item={item}
-            onItemClick={handleOpenItemCard}
-            index={idx}
-          />
+          <LikedItemCard key={item.id} item={item} onItemClick={handleOpenItemCard} index={idx} />
         ))}
       </div>
       <div className="my-4 w-full mx-auto h-px bg-gradient-to-r from-transparent via-orange-200 to-transparent"></div>
-      <OrderCard
-        isOpen={isOrderCardOpen}
-        onClose={handleCloseItemCard}
-        item={selectedItem}
-      />
+      <OrderCard isOpen={isOrderCardOpen} onClose={handleCloseItemCard} item={selectedItem} />
     </div>
   );
 };

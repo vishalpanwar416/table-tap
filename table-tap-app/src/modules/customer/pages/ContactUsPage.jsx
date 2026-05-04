@@ -1,11 +1,27 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { ChevronLeft, MapPin, Phone, Mail, Globe, MessageCircle, Send, Building, Users, Clock, CheckCircle, AlertCircle, Instagram, Facebook, FileText, Hash, Star, MessageSquare, Medal, Heart, Utensils } from 'lucide-react';
+import {
+  ChevronLeft,
+  MapPin,
+  Phone,
+  Mail,
+  MessageCircle,
+  Send,
+  Building,
+  Users,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Instagram,
+  Facebook,
+  FileText,
+  Heart,
+  Utensils,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useRestaurant } from '../../restaurant/pages/RestaurantSelection/RestaurantContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { authService } from '../../shared/api/authService';
 import { supabase } from '../../shared/supabase';
-import { Link } from 'react-router-dom'; // If you want to use a link
 import LoadingScreen from '../../shared/components/LoadingScreen';
 
 const ContactUsPage = () => {
@@ -14,7 +30,7 @@ const ContactUsPage = () => {
     name: '',
     email: '',
     subject: '',
-    message: ''
+    message: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
@@ -34,11 +50,11 @@ const ContactUsPage = () => {
             const profile = await authService.getProfile(user.id);
             if (profile?.full_name) name = profile.full_name;
             if (profile?.email) email = profile.email;
-          } catch { }
-          setContactForm(prev => ({
+          } catch {}
+          setContactForm((prev) => ({
             ...prev,
             name,
-            email
+            email,
           }));
         }
       } catch (err) {
@@ -50,29 +66,30 @@ const ContactUsPage = () => {
 
   const handleInputChange = useCallback((e) => {
     const { name, value } = e.target;
-    setContactForm(prev => ({
+    setContactForm((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   }, []);
 
-  const handleSubmit = useCallback(async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setSubmitStatus(null);
+  const handleSubmit = useCallback(
+    async (e) => {
+      e.preventDefault();
+      setIsSubmitting(true);
+      setSubmitStatus(null);
 
-    try {
-      if (!restaurant?.contact_email && !restaurant?.email) {
-        throw new Error('Restaurant contact email not available');
-      }
+      try {
+        if (!restaurant?.contact_email && !restaurant?.email) {
+          throw new Error('Restaurant contact email not available');
+        }
 
-      // 1. Send Email via Edge Function
-      const { error: emailError } = await supabase.functions.invoke('send-email', {
-        body: {
-          to: restaurant.contact_email || restaurant.email,
-          replyTo: contactForm.email,
-          subject: `New Message from ${contactForm.name}: ${contactForm.subject}`,
-          html: `
+        // 1. Send Email via Edge Function
+        const { error: emailError } = await supabase.functions.invoke('send-email', {
+          body: {
+            to: restaurant.contact_email || restaurant.email,
+            replyTo: contactForm.email,
+            subject: `New Message from ${contactForm.name}: ${contactForm.subject}`,
+            html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #333; border-bottom: 2px solid #f97316; padding-bottom: 10px;">New Contact Message</h2>
               <p><strong>From:</strong> ${contactForm.name} (${contactForm.email})</p>
@@ -82,28 +99,26 @@ const ContactUsPage = () => {
               </div>
               <p style="color: #888; font-size: 12px; margin-top: 20px;">Sent via TableTap Contact Form</p>
             </div>
-          `
+          `,
+          },
+        });
+
+        if (emailError) {
+          console.error('Email sending failed:', emailError);
+          // Continue to save to DB even if email fails? Maybe. Let's try to save to DB anyway.
         }
-      });
 
-      if (emailError) {
-        console.error('Email sending failed:', emailError);
-        // Continue to save to DB even if email fails? Maybe. Let's try to save to DB anyway.
-      }
+        // 2. Save message to Database
+        // Get current user ID if logged in
+        let userId = null;
+        try {
+          const user = await authService.getCurrentUser();
+          userId = user?.id || null;
+        } catch (e) {
+          console.warn('Could not fetch user for message logging', e);
+        }
 
-      // 2. Save message to Database
-      // Get current user ID if logged in
-      let userId = null;
-      try {
-        const user = await authService.getCurrentUser();
-        userId = user?.id || null;
-      } catch (e) {
-        console.warn('Could not fetch user for message logging', e);
-      }
-
-      const { error: dbError } = await supabase
-        .from('customer_messages')
-        .insert([
+        const { error: dbError } = await supabase.from('customer_messages').insert([
           {
             restaurant_id: restaurant.id,
             name: contactForm.name,
@@ -111,30 +126,31 @@ const ContactUsPage = () => {
             subject: contactForm.subject,
             message: contactForm.message,
             status: 'unread',
-            user_id: userId
-          }
+            user_id: userId,
+          },
         ]);
 
-      if (dbError) {
-        console.error('Database save failed:', dbError);
-        throw dbError; // If DB fails, we probably want to show error
+        if (dbError) {
+          console.error('Database save failed:', dbError);
+          throw dbError; // If DB fails, we probably want to show error
+        }
+
+        // If either succeeded (or both), we can consider it a success,
+        // but if DB fails we threw above.
+
+        setSubmitStatus('success');
+        setContactForm({ name: '', email: '', subject: '', message: '' });
+        setTimeout(() => setSubmitStatus(null), 3000);
+      } catch (error) {
+        console.error('Failed to send message:', error);
+        setSubmitStatus('error');
+        setTimeout(() => setSubmitStatus(null), 3000);
+      } finally {
+        setIsSubmitting(false);
       }
-
-      // If either succeeded (or both), we can consider it a success, 
-      // but if DB fails we threw above.
-
-      setSubmitStatus('success');
-      setContactForm({ name: '', email: '', subject: '', message: '' });
-      setTimeout(() => setSubmitStatus(null), 3000);
-
-    } catch (error) {
-      console.error('Failed to send message:', error);
-      setSubmitStatus('error');
-      setTimeout(() => setSubmitStatus(null), 3000);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [contactForm, restaurant]);
+    },
+    [contactForm, restaurant],
+  );
 
   const handleBack = useCallback(() => {
     navigate(-1);
@@ -157,7 +173,10 @@ const ContactUsPage = () => {
       const placeIdMatch = restaurant.google_maps_link.match(/place_id=([^&]+)/);
       if (placeIdMatch) {
         const placeId = placeIdMatch[1];
-        window.open(`https://www.google.com/maps/place/?q=place_id:${placeId}&action=review`, '_blank');
+        window.open(
+          `https://www.google.com/maps/place/?q=place_id:${placeId}&action=review`,
+          '_blank',
+        );
       } else {
         // Fallback: search for restaurant name and address
         const searchQuery = encodeURIComponent(`${restaurant.name} ${restaurant.address || ''}`);
@@ -181,11 +200,7 @@ const ContactUsPage = () => {
   if (error || !restaurant) {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center">
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="text-center"
-        >
+        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-center">
           <div className="w-24 h-24 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <AlertCircle className="w-12 h-12 text-red-500" />
           </div>
@@ -216,7 +231,7 @@ const ContactUsPage = () => {
       textColor: 'text-orange-600',
       link: restaurant.google_maps_link,
       action: restaurant.google_maps_link ? 'Get Directions' : 'Search on Maps',
-      showAlways: true
+      showAlways: true,
     },
     {
       icon: Phone,
@@ -225,7 +240,7 @@ const ContactUsPage = () => {
       color: 'from-green-400 to-green-600',
       textColor: 'text-green-600',
       link: restaurant.contact_phone ? `tel:${restaurant.contact_phone}` : null,
-      showAlways: true
+      showAlways: true,
     },
     {
       icon: Mail,
@@ -234,7 +249,7 @@ const ContactUsPage = () => {
       color: 'from-blue-400 to-blue-600',
       textColor: 'text-blue-600',
       link: restaurant.contact_email ? `mailto:${restaurant.contact_email}` : null,
-      showAlways: true
+      showAlways: true,
     },
     {
       icon: Clock,
@@ -243,8 +258,8 @@ const ContactUsPage = () => {
       color: 'from-yellow-400 to-yellow-600',
       textColor: 'text-yellow-600',
       link: null,
-      showAlways: true
-    }
+      showAlways: true,
+    },
   ];
 
   // Build additional info array
@@ -253,20 +268,20 @@ const ContactUsPage = () => {
       icon: Utensils,
       title: 'Cuisine Type',
       value: restaurant.cuisine_type,
-      color: 'from-purple-400 to-purple-600'
+      color: 'from-purple-400 to-purple-600',
     },
     {
       icon: FileText,
       title: 'GST Number',
       value: restaurant.gst_number,
-      color: 'from-indigo-400 to-indigo-600'
+      color: 'from-indigo-400 to-indigo-600',
     },
     {
       icon: FileText,
       title: 'FSSAI License',
       value: restaurant.fssai_license,
-      color: 'from-teal-400 to-teal-600'
-    }
+      color: 'from-teal-400 to-teal-600',
+    },
   ];
 
   return (
@@ -282,10 +297,10 @@ const ContactUsPage = () => {
         </button>
 
         <div className="flex flex-col items-center">
-          <h1 className="text-gray-100 text-2xl md:text-3xl font-medium text-center">
-            Contact Us
-          </h1>
-          <p className="text-orange-100/60 text-xs md:text-sm mt-1 text-center">We'd love to hear from you!</p>
+          <h1 className="text-gray-100 text-2xl md:text-3xl font-medium text-center">Contact Us</h1>
+          <p className="text-orange-100/60 text-xs md:text-sm mt-1 text-center">
+            We'd love to hear from you!
+          </p>
         </div>
       </div>
 
@@ -293,7 +308,7 @@ const ContactUsPage = () => {
         <motion.div
           initial={{ opacity: 0, y: 30, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
           className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl mx-auto"
         >
           {/* Main Card */}
@@ -313,15 +328,21 @@ const ContactUsPage = () => {
                   )}
                 </div>
                 <div>
-                  <h2 className="text-xl md:text-3xl font-bold mb-0.5 md:mb-1 text-gray-900">{restaurant.name}</h2>
-                  <p className="text-gray-500 text-xs md:text-base">{restaurant.description || 'Get in touch with us'}</p>
+                  <h2 className="text-xl md:text-3xl font-bold mb-0.5 md:mb-1 text-gray-900">
+                    {restaurant.name}
+                  </h2>
+                  <p className="text-gray-500 text-xs md:text-base">
+                    {restaurant.description || 'Get in touch with us'}
+                  </p>
                 </div>
               </div>
               {tableNumber && (
                 <div className="flex flex-row items-center justify-center mt-2 gap-2 md:gap-3 w-full overflow-x-auto no-scrollbar">
                   <div className="inline-flex items-center bg-gray-100 rounded-full px-3 py-1.5 md:px-4 md:py-2 border border-gray-200 whitespace-nowrap">
                     <Users className="w-4 h-4 md:w-5 md:h-5 mr-1.5 md:mr-2 text-gray-500" />
-                    <span className="font-semibold text-sm md:text-base text-gray-700">Table {tableNumber}</span>
+                    <span className="font-semibold text-sm md:text-base text-gray-700">
+                      Table {tableNumber}
+                    </span>
                   </div>
                   <motion.button
                     onClick={() => {
@@ -333,10 +354,16 @@ const ContactUsPage = () => {
                     }}
                     className="flex items-center px-3 py-1.5 md:px-4 md:py-2 bg-gradient-to-r from-orange-400 to-orange-600 text-white rounded-full font-spartan-medium shadow-lg border-2 border-orange-500 hover:scale-105 transition-transform duration-200 whitespace-nowrap"
                     animate={{ scale: [1, 1.08, 1] }}
-                    transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }}
+                    transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut' }}
                   >
-                    <Heart className="w-4 h-4 md:w-6 md:h-6 drop-shadow heart-beat-fill" fill="white" stroke="none" />
-                    <span className="ml-1.5 md:ml-2 text-sm md:text-base font-spartan-medium">Rate Us</span>
+                    <Heart
+                      className="w-4 h-4 md:w-6 md:h-6 drop-shadow heart-beat-fill"
+                      fill="white"
+                      stroke="none"
+                    />
+                    <span className="ml-1.5 md:ml-2 text-sm md:text-base font-spartan-medium">
+                      Rate Us
+                    </span>
                   </motion.button>
                 </div>
               )}
@@ -346,7 +373,10 @@ const ContactUsPage = () => {
               {/* Contact Info - Responsive 2-column grid */}
               <div className="p-0 md:p-3 grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 font-spartan mb-6 md:mb-8">
                 {contactInfo.map((info, idx) => (
-                  <div key={info.title} className="flex flex-col h-full bg-gray-50 rounded-2xl border border-gray-200 p-3 md:p-4">
+                  <div
+                    key={info.title}
+                    className="flex flex-col h-full bg-gray-50 rounded-2xl border border-gray-200 p-3 md:p-4"
+                  >
                     <div className="flex items-center gap-3 mb-2 w-full">
                       <div className="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 bg-black rounded-lg flex items-center justify-center">
                         <info.icon className="w-4 h-4 md:w-5 md:h-5 text-white" />
@@ -363,7 +393,9 @@ const ContactUsPage = () => {
                             {info.value || 'Not available'}
                           </a>
                         ) : (
-                          <p className="text-gray-900 text-xs md:text-sm font-medium break-words leading-tight">{info.value || 'Not available'}</p>
+                          <p className="text-gray-900 text-xs md:text-sm font-medium break-words leading-tight">
+                            {info.value || 'Not available'}
+                          </p>
                         )}
                       </div>
                       {info.link && info.action && (
@@ -386,17 +418,23 @@ const ContactUsPage = () => {
                 transition={{ delay: 0.4 }}
                 className="bg-gray-50 rounded-2xl p-4 md:p-6 border border-gray-100 mb-6 md:mb-8"
               >
-                <h3 className="text-base md:text-lg font-semibold text-gray-800 mb-3 md:mb-4">Restaurant Information</h3>
+                <h3 className="text-base md:text-lg font-semibold text-gray-800 mb-3 md:mb-4">
+                  Restaurant Information
+                </h3>
                 <div className="grid md:grid-cols-3 gap-3 md:gap-4">
                   {additionalInfo
-                    .filter(info => !!info.value)
+                    .filter((info) => !!info.value)
                     .map((info, index) => (
                       <div key={info.title} className="flex items-center">
-                        <div className={`w-7 h-7 md:w-8 md:h-8 bg-gradient-to-br ${info.color} rounded-lg flex items-center justify-center mr-3`}>
+                        <div
+                          className={`w-7 h-7 md:w-8 md:h-8 bg-gradient-to-br ${info.color} rounded-lg flex items-center justify-center mr-3`}
+                        >
                           <info.icon className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
                         </div>
                         <div>
-                          <p className="text-[10px] md:text-xs text-gray-500 font-medium">{info.title}</p>
+                          <p className="text-[10px] md:text-xs text-gray-500 font-medium">
+                            {info.title}
+                          </p>
                           <p className="text-xs md:text-sm text-gray-800 font-semibold">
                             {info.value}
                           </p>
@@ -414,7 +452,9 @@ const ContactUsPage = () => {
                   transition={{ delay: 0.5 }}
                   className="bg-gray-50 rounded-2xl p-4 md:p-6 border border-gray-100 mb-6 md:mb-8"
                 >
-                  <h3 className="text-base md:text-lg font-semibold text-gray-800 mb-3 md:mb-4 text-center">Follow Us</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-gray-800 mb-3 md:mb-4 text-center">
+                    Follow Us
+                  </h3>
                   <div className="flex justify-center space-x-3 md:space-x-4">
                     {restaurant.social_media?.instagram && (
                       <motion.button
@@ -465,7 +505,9 @@ const ContactUsPage = () => {
                 <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
                   <div className="grid md:grid-cols-2 gap-4 md:gap-6">
                     <div>
-                      <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1.5 md:mb-2">Your Name</label>
+                      <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1.5 md:mb-2">
+                        Your Name
+                      </label>
                       <div className="relative">
                         <input
                           type="text"
@@ -475,17 +517,20 @@ const ContactUsPage = () => {
                           onFocus={() => setActiveField('name')}
                           onBlur={() => setActiveField(null)}
                           required
-                          className={`w-full px-4 py-3 md:py-4 border-2 rounded-xl transition-all duration-300 text-sm md:text-base ${activeField === 'name'
-                            ? 'border-orange-500 bg-orange-50/50'
-                            : 'border-gray-200 hover:border-gray-300'
-                            } focus:outline-none focus:ring-2 focus:ring-orange-500/20`}
+                          className={`w-full px-4 py-3 md:py-4 border-2 rounded-xl transition-all duration-300 text-sm md:text-base ${
+                            activeField === 'name'
+                              ? 'border-orange-500 bg-orange-50/50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          } focus:outline-none focus:ring-2 focus:ring-orange-500/20`}
                           placeholder="Enter your name"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1.5 md:mb-2">Email Address</label>
+                      <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1.5 md:mb-2">
+                        Email Address
+                      </label>
                       <div className="relative">
                         <input
                           type="email"
@@ -495,10 +540,11 @@ const ContactUsPage = () => {
                           onFocus={() => setActiveField('email')}
                           onBlur={() => setActiveField(null)}
                           required
-                          className={`w-full px-4 py-3 md:py-4 border-2 rounded-xl transition-all duration-300 text-sm md:text-base ${activeField === 'email'
-                            ? 'border-orange-500 bg-orange-50/50'
-                            : 'border-gray-200 hover:border-gray-300'
-                            } focus:outline-none focus:ring-2 focus:ring-orange-500/20`}
+                          className={`w-full px-4 py-3 md:py-4 border-2 rounded-xl transition-all duration-300 text-sm md:text-base ${
+                            activeField === 'email'
+                              ? 'border-orange-500 bg-orange-50/50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          } focus:outline-none focus:ring-2 focus:ring-orange-500/20`}
                           placeholder="Enter your email"
                         />
                       </div>
@@ -506,7 +552,9 @@ const ContactUsPage = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1.5 md:mb-2">Subject</label>
+                    <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1.5 md:mb-2">
+                      Subject
+                    </label>
                     <div className="relative">
                       <input
                         type="text"
@@ -516,17 +564,20 @@ const ContactUsPage = () => {
                         onFocus={() => setActiveField('subject')}
                         onBlur={() => setActiveField(null)}
                         required
-                        className={`w-full px-4 py-3 md:py-4 border-2 rounded-xl transition-all duration-300 text-sm md:text-base ${activeField === 'subject'
-                          ? 'border-orange-500 bg-orange-50/50'
-                          : 'border-gray-200 hover:border-gray-300'
-                          } focus:outline-none focus:ring-2 focus:ring-orange-500/20`}
+                        className={`w-full px-4 py-3 md:py-4 border-2 rounded-xl transition-all duration-300 text-sm md:text-base ${
+                          activeField === 'subject'
+                            ? 'border-orange-500 bg-orange-50/50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        } focus:outline-none focus:ring-2 focus:ring-orange-500/20`}
                         placeholder="What's this about?"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1.5 md:mb-2">Message</label>
+                    <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1.5 md:mb-2">
+                      Message
+                    </label>
                     <div className="relative">
                       <textarea
                         name="message"
@@ -536,10 +587,11 @@ const ContactUsPage = () => {
                         onBlur={() => setActiveField(null)}
                         required
                         rows={5}
-                        className={`w-full px-4 py-3 md:py-4 border-2 rounded-xl transition-all duration-300 resize-none text-sm md:text-base ${activeField === 'message'
-                          ? 'border-orange-500 bg-orange-50/50'
-                          : 'border-gray-200 hover:border-gray-300'
-                          } focus:outline-none focus:ring-2 focus:ring-orange-500/20`}
+                        className={`w-full px-4 py-3 md:py-4 border-2 rounded-xl transition-all duration-300 resize-none text-sm md:text-base ${
+                          activeField === 'message'
+                            ? 'border-orange-500 bg-orange-50/50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        } focus:outline-none focus:ring-2 focus:ring-orange-500/20`}
                         placeholder="Tell us more about your inquiry..."
                       />
                     </div>
@@ -551,10 +603,11 @@ const ContactUsPage = () => {
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                        className={`p-3 md:p-4 rounded-xl flex items-center ${submitStatus === 'success'
-                          ? 'bg-green-50 text-green-800 border border-green-200'
-                          : 'bg-red-50 text-red-800 border border-red-200'
-                          }`}
+                        className={`p-3 md:p-4 rounded-xl flex items-center ${
+                          submitStatus === 'success'
+                            ? 'bg-green-50 text-green-800 border border-green-200'
+                            : 'bg-red-50 text-red-800 border border-red-200'
+                        }`}
                       >
                         {submitStatus === 'success' ? (
                           <CheckCircle className="w-4 h-4 md:w-5 md:h-5 mr-2 md:mr-3 text-green-600" />
@@ -564,7 +617,7 @@ const ContactUsPage = () => {
                         <span className="font-medium text-sm md:text-base">
                           {submitStatus === 'success'
                             ? "Message sent successfully! We'll get back to you soon."
-                            : "Failed to send message. Please try again."}
+                            : 'Failed to send message. Please try again.'}
                         </span>
                       </motion.div>
                     )}
@@ -599,4 +652,4 @@ const ContactUsPage = () => {
   );
 };
 
-export default ContactUsPage; 
+export default ContactUsPage;

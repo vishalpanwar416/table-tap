@@ -1,10 +1,8 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '../../shared/supabase';
 import {
   getManagerNotifications,
-  getUnreadManagerNotifications,
   markAllManagerNotificationsAsRead,
-  subscribeToManagerNotifications
 } from '../api/notificationService';
 import { useAdminRestaurant } from './AdminRestaurantContext';
 
@@ -13,60 +11,77 @@ const ManagerNotificationContext = createContext();
 export const ManagerNotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  // Use centralized restaurant context instead of re-fetching manually
   const { userRestaurantId } = useAdminRestaurant();
-  const [restaurantId, setRestaurantId] = useState(null);
+  const channelRef = useRef(null);
 
-  // Sync internal state with AdminRestaurantContext
-  useEffect(() => {
-    if (userRestaurantId) {
-      setRestaurantId(userRestaurantId);
-    }
-  }, [userRestaurantId]);
-
-  const fetchManagerNotifications = async () => {
-    if (!restaurantId) return; // Don't fetch if no restaurant ID known yet
+  const fetchManagerNotifications = async (restaurantId) => {
+    if (!restaurantId) return;
     const data = await getManagerNotifications(restaurantId);
     setNotifications(data);
-    const count = data.filter(n => !n.read && n.is_admin_notification).length;
-    setUnreadCount(count);
+    setUnreadCount(data.filter((n) => !n.read && n.is_admin_notification).length);
   };
 
   useEffect(() => {
-    if (!restaurantId) return;
+    if (!userRestaurantId) return;
 
-    fetchManagerNotifications();
+    fetchManagerNotifications(userRestaurantId);
 
-    const subscription = subscribeToManagerNotifications((payload) => {
-      if (payload.eventType === 'INSERT') {
-        setNotifications(prev => [payload.new, ...prev]);
-        setUnreadCount(prev => prev + 1);
-      } else if (payload.eventType === 'UPDATE') {
-        setNotifications(prev =>
-          prev.map(n => n.id === payload.new.id ? payload.new : n)
-        );
-        const count = notifications.filter(n => !n.read && n.is_admin_notification).length;
-        setUnreadCount(count);
-      }
-    }, restaurantId);
+    // Tear down any existing channel before creating a new one
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
+    // Use a unique channel name with crypto to avoid StrictMode collisions
+    const channelId = `admin-notifications-${userRestaurantId}-${Math.random().toString(36).slice(2)}`;
+    const channel = supabase
+      .channel(channelId)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `restaurant_id=eq.${userRestaurantId}`,
+        },
+        (payload) => {
+          if (payload.new && !payload.new.is_admin_notification) return;
+          if (payload.eventType === 'INSERT') {
+            setNotifications((prev) => [payload.new, ...prev]);
+            setUnreadCount((prev) => prev + 1);
+          } else if (payload.eventType === 'UPDATE') {
+            setNotifications((prev) =>
+              prev.map((n) => (n.id === payload.new.id ? payload.new : n)),
+            );
+          }
+        },
+      )
+      .subscribe();
+
+    channelRef.current = channel;
 
     return () => {
-      subscription.unsubscribe();
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
-  }, [restaurantId]);
+  }, [userRestaurantId]);
 
   const markAllAsRead = async () => {
     await markAllManagerNotificationsAsRead();
-    await fetchManagerNotifications();
+    await fetchManagerNotifications(userRestaurantId);
   };
 
   return (
-    <ManagerNotificationContext.Provider value={{
-      notifications,
-      unreadCount,
-      refreshNotifications: fetchManagerNotifications,
-      markAllAsRead
-    }}>
+    <ManagerNotificationContext.Provider
+      value={{
+        notifications,
+        unreadCount,
+        refreshNotifications: fetchManagerNotifications,
+        markAllAsRead,
+      }}
+    >
       {children}
     </ManagerNotificationContext.Provider>
   );

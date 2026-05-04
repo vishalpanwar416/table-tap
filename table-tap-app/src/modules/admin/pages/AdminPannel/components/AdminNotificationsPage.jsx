@@ -38,9 +38,12 @@ import {
   Loader2,
   Inbox,
   MailCheck,
-  MailX
+  MailX,
 } from 'lucide-react';
-import { useAdminNotifications, NOTIFICATION_TYPES } from '../../../context/AdminNotificationContext';
+import {
+  useAdminNotifications,
+  NOTIFICATION_TYPES,
+} from '../../../context/AdminNotificationContext';
 
 const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
   const {
@@ -51,7 +54,7 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
     markAsUnread,
     markAllAsRead,
     fetchNotifications,
-    clearOldNotifications
+    clearOldNotifications,
   } = useAdminNotifications();
 
   // State for filters and sorting
@@ -65,46 +68,46 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
 
   // Notification type categories for grouping in filter
   const notificationCategories = {
-    'Inquiries': [
+    Inquiries: [
       { type: NOTIFICATION_TYPES.NEW_INQUIRY, label: 'New Inquiry' },
-      { type: NOTIFICATION_TYPES.INQUIRY_CONVERTED, label: 'Lead Converted' }
+      { type: NOTIFICATION_TYPES.INQUIRY_CONVERTED, label: 'Lead Converted' },
     ],
-    'Registrations': [
+    Registrations: [
       { type: NOTIFICATION_TYPES.NEW_REGISTRATION, label: 'New Registration' },
       { type: NOTIFICATION_TYPES.REGISTRATION_APPROVED, label: 'Approved' },
-      { type: NOTIFICATION_TYPES.REGISTRATION_REJECTED, label: 'Rejected' }
+      { type: NOTIFICATION_TYPES.REGISTRATION_REJECTED, label: 'Rejected' },
     ],
-    'Subscriptions': [
+    Subscriptions: [
       { type: NOTIFICATION_TYPES.NEW_SUBSCRIPTION, label: 'New Subscription' },
       { type: NOTIFICATION_TYPES.SUBSCRIPTION_RENEWED, label: 'Renewed' },
       { type: NOTIFICATION_TYPES.SUBSCRIPTION_CANCELLED, label: 'Cancelled' },
       { type: NOTIFICATION_TYPES.SUBSCRIPTION_EXPIRED, label: 'Expired' },
       { type: NOTIFICATION_TYPES.SUBSCRIPTION_UPGRADED, label: 'Upgraded' },
-      { type: NOTIFICATION_TYPES.SUBSCRIPTION_DOWNGRADED, label: 'Downgraded' }
+      { type: NOTIFICATION_TYPES.SUBSCRIPTION_DOWNGRADED, label: 'Downgraded' },
     ],
-    'Restaurants': [
+    Restaurants: [
       { type: NOTIFICATION_TYPES.NEW_RESTAURANT, label: 'New Restaurant' },
       { type: NOTIFICATION_TYPES.RESTAURANT_ACTIVATED, label: 'Activated' },
-      { type: NOTIFICATION_TYPES.RESTAURANT_DEACTIVATED, label: 'Deactivated' }
+      { type: NOTIFICATION_TYPES.RESTAURANT_DEACTIVATED, label: 'Deactivated' },
     ],
-    'Staff': [
+    Staff: [
       { type: NOTIFICATION_TYPES.NEW_STAFF, label: 'New Staff' },
-      { type: NOTIFICATION_TYPES.STAFF_CONNECTED, label: 'Staff Connected' }
+      { type: NOTIFICATION_TYPES.STAFF_CONNECTED, label: 'Staff Connected' },
     ],
-    'Features': [
+    Features: [
       { type: NOTIFICATION_TYPES.AI_ENABLED, label: 'AI Enabled' },
       { type: NOTIFICATION_TYPES.AI_DISABLED, label: 'AI Disabled' },
       { type: NOTIFICATION_TYPES.AGGREGATORS_ENABLED, label: 'Aggregators Enabled' },
-      { type: NOTIFICATION_TYPES.AGGREGATORS_DISABLED, label: 'Aggregators Disabled' }
+      { type: NOTIFICATION_TYPES.AGGREGATORS_DISABLED, label: 'Aggregators Disabled' },
     ],
-    'Payments': [
+    Payments: [
       { type: NOTIFICATION_TYPES.PAYMENT_RECEIVED, label: 'Payment Received' },
-      { type: NOTIFICATION_TYPES.PAYMENT_FAILED, label: 'Payment Failed' }
+      { type: NOTIFICATION_TYPES.PAYMENT_FAILED, label: 'Payment Failed' },
     ],
-    'Emails': [
+    Emails: [
       { type: NOTIFICATION_TYPES.EMAIL_SENT, label: 'Email Sent' },
-      { type: NOTIFICATION_TYPES.EMAIL_FAILED, label: 'Email Failed' }
-    ]
+      { type: NOTIFICATION_TYPES.EMAIL_FAILED, label: 'Email Failed' },
+    ],
   };
 
   // Get icon for notification type
@@ -123,7 +126,7 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
       case NOTIFICATION_TYPES.NEW_SUBSCRIPTION:
         return <CreditCard className="w-5 h-5 text-green-500" />;
       case NOTIFICATION_TYPES.SUBSCRIPTION_RENEWED:
-        return <RefreshCw className="w-5 h-5 text-blue-500" />;
+        return <RefreshCw className="w-5 h-5 text-gray-600" />;
       case NOTIFICATION_TYPES.SUBSCRIPTION_CANCELLED:
         return <X className="w-5 h-5 text-red-500" />;
       case NOTIFICATION_TYPES.SUBSCRIPTION_EXPIRED:
@@ -131,21 +134,21 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
       case NOTIFICATION_TYPES.SUBSCRIPTION_EXPIRING:
         return <Calendar className="w-5 h-5 text-amber-500" />;
       case NOTIFICATION_TYPES.SUBSCRIPTION_UPGRADED:
-        return <TrendingUp className="w-5 h-5 text-purple-500" />;
+        return <TrendingUp className="w-5 h-5 text-orange-500" />;
       case NOTIFICATION_TYPES.SUBSCRIPTION_DOWNGRADED:
         return <TrendingDown className="w-5 h-5 text-gray-500" />;
       case NOTIFICATION_TYPES.NEW_RESTAURANT:
-        return <Building2 className="w-5 h-5 text-purple-500" />;
+        return <Building2 className="w-5 h-5 text-orange-500" />;
       case NOTIFICATION_TYPES.RESTAURANT_ACTIVATED:
         return <Power className="w-5 h-5 text-green-500" />;
       case NOTIFICATION_TYPES.RESTAURANT_DEACTIVATED:
         return <PowerOff className="w-5 h-5 text-gray-500" />;
       case NOTIFICATION_TYPES.NEW_STAFF:
-        return <UserPlus className="w-5 h-5 text-blue-500" />;
+        return <UserPlus className="w-5 h-5 text-gray-600" />;
       case NOTIFICATION_TYPES.STAFF_CONNECTED:
         return <UserCheck className="w-5 h-5 text-teal-500" />;
       case NOTIFICATION_TYPES.AI_ENABLED:
-        return <Brain className="w-5 h-5 text-indigo-500" />;
+        return <Brain className="w-5 h-5 text-orange-500" />;
       case NOTIFICATION_TYPES.AI_DISABLED:
         return <Brain className="w-5 h-5 text-gray-400" />;
       case NOTIFICATION_TYPES.AGGREGATORS_ENABLED:
@@ -168,22 +171,31 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
   // Get category colors
   const getCategoryColor = (category) => {
     switch (category) {
-      case 'Inquiries': return 'bg-pink-100 text-pink-700';
-      case 'Registrations': return 'bg-amber-100 text-amber-700';
-      case 'Subscriptions': return 'bg-emerald-100 text-emerald-700';
-      case 'Restaurants': return 'bg-indigo-100 text-indigo-700';
-      case 'Staff': return 'bg-teal-100 text-teal-700';
-      case 'Features': return 'bg-blue-100 text-blue-700';
-      case 'Payments': return 'bg-emerald-100 text-emerald-700';
-      case 'Emails': return 'bg-orange-100 text-orange-700';
-      default: return 'bg-gray-100 text-gray-700';
+      case 'Inquiries':
+        return 'bg-pink-100 text-pink-700';
+      case 'Registrations':
+        return 'bg-amber-100 text-amber-700';
+      case 'Subscriptions':
+        return 'bg-emerald-100 text-emerald-700';
+      case 'Restaurants':
+        return 'bg-orange-100 text-orange-700';
+      case 'Staff':
+        return 'bg-teal-100 text-teal-700';
+      case 'Features':
+        return 'bg-gray-100 text-gray-700';
+      case 'Payments':
+        return 'bg-emerald-100 text-emerald-700';
+      case 'Emails':
+        return 'bg-orange-100 text-orange-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
     }
   };
 
   // Get type label
   const getTypeLabel = (type) => {
     for (const category of Object.values(notificationCategories)) {
-      const found = category.find(item => item.type === type);
+      const found = category.find((item) => item.type === type);
       if (found) return found.label;
     }
     return type?.replace(/_/g, ' ') || 'Unknown';
@@ -192,7 +204,7 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
   // Get category for type
   const getCategoryForType = (type) => {
     for (const [category, types] of Object.entries(notificationCategories)) {
-      if (types.some(item => item.type === type)) return category;
+      if (types.some((item) => item.type === type)) return category;
     }
     return 'Other';
   };
@@ -211,7 +223,7 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
     return date.toLocaleDateString('en-IN', {
       day: 'numeric',
       month: 'short',
-      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
     });
   };
 
@@ -222,7 +234,7 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
       month: 'short',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
@@ -233,23 +245,24 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
     // Search filter
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
-      filtered = filtered.filter(n =>
-        n.title?.toLowerCase().includes(search) ||
-        n.message?.toLowerCase().includes(search) ||
-        getTypeLabel(n.type).toLowerCase().includes(search)
+      filtered = filtered.filter(
+        (n) =>
+          n.title?.toLowerCase().includes(search) ||
+          n.message?.toLowerCase().includes(search) ||
+          getTypeLabel(n.type).toLowerCase().includes(search),
       );
     }
 
     // Type filter
     if (typeFilter !== 'all') {
-      filtered = filtered.filter(n => n.type === typeFilter);
+      filtered = filtered.filter((n) => n.type === typeFilter);
     }
 
     // Status filter
     if (statusFilter === 'read') {
-      filtered = filtered.filter(n => n.read);
+      filtered = filtered.filter((n) => n.read);
     } else if (statusFilter === 'unread') {
-      filtered = filtered.filter(n => !n.read);
+      filtered = filtered.filter((n) => !n.read);
     }
 
     // Sort
@@ -261,9 +274,7 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
       } else if (sortBy === 'type') {
         const typeA = getTypeLabel(a.type);
         const typeB = getTypeLabel(b.type);
-        return sortOrder === 'desc'
-          ? typeB.localeCompare(typeA)
-          : typeA.localeCompare(typeB);
+        return sortOrder === 'desc' ? typeB.localeCompare(typeA) : typeA.localeCompare(typeB);
       }
       return 0;
     });
@@ -334,20 +345,20 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
     if (selectedNotifications.length === filteredNotifications.length) {
       setSelectedNotifications([]);
     } else {
-      setSelectedNotifications(filteredNotifications.map(n => n.id));
+      setSelectedNotifications(filteredNotifications.map((n) => n.id));
     }
   };
 
   // Handle mark selected as read
   const handleMarkSelectedAsRead = () => {
-    selectedNotifications.forEach(id => markAsRead(id));
+    selectedNotifications.forEach((id) => markAsRead(id));
     setSelectedNotifications([]);
   };
 
   // Toggle sort order
   const toggleSort = (field) => {
     if (sortBy === field) {
-      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
     } else {
       setSortBy(field);
       setSortOrder('desc');
@@ -365,8 +376,8 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
     return {
       total: notifications.length,
       unread: unreadCount,
-      today: notifications.filter(n => new Date(n.created_at) >= today).length,
-      thisWeek: notifications.filter(n => new Date(n.created_at) >= thisWeek).length
+      today: notifications.filter((n) => new Date(n.created_at) >= today).length,
+      thisWeek: notifications.filter((n) => new Date(n.created_at) >= thisWeek).length,
     };
   }, [notifications, unreadCount]);
 
@@ -374,52 +385,65 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
     <div className="w-full h-full md:p-6 lg:max-w-[1600px] mx-auto">
       {/* Stats Cards */}
       {/* Stats Cards - Compact on Mobile */}
-      <div className="grid grid-cols-4 gap-1 md:gap-3 px-1 md:px-0 mt-1 md:mt-2 pb-2 md:pb-0">
-        <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
-          <div className="p-1 md:p-2 bg-blue-100 rounded-lg mb-1">
-            <Inbox className="w-3.5 h-3.5 md:w-5 md:h-5 text-blue-600" />
+      <div className="grid grid-cols-4 gap-3">
+        <div className="bg-white rounded-lg border border-gray-200 p-3 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
+          <div className="p-1 md:p-2 bg-gray-100 rounded-lg mb-1">
+            <Inbox className="w-3.5 h-3.5 md:w-5 md:h-5 text-gray-600" />
           </div>
           <div>
-            <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">{stats.total}</p>
-            <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate w-full">Total</p>
+            <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">
+              {stats.total}
+            </p>
+            <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate w-full">
+              Total
+            </p>
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
+        <div className="bg-white rounded-lg border border-gray-200 p-3 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
           <div className="p-1 md:p-2 bg-red-100 rounded-lg mb-1">
             <Bell className="w-3.5 h-3.5 md:w-5 md:h-5 text-red-600" />
           </div>
           <div>
-            <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">{stats.unread}</p>
-            <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate w-full">Unread</p>
+            <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">
+              {stats.unread}
+            </p>
+            <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate w-full">
+              Unread
+            </p>
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
+        <div className="bg-white rounded-lg border border-gray-200 p-3 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
           <div className="p-1 md:p-2 bg-green-100 rounded-lg mb-1">
             <Clock className="w-3.5 h-3.5 md:w-5 md:h-5 text-green-600" />
           </div>
           <div>
-            <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">{stats.today}</p>
-            <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate w-full">Today</p>
+            <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">
+              {stats.today}
+            </p>
+            <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate w-full">
+              Today
+            </p>
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
-          <div className="p-1 md:p-2 bg-purple-100 rounded-lg mb-1">
-            <Calendar className="w-3.5 h-3.5 md:w-5 md:h-5 text-purple-600" />
+        <div className="bg-white rounded-lg border border-gray-200 p-3 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
+          <div className="p-1 md:p-2 bg-orange-100 rounded-lg mb-1">
+            <Calendar className="w-3.5 h-3.5 md:w-5 md:h-5 text-orange-600" />
           </div>
           <div>
-            <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">{stats.thisWeek}</p>
-            <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate w-full">Week</p>
+            <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">
+              {stats.thisWeek}
+            </p>
+            <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate w-full">
+              Week
+            </p>
           </div>
         </div>
       </div>
 
-
       {/* Filters, Sort & Actions - Single Line on Desktop */}
-      <div className="bg-white border-y md:border md:rounded-xl border-gray-200 md:shadow-sm mb-2 md:mb-3 mt-2 md:mt-4 overflow-x-auto no-scrollbar">
-        <div className="p-2 md:p-3 md:border-b md:border-gray-100 min-w-max">
+      <div className="bg-white border-y md:border md:rounded-xl border-gray-200 md:shadow-sm mb-3 mt-4 overflow-x-auto no-scrollbar">
+        <div className="p-3 md:border-b md:border-gray-100 min-w-max">
           <div className="flex items-center gap-2 sm:gap-3">
-
-
             {/* Type Filter */}
             <div className="relative shrink-0">
               <button
@@ -428,7 +452,9 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
               >
                 <div className="flex items-center gap-2">
                   <Filter className="w-4 h-4 text-gray-400" />
-                  <span className="hidden md:inline">{typeFilter === 'all' ? 'All Types' : getTypeLabel(typeFilter)}</span>
+                  <span className="hidden md:inline">
+                    {typeFilter === 'all' ? 'All Types' : getTypeLabel(typeFilter)}
+                  </span>
                 </div>
                 <ChevronDown className="hidden md:block w-4 h-4 text-gray-400 transition-transform" />
               </button>
@@ -437,9 +463,15 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
                 <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-xl border border-gray-200 shadow-xl z-50 max-h-96 overflow-y-auto">
                   <div className="p-2">
                     <button
-                      onClick={() => { setTypeFilter('all'); setShowTypeDropdown(false); }}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${typeFilter === 'all' ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-50 text-gray-700'
-                        }`}
+                      onClick={() => {
+                        setTypeFilter('all');
+                        setShowTypeDropdown(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                        typeFilter === 'all'
+                          ? 'bg-gray-50 text-gray-700 font-medium'
+                          : 'hover:bg-gray-50 text-gray-700'
+                      }`}
                     >
                       All Types
                     </button>
@@ -453,9 +485,15 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
                         {types.map(({ type, label }) => (
                           <button
                             key={type}
-                            onClick={() => { setTypeFilter(type); setShowTypeDropdown(false); }}
-                            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${typeFilter === type ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-50 text-gray-700'
-                              }`}
+                            onClick={() => {
+                              setTypeFilter(type);
+                              setShowTypeDropdown(false);
+                            }}
+                            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${
+                              typeFilter === type
+                                ? 'bg-gray-50 text-gray-700 font-medium'
+                                : 'hover:bg-gray-50 text-gray-700'
+                            }`}
                           >
                             {getNotificationIcon(type)}
                             <span>{label}</span>
@@ -473,15 +511,16 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
               {[
                 { value: 'all', label: 'All' },
                 { value: 'unread', label: 'Unread' },
-                { value: 'read', label: 'Read' }
+                { value: 'read', label: 'Read' },
               ].map(({ value, label }) => (
                 <button
                   key={value}
                   onClick={() => setStatusFilter(value)}
-                  className={`flex-1 px-1 py-1.5 md:px-4 md:py-2.5 text-[10px] md:text-sm font-medium transition-colors whitespace-nowrap text-center ${statusFilter === value
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-600 hover:bg-gray-50'
-                    }`}
+                  className={`flex-1 px-1 py-1.5 md:px-4 md:py-2.5 text-[10px] md:text-sm font-medium transition-colors whitespace-nowrap text-center ${
+                    statusFilter === value
+                      ? 'bg-gray-600 text-white'
+                      : 'bg-white text-gray-600 hover:bg-gray-50'
+                  }`}
                 >
                   {label}
                 </button>
@@ -501,29 +540,37 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
             <div className="flex items-center gap-2 shrink-0 border-l border-gray-200 pl-2 sm:pl-3">
               <button
                 onClick={() => toggleSort('date')}
-                className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border text-xs md:text-sm font-medium transition-all whitespace-nowrap ${sortBy === 'date'
-                  ? 'border-blue-200 bg-blue-50 text-blue-700'
-                  : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
-                  }`}
+                className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border text-xs md:text-sm font-medium transition-all whitespace-nowrap ${
+                  sortBy === 'date'
+                    ? 'border-gray-200 bg-gray-50 text-gray-700'
+                    : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                }`}
               >
                 <Clock className="w-4 h-4" />
                 <span className="inline">Date</span>
-                {sortBy === 'date' && (
-                  sortOrder === 'desc' ? <SortDesc className="w-3 h-3" /> : <SortAsc className="w-3 h-3" />
-                )}
+                {sortBy === 'date' &&
+                  (sortOrder === 'desc' ? (
+                    <SortDesc className="w-3 h-3" />
+                  ) : (
+                    <SortAsc className="w-3 h-3" />
+                  ))}
               </button>
               <button
                 onClick={() => toggleSort('type')}
-                className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border text-xs md:text-sm font-medium transition-all whitespace-nowrap ${sortBy === 'type'
-                  ? 'border-blue-200 bg-blue-50 text-blue-700'
-                  : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
-                  }`}
+                className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border text-xs md:text-sm font-medium transition-all whitespace-nowrap ${
+                  sortBy === 'type'
+                    ? 'border-gray-200 bg-gray-50 text-gray-700'
+                    : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                }`}
               >
                 <ArrowUpDown className="w-4 h-4" />
                 <span className="inline">Type</span>
-                {sortBy === 'type' && (
-                  sortOrder === 'desc' ? <SortDesc className="w-3 h-3" /> : <SortAsc className="w-3 h-3" />
-                )}
+                {sortBy === 'type' &&
+                  (sortOrder === 'desc' ? (
+                    <SortDesc className="w-3 h-3" />
+                  ) : (
+                    <SortAsc className="w-3 h-3" />
+                  ))}
               </button>
             </div>
 
@@ -535,7 +582,9 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
                 className="p-2 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50"
                 title="Refresh"
               >
-                <RefreshCw className={`w-4 h-4 md:w-5 md:h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <RefreshCw
+                  className={`w-4 h-4 md:w-5 md:h-5 ${isRefreshing ? 'animate-spin' : ''}`}
+                />
               </button>
               {unreadCount > 0 && (
                 <button
@@ -560,14 +609,15 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
 
         {/* Bulk Actions */}
         {selectedNotifications.length > 0 && (
-          <div className="px-4 py-3 bg-blue-50 border-b border-blue-100 flex items-center justify-between">
-            <span className="text-sm text-blue-700 font-medium">
-              {selectedNotifications.length} notification{selectedNotifications.length > 1 ? 's' : ''} selected
+          <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+            <span className="text-sm text-gray-700 font-medium">
+              {selectedNotifications.length} notification
+              {selectedNotifications.length > 1 ? 's' : ''} selected
             </span>
             <div className="flex items-center gap-2">
               <button
                 onClick={handleMarkSelectedAsRead}
-                className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-1.5"
+                className="px-3 py-1.5 rounded-lg bg-gray-600 text-white text-sm font-medium hover:bg-gray-700 transition-colors flex items-center gap-1.5"
               >
                 <Check className="w-4 h-4" />
                 Mark as read
@@ -588,9 +638,12 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
-                checked={selectedNotifications.length === filteredNotifications.length && filteredNotifications.length > 0}
+                checked={
+                  selectedNotifications.length === filteredNotifications.length &&
+                  filteredNotifications.length > 0
+                }
                 onChange={handleSelectAll}
-                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="w-4 h-4 rounded border-gray-300 text-gray-600 focus:ring-gray-600"
               />
               <span>Select all</span>
             </label>
@@ -604,7 +657,7 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
         <div className="divide-y divide-gray-100">
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+              <Loader2 className="w-8 h-8 text-gray-600 animate-spin" />
             </div>
           ) : filteredNotifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-gray-500">
@@ -613,16 +666,18 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
               <p className="text-sm text-gray-400 mt-1">
                 {searchTerm || typeFilter !== 'all' || statusFilter !== 'all'
                   ? 'Try adjusting your filters'
-                  : 'You\'re all caught up!'
-                }
+                  : "You're all caught up!"}
               </p>
             </div>
           ) : (
             filteredNotifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`group flex flex-col md:flex-row md:items-center gap-2 md:gap-3 p-2.5 md:py-3 md:px-3 transition-all cursor-pointer border-b border-gray-100 last:border-0 ${notification.read ? 'bg-white hover:bg-gray-50' : 'bg-blue-50/40 hover:bg-blue-50/70'
-                  }`}
+                className={`group flex flex-col md:flex-row md:items-center gap-2 md:gap-3 p-2.5 md:py-3 md:px-3 transition-all cursor-pointer border-b border-gray-100 last:border-0 ${
+                  notification.read
+                    ? 'bg-white hover:bg-gray-50'
+                    : 'bg-gray-50/40 hover:bg-gray-50/70'
+                }`}
                 onClick={() => handleNotificationClick(notification)}
               >
                 {/* Checkbox & Icon */}
@@ -633,29 +688,41 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
                       checked={selectedNotifications.includes(notification.id)}
                       onChange={(e) => {
                         e.stopPropagation();
-                        setSelectedNotifications(prev =>
+                        setSelectedNotifications((prev) =>
                           prev.includes(notification.id)
-                            ? prev.filter(id => id !== notification.id)
-                            : [...prev, notification.id]
+                            ? prev.filter((id) => id !== notification.id)
+                            : [...prev, notification.id],
                         );
                       }}
-                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="w-4 h-4 rounded border-gray-300 text-gray-600 focus:ring-gray-600"
                     />
                   </div>
 
-                  <div className={`flex-shrink-0 p-2 rounded-xl border ${notification.read ? 'bg-gray-50 border-gray-100' : 'bg-white border-blue-100 shadow-sm'}`}>
+                  <div
+                    className={`flex-shrink-0 p-2 rounded-xl border ${notification.read ? 'bg-gray-50 border-gray-100' : 'bg-white border-gray-100 shadow-sm'}`}
+                  >
                     {React.cloneElement(getNotificationIcon(notification.type), {
-                      className: "w-4 h-4 " + getNotificationIcon(notification.type).props.className.split(' ').filter(c => !c.startsWith('w-') && !c.startsWith('h-')).join(' ')
+                      className:
+                        'w-4 h-4 ' +
+                        getNotificationIcon(notification.type)
+                          .props.className.split(' ')
+                          .filter((c) => !c.startsWith('w-') && !c.startsWith('h-'))
+                          .join(' '),
                     })}
                   </div>
 
                   {/* Mobile-only tags & status */}
                   <div className="flex-1 md:hidden flex items-center justify-between min-w-0 pr-1">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase ${getCategoryColor(getCategoryForType(notification.type))
-                      }`}>
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase ${getCategoryColor(
+                        getCategoryForType(notification.type),
+                      )}`}
+                    >
                       {getCategoryForType(notification.type)}
                     </span>
-                    {!notification.read && <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />}
+                    {!notification.read && (
+                      <span className="w-2 h-2 rounded-full bg-gray-600 flex-shrink-0" />
+                    )}
                   </div>
                 </div>
 
@@ -663,19 +730,26 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
                 <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center gap-1 md:gap-3 pl-10 md:pl-0">
                   {/* Desktop-only tags */}
                   <div className="hidden md:flex items-center gap-2 flex-shrink-0">
-                    {!notification.read && <span className="w-2 h-2 rounded-full bg-blue-500" />}
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase ${getCategoryColor(getCategoryForType(notification.type))
-                      }`}>
+                    {!notification.read && <span className="w-2 h-2 rounded-full bg-gray-600" />}
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase ${getCategoryColor(
+                        getCategoryForType(notification.type),
+                      )}`}
+                    >
                       {getCategoryForType(notification.type)}
                     </span>
                   </div>
 
                   <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center gap-0.5 md:gap-2">
-                    <h4 className={`text-sm md:text-[15px] font-semibold truncate ${notification.read ? 'text-gray-700' : 'text-gray-900'}`}>
+                    <h4
+                      className={`text-sm md:text-[15px] font-semibold truncate ${notification.read ? 'text-gray-700' : 'text-gray-900'}`}
+                    >
                       {notification.title}
                     </h4>
                     <span className="hidden md:inline text-gray-300 mx-1">•</span>
-                    <p className={`text-xs md:text-[13px] truncate ${notification.read ? 'text-gray-500' : 'text-gray-700 font-medium'}`}>
+                    <p
+                      className={`text-xs md:text-[13px] truncate ${notification.read ? 'text-gray-500' : 'text-gray-700 font-medium'}`}
+                    >
                       {notification.message}
                     </p>
                   </div>
@@ -683,7 +757,10 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
 
                 {/* Right Actions & Date */}
                 <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto pl-10 md:pl-0 mt-2 md:mt-0">
-                  <span className="text-xs text-gray-400 whitespace-nowrap flex items-center gap-1.5" title={formatFullDate(notification.created_at)}>
+                  <span
+                    className="text-xs text-gray-400 whitespace-nowrap flex items-center gap-1.5"
+                    title={formatFullDate(notification.created_at)}
+                  >
                     <Clock className="w-3.5 h-3.5" />
                     {formatTimeAgo(notification.created_at)}
                   </span>
@@ -692,15 +769,22 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        notification.read ? markAsUnread(notification.id) : markAsRead(notification.id);
+                        notification.read
+                          ? markAsUnread(notification.id)
+                          : markAsRead(notification.id);
                       }}
-                      className={`p-1.5 rounded-lg transition-colors ${notification.read
-                        ? 'text-gray-400 hover:text-orange-600 hover:bg-orange-50'
-                        : 'text-blue-600 bg-blue-50 hover:bg-blue-100'
-                        }`}
-                      title={notification.read ? "Mark as unread" : "Mark as read"}
+                      className={`p-1.5 rounded-lg transition-colors ${
+                        notification.read
+                          ? 'text-gray-400 hover:text-orange-600 hover:bg-orange-50'
+                          : 'text-gray-600 bg-gray-50 hover:bg-gray-100'
+                      }`}
+                      title={notification.read ? 'Mark as unread' : 'Mark as read'}
                     >
-                      {notification.read ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {notification.read ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
                     </button>
                     <ChevronRight className="w-4 h-4 text-gray-300 ml-1" />
                   </div>
@@ -712,15 +796,10 @@ const AdminNotificationsPage = ({ onTabChange, searchTerm }) => {
       </div>
 
       {/* Click outside handler for dropdown */}
-      {
-        showTypeDropdown && (
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setShowTypeDropdown(false)}
-          />
-        )
-      }
-    </div >
+      {showTypeDropdown && (
+        <div className="fixed inset-0 z-40" onClick={() => setShowTypeDropdown(false)} />
+      )}
+    </div>
   );
 };
 

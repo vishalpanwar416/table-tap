@@ -4,6 +4,30 @@ import { supabase } from '../../supabase';
 import { ChevronLeft, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const cardVariants = {
+  initial: { y: 40, opacity: 0 },
+  animate: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 60, damping: 16 } },
+  exit: { y: 40, opacity: 0, transition: { duration: 0.2 } },
+};
+const stagger = {
+  animate: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
+};
+const itemVariants = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 80, damping: 18 } },
+};
+const messageVariants = {
+  initial: { opacity: 0, x: 0 },
+  animate: { opacity: 1, x: [0, -8, 8, -6, 6, -4, 4, 0], transition: { duration: 0.5 } },
+  exit: { opacity: 0 },
+};
+const buttonVariants = {
+  initial: { scale: 1 },
+  hover: { scale: 1.04 },
+  tap: { scale: 0.97 },
+  loading: { scale: 1, opacity: 0.7 },
+};
+
 const ResetPassword = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -78,7 +102,9 @@ const ResetPassword = () => {
         }
 
         // Check if there's already an active session (user may have clicked link already)
-        const { data: { session } } = await supabase.auth.getSession();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         if (session) {
           setSessionReady(true);
           setVerifying(false);
@@ -91,7 +117,6 @@ const ResetPassword = () => {
           type: 'error',
         });
         setVerifying(false);
-
       } catch (error) {
         setMessage({
           text: error.message || 'Invalid or expired password reset link.',
@@ -103,31 +128,6 @@ const ResetPassword = () => {
 
     handlePasswordReset();
   }, [location]);
-
-  // Animation variants
-  const cardVariants = {
-    initial: { y: 40, opacity: 0 },
-    animate: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 60, damping: 16 } },
-    exit: { y: 40, opacity: 0, transition: { duration: 0.2 } }
-  };
-  const stagger = {
-    animate: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } }
-  };
-  const itemVariants = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 80, damping: 18 } }
-  };
-  const messageVariants = {
-    initial: { opacity: 0, x: 0 },
-    animate: { opacity: 1, x: [0, -8, 8, -6, 6, -4, 4, 0], transition: { duration: 0.5 } },
-    exit: { opacity: 0 }
-  };
-  const buttonVariants = {
-    initial: { scale: 1 },
-    hover: { scale: 1.04 },
-    tap: { scale: 0.97 },
-    loading: { scale: 1, opacity: 0.7 }
-  };
 
   const validatePassword = (pwd) => {
     if (pwd.length < 6) {
@@ -273,10 +273,11 @@ const ResetPassword = () => {
           <AnimatePresence>
             {message.text && (
               <motion.div
-                className={`mb-6 p-4 rounded-xl text-center font-medium flex items-center justify-center gap-2 ${message.type === 'error'
-                  ? 'bg-red-100 text-red-700'
-                  : 'bg-green-100 text-green-700'
-                  }`}
+                className={`mb-6 p-4 rounded-xl text-center font-medium flex items-center justify-center gap-2 ${
+                  message.type === 'error'
+                    ? 'bg-red-100 text-red-700'
+                    : 'bg-green-100 text-green-700'
+                }`}
                 variants={messageVariants}
                 initial="initial"
                 animate="animate"
@@ -326,7 +327,10 @@ const ResetPassword = () => {
               </div>
             </motion.div>
             <motion.div variants={itemVariants}>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Confirm New Password
               </label>
               <div className="relative">
@@ -358,10 +362,11 @@ const ResetPassword = () => {
               <motion.button
                 type="submit"
                 disabled={loading || !password || !confirmPassword}
-                className={`w-full py-3 rounded-full font-medium text-white text-lg mt-2 ${loading || !password || !confirmPassword
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-gray-600 hover:bg-gray-700'
-                  }`}
+                className={`w-full py-3 rounded-full font-medium text-white text-lg mt-2 ${
+                  loading || !password || !confirmPassword
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-gray-600 hover:bg-gray-700'
+                }`}
                 variants={buttonVariants}
                 whileHover={!loading ? 'hover' : undefined}
                 whileTap={!loading ? 'tap' : undefined}

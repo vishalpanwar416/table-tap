@@ -78,18 +78,6 @@ const PaymentPage = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  if (!restaurant) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white text-xl">Loading restaurant details...</div>
-      </div>
-    );
-  }
-
-  if (authLoading) {
-    return <LoadingScreen message="Loading authentication..." variant="page" />;
-  }
-
   const calculatePriceDetails = useCallback(() => {
     let originalTotal = 0;
     let discountAmount = 0;
@@ -764,6 +752,18 @@ const PaymentPage = () => {
       setIsProcessing(false);
     }
   };
+
+  if (!restaurant) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white text-xl">Loading restaurant details...</div>
+      </div>
+    );
+  }
+
+  if (authLoading) {
+    return <LoadingScreen message="Loading authentication..." variant="page" />;
+  }
 
   return (
     <div className="flex justify-center items-start min-h-screen bg-black">

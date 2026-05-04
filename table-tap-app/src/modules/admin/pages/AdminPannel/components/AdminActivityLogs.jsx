@@ -28,13 +28,13 @@ import {
   IndianRupee,
   Eye,
   X,
-  Download
+  Download,
 } from 'lucide-react';
 import {
   getAdminActivityLogs,
   getActivityStats,
   ACTIVITY_TYPES,
-  EMAIL_TYPES
+  EMAIL_TYPES,
 } from '../../../api/adminActivityLogService';
 
 const AdminActivityLogs = ({ searchTerm }) => {
@@ -62,41 +62,124 @@ const AdminActivityLogs = ({ searchTerm }) => {
 
   // Activity type categories
   const activityCategories = {
-    'Emails': [
-      { type: ACTIVITY_TYPES.EMAIL_SENT, label: 'Email Sent', icon: MailCheck, color: 'text-green-500' },
-      { type: ACTIVITY_TYPES.EMAIL_FAILED, label: 'Email Failed', icon: MailX, color: 'text-red-500' },
-      { type: ACTIVITY_TYPES.EMAIL_QUEUED, label: 'Email Queued', icon: Mail, color: 'text-amber-500' }
+    Emails: [
+      {
+        type: ACTIVITY_TYPES.EMAIL_SENT,
+        label: 'Email Sent',
+        icon: MailCheck,
+        color: 'text-green-500',
+      },
+      {
+        type: ACTIVITY_TYPES.EMAIL_FAILED,
+        label: 'Email Failed',
+        icon: MailX,
+        color: 'text-red-500',
+      },
+      {
+        type: ACTIVITY_TYPES.EMAIL_QUEUED,
+        label: 'Email Queued',
+        icon: Mail,
+        color: 'text-amber-500',
+      },
     ],
-    'Subscriptions': [
-      { type: ACTIVITY_TYPES.SUBSCRIPTION_CREATED, label: 'Created', icon: CreditCard, color: 'text-blue-500' },
-      { type: ACTIVITY_TYPES.SUBSCRIPTION_RENEWED, label: 'Renewed', icon: RefreshCw, color: 'text-green-500' },
-      { type: ACTIVITY_TYPES.SUBSCRIPTION_CANCELLED, label: 'Cancelled', icon: XCircle, color: 'text-red-500' },
-      { type: ACTIVITY_TYPES.SUBSCRIPTION_EXPIRED, label: 'Expired', icon: AlertTriangle, color: 'text-orange-500' }
+    Subscriptions: [
+      {
+        type: ACTIVITY_TYPES.SUBSCRIPTION_CREATED,
+        label: 'Created',
+        icon: CreditCard,
+        color: 'text-gray-600',
+      },
+      {
+        type: ACTIVITY_TYPES.SUBSCRIPTION_RENEWED,
+        label: 'Renewed',
+        icon: RefreshCw,
+        color: 'text-green-500',
+      },
+      {
+        type: ACTIVITY_TYPES.SUBSCRIPTION_CANCELLED,
+        label: 'Cancelled',
+        icon: XCircle,
+        color: 'text-red-500',
+      },
+      {
+        type: ACTIVITY_TYPES.SUBSCRIPTION_EXPIRED,
+        label: 'Expired',
+        icon: AlertTriangle,
+        color: 'text-orange-500',
+      },
     ],
-    'Restaurants': [
-      { type: ACTIVITY_TYPES.RESTAURANT_CREATED, label: 'Created', icon: Building2, color: 'text-purple-500' },
-      { type: ACTIVITY_TYPES.RESTAURANT_ACTIVATED, label: 'Activated', icon: CheckCircle, color: 'text-green-500' },
-      { type: ACTIVITY_TYPES.RESTAURANT_DEACTIVATED, label: 'Deactivated', icon: XCircle, color: 'text-gray-500' },
-      { type: ACTIVITY_TYPES.RESTAURANT_UPDATED, label: 'Updated', icon: Settings, color: 'text-blue-500' },
-      { type: ACTIVITY_TYPES.RESTAURANT_DELETED, label: 'Deleted', icon: XCircle, color: 'text-red-500' }
+    Restaurants: [
+      {
+        type: ACTIVITY_TYPES.RESTAURANT_CREATED,
+        label: 'Created',
+        icon: Building2,
+        color: 'text-orange-500',
+      },
+      {
+        type: ACTIVITY_TYPES.RESTAURANT_ACTIVATED,
+        label: 'Activated',
+        icon: CheckCircle,
+        color: 'text-green-500',
+      },
+      {
+        type: ACTIVITY_TYPES.RESTAURANT_DEACTIVATED,
+        label: 'Deactivated',
+        icon: XCircle,
+        color: 'text-gray-500',
+      },
+      {
+        type: ACTIVITY_TYPES.RESTAURANT_UPDATED,
+        label: 'Updated',
+        icon: Settings,
+        color: 'text-gray-600',
+      },
+      {
+        type: ACTIVITY_TYPES.RESTAURANT_DELETED,
+        label: 'Deleted',
+        icon: XCircle,
+        color: 'text-red-500',
+      },
     ],
-    'Staff': [
-      { type: ACTIVITY_TYPES.STAFF_CREATED, label: 'Staff Added', icon: UserPlus, color: 'text-blue-500' },
-      { type: ACTIVITY_TYPES.STAFF_UPDATED, label: 'Staff Updated', icon: User, color: 'text-amber-500' },
-      { type: ACTIVITY_TYPES.STAFF_DELETED, label: 'Staff Removed', icon: XCircle, color: 'text-red-500' }
+    Staff: [
+      {
+        type: ACTIVITY_TYPES.STAFF_CREATED,
+        label: 'Staff Added',
+        icon: UserPlus,
+        color: 'text-gray-600',
+      },
+      {
+        type: ACTIVITY_TYPES.STAFF_UPDATED,
+        label: 'Staff Updated',
+        icon: User,
+        color: 'text-amber-500',
+      },
+      {
+        type: ACTIVITY_TYPES.STAFF_DELETED,
+        label: 'Staff Removed',
+        icon: XCircle,
+        color: 'text-red-500',
+      },
     ],
-    'System': [
+    System: [
       { type: ACTIVITY_TYPES.SYSTEM_ALERT, label: 'Alert', icon: Bell, color: 'text-red-500' },
       { type: ACTIVITY_TYPES.CRON_JOB, label: 'Cron Job', icon: Settings, color: 'text-gray-500' },
-      { type: ACTIVITY_TYPES.AUTO_PROCESS, label: 'Auto Process', icon: Activity, color: 'text-blue-500' }
-    ]
+      {
+        type: ACTIVITY_TYPES.AUTO_PROCESS,
+        label: 'Auto Process',
+        icon: Activity,
+        color: 'text-gray-600',
+      },
+    ],
   };
 
   // Email type labels
   const emailTypeLabels = {
     [EMAIL_TYPES.BILL]: { label: 'Bill/Invoice', icon: Receipt },
     [EMAIL_TYPES.WELCOME]: { label: 'Welcome Email', icon: UserPlus },
-    [EMAIL_TYPES.SUBSCRIPTION_CONFIRMATION]: { label: 'Subscription Confirmation', icon: CreditCard },
+    [EMAIL_TYPES.SUBSCRIPTION_CONFIRMATION]: {
+      label: 'Subscription Confirmation',
+      icon: CreditCard,
+    },
     [EMAIL_TYPES.SUBSCRIPTION_REMINDER]: { label: 'Subscription Reminder', icon: Bell },
     [EMAIL_TYPES.SUBSCRIPTION_EXPIRED]: { label: 'Subscription Expired', icon: AlertTriangle },
     [EMAIL_TYPES.PAYMENT_RECEIPT]: { label: 'Payment Receipt', icon: IndianRupee },
@@ -105,7 +188,7 @@ const AdminActivityLogs = ({ searchTerm }) => {
     [EMAIL_TYPES.REGISTRATION_APPROVED]: { label: 'Registration Approved', icon: CheckCircle },
     [EMAIL_TYPES.REGISTRATION_REJECTED]: { label: 'Registration Rejected', icon: XCircle },
     [EMAIL_TYPES.INQUIRY_RESPONSE]: { label: 'Inquiry Response', icon: Mail },
-    [EMAIL_TYPES.INVOICE]: { label: 'Invoice', icon: FileText }
+    [EMAIL_TYPES.INVOICE]: { label: 'Invoice', icon: FileText },
   };
 
   useEffect(() => {
@@ -155,14 +238,18 @@ const AdminActivityLogs = ({ searchTerm }) => {
         filters.search = searchTerm;
       }
 
-      const { data, count, error: fetchError } = await getAdminActivityLogs(filters, currentPage, PAGE_SIZE);
+      const {
+        data,
+        count,
+        error: fetchError,
+      } = await getAdminActivityLogs(filters, currentPage, PAGE_SIZE);
 
       if (fetchError) throw new Error(fetchError);
 
       if (reset) {
         setLogs(data || []);
       } else {
-        setLogs(prev => [...prev, ...(data || [])]);
+        setLogs((prev) => [...prev, ...(data || [])]);
       }
 
       setTotalCount(count || 0);
@@ -183,13 +270,13 @@ const AdminActivityLogs = ({ searchTerm }) => {
   };
 
   const loadMore = () => {
-    setPage(prev => prev + 1);
+    setPage((prev) => prev + 1);
     fetchLogs(false);
   };
 
   const getActivityIcon = (type) => {
     for (const category of Object.values(activityCategories)) {
-      const found = category.find(item => item.type === type);
+      const found = category.find((item) => item.type === type);
       if (found) {
         const Icon = found.icon;
         return <Icon className={`w-4 h-4 ${found.color}`} />;
@@ -236,7 +323,7 @@ const AdminActivityLogs = ({ searchTerm }) => {
       month: 'short',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
@@ -263,11 +350,12 @@ const AdminActivityLogs = ({ searchTerm }) => {
   const filteredLogs = useMemo(() => {
     if (!searchTerm) return logs;
     const search = searchTerm.toLowerCase();
-    return logs.filter(log =>
-      log.description?.toLowerCase().includes(search) ||
-      log.target_name?.toLowerCase().includes(search) ||
-      log.activity_name?.toLowerCase().includes(search) ||
-      log.user_name?.toLowerCase().includes(search)
+    return logs.filter(
+      (log) =>
+        log.description?.toLowerCase().includes(search) ||
+        log.target_name?.toLowerCase().includes(search) ||
+        log.activity_name?.toLowerCase().includes(search) ||
+        log.user_name?.toLowerCase().includes(search),
     );
   }, [logs, searchTerm]);
 
@@ -277,71 +365,90 @@ const AdminActivityLogs = ({ searchTerm }) => {
 
       {/* Stats Cards */}
       {stats && (
-        <div className="grid grid-cols-5 gap-1 md:gap-3 px-1 md:px-0 mt-1 md:mt-2 pb-2 md:pb-0 overflow-x-auto no-scrollbar">
+        <div className="grid grid-cols-5 gap-3 overflow-x-auto no-scrollbar">
           {/* Total */}
-          <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
-            <div className="p-1 md:p-2 bg-blue-100 rounded-lg mb-1">
-              <Activity className="w-3.5 h-3.5 md:w-5 md:h-5 text-blue-600" />
+          <div className="bg-white rounded-lg border border-gray-200 p-3 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
+            <div className="p-1 md:p-2 bg-gray-100 rounded-lg mb-1">
+              <Activity className="w-3.5 h-3.5 md:w-5 md:h-5 text-gray-600" />
             </div>
             <div>
-              <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">{stats.total}</p>
-              <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate w-full">Total</p>
+              <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">
+                {stats.total}
+              </p>
+              <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate w-full">
+                Total
+              </p>
             </div>
           </div>
 
           {/* Sent */}
-          <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
+          <div className="bg-white rounded-lg border border-gray-200 p-3 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
             <div className="p-1 md:p-2 bg-green-100 rounded-lg mb-1">
               <MailCheck className="w-3.5 h-3.5 md:w-5 md:h-5 text-green-600" />
             </div>
             <div>
-              <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">{stats.emails.sent}</p>
-              <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate w-full">Sent</p>
+              <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">
+                {stats.emails.sent}
+              </p>
+              <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate w-full">
+                Sent
+              </p>
             </div>
           </div>
 
           {/* Failed */}
-          <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
+          <div className="bg-white rounded-lg border border-gray-200 p-3 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
             <div className="p-1 md:p-2 bg-red-100 rounded-lg mb-1">
               <MailX className="w-3.5 h-3.5 md:w-5 md:h-5 text-red-600" />
             </div>
             <div>
-              <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">{stats.emails.failed}</p>
-              <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate w-full">Failed</p>
+              <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">
+                {stats.emails.failed}
+              </p>
+              <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate w-full">
+                Failed
+              </p>
             </div>
           </div>
 
           {/* Successful */}
-          <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
+          <div className="bg-white rounded-lg border border-gray-200 p-3 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
             <div className="p-1 md:p-2 bg-emerald-100 rounded-lg mb-1">
               <CheckCircle className="w-3.5 h-3.5 md:w-5 md:h-5 text-emerald-600" />
             </div>
             <div>
-              <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">{stats.byStatus.success}</p>
-              <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate w-full">Success</p>
+              <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">
+                {stats.byStatus.success}
+              </p>
+              <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate w-full">
+                Success
+              </p>
             </div>
           </div>
 
           {/* Pending */}
-          <div className="bg-white rounded-lg border border-gray-200 p-1.5 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
+          <div className="bg-white rounded-lg border border-gray-200 p-3 md:p-4 shadow-sm flex flex-col items-center justify-center text-center">
             <div className="p-1 md:p-2 bg-amber-100 rounded-lg mb-1">
               <Clock className="w-3.5 h-3.5 md:w-5 md:h-5 text-amber-600" />
             </div>
             <div>
-              <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">{stats.byStatus.pending}</p>
-              <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate w-full">Pending</p>
+              <p className="text-sm md:text-2xl font-bold text-gray-900 leading-none">
+                {stats.byStatus.pending}
+              </p>
+              <p className="text-[9px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate w-full">
+                Pending
+              </p>
             </div>
           </div>
         </div>
       )}
 
       {/* Filters, Sort & Actions - Single Line on Desktop */}
-      <div className="bg-white border-y md:border md:rounded-xl border-gray-200 md:shadow-sm mb-2 md:mb-3 mt-2 md:mt-4 overflow-x-auto no-scrollbar">
-        <div className="p-2 md:p-3 md:border-b md:border-gray-100 min-w-max">
+      <div className="bg-white border-y md:border md:rounded-xl border-gray-200 md:shadow-sm mb-3 mt-4 overflow-x-auto no-scrollbar">
+        <div className="p-3 md:border-b md:border-gray-100 min-w-max">
           <div className="flex items-center justify-between gap-2 sm:gap-3">
             {/* Left side actions */}
             <div className="flex items-center gap-2 flex-shrink-0">
-
               <button className="flex items-center gap-1.5 px-2 py-2 md:px-3 bg-white border border-gray-200 rounded-lg shadow-sm text-xs font-medium whitespace-nowrap active:bg-gray-50">
                 <Download className="w-4 h-4" />
                 <span className="hidden md:inline">Export</span>
@@ -349,15 +456,13 @@ const AdminActivityLogs = ({ searchTerm }) => {
             </div>
             {/* Search removed - available in header */}
 
-
-
             <div className="flex items-center gap-2 shrink-0 border-l border-gray-200 pl-2 sm:pl-3">
               {/* Status Filter (Dropdown) */}
               <div className="relative">
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="appearance-none pl-3 pr-8 py-2 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none shadow-sm flex-shrink-0 min-w-[110px] cursor-pointer"
+                  className="appearance-none pl-3 pr-8 py-2 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 focus:border-gray-500 focus:ring-2 focus:ring-gray-100 outline-none shadow-sm flex-shrink-0 min-w-[110px] cursor-pointer"
                 >
                   <option value="all">All Status</option>
                   <option value="success">Success</option>
@@ -372,7 +477,7 @@ const AdminActivityLogs = ({ searchTerm }) => {
                 <select
                   value={dateFilter}
                   onChange={(e) => setDateFilter(e.target.value)}
-                  className="appearance-none pl-3 pr-8 py-2 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none shadow-sm flex-shrink-0 min-w-[120px] cursor-pointer"
+                  className="appearance-none pl-3 pr-8 py-2 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 focus:border-gray-500 focus:ring-2 focus:ring-gray-100 outline-none shadow-sm flex-shrink-0 min-w-[120px] cursor-pointer"
                 >
                   <option value="24hours">Last 24 Hours</option>
                   <option value="7days">Last 7 Days</option>
@@ -386,7 +491,7 @@ const AdminActivityLogs = ({ searchTerm }) => {
         </div>
 
         {/* Results count */}
-        <div className="px-2 py-2 md:px-3 md:py-2.5 border-b border-gray-100 flex items-center justify-between text-xs md:text-sm text-gray-500">
+        <div className="px-3 py-2.5 border-b border-gray-100 flex items-center justify-between text-xs md:text-sm text-gray-500">
           <div className="flex items-center gap-3 md:gap-4">
             Showing {filteredLogs.length} of {totalCount} activities
           </div>
@@ -396,7 +501,7 @@ const AdminActivityLogs = ({ searchTerm }) => {
         <div className="divide-y divide-gray-100">
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+              <Loader2 className="w-8 h-8 text-gray-600 animate-spin" />
             </div>
           ) : filteredLogs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-gray-500">
@@ -405,31 +510,35 @@ const AdminActivityLogs = ({ searchTerm }) => {
               <p className="text-sm text-gray-400 mt-1">
                 {searchTerm || activityTypeFilter !== 'all' || statusFilter !== 'all'
                   ? 'Try adjusting your filters'
-                  : 'Activities will appear here as they occur'
-                }
+                  : 'Activities will appear here as they occur'}
               </p>
             </div>
           ) : (
             filteredLogs.map((log) => (
               <div
                 key={log.id}
-                className="group flex flex-col md:flex-row md:items-center gap-2 md:gap-3 p-2.5 md:py-3 md:px-3 transition-all cursor-pointer border-b border-gray-100 last:border-0 bg-white hover:bg-gray-50"
+                className="group flex flex-col md:flex-row md:items-center gap-2 md:gap-3 px-4 py-3 transition-all cursor-pointer border-b border-gray-100 last:border-0 bg-white hover:bg-gray-50"
                 onClick={() => setSelectedLog(log)}
               >
                 {/* Icon & Status */}
                 <div className="flex items-center gap-3 w-full md:w-auto">
-                  <div className={`flex-shrink-0 p-2 rounded-xl border ${log.status === 'failed' ? 'bg-red-50 border-red-100' :
-                    log.status === 'pending' ? 'bg-amber-50 border-amber-100' :
-                      'bg-gray-50 border-gray-100'
-                    }`}>
-                    {React.cloneElement(getActivityIcon(log.activity_type), { className: "w-4 h-4" })}
+                  <div
+                    className={`flex-shrink-0 p-2 rounded-xl border ${
+                      log.status === 'failed'
+                        ? 'bg-red-50 border-red-100'
+                        : log.status === 'pending'
+                          ? 'bg-amber-50 border-amber-100'
+                          : 'bg-gray-50 border-gray-100'
+                    }`}
+                  >
+                    {React.cloneElement(getActivityIcon(log.activity_type), {
+                      className: 'w-4 h-4',
+                    })}
                   </div>
 
                   {/* Mobile-only status & time */}
                   <div className="flex-1 md:hidden flex items-center justify-between min-w-0 pr-1">
-                    <div className="scale-75 origin-left -ml-2">
-                      {getStatusBadge(log.status)}
-                    </div>
+                    <div className="scale-75 origin-left -ml-2">{getStatusBadge(log.status)}</div>
                   </div>
                 </div>
 
@@ -442,7 +551,9 @@ const AdminActivityLogs = ({ searchTerm }) => {
                   <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center gap-0.5 md:gap-2">
                     <h4 className="text-sm md:text-[14px] font-semibold text-gray-900 truncate pr-2">
                       {log.activity_name}
-                      {log.target_name && <span className="text-gray-400 font-normal ml-1">· {log.target_name}</span>}
+                      {log.target_name && (
+                        <span className="text-gray-400 font-normal ml-1">· {log.target_name}</span>
+                      )}
                     </h4>
                     <span className="hidden md:inline text-gray-300 mx-1">•</span>
                     <p className="text-xs md:text-[13px] text-gray-500 truncate mt-0.5 md:mt-0">
@@ -456,7 +567,9 @@ const AdminActivityLogs = ({ searchTerm }) => {
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] md:text-xs text-gray-400 flex items-center gap-1">
                       <User className="w-3 h-3 md:w-3.5 md:h-3.5 opacity-70" />
-                      <span className="truncate max-w-[80px] md:max-w-[120px]">{log.user_name}</span>
+                      <span className="truncate max-w-[80px] md:max-w-[120px]">
+                        {log.user_name}
+                      </span>
                     </span>
                     {log.details?.amount && (
                       <span className="text-[10px] md:text-xs text-emerald-600 font-medium flex items-center gap-0.5 border-l border-gray-200 pl-2">
@@ -467,7 +580,10 @@ const AdminActivityLogs = ({ searchTerm }) => {
                   </div>
 
                   <div className="flex items-center gap-1 opacity-100">
-                    <span className="text-[10px] md:text-xs text-gray-400 whitespace-nowrap" title={formatTimeAgo(log.created_at)}>
+                    <span
+                      className="text-[10px] md:text-xs text-gray-400 whitespace-nowrap"
+                      title={formatTimeAgo(log.created_at)}
+                    >
                       {formatTimeAgo(log.created_at)}
                     </span>
                     <ChevronRight className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-300 ml-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -500,108 +616,107 @@ const AdminActivityLogs = ({ searchTerm }) => {
       </div>
 
       {/* Click outside handler for dropdown */}
-      {
-        showFilters && (
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setShowFilters(false)}
-          />
-        )
-      }
+      {showFilters && <div className="fixed inset-0 z-40" onClick={() => setShowFilters(false)} />}
 
       {/* Detail Modal */}
-      {
-        selectedLog && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-auto">
-              <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-                <h3 className="text-lg font-bold text-gray-900">Activity Details</h3>
-                <button
-                  onClick={() => setSelectedLog(null)}
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  <X className="w-5 h-5 text-gray-500" />
-                </button>
+      {selectedLog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-auto">
+            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-gray-900">Activity Details</h3>
+              <button
+                onClick={() => setSelectedLog(null)}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-xl bg-gray-50">
+                  {getActivityIcon(selectedLog.activity_type)}
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-900">{selectedLog.activity_name}</h4>
+                  {getStatusBadge(selectedLog.status)}
+                </div>
               </div>
-              <div className="p-4 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-xl bg-gray-50">
-                    {getActivityIcon(selectedLog.activity_type)}
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-gray-900">{selectedLog.activity_name}</h4>
-                    {getStatusBadge(selectedLog.status)}
-                  </div>
-                </div>
 
-                <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                  <p className="text-sm text-gray-700">{selectedLog.description}</p>
+              <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                <p className="text-sm text-gray-700">{selectedLog.description}</p>
 
-                  {selectedLog.target_name && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-500">Recipient:</span>
-                      <span className="font-medium text-gray-900">{selectedLog.target_name}</span>
-                    </div>
-                  )}
-
+                {selectedLog.target_name && (
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="text-gray-500">Triggered by:</span>
-                    <span className="font-medium text-gray-900">{selectedLog.user_name}</span>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-gray-500">Time:</span>
-                    <span className="font-medium text-gray-900">{formatDate(selectedLog.created_at)}</span>
-                  </div>
-                </div>
-
-                {selectedLog.details && Object.keys(selectedLog.details).length > 0 && (
-                  <div>
-                    <h5 className="text-sm font-semibold text-gray-700 mb-2">Additional Details</h5>
-                    <div className="bg-gray-50 rounded-xl p-4 space-y-2">
-                      {selectedLog.details.email_type && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className="text-gray-500">Email Type:</span>
-                          <span className="font-medium text-gray-900">
-                            {getEmailTypeInfo(selectedLog.details.email_type).label}
-                          </span>
-                        </div>
-                      )}
-                      {selectedLog.details.subject && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className="text-gray-500">Subject:</span>
-                          <span className="font-medium text-gray-900">{selectedLog.details.subject}</span>
-                        </div>
-                      )}
-                      {selectedLog.details.amount && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className="text-gray-500">Amount:</span>
-                          <span className="font-medium text-emerald-600">₹{selectedLog.details.amount.toLocaleString()}</span>
-                        </div>
-                      )}
-                      {selectedLog.details.order_id && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className="text-gray-500">Order ID:</span>
-                          <span className="font-mono text-gray-900">{selectedLog.details.order_id}</span>
-                        </div>
-                      )}
-                      {selectedLog.details.error_message && (
-                        <div className="text-sm">
-                          <span className="text-gray-500">Error:</span>
-                          <p className="mt-1 text-red-600 bg-red-50 rounded-lg p-2 text-xs font-mono">
-                            {selectedLog.details.error_message}
-                          </p>
-                        </div>
-                      )}
-                    </div>
+                    <span className="text-gray-500">Recipient:</span>
+                    <span className="font-medium text-gray-900">{selectedLog.target_name}</span>
                   </div>
                 )}
+
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-gray-500">Triggered by:</span>
+                  <span className="font-medium text-gray-900">{selectedLog.user_name}</span>
+                </div>
+
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-gray-500">Time:</span>
+                  <span className="font-medium text-gray-900">
+                    {formatDate(selectedLog.created_at)}
+                  </span>
+                </div>
               </div>
+
+              {selectedLog.details && Object.keys(selectedLog.details).length > 0 && (
+                <div>
+                  <h5 className="text-sm font-semibold text-gray-700 mb-2">Additional Details</h5>
+                  <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                    {selectedLog.details.email_type && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-gray-500">Email Type:</span>
+                        <span className="font-medium text-gray-900">
+                          {getEmailTypeInfo(selectedLog.details.email_type).label}
+                        </span>
+                      </div>
+                    )}
+                    {selectedLog.details.subject && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-gray-500">Subject:</span>
+                        <span className="font-medium text-gray-900">
+                          {selectedLog.details.subject}
+                        </span>
+                      </div>
+                    )}
+                    {selectedLog.details.amount && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-gray-500">Amount:</span>
+                        <span className="font-medium text-emerald-600">
+                          ₹{selectedLog.details.amount.toLocaleString()}
+                        </span>
+                      </div>
+                    )}
+                    {selectedLog.details.order_id && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-gray-500">Order ID:</span>
+                        <span className="font-mono text-gray-900">
+                          {selectedLog.details.order_id}
+                        </span>
+                      </div>
+                    )}
+                    {selectedLog.details.error_message && (
+                      <div className="text-sm">
+                        <span className="text-gray-500">Error:</span>
+                        <p className="mt-1 text-red-600 bg-red-50 rounded-lg p-2 text-xs font-mono">
+                          {selectedLog.details.error_message}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        )
-      }
-    </div >
+        </div>
+      )}
+    </div>
   );
 };
 

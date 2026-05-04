@@ -1,22 +1,32 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { ChevronLeft, ShoppingBag, Loader, Filter, RefreshCw, Search, X, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import {
+  ChevronLeft,
+  ShoppingBag,
+  Loader,
+  Filter,
+  RefreshCw,
+  Search,
+  X,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useOrders } from '../../shared/context/OrderContext';
 import OrderCard from '../components/OrderCard';
 import { getActiveRestaurants } from '../../restaurant/pages/RestaurantSelection/restaurantSelectionService';
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from 'framer-motion';
 import LoadingScreen from '../../shared/components/LoadingScreen';
 
 const tabs = [
-  { key: "pending", label: "Waiting Acceptance" },
-  { key: "preparing", label: "In Preparation" },
-  { key: "completed", label: "Order History" },
+  { key: 'pending', label: 'Waiting Acceptance' },
+  { key: 'preparing', label: 'In Preparation' },
+  { key: 'completed', label: 'Order History' },
 ];
 
 function SegmentedTabs({ activeTab, setActiveTab }) {
   // For indicator position/width
-  const tabRefs = React.useRef([]);
-  const [indicatorProps, setIndicatorProps] = React.useState({ left: 0, width: 0 });
+  const tabRefs = useRef([]);
+  const [indicatorProps, setIndicatorProps] = useState({ left: 0, width: 0 });
 
   React.useEffect(() => {
     const idx = tabs.findIndex((t) => t.key === activeTab);
@@ -35,7 +45,7 @@ function SegmentedTabs({ activeTab, setActiveTab }) {
       <motion.div
         className="absolute top-0 left-0 h-full bg-gray-700 rounded-full z-0"
         layout
-        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
         style={{
           width: indicatorProps.width,
           left: indicatorProps.left,
@@ -44,10 +54,10 @@ function SegmentedTabs({ activeTab, setActiveTab }) {
       {tabs.map((tab, idx) => (
         <button
           key={tab.key}
-          ref={el => (tabRefs.current[idx] = el)}
+          ref={(el) => (tabRefs.current[idx] = el)}
           onClick={() => setActiveTab(tab.key)}
           className={`relative z-10 px-3 py-1 rounded-full font-medium transition-colors duration-200 text-xs
-            ${activeTab === tab.key ? "text-white" : "text-gray-700"}
+            ${activeTab === tab.key ? 'text-white' : 'text-gray-700'}
           `}
           style={{ minWidth: 0, whiteSpace: 'nowrap' }} // Ensures no wrapping
         >
@@ -62,42 +72,63 @@ const statusComponents = {
   pending: {
     icon: (
       <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-yellow-50 flex items-center justify-center shadow-sm">
-        <svg className="w-8 h-8 md:w-10 md:h-10 text-yellow-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <svg
+          className="w-8 h-8 md:w-10 md:h-10 text-yellow-500"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        >
           <circle cx="12" cy="12" r="10" />
           <path d="M12 6v6l4 2" />
         </svg>
       </div>
     ),
     message: 'No pending orders',
-    description: 'Your pending orders will appear here'
+    description: 'Your pending orders will appear here',
   },
   preparing: {
     icon: (
       <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-purple-50 flex items-center justify-center shadow-sm">
-        <svg className="w-8 h-8 md:w-10 md:h-10 text-purple-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <svg
+          className="w-8 h-8 md:w-10 md:h-10 text-purple-500"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        >
           <path d="M12 2v4M12 22v-4M6.314 6.314L4.9 4.9M17.686 6.314L19.1 4.9M6.314 17.69L4.9 19.1M17.686 17.69L19.1 19.1M12 6a6 6 0 1 1 0 12 6 6 0 0 1 0-12z" />
         </svg>
       </div>
     ),
     message: 'No orders in preparation',
-    description: 'Orders being prepared will appear here'
+    description: 'Orders being prepared will appear here',
   },
   completed: {
     icon: (
       <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-green-50 flex items-center justify-center shadow-sm">
-        <svg className="w-8 h-8 md:w-10 md:h-10 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <svg
+          className="w-8 h-8 md:w-10 md:h-10 text-green-500"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        >
           <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
           <polyline points="22 4 12 14.01 9 11.01" />
         </svg>
       </div>
     ),
     message: 'No completed orders yet',
-    description: 'Your order history will be displayed here'
-  }
+    description: 'Your order history will be displayed here',
+  },
 };
 
 export default function MyOrders() {
-  const [activeTab, setActiveTab] = useState("pending");
+  const [activeTab, setActiveTab] = useState('pending');
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(new Date());
@@ -117,26 +148,29 @@ export default function MyOrders() {
   const { userOrders, fetchUserOrders, loading, error } = useOrders();
 
   // Fetch orders with better error handling
-  const handleFetchOrders = useCallback(async (showRefreshAnimation = false) => {
-    if (showRefreshAnimation) {
-      setIsRefreshing(true);
-    }
-
-    try {
-      await fetchUserOrders();
-      setLastRefresh(new Date());
-    } catch (err) {
-    } finally {
-      if (isInitialLoad) {
-        setIsInitialLoad(false);
-      }
-
+  const handleFetchOrders = useCallback(
+    async (showRefreshAnimation = false) => {
       if (showRefreshAnimation) {
-        // Keep the refresh animation for at least 500ms to provide feedback
-        setTimeout(() => setIsRefreshing(false), 500);
+        setIsRefreshing(true);
       }
-    }
-  }, [fetchUserOrders, isInitialLoad]);
+
+      try {
+        await fetchUserOrders();
+        setLastRefresh(new Date());
+      } catch (err) {
+      } finally {
+        if (isInitialLoad) {
+          setIsInitialLoad(false);
+        }
+
+        if (showRefreshAnimation) {
+          // Keep the refresh animation for at least 500ms to provide feedback
+          setTimeout(() => setIsRefreshing(false), 500);
+        }
+      }
+    },
+    [fetchUserOrders, isInitialLoad],
+  );
 
   // Initial load and polling setup
   useEffect(() => {
@@ -161,7 +195,7 @@ export default function MyOrders() {
 
         // Map restaurant_id to name
         const map = {};
-        (restaurants || []).forEach(r => {
+        (restaurants || []).forEach((r) => {
           if (r.id && r.name) {
             map[r.id] = r.name;
           }
@@ -207,38 +241,46 @@ export default function MyOrders() {
   // Filter and sort orders based on active tab, search, and filters
   const getFilteredAndSortedOrders = () => {
     // First filter by status
-    let filtered = userOrders.filter(order => {
+    let filtered = userOrders.filter((order) => {
       switch (activeTab) {
-        case 'pending': return order.status === 'pending';
-        case 'preparing': return order.status === 'preparing';
-        case 'completed': return ['completed', 'rejected', 'ready'].includes(order.status);
-        default: return false;
+        case 'pending':
+          return order.status === 'pending';
+        case 'preparing':
+          return order.status === 'preparing';
+        case 'completed':
+          return ['completed', 'rejected', 'ready'].includes(order.status);
+        default:
+          return false;
       }
     });
 
     // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(order => {
+      filtered = filtered.filter((order) => {
         const orderNumber = (order.order_number || '').toString().toLowerCase();
         const restaurantName = (restaurantMap[order.restaurant_id] || '').toLowerCase();
         const customerName = (order.customer_name || '').toLowerCase();
-        const items = (order.items || []).map(item => (item.name || '').toLowerCase()).join(' ');
+        const items = (order.items || []).map((item) => (item.name || '').toLowerCase()).join(' ');
 
-        return orderNumber.includes(query) ||
+        return (
+          orderNumber.includes(query) ||
           restaurantName.includes(query) ||
           customerName.includes(query) ||
-          items.includes(query);
+          items.includes(query)
+        );
       });
     }
 
     // Apply payment method filter
     if (filterPaymentMethod !== 'all') {
-      filtered = filtered.filter(order => {
+      filtered = filtered.filter((order) => {
         const method = (order.payment_method || '').toLowerCase();
-        if (filterPaymentMethod === 'online') return method.includes('razorpay') || method.includes('online');
+        if (filterPaymentMethod === 'online')
+          return method.includes('razorpay') || method.includes('online');
         if (filterPaymentMethod === 'upi') return method.includes('upi');
-        if (filterPaymentMethod === 'cash') return method.includes('cash') || method.includes('restaurant');
+        if (filterPaymentMethod === 'cash')
+          return method.includes('cash') || method.includes('restaurant');
         return true;
       });
     }
@@ -246,7 +288,7 @@ export default function MyOrders() {
     // Apply date range filter
     if (filterDateRange !== 'all') {
       const now = new Date();
-      filtered = filtered.filter(order => {
+      filtered = filtered.filter((order) => {
         const orderDate = new Date(order.created_at);
         if (filterDateRange === 'today') {
           return orderDate.toDateString() === now.toDateString();
@@ -287,7 +329,7 @@ export default function MyOrders() {
     setIsLoadingMore(true);
     // Simulate loading delay for smooth UX
     setTimeout(() => {
-      setDisplayedCount(prev => Math.min(prev + 10, filteredOrders.length));
+      setDisplayedCount((prev) => Math.min(prev + 10, filteredOrders.length));
       setIsLoadingMore(false);
     }, 300);
   }, [isLoadingMore, hasMore, filteredOrders.length]);
@@ -301,9 +343,7 @@ export default function MyOrders() {
         <h2 className="text-lg md:text-xl font-semibold text-center text-gray-800 mt-5 mb-2">
           {message}
         </h2>
-        <p className="text-gray-500 text-center text-sm max-w-xs">
-          {description}
-        </p>
+        <p className="text-gray-500 text-center text-sm max-w-xs">{description}</p>
       </div>
     );
   };
@@ -312,7 +352,6 @@ export default function MyOrders() {
   if (showLoading) {
     return <LoadingScreen message="Loading your orders..." variant="page" />;
   }
-
 
   if (error) {
     return (
@@ -350,10 +389,10 @@ export default function MyOrders() {
           </button>
 
           <div className="flex flex-col items-center absolute left-1/2 transform -translate-x-1/2">
-            <h1 className="text-gray-100 text-3xl font-medium">
-              My Orders
-            </h1>
-            <p className="text-orange-100/60 text-sm mt-1 text-center">Track and manage your food orders</p>
+            <h1 className="text-gray-100 text-3xl font-medium">My Orders</h1>
+            <p className="text-orange-100/60 text-sm mt-1 text-center">
+              Track and manage your food orders
+            </p>
           </div>
 
           {/* Search Icon */}
@@ -384,7 +423,10 @@ export default function MyOrders() {
                   className="w-full bg-white/10 backdrop-blur-md text-white placeholder-gray-400 rounded-full px-5 py-3 pl-12 pr-12 focus:outline-none focus:ring-2 focus:ring-orange-500/50 border border-white/20"
                   autoFocus
                 />
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <Search
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  size={20}
+                />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
@@ -425,7 +467,10 @@ export default function MyOrders() {
                 >
                   <Filter size={12} className="sm:mr-1" />
                   <span className="hidden sm:inline">Filters</span>
-                  <ChevronDown size={12} className={`ml-0.5 transition-transform ${showFilterMenu ? 'rotate-180' : ''}`} />
+                  <ChevronDown
+                    size={12}
+                    className={`ml-0.5 transition-transform ${showFilterMenu ? 'rotate-180' : ''}`}
+                  />
                 </button>
 
                 {/* Active Filter Badges */}
@@ -481,10 +526,11 @@ export default function MyOrders() {
                           <button
                             key={method}
                             onClick={() => setFilterPaymentMethod(method)}
-                            className={`text-xs px-3 py-2 rounded-lg border transition-colors ${filterPaymentMethod === method
-                              ? 'bg-orange-500 text-white border-orange-500'
-                              : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
-                              }`}
+                            className={`text-xs px-3 py-2 rounded-lg border transition-colors ${
+                              filterPaymentMethod === method
+                                ? 'bg-orange-500 text-white border-orange-500'
+                                : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                            }`}
                           >
                             {method.charAt(0).toUpperCase() + method.slice(1)}
                           </button>
@@ -500,12 +546,15 @@ export default function MyOrders() {
                           <button
                             key={range}
                             onClick={() => setFilterDateRange(range)}
-                            className={`text-xs px-3 py-2 rounded-lg border transition-colors ${filterDateRange === range
-                              ? 'bg-blue-500 text-white border-blue-500'
-                              : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
-                              }`}
+                            className={`text-xs px-3 py-2 rounded-lg border transition-colors ${
+                              filterDateRange === range
+                                ? 'bg-blue-500 text-white border-blue-500'
+                                : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                            }`}
                           >
-                            {range === 'all' ? 'All Time' : range.charAt(0).toUpperCase() + range.slice(1)}
+                            {range === 'all'
+                              ? 'All Time'
+                              : range.charAt(0).toUpperCase() + range.slice(1)}
                           </button>
                         ))}
                       </div>
@@ -541,8 +590,11 @@ export default function MyOrders() {
               }}
             >
               <h2 className="text-black text-xl font-semibold mb-4">
-                {activeTab === 'pending' ? 'Pending Orders' :
-                  activeTab === 'preparing' ? 'Orders in Preparation' : 'Order History'}
+                {activeTab === 'pending'
+                  ? 'Pending Orders'
+                  : activeTab === 'preparing'
+                    ? 'Orders in Preparation'
+                    : 'Order History'}
               </h2>
 
               {displayedOrders.length > 0 ? (
@@ -553,9 +605,9 @@ export default function MyOrders() {
                         order={order}
                         restaurantName={restaurantMap[order.restaurant_id] || 'Loading...'}
                         isExpanded={expandedOrderId === order.id}
-                        onToggleExpand={() => setExpandedOrderId(
-                          expandedOrderId === order.id ? null : order.id
-                        )}
+                        onToggleExpand={() =>
+                          setExpandedOrderId(expandedOrderId === order.id ? null : order.id)
+                        }
                       />
                     </div>
                   ))}
@@ -612,19 +664,23 @@ export default function MyOrders() {
                           <div className="bg-gray-50 border border-gray-200 rounded-lg p-2">
                             <p className="text-gray-600 text-[10px] mb-0.5">Pending</p>
                             <p className="text-lg font-bold text-yellow-500">
-                              {userOrders.filter(order => order.status === 'pending').length}
+                              {userOrders.filter((order) => order.status === 'pending').length}
                             </p>
                           </div>
                           <div className="bg-gray-50 border border-gray-200 rounded-lg p-2">
                             <p className="text-gray-600 text-[10px] mb-0.5">Preparing</p>
                             <p className="text-lg font-bold text-purple-500">
-                              {userOrders.filter(order => order.status === 'preparing').length}
+                              {userOrders.filter((order) => order.status === 'preparing').length}
                             </p>
                           </div>
                           <div className="bg-gray-50 border border-gray-200 rounded-lg p-2">
                             <p className="text-gray-600 text-[10px] mb-0.5">Done</p>
                             <p className="text-lg font-bold text-green-500">
-                              {userOrders.filter(order => ['completed', 'rejected', 'ready'].includes(order.status)).length}
+                              {
+                                userOrders.filter((order) =>
+                                  ['completed', 'rejected', 'ready'].includes(order.status),
+                                ).length
+                              }
                             </p>
                           </div>
                         </div>
@@ -641,4 +697,4 @@ export default function MyOrders() {
       </div>
     </div>
   );
-};
+}

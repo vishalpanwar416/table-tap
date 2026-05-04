@@ -11,7 +11,7 @@ const RestaurantGrid = ({
   onEdit,
   onDelete,
   onClick,
-  onLoadMore
+  onLoadMore,
 }) => {
   // Infinite scroll state
   const [displayedRestaurants, setDisplayedRestaurants] = useState([]);
@@ -45,7 +45,7 @@ const RestaurantGrid = ({
       // If we have local data, use it
       if (restaurants.length >= endIndex) {
         const newRestaurants = restaurants.slice(startIndex, endIndex);
-        setDisplayedRestaurants(prev => [...prev, ...newRestaurants]);
+        setDisplayedRestaurants((prev) => [...prev, ...newRestaurants]);
         setCurrentPage(nextPage);
         setHasMore(endIndex < restaurants.length);
       } else {
@@ -53,7 +53,7 @@ const RestaurantGrid = ({
         if (onLoadMore) {
           const newRestaurants = await onLoadMore(nextPage, itemsPerPage);
           if (newRestaurants && newRestaurants.length > 0) {
-            setDisplayedRestaurants(prev => [...prev, ...newRestaurants]);
+            setDisplayedRestaurants((prev) => [...prev, ...newRestaurants]);
             setCurrentPage(nextPage);
             setHasMore(newRestaurants.length === itemsPerPage);
           } else {
@@ -77,7 +77,7 @@ const RestaurantGrid = ({
           loadMore();
         }
       },
-      { threshold: 0.1, rootMargin: '100px' }
+      { threshold: 0.1, rootMargin: '100px' },
     );
 
     observerRef.current = observer;
@@ -85,24 +85,30 @@ const RestaurantGrid = ({
   }, [loadMore, hasMore, isLoading]);
 
   // Observe the last item for infinite scroll
-  const observeLastItem = useCallback((index) => {
-    if (index === displayedRestaurants.length - 1 && hasMore && !isLoading) {
-      const lastItem = document.querySelector(`[data-restaurant-index="${index}"]`);
-      if (lastItem && observerRef.current) {
-        observerRef.current.observe(lastItem);
+  const observeLastItem = useCallback(
+    (index) => {
+      if (index === displayedRestaurants.length - 1 && hasMore && !isLoading) {
+        const lastItem = document.querySelector(`[data-restaurant-index="${index}"]`);
+        if (lastItem && observerRef.current) {
+          observerRef.current.observe(lastItem);
+        }
       }
-    }
-  }, [displayedRestaurants.length, hasMore, isLoading]);
+    },
+    [displayedRestaurants.length, hasMore, isLoading],
+  );
 
   // Loading indicator component
-  const LoadingIndicator = useCallback(() => (
-    <div className="col-span-full flex items-center justify-center py-12">
-      <div className="flex items-center space-x-3 text-gray-600">
-        <Loader2 className="w-6 h-6 animate-spin" />
-        <span className="text-sm font-spartan">Loading more restaurants...</span>
+  const LoadingIndicator = useCallback(
+    () => (
+      <div className="col-span-full flex items-center justify-center py-12">
+        <div className="flex items-center space-x-3 text-gray-600">
+          <Loader2 className="w-6 h-6 animate-spin" />
+          <span className="text-sm font-spartan">Loading more restaurants...</span>
+        </div>
       </div>
-    </div>
-  ), []);
+    ),
+    [],
+  );
 
   // End of list indicator - hidden
   const EndOfListIndicator = useCallback(() => null, []);
@@ -129,11 +135,7 @@ const RestaurantGrid = ({
           <h4 className="text-md font-medium text-gray-700 font-spartan">Restaurant Grid</h4>
           <p className="text-sm text-gray-500 font-spartan">
             Showing {displayedRestaurants.length} of {restaurants.length} restaurants
-            {hasMore && (
-              <span className="ml-2 text-blue-600">
-                • Scroll to load more
-              </span>
-            )}
+            {hasMore && <span className="ml-2 text-gray-600">• Scroll to load more</span>}
           </p>
         </div>
       </div>
@@ -178,7 +180,7 @@ const RestaurantGrid = ({
               gridRef.current.scrollIntoView({ behavior: 'smooth' });
             }
           }}
-          className="fixed bottom-6 right-6 p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-colors z-50"
+          className="fixed bottom-6 right-6 p-3 bg-gray-600 text-white rounded-full shadow-lg hover:bg-gray-700 transition-colors z-50"
           title="Scroll to top"
         >
           <ChevronUp className="w-5 h-5" />
@@ -188,4 +190,4 @@ const RestaurantGrid = ({
   );
 };
 
-export default RestaurantGrid; 
+export default RestaurantGrid;

@@ -1,18 +1,49 @@
 import { supabase } from '../../shared/supabase';
 
-const DEFAULT_AVATAR_URL = 'https://table-tap.jiobase.com/storage/v1/object/public/avatars//default.jpg';
+export const DEFAULT_AVATAR_URL =
+  'https://vogixryubhpqziivspks.supabase.co/storage/v1/object/public/avatars/default.jpg';
+
+const AUTH_RATE_LIMIT_URL = `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/auth-rate-limit`;
+
+/**
+ * Route auth actions through the rate-limited edge function.
+ * Falls back to direct Supabase auth if the function is unreachable.
+ */
+async function callAuthEdgeFunction(action, payload) {
+  const res = await fetch(AUTH_RATE_LIMIT_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: process.env.REACT_APP_SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify({ action, ...payload }),
+  });
+  if (res.status === 429) {
+    const json = await res.json().catch(() => ({}));
+    const retryAfter = json.retryAfter || 60;
+    throw Object.assign(
+      new Error(`Too many attempts. Please wait ${retryAfter} seconds before trying again.`),
+      { status: 429, retryAfter },
+    );
+  }
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error || 'Authentication failed');
+  return json;
+}
 
 export const syncProfile = async (user, extraFields = {}) => {
   const metadata = user.user_metadata || {};
   const googleAvatar = metadata.avatar_url || metadata.picture;
 
-  const { error } = await supabase.from('profiles').upsert([{
-    id: user.id,
-    full_name: metadata.full_name || metadata.name || user.email,
-    email: user.email,
-    avatar_url: googleAvatar || DEFAULT_AVATAR_URL,
-    ...extraFields
-  }]);
+  const { error } = await supabase.from('profiles').upsert([
+    {
+      id: user.id,
+      full_name: metadata.full_name || metadata.name || user.email,
+      email: user.email,
+      avatar_url: googleAvatar || DEFAULT_AVATAR_URL,
+      ...extraFields,
+    },
+  ]);
 
   if (error) console.error('Error syncing profile:', error);
 };
@@ -76,17 +107,18 @@ export const authService = {
    * @throws {Error} If sign in fails
    */
   signInWithPassword: async (email, password) => {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: password.trim()
+    // Route through rate-limited edge function; on success inject session locally
+    const { session, user } = await callAuthEdgeFunction('sign_in', {
+      email: email.trim(),
+      password: password.trim(),
+    });
+    if (session) {
+      await supabase.auth.setSession({
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
       });
-
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      throw error;
     }
+    return { session, user };
   },
 
   /**
@@ -98,14 +130,14 @@ export const authService = {
   completePasswordReset: async (newPassword) => {
     try {
       const { data, error } = await supabase.auth.updateUser({
-        password: newPassword
+        password: newPassword,
       });
 
       if (error) throw error;
       return {
         success: true,
         message: 'Password updated successfully',
-        user: data.user
+        user: data.user,
       };
     } catch (error) {
       throw new Error('Failed to update password. The link may have expired.');
@@ -125,8 +157,8 @@ export const authService = {
         options: {
           // Must land on /auth-callback so AuthCallback.jsx can pick up the
           // session tokens and run the role-based redirect logic.
-          redirectTo: `${window.location.origin}/auth-callback`
-        }
+          redirectTo: `${window.location.origin}/auth-callback`,
+        },
       });
 
       if (error) throw error;
@@ -150,7 +182,10 @@ export const authService = {
   signUp: async (userData) => {
     try {
       const { fullName, email, password, mobileNumber, dateOfBirth, avatar_url } = userData;
-      const { data: { user }, error: authError } = await supabase.auth.signUp({
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -159,22 +194,22 @@ export const authService = {
             mobile_number: mobileNumber,
             date_of_birth: dateOfBirth,
           },
-        }
+        },
       });
 
       if (authError) throw authError;
       if (!user) throw new Error('User creation failed');
 
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert([{
+      const { error: profileError } = await supabase.from('profiles').upsert([
+        {
           id: user.id,
           full_name: fullName,
           email,
           mobile_number: mobileNumber,
           date_of_birth: dateOfBirth,
-          avatar_url: avatar_url || DEFAULT_AVATAR_URL
-        }]);
+          avatar_url: avatar_url || DEFAULT_AVATAR_URL,
+        },
+      ]);
 
       if (profileError) throw profileError;
       return user;
@@ -237,9 +272,9 @@ export const authService = {
           queryParams: {
             prompt: 'consent',
             screen_hint: 'signup',
-            include_granted_scopes: 'true'
-          }
-        }
+            include_granted_scopes: 'true',
+          },
+        },
       });
 
       if (error) throw error;
@@ -260,14 +295,12 @@ export const authService = {
       const user = await authService.getCurrentUser();
       if (!user) throw new Error('No authenticated user');
 
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          full_name: user.user_metadata?.full_name || user.user_metadata?.name,
-          email: user.email,
-          ...profileData
-        });
+      const { error } = await supabase.from('profiles').upsert({
+        id: user.id,
+        full_name: user.user_metadata?.full_name || user.user_metadata?.name,
+        email: user.email,
+        ...profileData,
+      });
 
       if (error) throw error;
       return { success: true };
@@ -283,16 +316,10 @@ export const authService = {
    * @throws {Error} If reset fails
    */
   resetPassword: async (email) => {
-    try {
-      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`
-      });
-
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      throw error;
-    }
+    return callAuthEdgeFunction('forgot_password', {
+      email: email.trim(),
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
   },
 
   /**
@@ -302,21 +329,10 @@ export const authService = {
    * @throws {Error} If reset fails
    */
   sendPasswordResetEmail: async (email) => {
-    if (typeof supabase.auth.resetPasswordForEmail === 'function') {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-      if (error) throw error;
-      return;
-    }
-    if (supabase.auth.api && typeof supabase.auth.api.resetPasswordForEmail === 'function') {
-      const { error } = await supabase.auth.api.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-      if (error) throw error;
-      return;
-    }
-    throw new Error('resetPasswordForEmail is not available on your Supabase client');
+    return callAuthEdgeFunction('forgot_password', {
+      email: email.trim(),
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
   },
 
   /**
@@ -326,7 +342,10 @@ export const authService = {
    */
   verifyPasswordResetToken: async (token) => {
     try {
-      const { data: { user }, error } = await supabase.auth.getUser(token);
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser(token);
       return { isValid: !error, user };
     } catch (error) {
       return { isValid: false };
@@ -342,9 +361,12 @@ export const authService = {
    */
   updatePasswordWithToken: async (newPassword, token) => {
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.setSession({
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.setSession({
         access_token: token,
-        refresh_token: ''
+        refresh_token: '',
       });
 
       if (sessionError) {
@@ -352,7 +374,7 @@ export const authService = {
       }
 
       const { data, error } = await supabase.auth.updateUser({
-        password: newPassword
+        password: newPassword,
       });
 
       if (error) throw error;
@@ -386,8 +408,9 @@ export const authService = {
     try {
       const trimmedEmail = email.trim().toLowerCase();
 
-      const { data, error } = await supabase
-        .rpc('check_email_exists', { email_to_check: trimmedEmail });
+      const { data, error } = await supabase.rpc('check_email_exists', {
+        email_to_check: trimmedEmail,
+      });
 
       if (error) {
         console.error('RPC error:', error);
@@ -399,7 +422,7 @@ export const authService = {
       console.error('Error in checkEmailExistsRPC:', error);
       return { exists: false };
     }
-  }
+  },
 };
 
 export default authService;

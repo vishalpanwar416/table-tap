@@ -11,14 +11,17 @@ const StaffTableHeader = ({ selectedRestaurantId, setSelectedRestaurantId, resta
             <select
               value={selectedRestaurantId}
               onChange={(e) => setSelectedRestaurantId(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-spartan"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent font-spartan"
             >
-              <option value="" className="font-spartan">All Restaurants</option>
-              {restaurants && restaurants.map(restaurant => (
-                <option key={restaurant.id} value={restaurant.id} className="font-spartan">
-                  {restaurant.name}
-                </option>
-              ))}
+              <option value="" className="font-spartan">
+                All Restaurants
+              </option>
+              {restaurants &&
+                restaurants.map((restaurant) => (
+                  <option key={restaurant.id} value={restaurant.id} className="font-spartan">
+                    {restaurant.name}
+                  </option>
+                ))}
             </select>
           </div>
         </div>
@@ -27,4 +30,4 @@ const StaffTableHeader = ({ selectedRestaurantId, setSelectedRestaurantId, resta
   );
 };
 
-export default StaffTableHeader; 
+export default StaffTableHeader;

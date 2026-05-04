@@ -9,7 +9,7 @@ const CartContext = createContext();
 // Validate simplified cart item
 const validateCartItem = (item) => {
   const required = ['food_item_id', 'restaurant_id', 'quantity'];
-  const missing = required.filter(field => !item[field]);
+  const missing = required.filter((field) => !item[field]);
 
   if (missing.length > 0) {
     throw new Error(`Invalid cart item: missing ${missing.join(', ')}`);
@@ -28,7 +28,7 @@ const cleanupStaleCartItems = async (cartItems, restaurantId) => {
 
   try {
     // Extract food item IDs from cart items (handle both old and new formats)
-    const itemIds = cartItems.map(item => item.food_item_id || item.id);
+    const itemIds = cartItems.map((item) => item.food_item_id || item.id);
 
     // Check which items still exist and are active
     const { data: validItems, error } = await supabase
@@ -42,8 +42,8 @@ const cleanupStaleCartItems = async (cartItems, restaurantId) => {
       return cartItems; // Return original if check fails
     }
 
-    const validIds = new Set(validItems.map(item => item.id));
-    const cleanedItems = cartItems.filter(item => {
+    const validIds = new Set(validItems.map((item) => item.id));
+    const cleanedItems = cartItems.filter((item) => {
       const itemId = item.food_item_id || item.id;
       return validIds.has(itemId);
     });
@@ -100,54 +100,57 @@ export function CartProvider({ children }) {
   }, []);
 
   // Add this new function to enrich cart items with food data - MOVED INSIDE COMPONENT
-  const enrichCartItemsWithFoodData = useCallback(async (minimalCartItems) => {
-    if (!minimalCartItems.length || !restaurantId) {
-      return minimalCartItems;
-    }
-
-    try {
-      // Extract food item IDs from cart items
-      const foodItemIds = minimalCartItems.map(item => item.food_item_id || item.id);
-
-      // Fetch food item details from fooditems table
-      const { data: foodItems, error: foodError } = await supabase
-        .from('fooditems')
-        .select('*')
-        .in('id', foodItemIds)
-        .eq('restaurant_id', restaurantId)
-        .eq('is_active', true);
-
-      if (foodError) {
-        console.error('Failed to fetch food items for cart enrichment:', foodError);
-        return minimalCartItems; // Return original if fetch fails
+  const enrichCartItemsWithFoodData = useCallback(
+    async (minimalCartItems) => {
+      if (!minimalCartItems.length || !restaurantId) {
+        return minimalCartItems;
       }
 
-      // Create a map of food items by ID
-      const foodItemsMap = new Map(foodItems.map(item => [item.id, item]));
+      try {
+        // Extract food item IDs from cart items
+        const foodItemIds = minimalCartItems.map((item) => item.food_item_id || item.id);
 
-      // Merge cart items with food item details
-      const enrichedCartItems = minimalCartItems
-        .map(cartItem => {
-          const foodItem = foodItemsMap.get(cartItem.food_item_id || cartItem.id);
-          if (!foodItem) {
-            return null; // Remove items that no longer exist
-          }
+        // Fetch food item details from fooditems table
+        const { data: foodItems, error: foodError } = await supabase
+          .from('fooditems')
+          .select('*')
+          .in('id', foodItemIds)
+          .eq('restaurant_id', restaurantId)
+          .eq('is_active', true);
 
-          return {
-            ...foodItem,
-            quantity: cartItem.quantity,
-            addedAt: cartItem.addedAt,
-            effectivePrice: calculateEffectivePrice(foodItem)
-          };
-        })
-        .filter(Boolean); // Remove null items
+        if (foodError) {
+          console.error('Failed to fetch food items for cart enrichment:', foodError);
+          return minimalCartItems; // Return original if fetch fails
+        }
 
-      return enrichedCartItems;
-    } catch (error) {
-      console.error('Error enriching cart items:', error);
-      return minimalCartItems; // Return original if enrichment fails
-    }
-  }, [restaurantId, calculateEffectivePrice]);
+        // Create a map of food items by ID
+        const foodItemsMap = new Map(foodItems.map((item) => [item.id, item]));
+
+        // Merge cart items with food item details
+        const enrichedCartItems = minimalCartItems
+          .map((cartItem) => {
+            const foodItem = foodItemsMap.get(cartItem.food_item_id || cartItem.id);
+            if (!foodItem) {
+              return null; // Remove items that no longer exist
+            }
+
+            return {
+              ...foodItem,
+              quantity: cartItem.quantity,
+              addedAt: cartItem.addedAt,
+              effectivePrice: calculateEffectivePrice(foodItem),
+            };
+          })
+          .filter(Boolean); // Remove null items
+
+        return enrichedCartItems;
+      } catch (error) {
+        console.error('Error enriching cart items:', error);
+        return minimalCartItems; // Return original if enrichment fails
+      }
+    },
+    [restaurantId, calculateEffectivePrice],
+  );
 
   // Simplified cart item structure - only store essential data
   const createCartItem = useCallback((item) => {
@@ -155,7 +158,7 @@ export function CartProvider({ children }) {
       food_item_id: item.id,
       restaurant_id: item.restaurant_id,
       quantity: 1,
-      addedAt: Date.now()
+      addedAt: Date.now(),
     };
   }, []);
 
@@ -205,7 +208,7 @@ export function CartProvider({ children }) {
               food_item_id: item.id,
               restaurant_id: item.restaurant_id,
               quantity: item.quantity || 1,
-              addedAt: item.addedAt || Date.now()
+              addedAt: item.addedAt || Date.now(),
             };
             validateCartItem(convertedItem);
             validItems.push(convertedItem);
@@ -229,7 +232,6 @@ export function CartProvider({ children }) {
       setCartItems(enrichedItems);
       setLastSyncTime(cartData.timestamp);
       setError(null);
-
     } catch (error) {
       setError('Failed to load cart');
       setCartItems([]);
@@ -245,87 +247,94 @@ export function CartProvider({ children }) {
   }, [restaurantId, user, getCartKey, enrichCartItemsWithFoodData]);
 
   // Save cart to localStorage with error handling
-  const saveCartToStorage = useCallback((items) => {
-    if (!restaurantId) return;
+  const saveCartToStorage = useCallback(
+    (items) => {
+      if (!restaurantId) return;
 
-    try {
       const cartData = {
         items,
         timestamp: Date.now(),
         userId: user?.id,
-        restaurantId
+        restaurantId,
       };
 
-      secureStorage.setItem(getCartKey(), cartData);
-      setError(null);
-    } catch (error) {
-      setError('Failed to save cart');
+      try {
+        secureStorage.setItem(getCartKey(), cartData);
+        setError(null);
+      } catch (error) {
+        setError('Failed to save cart');
 
-      // Handle storage quota exceeded
-      if (error.name === 'QuotaExceededError') {
-        // Try to clear old carts and retry
-        try {
-          const keys = Object.keys(localStorage);
-          const oldCartKeys = keys.filter(key => key.startsWith('cart_') && key !== getCartKey());
-          oldCartKeys.forEach(key => secureStorage.removeItem(key));
-          secureStorage.setItem(getCartKey(), cartData);
-          setError(null);
-        } catch (retryError) {
+        // Handle storage quota exceeded
+        if (error.name === 'QuotaExceededError') {
+          // Try to clear old carts and retry
+          try {
+            const keys = Object.keys(localStorage);
+            const oldCartKeys = keys.filter(
+              (key) => key.startsWith('cart_') && key !== getCartKey(),
+            );
+            oldCartKeys.forEach((key) => secureStorage.removeItem(key));
+            secureStorage.setItem(getCartKey(), cartData);
+            setError(null);
+          } catch (retryError) {}
         }
       }
-    }
-  }, [restaurantId, user?.id, getCartKey]);
+    },
+    [restaurantId, user?.id, getCartKey],
+  );
 
   // Save cart to server with minimal data
-  const saveCartToServer = useCallback(async (items) => {
-    if (!user?.id || !restaurantId) return;
+  const saveCartToServer = useCallback(
+    async (items) => {
+      if (!user?.id || !restaurantId) return;
 
-    try {
-      // Convert enriched cart items back to minimal format
-      const minimalCartItems = items.map(item => ({
-        food_item_id: item.id,
-        restaurant_id: item.restaurant_id,
-        quantity: item.quantity,
-        addedAt: item.addedAt
-      }));
+      try {
+        // Convert enriched cart items back to minimal format
+        const minimalCartItems = items.map((item) => ({
+          food_item_id: item.id,
+          restaurant_id: item.restaurant_id,
+          quantity: item.quantity,
+          addedAt: item.addedAt,
+        }));
 
-      // First, get current cart items from profile
-      const { data: profile, error: fetchError } = await supabase
-        .from('profiles')
-        .select('cart_items')
-        .eq('id', user.id)
-        .single();
+        // First, get current cart items from profile
+        const { data: profile, error: fetchError } = await supabase
+          .from('profiles')
+          .select('cart_items')
+          .eq('id', user.id)
+          .single();
 
-      if (fetchError) {
-        throw fetchError;
+        if (fetchError) {
+          throw fetchError;
+        }
+
+        // Get existing cart items (default to empty array if null)
+        const existingCartItems = profile?.cart_items || [];
+
+        // Remove items for current restaurant and add new items
+        const updatedCartItems = [
+          ...existingCartItems.filter((item) => item.restaurant_id !== restaurantId),
+          ...minimalCartItems,
+        ];
+
+        // Update the profile with new cart items
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            cart_items: updatedCartItems,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', user.id);
+
+        if (updateError) throw updateError;
+
+        setLastSyncTime(Date.now());
+        setError(null);
+      } catch (error) {
+        setError('Failed to sync cart');
       }
-
-      // Get existing cart items (default to empty array if null)
-      const existingCartItems = profile?.cart_items || [];
-
-      // Remove items for current restaurant and add new items
-      const updatedCartItems = [
-        ...existingCartItems.filter(item => item.restaurant_id !== restaurantId),
-        ...minimalCartItems
-      ];
-
-      // Update the profile with new cart items
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          cart_items: updatedCartItems,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
-
-      if (updateError) throw updateError;
-
-      setLastSyncTime(Date.now());
-      setError(null);
-    } catch (error) {
-      setError('Failed to sync cart');
-    }
-  }, [user?.id, restaurantId]);
+    },
+    [user?.id, restaurantId],
+  );
 
   // Load cart from server with food item details
   const loadCartFromServer = useCallback(async () => {
@@ -345,8 +354,8 @@ export function CartProvider({ children }) {
 
       if (profile && profile.cart_items && Array.isArray(profile.cart_items)) {
         // Find cart items for current restaurant
-        const restaurantCartItems = profile.cart_items.filter(item =>
-          item.restaurant_id === restaurantId
+        const restaurantCartItems = profile.cart_items.filter(
+          (item) => item.restaurant_id === restaurantId,
         );
 
         if (restaurantCartItems.length === 0) {
@@ -357,7 +366,7 @@ export function CartProvider({ children }) {
         }
 
         // Get food item IDs
-        const foodItemIds = restaurantCartItems.map(item => item.food_item_id);
+        const foodItemIds = restaurantCartItems.map((item) => item.food_item_id);
 
         // Fetch food item details from fooditems table
         const { data: foodItems, error: foodError } = await supabase
@@ -372,11 +381,11 @@ export function CartProvider({ children }) {
         }
 
         // Create a map of food items by ID
-        const foodItemsMap = new Map(foodItems.map(item => [item.id, item]));
+        const foodItemsMap = new Map(foodItems.map((item) => [item.id, item]));
 
         // Merge cart items with food item details
         const enrichedCartItems = restaurantCartItems
-          .map(cartItem => {
+          .map((cartItem) => {
             const foodItem = foodItemsMap.get(cartItem.food_item_id);
             if (!foodItem) {
               return null;
@@ -386,7 +395,7 @@ export function CartProvider({ children }) {
               ...foodItem,
               quantity: cartItem.quantity,
               addedAt: cartItem.addedAt,
-              effectivePrice: calculateEffectivePrice(foodItem)
+              effectivePrice: calculateEffectivePrice(foodItem),
             };
           })
           .filter(Boolean); // Remove null items
@@ -397,7 +406,6 @@ export function CartProvider({ children }) {
 
         // Update localStorage with enriched data
         saveCartToStorage(enrichedCartItems);
-
       } else {
         setCartItems([]);
         setLastSyncTime(Date.now());
@@ -411,15 +419,18 @@ export function CartProvider({ children }) {
   }, [user?.id, restaurantId, saveCartToStorage, calculateEffectivePrice]);
 
   // Debounced save to server
-  const debouncedSaveToServer = useCallback((items) => {
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
+  const debouncedSaveToServer = useCallback(
+    (items) => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
 
-    saveTimeoutRef.current = setTimeout(() => {
-      saveCartToServer(items);
-    }, 2000); // 2 second debounce
-  }, [saveCartToServer]);
+      saveTimeoutRef.current = setTimeout(() => {
+        saveCartToServer(items);
+      }, 2000); // 2 second debounce
+    },
+    [saveCartToServer],
+  );
 
   // Clear entire cart - DEFINE THIS BEFORE THE useEffect THAT USES IT
   const clearCart = useCallback(() => {
@@ -430,8 +441,7 @@ export function CartProvider({ children }) {
     // Clear from localStorage
     try {
       localStorage.removeItem(getCartKey());
-    } catch (error) {
-    }
+    } catch (error) {}
 
     // Clear from server
     if (user) {
@@ -440,116 +450,131 @@ export function CartProvider({ children }) {
   }, [user, getCartKey, saveCartToServer]);
 
   // Add item to cart with minimal data
-  const addToCart = useCallback((item) => {
-    if (!restaurantId) {
-      setError('No restaurant selected');
-      return;
-    }
+  const addToCart = useCallback(
+    (item) => {
+      if (!restaurantId) {
+        setError('No restaurant selected');
+        return;
+      }
 
-    // Use String comparison for robustness with different ID types (UUID vs Integer)
-    const itemRestId = item.restaurant_id ? String(item.restaurant_id) : null;
-    const currentRestId = restaurantId ? String(restaurantId) : null;
+      // Use String comparison for robustness with different ID types (UUID vs Integer)
+      const itemRestId = item.restaurant_id ? String(item.restaurant_id) : null;
+      const currentRestId = restaurantId ? String(restaurantId) : null;
 
-    if (itemRestId && currentRestId && itemRestId !== currentRestId) {
-      setError('Cannot add items from different restaurants');
-      return;
-    }
+      if (itemRestId && currentRestId && itemRestId !== currentRestId) {
+        setError('Cannot add items from different restaurants');
+        return;
+      }
 
-    try {
-      // Create enriched item for local state
-      const enrichedItem = {
-        ...item,
-        quantity: 1,
-        addedAt: Date.now(),
-        effectivePrice: calculateEffectivePrice(item)
-      };
+      try {
+        // Create enriched item for local state
+        const enrichedItem = {
+          ...item,
+          quantity: 1,
+          addedAt: Date.now(),
+          effectivePrice: calculateEffectivePrice(item),
+        };
 
-      setCartItems(prev => {
-        const existingItem = prev.find(i =>
-          String(i.id) === String(item.id) &&
-          (item.category ? i.category === item.category : true)
-        );
-
-        if (existingItem) {
-          return prev.map(i =>
-            (String(i.id) === String(item.id) &&
-              (item.category ? i.category === item.category : true))
-              ? {
-                ...i,
-                quantity: i.quantity + 1,
-                effectivePrice: calculateEffectivePrice(i)
-              }
-              : i
+        setCartItems((prev) => {
+          const existingItem = prev.find(
+            (i) =>
+              String(i.id) === String(item.id) &&
+              (item.category ? i.category === item.category : true),
           );
-        }
 
-        return [...prev, enrichedItem];
-      });
+          if (existingItem) {
+            return prev.map((i) =>
+              String(i.id) === String(item.id) &&
+              (item.category ? i.category === item.category : true)
+                ? {
+                    ...i,
+                    quantity: i.quantity + 1,
+                    effectivePrice: calculateEffectivePrice(i),
+                  }
+                : i,
+            );
+          }
 
-      setError(null);
-    } catch (validationError) {
-      setError('Invalid item data');
-    }
-  }, [restaurantId, calculateEffectivePrice]);
+          return [...prev, enrichedItem];
+        });
+
+        setError(null);
+      } catch (validationError) {
+        setError('Invalid item data');
+      }
+    },
+    [restaurantId, calculateEffectivePrice],
+  );
 
   // Remove item from cart
-  const removeItem = useCallback((id, category) => {
-    setCartItems(prev => {
-      const filtered = prev.filter(item =>
-        !(String(item.id) === String(id) && (category ? item.category === category : true))
-      );
-
-      // Recalculate effective prices for remaining items
-      return filtered.map(item => ({
-        ...item,
-        effectivePrice: calculateEffectivePrice(item)
-      }));
-    });
-    setError(null);
-  }, [calculateEffectivePrice]);
-
-  // Update item quantity
-  const updateQuantity = useCallback((id, category, quantity) => {
-    if (quantity < 1) {
-      removeItem(id, category);
-      return;
-    }
-
-    setCartItems(prev =>
-      prev.map(item =>
-        (String(item.id) === String(id) && (category ? item.category === category : true))
-          ? {
-            ...item,
-            quantity,
-            effectivePrice: calculateEffectivePrice(item) // Recalculate effective price
-          }
-          : item
-      )
-    );
-    setError(null);
-  }, [removeItem, calculateEffectivePrice]);
-
-  // Merge guest cart with user cart
-  const mergeCarts = useCallback((guestCart, userCart) => {
-    const mergedItems = [...userCart];
-
-    guestCart.forEach(guestItem => {
-      if (guestItem.restaurant_id === restaurantId) {
-        const existingItem = mergedItems.find(item =>
-          String(item.id) === String(guestItem.id) &&
-          (guestItem.category ? item.category === guestItem.category : true)
+  const removeItem = useCallback(
+    (id, category) => {
+      setCartItems((prev) => {
+        const filtered = prev.filter(
+          (item) =>
+            !(String(item.id) === String(id) && (category ? item.category === category : true)),
         );
 
-        if (existingItem) {
-          existingItem.quantity += guestItem.quantity;
-        } else {
-          mergedItems.push(guestItem);
-        }
-      }
-    });
+        // Recalculate effective prices for remaining items
+        return filtered.map((item) => ({
+          ...item,
+          effectivePrice: calculateEffectivePrice(item),
+        }));
+      });
+      setError(null);
+    },
+    [calculateEffectivePrice],
+  );
 
-    return mergedItems;
-  }, [restaurantId]);
+  // Update item quantity
+  const updateQuantity = useCallback(
+    (id, category, quantity) => {
+      if (quantity < 1) {
+        removeItem(id, category);
+        return;
+      }
+
+      setCartItems((prev) =>
+        prev.map((item) =>
+          String(item.id) === String(id) && (category ? item.category === category : true)
+            ? {
+                ...item,
+                quantity,
+                effectivePrice: calculateEffectivePrice(item), // Recalculate effective price
+              }
+            : item,
+        ),
+      );
+      setError(null);
+    },
+    [removeItem, calculateEffectivePrice],
+  );
+
+  // Merge guest cart with user cart
+  const mergeCarts = useCallback(
+    (guestCart, userCart) => {
+      const mergedItems = [...userCart];
+
+      guestCart.forEach((guestItem) => {
+        if (guestItem.restaurant_id === restaurantId) {
+          const existingItem = mergedItems.find(
+            (item) =>
+              String(item.id) === String(guestItem.id) &&
+              (guestItem.category ? item.category === guestItem.category : true),
+          );
+
+          if (existingItem) {
+            existingItem.quantity += guestItem.quantity;
+          } else {
+            mergedItems.push(guestItem);
+          }
+        }
+      });
+
+      return mergedItems;
+    },
+    [restaurantId],
+  );
 
   // Calculate totals
   const getTotalItems = useCallback(() => {
@@ -559,7 +584,7 @@ export function CartProvider({ children }) {
   const getTotalPrice = useCallback(() => {
     return cartItems.reduce((total, item) => {
       const price = item.effectivePrice || calculateEffectivePrice(item);
-      return total + (price * (item.quantity || 0));
+      return total + price * (item.quantity || 0);
     }, 0);
   }, [cartItems, calculateEffectivePrice]);
 
@@ -644,7 +669,7 @@ export function CartProvider({ children }) {
         isLoading,
         lastSyncTime,
         error,
-        restaurantId
+        restaurantId,
       }}
     >
       {children}

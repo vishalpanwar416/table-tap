@@ -1,10 +1,12 @@
+import { useState, useCallback } from 'react';
+
 // Focus management
 export const focusManager = {
   trap: (containerRef) => {
     const focusableElements = containerRef.current?.querySelectorAll(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
     );
-    
+
     if (!focusableElements?.length) return;
 
     const firstElement = focusableElements[0];
@@ -27,7 +29,7 @@ export const focusManager = {
     };
 
     containerRef.current?.addEventListener('keydown', handleTabKey);
-    
+
     return () => {
       containerRef.current?.removeEventListener('keydown', handleTabKey);
     };
@@ -46,7 +48,7 @@ export const focusManager = {
     if (activeElement) {
       activeElement.setAttribute('data-previously-focused', 'true');
     }
-  }
+  },
 };
 
 // ARIA utilities
@@ -57,9 +59,9 @@ export const ariaUtils = {
     announcement.setAttribute('aria-atomic', 'true');
     announcement.className = 'sr-only';
     announcement.textContent = message;
-    
+
     document.body.appendChild(announcement);
-    
+
     setTimeout(() => {
       document.body.removeChild(announcement);
     }, 1000);
@@ -77,43 +79,42 @@ export const ariaUtils = {
       document.head.appendChild(metaDescription);
     }
     metaDescription.content = description;
-  }
+  },
 };
 
 // Keyboard navigation hook
 export const useKeyboardNavigation = (items, onSelect) => {
   const [focusedIndex, setFocusedIndex] = useState(-1);
 
-  const handleKeyDown = useCallback((e) => {
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        setFocusedIndex(prev => 
-          prev < items.length - 1 ? prev + 1 : 0
-        );
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        setFocusedIndex(prev => 
-          prev > 0 ? prev - 1 : items.length - 1
-        );
-        break;
-      case 'Enter':
-      case ' ':
-        e.preventDefault();
-        if (focusedIndex >= 0 && onSelect) {
-          onSelect(items[focusedIndex], focusedIndex);
-        }
-        break;
-      case 'Escape':
-        setFocusedIndex(-1);
-        break;
-    }
-  }, [items, focusedIndex, onSelect]);
+  const handleKeyDown = useCallback(
+    (e) => {
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          setFocusedIndex((prev) => (prev < items.length - 1 ? prev + 1 : 0));
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setFocusedIndex((prev) => (prev > 0 ? prev - 1 : items.length - 1));
+          break;
+        case 'Enter':
+        case ' ':
+          e.preventDefault();
+          if (focusedIndex >= 0 && onSelect) {
+            onSelect(items[focusedIndex], focusedIndex);
+          }
+          break;
+        case 'Escape':
+          setFocusedIndex(-1);
+          break;
+      }
+    },
+    [items, focusedIndex, onSelect],
+  );
 
   return {
     focusedIndex,
     setFocusedIndex,
-    handleKeyDown
+    handleKeyDown,
   };
-}; 
+};
