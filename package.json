@@ -3,17 +3,25 @@
     "version": "1.0.0",
     "private": true,
     "description": "Table-Tap Monorepo - Landing Page & Main App",
+    "workspaces": [
+        "packages/*"
+    ],
     "scripts": {
         "dev": "concurrently \"npm run dev:app\" \"npm run dev:landing\"",
-        "dev:app": "cd table-tap-app && npm start",
-        "dev:landing": "cd table-tap-landing && npm run dev -- -p 3001",
+        "dev:app": "npm run start --prefix table-tap-app",
+        "dev:landing": "npm run dev --prefix table-tap-landing -- -p 3001",
         "build": "npm run build:app && npm run build:landing",
-        "build:app": "cd table-tap-app && npm install && npm run build",
-        "build:landing": "cd table-tap-landing && npm install && npm run build",
-        "install:all": "npm install && cd table-tap-app && npm install && cd ../table-tap-landing && npm install",
+        "build:app": "npm run build --prefix table-tap-app",
+        "build:landing": "npm run build --prefix table-tap-landing",
+        "test:app": "npm test --prefix table-tap-app",
+        "test:e2e": "npm run test:e2e --prefix table-tap-app",
+        "install:all": "npm install && npm install --prefix table-tap-app && npm install --prefix table-tap-landing",
         "status": "sh project_docs/check_branch_status.sh"
     },
     "devDependencies": {
         "concurrently": "^9.2.1"
+    },
+    "overrides": {
+        "eslint": "^8.57.0"
     }
 }

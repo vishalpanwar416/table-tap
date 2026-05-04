@@ -1,0 +1,12 @@
+build
+coverage
+node_modules
+public
+e2e/playwright-report
+test-results
+*.config.js
+scripts
+**/*.test.js
+**/*.test.jsx
+**/*.spec.js
+**/*.spec.jsx
