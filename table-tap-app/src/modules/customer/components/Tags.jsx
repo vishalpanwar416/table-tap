@@ -1,7 +1,6 @@
 import React, { useState, useRef, memo } from 'react';
-import { ChevronDown, ChevronUp, ChevronRight, ChevronLeft, Star } from 'lucide-react';
-import { Heart, ShoppingBag } from 'lucide-react';
-import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from 'framer-motion';
+import { ChevronDown, ChevronRight, ChevronLeft, Heart, ShoppingBag } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../../shared/config/CartContent';
 import { useLikes } from '../../shared/config/LikesContent';
 import { LazyImage } from '../../shared/utils/imageOptimization';
@@ -14,13 +13,21 @@ const RecommendationItem = memo(({ item, onImageClick, index }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isLikedAnimating, setIsLikedAnimating] = useState(false);
 
+  // Price calculation — must be before early return to satisfy rules-of-hooks
+  const discountedPrice = React.useMemo(() => {
+    if (!item || !item.discounttype || !item.discountvalue) return item?.price;
+    return item.discounttype === 'Percentage'
+      ? item.price - item.price * (item.discountvalue / 100)
+      : Math.max(0, item.price - item.discountvalue);
+  }, [item]);
+
   if (!item) return null;
 
   const { id, image, name, category } = item;
 
-  const cartItem = cartItems.find(cartItem => cartItem.id === id);
+  const cartItem = cartItems.find((cartItem) => cartItem.id === id);
   const quantity = cartItem?.quantity || 0;
-  const isLiked = likedItems.some(likedItem => likedItem.id === id);
+  const isLiked = likedItems.some((likedItem) => likedItem.id === id);
 
   const handleAddToCart = () => {
     addToCart(item);
@@ -56,18 +63,8 @@ const RecommendationItem = memo(({ item, onImageClick, index }) => {
       </motion.span>
     ) : null;
 
-  // Price calculation
-  const discountedPrice = React.useMemo(() => {
-    if (!item.discounttype || !item.discountvalue) return item.price;
-    return item.discounttype === 'Percentage'
-      ? (item.price - (item.price * (item.discountvalue / 100)))
-      : Math.max(0, item.price - item.discountvalue);
-  }, [item.price, item.discounttype, item.discountvalue]);
-
   return (
-    <div
-      className="group bg-white rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1.5 hover:scale-[1.03] transition-all duration-300 overflow-hidden border border-gray-100 min-w-[140px] max-w-[150px] h-[160px] flex flex-col relative"
-    >
+    <div className="group bg-white rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1.5 hover:scale-[1.03] transition-all duration-300 overflow-hidden border border-gray-100 min-w-[140px] max-w-[150px] h-[160px] flex flex-col relative">
       {/* Hover overlay effect */}
       <motion.div
         className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 pointer-events-none"
@@ -81,16 +78,13 @@ const RecommendationItem = memo(({ item, onImageClick, index }) => {
           className="absolute top-1 right-2 z-20"
           initial={{ scale: 0.5, opacity: 0, rotate: -15 }}
           animate={{ scale: 1, opacity: 1, rotate: 0 }}
-          transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.2 }}
           whileHover={{ scale: 1.15, rotate: 5 }}
         >
           <DiscountTag />
         </motion.div>
 
-        <motion.div
-          whileHover={{ scale: 1.1 }}
-          transition={{ duration: 0.3 }}
-        >
+        <motion.div whileHover={{ scale: 1.1 }} transition={{ duration: 0.3 }}>
           <LazyImage
             src={image}
             alt={name}
@@ -108,15 +102,20 @@ const RecommendationItem = memo(({ item, onImageClick, index }) => {
           onClick={handleLikeClick}
         >
           <motion.div
-            animate={isLikedAnimating ? {
-              scale: [1, 1.3, 1],
-              rotate: [0, 10, -10, 0]
-            } : {}}
+            animate={
+              isLikedAnimating
+                ? {
+                    scale: [1, 1.3, 1],
+                    rotate: [0, 10, -10, 0],
+                  }
+                : {}
+            }
             transition={{ duration: 0.6 }}
           >
             <Heart
-              className={`h-4 w-4 md:w-5 md:h-5 transition-colors duration-200 ${isLiked ? 'text-red-500 fill-red-500' : 'text-gray-500 hover:text-red-400'
-                }`}
+              className={`h-4 w-4 md:w-5 md:h-5 transition-colors duration-200 ${
+                isLiked ? 'text-red-500 fill-red-500' : 'text-gray-500 hover:text-red-400'
+              }`}
             />
           </motion.div>
         </motion.button>
@@ -210,7 +209,7 @@ const RecommendationItem = memo(({ item, onImageClick, index }) => {
                   className="bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white rounded-full px-2.5 py-1 flex items-center space-x-1 text-xs shadow-lg transition-all duration-200"
                   whileHover={{
                     scale: 1.05,
-                    boxShadow: "0 10px 25px rgba(0,0,0,0.2)"
+                    boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
                   }}
                   whileTap={{ scale: 0.95 }}
                   initial={{ scale: 0.8, opacity: 0 }}
@@ -240,9 +239,7 @@ const ScrollButtons = ({ tagKey, scrollRefs, onScroll }) => {
     const container = scrollRefs.current[tagKey];
     if (container) {
       setCanScrollLeft(container.scrollLeft > 0);
-      setCanScrollRight(
-        container.scrollLeft < container.scrollWidth - container.clientWidth - 1
-      );
+      setCanScrollRight(container.scrollLeft < container.scrollWidth - container.clientWidth - 1);
     }
   };
 
@@ -318,9 +315,9 @@ const Tags = ({ foodItems = [], onItemClick }) => {
       return tagGroups;
     }
 
-    foodItems.forEach(item => {
+    foodItems.forEach((item) => {
       if (item.tags && Array.isArray(item.tags)) {
-        item.tags.forEach(tag => {
+        item.tags.forEach((tag) => {
           const normalizedTag = tag.toLowerCase();
           if (normalizedTag === 'bestseller' || normalizedTag === 'recommended') {
             return;
@@ -329,7 +326,7 @@ const Tags = ({ foodItems = [], onItemClick }) => {
           if (!tagGroups[normalizedTag]) {
             tagGroups[normalizedTag] = {
               name: tag,
-              items: []
+              items: [],
             };
           }
           tagGroups[normalizedTag].items.push(item);
@@ -357,7 +354,7 @@ const Tags = ({ foodItems = [], onItemClick }) => {
 
       container.scrollTo({
         left: start + scrollOffset,
-        behavior: 'smooth'
+        behavior: 'smooth',
       });
     }
   };
@@ -412,7 +409,7 @@ const Tags = ({ foodItems = [], onItemClick }) => {
             transition={{
               duration: 0.5,
               delay: tagIndex * 0.1,
-              ease: [0.25, 0.46, 0.45, 0.94]
+              ease: [0.25, 0.46, 0.45, 0.94],
             }}
           >
             {/* Enhanced Tag Header */}
@@ -422,22 +419,22 @@ const Tags = ({ foodItems = [], onItemClick }) => {
                 className="col-start-1 col-end-2 flex items-center"
                 animate={{
                   x: expandedTags.has(tagKey) ? '50%' : 0,
-                  xPercent: expandedTags.has(tagKey) ? -50 : 0
+                  xPercent: expandedTags.has(tagKey) ? -50 : 0,
                 }}
                 transition={{
                   duration: 0.4,
-                  ease: [0.25, 0.46, 0.45, 0.94]
+                  ease: [0.25, 0.46, 0.45, 0.94],
                 }}
               >
                 <motion.span
                   className="relative text-lg font-semibold text-gray-800 capitalize hover:text-orange-500 transition-colors md:text-2xl cursor-pointer whitespace-nowrap"
                   whileHover={{ color: '#f97316' }}
                   animate={{
-                    scale: expandedTags.has(tagKey) ? 1.05 : 1
+                    scale: expandedTags.has(tagKey) ? 1.05 : 1,
                   }}
                   transition={{
                     duration: 0.3,
-                    ease: [0.25, 0.46, 0.45, 0.94]
+                    ease: [0.25, 0.46, 0.45, 0.94],
                   }}
                   onClick={() => toggleTag(tagKey)}
                 >
@@ -447,7 +444,7 @@ const Tags = ({ foodItems = [], onItemClick }) => {
                     initial={{ width: 0 }}
                     whileHover={{ width: '100%' }}
                     animate={{
-                      width: expandedTags.has(tagKey) ? '100%' : 0
+                      width: expandedTags.has(tagKey) ? '100%' : 0,
                     }}
                     transition={{ duration: 0.3 }}
                   />
@@ -463,9 +460,9 @@ const Tags = ({ foodItems = [], onItemClick }) => {
               >
                 <motion.div
                   animate={{
-                    rotate: expandedTags.has(tagKey) ? 180 : 0
+                    rotate: expandedTags.has(tagKey) ? 180 : 0,
                   }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  transition={{ duration: 0.3, ease: 'easeInOut' }}
                 >
                   <ChevronDown className="w-5 h-5 md:w-6 md:h-6 text-orange-500" />
                 </motion.div>
@@ -481,12 +478,12 @@ const Tags = ({ foodItems = [], onItemClick }) => {
                   exit={{ opacity: 0, height: 0 }}
                   transition={{
                     duration: 0.4,
-                    ease: "easeOut"
+                    ease: 'easeOut',
                   }}
                   className="overflow-hidden"
                 >
                   <div
-                    ref={(el) => scrollRefs.current[tagKey] = el}
+                    ref={(el) => (scrollRefs.current[tagKey] = el)}
                     className="flex space-x-4 overflow-x-auto overflow-y-hidden pb-4 pt-2 scroll-smooth scrollbar-hide px-4"
                   >
                     {tagData.items.map((item, index) => (
@@ -505,11 +502,7 @@ const Tags = ({ foodItems = [], onItemClick }) => {
         ))}
       </div>
 
-      <OrderCard
-        isOpen={isOrderCardOpen}
-        onClose={handleCloseItemCard}
-        item={selectedItem}
-      />
+      <OrderCard isOpen={isOrderCardOpen} onClose={handleCloseItemCard} item={selectedItem} />
 
       <style>{`
         .scrollbar-hide {
