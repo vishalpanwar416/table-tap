@@ -7,11 +7,13 @@ const corsHeaders = {
 
 interface EmailRequest {
   to: string;
-  subject: string;
-  html: string;
+  subject?: string;
+  html?: string;
   text?: string;
   from?: string;
   replyTo?: string;
+  templateKey?: string;
+  templateVars?: Record<string, string>;
 }
 
 interface EmailResponse {
@@ -94,9 +96,46 @@ Deno.serve(async (req: Request) => {
 
         const emailData: EmailRequest = requestData;
 
-        // Validate required fields
-        if (!emailData.to || !emailData.subject || !emailData.html) {
-          return new Response(JSON.stringify({ success: false, error: 'Missing required fields: to, subject, and html are required' }), {
+        // 3. Resolve Template if provided
+        let finalHtml = emailData.html || '';
+        let finalSubject = emailData.subject || '';
+        let finalText = emailData.text || '';
+
+        if (emailData.templateKey) {
+          console.log(`Fetching template: ${emailData.templateKey}`);
+          const { data: template, error: templateError } = await supabaseAdmin
+            .from('email_templates')
+            .select('subject, html')
+            .eq('key', emailData.templateKey)
+            .maybeSingle();
+
+          if (templateError) {
+            console.error('Error fetching template:', templateError);
+          } else if (template) {
+            finalHtml = template.html;
+            finalSubject = template.subject;
+            console.log('Template found and loaded.');
+          } else {
+            console.warn(`Template not found: ${emailData.templateKey}`);
+          }
+        }
+
+        // 4. Apply Variables
+        if (emailData.templateVars) {
+          Object.entries(emailData.templateVars).forEach(([key, value]) => {
+            const regex = new RegExp(`{{${key}}}`, 'g');
+            finalHtml = finalHtml.replace(regex, value || '');
+            finalSubject = finalSubject.replace(regex, value || '');
+            finalText = finalText.replace(regex, value || '');
+          });
+        }
+
+        // Validate required fields after template resolution
+        if (!emailData.to || !finalSubject || !finalHtml) {
+          return new Response(JSON.stringify({ 
+            success: false, 
+            error: 'Missing required fields after template resolution: to, subject, and html are required' 
+          }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
             status: 400,
           });
@@ -114,9 +153,9 @@ Deno.serve(async (req: Request) => {
           body: JSON.stringify({
             from: emailData.from || EMAIL_FROM,
             to: [emailData.to],
-            subject: emailData.subject,
-            html: emailData.html,
-            text: emailData.text,
+            subject: finalSubject,
+            html: finalHtml,
+            text: finalText || finalSubject,
             reply_to: emailData.replyTo,
           }),
         });

@@ -28,3 +28,11 @@ yarn-error.log*
 # IDE / Tooling
 .cursor/
 .agent/
+.claude/
+
+# Logs and test results
+test-results/
+**/test-results/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
