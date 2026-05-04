@@ -127,8 +127,22 @@ export const RestaurantProvider = ({ children }) => {
           return;
         }
 
-        if (!restaurantData || !restaurantData.is_active) {
-          setError('Restaurant not found or inactive');
+        if (!restaurantData) {
+          localStorageStore.clear();
+          setError('Restaurant not found');
+          return;
+        }
+
+        // Still set restaurant data so UI can show the name even if inactive/suspended
+        setRestaurant({
+          ...restaurantData,
+          subscription_status: null,
+          subscription_end_date: null,
+        });
+
+        if (!restaurantData.is_active) {
+          localStorageStore.clear();
+          setError('Restaurant is currently inactive');
           return;
         }
 
@@ -179,6 +193,7 @@ export const RestaurantProvider = ({ children }) => {
         })();
 
         if (!isAccessible) {
+          localStorageStore.clear();
           setError('This restaurant is currently unavailable. Please try again later.');
           return;
         }
