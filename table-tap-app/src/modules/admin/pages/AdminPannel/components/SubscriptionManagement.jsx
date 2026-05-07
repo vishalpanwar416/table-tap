@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
   CreditCard,
-  Calendar,
   IndianRupee,
-  Users,
   TrendingUp,
   AlertTriangle,
   Plus,
   Edit,
   Trash2,
-  Eye,
   CheckCircle,
   XCircle,
   Clock,
@@ -21,14 +18,10 @@ import {
   AlertCircle,
   ArrowLeft,
   Download,
-  Filter,
-  Search,
   RotateCcw,
   CalendarClock,
   ChevronDown,
-  FileText,
   Printer,
-  Send,
   Mail,
   Stars,
 } from 'lucide-react';
@@ -40,17 +33,11 @@ import {
   COMPANY_DETAILS,
 } from '../../../../shared/utils/invoiceGenerator';
 import {
-  getRestaurantInvoices,
-  sendInvoiceEmail,
-  getCompanyDetails as fetchCompanyDetails,
-} from '../../../../shared/api/invoiceService';
-import {
   getSubscriptionPlans,
   getBillingCycles,
   createSubscriptionPlan,
   updateSubscriptionPlan,
   deleteSubscriptionPlan,
-  getRestaurantSubscriptions,
   assignSubscriptionToRestaurant,
   updateRestaurantSubscription,
   cancelRestaurantSubscription,
@@ -62,7 +49,7 @@ import {
   getPaginatedSubscriptions,
 } from '../../../../admin/api/subscriptionService';
 import { supabase } from '../../../../shared/supabase';
-import { getAllRestaurants, getSystemSetting, getEmailTemplate } from '../admin_service.js';
+import { getAllRestaurants, getEmailTemplate } from '../admin_service.js';
 import { applyTemplate } from '../../../../shared/api/emailService';
 
 const SubscriptionManagementV2 = () => {
@@ -84,12 +71,9 @@ const SubscriptionManagementV2 = () => {
   const [processingId, setProcessingId] = useState(null);
 
   // Pagination & Loading States for Tabs
-  const [loadingStats, setLoadingStats] = useState(false);
-  const [loadingRenewals, setLoadingRenewals] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [totalCount, setTotalCount] = useState(0);
   const pageSize = 20;
 
   // Billing & Invoice State
@@ -165,16 +149,12 @@ const SubscriptionManagementV2 = () => {
 
       switch (tab) {
         case 'overview':
-          setLoadingStats(true);
           const statsRes = await getSubscriptionStats();
           if (statsRes.data) setStats(statsRes.data);
-          setLoadingStats(false);
           break;
         case 'expiring':
-          setLoadingRenewals(true);
           const renewalsRes = await getUpcomingRenewals(14);
           setUpcomingRenewals(renewalsRes.data || []);
-          setLoadingRenewals(false);
           break;
         case 'subscriptions':
         case 'billing':
@@ -190,7 +170,6 @@ const SubscriptionManagementV2 = () => {
             setRestaurants(restRes.data || []);
           }
 
-          setTotalCount(subsRes.totalCount);
           setHasMore(pageNum * pageSize < subsRes.totalCount);
           setLoadingMore(false);
           break;
@@ -199,8 +178,6 @@ const SubscriptionManagementV2 = () => {
       setError(error.message);
     } finally {
       setLoading(false);
-      setLoadingStats(false);
-      setLoadingRenewals(false);
       setLoadingMore(false);
     }
   };
@@ -321,7 +298,6 @@ const SubscriptionManagementV2 = () => {
         badge_text: plan.badge_text || '',
         use_custom_builder: !!plan.use_custom_builder,
         button_text: plan.button_text || '',
-        plan_discount_percentage: plan.plan_discount_percentage || 0,
         plan_discount_percentage: plan.plan_discount_percentage || 0,
         ai_features_enabled: !!plan.ai_features_enabled,
         cycle_discounts: plan.cycle_discounts || {},
@@ -538,7 +514,7 @@ const SubscriptionManagementV2 = () => {
           button_text: 'Get Pro Today',
         },
         {
-          key: 'custom',
+          key: 'enterprise',
           name: 'Enterprise',
           description: 'Bespoke solutions for restaurant chains and enterprise groups.',
           base_price: 2999,
@@ -676,8 +652,8 @@ const SubscriptionManagementV2 = () => {
           amount_paid: transaction.amount_paid,
           gst_amount:
             transaction.gst_amount || transaction.amount_paid - transaction.amount_paid / 1.18,
-          plan_name: transaction.plan_name || subscription?.plan_name,
-          billing_cycle: transaction.billing_cycle || subscription?.billing_cycle,
+          plan_name: transaction.new_plan || transaction.old_plan || subscription?.plan_name,
+          billing_cycle: subscription?.billing_cycle,
           payment_reference: transaction.payment_reference,
         },
         restaurant: selectedBillingRestaurant,
@@ -698,8 +674,8 @@ const SubscriptionManagementV2 = () => {
           created_at: transaction.created_at,
           amount_paid: transaction.amount_paid,
           gst_amount: transaction.gst_amount,
-          plan_name: transaction.plan_name || subscription?.plan_name,
-          billing_cycle: transaction.billing_cycle || subscription?.billing_cycle,
+          plan_name: transaction.new_plan || transaction.old_plan || subscription?.plan_name,
+          billing_cycle: subscription?.billing_cycle,
           payment_reference: transaction.payment_reference,
         },
         restaurant: selectedBillingRestaurant,
@@ -982,9 +958,13 @@ const SubscriptionManagementV2 = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div>
-                          <p className="font-bold text-gray-900 capitalize">{txn.plan_name} Plan</p>
+                          <p className="font-bold text-gray-900 capitalize">
+                            {txn.new_plan || txn.old_plan} Plan
+                          </p>
                           <p className="text-xs text-gray-500 mt-0.5 capitalize">
-                            {txn.billing_cycle} Cycle
+                            {subscriptions.find((s) => s.restaurant_id === txn.restaurant_id)
+                              ?.billing_cycle || '—'}{' '}
+                            Cycle
                           </p>
                         </div>
                       </td>
@@ -1070,7 +1050,7 @@ const SubscriptionManagementV2 = () => {
                 <p className="text-sm">No invoices found.</p>
               </div>
             ) : (
-              billingHistory.map((txn, idx) => (
+              billingHistory.map((txn) => (
                 <div
                   key={txn.id}
                   className="bg-white border border-gray-100 rounded-xl p-3 shadow-sm hover:shadow-md transition-all group flex flex-col gap-3"
@@ -1088,10 +1068,13 @@ const SubscriptionManagementV2 = () => {
                   </div>
 
                   <div className="flex items-center gap-2 mb-2">
-                    <h4 className="font-bold text-gray-900 text-sm">
-                      {txn.plan_name} Plan{' '}
+                    <h4 className="font-bold text-gray-900 text-sm capitalize">
+                      {txn.new_plan || txn.old_plan} Plan{' '}
                       <span className="text-gray-400 font-normal text-xs">
-                        ({txn.billing_cycle})
+                        (
+                        {subscriptions.find((s) => s.restaurant_id === txn.restaurant_id)
+                          ?.billing_cycle || '—'}
+                        )
                       </span>
                     </h4>
                   </div>
@@ -1334,7 +1317,7 @@ const SubscriptionManagementV2 = () => {
                 Icon = Brain;
                 colorText = 'text-slate-700';
                 colorBg = 'bg-slate-50';
-              } else if (plan.key === 'custom') {
+              } else if (plan.key === 'enterprise') {
                 Icon = Building2;
                 colorText = 'text-amber-600';
                 colorBg = 'bg-amber-50';
@@ -1729,7 +1712,9 @@ const SubscriptionManagementV2 = () => {
                       <h3 className="font-bold text-gray-900 text-lg leading-tight">
                         {sub.restaurant?.name}
                       </h3>
-                      <p className="text-sm text-gray-500 font-medium">{sub.plan?.name}</p>
+                      <p className="text-sm text-gray-500 font-medium capitalize">
+                        {sub.plan_name}
+                      </p>
                     </div>
                   </div>
 
@@ -1791,7 +1776,9 @@ const SubscriptionManagementV2 = () => {
                       </div>
                       <div>
                         <h4 className="font-bold text-gray-900 text-sm">{sub.restaurant?.name}</h4>
-                        <p className="text-xs text-gray-500">{sub.plan?.name || 'Plan'}</p>
+                        <p className="text-xs text-gray-500 capitalize">
+                          {sub.plan_name || 'Plan'}
+                        </p>
                       </div>
                     </div>
                     <div
@@ -2506,7 +2493,7 @@ const SubscriptionManagementV2 = () => {
                     className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-medium text-gray-700 focus:ring-2 focus:ring-gray-600/20 focus:bg-white transition-all outline-none min-h-[120px] leading-relaxed"
                     placeholder="Unlimited Menus, QR Ordering, AI Insights, etc."
                   />
-                  <p className="text-[10px] text-gray-400 font-bold ml-1 italic italic">
+                  <p className="text-[10px] text-gray-400 font-bold ml-1 italic">
                     Separate each feature with a comma
                   </p>
                 </div>

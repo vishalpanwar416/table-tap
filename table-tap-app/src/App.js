@@ -29,7 +29,6 @@ const RestaurantApp = lazy(() => import('./modules/restaurant/RestaurantApp'));
 const AdminApp = lazy(() => import('./modules/admin/AdminApp'));
 const OwnerApp = lazy(() => import('./modules/owner/OwnerApp'));
 const AuthCallback = lazy(() => import('./modules/shared/components/auth/AuthCallback'));
-const LoadingSpinner = () => <LoadingScreen message="Loading Table Tap..." />;
 
 /**
  * Main App Component with Subdomain-based Routing
@@ -103,7 +102,7 @@ const App = () => {
           <Route
             path="/auth-callback"
             element={
-              <Suspense fallback={<LoadingSpinner />}>
+              <Suspense fallback={<LoadingScreen message="Loading Table Tap..." />}>
                 <AuthCallback />
               </Suspense>
             }
@@ -113,7 +112,7 @@ const App = () => {
           <Route
             path="/restaurant/*"
             element={
-              <Suspense fallback={<LoadingSpinner />}>
+              <Suspense fallback={<LoadingScreen message="Loading Table Tap..." />}>
                 <RestaurantApp />
               </Suspense>
             }
@@ -123,7 +122,7 @@ const App = () => {
           <Route
             path="/admin/*"
             element={
-              <Suspense fallback={<LoadingSpinner />}>
+              <Suspense fallback={<LoadingScreen message="Loading Table Tap..." />}>
                 <AdminApp />
               </Suspense>
             }
@@ -133,7 +132,7 @@ const App = () => {
           <Route
             path="/owner/*"
             element={
-              <Suspense fallback={<LoadingSpinner />}>
+              <Suspense fallback={<LoadingScreen message="Loading Table Tap..." />}>
                 <OwnerApp />
               </Suspense>
             }
@@ -154,7 +153,7 @@ const App = () => {
       pathname === '/admin/auth-callback';
     if (isAuthCallback) {
       return (
-        <Suspense fallback={<LoadingSpinner />}>
+        <Suspense fallback={<LoadingScreen message="Loading Table Tap..." />}>
           <AuthCallback />
         </Suspense>
       );
@@ -163,7 +162,7 @@ const App = () => {
     if (pathname.startsWith('/admin')) {
       console.log('[App] Loading AdminApp for /admin path');
       return (
-        <Suspense fallback={<LoadingSpinner />}>
+        <Suspense fallback={<LoadingScreen message="Loading Table Tap..." />}>
           <AdminApp />
         </Suspense>
       );
@@ -177,7 +176,7 @@ const App = () => {
     if (pathname.startsWith('/restaurant')) {
       console.log('[App] Loading RestaurantApp for /restaurant path');
       return (
-        <Suspense fallback={<LoadingSpinner />}>
+        <Suspense fallback={<LoadingScreen message="Loading Table Tap..." />}>
           <RestaurantApp />
         </Suspense>
       );
@@ -189,19 +188,19 @@ const App = () => {
         return <CustomerApp />;
       case 'restaurant':
         return (
-          <Suspense fallback={<LoadingSpinner />}>
+          <Suspense fallback={<LoadingScreen message="Loading Table Tap..." />}>
             <RestaurantApp />
           </Suspense>
         );
       case 'owner':
         return (
-          <Suspense fallback={<LoadingSpinner />}>
+          <Suspense fallback={<LoadingScreen message="Loading Table Tap..." />}>
             <OwnerApp />
           </Suspense>
         );
       case 'admin':
         return (
-          <Suspense fallback={<LoadingSpinner />}>
+          <Suspense fallback={<LoadingScreen message="Loading Table Tap..." />}>
             <AdminApp />
           </Suspense>
         );

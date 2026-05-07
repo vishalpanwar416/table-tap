@@ -5,7 +5,7 @@ import AdminSidebar from './components/AdminSidebar.jsx';
 import AdminHeader from './components/AdminHeader.jsx';
 import MobileAdminHeader from './components/MobileAdminHeader.jsx';
 import ToastNotifications from './components/ToastNotifications.jsx';
-import LoadingSpinner from './components/LoadingSpinner.jsx';
+import LoadingScreen from '../../../shared/components/LoadingScreen';
 import RestaurantManagement from './components/RestaurantManagement.jsx';
 import StaffManagement from './components/StaffManagement.jsx';
 import { RestaurantModal, StaffModal } from './components/Modals.jsx';
@@ -654,7 +654,7 @@ const AdminPanel = () => {
         );
       case 'subscriptions':
         return (
-          <Suspense fallback={<LoadingSpinner />}>
+          <Suspense fallback={<LoadingScreen variant="page" message="Loading..." />}>
             <SubscriptionManagement />
           </Suspense>
         );
@@ -664,19 +664,19 @@ const AdminPanel = () => {
         return <InquiryManagement searchTerm={searchTerm} />;
       case 'notifications':
         return (
-          <Suspense fallback={<LoadingSpinner />}>
+          <Suspense fallback={<LoadingScreen variant="page" message="Loading..." />}>
             <AdminNotificationsPage onTabChange={setActiveTab} searchTerm={searchTerm} />
           </Suspense>
         );
       case 'activity':
         return (
-          <Suspense fallback={<LoadingSpinner />}>
+          <Suspense fallback={<LoadingScreen variant="page" message="Loading..." />}>
             <AdminActivityLogs searchTerm={searchTerm} />
           </Suspense>
         );
       case 'settings':
         return (
-          <Suspense fallback={<LoadingSpinner />}>
+          <Suspense fallback={<LoadingScreen variant="page" message="Loading..." />}>
             <SystemSettings />
           </Suspense>
         );
@@ -687,7 +687,7 @@ const AdminPanel = () => {
 
   // Only show full-page loading spinner during the INITIAL data load (when we have nothing to show yet)
   if (loading && restaurants.length === 0 && staff.length === 0) {
-    return <LoadingSpinner />;
+    return <LoadingScreen message="Updating Dashboard" />;
   }
 
   return (
