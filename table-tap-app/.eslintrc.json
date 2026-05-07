@@ -1,8 +1,10 @@
 {
   "extends": ["react-app/base"],
+  "plugins": ["react-hooks"],
   "rules": {
     "no-unused-vars": "off",
     "no-console": "off",
-    "react-hooks/exhaustive-deps": "off"
+    "react-hooks/exhaustive-deps": "off",
+    "react-hooks/rules-of-hooks": "error"
   }
 }

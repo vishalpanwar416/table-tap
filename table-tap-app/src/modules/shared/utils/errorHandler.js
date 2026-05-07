@@ -5,7 +5,7 @@ export const ERROR_TYPES = {
   VALIDATION: 'VALIDATION',
   NOT_FOUND: 'NOT_FOUND',
   SERVER: 'SERVER',
-  UNKNOWN: 'UNKNOWN'
+  UNKNOWN: 'UNKNOWN',
 };
 
 // Error messages
@@ -15,7 +15,7 @@ export const ERROR_MESSAGES = {
   [ERROR_TYPES.VALIDATION]: 'Please check your input and try again.',
   [ERROR_TYPES.NOT_FOUND]: 'The requested item was not found.',
   [ERROR_TYPES.SERVER]: 'Server error occurred. Please try again later.',
-  [ERROR_TYPES.UNKNOWN]: 'An unexpected error occurred. Please try again.'
+  [ERROR_TYPES.UNKNOWN]: 'An unexpected error occurred. Please try again.',
 };
 
 // Error handler class
@@ -51,13 +51,6 @@ export const handleError = (error, context = '') => {
     userMessage = ERROR_MESSAGES[ERROR_TYPES.SERVER];
   }
 
-  // Log error for debugging
-    type: errorType,
-    message: userMessage,
-    originalError: error,
-    timestamp: new Date().toISOString()
-  });
-
   return new AppError(errorType, userMessage, error);
 };
 
@@ -70,4 +63,4 @@ export const withErrorHandling = (asyncFunction, context = '') => {
       throw handleError(error, context);
     }
   };
-}; 
+};

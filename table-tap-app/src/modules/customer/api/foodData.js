@@ -25,7 +25,7 @@ export const BESTSELLER_TAGS = [
   'popular',
   'featured',
   'trending',
-  'hot'
+  'hot',
 ];
 
 export const RECOMMENDED_TAGS = [
@@ -38,7 +38,7 @@ export const RECOMMENDED_TAGS = [
   'must try',
   'top pick',
   'chef choice',
-  'chef\'s choice'
+  "chef's choice",
 ];
 
 /**
@@ -70,10 +70,10 @@ export const hasTag = (item, targetTags) => {
   if (!item.tags || !Array.isArray(item.tags)) return false;
 
   // Convert target tags to lowercase for comparison
-  const targetTagsLower = targetTags.map(tag => tag.toLowerCase());
+  const targetTagsLower = targetTags.map((tag) => tag.toLowerCase());
 
   // Check if any of the item's tags match any of the target tags (case-insensitive)
-  return item.tags.some(itemTag => {
+  return item.tags.some((itemTag) => {
     const itemTagLower = itemTag.toLowerCase();
     return targetTagsLower.includes(itemTagLower);
   });
@@ -95,10 +95,9 @@ export const fetchBestSellerItems = async (restaurantId) => {
     if (error) throw error;
 
     // Filter items with case-insensitive tag matching
-    const bestSellerItems = (data || []).filter(item => {
+    const bestSellerItems = (data || []).filter((item) => {
       return hasTag(item, BESTSELLER_TAGS);
     });
-
 
     // Process items to ensure they have valid images
     const processedItems = processFoodItems(bestSellerItems);
@@ -124,10 +123,9 @@ export const fetchRecommendedItems = async (restaurantId) => {
     if (error) throw error;
 
     // Filter items with case-insensitive tag matching
-    const recommendedItems = (data || []).filter(item => {
+    const recommendedItems = (data || []).filter((item) => {
       return hasTag(item, RECOMMENDED_TAGS);
     });
-
 
     // Process items to ensure they have valid images
     const processedItems = processFoodItems(recommendedItems);
@@ -143,10 +141,7 @@ export const fetchRecommendedItems = async (restaurantId) => {
 export const fetchMaincaroselData = async (restaurantId = null) => {
   try {
     // Note: carousel offers may not have is_active set — don't filter on it here
-    let query = supabase
-      .from('fooditems')
-      .select('*')
-      .eq('is_carousel', true);
+    let query = supabase.from('fooditems').select('*').eq('is_carousel', true);
 
     // Filter by restaurant if restaurantId is provided
     if (restaurantId) {
@@ -160,7 +155,7 @@ export const fetchMaincaroselData = async (restaurantId = null) => {
     }
 
     // Transform the data to match the expected format
-    return data.map(item => ({
+    return data.map((item) => ({
       id: item.id,
       restaurant_id: item.restaurant_id, // <-- add this!
       imade: item.image, // Note: keeping 'imade' to match existing component
@@ -216,10 +211,18 @@ const formatDiscount = (item) => {
     // Check for tags to create a personalized message
     if (item.tags && item.tags.length > 0) {
       // Look for specific tags that might indicate a special offer
-      if (item.tags.some(tag =>
-        ['new', 'featured', 'bestseller', 'popular', 'trending', 'hot'].includes(tag.toLowerCase()))) {
-        const specialTag = item.tags.find(tag =>
-          ['new', 'featured', 'bestseller', 'popular', 'trending', 'hot'].includes(tag.toLowerCase()));
+      if (
+        item.tags.some((tag) =>
+          ['new', 'featured', 'bestseller', 'popular', 'trending', 'hot'].includes(
+            tag.toLowerCase(),
+          ),
+        )
+      ) {
+        const specialTag = item.tags.find((tag) =>
+          ['new', 'featured', 'bestseller', 'popular', 'trending', 'hot'].includes(
+            tag.toLowerCase(),
+          ),
+        );
 
         return specialTag.toUpperCase();
       }
@@ -228,10 +231,10 @@ const formatDiscount = (item) => {
     // Create enticing offers based on category or random selection
     const specialOffers = [
       'HOT DEAL!',
-      'TODAY\'S SPECIAL',
+      "TODAY'S SPECIAL",
       'MUST TRY!',
       'TOP PICK',
-      'CHEF\'S CHOICE'
+      "CHEF'S CHOICE",
     ];
 
     // Use category if available to personalize the offer
@@ -287,36 +290,14 @@ export const fallbackMaincaroselData = [
     imade: null,
     discount: "Chef's Choice",
     message: 'Tastier than ever before!',
-  }
+  },
 ];
-
-// Function that automatically gets restaurant ID from context and fetches food items
-// This is what you should use in your components
-export const fetchFoodItemsWithContext = () => {
-  const { restaurantId, loading: restaurantLoading } = useRestaurant();
-
-  const fetchItems = async () => {
-
-    if (!restaurantId || restaurantLoading) {
-      return [];
-    }
-
-    return await fetchFoodItems(restaurantId);
-  };
-
-  return {
-    fetchItems,
-    restaurantId,
-    isReady: !restaurantLoading && !!restaurantId
-  };
-};
 
 // Hook to fetch food items for current restaurant
 export const useFoodItems = () => {
   const { restaurantId, loading: restaurantLoading } = useRestaurant();
 
   const getFoodItems = async () => {
-
     if (!restaurantId) {
       return [];
     }
@@ -335,7 +316,6 @@ export const useFoodItemsData = () => {
   const [error, setError] = useState(null);
 
   const loadFoodItems = async () => {
-
     if (!restaurantId) {
       setFoodItems([]);
       return;
@@ -366,6 +346,6 @@ export const useFoodItemsData = () => {
     error,
     refetch: loadFoodItems,
     restaurantId,
-    isReady: !restaurantLoading && !!restaurantId
+    isReady: !restaurantLoading && !!restaurantId,
   };
 };
