@@ -1,5 +1,12 @@
-import React, { Suspense, lazy, useMemo } from 'react';
+import React, { Suspense, lazy, useMemo, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+
+const ExternalRedirect = ({ to }) => {
+  useEffect(() => {
+    window.location.replace(to);
+  }, [to]);
+  return null;
+};
 import RestaurantDashboardWrapper from '../shared/config/RestaurantDashboardWrapper';
 import { AdminRestaurantProvider } from '../shared/context/AdminRestaurantContext';
 import { ManagerNotificationProvider } from '../shared/context/ManagerNotificationContext';

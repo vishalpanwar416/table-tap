@@ -63,7 +63,6 @@ export default function RestaurantLoginPage() {
       try {
         const user = await authService.getCurrentUser();
         if (user) {
-          // Check if user has restaurant role
           const profile = await authService.getProfile(user.id);
           const role = profile?.profile_role || profile?.role;
           if (profile && ALLOWED_ROLES.includes(role)) {
@@ -71,7 +70,7 @@ export default function RestaurantLoginPage() {
           }
         }
       } catch (err) {
-        console.log('No existing session');
+        // No existing session
       }
     };
     checkSession();

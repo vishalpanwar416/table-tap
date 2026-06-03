@@ -777,7 +777,6 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
   // Refetch orders when coming back online
   useEffect(() => {
     if (isOnline) {
-      console.log('Online detected, refreshing orders...');
       fetchOrders();
       // Also retry sync just in case App.js missed it or for redundancy
       syncPendingActions();
@@ -1018,8 +1017,6 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
       console.warn('No restaurantId available for real-time subscription');
       return;
     }
-
-    console.log('Setting up real-time subscription for restaurant:', restaurantId);
 
     const channel = subscribeToAllOrderChanges(restaurantId, (payload) => {
       const { eventType, new: newRecord, old: oldRecord } = payload;

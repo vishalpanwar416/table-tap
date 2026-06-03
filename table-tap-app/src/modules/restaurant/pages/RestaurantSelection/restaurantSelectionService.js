@@ -4,9 +4,15 @@ import { supabase } from '../../../shared/supabase';
  * Helper function to mark authentication errors
  */
 const markAuthError = (error) => {
-  if (error && (error.code === 'PGRST301' || error.status === 401 ||
-    error.message?.includes('JWT') || error.message?.includes('expired') ||
-    error.message?.includes('Invalid Refresh Token') || error.message?.includes('Refresh Token Not Found'))) {
+  if (
+    error &&
+    (error.code === 'PGRST301' ||
+      error.status === 401 ||
+      error.message?.includes('JWT') ||
+      error.message?.includes('expired') ||
+      error.message?.includes('Invalid Refresh Token') ||
+      error.message?.includes('Refresh Token Not Found'))
+  ) {
     error.isAuthError = true;
   }
   return error;
@@ -26,13 +32,15 @@ export const getActiveRestaurants = async () => {
 
     if (subError) throw markAuthError(subError);
 
-    const accessibleIds = [...new Set((subData || []).map(s => s.restaurant_id))];
+    const accessibleIds = [...new Set((subData || []).map((s) => s.restaurant_id))];
     if (accessibleIds.length === 0) return [];
 
     const { data, error } = await supabase
       .from('restaurants')
-      .select(`id, name, description, address, contact_phone, opening_hours,
-        logo_url, restaurant_photo_url, is_active, cuisine_type, location, tables`)
+      .select(
+        `id, name, description, address, contact_phone, opening_hours,
+        logo_url, restaurant_photo_url, is_active, cuisine_type, location, tables`,
+      )
       .eq('is_active', true)
       .in('id', accessibleIds)
       .order('name');
@@ -50,10 +58,10 @@ export const getActiveRestaurants = async () => {
  */
 export const getRestaurantById = async (restaurantId) => {
   try {
-
     const { data, error } = await supabase
       .from('restaurants')
-      .select(`
+      .select(
+        `
         id,
         name,
         description,
@@ -65,7 +73,8 @@ export const getRestaurantById = async (restaurantId) => {
         cuisine_type,
         location,
         tables
-      `)
+      `,
+      )
       .eq('id', restaurantId)
       .eq('is_active', true)
       .single();
@@ -85,7 +94,6 @@ export const getRestaurantById = async (restaurantId) => {
  */
 export const getRestaurantTables = async (restaurantId) => {
   try {
-
     const { data, error } = await supabase
       .from('restaurants')
       .select('tables')
@@ -118,12 +126,11 @@ export const getRestaurantTables = async (restaurantId) => {
  */
 export const updateRestaurantTables = async (restaurantId, tables) => {
   try {
-
     const { data, error } = await supabase
       .from('restaurants')
       .update({
         tables: JSON.stringify(tables),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('id', restaurantId)
       .select()
@@ -151,11 +158,12 @@ export const searchRestaurants = async (searchTerm) => {
     const term = searchTerm.toLowerCase().trim();
     if (!term) return all;
 
-    return all.filter(r =>
-      r.name?.toLowerCase().includes(term) ||
-      r.cuisine_type?.toLowerCase().includes(term) ||
-      r.description?.toLowerCase().includes(term) ||
-      r.address?.toLowerCase().includes(term)
+    return all.filter(
+      (r) =>
+        r.name?.toLowerCase().includes(term) ||
+        r.cuisine_type?.toLowerCase().includes(term) ||
+        r.description?.toLowerCase().includes(term) ||
+        r.address?.toLowerCase().includes(term),
     );
   } catch (error) {
     throw markAuthError(error);
@@ -176,12 +184,14 @@ export const getRestaurantsByCuisine = async (cuisineType) => {
 
     if (subError) throw markAuthError(subError);
 
-    const accessibleIds = [...new Set((subData || []).map(s => s.restaurant_id))];
+    const accessibleIds = [...new Set((subData || []).map((s) => s.restaurant_id))];
     if (accessibleIds.length === 0) return [];
 
     const { data, error } = await supabase
       .from('restaurants')
-      .select('id, name, description, address, contact_phone, opening_hours, logo_url, is_active, cuisine_type, location')
+      .select(
+        'id, name, description, address, contact_phone, opening_hours, logo_url, is_active, cuisine_type, location',
+      )
       .eq('is_active', true)
       .in('id', accessibleIds)
       .eq('cuisine_type', cuisineType)
@@ -200,7 +210,6 @@ export const getRestaurantsByCuisine = async (cuisineType) => {
  */
 export const getRestaurantStats = async (restaurantId) => {
   try {
-
     // Get restaurant data
     const { data: restaurant, error: restaurantError } = await supabase
       .from('restaurants')
@@ -236,7 +245,7 @@ export const getRestaurantStats = async (restaurantId) => {
       restaurant,
       orderCount: orderCount || 0,
       foodItemCount: foodItemCount || 0,
-      isActive: restaurant?.is_active || false
+      isActive: restaurant?.is_active || false,
     };
 
     return stats;
@@ -251,12 +260,14 @@ export const getRestaurantStats = async (restaurantId) => {
  */
 function calculateDistance(lat1, lon1, lat2, lon2) {
   const R = 6371000; // Earth's radius in meters
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
@@ -298,7 +309,7 @@ async function getClosestRestaurantsPostGIS(latitude, longitude, radiusMeters = 
     const { data, error } = await supabase.rpc('get_restaurants_within_radius', {
       user_lat: latitude,
       user_lng: longitude,
-      radius_meters: radiusMeters
+      radius_meters: radiusMeters,
     });
     if (error) {
       console.error('PostGIS query failed:', error);
@@ -307,8 +318,8 @@ async function getClosestRestaurantsPostGIS(latitude, longitude, radiusMeters = 
 
     // Filter by active subscription
     if (data && data.length > 0) {
-      const activeIds = await fetchActiveRestaurantIds(data.map(r => r.id));
-      return data.filter(r => activeIds.includes(r.id));
+      const activeIds = await fetchActiveRestaurantIds(data.map((r) => r.id));
+      return data.filter((r) => activeIds.includes(r.id));
     }
 
     return data || [];
@@ -329,23 +340,18 @@ async function getClosestRestaurantsJavaScript(latitude, longitude, radiusMeters
     }
     // Calculate distances and filter by radius
     const restaurantsWithDistance = restaurants
-      .map(restaurant => {
+      .map((restaurant) => {
         const location = parsePostGISPoint(restaurant.location);
         if (!location) return null;
-        const distance = calculateDistance(
-          latitude,
-          longitude,
-          location.lat,
-          location.lng
-        );
+        const distance = calculateDistance(latitude, longitude, location.lat, location.lng);
         return {
           ...restaurant,
           distance,
           latitude: location.lat,
-          longitude: location.lng
+          longitude: location.lng,
         };
       })
-      .filter(restaurant => restaurant && restaurant.distance <= radiusMeters)
+      .filter((restaurant) => restaurant && restaurant.distance <= radiusMeters)
       .sort((a, b) => a.distance - b.distance);
     return restaurantsWithDistance;
   } catch (err) {
@@ -373,10 +379,8 @@ export async function getClosestRestaurants(latitude, longitude, radiusMeters = 
     // First, try PostGIS method
     const isPostGISAvailable = await checkPostGISAvailability();
     if (isPostGISAvailable) {
-      console.log('Using PostGIS for restaurant search');
       return await getClosestRestaurantsPostGIS(latitude, longitude, radiusMeters);
     } else {
-      console.log('Using JavaScript fallback for restaurant search');
       return await getClosestRestaurantsJavaScript(latitude, longitude, radiusMeters);
     }
   } catch (err) {
@@ -438,7 +442,7 @@ async function fetchActiveRestaurantIds(restaurantIds) {
     if (error) throw error;
 
     // Return unique IDs
-    return [...new Set(data.map(item => item.restaurant_id))];
+    return [...new Set(data.map((item) => item.restaurant_id))];
   } catch (err) {
     console.error('Error fetching active subscriptions:', err);
     return [];

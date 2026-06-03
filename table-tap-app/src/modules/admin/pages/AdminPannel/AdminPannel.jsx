@@ -173,7 +173,6 @@ const AdminPanel = () => {
           console.error('Error loading profile:', error);
         }
       } else {
-        console.log('No user found');
       }
     };
 

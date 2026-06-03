@@ -28,7 +28,7 @@ export const uploadRestaurantPhotoForAdmin = async (file, restaurantId) => {
       maxWidth: 800,
       maxHeight: 600,
       quality: 0.8,
-      format: 'webp'
+      format: 'webp',
     });
 
     // Generate unique filename
@@ -40,7 +40,7 @@ export const uploadRestaurantPhotoForAdmin = async (file, restaurantId) => {
       .from('food-images')
       .upload(filePath, optimizedFile, {
         cacheControl: '3600',
-        upsert: true
+        upsert: true,
       });
 
     if (uploadError) {
@@ -48,20 +48,18 @@ export const uploadRestaurantPhotoForAdmin = async (file, restaurantId) => {
     }
 
     // Get public URL
-    const { data: urlData } = supabaseClient.storage
-      .from('food-images')
-      .getPublicUrl(filePath);
+    const { data: urlData } = supabaseClient.storage.from('food-images').getPublicUrl(filePath);
 
     return {
       url: urlData.publicUrl,
       path: filePath,
-      error: null
+      error: null,
     };
   } catch (error) {
     return {
       url: null,
       path: null,
-      error: error.message
+      error: error.message,
     };
   }
 };
@@ -82,7 +80,7 @@ export const uploadRestaurantLogo = async (file, restaurantId) => {
       maxWidth: 400,
       maxHeight: 400,
       quality: 0.8,
-      format: 'webp'
+      format: 'webp',
     });
 
     // Generate unique filename
@@ -94,7 +92,7 @@ export const uploadRestaurantLogo = async (file, restaurantId) => {
       .from('food-images')
       .upload(filePath, optimizedFile, {
         cacheControl: '3600',
-        upsert: true
+        upsert: true,
       });
 
     if (uploadError) {
@@ -102,20 +100,18 @@ export const uploadRestaurantLogo = async (file, restaurantId) => {
     }
 
     // Get public URL
-    const { data: urlData } = supabaseClient.storage
-      .from('food-images')
-      .getPublicUrl(filePath);
+    const { data: urlData } = supabaseClient.storage.from('food-images').getPublicUrl(filePath);
 
     return {
       url: urlData.publicUrl,
       path: filePath,
-      error: null
+      error: null,
     };
   } catch (error) {
     return {
       url: null,
       path: null,
-      error: error.message
+      error: error.message,
     };
   }
 };
@@ -143,7 +139,10 @@ const transformRestaurantData = (restaurant) => {
         // Likely WKB hex string - we can't easily parse this without a library
         // but we'll leave latitude/longitude alone if they already exist in the object
       }
-    } else if (restaurant.location.type === 'Point' && Array.isArray(restaurant.location.coordinates)) {
+    } else if (
+      restaurant.location.type === 'Point' &&
+      Array.isArray(restaurant.location.coordinates)
+    ) {
       // Handle GeoJSON format
       longitude = restaurant.location.coordinates[0];
       latitude = restaurant.location.coordinates[1];
@@ -151,11 +150,9 @@ const transformRestaurantData = (restaurant) => {
   }
 
   // Map staff/owner info
-  const ownerStaff = restaurant.restaurant_staff?.find(
-    staff => staff.staff_role === 'owner'
-  ) || restaurant.restaurant_staff?.find(
-    staff => staff.staff_role === 'manager'
-  );
+  const ownerStaff =
+    restaurant.restaurant_staff?.find((staff) => staff.staff_role === 'owner') ||
+    restaurant.restaurant_staff?.find((staff) => staff.staff_role === 'manager');
 
   let manager = null;
   if (ownerStaff) {
@@ -165,7 +162,7 @@ const transformRestaurantData = (restaurant) => {
         email: ownerStaff.profiles.email,
         id: ownerStaff.profiles.id,
         connected: true,
-        role: ownerStaff.staff_role
+        role: ownerStaff.staff_role,
       };
     } else {
       manager = {
@@ -174,7 +171,7 @@ const transformRestaurantData = (restaurant) => {
         phone: ownerStaff.staff_phone_number,
         connected: false,
         staff_id: ownerStaff.id,
-        role: ownerStaff.staff_role
+        role: ownerStaff.staff_role,
       };
     }
   }
@@ -184,7 +181,7 @@ const transformRestaurantData = (restaurant) => {
     latitude: latitude || restaurant.latitude || '',
     longitude: longitude || restaurant.longitude || '',
     manager: manager || restaurant.manager || null,
-    staff_count: restaurant.staff_count || 0
+    staff_count: restaurant.staff_count || 0,
   };
 };
 
@@ -202,9 +199,7 @@ export const deleteRestaurantPhotoForAdmin = async (url) => {
     const filePath = `restaurants/${fileName}`;
 
     // Delete from storage
-    const { error } = await supabaseClient.storage
-      .from('food-images')
-      .remove([filePath]);
+    const { error } = await supabaseClient.storage.from('food-images').remove([filePath]);
 
     if (error) {
       throw new Error(`Delete failed: ${error.message}`);
@@ -241,11 +236,14 @@ export const getAllRestaurants = async (page = 1, pageSize = 50) => {
       // Fallback: query restaurants table directly with staff join
       ({ data, error, count } = await supabase
         .from('restaurants')
-        .select(`
+        .select(
+          `
           *,
           restaurant_staff (id, staff_role, connected, staff_name, staff_email,
             profiles (id, full_name, email, avatar_url))
-        `, { count: 'estimated' })
+        `,
+          { count: 'estimated' },
+        )
         .order('created_at', { ascending: false })
         .range(from, to));
     }
@@ -255,14 +253,14 @@ export const getAllRestaurants = async (page = 1, pageSize = 50) => {
       throw error;
     }
 
-    const transformedData = (data || []).map(restaurant => transformRestaurantData(restaurant));
+    const transformedData = (data || []).map((restaurant) => transformRestaurantData(restaurant));
 
     return {
       data: transformedData,
       total: count || transformedData.length,
       page,
       pageSize,
-      error: null
+      error: null,
     };
   } catch (error) {
     console.error('[AdminService] getAllRestaurants failed:', error);
@@ -363,15 +361,19 @@ export const createRestaurant = async (restaurantData) => {
     }
 
     // Prepare location data
-    const locationData = restaurantData.latitude && restaurantData.longitude
-      ? `POINT(${restaurantData.longitude} ${restaurantData.latitude})`
-      : null;
+    const locationData =
+      restaurantData.latitude && restaurantData.longitude
+        ? `POINT(${restaurantData.longitude} ${restaurantData.latitude})`
+        : null;
 
     // Prepare social media data
-    const socialMediaData = restaurantData.social_media &&
-      Object.keys(restaurantData.social_media).some(key =>
-        restaurantData.social_media[key].trim() !== ''
-      ) ? restaurantData.social_media : null;
+    const socialMediaData =
+      restaurantData.social_media &&
+      Object.keys(restaurantData.social_media).some(
+        (key) => restaurantData.social_media[key].trim() !== '',
+      )
+        ? restaurantData.social_media
+        : null;
 
     // Create restaurant
     const { data: restaurant, error: restaurantError } = await supabase
@@ -399,7 +401,7 @@ export const createRestaurant = async (restaurantData) => {
         online_bill_enabled: restaurantData.online_bill_enabled !== false,
         billing_features_enabled: restaurantData.billing_features_enabled !== false,
         auto_email_billing_enabled: restaurantData.auto_email_billing_enabled === true,
-        is_active: true
+        is_active: true,
       })
       .select()
       .maybeSingle();
@@ -416,48 +418,49 @@ export const createRestaurant = async (restaurantData) => {
       // 1. If password is provided, create the Auth User using Edge Function
       if (restaurantData.owner_password) {
         try {
-          const { data: funcData, error: funcError } = await supabase.functions.invoke('create-user', {
-            body: {
-              email: restaurantData.owner_email,
-              password: restaurantData.owner_password,
-              email_confirm: true,
-              user_metadata: {
-                full_name: restaurantData.owner_name || 'Owner',
-                profile_role: 'owner', // owner role
-                phone_number: restaurantData.owner_phone
-              }
-            }
-          });
+          const { data: funcData, error: funcError } = await supabase.functions.invoke(
+            'create-user',
+            {
+              body: {
+                email: restaurantData.owner_email,
+                password: restaurantData.owner_password,
+                email_confirm: true,
+                user_metadata: {
+                  full_name: restaurantData.owner_name || 'Owner',
+                  profile_role: 'owner', // owner role
+                  phone_number: restaurantData.owner_phone,
+                },
+              },
+            },
+          );
 
           if (funcError) {
-            console.error("Failed to create owner auth user:", funcError);
+            console.error('Failed to create owner auth user:', funcError);
             // We continue to create the staff record even if Auth creation fails (placeholder)
           } else if (funcData?.user) {
             createdUserId = funcData.user.id;
             isConnected = true;
           }
         } catch (err) {
-          console.error("Error invoking create-user:", err);
+          console.error('Error invoking create-user:', err);
         }
       }
 
       // 2. Insert into restaurant_staff
-      const { error: staffError } = await supabase
-        .from('restaurant_staff')
-        .insert({
-          restaurant_id: restaurant.id,
-          staff_role: 'owner',
-          staff_name: restaurantData.owner_name || 'Owner',
-          staff_email: restaurantData.owner_email,
-          staff_phone_number: restaurantData.owner_phone,
-          connected: isConnected,
-          user_id: createdUserId
-        });
+      const { error: staffError } = await supabase.from('restaurant_staff').insert({
+        restaurant_id: restaurant.id,
+        staff_role: 'owner',
+        staff_name: restaurantData.owner_name || 'Owner',
+        staff_email: restaurantData.owner_email,
+        staff_phone_number: restaurantData.owner_phone,
+        connected: isConnected,
+        user_id: createdUserId,
+      });
 
       if (staffError) {
         // Fallback if 'owner' role is not in enum: try 'manager' but log it
         if (staffError.message?.includes('check constraint')) {
-          console.warn("Owner role not supported in DB, falling back to manager");
+          console.warn('Owner role not supported in DB, falling back to manager');
           await supabase.from('restaurant_staff').insert({
             restaurant_id: restaurant.id,
             staff_role: 'manager',
@@ -465,7 +468,7 @@ export const createRestaurant = async (restaurantData) => {
             staff_email: restaurantData.owner_email,
             staff_phone_number: restaurantData.owner_phone,
             connected: isConnected,
-            user_id: createdUserId
+            user_id: createdUserId,
           });
         } else {
           throw staffError;
@@ -480,7 +483,7 @@ export const createRestaurant = async (restaurantData) => {
       target_type: 'restaurant',
       target_id: restaurant.id,
       target_name: restaurant.name,
-      description: `New restaurant ${restaurant.name} created.`
+      description: `New restaurant ${restaurant.name} created.`,
     });
 
     return { data: transformRestaurantData(restaurant), error: null };
@@ -535,16 +538,22 @@ export const updateRestaurant = async (restaurantId, updateData) => {
     }
 
     // FIX: Correct longitude/latitude order
-    const locationData = (updateData.latitude !== null && updateData.latitude !== undefined && updateData.latitude !== '' &&
-      updateData.longitude !== null && updateData.longitude !== undefined && updateData.longitude !== '')
-      ? `POINT(${updateData.longitude} ${updateData.latitude})`
-      : null;
+    const locationData =
+      updateData.latitude !== null &&
+      updateData.latitude !== undefined &&
+      updateData.latitude !== '' &&
+      updateData.longitude !== null &&
+      updateData.longitude !== undefined &&
+      updateData.longitude !== ''
+        ? `POINT(${updateData.longitude} ${updateData.latitude})`
+        : null;
 
     // Prepare social media data
-    const socialMediaData = updateData.social_media &&
-      Object.keys(updateData.social_media).some(key =>
-        updateData.social_media[key].trim() !== ''
-      ) ? updateData.social_media : null;
+    const socialMediaData =
+      updateData.social_media &&
+      Object.keys(updateData.social_media).some((key) => updateData.social_media[key].trim() !== '')
+        ? updateData.social_media
+        : null;
 
     // Update restaurant
     const { data, error } = await supabase
@@ -571,7 +580,7 @@ export const updateRestaurant = async (restaurantId, updateData) => {
         online_bill_enabled: updateData.online_bill_enabled !== false,
         billing_features_enabled: updateData.billing_features_enabled !== false,
         auto_email_billing_enabled: updateData.auto_email_billing_enabled === true,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('id', restaurantId)
       .select()
@@ -584,7 +593,7 @@ export const updateRestaurant = async (restaurantId, updateData) => {
       ...data,
       // If DB returned blank/WKB, use our known good updateData as backup
       latitude: data.latitude || updateData.latitude,
-      longitude: data.longitude || updateData.longitude
+      longitude: data.longitude || updateData.longitude,
     });
 
     await logAdminActivity({
@@ -594,7 +603,7 @@ export const updateRestaurant = async (restaurantId, updateData) => {
       target_type: 'restaurant',
       target_id: restaurantId,
       target_name: updateData.name || 'Restaurant',
-      description: `Restaurant ${updateData.name || ''} updated.`
+      description: `Restaurant ${updateData.name || ''} updated.`,
     });
 
     return { data: transformed, error: null };
@@ -620,10 +629,7 @@ export const deleteRestaurant = async (restaurantId) => {
     }
 
     // Then delete the restaurant
-    const { error } = await supabase
-      .from('restaurants')
-      .delete()
-      .eq('id', restaurantId);
+    const { error } = await supabase.from('restaurants').delete().eq('id', restaurantId);
 
     if (error) throw error;
     if (error) throw error;
@@ -635,7 +641,7 @@ export const deleteRestaurant = async (restaurantId) => {
       target_type: 'restaurant',
       target_id: restaurantId,
       target_name: 'Deleted Restaurant',
-      description: `Restaurant ${restaurantId} deleted.`
+      description: `Restaurant ${restaurantId} deleted.`,
     });
 
     return { success: true, error: null };
@@ -660,7 +666,8 @@ export const getAllStaff = async (page = 1, pageSize = 50) => {
 
     const { data, error, count } = await supabase
       .from('restaurant_staff')
-      .select(`
+      .select(
+        `
         *,
         restaurants (
           id,
@@ -673,7 +680,9 @@ export const getAllStaff = async (page = 1, pageSize = 50) => {
           email,
           avatar_url
         )
-      `, { count: 'estimated' })
+      `,
+        { count: 'estimated' },
+      )
       .order('created_at', { ascending: false })
       .range(from, to);
 
@@ -682,9 +691,8 @@ export const getAllStaff = async (page = 1, pageSize = 50) => {
       throw error;
     }
 
-
     // Transform data to match component structure
-    const transformedData = (data || []).map(staff => ({
+    const transformedData = (data || []).map((staff) => ({
       id: staff.id,
       name: staff.connected && staff.profiles ? staff.profiles.full_name : staff.staff_name,
       email: staff.connected && staff.profiles ? staff.profiles.email : staff.staff_email,
@@ -696,16 +704,15 @@ export const getAllStaff = async (page = 1, pageSize = 50) => {
       user_id: staff.user_id,
       avatar_url: staff.profiles?.avatar_url,
       created_at: staff.created_at || null,
-      updated_at: staff.updated_at || null
+      updated_at: staff.updated_at || null,
     }));
-
 
     return {
       data: transformedData,
       total: count || 0,
       page,
       pageSize,
-      error: null
+      error: null,
     };
   } catch (error) {
     console.error('[AdminService] getAllStaff failed:', error);
@@ -730,31 +737,34 @@ export const createStaff = async (staffData) => {
     // 1. If password provided, create Auth User
     if (staffData.password) {
       try {
-        const { data: funcData, error: funcError } = await supabase.functions.invoke('create-user', {
-          body: {
-            email: staffData.email,
-            password: staffData.password,
-            email_confirm: true,
-            user_metadata: {
-              full_name: staffData.name,
-              profile_role: staffData.role, // use selected role
-              phone_number: staffData.phone_number
-            }
-          }
-        });
+        const { data: funcData, error: funcError } = await supabase.functions.invoke(
+          'create-user',
+          {
+            body: {
+              email: staffData.email,
+              password: staffData.password,
+              email_confirm: true,
+              user_metadata: {
+                full_name: staffData.name,
+                profile_role: staffData.role, // use selected role
+                phone_number: staffData.phone_number,
+              },
+            },
+          },
+        );
 
         if (funcError) {
-          console.error("Failed to create staff auth user:", funcError);
+          console.error('Failed to create staff auth user:', funcError);
           if (funcError.message) {
-            throw new Error("User creation failed: " + funcError.message);
+            throw new Error('User creation failed: ' + funcError.message);
           }
         } else if (funcData?.user) {
           createdUserId = funcData.user.id;
           isConnected = true;
         }
       } catch (err) {
-        console.error("Error invoking create-user:", err);
-        throw new Error("Failed to create user account: " + err.message);
+        console.error('Error invoking create-user:', err);
+        throw new Error('Failed to create user account: ' + err.message);
       }
     }
 
@@ -768,7 +778,7 @@ export const createStaff = async (staffData) => {
         staff_email: staffData.email,
         staff_phone_number: staffData.phone_number,
         connected: isConnected,
-        user_id: createdUserId
+        user_id: createdUserId,
       })
       .select()
       .maybeSingle();
@@ -782,7 +792,7 @@ export const createStaff = async (staffData) => {
       target_type: 'staff',
       target_id: data?.id,
       target_name: staffData.name,
-      description: `Staff member ${staffData.name} (${staffData.role}) added.`
+      description: `Staff member ${staffData.name} (${staffData.role}) added.`,
     });
 
     return { data, error: null };
@@ -790,7 +800,7 @@ export const createStaff = async (staffData) => {
     if (error.message?.includes('violates check constraint "restaurant_staff_staff_role_check"')) {
       return {
         data: null,
-        error: `The database does not support the role '${staffData.role}' yet. Please run this SQL in your Supabase editor to fix it: \n\n ALTER TABLE restaurant_staff DROP CONSTRAINT IF EXISTS restaurant_staff_staff_role_check; \n ALTER TABLE restaurant_staff ADD CONSTRAINT restaurant_staff_staff_role_check CHECK (staff_role IN ('manager', 'captain', 'chef', 'waiter', 'cashier'));`
+        error: `The database does not support the role '${staffData.role}' yet. Please run this SQL in your Supabase editor to fix it: \n\n ALTER TABLE restaurant_staff DROP CONSTRAINT IF EXISTS restaurant_staff_staff_role_check; \n ALTER TABLE restaurant_staff ADD CONSTRAINT restaurant_staff_staff_role_check CHECK (staff_role IN ('manager', 'captain', 'chef', 'waiter', 'cashier'));`,
       };
     }
     return { data: null, error: error.message };
@@ -801,8 +811,6 @@ export const createStaff = async (staffData) => {
  * Update staff member
  */
 export const updateStaff = async (id, updates) => {
-  console.log('🔍 updateStaff called with:', { id, updates });
-
   try {
     // Map frontend fields to database fields (remove updated_at)
     const dbUpdates = {
@@ -810,11 +818,9 @@ export const updateStaff = async (id, updates) => {
       staff_name: updates.name,
       staff_email: updates.email,
       staff_phone_number: updates.phone_number,
-      restaurant_id: updates.restaurant_id
+      restaurant_id: updates.restaurant_id,
       // Removed updated_at since it doesn't exist in the table
     };
-
-    console.log('🔍 Mapped to database fields:', dbUpdates);
 
     const result = await supabase
       .from('restaurant_staff')
@@ -823,14 +829,10 @@ export const updateStaff = async (id, updates) => {
       .select()
       .maybeSingle();
 
-    console.log('🔍 Supabase response:', result);
-
     if (result.error) {
       console.error('❌ Supabase error:', result.error);
       throw new Error(result.error.message);
     }
-
-    console.log('✅ Staff updated successfully in database');
 
     await logAdminActivity({
       activity_type: ACTIVITY_TYPES.STAFF_UPDATED,
@@ -839,7 +841,7 @@ export const updateStaff = async (id, updates) => {
       target_type: 'staff',
       target_id: id,
       target_name: updates.name || 'Staff',
-      description: `Staff member ${updates.name || id} ${updates.role ? `role changed to ${updates.role}` : 'details updated'}.`
+      description: `Staff member ${updates.name || id} ${updates.role ? `role changed to ${updates.role}` : 'details updated'}.`,
     });
 
     return result;
@@ -854,10 +856,7 @@ export const updateStaff = async (id, updates) => {
  */
 export const deleteStaff = async (staffId) => {
   try {
-    const { error } = await supabase
-      .from('restaurant_staff')
-      .delete()
-      .eq('id', staffId);
+    const { error } = await supabase.from('restaurant_staff').delete().eq('id', staffId);
 
     if (error) throw error;
 
@@ -868,7 +867,7 @@ export const deleteStaff = async (staffId) => {
       target_type: 'staff',
       target_id: staffId,
       target_name: 'Deleted Staff',
-      description: `Staff member ${staffId} deleted.`
+      description: `Staff member ${staffId} deleted.`,
     });
 
     return { success: true, error: null };
@@ -924,7 +923,7 @@ export const updateOwnerDetails = async (ownerId, ownerData) => {
       .update({
         staff_name: ownerData.owner_name,
         staff_email: ownerData.owner_email,
-        staff_phone_number: ownerData.owner_phone
+        staff_phone_number: ownerData.owner_phone,
       })
       .eq('id', ownerId)
       .select()
@@ -954,14 +953,14 @@ export const getSubscriptionStats = async () => {
     if (error) throw error;
 
     const totalSubscriptions = restaurants.length;
-    const activeSubscriptions = restaurants.filter(r => r.is_active).length;
-    const basicSubscriptions = restaurants.filter(r => r.is_active && !r.ai_enabled).length;
-    const premiumSubscriptions = restaurants.filter(r => r.is_active && r.ai_enabled).length;
+    const activeSubscriptions = restaurants.filter((r) => r.is_active).length;
+    const basicSubscriptions = restaurants.filter((r) => r.is_active && !r.ai_enabled).length;
+    const premiumSubscriptions = restaurants.filter((r) => r.is_active && r.ai_enabled).length;
 
     // Calculate revenue based on plan prices
     const basicPrice = 1999;
     const premiumPrice = 2599;
-    const totalRevenue = (basicSubscriptions * basicPrice) + (premiumSubscriptions * premiumPrice);
+    const totalRevenue = basicSubscriptions * basicPrice + premiumSubscriptions * premiumPrice;
 
     return {
       data: {
@@ -971,10 +970,12 @@ export const getSubscriptionStats = async () => {
         totalRevenue,
         basicSubscriptions,
         premiumSubscriptions,
-        cancellationRate: totalSubscriptions > 0 ?
-          ((totalSubscriptions - activeSubscriptions) / totalSubscriptions * 100).toFixed(2) : 0
+        cancellationRate:
+          totalSubscriptions > 0
+            ? (((totalSubscriptions - activeSubscriptions) / totalSubscriptions) * 100).toFixed(2)
+            : 0,
       },
-      error: null
+      error: null,
     };
   } catch (error) {
     return { data: null, error: error.message };
@@ -988,7 +989,8 @@ export const getUpcomingRenewals = async (days = 30) => {
   try {
     const { data: restaurants, error } = await supabase
       .from('restaurants')
-      .select(`
+      .select(
+        `
         id,
         name,
         contact_email,
@@ -996,16 +998,17 @@ export const getUpcomingRenewals = async (days = 30) => {
         is_active,
         ai_enabled,
         created_at
-      `)
+      `,
+      )
       .eq('is_active', true)
       .order('created_at', { ascending: true });
 
     if (error) throw error;
 
-    const renewals = restaurants.map(restaurant => {
-      const plan = restaurant.ai_enabled ?
-        { id: 'premium', name: 'Premium Plan', price: 2599, ai_features_enabled: true } :
-        { id: 'basic', name: 'Basic Plan', price: 1999, ai_features_enabled: false };
+    const renewals = restaurants.map((restaurant) => {
+      const plan = restaurant.ai_enabled
+        ? { id: 'premium', name: 'Premium Plan', price: 2599, ai_features_enabled: true }
+        : { id: 'basic', name: 'Basic Plan', price: 1999, ai_features_enabled: false };
 
       return {
         id: restaurant.id,
@@ -1014,9 +1017,9 @@ export const getUpcomingRenewals = async (days = 30) => {
         restaurant: {
           id: restaurant.id,
           name: restaurant.name,
-          contact_email: restaurant.contact_email
+          contact_email: restaurant.contact_email,
         },
-        plan: plan
+        plan: plan,
       };
     });
 
@@ -1031,19 +1034,21 @@ export const getUpcomingRenewals = async (days = 30) => {
  */
 export const updateRestaurantSubscription = async (restaurantId, subscriptionData) => {
   try {
-    const plan = subscriptionData.plan_id === 'premium' ?
-      { ai_features_enabled: true } :
-      { ai_features_enabled: false };
+    const plan =
+      subscriptionData.plan_id === 'premium'
+        ? { ai_features_enabled: true }
+        : { ai_features_enabled: false };
 
     const { data, error } = await supabase
       .from('restaurants')
       .update({
         ai_enabled: plan.ai_features_enabled,
-        is_active: subscriptionData.status === 'active'
+        is_active: subscriptionData.status === 'active',
         // removed updated_at
       })
       .eq('id', restaurantId)
-      .select(`
+      .select(
+        `
         id,
         name,
         contact_email,
@@ -1051,7 +1056,8 @@ export const updateRestaurantSubscription = async (restaurantId, subscriptionDat
         is_active,
         ai_enabled,
         created_at
-      `) // removed updated_at
+      `,
+      ) // removed updated_at
       .maybeSingle();
 
     if (error) throw error;
@@ -1071,11 +1077,11 @@ export const updateRestaurantSubscription = async (restaurantId, subscriptionDat
         id: data.id,
         name: data.name,
         contact_email: data.contact_email,
-        contact_phone: data.contact_phone
+        contact_phone: data.contact_phone,
       },
-      plan: data.ai_enabled ?
-        { id: 'premium', name: 'Premium Plan', price: 2599, ai_features_enabled: true } :
-        { id: 'basic', name: 'Basic Plan', price: 1999, ai_features_enabled: false }
+      plan: data.ai_enabled
+        ? { id: 'premium', name: 'Premium Plan', price: 2599, ai_features_enabled: true }
+        : { id: 'basic', name: 'Basic Plan', price: 1999, ai_features_enabled: false },
     };
 
     return { data: subscription, error: null };
@@ -1095,7 +1101,8 @@ export const cancelRestaurantSubscription = async (restaurantId) => {
     // Get restaurant data without deactivating it
     const { data, error } = await supabase
       .from('restaurants')
-      .select(`
+      .select(
+        `
         id,
         name,
         contact_email,
@@ -1103,15 +1110,16 @@ export const cancelRestaurantSubscription = async (restaurantId) => {
         is_active,
         ai_enabled,
         created_at
-      `)
+      `,
+      )
       .eq('id', restaurantId)
       .maybeSingle();
 
     if (error) throw error;
 
-    const plan = data.ai_enabled ?
-      { id: 'premium', name: 'Premium Plan', price: 2599, ai_features_enabled: true } :
-      { id: 'basic', name: 'Basic Plan', price: 1999, ai_features_enabled: false };
+    const plan = data.ai_enabled
+      ? { id: 'premium', name: 'Premium Plan', price: 2599, ai_features_enabled: true }
+      : { id: 'basic', name: 'Basic Plan', price: 1999, ai_features_enabled: false };
 
     const subscription = {
       id: data.id,
@@ -1128,9 +1136,9 @@ export const cancelRestaurantSubscription = async (restaurantId) => {
         id: data.id,
         name: data.name,
         contact_email: data.contact_email,
-        contact_phone: data.contact_phone
+        contact_phone: data.contact_phone,
       },
-      plan: plan
+      plan: plan,
     };
 
     return { data: subscription, error: null };
@@ -1149,9 +1157,7 @@ export const getPaginatedInquiries = async (page = 1, pageSize = 20, status = 'a
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
-    let query = supabase
-      .from('landing_inquiries')
-      .select('*', { count: 'exact' });
+    let query = supabase.from('landing_inquiries').select('*', { count: 'exact' });
 
     if (status !== 'all') {
       query = query.eq('status', status);
@@ -1211,10 +1217,7 @@ export const updateInquiryStatus = async (id, status) => {
  */
 export const deleteInquiry = async (id) => {
   try {
-    const { error } = await supabase
-      .from('landing_inquiries')
-      .delete()
-      .eq('id', id);
+    const { error } = await supabase.from('landing_inquiries').delete().eq('id', id);
 
     if (error) throw error;
     return { success: true, error: null };
@@ -1271,9 +1274,7 @@ export const getPaginatedRegistrations = async (page = 1, pageSize = 20, status 
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
-    let query = supabase
-      .from('restaurant_registrations')
-      .select('*', { count: 'exact' });
+    let query = supabase.from('restaurant_registrations').select('*', { count: 'exact' });
 
     if (status !== 'all') {
       query = query.eq('status', status);

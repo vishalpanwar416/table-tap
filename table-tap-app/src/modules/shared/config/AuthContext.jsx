@@ -44,23 +44,30 @@ export const AuthProvider = ({ children }) => {
           try {
             // Clear all heartbeat/auth keys from localStorage
             Object.keys(localStorage)
-              .filter(k => k.toLowerCase().includes('sb-') || k.includes('supabase'))
-              .forEach(k => localStorage.removeItem(k));
+              .filter((k) => k.toLowerCase().includes('sb-') || k.includes('supabase'))
+              .forEach((k) => localStorage.removeItem(k));
 
             // Clear supabase cookies too
             try {
-              const cookies = document.cookie.split(";");
+              const cookies = document.cookie.split(';');
               for (let i = 0; i < cookies.length; i++) {
                 const cookie = cookies[i];
-                const eqPos = cookie.indexOf("=");
+                const eqPos = cookie.indexOf('=');
                 const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
                 if (name.includes('sb-') || name.includes('supabase')) {
-                  document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
-                  document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=" + window.location.hostname;
+                  document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+                  document.cookie =
+                    name +
+                    '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=' +
+                    window.location.hostname;
                 }
               }
-            } catch (e) { /* ignore cookie errors */ }
-          } catch { /* ignore storage errors */ }
+            } catch (e) {
+              /* ignore cookie errors */
+            }
+          } catch {
+            /* ignore storage errors */
+          }
 
           if (mounted) {
             // IMPORTANT: cancel the outer safety timer BEFORE the retry wait
@@ -72,14 +79,15 @@ export const AuthProvider = ({ children }) => {
               return;
             }
 
-            await new Promise(r => setTimeout(r, 600));
+            await new Promise((r) => setTimeout(r, 600));
             return getSession(true); // retry once with clean storage
           }
         }
 
         if (
           typeof error?.message === 'string' &&
-          (error.message.includes('Invalid Refresh Token') || error.message.includes('Refresh Token Not Found'))
+          (error.message.includes('Invalid Refresh Token') ||
+            error.message.includes('Refresh Token Not Found'))
         ) {
           try {
             await supabase.auth.signOut();
@@ -99,46 +107,47 @@ export const AuthProvider = ({ children }) => {
 
     getSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        const hasUser = !!session?.user;
-        if (mounted) {
-          setUser(session?.user ?? null);
-          setLoading(false);
-        }
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      const hasUser = !!session?.user;
+      if (mounted) {
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }
 
-        if (event === 'TOKEN_REFRESH_FAILED') {
-          try {
-            await supabase.auth.signOut();
-          } catch {
-            // ignore
-          }
-          if (mounted && wasAuthenticated) setShowSessionModal(true);
+      if (event === 'TOKEN_REFRESH_FAILED') {
+        try {
+          await supabase.auth.signOut();
+        } catch {
+          // ignore
         }
+        if (mounted && wasAuthenticated) setShowSessionModal(true);
+      }
 
-        if (event === 'SIGNED_IN') {
-          setWasAuthenticated(true);
-          // Attempt to sync guest orders — silently skip if RPC doesn't exist
-          try {
-            const { data: syncResult } = await supabase.rpc('sync_guest_orders').throwOnError();
-            if (syncResult?.linked_count > 0) {
-              console.log(`[Auth] Linked ${syncResult.linked_count} guest orders to account.`);
-            }
-          } catch {
-            // RPC may not exist on all environments — ignore completely
+      if (event === 'SIGNED_IN') {
+        setWasAuthenticated(true);
+        // Attempt to sync guest orders — silently skip if RPC doesn't exist
+        try {
+          const { data: syncResult } = await supabase.rpc('sync_guest_orders').throwOnError();
+          if (syncResult?.linked_count > 0) {
           }
-        }
-
-        if (event === 'SIGNED_OUT') {
-          // Only show modal if we were previously authenticated and not already on an auth page
-          const isAuthPage = ['/login', '/signup', '/forgot-password'].some(path => window.location.pathname.includes(path));
-          if (mounted && wasAuthenticated && !isAuthPage) {
-            setShowSessionModal(true);
-          }
-          setWasAuthenticated(false);
+        } catch {
+          // RPC may not exist on all environments — ignore completely
         }
       }
-    );
+
+      if (event === 'SIGNED_OUT') {
+        // Only show modal if we were previously authenticated and not already on an auth page
+        const isAuthPage = ['/login', '/signup', '/forgot-password'].some((path) =>
+          window.location.pathname.includes(path),
+        );
+        if (mounted && wasAuthenticated && !isAuthPage) {
+          setShowSessionModal(true);
+        }
+        setWasAuthenticated(false);
+      }
+    });
 
     return () => {
       mounted = false;
@@ -152,7 +161,9 @@ export const AuthProvider = ({ children }) => {
   // Call this after signInWithPassword so the user is set before navigation.
   const refreshUser = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
     } catch (_) {}
   };

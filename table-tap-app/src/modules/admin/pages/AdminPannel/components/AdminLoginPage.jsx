@@ -52,14 +52,13 @@ export default function AdminLoginPage() {
       try {
         const user = await authService.getCurrentUser();
         if (user) {
-          // Check if user has admin role
           const profile = await authService.getProfile(user.id);
           if (profile && ALLOWED_ROLES.includes(profile.profile_role || profile.role)) {
             navigate('/');
           }
         }
       } catch (err) {
-        console.log('No existing session');
+        // No existing session
       }
     };
     checkSession();

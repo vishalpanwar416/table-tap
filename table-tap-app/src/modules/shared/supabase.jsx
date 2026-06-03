@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from '@supabase/supabase-js';
 
 // Resolve Supabase credentials from the most common env prefixes used across
 // the repo (CRA/Next). Falls back to placeholders so tests don't crash if the
@@ -18,8 +18,6 @@ const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefine
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase credentials missing! Check your .env file or Vercel project settings.');
-  console.log('URL present:', !!supabaseUrl);
-  console.log('Key present:', !!supabaseAnonKey);
 }
 
 // Use fallback values if env vars are missing to prevent app crash
@@ -34,7 +32,7 @@ const browserStorage = {
   getItem: (key) => {
     try {
       // 1. Try to get from Cookie (Cross-subdomain)
-      const name = key + "=";
+      const name = key + '=';
       const decodedCookie = decodeURIComponent(document.cookie);
       const ca = decodedCookie.split(';');
       for (let i = 0; i < ca.length; i++) {
@@ -85,39 +83,34 @@ const browserStorage = {
     } catch (error) {
       console.warn('Failed to remove session:', error);
     }
-  }
+  },
 };
 
-const storageAdapter = isBrowser ? browserStorage : {
-  getItem: () => null,
-  setItem: () => { },
-  removeItem: () => { }
-};
+const storageAdapter = isBrowser
+  ? browserStorage
+  : {
+      getItem: () => null,
+      setItem: () => {},
+      removeItem: () => {},
+    };
 
-const supabaseClient = createClient(
-  supabaseUrl || defaultUrl,
-  supabaseAnonKey || defaultKey,
-  {
-    auth: {
-      autoRefreshToken: isBrowser,
-      persistSession: isBrowser,
-      detectSessionInUrl: true,
-      // Force implicit flow: JioBase returns tokens in the URL hash (#access_token=…)
-      flowType: 'implicit',
-      // Use default localStorage in dev to avoid stale cookies from the old
-      // supabase.co project being returned and causing token refresh AbortErrors.
-      // Cookie adapter is only needed on production (cross-subdomain sharing).
-      storage: isBrowser && window.location.hostname.endsWith('table-tap.in')
-        ? storageAdapter
-        : undefined, // undefined = SDK uses its own localStorage
+const supabaseClient = createClient(supabaseUrl || defaultUrl, supabaseAnonKey || defaultKey, {
+  auth: {
+    autoRefreshToken: isBrowser,
+    persistSession: isBrowser,
+    detectSessionInUrl: true,
+    // Use default localStorage in dev to avoid stale cookies from the old
+    // supabase.co project being returned and causing token refresh AbortErrors.
+    // Cookie adapter is only needed on production (cross-subdomain sharing).
+    storage:
+      isBrowser && window.location.hostname.endsWith('table-tap.in') ? storageAdapter : undefined, // undefined = SDK uses its own localStorage
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10,
     },
-    realtime: {
-      params: {
-        eventsPerSecond: 10
-      }
-    }
-  });
-
+  },
+});
 
 export const supabase = supabaseClient;
 

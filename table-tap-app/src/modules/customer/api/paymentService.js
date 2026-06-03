@@ -254,18 +254,6 @@ export const createOrder = async (orderData) => {
       updated_at: new Date().toISOString(),
     };
 
-    console.log('Attempting to create order with validated data:', {
-      restaurantId: order.restaurant_id,
-      userId: order.user_id,
-      customerName: order.customer_name,
-      customerEmail: order.customer_email,
-      customerPhone: order.customer_phone,
-      tableNumber: order.table_number,
-      total: order.total,
-      itemsCount: order.items.length,
-      isGuest: !orderData.userId,
-    });
-
     const { data, error } = await supabase.from('orders').insert([order]).select().single();
 
     if (error) {
@@ -674,7 +662,6 @@ const notifyPaymentOrderMismatch = async (failedOrderData, restaurantName) => {
     if (error) console.error('Alert function error:', error);
   } catch (e) {
     // Ignore alert failures to keep the UI recovery flow active
-    console.log('Could not send remote alert, local recovery active.');
   }
 };
 
@@ -684,42 +671,76 @@ const sendOrderFailureNotification = async (failedOrderData, restaurant) => {
   return Promise.resolve();
 };
 
-// Helper: Show recovery options to user
+// Helper: Show recovery options to user — built with DOM APIs (no innerHTML) to prevent XSS
 const showPaymentRecoveryOptions = (
   paymentId,
   { retryOrderCreation, contactSupport, closeRecoveryDialog },
 ) => {
-  const recoveryDialog = document.createElement('div');
-  recoveryDialog.className =
-    'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-  recoveryDialog.innerHTML = `
-    <div class="bg-white p-6 rounded-2xl max-w-md mx-4">
-      <h3 class="text-lg font-bold mb-4 text-red-600">Payment Successful, Order Issue</h3>
-      <p class="text-gray-700 mb-4">
-        Your payment was processed successfully, but there was an issue creating your order. 
-        Don't worry - your money is safe!
-      </p>
-      <div class="mb-4">
-        <p class="text-sm text-gray-600">Payment ID: <span class="font-mono">${paymentId}</span></p>
-      </div>
-      <div class="space-y-3">
-        <button id="retryOrderBtn" class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">
-          Retry Order Creation
-        </button>
-        <button id="contactSupportBtn" class="w-full bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600">
-          Contact Support
-        </button>
-        <button id="closeRecoveryBtn" class="w-full bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300">
-          Close
-        </button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(recoveryDialog);
+  const overlay = document.createElement('div');
+  overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
 
-  document.getElementById('retryOrderBtn').onclick = retryOrderCreation;
-  document.getElementById('contactSupportBtn').onclick = contactSupport;
-  document.getElementById('closeRecoveryBtn').onclick = closeRecoveryDialog;
+  const card = document.createElement('div');
+  card.className = 'bg-white p-6 rounded-2xl max-w-md mx-4';
+
+  const title = document.createElement('h3');
+  title.className = 'text-lg font-bold mb-4 text-red-600';
+  title.textContent = 'Payment Successful, Order Issue';
+
+  const desc = document.createElement('p');
+  desc.className = 'text-gray-700 mb-4';
+  desc.textContent =
+    "Your payment was processed successfully, but there was an issue creating your order. Don't worry — your money is safe!";
+
+  const paymentIdBox = document.createElement('div');
+  paymentIdBox.className = 'mb-4';
+  const label = document.createElement('p');
+  label.className = 'text-sm text-gray-600';
+  label.textContent = 'Payment ID: ';
+  const idSpan = document.createElement('span');
+  idSpan.className = 'font-mono';
+  idSpan.textContent = String(paymentId || '');
+  label.appendChild(idSpan);
+  paymentIdBox.appendChild(label);
+
+  const btnContainer = document.createElement('div');
+  btnContainer.className = 'space-y-3';
+
+  const makeBtn = (text, cls, handler) => {
+    const btn = document.createElement('button');
+    btn.className = cls;
+    btn.textContent = text;
+    btn.onclick = handler;
+    return btn;
+  };
+
+  btnContainer.appendChild(
+    makeBtn(
+      'Retry Order Creation',
+      'w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600',
+      retryOrderCreation,
+    ),
+  );
+  btnContainer.appendChild(
+    makeBtn(
+      'Contact Support',
+      'w-full bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600',
+      contactSupport,
+    ),
+  );
+  btnContainer.appendChild(
+    makeBtn(
+      'Close',
+      'w-full bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300',
+      closeRecoveryDialog,
+    ),
+  );
+
+  card.appendChild(title);
+  card.appendChild(desc);
+  card.appendChild(paymentIdBox);
+  card.appendChild(btnContainer);
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
 };
 
 const closeRecoveryDialog = () => {

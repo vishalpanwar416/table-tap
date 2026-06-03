@@ -16,11 +16,8 @@ const OrderConfirmationPage = () => {
 
   useEffect(() => {
     const initializeOrder = async () => {
-      console.log('OrderConfirmationPage: Initializing with state:', location.state);
-
       try {
         const orderId = location.state?.orderId;
-        console.log('OrderConfirmationPage: Order ID:', orderId);
 
         if (!orderId) {
           setError('No order ID provided');
@@ -37,7 +34,6 @@ const OrderConfirmationPage = () => {
         localStorage.setItem('lastGuestOrderId', orderId);
 
         const order = await getOrderDetails(orderId);
-        console.log('OrderConfirmationPage: Retrieved order:', order);
 
         setOrderDetails(order);
         startStatusUpdates(orderId);
@@ -45,7 +41,7 @@ const OrderConfirmationPage = () => {
         // Auto-redirect to tracking page after 8 seconds
         setTimeout(() => {
           navigate('/order-tracking', {
-            state: { orderId: orderId }
+            state: { orderId: orderId },
           });
         }, 8000);
       } catch (err) {
@@ -62,14 +58,18 @@ const OrderConfirmationPage = () => {
   const startStatusUpdates = (orderId) => {
     const channel = supabase
       .channel(`order-${orderId}`)
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'orders',
-        filter: `id=eq.${orderId}`
-      }, (payload) => {
-        setOrderDetails(payload.new);
-      })
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: `id=eq.${orderId}`,
+        },
+        (payload) => {
+          setOrderDetails(payload.new);
+        },
+      )
       .subscribe();
 
     return () => {
@@ -80,7 +80,7 @@ const OrderConfirmationPage = () => {
   const handleTrackOrder = () => {
     if (orderDetails && orderDetails.id) {
       navigate('/order-tracking', {
-        state: { orderId: orderDetails.id }
+        state: { orderId: orderDetails.id },
       });
     }
   };
@@ -139,20 +139,20 @@ const OrderConfirmationPage = () => {
           className="mb-8"
           initial={{ opacity: 0, scale: 0.7 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: "spring", stiffness: 200, damping: 15 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 15 }}
         >
           <div className="relative w-24 h-24 mx-auto mb-6">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 300, damping: 12 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 12 }}
             >
               <CheckCircle className="w-24 h-24 text-green-500 drop-shadow-lg" />
             </motion.div>
             <motion.div
               className="absolute inset-0 bg-green-500 rounded-full opacity-20"
               animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.3, 0.2] }}
-              transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+              transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
             />
           </div>
         </motion.div>
@@ -170,7 +170,9 @@ const OrderConfirmationPage = () => {
           {orderDetails.order_number && (
             <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 mb-4 shadow-lg border border-white/10">
               <p className="text-xs text-gray-400">Order Number</p>
-              <p className="text-lg font-semibold text-orange-400 tracking-wider">{orderDetails.order_number}</p>
+              <p className="text-lg font-semibold text-orange-400 tracking-wider">
+                {orderDetails.order_number}
+              </p>
             </div>
           )}
 

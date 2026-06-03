@@ -67,7 +67,6 @@ const App = () => {
 
     // Offline sync listener
     const handleOnline = async () => {
-      console.log('App is online, syncing pending actions...');
       try {
         await syncPendingActions();
         toast.success('Back online! Synced offline changes.');
@@ -91,11 +90,9 @@ const App = () => {
   // Render the appropriate app based on subdomain
   const renderApp = () => {
     const pathname = location.pathname;
-    console.log('[App] Routing decision:', { isDevMode, subdomain, pathname });
 
     // In development, we use path-based routing for convenience
     if (isDevMode) {
-      console.log('[App] Using dev mode routing (React Router)');
       return (
         <Routes>
           {/* Top-level callback to prevent unmounting during auth logic */}
@@ -160,7 +157,6 @@ const App = () => {
     }
 
     if (pathname.startsWith('/admin')) {
-      console.log('[App] Loading AdminApp for /admin path');
       return (
         <Suspense fallback={<LoadingScreen message="Loading Table Tap..." />}>
           <AdminApp />
@@ -174,7 +170,6 @@ const App = () => {
     }
 
     if (pathname.startsWith('/restaurant')) {
-      console.log('[App] Loading RestaurantApp for /restaurant path');
       return (
         <Suspense fallback={<LoadingScreen message="Loading Table Tap..." />}>
           <RestaurantApp />
@@ -182,7 +177,6 @@ const App = () => {
       );
     }
 
-    console.log('[App] Loading app based on subdomain:', subdomain);
     switch (subdomain) {
       case 'app':
         return <CustomerApp />;

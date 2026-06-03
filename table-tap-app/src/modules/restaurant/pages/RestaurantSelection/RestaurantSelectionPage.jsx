@@ -670,8 +670,18 @@ const RestaurantSelectionPage = () => {
 
       console.error('Error fetching restaurants:', err);
 
-      // Handle retry for transient errors
+      // Retry once after abort/session mismatch (clear stale Supabase auth keys)
+      const isAbort = err?.name === 'AbortError' || err?.message?.includes('aborted');
       if (retryCount < 1) {
+        if (isAbort) {
+          try {
+            Object.keys(localStorage)
+              .filter((k) => k.startsWith('sb-') && k.endsWith('-auth-token'))
+              .forEach((k) => localStorage.removeItem(k));
+          } catch (e) {
+            /* ignore */
+          }
+        }
         await new Promise((r) => setTimeout(r, 300));
         return fetchRestaurants(showRefreshAnimation, force, retryCount + 1);
       }

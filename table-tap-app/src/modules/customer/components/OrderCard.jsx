@@ -1,5 +1,18 @@
 import React, { useState } from 'react';
-import { Clock, CheckCircle, XCircle, ChefHat, Calendar, ChevronDown, ChevronUp, DollarSign, IndianRupee, CreditCard, Wallet, Landmark } from 'lucide-react';
+import {
+  Clock,
+  CheckCircle,
+  XCircle,
+  ChefHat,
+  Calendar,
+  ChevronDown,
+  ChevronUp,
+  DollarSign,
+  IndianRupee,
+  CreditCard,
+  Wallet,
+  Landmark,
+} from 'lucide-react';
 
 const statusIcons = {
   pending: <Clock className="w-4 h-4 text-yellow-500" />,
@@ -7,7 +20,7 @@ const statusIcons = {
   rejected: <XCircle className="w-4 h-4 text-red-500" />,
   accepted: <ChefHat className="w-4 h-4 text-blue-500" />,
   preparing: <ChefHat className="w-4 h-4 text-purple-500" />,
-  ready: <CheckCircle className="w-4 h-4 text-green-500" />
+  ready: <CheckCircle className="w-4 h-4 text-green-500" />,
 };
 
 const statusLabels = {
@@ -16,7 +29,7 @@ const statusLabels = {
   rejected: 'Rejected',
   accepted: 'Accepted',
   preparing: 'Preparing',
-  ready: 'Ready'
+  ready: 'Ready',
 };
 
 const statusColors = {
@@ -25,7 +38,7 @@ const statusColors = {
   rejected: 'bg-red-100 text-red-800 border-red-200',
   accepted: 'bg-blue-100 text-blue-800 border-blue-200',
   preparing: 'bg-purple-100 text-purple-800 border-purple-200',
-  ready: 'bg-green-100 text-green-800 border-green-200'
+  ready: 'bg-green-100 text-green-800 border-green-200',
 };
 
 // Helper to format date
@@ -37,32 +50,30 @@ const formatDate = (dateString) => {
     day: 'numeric',
     hour: 'numeric',
     minute: 'numeric',
-    hour12: true
+    hour12: true,
   });
 };
 
 const OrderCard = ({ order, onClick, restaurantName }) => {
   const [expanded, setExpanded] = useState(false);
-  
+
   if (!order) return null;
-  
+
   const handleCardClick = (e) => {
     // Toggle expanded state
     setExpanded(!expanded);
-    
+
     // Also call the parent onClick if provided
     if (onClick) onClick(e);
   };
-  
+
   const handleViewDetails = (e) => {
     e.stopPropagation(); // Prevent triggering the card click
     setExpanded(!expanded);
   };
-  
-  console.log('OrderCard order:', order);
-  
+
   return (
-    <div 
+    <div
       onClick={handleCardClick}
       className={`bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all border mx-auto max-w-full ${expanded ? 'border-orange-300' : 'border-gray-100'} cursor-pointer`}
       style={{ fontSize: '0.95rem' }}
@@ -87,14 +98,14 @@ const OrderCard = ({ order, onClick, restaurantName }) => {
               <span>{formatDate(order.created_at || new Date())}</span>
             </div>
           </div>
-          <div className={`flex items-center px-2 py-1 rounded-full text-xs font-medium border ${statusColors[order.status]}`}>
-            <div className="mr-1">
-              {statusIcons[order.status]}
-            </div>
+          <div
+            className={`flex items-center px-2 py-1 rounded-full text-xs font-medium border ${statusColors[order.status]}`}
+          >
+            <div className="mr-1">{statusIcons[order.status]}</div>
             {statusLabels[order.status]}
           </div>
         </div>
-        
+
         {/* Compact Item Summary - Always visible */}
         <div className="flex items-center justify-between py-1 border-t border-b border-gray-100">
           <div className="flex items-center py-0.5">
@@ -105,7 +116,7 @@ const OrderCard = ({ order, onClick, restaurantName }) => {
           <div className="flex items-center font-semibold text-gray-900 text-sm">
             <span>₹{order.total?.toFixed(2) || '0.00'}</span>
           </div>
-          <button 
+          <button
             onClick={handleViewDetails}
             className={`flex items-center text-xs font-medium rounded px-2 py-0.5 ${expanded ? 'bg-orange-50 text-orange-600' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'} transition-colors`}
             tabIndex={0}
@@ -113,45 +124,50 @@ const OrderCard = ({ order, onClick, restaurantName }) => {
             {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
           </button>
         </div>
-        
+
         {/* Expanded Content */}
         {expanded && (
           <div className="mt-2 pt-1 overflow-hidden transition-all duration-300 ease-in-out bg-gray-50 rounded-lg">
             {/* Order Items */}
             <div className="mb-2">
-              <h4 className="text-xs uppercase font-medium text-gray-500 mb-1 tracking-wider">Order Items</h4>
+              <h4 className="text-xs uppercase font-medium text-gray-500 mb-1 tracking-wider">
+                Order Items
+              </h4>
               <div className="divide-y divide-gray-100">
-                {order.items && order.items.map((item, index) => (
-                  <div key={index} className="flex items-center px-2 py-2">
-                    {item.image && (
-                      <div className="w-8 h-8 rounded-md overflow-hidden mr-2 flex-shrink-0 border border-gray-200">
-                        <img 
-                          src={item.image} 
-                          alt={item.name} 
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                          }}
-                        />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <span className="text-xs font-medium text-gray-800 truncate">{item.name}</span>
-                      <span className="ml-2 text-[10px] bg-gray-100 px-1 py-0.5 rounded-full text-gray-600">
-                        x{item.quantity}
-                      </span>
-                      {item.variant && (
-                        <p className="text-[10px] text-gray-400 mt-0.5">{item.variant}</p>
+                {order.items &&
+                  order.items.map((item, index) => (
+                    <div key={index} className="flex items-center px-2 py-2">
+                      {item.image && (
+                        <div className="w-8 h-8 rounded-md overflow-hidden mr-2 flex-shrink-0 border border-gray-200">
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                            }}
+                          />
+                        </div>
                       )}
+                      <div className="flex-1 min-w-0">
+                        <span className="text-xs font-medium text-gray-800 truncate">
+                          {item.name}
+                        </span>
+                        <span className="ml-2 text-[10px] bg-gray-100 px-1 py-0.5 rounded-full text-gray-600">
+                          x{item.quantity}
+                        </span>
+                        {item.variant && (
+                          <p className="text-[10px] text-gray-400 mt-0.5">{item.variant}</p>
+                        )}
+                      </div>
+                      <div className="text-xs font-medium text-gray-900">
+                        ₹{(item.price * (item.quantity || 1)).toFixed(2)}
+                      </div>
                     </div>
-                    <div className="text-xs font-medium text-gray-900">
-                      ₹{(item.price * (item.quantity || 1)).toFixed(2)}
-                    </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             </div>
-            
+
             {/* Additional Order Details */}
             <div className="mt-1 space-y-2">
               {order.tableNumber && (
@@ -159,17 +175,21 @@ const OrderCard = ({ order, onClick, restaurantName }) => {
                   <span className="font-medium">Table {order.tableNumber}</span>
                 </div>
               )}
-              
+
               {order.specialInstructions && (
                 <div className="bg-gray-50 rounded-lg p-2 text-xs border border-gray-200">
-                  <span className="font-medium text-[10px] uppercase text-gray-500 block mb-1">Special Instructions</span>
+                  <span className="font-medium text-[10px] uppercase text-gray-500 block mb-1">
+                    Special Instructions
+                  </span>
                   <p className="text-gray-700">{order.specialInstructions}</p>
                 </div>
               )}
-              
+
               {/* Payment details */}
               <div className="bg-gray-50 rounded-lg p-2 border border-gray-200">
-                <span className="font-medium text-[10px] uppercase text-gray-500 block mb-1">Payment Summary</span>
+                <span className="font-medium text-[10px] uppercase text-gray-500 block mb-1">
+                  Payment Summary
+                </span>
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-gray-600">Subtotal</span>
                   <span className="text-gray-900">₹{order.subtotal?.toFixed(2) || '0.00'}</span>
@@ -222,14 +242,18 @@ const OrderCard = ({ order, onClick, restaurantName }) => {
                 </div>
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-gray-600">Payment Status</span>
-                  <span className={`font-medium ${
-                    order.payment_status === 'completed'
-                      ? 'text-green-600'
-                      : order.payment_status === 'pending'
-                      ? 'text-yellow-600'
-                      : 'text-gray-900'
-                  }`}>
-                    {order.payment_status ? order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1) : 'Unknown'}
+                  <span
+                    className={`font-medium ${
+                      order.payment_status === 'completed'
+                        ? 'text-green-600'
+                        : order.payment_status === 'pending'
+                          ? 'text-yellow-600'
+                          : 'text-gray-900'
+                    }`}
+                  >
+                    {order.payment_status
+                      ? order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1)
+                      : 'Unknown'}
                   </span>
                 </div>
                 <div className="border-t border-gray-200 mt-2 pt-2 flex justify-between font-semibold">

@@ -574,46 +574,83 @@ const PaymentPage = () => {
     if (!response.ok) throw new Error('Failed to send notification email');
   };
 
-  // Function to show recovery options to user
+  // Function to show recovery options to user — built with DOM APIs (no innerHTML) to prevent XSS
   const showPaymentRecoveryOptions = (
     paymentId,
     errorMessage,
     { retryOrderCreation, contactSupport, closeRecoveryDialog },
   ) => {
-    const recoveryDialog = document.createElement('div');
-    recoveryDialog.className =
+    const overlay = document.createElement('div');
+    overlay.className =
       'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-    recoveryDialog.innerHTML = `
-      <div class="bg-white p-6 rounded-2xl max-w-md mx-4">
-        <h3 class="text-lg font-bold mb-4 text-red-600">Payment Successful, Order Issue</h3>
-        <p class="text-gray-700 mb-4">
-          Your payment was processed successfully, but there was an issue creating your order. 
-          Don't worry - your money is safe!
-        </p>
-        <div class="mb-4 bg-red-50 p-3 rounded text-xs text-red-700 font-mono break-all">
-          Error: ${errorMessage || 'Unknown error'}
-        </div>
-        <div class="mb-4">
-          <p class="text-sm text-gray-600">Payment ID: <span class="font-mono">${paymentId}</span></p>
-        </div>
-        <div class="space-y-3">
-          <button id="retryOrderBtn" class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">
-            Retry Order Creation
-          </button>
-          <button id="contactSupportBtn" class="w-full bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600">
-            Contact Support
-          </button>
-          <button id="closeRecoveryBtn" class="w-full bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300">
-            Close
-          </button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(recoveryDialog);
 
-    document.getElementById('retryOrderBtn').onclick = retryOrderCreation;
-    document.getElementById('contactSupportBtn').onclick = contactSupport;
-    document.getElementById('closeRecoveryBtn').onclick = closeRecoveryDialog;
+    const card = document.createElement('div');
+    card.className = 'bg-white p-6 rounded-2xl max-w-md mx-4';
+
+    const title = document.createElement('h3');
+    title.className = 'text-lg font-bold mb-4 text-red-600';
+    title.textContent = 'Payment Successful, Order Issue';
+
+    const desc = document.createElement('p');
+    desc.className = 'text-gray-700 mb-4';
+    desc.textContent =
+      "Your payment was processed successfully, but there was an issue creating your order. Don't worry — your money is safe!";
+
+    const errorBox = document.createElement('div');
+    errorBox.className = 'mb-4 bg-red-50 p-3 rounded text-xs text-red-700 font-mono break-all';
+    errorBox.textContent = `Error: ${String(errorMessage || 'Unknown error')}`;
+
+    const paymentIdBox = document.createElement('div');
+    paymentIdBox.className = 'mb-4';
+    const paymentIdLabel = document.createElement('p');
+    paymentIdLabel.className = 'text-sm text-gray-600';
+    paymentIdLabel.textContent = 'Payment ID: ';
+    const paymentIdSpan = document.createElement('span');
+    paymentIdSpan.className = 'font-mono';
+    paymentIdSpan.textContent = String(paymentId || '');
+    paymentIdLabel.appendChild(paymentIdSpan);
+    paymentIdBox.appendChild(paymentIdLabel);
+
+    const btnContainer = document.createElement('div');
+    btnContainer.className = 'space-y-3';
+
+    const makeBtn = (text, cls, handler) => {
+      const btn = document.createElement('button');
+      btn.className = cls;
+      btn.textContent = text;
+      btn.onclick = handler;
+      return btn;
+    };
+
+    btnContainer.appendChild(
+      makeBtn(
+        'Retry Order Creation',
+        'w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600',
+        retryOrderCreation,
+      ),
+    );
+    btnContainer.appendChild(
+      makeBtn(
+        'Contact Support',
+        'w-full bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600',
+        contactSupport,
+      ),
+    );
+    btnContainer.appendChild(
+      makeBtn(
+        'Close',
+        'w-full bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300',
+        closeRecoveryDialog,
+      ),
+    );
+
+    card.appendChild(title);
+    card.appendChild(desc);
+    card.appendChild(errorBox);
+    card.appendChild(paymentIdBox);
+    card.appendChild(btnContainer);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
   };
 
   // Function to retry order creation with stored payment data

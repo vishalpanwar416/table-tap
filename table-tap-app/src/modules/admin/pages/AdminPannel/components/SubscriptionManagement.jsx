@@ -349,11 +349,6 @@ const SubscriptionManagementV2 = () => {
   const handlePlanSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
 
-    console.log('--- Submitting Plan ---');
-    console.log('Mode:', editingPlan ? 'Edit' : 'Create');
-    console.log('Original Plan:', editingPlan);
-    console.log('Form State:', planForm);
-
     try {
       setProcessingId('plan');
       setError(null);
@@ -380,22 +375,16 @@ const SubscriptionManagementV2 = () => {
         cycle_discounts: planForm.cycle_discounts || {},
       };
 
-      console.log('Payload constructed:', payload);
-
       if (!payload.name || !payload.key) {
         throw new Error('Name and Key are required fields.');
       }
 
       let response;
       if (editingPlan && editingPlan.id) {
-        console.log('Calling updateSubscriptionPlan with ID:', editingPlan.id);
         response = await updateSubscriptionPlan(editingPlan.id, payload);
       } else {
-        console.log('Calling createSubscriptionPlan');
         response = await createSubscriptionPlan(payload);
       }
-
-      console.log('Service Response:', response);
 
       if (response.error) throw new Error(response.error);
       if (!response.data)
@@ -406,9 +395,7 @@ const SubscriptionManagementV2 = () => {
       setSuccess(editingPlan ? 'Changes saved successfully!' : 'Plan created successfully!');
 
       // Refresh the data to reflect changes in the UI
-      console.log('Refreshing data...');
       await fetchData();
-      console.log('Data refreshed.');
 
       setTimeout(() => setSuccess(null), 3000);
     } catch (error) {
