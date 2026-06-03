@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { supabase } from '../../shared/supabase';
+import { supabase } from '../supabase';
 import {
   getManagerNotifications,
   markAllManagerNotificationsAsRead,
+  markNotificationAsRead,
 } from '../api/notificationService';
 import { useAdminRestaurant } from './AdminRestaurantContext';
 
@@ -26,13 +27,11 @@ export const ManagerNotificationProvider = ({ children }) => {
 
     fetchManagerNotifications(userRestaurantId);
 
-    // Tear down any existing channel before creating a new one
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }
 
-    // Use a unique channel name with crypto to avoid StrictMode collisions
     const channelId = `admin-notifications-${userRestaurantId}-${Math.random().toString(36).slice(2)}`;
     const channel = supabase
       .channel(channelId)
@@ -73,12 +72,24 @@ export const ManagerNotificationProvider = ({ children }) => {
     await fetchManagerNotifications(userRestaurantId);
   };
 
+  const markAsRead = async (notificationId) => {
+    try {
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n)),
+      );
+      await markNotificationAsRead(notificationId);
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+    }
+  };
+
   return (
     <ManagerNotificationContext.Provider
       value={{
         notifications,
         unreadCount,
         refreshNotifications: fetchManagerNotifications,
+        markAsRead,
         markAllAsRead,
       }}
     >

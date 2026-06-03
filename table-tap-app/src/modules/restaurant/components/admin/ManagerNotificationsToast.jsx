@@ -1,17 +1,54 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, X, Check, AlertCircle, Trash2, Clock, ChevronRight, ShieldAlert, CreditCard } from 'lucide-react';
+import {
+  Bell,
+  X,
+  Check,
+  AlertCircle,
+  Trash2,
+  Clock,
+  ChevronRight,
+  ShieldAlert,
+  CreditCard,
+} from 'lucide-react';
 import { useManagerNotifications } from '../../../shared/context/ManagerNotificationContext';
 import { formatDistanceToNow } from 'date-fns';
 
-const ManagerNotificationsToast = ({ buttonClassName = "text-gray-500 hover:bg-gray-100 hover:text-gray-700" }) => {
+const ManagerNotificationsToast = ({
+  buttonClassName = 'text-gray-500 hover:bg-gray-100 hover:text-gray-700',
+  onSelectTab,
+}) => {
   // Use context safely
   const context = useManagerNotifications();
   const notifications = context?.notifications || [];
   const unreadCount = context?.unreadCount || 0;
-  const markAllAsRead = context?.markAllAsRead || (() => { });
+  const markAllAsRead = context?.markAllAsRead || (() => {});
+  const markAsRead = context?.markAsRead || (() => {});
 
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  const handleNotificationClick = async (notification) => {
+    try {
+      // Mark as read
+      if (!notification.read) {
+        await markAsRead(notification.id);
+      }
+
+      // Deep link navigation
+      const orderId = notification.order_id || notification.metadata?.order_id;
+      if (orderId && onSelectTab) {
+        // Navigate to orders tab
+        onSelectTab('orders');
+        // Store the order ID in URL for OrderManagement to pick up
+        const url = new URL(window.location.href);
+        url.searchParams.set('orderId', orderId);
+        window.history.replaceState({}, '', url.toString());
+        setIsOpen(false);
+      }
+    } catch (error) {
+      console.error('Error handling notification click:', error);
+    }
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -105,11 +142,13 @@ const ManagerNotificationsToast = ({ buttonClassName = "text-gray-500 hover:bg-g
                   <Bell className="w-8 h-8 text-orange-300" />
                 </div>
                 <h4 className="text-gray-900 font-semibold mb-1">All caught up!</h4>
-                <p className="text-gray-500 text-sm max-w-[200px]">You don't have any new notifications at the moment.</p>
+                <p className="text-gray-500 text-sm max-w-[200px]">
+                  You don't have any new notifications at the moment.
+                </p>
               </div>
             ) : (
               <div className="pb-2">
-                {['Today', 'Yesterday', 'Older'].map(group => {
+                {['Today', 'Yesterday', 'Older'].map((group) => {
                   const groupItems = groupedNotifications[group];
                   if (!groupItems || groupItems.length === 0) return null;
 
@@ -127,12 +166,16 @@ const ManagerNotificationsToast = ({ buttonClassName = "text-gray-500 hover:bg-g
                           return (
                             <div
                               key={notification.id}
-                              className={`group relative p-4 transition-all duration-200 hover:bg-gray-50 ${!notification.read
-                                  ? isSubExpired ? 'bg-red-50/60'
-                                    : isSubExpiring ? 'bg-amber-50/60'
+                              onClick={() => handleNotificationClick(notification)}
+                              className={`group relative p-4 transition-all duration-200 cursor-pointer hover:bg-gray-50 ${
+                                !notification.read
+                                  ? isSubExpired
+                                    ? 'bg-red-50/60'
+                                    : isSubExpiring
+                                      ? 'bg-amber-50/60'
                                       : 'bg-orange-50/30'
                                   : ''
-                                }`}
+                              }`}
                             >
                               <div className="flex items-start gap-3.5">
                                 {/* Icon */}
@@ -166,21 +209,31 @@ const ManagerNotificationsToast = ({ buttonClassName = "text-gray-500 hover:bg-g
                                 {/* Content */}
                                 <div className="flex-1 min-w-0">
                                   <div className="flex justify-between items-start gap-2">
-                                    <p className={`text-sm leading-tight ${!notification.read
-                                        ? isSubExpired ? 'font-bold text-red-700'
-                                          : isSubExpiring ? 'font-bold text-amber-700'
-                                            : 'font-bold text-gray-900'
-                                        : 'font-medium text-gray-700'
-                                      }`}>
+                                    <p
+                                      className={`text-sm leading-tight ${
+                                        !notification.read
+                                          ? isSubExpired
+                                            ? 'font-bold text-red-700'
+                                            : isSubExpiring
+                                              ? 'font-bold text-amber-700'
+                                              : 'font-bold text-gray-900'
+                                          : 'font-medium text-gray-700'
+                                      }`}
+                                    >
                                       {notification.title}
                                     </p>
                                     <span className="text-[10px] text-gray-400 whitespace-nowrap flex-shrink-0 pt-0.5 font-medium">
-                                      {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true }).replace('about ', '')}
+                                      {formatDistanceToNow(new Date(notification.created_at), {
+                                        addSuffix: true,
+                                      }).replace('about ', '')}
                                     </span>
                                   </div>
 
-                                  <p className={`text-sm mt-1 leading-relaxed ${!notification.read ? 'text-gray-800' : 'text-gray-500'
-                                    }`}>
+                                  <p
+                                    className={`text-sm mt-1 leading-relaxed ${
+                                      !notification.read ? 'text-gray-800' : 'text-gray-500'
+                                    }`}
+                                  >
                                     {notification.message}
                                   </p>
 
@@ -190,10 +243,11 @@ const ManagerNotificationsToast = ({ buttonClassName = "text-gray-500 hover:bg-g
                                       href="https://table-tap.in/#pricing"
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className={`inline-flex items-center gap-1 mt-2 text-xs font-bold px-3 py-1.5 rounded-full transition-colors ${isSubExpired
+                                      className={`inline-flex items-center gap-1 mt-2 text-xs font-bold px-3 py-1.5 rounded-full transition-colors ${
+                                        isSubExpired
                                           ? 'bg-red-100 text-red-700 hover:bg-red-200'
                                           : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-                                        }`}
+                                      }`}
                                     >
                                       <CreditCard className="w-3 h-3" />
                                       Renew Subscription
@@ -216,14 +270,18 @@ const ManagerNotificationsToast = ({ buttonClassName = "text-gray-500 hover:bg-g
           <div className="p-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between gap-2">
             <button
               className="text-xs font-medium text-gray-500 hover:text-gray-800 transition-colors px-2 py-1.5 rounded hover:bg-gray-200/50 flex items-center gap-1.5"
-              onClick={() => {/* Add functionality later */ }}
+              onClick={() => {
+                /* Add functionality later */
+              }}
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>Clear all</span>
             </button>
             <button
               className="text-xs font-semibold text-orange-600 hover:text-orange-700 transition-colors px-2 py-1.5 rounded hover:bg-orange-50 flex items-center gap-1.5"
-              onClick={() => {/* Navigate to full notifications page if exists */ setIsOpen(false); }}
+              onClick={() => {
+                /* Navigate to full notifications page if exists */ setIsOpen(false);
+              }}
             >
               <span>View History</span>
               <ChevronRight className="w-3.5 h-3.5" />

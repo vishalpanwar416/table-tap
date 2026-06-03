@@ -15,31 +15,45 @@ import {
   Building2,
   Map,
   Search,
-  DollarSign
+  DollarSign,
 } from 'lucide-react';
 import tableTapLogo from '../../../../assets/icons/logott.png';
 import ManagerNotificationsToast from './ManagerNotificationsToast';
 
-const MobileNav = ({ showMobileNav, setShowMobileNav, activeTab, setActiveTab, menuItems, handleLogout, currentUser, restaurantName, restaurantLogoUrl, userRole, searchTerm, setSearchTerm }) => {
+const MobileNav = ({
+  showMobileNav,
+  setShowMobileNav,
+  activeTab,
+  setActiveTab,
+  menuItems,
+  handleLogout,
+  currentUser,
+  restaurantName,
+  restaurantLogoUrl,
+  userRole,
+  searchTerm,
+  setSearchTerm,
+  onSelectTab,
+}) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   // Map icon strings to actual components
   const getIcon = (iconName) => {
     const icons = {
-      'LayoutDashboard': LayoutDashboard,
-      'Utensils': Utensils,
-      'ShoppingCart': ShoppingCart,
-      'Users': Users,
-      'Tag': Tag,
-      'QrCode': QrCode,
-      'BarChart3': BarChart3,
-      'Package': Package,
-      'Clock': Clock,
-      'Settings': Settings,
-      'ShoppingBag': ShoppingBag,
-      'Building2': Building2,
-      'Map': Map,
-      'DollarSign': DollarSign
+      LayoutDashboard: LayoutDashboard,
+      Utensils: Utensils,
+      ShoppingCart: ShoppingCart,
+      Users: Users,
+      Tag: Tag,
+      QrCode: QrCode,
+      BarChart3: BarChart3,
+      Package: Package,
+      Clock: Clock,
+      Settings: Settings,
+      ShoppingBag: ShoppingBag,
+      Building2: Building2,
+      Map: Map,
+      DollarSign: DollarSign,
     };
 
     const IconComponent = icons[iconName];
@@ -115,7 +129,7 @@ const MobileNav = ({ showMobileNav, setShowMobileNav, activeTab, setActiveTab, m
               <div className="flex flex-col min-w-0">
                 <span className="truncate">{restaurantName || 'Dashboard'}</span>
                 <span className="text-xs text-gray-400 font-normal truncate">
-                  {menuItems.find(item => item.id === activeTab)?.label || 'Dashboard'}
+                  {menuItems.find((item) => item.id === activeTab)?.label || 'Dashboard'}
                 </span>
               </div>
             </h1>
@@ -168,10 +182,11 @@ const MobileNav = ({ showMobileNav, setShowMobileNav, activeTab, setActiveTab, m
                         setActiveTab(item.id);
                         setShowMobileNav(false);
                       }}
-                      className={`flex items-center w-full p-3 rounded-lg transition-colors ${activeTab === item.id
-                        ? 'bg-orange-500 text-white'
-                        : 'hover:bg-gray-700 text-gray-300'
-                        }`}
+                      className={`flex items-center w-full p-3 rounded-lg transition-colors ${
+                        activeTab === item.id
+                          ? 'bg-orange-500 text-white'
+                          : 'hover:bg-gray-700 text-gray-300'
+                      }`}
                     >
                       {getIcon(item.icon)}
                       <span>{item.label}</span>

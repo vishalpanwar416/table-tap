@@ -824,9 +824,10 @@ const AdminDashboard = () => {
           currentUser={currentUser}
           restaurantName={restaurant?.name}
           restaurantLogoUrl={restaurant?.logo_url}
-          userRole={contextUserRole}
+          userRole={userRole}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
+          onSelectTab={setActiveTab}
         />
         <LogoutPopup isOpen={showLogoutPopup} onClose={() => setShowLogoutPopup(false)} />
 
@@ -911,7 +912,7 @@ const AdminDashboard = () => {
               )}
 
               <div className="hidden md:flex items-center gap-4">
-                <ManagerNotificationsToast />
+                <ManagerNotificationsToast onSelectTab={setActiveTab} />
                 <div className="relative text-gray-600">
                   <input
                     type="search"
