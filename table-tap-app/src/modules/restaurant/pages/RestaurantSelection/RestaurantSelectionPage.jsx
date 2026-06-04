@@ -658,12 +658,13 @@ const RestaurantSelectionPage = () => {
       const restaurantsData = data || [];
       setRestaurants(restaurantsData);
 
-      // Save to persistent IndexedDB cache for next refresh
-      if (restaurantsData.length > 0) {
-        import('../../../shared/utils/offlineStorage').then(({ offlineStorage }) => {
-          offlineStorage.saveRestaurants(restaurantsData);
-        });
-      }
+      // Sync the persistent IndexedDB cache to this authoritative result.
+      // Persist even when empty so a stale cache (e.g. restaurants whose
+      // subscription has since lapsed) gets cleared instead of flashing on
+      // the next mount's optimistic cache load. saveRestaurants([]) clears the store.
+      import('../../../shared/utils/offlineStorage').then(({ offlineStorage }) => {
+        offlineStorage.saveRestaurants(restaurantsData);
+      });
     } catch (err) {
       // Ignore abort errors as they are intentional
       if (err.name === 'AbortError' || err.message?.includes('aborted')) return;
