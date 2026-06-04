@@ -1,9 +1,23 @@
 import { supabase } from '../../shared/supabase';
+import { logAdminActivity, ACTIVITY_TYPES } from './adminActivityLogService';
 
 // ========= SUBSCRIPTION MANAGEMENT WITH DATABASE TABLE =========
 // Uses subscriptions table with automatic restaurant status updates
 
 // Master data is now fetched from database tables: subscription_plans and billing_cycles
+
+// Best-effort actor resolution for the admin activity log (never throws / blocks).
+const getActor = async () => {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { user_id: null, user_name: 'System' };
+    return { user_id: user.id, user_name: user.email || 'Admin' };
+  } catch {
+    return { user_id: null, user_name: 'System' };
+  }
+};
 
 /**
  * Get all subscription plans from database
@@ -315,6 +329,26 @@ export const assignSubscriptionToRestaurant = async (subscriptionData) => {
       console.error('subscription_history insert failed (audit trail missing):', historyError);
     }
 
+    // Surface in the admin Activity Logs (non-fatal).
+    const actor = await getActor();
+    await logAdminActivity({
+      activity_type: ACTIVITY_TYPES.SUBSCRIPTION_CREATED,
+      activity_name: 'Subscription assigned',
+      restaurant_id: data.restaurant_id,
+      user_id: actor.user_id,
+      user_name: actor.user_name,
+      target_type: 'subscription',
+      target_id: data.id,
+      target_name: data.restaurant?.name || null,
+      status: 'success',
+      details: {
+        plan: plan.key,
+        billing_cycle: subscriptionData.billing_cycle || 'monthly',
+        total_amount: totalAmount,
+      },
+      description: `Assigned ${plan.name || plan.key} plan to ${data.restaurant?.name || 'restaurant'}`,
+    });
+
     return {
       data: {
         ...data,
@@ -411,6 +445,26 @@ export const updateRestaurantSubscription = async (subscriptionId, updates) => {
       },
     ]);
 
+    const actor = await getActor();
+    await logAdminActivity({
+      activity_type: ACTIVITY_TYPES.SUBSCRIPTION_RENEWED,
+      activity_name: 'Subscription updated',
+      restaurant_id: data.restaurant_id,
+      user_id: actor.user_id,
+      user_name: actor.user_name,
+      target_type: 'subscription',
+      target_id: subscriptionId,
+      target_name: data.restaurant?.name || null,
+      status: 'success',
+      details: {
+        old_plan: currentSub?.plan_name || null,
+        new_plan: plan.key,
+        billing_cycle: updates.billing_cycle || 'monthly',
+        total_amount: totalAmount,
+      },
+      description: `Updated subscription for ${data.restaurant?.name || 'restaurant'} to ${plan.name || plan.key} plan`,
+    });
+
     return {
       data: {
         ...data,
@@ -477,6 +531,21 @@ export const cancelRestaurantSubscription = async (subscriptionId, reason = '') 
       },
     ]);
 
+    const actor = await getActor();
+    await logAdminActivity({
+      activity_type: ACTIVITY_TYPES.SUBSCRIPTION_CANCELLED,
+      activity_name: 'Subscription cancelled',
+      restaurant_id: data.restaurant_id,
+      user_id: actor.user_id,
+      user_name: actor.user_name,
+      target_type: 'subscription',
+      target_id: subscriptionId,
+      target_name: data.restaurant?.name || null,
+      status: 'success',
+      details: { reason: reason || null, old_status: currentSub?.status || null },
+      description: `Cancelled subscription for ${data.restaurant?.name || 'restaurant'}${reason ? ` (${reason})` : ''}`,
+    });
+
     return { data, error: null };
   } catch (error) {
     return { data: null, error: error.message };
@@ -537,6 +606,21 @@ export const reactivateSubscription = async (subscriptionId, durationMonths = 1)
         notes: 'Subscription reactivated',
       },
     ]);
+
+    const actor = await getActor();
+    await logAdminActivity({
+      activity_type: ACTIVITY_TYPES.SUBSCRIPTION_RENEWED,
+      activity_name: 'Subscription reactivated',
+      restaurant_id: data.restaurant_id,
+      user_id: actor.user_id,
+      user_name: actor.user_name,
+      target_type: 'subscription',
+      target_id: subscriptionId,
+      target_name: data.restaurant?.name || null,
+      status: 'success',
+      details: { old_status: currentSub?.status || null, duration_months: durationMonths },
+      description: `Reactivated subscription for ${data.restaurant?.name || 'restaurant'}`,
+    });
 
     return { data, error: null };
   } catch (error) {
@@ -717,6 +801,7 @@ export const processExpiredSubscriptions = async () => {
 
     // Update each expired subscription - only change subscription status, NOT restaurant
     let processedCount = 0;
+    const actor = await getActor();
     for (const sub of expiredSubs) {
       const { error: updateError } = await supabase
         .from('subscriptions')
@@ -738,6 +823,18 @@ export const processExpiredSubscriptions = async () => {
             notes: 'Subscription expired - restaurant hidden from customers until renewed',
           },
         ]);
+        await logAdminActivity({
+          activity_type: ACTIVITY_TYPES.SUBSCRIPTION_EXPIRED,
+          activity_name: 'Subscription expired',
+          restaurant_id: sub.restaurant_id,
+          user_id: actor.user_id,
+          user_name: actor.user_name,
+          target_type: 'subscription',
+          target_id: sub.id,
+          status: 'success',
+          details: { old_status: sub.status, end_date: sub.end_date },
+          description: 'Subscription expired — restaurant hidden from customers until renewed',
+        });
         processedCount++;
       }
     }
