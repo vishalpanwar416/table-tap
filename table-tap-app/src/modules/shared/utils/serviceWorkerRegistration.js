@@ -1,13 +1,13 @@
-const CACHE_VERSION = '1.0.0';
+const CACHE_VERSION = '1.1.0';
 
 // Function to clear all caches
 export function clearAllCaches() {
   if ('caches' in window) {
-    return caches.keys().then(cacheNames => {
+    return caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames.map(cacheName => {
+        cacheNames.map((cacheName) => {
           return caches.delete(cacheName);
-        })
+        }),
       );
     });
   }
@@ -17,11 +17,11 @@ export function clearAllCaches() {
 // Function to unregister service worker
 export function unregisterServiceWorker() {
   if ('serviceWorker' in navigator) {
-    return navigator.serviceWorker.getRegistrations().then(registrations => {
+    return navigator.serviceWorker.getRegistrations().then((registrations) => {
       return Promise.all(
-        registrations.map(registration => {
+        registrations.map((registration) => {
           return registration.unregister();
-        })
+        }),
       );
     });
   }
@@ -29,13 +29,22 @@ export function unregisterServiceWorker() {
 }
 
 export function register() {
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      const swUrl = `${process.env.PUBLIC_URL}/sw.js?v=${CACHE_VERSION}`;
-      // Always register the service worker, no dev-only logic
-      registerServiceWorker(swUrl);
-    });
+  if (!('serviceWorker' in navigator)) return;
+
+  // The service worker is a production-only optimisation. In development it
+  // caches the app bundle and (previously) cross-origin API responses, which
+  // serves stale code/data and breaks HMR. So never register in dev — and
+  // proactively tear down any SW + caches a previous dev session left behind,
+  // otherwise localhost keeps running the last-cached bundle.
+  if (process.env.NODE_ENV !== 'production') {
+    unregisterServiceWorker().then(clearAllCaches);
+    return;
   }
+
+  window.addEventListener('load', () => {
+    const swUrl = `${process.env.PUBLIC_URL}/sw.js?v=${CACHE_VERSION}`;
+    registerServiceWorker(swUrl);
+  });
 }
 
 function registerServiceWorker(swUrl) {
@@ -57,9 +66,8 @@ function registerServiceWorker(swUrl) {
               // content until all client tabs are closed.
               console.log(
                 'New content is available and will be used when all ' +
-                'tabs for this page are closed.'
+                  'tabs for this page are closed.',
               );
-
             } else {
               // At this point, everything has been precached.
             }
@@ -67,8 +75,7 @@ function registerServiceWorker(swUrl) {
         };
       };
     })
-    .catch((error) => {
-    });
+    .catch((error) => {});
 }
 
 export function unregister() {
@@ -77,7 +84,6 @@ export function unregister() {
       .then((registration) => {
         registration.unregister();
       })
-      .catch((error) => {
-      });
+      .catch((error) => {});
   }
-} 
+}

@@ -1,38 +1,20 @@
-const CACHE_VERSION = '1.0.0';
+const CACHE_VERSION = '1.1.0';
 const CACHE_NAME = `table-tap-v${CACHE_VERSION}`;
 const STATIC_CACHE = `static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-v${CACHE_VERSION}`;
-const API_CACHE = `api-v${CACHE_VERSION}`;
 
-const STATIC_ASSETS = [
-  '/',
-  '/static/js/bundle.js',
-  '/static/css/main.css',
-  '/manifest.json',
-  '/favicon.ico'
-];
+// Only precache stable, always-present app-shell entry points. Hashed bundles
+// (/static/js/main.<hash>.js) are cached at runtime; precaching fixed bundle
+// paths breaks because the filenames differ between dev and each prod build.
+const STATIC_ASSETS = ['/', '/manifest.json', '/favicon.ico'];
 
-const API_ENDPOINTS = [
-  '/api/fooditems',
-  '/api/bestsellers',
-  '/api/recommendations'
-];
-
-// Install event - cache static assets
+// Install event - precache the app shell (resiliently: a single failed entry
+// must not abort the whole install).
 self.addEventListener('install', (event) => {
-  console.log('Service Worker installing...');
-
   event.waitUntil(
-    Promise.all([
-      caches.open(STATIC_CACHE).then((cache) => {
-        console.log('Caching static assets');
-        return cache.addAll(STATIC_ASSETS);
-      }),
-      caches.open(API_CACHE).then((cache) => {
-        console.log('Caching API endpoints');
-        return cache.addAll(API_ENDPOINTS);
-      })
-    ])
+    caches.open(STATIC_CACHE).then((cache) =>
+      Promise.all(STATIC_ASSETS.map((url) => cache.add(url).catch(() => {})))
+    )
   );
   self.skipWaiting();
 });
@@ -45,9 +27,8 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          // In development, clear all old caches
-          if (![STATIC_CACHE, DYNAMIC_CACHE, API_CACHE].includes(cacheName)) {
-            console.log('Deleting cache:', cacheName);
+          // Drop caches from older versions (including the old API cache).
+          if (![STATIC_CACHE, DYNAMIC_CACHE].includes(cacheName)) {
             return caches.delete(cacheName);
           }
         })
@@ -57,74 +38,59 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch event - serve from cache with network fallback
+// Fetch event
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip caching for unsupported schemes
-  if (url.protocol === 'chrome-extension:' || url.protocol === 'chrome:' || url.protocol === 'moz-extension:') {
-    return;
-  }
+  // Only ever touch same-origin GETs over http(s). Cross-origin requests
+  // (Supabase REST/Realtime, CDNs, analytics, etc.) MUST go straight to the
+  // network — caching them cache-first served stale/empty API data (e.g. the
+  // restaurant list and activity logs) indefinitely.
+  if (request.method !== 'GET') return;
+  if (url.origin !== self.location.origin) return;
+  if (!url.protocol.startsWith('http')) return;
 
-  // Handle API requests
-  if (url.pathname.startsWith('/api/')) {
+  // App shell (navigation + JS/CSS): network-first, so a new deploy is picked
+  // up immediately. Fall back to cache only when the network is unavailable.
+  const isAppShell =
+    request.mode === 'navigate' ||
+    request.destination === 'document' ||
+    request.destination === 'script' ||
+    request.destination === 'style';
+
+  if (isAppShell) {
     event.respondWith(
-      caches.open(API_CACHE).then((cache) => {
-        return cache.match(request).then((response) => {
-          if (response) {
-            // Return cached response and update in background
-            fetch(request).then((freshResponse) => {
-              // Only cache if the response is valid and the request scheme is supported
-              if (freshResponse.status === 200 && url.protocol.startsWith('http')) {
-                cache.put(request, freshResponse.clone());
-              }
-            }).catch(() => {
-              // Ignore fetch errors for background updates
-            });
-            return response;
+      fetch(request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(DYNAMIC_CACHE).then((cache) => cache.put(request, clone));
           }
-
-          // Fetch from network and cache
-          return fetch(request).then((response) => {
-            if (response.status === 200 && url.protocol.startsWith('http')) {
-              cache.put(request, response.clone());
-            }
-            return response;
-          });
-        });
-      })
+          return response;
+        })
+        .catch(() =>
+          caches.match(request).then((cached) => cached || caches.match('/')),
+        ),
     );
     return;
   }
 
-  // Handle static assets
-  if (request.method === 'GET' && request.destination !== 'document') {
-    event.respondWith(
-      caches.match(request).then((response) => {
-        return response || fetch(request).then((fetchResponse) => {
-          // Cache successful responses only for supported schemes
-          if (fetchResponse.status === 200 && url.protocol.startsWith('http')) {
-            const responseClone = fetchResponse.clone();
-            caches.open(DYNAMIC_CACHE).then((cache) => {
-              cache.put(request, responseClone);
-            });
+  // Other same-origin static assets (images, fonts, manifest): cache-first is
+  // safe because CRA emits content-hashed filenames in production.
+  event.respondWith(
+    caches.match(request).then(
+      (cached) =>
+        cached ||
+        fetch(request).then((response) => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(DYNAMIC_CACHE).then((cache) => cache.put(request, clone));
           }
-          return fetchResponse;
-        });
-      })
-    );
-    return;
-  }
-
-  // Handle navigation requests
-  if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request).catch(() => {
-        return caches.match('/');
-      })
-    );
-  }
+          return response;
+        }),
+    ),
+  );
 });
 
 // Background sync for offline actions
