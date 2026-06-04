@@ -141,12 +141,18 @@ export const getAdminActivityLogs = async (filters = {}, page = 1, pageSize = 50
   try {
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
+    const timeoutSignal =
+      typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(15000) : null;
 
     let query = supabase
       .from('admin_activity_logs')
       .select('*', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(from, to);
+
+    if (timeoutSignal) {
+      query = query.abortSignal(timeoutSignal);
+    }
 
     // Apply filters
     if (filters.activity_type) {
@@ -199,9 +205,19 @@ export const getEmailActivityLogs = async (filters = {}, page = 1, pageSize = 50
 /**
  * Get activity statistics
  */
-export const getActivityStats = async (days = 7) => {
+export const getActivityStats = async (days = 7, filters = {}) => {
   try {
+    const timeoutSignal =
+      typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(15000) : null;
     let query = supabase.from('admin_activity_logs').select('activity_type, status, created_at');
+
+    if (timeoutSignal) {
+      query = query.abortSignal(timeoutSignal);
+    }
+
+    if (filters.restaurant_id) {
+      query = query.eq('restaurant_id', filters.restaurant_id);
+    }
 
     // days === null means "all time" — don't constrain by date so the stat
     // cards match the list when the "All Time" range is selected.

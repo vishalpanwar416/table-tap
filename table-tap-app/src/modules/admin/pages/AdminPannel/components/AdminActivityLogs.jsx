@@ -37,7 +37,7 @@ import {
   EMAIL_TYPES,
 } from '../../../api/adminActivityLogService';
 
-const AdminActivityLogs = ({ searchTerm }) => {
+const AdminActivityLogs = ({ searchTerm, selectedRestaurantId }) => {
   const [logs, setLogs] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -194,9 +194,45 @@ const AdminActivityLogs = ({ searchTerm }) => {
   useEffect(() => {
     fetchLogs(true);
     fetchStats();
-  }, [activityTypeFilter, statusFilter, dateFilter, searchTerm]);
+  }, [activityTypeFilter, statusFilter, dateFilter, searchTerm, selectedRestaurantId]);
 
-  const fetchLogs = async (reset = false) => {
+  const buildFilters = () => {
+    const filters = {};
+
+    if (activityTypeFilter !== 'all') {
+      filters.activity_type = activityTypeFilter;
+    }
+    if (statusFilter !== 'all') {
+      filters.status = statusFilter;
+    }
+    if (selectedRestaurantId) {
+      filters.restaurant_id = selectedRestaurantId;
+    }
+    if (dateFilter !== 'all') {
+      const dateFrom = new Date();
+      switch (dateFilter) {
+        case '24hours':
+          dateFrom.setHours(dateFrom.getHours() - 24);
+          break;
+        case '7days':
+          dateFrom.setDate(dateFrom.getDate() - 7);
+          break;
+        case '30days':
+          dateFrom.setDate(dateFrom.getDate() - 30);
+          break;
+        default:
+          break;
+      }
+      filters.date_from = dateFrom.toISOString();
+    }
+    if (searchTerm) {
+      filters.search = searchTerm;
+    }
+
+    return filters;
+  };
+
+  const fetchLogs = async (reset = false, nextPage = page) => {
     try {
       if (reset) {
         setLoading(true);
@@ -205,38 +241,8 @@ const AdminActivityLogs = ({ searchTerm }) => {
         setLoadingMore(true);
       }
 
-      const currentPage = reset ? 1 : page;
-
-      // Build filters
-      const filters = {};
-      if (activityTypeFilter !== 'all') {
-        filters.activity_type = activityTypeFilter;
-      }
-      if (statusFilter !== 'all') {
-        filters.status = statusFilter;
-      }
-      if (dateFilter !== 'all') {
-        const dateFrom = new Date();
-        switch (dateFilter) {
-          case '24hours':
-            dateFrom.setHours(dateFrom.getHours() - 24);
-            break;
-          case '7days':
-            dateFrom.setDate(dateFrom.getDate() - 7);
-            break;
-          case '30days':
-            dateFrom.setDate(dateFrom.getDate() - 30);
-            break;
-          default:
-            break;
-        }
-        if (dateFilter !== 'all') {
-          filters.date_from = dateFrom.toISOString();
-        }
-      }
-      if (searchTerm) {
-        filters.search = searchTerm;
-      }
+      const currentPage = reset ? 1 : nextPage;
+      const filters = buildFilters();
 
       const {
         data,
@@ -267,13 +273,14 @@ const AdminActivityLogs = ({ searchTerm }) => {
     // Keep the stat cards in sync with the selected range; 'all' => no date filter.
     const days =
       dateFilter === '24hours' ? 1 : dateFilter === '7days' ? 7 : dateFilter === 'all' ? null : 30;
-    const { data } = await getActivityStats(days);
+    const { data } = await getActivityStats(days, { restaurant_id: selectedRestaurantId });
     setStats(data);
   };
 
   const loadMore = () => {
-    setPage((prev) => prev + 1);
-    fetchLogs(false);
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchLogs(false, nextPage);
   };
 
   const getActivityIcon = (type) => {

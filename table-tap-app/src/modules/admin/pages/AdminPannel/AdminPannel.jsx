@@ -151,6 +151,9 @@ const AdminPanel = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const navigate = useNavigate();
+  const selectedActivityRestaurantId = restaurants.some((r) => r.id === selectedRestaurantId)
+    ? selectedRestaurantId
+    : '';
 
   // Load user profile data
   useEffect(() => {
@@ -670,7 +673,10 @@ const AdminPanel = () => {
       case 'activity':
         return (
           <Suspense fallback={<LoadingScreen variant="page" message="Loading..." />}>
-            <AdminActivityLogs searchTerm={searchTerm} />
+            <AdminActivityLogs
+              searchTerm={searchTerm}
+              selectedRestaurantId={selectedActivityRestaurantId}
+            />
           </Suspense>
         );
       case 'settings':

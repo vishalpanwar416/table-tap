@@ -103,6 +103,9 @@ const MobileAdminHeader = ({
 
   const restaurantStats = getRestaurantStats();
   const staffStats = getStaffStats();
+  const hasValidRestaurantFilter = restaurants.some((r) => r.id === selectedRestaurantId);
+  const restaurantFilterValue =
+    activeTab === 'restaurants' || hasValidRestaurantFilter ? selectedRestaurantId : '';
 
   const handleClearFilters = () => {
     setSearchTerm('');
@@ -118,7 +121,7 @@ const MobileAdminHeader = ({
 
   const hasFilters =
     searchTerm ||
-    selectedRestaurantId ||
+    restaurantFilterValue ||
     selectedCuisineType ||
     selectedStaffRole ||
     selectedConnectionStatus;
@@ -243,14 +246,16 @@ const MobileAdminHeader = ({
                   )}
                 </div>
 
-                {/* Status/Restaurant Filter - Only for Restaurants and Staff */}
-                {(activeTab === 'restaurants' || activeTab === 'staff') && (
+                {/* Status/Restaurant Filter */}
+                {(activeTab === 'restaurants' ||
+                  activeTab === 'staff' ||
+                  activeTab === 'activity') && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2 font-spartan">
                       {activeTab === 'restaurants' ? 'Status' : 'Restaurant'}
                     </label>
                     <select
-                      value={selectedRestaurantId}
+                      value={restaurantFilterValue}
                       onChange={(e) => setSelectedRestaurantId(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent font-spartan"
                     >
