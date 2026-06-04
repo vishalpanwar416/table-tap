@@ -134,9 +134,16 @@ const SubscriptionManagementV2 = () => {
 
   const fetchMasterData = async () => {
     try {
-      const [plansRes, cyclesRes] = await Promise.all([getSubscriptionPlans(), getBillingCycles()]);
+      // Restaurants are needed by the always-visible "Assign Subscription" modal,
+      // so load them on mount rather than only on the subscriptions/billing tabs.
+      const [plansRes, cyclesRes, restRes] = await Promise.all([
+        getSubscriptionPlans(),
+        getBillingCycles(),
+        getAllRestaurants(),
+      ]);
       setPlans(plansRes.data || []);
       setBillingCycles(cyclesRes.data || []);
+      setRestaurants(restRes.data || []);
     } catch (e) {
       console.error('Master data fail:', e);
     }
