@@ -264,7 +264,9 @@ const AdminActivityLogs = ({ searchTerm }) => {
   };
 
   const fetchStats = async () => {
-    const days = dateFilter === '24hours' ? 1 : dateFilter === '7days' ? 7 : 30;
+    // Keep the stat cards in sync with the selected range; 'all' => no date filter.
+    const days =
+      dateFilter === '24hours' ? 1 : dateFilter === '7days' ? 7 : dateFilter === 'all' ? null : 30;
     const { data } = await getActivityStats(days);
     setStats(data);
   };
