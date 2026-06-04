@@ -37,6 +37,38 @@ import {
   getUpcomingRenewals,
   getSubscriptionPlans,
 } from '../../../api/subscriptionService';
+import { ACTIVITY_TYPES } from '../../../api/adminActivityLogService';
+
+const DASHBOARD_ACTIVITY_TYPES = [
+  ACTIVITY_TYPES.SUBSCRIPTION_CREATED,
+  ACTIVITY_TYPES.SUBSCRIPTION_RENEWED,
+  ACTIVITY_TYPES.SUBSCRIPTION_CANCELLED,
+  ACTIVITY_TYPES.SUBSCRIPTION_EXPIRED,
+  ACTIVITY_TYPES.SYSTEM_ALERT,
+  ACTIVITY_TYPES.CRON_JOB,
+  ACTIVITY_TYPES.AUTO_PROCESS,
+];
+
+const getDashboardActivityAction = (log) => {
+  switch (log.activity_type) {
+    case ACTIVITY_TYPES.SUBSCRIPTION_CREATED:
+      return 'created';
+    case ACTIVITY_TYPES.SUBSCRIPTION_RENEWED:
+      return log.details?.old_plan && log.details?.new_plan ? 'upgraded' : 'renewed';
+    case ACTIVITY_TYPES.SUBSCRIPTION_CANCELLED:
+      return 'cancelled';
+    case ACTIVITY_TYPES.SUBSCRIPTION_EXPIRED:
+      return 'expired';
+    default:
+      return 'system';
+  }
+};
+
+const getDashboardActivityPlan = (details = {}) =>
+  details.new_plan || details.plan || details.plan_name || null;
+
+const getDashboardActivityAmount = (details = {}) =>
+  Number(details.total_amount || details.amount || 0);
 
 const AdminDashboard = ({
   restaurants,
@@ -130,7 +162,7 @@ const AdminDashboard = ({
         renewalsRes,
         inquiriesRes,
         registrationsRes,
-        historyRes,
+        activityRes,
         thisMonthRes,
         lastMonthRes,
         plansRes,
@@ -141,8 +173,9 @@ const AdminDashboard = ({
         withTimeout(supabase.from('restaurant_registrations').select('status')),
         withTimeout(
           supabase
-            .from('subscription_history')
+            .from('admin_activity_logs')
             .select('*')
+            .in('activity_type', DASHBOARD_ACTIVITY_TYPES)
             .order('created_at', { ascending: false })
             .limit(6),
         ),
@@ -183,14 +216,28 @@ const AdminDashboard = ({
         rejected: registrations.filter((r) => r.status === 'rejected').length,
       });
 
-      // Attach restaurant names from already-loaded props (avoids join RLS issues)
-      const historyRows = (historyRes?.data || []).map((row) => ({
-        ...row,
-        restaurant: {
-          name: restaurants?.find((r) => r.id === row.restaurant_id)?.name || 'Unknown',
-        },
-      }));
-      setRecentActivity(historyRows);
+      const activityRows = (activityRes?.data || []).map((row) => {
+        const action = getDashboardActivityAction(row);
+        const restaurantName =
+          row.target_name || restaurants?.find((r) => r.id === row.restaurant_id)?.name || null;
+
+        return {
+          id: row.id,
+          action,
+          action_label: row.activity_name || action,
+          activity_name: row.activity_name,
+          new_plan: getDashboardActivityPlan(row.details),
+          amount_paid: getDashboardActivityAmount(row.details),
+          status: row.status,
+          created_at: row.created_at,
+          description: row.description,
+          restaurant: {
+            name:
+              restaurantName || (action === 'system' ? row.activity_name : 'Unknown Restaurant'),
+          },
+        };
+      });
+      setRecentActivity(activityRows);
 
       const thisMonthTotal = (thisMonthRes?.data || []).reduce(
         (s, r) => s + (r.amount_paid || 0),
@@ -284,12 +331,16 @@ const AdminDashboard = ({
         return <CheckCircle className="text-green-500" {...iconProps} />;
       case 'cancelled':
         return <XCircle className="text-red-500" {...iconProps} />;
+      case 'expired':
+        return <AlertTriangle className="text-orange-500" {...iconProps} />;
       case 'renewed':
         return <RefreshCw className="text-gray-600" {...iconProps} />;
       case 'upgraded':
         return <TrendingUp className="text-orange-500" {...iconProps} />;
       case 'reactivated':
         return <Zap className="text-amber-500" {...iconProps} />;
+      case 'system':
+        return <Activity className="text-gray-600" {...iconProps} />;
       default:
         return <Activity className="text-gray-500" {...iconProps} />;
     }
@@ -301,12 +352,16 @@ const AdminDashboard = ({
         return 'bg-green-50 text-green-700 border-green-200';
       case 'cancelled':
         return 'bg-red-50 text-red-700 border-red-200';
+      case 'expired':
+        return 'bg-orange-50 text-orange-700 border-orange-200';
       case 'renewed':
         return 'bg-gray-50 text-gray-700 border-gray-200';
       case 'upgraded':
         return 'bg-orange-50 text-orange-700 border-orange-200';
       case 'reactivated':
         return 'bg-amber-50 text-amber-700 border-amber-200';
+      case 'system':
+        return 'bg-gray-50 text-gray-700 border-gray-200';
       default:
         return 'bg-gray-50 text-gray-700 border-gray-200';
     }
@@ -897,7 +952,7 @@ const AdminDashboard = ({
             <div className="flex-1 flex flex-col items-center justify-center py-10 text-gray-400 border border-dashed border-gray-100 rounded-2xl bg-gray-50/50">
               <Activity size={48} className="mx-auto mb-3 opacity-20" />
               <p className="font-bold">No activity yet</p>
-              <p className="text-sm">Recent subscription changes will appear here</p>
+              <p className="text-sm">Subscription and system events will appear here</p>
             </div>
           ) : (
             <div className="relative space-y-0 pl-4 before:absolute before:inset-y-0 before:left-2 before:w-0.5 before:bg-gray-200 before:rounded-full">
@@ -912,7 +967,9 @@ const AdminDashboard = ({
                           ? 'bg-gray-600'
                           : activity.action === 'cancelled'
                             ? 'bg-red-500'
-                            : 'bg-gray-400'
+                            : activity.action === 'expired'
+                              ? 'bg-orange-500'
+                              : 'bg-gray-400'
                     } group-hover:scale-125 transition-transform duration-300`}
                   ></div>
 
@@ -929,7 +986,7 @@ const AdminDashboard = ({
                         </p>
                         <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1.5">
                           <span className="capitalize font-medium text-gray-700">
-                            {activity.action}
+                            {activity.action_label || activity.action}
                           </span>
                           {activity.new_plan && (
                             <>
