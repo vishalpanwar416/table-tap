@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback, memo } from 'react';
-import { Search, X, ShoppingCart, Bell, User, MapPin, RefreshCw } from 'lucide-react';
+import { Search, X, ShoppingCart, Bell, User, MapPin } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../shared/config/AuthContext';
 import { useCart } from '../../shared/config/CartContent';

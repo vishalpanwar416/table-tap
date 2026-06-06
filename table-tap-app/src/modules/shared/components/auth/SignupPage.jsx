@@ -1,14 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  ChevronLeft,
-  Eye,
-  EyeOff,
-  CheckCircle,
-  XCircle,
-  LogOut,
-  Home,
-  User as UserIcon,
-} from 'lucide-react';
+import { ChevronLeft, Eye, EyeOff, LogOut, Home } from 'lucide-react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { authService, DEFAULT_AVATAR_URL } from '../../api/authService';
 import GoogleButton from './auth/GoogleButton';
@@ -21,7 +12,6 @@ import {
   validateEmail,
   validatePhoneNumber,
   sanitizeInput,
-  rateLimiter,
 } from '../../../shared/utils/security';
 
 const cardVariants = {

@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   X,
   Upload,
-  Trash2,
   MapPin,
   Phone,
   Mail,

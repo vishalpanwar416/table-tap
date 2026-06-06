@@ -1,0 +1,15 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "src/index.js",
+    "src/sentry.js",
+    "src/themes/**/index.jsx",
+    "src/modules/admin/AdminApp.jsx",
+    "src/modules/owner/OwnerApp.jsx",
+    "src/modules/restaurant/RestaurantApp.jsx",
+    "src/modules/shared/components/auth/AuthCallback.{js,jsx}",
+    "**/*.test.{js,jsx}"
+  ],
+  "project": ["src/**/*.{js,jsx}"],
+  "ignoreBinaries": ["eslint"]
+}

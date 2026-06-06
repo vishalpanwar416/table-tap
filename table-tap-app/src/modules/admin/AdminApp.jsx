@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useMemo } from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import AdminOnlyWrapper from '../shared/config/AdminOnlyWrapper';
 import { AdminRestaurantProvider } from '../shared/context/AdminRestaurantContext';

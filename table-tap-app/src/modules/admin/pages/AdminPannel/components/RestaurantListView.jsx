@@ -1,15 +1,8 @@
-import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   Building2,
-  MapPin,
-  Phone,
-  Users,
-  Clock,
-  Calendar,
   Edit,
   Trash2,
-  ToggleLeft,
-  ToggleRight,
   ExternalLink,
   Brain,
   ShoppingBag,

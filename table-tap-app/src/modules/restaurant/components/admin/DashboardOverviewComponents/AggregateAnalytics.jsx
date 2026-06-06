@@ -2,18 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useAdminRestaurant } from '../../../../shared/context/AdminRestaurantContext';
 import {
   TrendingUp,
-  TrendingDown,
   DollarSign,
   ShoppingCart,
-  Users,
   Building2,
   ChevronDown,
   ChevronUp,
   ArrowRight,
   BarChart3,
   RefreshCw,
-  Calendar,
-  Store
+  Store,
 } from 'lucide-react';
 
 const AggregateAnalytics = ({ onSelectRestaurant }) => {
@@ -42,7 +39,7 @@ const AggregateAnalytics = ({ onSelectRestaurant }) => {
         return;
       }
 
-      const restaurantIds = ownedRestaurants.map(r => r.id);
+      const restaurantIds = ownedRestaurants.map((r) => r.id);
       const now = new Date();
 
       // Calculate date ranges
@@ -73,7 +70,7 @@ const AggregateAnalytics = ({ onSelectRestaurant }) => {
       const restaurantData = {};
 
       // Initialize restaurant data
-      ownedRestaurants.forEach(r => {
+      ownedRestaurants.forEach((r) => {
         restaurantData[r.id] = {
           id: r.id,
           name: r.name,
@@ -85,12 +82,12 @@ const AggregateAnalytics = ({ onSelectRestaurant }) => {
           preparing: 0,
           avgOrderValue: 0,
           popularItems: {},
-          revenueByDay: {}
+          revenueByDay: {},
         };
       });
 
       // Process orders
-      (ordersData || []).forEach(order => {
+      (ordersData || []).forEach((order) => {
         const restaurantId = order.restaurant_id;
         const orderTotal = parseFloat(order.total) || 0;
 
@@ -117,7 +114,7 @@ const AggregateAnalytics = ({ onSelectRestaurant }) => {
 
           // Track popular items
           if (order.items && Array.isArray(order.items)) {
-            order.items.forEach(item => {
+            order.items.forEach((item) => {
               const itemName = item.name || item.title || 'Unknown';
               restaurantData[restaurantId].popularItems[itemName] =
                 (restaurantData[restaurantId].popularItems[itemName] || 0) + (item.quantity || 1);
@@ -127,7 +124,7 @@ const AggregateAnalytics = ({ onSelectRestaurant }) => {
       });
 
       // Calculate average order value for each restaurant
-      Object.keys(restaurantData).forEach(id => {
+      Object.keys(restaurantData).forEach((id) => {
         const data = restaurantData[id];
         if (data.completed > 0) {
           data.avgOrderValue = data.revenue / data.completed;
@@ -148,7 +145,7 @@ const AggregateAnalytics = ({ onSelectRestaurant }) => {
         completedOrders,
         pendingOrders,
         avgOrderValue: completedOrders > 0 ? totalRevenue / completedOrders : 0,
-        restaurantCount: ownedRestaurants.length
+        restaurantCount: ownedRestaurants.length,
       });
 
       setRestaurantStats(sortedRestaurants);
@@ -169,7 +166,7 @@ const AggregateAnalytics = ({ onSelectRestaurant }) => {
       style: 'currency',
       currency: 'INR',
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     }).format(amount);
   };
 
@@ -212,7 +209,9 @@ const AggregateAnalytics = ({ onSelectRestaurant }) => {
       <div className="bg-gray-50 border border-gray-200 rounded-xl p-8 text-center">
         <Building2 size={48} className="mx-auto text-gray-400 mb-4" />
         <h3 className="text-lg font-semibold text-gray-700 mb-2">No Restaurants Found</h3>
-        <p className="text-gray-500">You don't have any restaurants associated with your account yet.</p>
+        <p className="text-gray-500">
+          You don't have any restaurants associated with your account yet.
+        </p>
       </div>
     );
   }
@@ -230,7 +229,8 @@ const AggregateAnalytics = ({ onSelectRestaurant }) => {
               <h2 className="text-2xl font-bold">Multi-Restaurant Overview</h2>
             </div>
             <p className="text-white/80">
-              Consolidated analytics across {aggregateData?.restaurantCount} restaurant{aggregateData?.restaurantCount > 1 ? 's' : ''}
+              Consolidated analytics across {aggregateData?.restaurantCount} restaurant
+              {aggregateData?.restaurantCount > 1 ? 's' : ''}
             </p>
           </div>
 
@@ -264,7 +264,9 @@ const AggregateAnalytics = ({ onSelectRestaurant }) => {
               {period}
             </span>
           </div>
-          <p className="text-2xl font-bold text-gray-900">{formatCurrency(aggregateData?.totalRevenue || 0)}</p>
+          <p className="text-2xl font-bold text-gray-900">
+            {formatCurrency(aggregateData?.totalRevenue || 0)}
+          </p>
           <p className="text-sm text-gray-500 mt-1">Total Revenue</p>
         </div>
 
@@ -287,7 +289,9 @@ const AggregateAnalytics = ({ onSelectRestaurant }) => {
               <BarChart3 size={20} className="text-orange-600" />
             </div>
           </div>
-          <p className="text-2xl font-bold text-gray-900">{formatCurrency(aggregateData?.avgOrderValue || 0)}</p>
+          <p className="text-2xl font-bold text-gray-900">
+            {formatCurrency(aggregateData?.avgOrderValue || 0)}
+          </p>
           <p className="text-sm text-gray-500 mt-1">Avg Order Value</p>
         </div>
 
@@ -326,17 +330,22 @@ const AggregateAnalytics = ({ onSelectRestaurant }) => {
               {/* Restaurant Row */}
               <div
                 className="p-4 flex items-center gap-4 cursor-pointer"
-                onClick={() => setExpandedRestaurant(
-                  expandedRestaurant === restaurant.id ? null : restaurant.id
-                )}
+                onClick={() =>
+                  setExpandedRestaurant(expandedRestaurant === restaurant.id ? null : restaurant.id)
+                }
               >
                 {/* Rank Badge */}
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                  index === 0 ? 'bg-amber-100 text-amber-700' :
-                  index === 1 ? 'bg-gray-200 text-gray-700' :
-                  index === 2 ? 'bg-orange-100 text-orange-700' :
-                  'bg-gray-100 text-gray-500'
-                }`}>
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                    index === 0
+                      ? 'bg-amber-100 text-amber-700'
+                      : index === 1
+                        ? 'bg-gray-200 text-gray-700'
+                        : index === 2
+                          ? 'bg-orange-100 text-orange-700'
+                          : 'bg-gray-100 text-gray-500'
+                  }`}
+                >
                   {index + 1}
                 </div>
 
@@ -365,7 +374,9 @@ const AggregateAnalytics = ({ onSelectRestaurant }) => {
 
                 {/* Revenue */}
                 <div className="text-right flex-shrink-0">
-                  <p className="font-semibold text-gray-900">{formatCurrency(restaurant.revenue)}</p>
+                  <p className="font-semibold text-gray-900">
+                    {formatCurrency(restaurant.revenue)}
+                  </p>
                   <p className="text-xs text-gray-500">Revenue</p>
                 </div>
 
@@ -446,7 +457,7 @@ const AggregateAnalytics = ({ onSelectRestaurant }) => {
         </h3>
         <div className="space-y-3">
           {restaurantStats.map((restaurant) => {
-            const maxRevenue = Math.max(...restaurantStats.map(r => r.revenue)) || 1;
+            const maxRevenue = Math.max(...restaurantStats.map((r) => r.revenue)) || 1;
             const widthPercent = (restaurant.revenue / maxRevenue) * 100;
 
             return (

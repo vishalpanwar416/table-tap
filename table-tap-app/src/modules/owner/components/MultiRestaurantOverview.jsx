@@ -1,22 +1,16 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../shared/supabase';
 import {
-  Building2,
   TrendingUp,
   IndianRupee,
   ShoppingCart,
   ArrowRight,
-  RefreshCw,
   Store,
-  BarChart3,
-  ChevronDown,
-  ChevronUp,
   Briefcase,
   PieChart as PieIcon,
   ArrowUpRight,
   ArrowDownRight,
-  Calendar,
   Clock,
   Flame,
 } from 'lucide-react';
@@ -28,8 +22,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
   Cell,
   PieChart,
   Pie,

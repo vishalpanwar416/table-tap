@@ -1,6 +1,6 @@
 import React from 'react';
 import FoodItemCard from './FoodtemsCard';
-import { deleteFoodItem, toggleFoodItemActive } from '../../../../customer/api/foodService';
+import { deleteFoodItem } from '../../../../customer/api/foodService';
 
 const GRID_CLASSES = {
   2: 'md:grid-cols-2',
@@ -8,14 +8,14 @@ const GRID_CLASSES = {
   4: 'md:grid-cols-4',
 };
 
-const FoodItemList = ({ 
-  filteredFoodItems, 
-  gridColumns = 3, 
-  handleEdit, 
-  setLoading, 
-  setErrorMsg, 
-  setSuccessMsg, 
-  fetchFoodItems 
+const FoodItemList = ({
+  filteredFoodItems,
+  gridColumns = 3,
+  handleEdit,
+  setLoading,
+  setErrorMsg,
+  setSuccessMsg,
+  fetchFoodItems,
 }) => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this item?')) {
@@ -44,8 +44,8 @@ const FoodItemList = ({
 
   return (
     <div className={`grid grid-cols-1 gap-4 ${gridClass}`}>
-      {filteredFoodItems.map(item => (
-        <FoodItemCard 
+      {filteredFoodItems.map((item) => (
+        <FoodItemCard
           key={item.id}
           item={item}
           gridColumns={gridColumns}

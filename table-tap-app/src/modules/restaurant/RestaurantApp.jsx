@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useMemo, useEffect } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 
 const ExternalRedirect = ({ to }) => {
@@ -10,7 +10,7 @@ const ExternalRedirect = ({ to }) => {
 import RestaurantDashboardWrapper from '../shared/config/RestaurantDashboardWrapper';
 import { AdminRestaurantProvider } from '../shared/context/AdminRestaurantContext';
 import { ManagerNotificationProvider } from '../shared/context/ManagerNotificationContext';
-import { BasePathProvider, useBasePath } from '../shared/config/BasePathContext';
+import { BasePathProvider } from '../shared/config/BasePathContext';
 import { isDevelopment } from '../shared/utils/subdomainRouter';
 
 // Use unified loading component

@@ -3,12 +3,7 @@ import React, { createContext, useState, useEffect, useContext, useCallback } fr
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../shared/config/AuthContext';
 import { useRestaurant } from '../../restaurant/pages/RestaurantSelection/RestaurantContext';
-import {
-  createOrder,
-  getUserOrders,
-  getOrderById,
-  updatePaymentStatus,
-} from '../../customer/api/paymentService';
+import { createOrder, getOrderById, updatePaymentStatus } from '../../customer/api/paymentService';
 import { subscribeToOrderUpdates } from '../../restaurant/api/admin/orderService'; // Add this import
 import { supabase } from '../../shared/supabase';
 

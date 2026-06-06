@@ -1,9 +1,28 @@
 import React, { useState } from 'react';
-import { Edit, Plus, X, Upload, Image as ImageIcon, Save, RotateCcw, Tag, IndianRupee, FileText, Hash, ArrowLeft } from 'lucide-react';
+import {
+  Edit,
+  Plus,
+  X,
+  Upload,
+  Image as ImageIcon,
+  Save,
+  RotateCcw,
+  Tag,
+  IndianRupee,
+  FileText,
+  ArrowLeft,
+} from 'lucide-react';
 import { categories } from '../../../../customer/api/foodData';
-import { createFoodItem, updateFoodItem, uploadFoodImage } from '../../../../customer/api/foodService';
+import {
+  createFoodItem,
+  updateFoodItem,
+  uploadFoodImage,
+} from '../../../../customer/api/foodService';
 import { useAdminRestaurant } from '../../../../shared/context/AdminRestaurantContext';
-import { validateImageFile, optimizeImageForUpload } from '../../../../shared/utils/imageOptimization';
+import {
+  validateImageFile,
+  optimizeImageForUpload,
+} from '../../../../shared/utils/imageOptimization';
 
 const FoodItemForm = ({
   formData,
@@ -15,7 +34,7 @@ const FoodItemForm = ({
   setLoading,
   setErrorMsg,
   setSuccessMsg,
-  fetchFoodItems
+  fetchFoodItems,
 }) => {
   const { userRestaurantId } = useAdminRestaurant();
   const [imageProcessing, setImageProcessing] = useState(false);
@@ -25,7 +44,7 @@ const FoodItemForm = ({
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -53,16 +72,14 @@ const FoodItemForm = ({
         maxWidth: 800,
         maxHeight: 600,
         quality: 0.8,
-        format: 'webp'
+        format: 'webp',
       });
 
       // Update form data with optimized file but keep permanent image field clean
       setFormData({
         ...formData,
-        imageFile: optimizedFile
+        imageFile: optimizedFile,
       });
-
-
     } catch (error) {
       setErrorMsg('Failed to process image. Please try again.');
     } finally {
@@ -99,13 +116,16 @@ const FoodItemForm = ({
         ...rest,
         price: parseFloat(price),
         discountvalue: discountvalue ? parseFloat(discountvalue) : null,
-        tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+        tags: tags
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter((tag) => tag),
         image: imageUrl,
-        restaurant_id: userRestaurantId
+        restaurant_id: userRestaurantId,
       };
 
       // Remove any undefined or null values that might cause issues
-      Object.keys(foodItemData).forEach(key => {
+      Object.keys(foodItemData).forEach((key) => {
         if (foodItemData[key] === undefined || foodItemData[key] === '') {
           delete foodItemData[key];
         }
@@ -121,7 +141,6 @@ const FoodItemForm = ({
 
       await fetchFoodItems();
       resetForm();
-
     } catch (error) {
       setErrorMsg(error.message || 'Failed to save food item');
     } finally {
@@ -174,7 +193,9 @@ const FoodItemForm = ({
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Food Name *</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Food Name *
+                </label>
                 <input
                   type="text"
                   name="name"
@@ -193,7 +214,7 @@ const FoodItemForm = ({
                   onChange={handleInputChange}
                   className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all shadow-sm"
                 >
-                  {categories.map(category => (
+                  {categories.map((category) => (
                     <option key={category.name} value={category.name}>
                       {category.name}
                     </option>
@@ -201,7 +222,9 @@ const FoodItemForm = ({
                 </select>
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Description *</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Description *
+                </label>
                 <textarea
                   name="description"
                   value={formData.description}
@@ -223,9 +246,13 @@ const FoodItemForm = ({
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Price (₹) *</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Price (₹) *
+                </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">₹</span>
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                    ₹
+                  </span>
                   <input
                     type="number"
                     name="price"
@@ -240,7 +267,9 @@ const FoodItemForm = ({
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Discount Type</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Discount Type
+                </label>
                 <select
                   name="discounttype"
                   value={formData.discounttype || ''}
@@ -248,14 +277,20 @@ const FoodItemForm = ({
                   className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all shadow-sm"
                 >
                   <option value="">No Discount</option>
-                  {discountTypes.map(type => (
-                    <option key={type} value={type}>{type}</option>
+                  {discountTypes.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
                   ))}
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  {formData.discounttype === 'Percentage' ? 'Discount (%)' : formData.discounttype === 'Fixed' ? 'Discount (₹)' : 'Discount Value'}
+                  {formData.discounttype === 'Percentage'
+                    ? 'Discount (%)'
+                    : formData.discounttype === 'Fixed'
+                      ? 'Discount (₹)'
+                      : 'Discount Value'}
                 </label>
                 <input
                   type="number"
@@ -292,7 +327,8 @@ const FoodItemForm = ({
                 Comma separated, e.g. 'spicy, veg, bestseller'
               </p>
               <p className="text-xs text-orange-500 mt-1">
-                To feature an item in the <b>Bestseller</b> or <b>Recommendation</b> tabs, add the tags <b>bestseller</b> and/or <b>recommended</b>.
+                To feature an item in the <b>Bestseller</b> or <b>Recommendation</b> tabs, add the
+                tags <b>bestseller</b> and/or <b>recommended</b>.
               </p>
             </div>
           </div>

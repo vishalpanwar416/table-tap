@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useMemo } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 import './App.css';
 import './styles/admin-panel.css';
@@ -9,7 +9,6 @@ import { AuthProvider } from './modules/shared/config/AuthContext';
 import { NotificationProvider } from './modules/shared/context/NotificationContext';
 import ErrorBoundary from './modules/shared/components/ErrorBoundary';
 import InstallPrompt from './modules/shared/components/InstallPrompt';
-import { register } from './modules/shared/utils/serviceWorkerRegistration';
 import { getSubdomain, isDevelopment } from './modules/shared/utils/subdomainRouter';
 import { syncPendingActions } from './modules/restaurant/api/admin/orderService';
 

@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../../shared/config/CartContent';
 import { useLikes } from '../../shared/config/LikesContent';
 import { useNavigate } from 'react-router-dom';
-import PriceDisplay from './PriceDisplay';
 import OrderCard from './itemCard';
 
 // Simple image fallback handler

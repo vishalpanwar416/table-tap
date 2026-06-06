@@ -1,6 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense, useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Loader, X, Bell } from 'lucide-react';
 import AdminSidebar from './components/AdminSidebar.jsx';
 import AdminHeader from './components/AdminHeader.jsx';
 import MobileAdminHeader from './components/MobileAdminHeader.jsx';
@@ -151,6 +150,9 @@ const AdminPanel = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const navigate = useNavigate();
+  const selectedActivityRestaurantId = restaurants.some((r) => r.id === selectedRestaurantId)
+    ? selectedRestaurantId
+    : '';
 
   // Load user profile data
   useEffect(() => {
@@ -670,7 +672,10 @@ const AdminPanel = () => {
       case 'activity':
         return (
           <Suspense fallback={<LoadingScreen variant="page" message="Loading..." />}>
-            <AdminActivityLogs searchTerm={searchTerm} />
+            <AdminActivityLogs
+              searchTerm={searchTerm}
+              selectedRestaurantId={selectedActivityRestaurantId}
+            />
           </Suspense>
         );
       case 'settings':

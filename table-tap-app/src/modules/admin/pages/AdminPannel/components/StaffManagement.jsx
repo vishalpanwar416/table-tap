@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Users, Plus, List, Grid, Building2, CheckCircle, XCircle } from 'lucide-react';
-import StaffStats from './StaffStats';
+import { Users, Plus, Grid, Building2, CheckCircle, XCircle } from 'lucide-react';
 import RestaurantStaffSection from './RestaurantStaffSection';
 import RestaurantStaffGrid from './RestaurantStaffGrid';
 import StaffListView from './StaffListView';

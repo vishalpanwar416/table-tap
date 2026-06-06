@@ -1,6 +1,17 @@
 import React, { useRef, useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, UtensilsCrossed, Heart, ShoppingBag, Bike, CheckCircle, XCircle, AlertCircle, Trash2, X, Settings } from 'lucide-react';
+import {
+  Bell,
+  UtensilsCrossed,
+  ShoppingBag,
+  Bike,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Trash2,
+  X,
+  Settings,
+} from 'lucide-react';
 import { useNotifications } from '../../shared/context/NotificationContext';
 
 const typeIcons = {
@@ -11,7 +22,7 @@ const typeIcons = {
   order_rejected: <XCircle className="w-5 h-5 text-red-300" />,
   payment_success: <CheckCircle className="w-5 h-5 text-green-300" />,
   payment_failed: <AlertCircle className="w-5 h-5 text-red-300" />,
-  default: <Bell className="w-5 h-5 text-gray-300" />
+  default: <Bell className="w-5 h-5 text-gray-300" />,
 };
 
 // Helper: is Notification API supported?
@@ -21,7 +32,7 @@ const NotificationSidebar = ({
   isOpen,
   onClose,
   headerIcon = <Bell className="w-6 h-6 " />,
-  title = "Notifications"
+  title = 'Notifications',
 }) => {
   const sidebarRef = useRef(null);
   const touchStartX = useRef(0);
@@ -31,7 +42,9 @@ const NotificationSidebar = ({
   const { notifications, markAsRead, deleteNotification, unreadCount } = useNotifications();
 
   // Browser notification state
-  const [notificationPermission, setNotificationPermission] = useState(isNotificationSupported() ? Notification.permission : 'unsupported');
+  const [notificationPermission, setNotificationPermission] = useState(
+    isNotificationSupported() ? Notification.permission : 'unsupported',
+  );
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
 
   // Swipe detection
@@ -81,11 +94,10 @@ const NotificationSidebar = ({
         new Notification('Notifications Enabled!', {
           body: 'You will now receive notifications for order updates.',
           icon: '/favicon.ico',
-          badge: '/favicon.ico'
+          badge: '/favicon.ico',
         });
       }
-    } catch (error) {
-    }
+    } catch (error) {}
   };
 
   // Show permission prompt if needed
@@ -102,7 +114,7 @@ const NotificationSidebar = ({
     visible: {
       x: 0,
       opacity: 1,
-      transition: { type: 'spring', stiffness: 300, damping: 30 }
+      transition: { type: 'spring', stiffness: 300, damping: 30 },
     },
     exit: {
       x: '100%',
@@ -111,24 +123,24 @@ const NotificationSidebar = ({
         type: 'spring',
         stiffness: 400,
         damping: 40,
-        duration: 0.4
-      }
-    }
+        duration: 0.4,
+      },
+    },
   };
 
   const overlayVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: { duration: 0.3 }
+      transition: { duration: 0.3 },
     },
     exit: {
       opacity: 0,
       transition: {
         duration: 0.3,
-        ease: 'easeOut'
-      }
-    }
+        ease: 'easeOut',
+      },
+    },
   };
 
   return (
@@ -163,7 +175,12 @@ const NotificationSidebar = ({
                   <div className="bg-white/30 backdrop-blur-md rounded-full p-3 border border-white/30 shadow-xl">
                     {headerIcon}
                   </div>
-                  <h2 className="text-2xl font-bold text-white text-center drop-shadow-lg">{title} <span className="ml-2 text-base font-normal text-blue-200">({unreadCount})</span></h2>
+                  <h2 className="text-2xl font-bold text-white text-center drop-shadow-lg">
+                    {title}{' '}
+                    <span className="ml-2 text-base font-normal text-blue-200">
+                      ({unreadCount})
+                    </span>
+                  </h2>
                 </div>
                 <div className="flex items-center gap-2">
                   {isNotificationSupported() && notificationPermission === 'default' && (
@@ -179,7 +196,7 @@ const NotificationSidebar = ({
                     <button
                       onClick={() => {
                         if (window.confirm('Clear all notifications?')) {
-                          notifications.forEach(notif => deleteNotification(notif.id));
+                          notifications.forEach((notif) => deleteNotification(notif.id));
                         }
                       }}
                       className="bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-red-200 p-2 rounded-lg border border-red-500/30 hover:border-red-500/50 transition-all backdrop-blur-md"
@@ -222,23 +239,34 @@ const NotificationSidebar = ({
                   <div className="px-6 py-8 text-center text-white/70">No notifications yet.</div>
                 ) : (
                   notifications.map((notification) => (
-                    <div
-                      key={notification.id}
-                      className={`mb-1.5 px-2`}
-                    >
-                      <div className={`flex items-center relative bg-white/20 backdrop-blur-xl rounded-xl shadow-lg border border-white/15 px-2.5 sm:px-3 py-1.5 sm:py-2 gap-2 min-h-[48px] sm:min-h-[60px] transition-all group hover:bg-white/30 hover:shadow-2xl ${!notification.read ? 'ring-2 ring-blue-400/40' : ''}`}
-                        style={{ fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif' }}
+                    <div key={notification.id} className={`mb-1.5 px-2`}>
+                      <div
+                        className={`flex items-center relative bg-white/20 backdrop-blur-xl rounded-xl shadow-lg border border-white/15 px-2.5 sm:px-3 py-1.5 sm:py-2 gap-2 min-h-[48px] sm:min-h-[60px] transition-all group hover:bg-white/30 hover:shadow-2xl ${!notification.read ? 'ring-2 ring-blue-400/40' : ''}`}
+                        style={{
+                          fontFamily:
+                            'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif',
+                        }}
                       >
                         {/* Vertical accent bar */}
-                        <div className={`absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full sm:w-1 ${notification.type === 'order_received' ? 'bg-blue-400' :
-                          notification.type === 'order_accepted' ? 'bg-green-400' :
-                            notification.type === 'order_preparing' ? 'bg-yellow-400' :
-                              notification.type === 'order_ready' ? 'bg-purple-400' :
-                                notification.type === 'order_rejected' ? 'bg-red-400' :
-                                  notification.type === 'payment_success' ? 'bg-green-400' :
-                                    notification.type === 'payment_failed' ? 'bg-red-400' :
-                                      'bg-gray-300'
-                          }`} />
+                        <div
+                          className={`absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full sm:w-1 ${
+                            notification.type === 'order_received'
+                              ? 'bg-blue-400'
+                              : notification.type === 'order_accepted'
+                                ? 'bg-green-400'
+                                : notification.type === 'order_preparing'
+                                  ? 'bg-yellow-400'
+                                  : notification.type === 'order_ready'
+                                    ? 'bg-purple-400'
+                                    : notification.type === 'order_rejected'
+                                      ? 'bg-red-400'
+                                      : notification.type === 'payment_success'
+                                        ? 'bg-green-400'
+                                        : notification.type === 'payment_failed'
+                                          ? 'bg-red-400'
+                                          : 'bg-gray-300'
+                          }`}
+                        />
                         {/* Icon */}
                         <div className="bg-white/40 backdrop-blur-md rounded-lg p-1.5 sm:p-2 border border-white/30 shadow flex-shrink-0 z-10">
                           {typeIcons[notification.type] || typeIcons.default}
@@ -248,18 +276,31 @@ const NotificationSidebar = ({
                           className="flex-1 cursor-pointer min-w-0 z-10"
                           onClick={() => !notification.read && markAsRead(notification.id)}
                         >
-                          <p className="text-white font-bold text-xs sm:text-sm leading-snug mb-0 whitespace-normal break-words drop-shadow-sm">{notification.title}</p>
+                          <p className="text-white font-bold text-xs sm:text-sm leading-snug mb-0 whitespace-normal break-words drop-shadow-sm">
+                            {notification.title}
+                          </p>
                           {notification.metadata && notification.metadata.order_number && (
-                            <span className="inline-block bg-gray-900/60 text-blue-200 text-[9px] font-mono px-1 py-0 rounded mb-0 mr-2 tracking-wider">Order #{notification.metadata.order_number}</span>
+                            <span className="inline-block bg-gray-900/60 text-blue-200 text-[9px] font-mono px-1 py-0 rounded mb-0 mr-2 tracking-wider">
+                              Order #{notification.metadata.order_number}
+                            </span>
                           )}
                           {notification.metadata && notification.metadata.restaurant_name && (
-                            <p className="text-blue-100 text-[9px] sm:text-[10px] font-semibold mb-0 whitespace-normal break-words tracking-wide">{notification.metadata.restaurant_name}</p>
+                            <p className="text-blue-100 text-[9px] sm:text-[10px] font-semibold mb-0 whitespace-normal break-words tracking-wide">
+                              {notification.metadata.restaurant_name}
+                            </p>
                           )}
-                          <p className="text-white/90 text-[11px] sm:text-xs whitespace-normal break-words leading-relaxed">{notification.message}</p>
+                          <p className="text-white/90 text-[11px] sm:text-xs whitespace-normal break-words leading-relaxed">
+                            {notification.message}
+                          </p>
                         </div>
                         {/* Time & Actions */}
                         <div className="flex flex-col items-end gap-0.5 sm:gap-1 ml-2 sm:ml-3 z-10">
-                          <span className="text-[9px] sm:text-[10px] text-white/60 whitespace-nowrap font-medium">{new Date(notification.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          <span className="text-[9px] sm:text-[10px] text-white/60 whitespace-nowrap font-medium">
+                            {new Date(notification.created_at).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
                           <div className="flex items-center gap-1 sm:gap-2">
                             {!notification.read && (
                               <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-blue-400 inline-block shadow-md" />

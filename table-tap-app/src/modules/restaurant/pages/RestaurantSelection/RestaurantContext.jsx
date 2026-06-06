@@ -5,6 +5,9 @@ import { offlineStorage } from '../../../shared/utils/offlineStorage';
 
 const RestaurantContext = createContext();
 
+// Default theme rendered to customers when a restaurant has no theme_id set.
+export const DEFAULT_THEME_ID = 'a';
+
 // Helper function to get URL parameters
 const getUrlParams = () => {
   const urlParams = new URLSearchParams(window.location.search);
@@ -37,6 +40,7 @@ const localStorageStore = {
     try {
       localStorage.removeItem('restaurantId');
       localStorage.removeItem('tableNumber');
+      localStorage.removeItem('themeId');
     } catch (error) {}
   },
 };
@@ -47,7 +51,19 @@ export const RestaurantProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [restaurantId, setRestaurantId] = useState(null);
   const [tableNumber, setTableNumber] = useState(null);
+  // Seed themeId from cache so the correct theme bundle can load on first paint
+  // (before the restaurant row finishes fetching), avoiding a theme flash.
+  const [themeId, setThemeId] = useState(
+    () => localStorageStore.get('themeId') || DEFAULT_THEME_ID,
+  );
   const { loading: authLoading } = useAuth();
+
+  // Keep themeId in sync with the resolved restaurant and persist it for next visit.
+  useEffect(() => {
+    const resolved = restaurant?.theme_id || DEFAULT_THEME_ID;
+    setThemeId(resolved);
+    localStorageStore.set('themeId', resolved);
+  }, [restaurant?.theme_id]);
 
   useEffect(() => {
     // Check URL parameters first
@@ -386,6 +402,7 @@ export const RestaurantProvider = ({ children }) => {
     setRestaurantId(null);
     setTableNumber(null);
     setRestaurant(null);
+    setThemeId(DEFAULT_THEME_ID);
     setError(null);
   };
 
@@ -393,6 +410,7 @@ export const RestaurantProvider = ({ children }) => {
     restaurant,
     restaurantId,
     tableNumber,
+    themeId,
     updateRestaurant,
     refreshRestaurant,
     setRestaurantAndTable,

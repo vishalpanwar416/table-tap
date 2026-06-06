@@ -17,19 +17,7 @@ import ManagerNotificationsToast from '../../components/admin/ManagerNotificatio
 import QRManagement from '../../components/admin/QRManagement/QRManagement';
 import ActivityLogs from '../../components/admin/ActivityLogs';
 import AggregatorIntegration from '../../components/admin/AggregatorIntegration';
-import {
-  X,
-  ChevronLeft,
-  Package,
-  BarChart3,
-  Sparkles,
-  Plus,
-  Building2,
-  ChevronDown,
-  Clock,
-  Grid,
-  Crown,
-} from 'lucide-react';
+import { X, ChevronLeft, Plus, Building2, ChevronDown, Crown } from 'lucide-react';
 
 import FloorPlanView from '../../components/admin/FloorPlan/FloorPlanView';
 import { getAllFoodItems, getRestaurantFoodItems } from '../../../customer/api/foodService';

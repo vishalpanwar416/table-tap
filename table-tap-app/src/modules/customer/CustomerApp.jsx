@@ -1,138 +1,47 @@
-import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { CartProvider } from '../shared/config/CartContent';
-import { LikesProvider } from '../shared/config/LikesContent';
-import { FoodDataProvider } from '../shared/context/FoodDataContext';
-import { RestaurantProvider } from '../restaurant/pages/RestaurantSelection/RestaurantContext';
-import { OrderProvider } from '../shared/context/OrderContext';
-import RestaurantSelectionWrapper from '../restaurant/pages/RestaurantSelection/RestaurantSelectionWrapper';
-import { useAuth } from '../shared/config/AuthContext';
-import { hasValidRestaurantSelection } from '../shared/utils/restaurantCheck';
+import React, { Suspense } from 'react';
 
-// Opening loads eagerly so "/" never shows a black loading screen
-import Opening from '../shared/pages/opening';
-
-import { authService } from '../shared/api/authService';
-
-// Use unified loading component
+// Core shell: all functionality providers + tenant/theme resolution.
+import {
+  RestaurantProvider,
+  OrderProvider,
+  CartProvider,
+  LikesProvider,
+  FoodDataProvider,
+  useRestaurant,
+} from '../../core';
 import LoadingScreen from '../shared/components/LoadingScreen';
+import { getThemeLoader } from '../../themes/registry';
 
-/** On "/": show Opening (splash) only when not logged in; if logged in, redirect to /home or /restaurant-selection. */
-function OpeningOrRedirect() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { user, loading: authLoading } = useAuth();
-  const pathname = (location.pathname || '/').replace(/\/$/, '') || '/';
-  const search = location.search || '';
-
-  // Only run redirect on customer app root (not admin/restaurant subdomain)
-  const isCustomerOrigin = () => {
-    if (typeof window === 'undefined') return true;
-    const h = (window.location.hostname || '').toLowerCase();
-    return !h.startsWith('admin.') && !h.startsWith('restaurant.') && !h.startsWith('manager.');
-  };
-
-  React.useEffect(() => {
-    if (!authLoading && user && pathname === '/' && isCustomerOrigin()) {
-      const checkRoleAndRedirect = async () => {
-        try {
-          // Check if profile exists just to ensure valid session,
-          // but DO NOT redirect based on role if we are on customer app.
-          await authService.getProfile(user.id);
-
-          const to = hasValidRestaurantSelection() ? '/home' : '/restaurant-selection';
-          navigate(to + search, { replace: true });
-        } catch (err) {
-          console.error('Role check failed:', err);
-          navigate('/restaurant-selection' + search, { replace: true });
-        }
-      };
-      checkRoleAndRedirect();
-    }
-  }, [user, authLoading, pathname, navigate, search]);
-
-  if (pathname !== '/') return <Opening />;
-  if (!isCustomerOrigin()) return <Opening />;
-  if (authLoading || (user && pathname === '/')) return <Opening />;
-
-  return <Opening />;
-}
-// Lazy load other pages for better performance
-const OnboardingScreen = lazy(() => import('../shared/pages/onboardingScreen'));
-const LoginPage = lazy(() => import('../shared/components/auth/LoginPage'));
-const SignupPage = lazy(() => import('../shared/components/auth/SignupPage'));
-const CompleteProfile = lazy(() => import('../shared/components/auth/CompleteProfile'));
-const ForgotPassword = lazy(() => import('../shared/components/auth/ForgotPassward'));
-const ResetPassword = lazy(() => import('../shared/components/auth/ResetPassword'));
-const AuthCallback = lazy(() => import('../shared/components/auth/AuthCallback'));
-const RestaurantSelectionPage = lazy(
-  () => import('../restaurant/pages/RestaurantSelection/RestaurantSelectionPage'),
-);
-
-// Customer pages
-const Homepage = lazy(() => import('./pages/HomePage/Homepage'));
-const BestSellerPage = lazy(() => import('./pages/BestSellerPage'));
-const LikedItemsPage = lazy(() => import('./pages/LikedItemsPage'));
-const MyOrders = lazy(() => import('./pages/MyOrders'));
-const OrderConfirmation = lazy(() => import('./pages/OrderConfirmation'));
-const PaymentPage = lazy(() => import('./pages/PaymentPage'));
-const ProfilePage = lazy(() => import('./pages/ProfilePage'));
-const OrderTracking = lazy(() => import('./pages/OrderTracking'));
-const OrderConfirmationPage = lazy(() => import('./pages/OrderConfirmationPage'));
-const ContactUsPage = lazy(() => import('./pages/ContactUsPage'));
-const HelpFAQPage = lazy(() => import('./pages/HelpFAQPage'));
-const TermsOfService = lazy(() => import('../shared/components/legal/TermsOfService'));
-const PrivacyPolicy = lazy(() => import('../shared/components/legal/PrivacyPolicy'));
-const RequireAuth = lazy(() => import('../shared/components/auth/RequireAuth'));
-const NotFoundPage = lazy(() => import('../shared/components/NotFoundPage'));
-const LoadingSpinner = () => <LoadingScreen message="Loading..." />;
-
-/** Auth paths that must never be redirected to /. Fallback only sends unknown paths to /. */
-const AUTH_PATHS = [
-  '/login',
-  '/signup',
-  '/complete-profile',
-  '/forgot-password',
-  '/reset-password',
-  '/auth-callback',
-  '/restaurant-selection',
-  '/onboarding',
-  '/terms',
-  '/privacy',
-];
-
-const FallbackRedirect = ({ NotFound }) => {
-  const location = useLocation();
-  const pathname = location.pathname.replace(/\/$/, '') || '/'; // normalize trailing slash
-  const isAuthPath = AUTH_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'));
-  if (isAuthPath) {
-    // If * matched an auth path (e.g. /login/), render the right page so login always shows
-    if (pathname === '/login' || pathname.startsWith('/login')) return <LoginPage />;
-    if (pathname === '/signup' || pathname.startsWith('/signup')) return <SignupPage />;
-    if (pathname === '/onboarding' || pathname.startsWith('/onboarding'))
-      return <OnboardingScreen />;
-    if (pathname === '/complete-profile' || pathname.startsWith('/complete-profile'))
-      return <CompleteProfile />;
-    if (pathname === '/forgot-password' || pathname.startsWith('/forgot-password'))
-      return <ForgotPassword />;
-    if (pathname === '/reset-password' || pathname.startsWith('/reset-password'))
-      return <ResetPassword />;
-    if (pathname === '/auth-callback' || pathname.startsWith('/auth-callback'))
-      return <AuthCallback />;
-    if (pathname === '/restaurant-selection' || pathname.startsWith('/restaurant-selection'))
-      return <RestaurantSelectionPage />;
-    if (pathname === '/terms' || pathname.startsWith('/terms')) return <TermsOfService />;
-    if (pathname === '/privacy' || pathname.startsWith('/privacy')) return <PrivacyPolicy />;
-    return <Navigate to={pathname} replace />;
+// Cache the lazy component per themeId so switching themes (or re-renders) doesn't
+// recreate the component and remount the whole tree.
+const themeCache = {};
+function getThemeComponent(themeId) {
+  if (!themeCache[themeId]) {
+    themeCache[themeId] = React.lazy(getThemeLoader(themeId));
   }
-  // Unknown path — show 404 instead of silently redirecting to /
-  if (NotFound) return <NotFound />;
-  return <Navigate to="/" replace />;
-};
+  return themeCache[themeId];
+}
 
 /**
- * Customer App Module
- * Handles all customer-facing routes and functionality
+ * Reads the resolved theme_id and renders the matching customer frontend.
+ * Must live inside RestaurantProvider so useRestaurant() is available.
+ */
+function ThemeOutlet() {
+  const { themeId } = useRestaurant();
+  const Theme = getThemeComponent(themeId);
+  return (
+    <Suspense fallback={<LoadingScreen message="Loading..." />}>
+      <Theme />
+    </Suspense>
+  );
+}
+
+/**
+ * Customer App — headless shell.
+ *
+ * Provides every functionality context, then hands off all presentation to the
+ * theme selected by the restaurant's theme_id. The shell contains no UI/routes
+ * of its own; each theme owns its routes and screens (see src/themes/*).
  */
 const CustomerApp = () => {
   return (
@@ -141,120 +50,7 @@ const CustomerApp = () => {
         <CartProvider>
           <LikesProvider>
             <FoodDataProvider>
-              <Suspense fallback={<LoadingSpinner />}>
-                <Routes>
-                  {/* Root: use index so only exact "/" matches, not /login */}
-                  <Route index element={<OpeningOrRedirect />} />
-                  <Route path="/onboarding" element={<OnboardingScreen />} />
-                  <Route path="/login/*" element={<LoginPage />} />
-                  <Route path="/signup/*" element={<SignupPage />} />
-                  <Route path="/complete-profile/*" element={<CompleteProfile />} />
-                  <Route path="/forgot-password/*" element={<ForgotPassword />} />
-                  <Route path="/reset-password/*" element={<ResetPassword />} />
-                  <Route path="/auth-callback/*" element={<AuthCallback />} />
-                  <Route path="/restaurant-selection" element={<RestaurantSelectionPage />} />
-                  <Route path="/restaurant-selection/*" element={<RestaurantSelectionPage />} />
-                  <Route path="/terms" element={<TermsOfService />} />
-                  <Route path="/privacy" element={<PrivacyPolicy />} />
-
-                  {/* Protected Customer Routes */}
-                  <Route
-                    path="/home"
-                    element={
-                      <RestaurantSelectionWrapper>
-                        <Homepage />
-                      </RestaurantSelectionWrapper>
-                    }
-                  />
-                  <Route
-                    path="/best-sellers"
-                    element={
-                      <RestaurantSelectionWrapper>
-                        <BestSellerPage />
-                      </RestaurantSelectionWrapper>
-                    }
-                  />
-                  <Route
-                    path="/liked-items"
-                    element={
-                      <RestaurantSelectionWrapper>
-                        <LikedItemsPage />
-                      </RestaurantSelectionWrapper>
-                    }
-                  />
-                  <Route
-                    path="/my-orders"
-                    element={
-                      <RequireAuth>
-                        <RestaurantSelectionWrapper>
-                          <MyOrders />
-                        </RestaurantSelectionWrapper>
-                      </RequireAuth>
-                    }
-                  />
-                  <Route
-                    path="/order-confirmation"
-                    element={
-                      <RestaurantSelectionWrapper>
-                        <OrderConfirmation />
-                      </RestaurantSelectionWrapper>
-                    }
-                  />
-                  <Route
-                    path="/payment"
-                    element={
-                      <RestaurantSelectionWrapper>
-                        <PaymentPage />
-                      </RestaurantSelectionWrapper>
-                    }
-                  />
-                  <Route
-                    path="/profile"
-                    element={
-                      <RequireAuth>
-                        <RestaurantSelectionWrapper>
-                          <ProfilePage />
-                        </RestaurantSelectionWrapper>
-                      </RequireAuth>
-                    }
-                  />
-                  <Route
-                    path="/order-tracking"
-                    element={
-                      <RestaurantSelectionWrapper>
-                        <OrderTracking />
-                      </RestaurantSelectionWrapper>
-                    }
-                  />
-                  <Route
-                    path="/order-confirmation-page"
-                    element={
-                      <RestaurantSelectionWrapper>
-                        <OrderConfirmationPage />
-                      </RestaurantSelectionWrapper>
-                    }
-                  />
-                  <Route
-                    path="/contact"
-                    element={
-                      <RestaurantSelectionWrapper>
-                        <ContactUsPage />
-                      </RestaurantSelectionWrapper>
-                    }
-                  />
-                  <Route
-                    path="/help"
-                    element={
-                      <RestaurantSelectionWrapper>
-                        <HelpFAQPage />
-                      </RestaurantSelectionWrapper>
-                    }
-                  />
-
-                  {/* Fallback: never redirect /login etc. to / — show login if we landed on /login */}
-                  <Route path="*" element={<FallbackRedirect NotFound={NotFoundPage} />} />
-                </Routes>
-              </Suspense>
+              <ThemeOutlet />
             </FoodDataProvider>
           </LikesProvider>
         </CartProvider>

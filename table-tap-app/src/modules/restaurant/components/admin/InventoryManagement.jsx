@@ -1,11 +1,28 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
-  Package, Plus, Search, Edit3, Trash2, AlertTriangle,
-  TrendingDown, TrendingUp, Calendar, Filter, Download,
-  Upload, Eye, X, Save, RefreshCw, BarChart3, Clock,
-  MapPin, Phone, Mail, Barcode, Settings, AlertCircle,
-  CheckCircle, Info, IndianRupee, ShoppingCart, FileText,
-  Printer, Sparkles, Zap, Target, Activity, Minus, Scan
+  Package,
+  Plus,
+  Edit3,
+  Trash2,
+  AlertTriangle,
+  TrendingDown,
+  Download,
+  Upload,
+  Eye,
+  X,
+  Save,
+  RefreshCw,
+  BarChart3,
+  Clock,
+  MapPin,
+  Phone,
+  Settings,
+  AlertCircle,
+  Info,
+  IndianRupee,
+  ShoppingCart,
+  FileText,
+  Minus,
 } from 'lucide-react';
 import { useAuth } from '../../../shared/config/AuthContext';
 import { useAdminRestaurant } from '../../../shared/context/AdminRestaurantContext';
@@ -17,17 +34,21 @@ import {
   getStockStatus,
   getStatusColor,
   getInventoryStats,
-  getRoleColor,
-  getRoleDisplayName
 } from '../../api/admin/inventoryService';
 
 // Helper component for stats cards
 const StatsCard = ({ icon: Icon, value, label, colorClass, className = '' }) => (
-  <div className={`bg-white p-2 md:p-4 rounded-lg shadow border hover:shadow-md transition-shadow ${className}`}>
+  <div
+    className={`bg-white p-2 md:p-4 rounded-lg shadow border hover:shadow-md transition-shadow ${className}`}
+  >
     <div className="flex items-center justify-between gap-2 md:gap-3">
       <div className="min-w-0">
-        <p className="text-[10px] md:text-sm text-gray-500 uppercase tracking-wide truncate">{label}</p>
-        <p className={`text-base md:text-2xl font-bold truncate leading-tight ${colorClass}`}>{value}</p>
+        <p className="text-[10px] md:text-sm text-gray-500 uppercase tracking-wide truncate">
+          {label}
+        </p>
+        <p className={`text-base md:text-2xl font-bold truncate leading-tight ${colorClass}`}>
+          {value}
+        </p>
       </div>
       <Icon className="w-5 h-5 md:w-8 md:h-8 flex-shrink-0 opacity-70" />
     </div>
@@ -55,7 +76,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
     lowStock: 0,
     outOfStock: 0,
     totalValue: 0,
-    expiringSoon: 0
+    expiringSoon: 0,
   });
   const [formData, setFormData] = useState({
     name: '',
@@ -73,22 +94,22 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
     barcode: '',
     location: '',
     reorder_point: '',
-    lead_time_days: ''
+    lead_time_days: '',
   });
   const [stockUpdateData, setStockUpdateData] = useState({
     newStockLevel: '',
     reason: '',
-    notes: ''
+    notes: '',
   });
   const [reorderData, setReorderData] = useState({
     quantity: '',
     expectedDelivery: '',
-    notes: ''
+    notes: '',
   });
   const [takeOutData, setTakeOutData] = useState({
     quantity: '',
     reason: '',
-    notes: ''
+    notes: '',
   });
   const [activityLogs, setActivityLogs] = useState([]);
 
@@ -99,7 +120,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
       id: user.id,
       name: user.user_metadata?.full_name || user.email || 'Unknown User',
       email: user.email,
-      role: userRole || 'unknown'
+      role: userRole || 'unknown',
     };
   }, [user, userRole]);
 
@@ -154,7 +175,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
   const filteredItems = useMemo(() => {
     if (!inventoryItems || inventoryItems.length === 0) return [];
     return inventoryItems
-      .filter(item => {
+      .filter((item) => {
         const matchesCategory = filterCategory === 'all' || item.category === filterCategory;
         const matchesStatus = filterStatus === 'all' || getStockStatus(item) === filterStatus;
         if (!searchTerm) return matchesCategory && matchesStatus;
@@ -179,9 +200,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
           aValue = aValue.toLowerCase();
           bValue = bValue.toLowerCase();
         }
-        return sortOrder === 'asc'
-          ? aValue > bValue ? 1 : -1
-          : aValue < bValue ? 1 : -1;
+        return sortOrder === 'asc' ? (aValue > bValue ? 1 : -1) : aValue < bValue ? 1 : -1;
       });
   }, [inventoryItems, searchTerm, filterCategory, filterStatus, sortBy, sortOrder]);
 
@@ -198,12 +217,12 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
           selectedItem.id,
           formData,
           userRestaurantId,
-          currentUser
+          currentUser,
         );
         if (error) throw new Error(error);
 
-        setInventoryItems(prev =>
-          prev.map(item => item.id === selectedItem.id ? data : item)
+        setInventoryItems((prev) =>
+          prev.map((item) => (item.id === selectedItem.id ? data : item)),
         );
         setSuccessMsg('Inventory item updated successfully!');
       } else {
@@ -211,11 +230,11 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
         const { data, error } = await inventoryService.addItem(
           formData,
           userRestaurantId,
-          currentUser
+          currentUser,
         );
         if (error) throw new Error(error);
 
-        setInventoryItems(prev => [...prev, data]);
+        setInventoryItems((prev) => [...prev, data]);
         setSuccessMsg('New inventory item added successfully!');
       }
 
@@ -249,19 +268,19 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
         barcode: item.barcode || '',
         location: item.location || '',
         reorder_point: item.reorder_point?.toString() || '',
-        lead_time_days: item.lead_time_days?.toString() || ''
+        lead_time_days: item.lead_time_days?.toString() || '',
       });
     } else if (modalType === 'stockUpdate' && item) {
       setStockUpdateData({
         newStockLevel: item.current_stock.toString(),
         reason: '',
-        notes: ''
+        notes: '',
       });
     } else if (modalType === 'reorder' && item) {
       setReorderData({
         quantity: Math.max(1, item.max_stock_level - item.current_stock).toString(),
         expectedDelivery: '',
-        notes: ''
+        notes: '',
       });
     } else if (modalType === 'takeOut') {
       setTakeOutData({ quantity: '', reason: '', notes: '' });
@@ -287,7 +306,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
       barcode: '',
       location: '',
       reorder_point: '',
-      lead_time_days: ''
+      lead_time_days: '',
     });
     setTakeOutData({ quantity: '', reason: '', notes: '' }); // <-- Reset takeOutData as well
   };
@@ -303,7 +322,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
       if (data) {
         openModal('view', data);
       } else {
-        setFormData(prev => ({ ...prev, barcode }));
+        setFormData((prev) => ({ ...prev, barcode }));
         openModal('add');
         setSuccessMsg('Barcode scanned. Please complete the item details.');
       }
@@ -326,14 +345,12 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
         stockUpdateData.reason,
         stockUpdateData.notes,
         userRestaurantId,
-        currentUser
+        currentUser,
       );
 
       if (error) throw new Error(error);
 
-      setInventoryItems(prev =>
-        prev.map(item => item.id === selectedItem.id ? data : item)
-      );
+      setInventoryItems((prev) => prev.map((item) => (item.id === selectedItem.id ? data : item)));
       setSuccessMsg('Stock level updated successfully!');
       closeModal();
       setStockUpdateData({ newStockLevel: '', reason: '', notes: '' });
@@ -353,7 +370,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
       const { error } = await inventoryService.deleteItem(itemId, userRestaurantId, currentUser);
       if (error) throw new Error(error);
 
-      setInventoryItems(prev => prev.filter(item => item.id !== itemId));
+      setInventoryItems((prev) => prev.filter((item) => item.id !== itemId));
       setSuccessMsg('Inventory item deleted successfully!');
     } catch (error) {
       setErrorMsg('Failed to delete inventory item: ' + error.message);
@@ -369,12 +386,12 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
     try {
       setLoading(true);
       await Promise.all(
-        selectedItems.map(itemId =>
-          inventoryService.deleteItem(itemId, userRestaurantId, currentUser)
-        )
+        selectedItems.map((itemId) =>
+          inventoryService.deleteItem(itemId, userRestaurantId, currentUser),
+        ),
       );
 
-      setInventoryItems(prev => prev.filter(item => !selectedItems.includes(item.id)));
+      setInventoryItems((prev) => prev.filter((item) => !selectedItems.includes(item.id)));
       setSelectedItems([]);
       setSuccessMsg(`${selectedItems.length} items deleted successfully!`);
     } catch (error) {
@@ -386,19 +403,15 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
 
   // Handle item selection
   const handleItemSelect = (itemId) => {
-    setSelectedItems(prev =>
-      prev.includes(itemId)
-        ? prev.filter(id => id !== itemId)
-        : [...prev, itemId]
+    setSelectedItems((prev) =>
+      prev.includes(itemId) ? prev.filter((id) => id !== itemId) : [...prev, itemId],
     );
   };
 
   // Handle select all
   const handleSelectAll = () => {
-    setSelectedItems(prev =>
-      prev.length === filteredItems.length
-        ? []
-        : filteredItems.map(item => item.id)
+    setSelectedItems((prev) =>
+      prev.length === filteredItems.length ? [] : filteredItems.map((item) => item.id),
     );
   };
 
@@ -462,14 +475,12 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
         takeOutData.reason,
         takeOutData.notes,
         userRestaurantId,
-        currentUser
+        currentUser,
       );
 
       if (error) throw new Error(error);
 
-      setInventoryItems(prev =>
-        prev.map(item => item.id === selectedItem.id ? data : item)
-      );
+      setInventoryItems((prev) => prev.map((item) => (item.id === selectedItem.id ? data : item)));
       setSuccessMsg('Stock taken out successfully!');
       closeModal();
     } catch (error) {
@@ -491,12 +502,14 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
         reorderData.expectedDelivery,
         reorderData.notes,
         userRestaurantId,
-        currentUser
+        currentUser,
       );
 
       if (error) throw new Error(error);
 
-      setSuccessMsg(`Reorder request sent for ${reorderData.quantity} units of ${selectedItem.name}`);
+      setSuccessMsg(
+        `Reorder request sent for ${reorderData.quantity} units of ${selectedItem.name}`,
+      );
       closeModal();
       setReorderData({ quantity: '', expectedDelivery: '', notes: '' });
     } catch (error) {
@@ -521,8 +534,6 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
     <div className="space-y-4 md:space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-
-
         <div className="flex overflow-x-auto pb-2 gap-2 no-scrollbar md:flex-wrap md:pb-0">
           <button
             onClick={() => openModal('add')}
@@ -569,7 +580,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
             disabled={isLoadingData}
             className="hidden md:flex items-center gap-1.5 md:gap-2 bg-green-500 text-white px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm rounded-lg hover:bg-green-600 transition-colors disabled:opacity-70 whitespace-nowrap flex-shrink-0"
           >
-            <RefreshCw className={`w-3.5 h-3.5 md:w-4 md:h-4 ${isLoadingData ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`w-3.5 h-3.5 md:w-4 md:h-4 ${isLoadingData ? 'animate-spin' : ''}`}
+            />
             Refresh
           </button>
 
@@ -587,11 +600,41 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
 
       {/* Stats Cards */}
       <div className="flex overflow-x-auto pb-2 gap-2 md:gap-4 no-scrollbar snap-x md:grid md:grid-cols-2 lg:grid-cols-5 md:pb-0">
-        <StatsCard className="min-w-[120px] flex-shrink-0 snap-start" icon={Package} value={stats.total} label="Total" colorClass="text-gray-900" />
-        <StatsCard className="min-w-[120px] flex-shrink-0 snap-start" icon={TrendingDown} value={stats.lowStock} label="Low Stock" colorClass="text-yellow-600" />
-        <StatsCard className="min-w-[120px] flex-shrink-0 snap-start" icon={AlertTriangle} value={stats.outOfStock} label="No Stock" colorClass="text-red-600" />
-        <StatsCard className="min-w-[120px] flex-shrink-0 snap-start" icon={IndianRupee} value={`₹${stats.totalValue.toFixed(2)}`} label="Value" colorClass="text-green-600" />
-        <StatsCard className="min-w-[120px] flex-shrink-0 snap-start" icon={Clock} value={stats.expiringSoon} label="Expiring" colorClass="text-orange-600" />
+        <StatsCard
+          className="min-w-[120px] flex-shrink-0 snap-start"
+          icon={Package}
+          value={stats.total}
+          label="Total"
+          colorClass="text-gray-900"
+        />
+        <StatsCard
+          className="min-w-[120px] flex-shrink-0 snap-start"
+          icon={TrendingDown}
+          value={stats.lowStock}
+          label="Low Stock"
+          colorClass="text-yellow-600"
+        />
+        <StatsCard
+          className="min-w-[120px] flex-shrink-0 snap-start"
+          icon={AlertTriangle}
+          value={stats.outOfStock}
+          label="No Stock"
+          colorClass="text-red-600"
+        />
+        <StatsCard
+          className="min-w-[120px] flex-shrink-0 snap-start"
+          icon={IndianRupee}
+          value={`₹${stats.totalValue.toFixed(2)}`}
+          label="Value"
+          colorClass="text-green-600"
+        />
+        <StatsCard
+          className="min-w-[120px] flex-shrink-0 snap-start"
+          icon={Clock}
+          value={stats.expiringSoon}
+          label="Expiring"
+          colorClass="text-orange-600"
+        />
       </div>
 
       {/* Filters and Search */}
@@ -604,8 +647,10 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
               className="w-full px-2 py-1.5 md:px-4 md:py-2 text-xs md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
             >
               <option value="all">All Cats</option>
-              {INVENTORY_CATEGORIES.map(category => (
-                <option key={category} value={category}>{category}</option>
+              {INVENTORY_CATEGORIES.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
               ))}
             </select>
 
@@ -642,19 +687,21 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
           <div className="hidden md:flex gap-2 self-end md:self-auto ml-auto">
             <button
               onClick={() => setViewMode('table')}
-              className={`px-3 py-1.5 md:px-3 md:py-2 rounded-lg border transition-colors ${viewMode === 'table'
-                ? 'bg-orange-500 text-white border-orange-500'
-                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                }`}
+              className={`px-3 py-1.5 md:px-3 md:py-2 rounded-lg border transition-colors ${
+                viewMode === 'table'
+                  ? 'bg-orange-500 text-white border-orange-500'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
             >
               <FileText className="w-3.5 h-3.5 md:w-4 md:h-4" />
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={`px-3 py-1.5 md:px-3 md:py-2 rounded-lg border transition-colors ${viewMode === 'grid'
-                ? 'bg-orange-500 text-white border-orange-500'
-                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                }`}
+              className={`px-3 py-1.5 md:px-3 md:py-2 rounded-lg border transition-colors ${
+                viewMode === 'grid'
+                  ? 'bg-orange-500 text-white border-orange-500'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
             >
               <BarChart3 className="w-3.5 h-3.5 md:w-4 md:h-4" />
             </button>
@@ -680,25 +727,47 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
           ) : (
             filteredItems.map((item) => {
               const status = getStockStatus(item);
-              const daysUntilExpiry = Math.ceil((new Date(item.expiry_date) - new Date()) / (1000 * 60 * 60 * 24));
+              const daysUntilExpiry = Math.ceil(
+                (new Date(item.expiry_date) - new Date()) / (1000 * 60 * 60 * 24),
+              );
               const isExpiringSoon = daysUntilExpiry <= 15 && daysUntilExpiry > 0;
 
               return (
-                <div key={item.id} className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm relative overflow-hidden">
-                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${status === STOCK_STATUS.LOW_STOCK ? 'bg-yellow-500' :
-                      status === STOCK_STATUS.OUT_OF_STOCK ? 'bg-red-500' : 'bg-green-500'
-                    }`} />
+                <div
+                  key={item.id}
+                  className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm relative overflow-hidden"
+                >
+                  <div
+                    className={`absolute left-0 top-0 bottom-0 w-1 ${
+                      status === STOCK_STATUS.LOW_STOCK
+                        ? 'bg-yellow-500'
+                        : status === STOCK_STATUS.OUT_OF_STOCK
+                          ? 'bg-red-500'
+                          : 'bg-green-500'
+                    }`}
+                  />
 
                   <div className="pl-2 flex justify-between items-start mb-2">
                     <div className="min-w-0 pr-2">
                       <div className="flex items-center gap-2">
-                        <h4 className="font-semibold text-gray-900 truncate text-sm">{item.name}</h4>
-                        {item.barcode && <span className="text-[10px] bg-gray-100 text-gray-500 px-1 rounded">#{item.barcode}</span>}
+                        <h4 className="font-semibold text-gray-900 truncate text-sm">
+                          {item.name}
+                        </h4>
+                        {item.barcode && (
+                          <span className="text-[10px] bg-gray-100 text-gray-500 px-1 rounded">
+                            #{item.barcode}
+                          </span>
+                        )}
                       </div>
                       <div className="text-xs text-gray-500 mt-0.5">{item.category}</div>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <div className="font-bold text-gray-900 text-sm">{item.current_stock} <span className="text-[10px] font-normal text-gray-500 uppercase">{item.unit}</span></div>
+                      <div className="font-bold text-gray-900 text-sm">
+                        {item.current_stock}{' '}
+                        <span className="text-[10px] font-normal text-gray-500 uppercase">
+                          {item.unit}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
@@ -712,9 +781,27 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       )}
                     </div>
                     <div className="flex items-center gap-4">
-                      <button onClick={() => openModal('stockUpdate', item)} className="text-green-600 p-1 hover:bg-green-50 rounded" title="Update Stock"><Edit3 size={16} /></button>
-                      <button onClick={() => openModal('edit', item)} className="text-gray-500 p-1 hover:bg-gray-100 rounded" title="Edit"><Settings size={16} /></button>
-                      <button onClick={() => handleDelete(item.id)} className="text-red-500 p-1 hover:bg-red-50 rounded" title="Delete"><Trash2 size={16} /></button>
+                      <button
+                        onClick={() => openModal('stockUpdate', item)}
+                        className="text-green-600 p-1 hover:bg-green-50 rounded"
+                        title="Update Stock"
+                      >
+                        <Edit3 size={16} />
+                      </button>
+                      <button
+                        onClick={() => openModal('edit', item)}
+                        className="text-gray-500 p-1 hover:bg-gray-100 rounded"
+                        title="Edit"
+                      >
+                        <Settings size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(item.id)}
+                        className="text-red-500 p-1 hover:bg-red-50 rounded"
+                        title="Delete"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -734,7 +821,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     <input
                       type="checkbox"
-                      checked={selectedItems.length === filteredItems.length && filteredItems.length > 0}
+                      checked={
+                        selectedItems.length === filteredItems.length && filteredItems.length > 0
+                      }
                       onChange={handleSelectAll}
                       className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                     />
@@ -774,7 +863,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                 ) : (
                   filteredItems.map((item) => {
                     const status = getStockStatus(item);
-                    const daysUntilExpiry = Math.ceil((new Date(item.expiry_date) - new Date()) / (1000 * 60 * 60 * 24));
+                    const daysUntilExpiry = Math.ceil(
+                      (new Date(item.expiry_date) - new Date()) / (1000 * 60 * 60 * 24),
+                    );
                     const isExpiringSoon = daysUntilExpiry <= 15 && daysUntilExpiry > 0;
 
                     return (
@@ -832,7 +923,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                           )}
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}
+                          >
                             {status.replace('-', ' ')}
                           </span>
                         </td>
@@ -852,7 +945,8 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                             >
                               <Edit3 className="w-4 h-4" />
                             </button>
-                            {(status === STOCK_STATUS.LOW_STOCK || status === STOCK_STATUS.OUT_OF_STOCK) && (
+                            {(status === STOCK_STATUS.LOW_STOCK ||
+                              status === STOCK_STATUS.OUT_OF_STOCK) && (
                               <button
                                 onClick={() => openModal('reorder', item)}
                                 className="text-orange-600 hover:text-orange-800"
@@ -899,23 +993,27 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
           ) : (
             filteredItems.map((item) => {
               const status = getStockStatus(item);
-              const daysUntilExpiry = Math.ceil((new Date(item.expiry_date) - new Date()) / (1000 * 60 * 60 * 24));
+              const daysUntilExpiry = Math.ceil(
+                (new Date(item.expiry_date) - new Date()) / (1000 * 60 * 60 * 24),
+              );
               const isExpiringSoon = daysUntilExpiry <= 15 && daysUntilExpiry > 0;
 
               return (
                 <div
                   key={item.id}
-                  className={`bg-white rounded-lg shadow border hover:shadow-md transition-shadow ${status === STOCK_STATUS.LOW_STOCK ? 'border-yellow-200' :
-                    status === STOCK_STATUS.OUT_OF_STOCK ? 'border-red-200' : ''
-                    }`}
+                  className={`bg-white rounded-lg shadow border hover:shadow-md transition-shadow ${
+                    status === STOCK_STATUS.LOW_STOCK
+                      ? 'border-yellow-200'
+                      : status === STOCK_STATUS.OUT_OF_STOCK
+                        ? 'border-red-200'
+                        : ''
+                  }`}
                 >
                   <div className="p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
                         <h3 className="text-sm font-medium text-gray-900 truncate">{item.name}</h3>
-                        {item.barcode && (
-                          <p className="text-xs text-gray-500">#{item.barcode}</p>
-                        )}
+                        {item.barcode && <p className="text-xs text-gray-500">#{item.barcode}</p>}
                       </div>
                       <input
                         type="checkbox"
@@ -955,7 +1053,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
 
                     <div className="mt-3 pt-3 border-t border-gray-100">
                       <div className="flex items-center justify-between mb-2">
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
+                        <span
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}
+                        >
                           {status.replace('-', ' ')}
                         </span>
                         {isExpiringSoon && (
@@ -1009,10 +1109,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                   <Edit3 className="w-3 h-3" />
                   Update Stock
                 </button>
-                <button
-                  onClick={closeModal}
-                  className="text-gray-400 hover:text-gray-600"
-                >
+                <button onClick={closeModal} className="text-gray-400 hover:text-gray-600">
                   <X className="w-6 h-6" />
                 </button>
               </div>
@@ -1027,7 +1124,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Item Name
+                    </label>
                     <p className="text-sm text-gray-900">{selectedItem.name}</p>
                   </div>
 
@@ -1038,12 +1137,16 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Barcode</label>
-                    <p className="text-sm text-gray-900">{selectedItem.barcode || 'Not specified'}</p>
+                    <p className="text-sm text-gray-900">
+                      {selectedItem.barcode || 'Not specified'}
+                    </p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                    <p className="text-sm text-gray-900">{selectedItem.location || 'Not specified'}</p>
+                    <p className="text-sm text-gray-900">
+                      {selectedItem.location || 'Not specified'}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -1056,42 +1159,56 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Current Stock</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Current Stock
+                    </label>
                     <p className="text-sm text-gray-900">
                       {selectedItem.current_stock} {selectedItem.unit}
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Stock Range</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Stock Range
+                    </label>
                     <p className="text-sm text-gray-900">
                       Min: {selectedItem.min_stock_level} | Max: {selectedItem.max_stock_level}
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Reorder Point</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Reorder Point
+                    </label>
                     <p className="text-sm text-gray-900">
                       {selectedItem.reorder_point || 'Not set'}
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Lead Time</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Lead Time
+                    </label>
                     <p className="text-sm text-gray-900">
-                      {selectedItem.lead_time_days ? `${selectedItem.lead_time_days} days` : 'Not specified'}
+                      {selectedItem.lead_time_days
+                        ? `${selectedItem.lead_time_days} days`
+                        : 'Not specified'}
                     </p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(getStockStatus(selectedItem))}`}>
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(getStockStatus(selectedItem))}`}
+                    >
                       {getStockStatus(selectedItem).replace('-', ' ')}
                     </span>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Last Updated</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Last Updated
+                    </label>
                     <p className="text-sm text-gray-900">{selectedItem.last_updated}</p>
                   </div>
                 </div>
@@ -1105,7 +1222,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Unit Cost
+                    </label>
                     <p className="text-sm text-gray-900">
                       ₹{selectedItem.cost_per_unit.toFixed(2)}
                     </p>
@@ -1118,7 +1237,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                     <p className="text-sm text-gray-900">
                       {new Date(selectedItem.expiry_date).toLocaleDateString()}
                       {(() => {
-                        const daysUntilExpiry = Math.ceil((new Date(selectedItem.expiry_date) - new Date()) / (1000 * 60 * 60 * 24));
+                        const daysUntilExpiry = Math.ceil(
+                          (new Date(selectedItem.expiry_date) - new Date()) / (1000 * 60 * 60 * 24),
+                        );
                         return (
                           <span className="ml-2 text-orange-600">
                             (Expires in {daysUntilExpiry} days)
@@ -1138,18 +1259,24 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Supplier Name</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Supplier Name
+                    </label>
                     <p className="text-sm text-gray-900">{selectedItem.supplier}</p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Contact</label>
-                    <p className="text-sm text-gray-900">{selectedItem.supplier_contact || 'Not specified'}</p>
+                    <p className="text-sm text-gray-900">
+                      {selectedItem.supplier_contact || 'Not specified'}
+                    </p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <p className="text-sm text-gray-900">{selectedItem.supplier_email || 'Not specified'}</p>
+                    <p className="text-sm text-gray-900">
+                      {selectedItem.supplier_email || 'Not specified'}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -1179,10 +1306,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
               <h3 className="text-lg font-semibold text-gray-900">
                 {activeModal === 'edit' ? 'Edit Inventory Item' : 'Add New Inventory Item'}
               </h3>
-              <button
-                onClick={closeModal}
-                className="text-gray-400 hover:text-gray-600"
-              >
+              <button onClick={closeModal} className="text-gray-400 hover:text-gray-600">
                 <X className="w-6 h-6" />
               </button>
             </div>
@@ -1203,7 +1327,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       type="text"
                       required
                       value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     />
                   </div>
@@ -1215,37 +1339,41 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                     <select
                       required
                       value={formData.category}
-                      onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, category: e.target.value }))
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     >
                       <option value="">Select Category</option>
-                      {INVENTORY_CATEGORIES.map(category => (
-                        <option key={category} value={category}>{category}</option>
+                      {INVENTORY_CATEGORIES.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
                       ))}
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Barcode
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Barcode</label>
                     <input
                       type="text"
                       value={formData.barcode}
-                      onChange={(e) => setFormData(prev => ({ ...prev, barcode: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, barcode: e.target.value }))
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                       placeholder="Optional barcode"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Location
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
                     <input
                       type="text"
                       value={formData.location}
-                      onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, location: e.target.value }))
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                       placeholder="e.g., Refrigerator A1"
                     />
@@ -1270,24 +1398,26 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       required
                       min="0"
                       value={formData.current_stock}
-                      onChange={(e) => setFormData(prev => ({ ...prev, current_stock: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, current_stock: e.target.value }))
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Unit *
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Unit *</label>
                     <select
                       required
                       value={formData.unit}
-                      onChange={(e) => setFormData(prev => ({ ...prev, unit: e.target.value }))}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, unit: e.target.value }))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     >
                       <option value="">Select Unit</option>
-                      {INVENTORY_UNITS.map(unit => (
-                        <option key={unit} value={unit}>{unit}</option>
+                      {INVENTORY_UNITS.map((unit) => (
+                        <option key={unit} value={unit}>
+                          {unit}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -1302,7 +1432,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       required
                       min="0"
                       value={formData.min_stock_level}
-                      onChange={(e) => setFormData(prev => ({ ...prev, min_stock_level: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, min_stock_level: e.target.value }))
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     />
                   </div>
@@ -1317,7 +1449,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       required
                       min="0"
                       value={formData.max_stock_level}
-                      onChange={(e) => setFormData(prev => ({ ...prev, max_stock_level: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, max_stock_level: e.target.value }))
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     />
                   </div>
@@ -1331,7 +1465,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       step="0.01"
                       min="0"
                       value={formData.reorder_point}
-                      onChange={(e) => setFormData(prev => ({ ...prev, reorder_point: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, reorder_point: e.target.value }))
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                       placeholder="Auto-reorder threshold"
                     />
@@ -1345,7 +1481,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       type="number"
                       min="0"
                       value={formData.lead_time_days}
-                      onChange={(e) => setFormData(prev => ({ ...prev, lead_time_days: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, lead_time_days: e.target.value }))
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                       placeholder="Days to receive order"
                     />
@@ -1370,7 +1508,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       required
                       min="0"
                       value={formData.cost_per_unit}
-                      onChange={(e) => setFormData(prev => ({ ...prev, cost_per_unit: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, cost_per_unit: e.target.value }))
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     />
                   </div>
@@ -1382,7 +1522,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                     <input
                       type="date"
                       value={formData.expiry_date}
-                      onChange={(e) => setFormData(prev => ({ ...prev, expiry_date: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, expiry_date: e.target.value }))
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     />
                   </div>
@@ -1404,7 +1546,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       type="text"
                       required
                       value={formData.supplier}
-                      onChange={(e) => setFormData(prev => ({ ...prev, supplier: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, supplier: e.target.value }))
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     />
                   </div>
@@ -1416,7 +1560,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                     <input
                       type="text"
                       value={formData.supplier_contact}
-                      onChange={(e) => setFormData(prev => ({ ...prev, supplier_contact: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, supplier_contact: e.target.value }))
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                       placeholder="Phone number"
                     />
@@ -1429,7 +1575,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                     <input
                       type="email"
                       value={formData.supplier_email}
-                      onChange={(e) => setFormData(prev => ({ ...prev, supplier_email: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, supplier_email: e.target.value }))
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                       placeholder="Email address"
                     />
@@ -1450,7 +1598,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                   <textarea
                     rows="3"
                     value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, description: e.target.value }))
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     placeholder="Optional description or notes about this item..."
                   />
@@ -1484,19 +1634,14 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
             <div className="flex items-center justify-between p-6 border-b">
               <h3 className="text-lg font-semibold text-gray-900">Update Stock Level</h3>
-              <button
-                onClick={closeModal}
-                className="text-gray-400 hover:text-gray-600"
-              >
+              <button onClick={closeModal} className="text-gray-400 hover:text-gray-600">
                 <X className="w-6 h-6" />
               </button>
             </div>
 
             <form onSubmit={handleStockUpdate} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Item Name
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
                 <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">{selectedItem.name}</p>
               </div>
 
@@ -1519,7 +1664,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                   required
                   min="0"
                   value={stockUpdateData.newStockLevel}
-                  onChange={(e) => setStockUpdateData(prev => ({ ...prev, newStockLevel: e.target.value }))}
+                  onChange={(e) =>
+                    setStockUpdateData((prev) => ({ ...prev, newStockLevel: e.target.value }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 />
               </div>
@@ -1530,7 +1677,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                 </label>
                 <select
                   value={stockUpdateData.reason}
-                  onChange={(e) => setStockUpdateData(prev => ({ ...prev, reason: e.target.value }))}
+                  onChange={(e) =>
+                    setStockUpdateData((prev) => ({ ...prev, reason: e.target.value }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 >
                   <option value="">Select Reason</option>
@@ -1543,13 +1692,13 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Notes
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
                 <textarea
                   rows="2"
                   value={stockUpdateData.notes}
-                  onChange={(e) => setStockUpdateData(prev => ({ ...prev, notes: e.target.value }))}
+                  onChange={(e) =>
+                    setStockUpdateData((prev) => ({ ...prev, notes: e.target.value }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                   placeholder="Optional notes about this stock update..."
                 />
@@ -1582,19 +1731,14 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
             <div className="flex items-center justify-between p-6 border-b">
               <h3 className="text-lg font-semibold text-gray-900">Place Reorder</h3>
-              <button
-                onClick={closeModal}
-                className="text-gray-400 hover:text-gray-600"
-              >
+              <button onClick={closeModal} className="text-gray-400 hover:text-gray-600">
                 <X className="w-6 h-6" />
               </button>
             </div>
 
             <form onSubmit={handleReorder} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Item Name
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
                 <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">{selectedItem.name}</p>
               </div>
 
@@ -1608,10 +1752,10 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Supplier
-                </label>
-                <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">{selectedItem.supplier}</p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Supplier</label>
+                <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                  {selectedItem.supplier}
+                </p>
               </div>
 
               <div>
@@ -1624,7 +1768,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                   required
                   min="0.01"
                   value={reorderData.quantity}
-                  onChange={(e) => setReorderData(prev => ({ ...prev, quantity: e.target.value }))}
+                  onChange={(e) =>
+                    setReorderData((prev) => ({ ...prev, quantity: e.target.value }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 />
               </div>
@@ -1636,19 +1782,19 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                 <input
                   type="date"
                   value={reorderData.expectedDelivery}
-                  onChange={(e) => setReorderData(prev => ({ ...prev, expectedDelivery: e.target.value }))}
+                  onChange={(e) =>
+                    setReorderData((prev) => ({ ...prev, expectedDelivery: e.target.value }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Notes
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
                 <textarea
                   rows="2"
                   value={reorderData.notes}
-                  onChange={(e) => setReorderData(prev => ({ ...prev, notes: e.target.value }))}
+                  onChange={(e) => setReorderData((prev) => ({ ...prev, notes: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                   placeholder="Any special instructions or notes..."
                 />
@@ -1681,10 +1827,7 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
             <div className="flex items-center justify-between p-6 border-b">
               <h3 className="text-lg font-semibold text-gray-900">Take Out from Inventory</h3>
-              <button
-                onClick={closeModal}
-                className="text-gray-400 hover:text-gray-600"
-              >
+              <button onClick={closeModal} className="text-gray-400 hover:text-gray-600">
                 <X className="w-6 h-6" />
               </button>
             </div>
@@ -1699,20 +1842,19 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                   value={selectedItem?.id || ''}
                   onChange={(e) => {
                     const itemId = e.target.value;
-                    const item = inventoryItems.find(i => i.id.toString() === itemId);
+                    const item = inventoryItems.find((i) => i.id.toString() === itemId);
                     setSelectedItem(item || null);
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 >
                   <option value="">Select an item to take out</option>
                   {inventoryItems
-                    .filter(item => item.current_stock > 0)
-                    .map(item => (
+                    .filter((item) => item.current_stock > 0)
+                    .map((item) => (
                       <option key={item.id} value={item.id}>
                         {item.name} - {item.current_stock} {item.unit}
                       </option>
-                    ))
-                  }
+                    ))}
                 </select>
               </div>
 
@@ -1738,7 +1880,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       max={selectedItem.current_stock}
                       required
                       value={takeOutData.quantity}
-                      onChange={(e) => setTakeOutData(prev => ({ ...prev, quantity: e.target.value }))}
+                      onChange={(e) =>
+                        setTakeOutData((prev) => ({ ...prev, quantity: e.target.value }))
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                       placeholder={`Max: ${selectedItem.current_stock} ${selectedItem.unit}`}
                     />
@@ -1751,7 +1895,9 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                     <select
                       required
                       value={takeOutData.reason}
-                      onChange={(e) => setTakeOutData(prev => ({ ...prev, reason: e.target.value }))}
+                      onChange={(e) =>
+                        setTakeOutData((prev) => ({ ...prev, reason: e.target.value }))
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     >
                       <option value="">Select Reason</option>
@@ -1762,13 +1908,13 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Notes
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
                     <textarea
                       rows="2"
                       value={takeOutData.notes}
-                      onChange={(e) => setTakeOutData(prev => ({ ...prev, notes: e.target.value }))}
+                      onChange={(e) =>
+                        setTakeOutData((prev) => ({ ...prev, notes: e.target.value }))
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                       placeholder="Optional notes about this take out..."
                     />

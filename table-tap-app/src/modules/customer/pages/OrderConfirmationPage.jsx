@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, CheckCircle, MapPin } from 'lucide-react';
 import { useOrders } from '../../shared/context/OrderContext';
 import { supabase } from '../../shared/supabase';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import LoadingScreen from '../../shared/components/LoadingScreen';
 
 const OrderConfirmationPage = () => {

@@ -1,15 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Search,
-  Bell,
-  Building2,
-  Users,
-  X,
-  Filter,
-  ChevronDown,
-  RefreshCw,
-  ChevronLeft,
-} from 'lucide-react';
+import { Search, Building2, Users, X, Filter, ChevronDown, ChevronLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AdminNotificationBell from './AdminNotificationBell';
 
@@ -49,6 +39,9 @@ const AdminHeader = ({
   };
 
   const stats = getStats();
+  const hasValidRestaurantFilter = restaurants.some((r) => r.id === selectedRestaurantId);
+  const restaurantFilterValue =
+    activeTab === 'restaurants' || hasValidRestaurantFilter ? selectedRestaurantId : '';
 
   const handleClearFilters = () => {
     setSearchTerm('');
@@ -64,7 +57,7 @@ const AdminHeader = ({
 
   const hasFilters =
     searchTerm ||
-    selectedRestaurantId ||
+    restaurantFilterValue ||
     selectedCuisineType ||
     selectedStaffRole ||
     selectedConnectionStatus;
@@ -227,7 +220,7 @@ const AdminHeader = ({
                             {activeTab === 'restaurants' ? 'Status' : 'Restaurant'}
                           </label>
                           <select
-                            value={selectedRestaurantId}
+                            value={restaurantFilterValue}
                             onChange={(e) => setSelectedRestaurantId(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent font-spartan"
                           >

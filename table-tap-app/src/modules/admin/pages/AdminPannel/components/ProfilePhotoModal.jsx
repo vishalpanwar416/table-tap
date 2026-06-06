@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Camera, Upload, Trash2, User } from 'lucide-react';
+import { X, Camera, Upload, Trash2 } from 'lucide-react';
 import { supabase } from '../../../../shared/supabase';
 
 const ProfilePhotoModal = ({ show, onClose, currentUser, onPhotoUpdate }) => {

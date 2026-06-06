@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { X, Heart, ShoppingBag, Minus, Plus, Star, Clock, Flame, Tag, Leaf } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Heart, ShoppingBag, Minus, Plus, Star, Clock, Flame, Tag } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { useCart } from '../../shared/config/CartContent';
 import { useLikes } from '../../shared/config/LikesContent';

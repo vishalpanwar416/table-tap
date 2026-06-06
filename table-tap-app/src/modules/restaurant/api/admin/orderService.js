@@ -2,7 +2,6 @@ import { supabase, SUPABASE_URL } from '../../../shared/supabase';
 import { createNotification } from '../../../shared/api/notificationService';
 import { logActivity } from '../../../shared/api/activityLogService';
 import { sendOrderStatusEmail, sendBillToCustomer } from '../../../shared/api/emailService';
-import axios from 'axios';
 
 import { offlineStorage } from '../../../shared/utils/offlineStorage';
 

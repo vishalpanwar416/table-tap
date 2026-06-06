@@ -7,8 +7,6 @@ import {
   Calendar,
   ChevronDown,
   ChevronUp,
-  DollarSign,
-  IndianRupee,
   CreditCard,
   Wallet,
   Landmark,

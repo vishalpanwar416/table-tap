@@ -33,7 +33,7 @@ export const ACTIVITY_TYPES = {
   // System activities
   SYSTEM_ALERT: 'system_alert',
   CRON_JOB: 'cron_job',
-  AUTO_PROCESS: 'auto_process'
+  AUTO_PROCESS: 'auto_process',
 };
 
 // Email types
@@ -49,7 +49,7 @@ export const EMAIL_TYPES = {
   REGISTRATION_APPROVED: 'registration_approved',
   REGISTRATION_REJECTED: 'registration_rejected',
   INQUIRY_RESPONSE: 'inquiry_response',
-  INVOICE: 'invoice'
+  INVOICE: 'invoice',
 };
 
 /**
@@ -58,9 +58,8 @@ export const EMAIL_TYPES = {
  */
 export const logAdminActivity = async (logData) => {
   try {
-    const { error } = await supabase
-      .from('admin_activity_logs')
-      .insert([{
+    const { error } = await supabase.from('admin_activity_logs').insert([
+      {
         activity_type: logData.activity_type,
         activity_name: logData.activity_name,
         restaurant_id: logData.restaurant_id || null,
@@ -73,8 +72,9 @@ export const logAdminActivity = async (logData) => {
         details: logData.details || {},
         description: logData.description,
         ip_address: logData.ip_address || null,
-        created_at: new Date().toISOString()
-      }]);
+        created_at: new Date().toISOString(),
+      },
+    ]);
 
     if (error) throw error;
     return { success: true };
@@ -90,12 +90,14 @@ export const logAdminActivity = async (logData) => {
  */
 export const logEmailActivity = async (emailData) => {
   try {
-    const { error } = await supabase
-      .from('admin_activity_logs')
-      .insert([{
-        activity_type: emailData.status === 'failed' ? ACTIVITY_TYPES.EMAIL_FAILED :
-          emailData.status === 'queued' ? ACTIVITY_TYPES.EMAIL_QUEUED :
-            ACTIVITY_TYPES.EMAIL_SENT,
+    const { error } = await supabase.from('admin_activity_logs').insert([
+      {
+        activity_type:
+          emailData.status === 'failed'
+            ? ACTIVITY_TYPES.EMAIL_FAILED
+            : emailData.status === 'queued'
+              ? ACTIVITY_TYPES.EMAIL_QUEUED
+              : ACTIVITY_TYPES.EMAIL_SENT,
         activity_name: `Email: ${emailData.email_type}`,
         restaurant_id: emailData.restaurant_id || null,
         user_id: emailData.triggered_by || null,
@@ -115,11 +117,14 @@ export const logEmailActivity = async (emailData) => {
           subscription_id: emailData.subscription_id || null,
           error_message: emailData.error_message || null,
           retry_count: emailData.retry_count || 0,
-          metadata: emailData.metadata || {}
+          metadata: emailData.metadata || {},
         },
-        description: emailData.description || `${emailData.email_type} email ${emailData.status === 'failed' ? 'failed to send' : emailData.status === 'queued' ? 'queued' : 'sent'} to ${emailData.recipient_email}`,
-        created_at: new Date().toISOString()
-      }]);
+        description:
+          emailData.description ||
+          `${emailData.email_type} email ${emailData.status === 'failed' ? 'failed to send' : emailData.status === 'queued' ? 'queued' : 'sent'} to ${emailData.recipient_email}`,
+        created_at: new Date().toISOString(),
+      },
+    ]);
 
     if (error) throw error;
     return { success: true };
@@ -136,12 +141,18 @@ export const getAdminActivityLogs = async (filters = {}, page = 1, pageSize = 50
   try {
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
+    const timeoutSignal =
+      typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(15000) : null;
 
     let query = supabase
       .from('admin_activity_logs')
       .select('*', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(from, to);
+
+    if (timeoutSignal) {
+      query = query.abortSignal(timeoutSignal);
+    }
 
     // Apply filters
     if (filters.activity_type) {
@@ -163,7 +174,9 @@ export const getAdminActivityLogs = async (filters = {}, page = 1, pageSize = 50
       query = query.lte('created_at', filters.date_to);
     }
     if (filters.search) {
-      query = query.or(`description.ilike.%${filters.search}%,target_name.ilike.%${filters.search}%`);
+      query = query.or(
+        `description.ilike.%${filters.search}%,target_name.ilike.%${filters.search}%`,
+      );
     }
 
     const { data, error, count } = await query;
@@ -179,24 +192,42 @@ export const getAdminActivityLogs = async (filters = {}, page = 1, pageSize = 50
  * Get email activity logs specifically
  */
 export const getEmailActivityLogs = async (filters = {}, page = 1, pageSize = 50) => {
-  return getAdminActivityLogs({
-    ...filters,
-    target_type: 'email'
-  }, page, pageSize);
+  return getAdminActivityLogs(
+    {
+      ...filters,
+      target_type: 'email',
+    },
+    page,
+    pageSize,
+  );
 };
 
 /**
  * Get activity statistics
  */
-export const getActivityStats = async (days = 7) => {
+export const getActivityStats = async (days = 7, filters = {}) => {
   try {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
+    const timeoutSignal =
+      typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(15000) : null;
+    let query = supabase.from('admin_activity_logs').select('activity_type, status, created_at');
 
-    const { data, error } = await supabase
-      .from('admin_activity_logs')
-      .select('activity_type, status, created_at')
-      .gte('created_at', startDate.toISOString());
+    if (timeoutSignal) {
+      query = query.abortSignal(timeoutSignal);
+    }
+
+    if (filters.restaurant_id) {
+      query = query.eq('restaurant_id', filters.restaurant_id);
+    }
+
+    // days === null means "all time" — don't constrain by date so the stat
+    // cards match the list when the "All Time" range is selected.
+    if (days != null) {
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+      query = query.gte('created_at', startDate.toISOString());
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
 
@@ -204,21 +235,22 @@ export const getActivityStats = async (days = 7) => {
     const stats = {
       total: data.length,
       emails: {
-        sent: data.filter(d => d.activity_type === ACTIVITY_TYPES.EMAIL_SENT).length,
-        failed: data.filter(d => d.activity_type === ACTIVITY_TYPES.EMAIL_FAILED).length,
-        queued: data.filter(d => d.activity_type === ACTIVITY_TYPES.EMAIL_QUEUED).length
+        sent: data.filter((d) => d.activity_type === ACTIVITY_TYPES.EMAIL_SENT).length,
+        failed: data.filter((d) => d.activity_type === ACTIVITY_TYPES.EMAIL_FAILED).length,
+        queued: data.filter((d) => d.activity_type === ACTIVITY_TYPES.EMAIL_QUEUED).length,
       },
       subscriptions: {
-        created: data.filter(d => d.activity_type === ACTIVITY_TYPES.SUBSCRIPTION_CREATED).length,
-        renewed: data.filter(d => d.activity_type === ACTIVITY_TYPES.SUBSCRIPTION_RENEWED).length,
-        cancelled: data.filter(d => d.activity_type === ACTIVITY_TYPES.SUBSCRIPTION_CANCELLED).length,
-        expired: data.filter(d => d.activity_type === ACTIVITY_TYPES.SUBSCRIPTION_EXPIRED).length
+        created: data.filter((d) => d.activity_type === ACTIVITY_TYPES.SUBSCRIPTION_CREATED).length,
+        renewed: data.filter((d) => d.activity_type === ACTIVITY_TYPES.SUBSCRIPTION_RENEWED).length,
+        cancelled: data.filter((d) => d.activity_type === ACTIVITY_TYPES.SUBSCRIPTION_CANCELLED)
+          .length,
+        expired: data.filter((d) => d.activity_type === ACTIVITY_TYPES.SUBSCRIPTION_EXPIRED).length,
       },
       byStatus: {
-        success: data.filter(d => d.status === 'success').length,
-        failed: data.filter(d => d.status === 'failed').length,
-        pending: data.filter(d => d.status === 'pending').length
-      }
+        success: data.filter((d) => d.status === 'success').length,
+        failed: data.filter((d) => d.status === 'failed').length,
+        pending: data.filter((d) => d.status === 'pending').length,
+      },
     };
 
     return { data: stats, error: null };
@@ -234,7 +266,10 @@ export const getEmailTypes = () => {
   return Object.entries(EMAIL_TYPES).map(([key, value]) => ({
     key,
     value,
-    label: value.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    label: value
+      .split('_')
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' '),
   }));
 };
 
@@ -246,5 +281,5 @@ export default {
   getActivityStats,
   getEmailTypes,
   ACTIVITY_TYPES,
-  EMAIL_TYPES
+  EMAIL_TYPES,
 };

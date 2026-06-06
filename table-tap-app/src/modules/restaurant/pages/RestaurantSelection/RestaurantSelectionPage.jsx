@@ -2,26 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import {
-  ChevronLeft,
-  MapPin,
-  Phone,
-  Clock,
-  RefreshCw,
-  Store,
-  ArrowRight,
-  Navigation,
-  Crosshair,
-  ChevronDown,
-  Edit3,
-  Search,
-  X,
-} from 'lucide-react';
+import { ChevronLeft, MapPin, Store, ArrowRight, Search, X } from 'lucide-react';
 import {
   getActiveRestaurants,
   getClosestRestaurants,
   getAllRestaurants,
-  searchRestaurants,
 } from './restaurantSelectionService';
 import { useRestaurant } from './RestaurantContext';
 import { useAuth } from '../../../shared/config/AuthContext';
@@ -658,12 +643,13 @@ const RestaurantSelectionPage = () => {
       const restaurantsData = data || [];
       setRestaurants(restaurantsData);
 
-      // Save to persistent IndexedDB cache for next refresh
-      if (restaurantsData.length > 0) {
-        import('../../../shared/utils/offlineStorage').then(({ offlineStorage }) => {
-          offlineStorage.saveRestaurants(restaurantsData);
-        });
-      }
+      // Sync the persistent IndexedDB cache to this authoritative result.
+      // Persist even when empty so a stale cache (e.g. restaurants whose
+      // subscription has since lapsed) gets cleared instead of flashing on
+      // the next mount's optimistic cache load. saveRestaurants([]) clears the store.
+      import('../../../shared/utils/offlineStorage').then(({ offlineStorage }) => {
+        offlineStorage.saveRestaurants(restaurantsData);
+      });
     } catch (err) {
       // Ignore abort errors as they are intentional
       if (err.name === 'AbortError' || err.message?.includes('aborted')) return;

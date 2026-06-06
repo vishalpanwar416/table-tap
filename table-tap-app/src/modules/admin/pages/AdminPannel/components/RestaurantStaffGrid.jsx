@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import { Users, Building2, Mail, Phone, Edit, Trash2, Loader2, ChevronUp } from 'lucide-react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { Users, Phone, Edit, Trash2, Loader2 } from 'lucide-react';
 import RestaurantStaffHeader from './RestaurantStaffHeader';
 import EmptyStaffState from './EmptyStaffState';
 
