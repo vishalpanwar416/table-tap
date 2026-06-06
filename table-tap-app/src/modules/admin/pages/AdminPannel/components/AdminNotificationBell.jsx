@@ -14,7 +14,6 @@ import {
   Calendar,
   IndianRupee,
   UserPlus,
-  Users,
   UserCheck,
   Power,
   PowerOff,

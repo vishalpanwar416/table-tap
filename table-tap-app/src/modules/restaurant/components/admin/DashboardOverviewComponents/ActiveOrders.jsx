@@ -1,5 +1,15 @@
-import React, { useState } from 'react';
-import { ArrowRight, Check, X, CheckCircle, User, MapPin, ChevronUp, ChevronDown, Clock, ShoppingBag } from 'lucide-react';
+import React from 'react';
+import {
+  ArrowRight,
+  Check,
+  X,
+  CheckCircle,
+  User,
+  MapPin,
+  ChevronUp,
+  ChevronDown,
+  Clock,
+} from 'lucide-react';
 
 const ActiveOrders = ({
   orders,
@@ -9,7 +19,7 @@ const ActiveOrders = ({
   getStatusBadge,
   getStatusIcon,
   formatDate,
-  setActiveTab
+  setActiveTab,
 }) => {
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -25,18 +35,21 @@ const ActiveOrders = ({
           onClick={() => setActiveTab('orders')}
           className="text-xs md:text-sm text-orange-500 hover:text-orange-600 flex items-center font-medium"
         >
-          View all <span className="hidden md:inline">&nbsp;orders</span> <ArrowRight size={14} className="ml-1" />
+          View all <span className="hidden md:inline">&nbsp;orders</span>{' '}
+          <ArrowRight size={14} className="ml-1" />
         </button>
       </div>
 
       <div className="p-0 md:p-4">
         {orders.length === 0 ? (
-          <div className="py-8 text-center text-gray-500 text-sm">No active orders at the moment.</div>
+          <div className="py-8 text-center text-gray-500 text-sm">
+            No active orders at the moment.
+          </div>
         ) : (
           <>
             {/* Desktop View (Original detailed cards) */}
             <div className="hidden md:block space-y-4">
-              {orders.map(order => (
+              {orders.map((order) => (
                 <div key={order.id} className="border rounded-lg overflow-hidden">
                   {/* Header */}
                   <div className="bg-gray-50 p-3 flex justify-between items-center border-b">
@@ -44,7 +57,9 @@ const ActiveOrders = ({
                       <div className="mr-2">{getStatusIcon(order.status)}</div>
                       <div>
                         <p className="font-medium">#{order.order_number}</p>
-                        <p className="text-xs text-gray-500">{formatDate(order.created_at || new Date())}</p>
+                        <p className="text-xs text-gray-500">
+                          {formatDate(order.created_at || new Date())}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-3">
@@ -53,7 +68,11 @@ const ActiveOrders = ({
                         onClick={() => toggleOrderExpansion(order.id)}
                         className="text-gray-500 hover:text-gray-700"
                       >
-                        {expandedOrderId === order.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        {expandedOrderId === order.id ? (
+                          <ChevronUp size={16} />
+                        ) : (
+                          <ChevronDown size={16} />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -74,8 +93,20 @@ const ActiveOrders = ({
                       </div>
                       {order.customer_email && (
                         <div className="flex items-center text-xs text-gray-500">
-                          <svg className="mr-1" width="16" height="16" fill="none" viewBox="0 0 24 24">
-                            <path d="M4 4h16v16H4V4zm0 0l8 8 8-8" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          <svg
+                            className="mr-1"
+                            width="16"
+                            height="16"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              d="M4 4h16v16H4V4zm0 0l8 8 8-8"
+                              stroke="#9CA3AF"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
                           </svg>
                           <span>{order.customer_email}</span>
                         </div>
@@ -131,7 +162,10 @@ const ActiveOrders = ({
                     {/* Item thumbnails */}
                     <div className="flex mb-3 space-x-2 overflow-x-auto pb-1 scrollbar-hide">
                       {(order.items || []).slice(0, 4).map((item, idx) => (
-                        <div key={idx} className="flex-shrink-0 w-12 h-12 rounded-md overflow-hidden border border-gray-200">
+                        <div
+                          key={idx}
+                          className="flex-shrink-0 w-12 h-12 rounded-md overflow-hidden border border-gray-200"
+                        >
                           <img
                             src={item.image || `/api/placeholder/48/48`}
                             alt={item.name || `Item ${idx + 1}`}
@@ -150,7 +184,9 @@ const ActiveOrders = ({
                   {/* Expanded content */}
                   {expandedOrderId === order.id && (
                     <div className="bg-gray-50 p-3 border-t border-gray-100">
-                      <h4 className="text-xs font-semibold uppercase text-gray-500 mb-2">Order Items</h4>
+                      <h4 className="text-xs font-semibold uppercase text-gray-500 mb-2">
+                        Order Items
+                      </h4>
                       <div className="space-y-3">
                         {(order.items || []).map((item, idx) => (
                           <div key={idx} className="flex items-center">
@@ -162,10 +198,16 @@ const ActiveOrders = ({
                               />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">{item.name || `Item ${idx + 1}`}</p>
+                              <p className="text-sm font-medium truncate">
+                                {item.name || `Item ${idx + 1}`}
+                              </p>
                               <div className="flex justify-between text-xs text-gray-500">
-                                <span>{item.quantity || 1} × ₹{item.price?.toFixed(2) || '0.00'}</span>
-                                <span>₹{((item.quantity || 1) * (item.price || 0)).toFixed(2)}</span>
+                                <span>
+                                  {item.quantity || 1} × ₹{item.price?.toFixed(2) || '0.00'}
+                                </span>
+                                <span>
+                                  ₹{((item.quantity || 1) * (item.price || 0)).toFixed(2)}
+                                </span>
                               </div>
                             </div>
                           </div>
@@ -192,7 +234,9 @@ const ActiveOrders = ({
 
                       {order.notes && (
                         <div className="mt-3 pt-3 border-t border-gray-200">
-                          <div className="text-xs font-semibold uppercase text-gray-500 mb-1">Customer Notes</div>
+                          <div className="text-xs font-semibold uppercase text-gray-500 mb-1">
+                            Customer Notes
+                          </div>
                           <p className="text-sm text-gray-600">{order.notes}</p>
                         </div>
                       )}
@@ -204,12 +248,14 @@ const ActiveOrders = ({
 
             {/* Mobile View (Compact List) */}
             <div className="md:hidden divide-y divide-gray-100">
-              {orders.map(order => (
+              {orders.map((order) => (
                 <div key={order.id} className="p-3 hover:bg-gray-50 transition-colors">
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex flex-col">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-gray-900 text-sm">#{order.order_number || order.id?.slice(0, 6)}</span>
+                        <span className="font-bold text-gray-900 text-sm">
+                          #{order.order_number || order.id?.slice(0, 6)}
+                        </span>
                         {getStatusBadge(order.status || 'pending')}
                       </div>
                       <div className="flex items-center gap-2 mt-1">
@@ -225,8 +271,12 @@ const ActiveOrders = ({
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold text-gray-900 text-sm">₹{order.total?.toFixed(2) || '0.00'}</div>
-                      <div className="text-[10px] text-gray-500">{order.items?.length || 0} items</div>
+                      <div className="font-bold text-gray-900 text-sm">
+                        ₹{order.total?.toFixed(2) || '0.00'}
+                      </div>
+                      <div className="text-[10px] text-gray-500">
+                        {order.items?.length || 0} items
+                      </div>
                     </div>
                   </div>
 

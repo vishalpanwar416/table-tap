@@ -4,8 +4,6 @@ import {
   Building2,
   Users,
   LogOut,
-  Menu,
-  X,
   LayoutDashboard,
   Utensils,
   ShoppingCart,
@@ -20,9 +18,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Map,
-  DollarSign
+  DollarSign,
 } from 'lucide-react';
-import { supabase } from '../../../shared/supabase';
 import tableTapLogo from '../../../../assets/icons/logott.png'; // Adjust path if needed
 
 const Sidebar = ({
@@ -36,7 +33,7 @@ const Sidebar = ({
   restaurantLogoUrl,
   collapsed = false,
   onToggleCollapsed,
-  handleLogout // Accepted from props
+  handleLogout, // Accepted from props
 }) => {
   const navigate = useNavigate();
 
@@ -104,15 +101,19 @@ const Sidebar = ({
   return (
     <>
       {/* Sidebar */}
-      <div className={`
+      <div
+        className={`
         hidden md:flex flex-col h-full
         ${collapsed ? 'w-20' : 'w-64'} bg-gray-900 text-white
         transition-all duration-200 ease-in-out
-      `}>
+      `}
+      >
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="p-4 border-b border-gray-800">
-            <div className={`flex items-center ${collapsed ? 'justify-center' : 'justify-between'} mb-3`}>
+            <div
+              className={`flex items-center ${collapsed ? 'justify-center' : 'justify-between'} mb-3`}
+            >
               {/* Collapse toggle (desktop only) */}
               <button
                 type="button"
@@ -121,13 +122,15 @@ const Sidebar = ({
                 aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                 title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               >
-                {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+                {collapsed ? (
+                  <ChevronRight className="w-5 h-5" />
+                ) : (
+                  <ChevronLeft className="w-5 h-5" />
+                )}
               </button>
 
               {/* Spacer for collapsed centering */}
-              {collapsed && (
-                <div className="hidden md:block w-9 h-9" aria-hidden="true" />
-              )}
+              {collapsed && <div className="hidden md:block w-9 h-9" aria-hidden="true" />}
             </div>
 
             <div className="flex flex-col items-center space-y-2">
@@ -135,7 +138,7 @@ const Sidebar = ({
                 <img
                   key={restaurantLogoUrl || 'default'}
                   src={restaurantLogoUrl || currentUser?.restaurant_logo_url || tableTapLogo}
-                  alt={restaurantName || "Restaurant Logo"}
+                  alt={restaurantName || 'Restaurant Logo'}
                   className="w-full h-full object-contain"
                   onError={(e) => {
                     if (e.target.src !== tableTapLogo) {
@@ -166,10 +169,11 @@ const Sidebar = ({
                   <button
                     onClick={() => handleTabChange(item.id)}
                     title={collapsed ? item.label : undefined}
-                    className={`flex items-center w-full p-3 rounded-lg transition-colors ${collapsed ? 'justify-center' : ''} ${activeTab === item.id
-                      ? 'bg-orange-500 text-white'
-                      : 'hover:bg-gray-800 text-gray-300'
-                      }`}
+                    className={`flex items-center w-full p-3 rounded-lg transition-colors ${collapsed ? 'justify-center' : ''} ${
+                      activeTab === item.id
+                        ? 'bg-orange-500 text-white'
+                        : 'hover:bg-gray-800 text-gray-300'
+                    }`}
                   >
                     {getIcon(item.icon)}
                     {!collapsed && <span className="ml-3">{item.label}</span>}
@@ -181,7 +185,9 @@ const Sidebar = ({
 
           {/* User profile and logout */}
           <div className="p-4 border-t border-gray-800">
-            <div className={`admin-profile flex items-center ${collapsed ? 'justify-center' : 'gap-4'} p-2`}>
+            <div
+              className={`admin-profile flex items-center ${collapsed ? 'justify-center' : 'gap-4'} p-2`}
+            >
               <div className="relative group">
                 {currentUser?.avatar_url ? (
                   <img
@@ -189,13 +195,13 @@ const Sidebar = ({
                     alt="User avatar"
                     className="w-12 h-12 rounded-full object-cover border-2 border-gray-500 cursor-pointer transition-transform group-hover:scale-105"
                     onClick={onProfilePhotoClick}
-                    title={collapsed ? (currentUser?.email || 'Profile') : undefined}
+                    title={collapsed ? currentUser?.email || 'Profile' : undefined}
                   />
                 ) : (
                   <div
                     className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-medium cursor-pointer transition-transform group-hover:scale-105"
                     onClick={onProfilePhotoClick}
-                    title={collapsed ? (currentUser?.email || 'Profile') : undefined}
+                    title={collapsed ? currentUser?.email || 'Profile' : undefined}
                   >
                     {currentUser?.email?.charAt(0).toUpperCase()}
                   </div>
@@ -212,9 +218,7 @@ const Sidebar = ({
                   <p className="restaurant-name font-medium text-white text-sm truncate">
                     {restaurantName || 'Restaurant'}
                   </p>
-                  <p className="user-email text-xs text-gray-400 truncate">
-                    {currentUser?.email}
-                  </p>
+                  <p className="user-email text-xs text-gray-400 truncate">{currentUser?.email}</p>
                   <p className="user-role text-xs text-orange-400 font-medium">
                     {getRoleDisplayName(userRole)}
                   </p>

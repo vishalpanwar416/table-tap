@@ -4,12 +4,8 @@ import {
   ShoppingCart,
   User,
   Utensils,
-  PieChart,
   ChevronUp,
   ChevronDown,
-  Truck,
-  CheckCircle,
-  RefreshCw,
   BarChart3,
 } from 'lucide-react';
 

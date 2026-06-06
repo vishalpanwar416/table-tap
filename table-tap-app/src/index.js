@@ -6,7 +6,6 @@ import './modules/shared/supabase';
 import App from './App';
 import 'react-alice-carousel/lib/alice-carousel.css';
 import { BrowserRouter } from 'react-router-dom';
-import { Analytics } from '@vercel/analytics/react';
 
 // Initialize Sentry for error tracking
 import initSentry from './sentry';

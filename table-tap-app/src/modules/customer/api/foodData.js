@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../shared/supabase';
 import { useRestaurant } from '../../restaurant/pages/RestaurantSelection/RestaurantContext';
-import { processFoodItems, getFallbackImage } from '../../shared/utils/imageOptimization';
+import { processFoodItems } from '../../shared/utils/imageOptimization';
 
 export const categories = [
   { name: 'Snacks', icon: 'Sandwich' },

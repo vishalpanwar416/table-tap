@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { supabase } from '../../shared/supabase';
 import { useAuth } from '../../shared/config/AuthContext';
 
@@ -8,15 +8,14 @@ const AdminRestaurantContext = createContext();
 // Restaurants we never want to surface in the admin UI (legacy demo data) - currently empty to allow all for development
 const BLOCKED_RESTAURANT_NAMES = []; // was ['Restaurant-1', 'Resturant-1']
 const filterBlockedRestaurants = (list = []) =>
-  list.filter(r => !BLOCKED_RESTAURANT_NAMES.includes((r.name || '').trim()));
+  list.filter((r) => !BLOCKED_RESTAURANT_NAMES.includes((r.name || '').trim()));
 
 // Helper function to store in localStorage
 const localStorageStore = {
   set: (key, value) => {
     try {
       localStorage.setItem(key, value);
-    } catch (error) {
-    }
+    } catch (error) {}
   },
   get: (key) => {
     try {
@@ -28,9 +27,8 @@ const localStorageStore = {
   remove: (key) => {
     try {
       localStorage.removeItem(key);
-    } catch (error) {
-    }
-  }
+    } catch (error) {}
+  },
 };
 
 export const AdminRestaurantProvider = ({ children }) => {
@@ -59,7 +57,12 @@ export const AdminRestaurantProvider = ({ children }) => {
 
       // Avoid redundant loading if possible
       const currentStoredId = urlRestaurantId || localStorageStore.get('admin_selected_restaurant');
-      if (userRole && userRestaurantId === currentStoredId && restaurant && (userRole !== 'owner' || ownedRestaurants.length > 0)) {
+      if (
+        userRole &&
+        userRestaurantId === currentStoredId &&
+        restaurant &&
+        (userRole !== 'owner' || ownedRestaurants.length > 0)
+      ) {
         if (mounted) setLoading(false);
         return;
       }
@@ -107,12 +110,17 @@ export const AdminRestaurantProvider = ({ children }) => {
         // 2. Fetch Restaurants via Edge Function
         // This handles Admin (all active), Owner (all connected), and Manager/Staff (single connected) logic securely
         try {
-          const { data: funcData, error: funcError } = await supabase.functions.invoke('fetch-owner-restaurants');
+          const { data: funcData, error: funcError } =
+            await supabase.functions.invoke('fetch-owner-restaurants');
 
           if (!funcError && funcData && funcData.restaurants) {
             availableRestaurants = funcData.restaurants;
           } else {
-            if (funcError) console.warn('[AdminRestaurantContext] Edge Function error, falling back:', funcError);
+            if (funcError)
+              console.warn(
+                '[AdminRestaurantContext] Edge Function error, falling back:',
+                funcError,
+              );
             throw new Error('Edge function failed');
           }
         } catch (funcErr) {
@@ -131,8 +139,12 @@ export const AdminRestaurantProvider = ({ children }) => {
               .eq('connected', true);
 
             if (staffRows && staffRows.length > 0) {
-              const ids = staffRows.map(r => r.restaurant_id);
-              const { data: rests } = await supabase.from('restaurants').select('*').in('id', ids).eq('is_active', true);
+              const ids = staffRows.map((r) => r.restaurant_id);
+              const { data: rests } = await supabase
+                .from('restaurants')
+                .select('*')
+                .in('id', ids)
+                .eq('is_active', true);
               availableRestaurants = rests || [];
             }
           }
@@ -147,7 +159,7 @@ export const AdminRestaurantProvider = ({ children }) => {
         // 3. Selection Logic
         let targetId = null;
         const storedId = localStorageStore.get('admin_selected_restaurant');
-        const filteredIds = filteredRestaurants.map(r => r.id);
+        const filteredIds = filteredRestaurants.map((r) => r.id);
 
         if (urlRestaurantId && filteredIds.includes(urlRestaurantId)) {
           targetId = urlRestaurantId;
@@ -164,7 +176,7 @@ export const AdminRestaurantProvider = ({ children }) => {
         // Set all related states together to avoid intermediate 'access denied' states
         // in components like RestaurantDashboardWrapper
         if (targetId) {
-          const selected = filteredRestaurants.find(r => r.id === targetId);
+          const selected = filteredRestaurants.find((r) => r.id === targetId);
           if (selected) {
             setRestaurant(selected);
             if (['admin', 'owner'].includes(role)) {
@@ -175,7 +187,6 @@ export const AdminRestaurantProvider = ({ children }) => {
 
         setUserRestaurantId(targetId);
         setUserRole(role);
-
       } catch (err) {
         if (err.name === 'AbortError') return;
         console.error('[AdminRestaurantContext] Initialization error:', err);
@@ -187,54 +198,58 @@ export const AdminRestaurantProvider = ({ children }) => {
     };
 
     fetchUserRoleAndRestaurant();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [user?.id, urlRestaurantId]);
 
   // Function to set restaurant for admin users
-  const setAdminRestaurant = React.useCallback(async (restaurantId) => {
-    if (userRole !== 'admin') {
-      return false;
-    }
-
-    try {
-      setLoading(true);
-
-      const { data: restaurantData, error: restaurantError } = await supabase
-        .from('restaurants')
-        .select('*')
-        .eq('id', restaurantId)
-        .maybeSingle();
-
-      if (restaurantError) {
-        setError('Restaurant not found');
+  const setAdminRestaurant = React.useCallback(
+    async (restaurantId) => {
+      if (userRole !== 'admin') {
         return false;
       }
 
-      if (!restaurantData) {
-        setError('Restaurant not found or inactive');
+      try {
+        setLoading(true);
+
+        const { data: restaurantData, error: restaurantError } = await supabase
+          .from('restaurants')
+          .select('*')
+          .eq('id', restaurantId)
+          .maybeSingle();
+
+        if (restaurantError) {
+          setError('Restaurant not found');
+          return false;
+        }
+
+        if (!restaurantData) {
+          setError('Restaurant not found or inactive');
+          return false;
+        }
+
+        setRestaurant(restaurantData);
+        setUserRestaurantId(restaurantId);
+        localStorageStore.set('admin_selected_restaurant', restaurantId);
+
+        // Update URL without page reload
+        const url = new URL(window.location);
+        url.searchParams.set('restaurant', restaurantId);
+        window.history.replaceState({}, '', url);
+
+        setError(null);
+        return true;
+      } catch (err) {
+        if (err.name === 'AbortError') return false;
+        setError('Failed to set restaurant');
         return false;
+      } finally {
+        setLoading(false);
       }
-
-      setRestaurant(restaurantData);
-      setUserRestaurantId(restaurantId);
-      localStorageStore.set('admin_selected_restaurant', restaurantId);
-
-      // Update URL without page reload
-      const url = new URL(window.location);
-      url.searchParams.set('restaurant', restaurantId);
-      window.history.replaceState({}, '', url);
-
-      setError(null);
-      return true;
-
-    } catch (err) {
-      if (err.name === 'AbortError') return false;
-      setError('Failed to set restaurant');
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  }, [userRole]);
+    },
+    [userRole],
+  );
 
   // Function to clear admin restaurant selection
   const clearAdminRestaurant = React.useCallback(() => {
@@ -254,155 +269,162 @@ export const AdminRestaurantProvider = ({ children }) => {
     return true;
   }, [userRole]);
 
-  const updateRestaurant = React.useCallback(async (updates) => {
-    if (userRole !== 'admin' && !userRestaurantId) {
-      return false;
-    }
-
-    if (!['admin', 'manager', 'owner'].includes(userRole)) {
-      return false;
-    }
-
-    try {
-      const restaurantId = userRole === 'admin' ? updates.restaurant_id || userRestaurantId : userRestaurantId;
-
-      if (!restaurantId) {
+  const updateRestaurant = React.useCallback(
+    async (updates) => {
+      if (userRole !== 'admin' && !userRestaurantId) {
         return false;
       }
 
-      // SECURITY: Filter out protected fields for non-admins
-      const filteredUpdates = { ...updates };
-      if (userRole !== 'admin') {
-        delete filteredUpdates.swiggy_api_key;
-        delete filteredUpdates.zomato_api_key;
-        // You can add other sensitive fields here like razorpay_key_id if needed
-      }
-
-      const { data, error } = await supabase
-        .from('restaurants')
-        .update({
-          ...filteredUpdates,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', restaurantId)
-        .select()
-        .maybeSingle();
-
-      if (error) {
-        if (error.name === 'AbortError') return false;
+      if (!['admin', 'manager', 'owner'].includes(userRole)) {
         return false;
       }
 
-      if (userRole !== 'admin' || restaurantId === userRestaurantId) {
-        setRestaurant(data);
-      }
-      return true;
+      try {
+        const restaurantId =
+          userRole === 'admin' ? updates.restaurant_id || userRestaurantId : userRestaurantId;
 
-    } catch (err) {
-      return false;
-    }
-  }, [userRole, userRestaurantId]);
-
-  const refreshRestaurant = React.useCallback(async (restaurantId = null) => {
-    const targetRestaurantId = userRole === 'admin' ? restaurantId : userRestaurantId;
-
-    if (!targetRestaurantId) {
-      return false;
-    }
-
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('restaurants')
-        .select('*')
-        .eq('id', targetRestaurantId)
-        .eq('is_active', true)
-        .maybeSingle();
-
-      if (error) {
-        if (error.name === 'AbortError') return false;
-        setError(error.message);
-        return false;
-      }
-
-      if (userRole !== 'admin' || targetRestaurantId === userRestaurantId) {
-        setRestaurant(data);
-      }
-      setError(null);
-      return true;
-
-    } catch (err) {
-      if (err.name === 'AbortError') return false;
-      setError('Failed to refresh restaurant data');
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  }, [userRole, userRestaurantId]);
-
-  // Function to set restaurant for owner users
-  const setOwnerRestaurant = React.useCallback(async (restaurantId) => {
-    if (userRole !== 'owner') {
-      return false;
-    }
-
-    try {
-      setLoading(true);
-
-      // Verify ownership locally first for speed
-      const targetRestaurant = ownedRestaurants.find(r => r.id === restaurantId);
-
-      if (!targetRestaurant) {
-        // Double check with DB to be safe
-        const { data: staffData, error: staffError } = await supabase
-          .from('restaurant_staff')
-          .select('restaurant_id')
-          .eq('user_id', user.id)
-          .eq('restaurant_id', restaurantId)
-          .eq('connected', true)
-          .maybeSingle();
-
-        if (staffError || !staffData) {
-          setError('You do not have access to this restaurant');
+        if (!restaurantId) {
           return false;
         }
 
-        const { data: restaurantData, error: restaurantError } = await supabase
+        // SECURITY: Filter out protected fields for non-admins
+        const filteredUpdates = { ...updates };
+        if (userRole !== 'admin') {
+          delete filteredUpdates.swiggy_api_key;
+          delete filteredUpdates.zomato_api_key;
+          // You can add other sensitive fields here like razorpay_key_id if needed
+        }
+
+        const { data, error } = await supabase
+          .from('restaurants')
+          .update({
+            ...filteredUpdates,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', restaurantId)
+          .select()
+          .maybeSingle();
+
+        if (error) {
+          if (error.name === 'AbortError') return false;
+          return false;
+        }
+
+        if (userRole !== 'admin' || restaurantId === userRestaurantId) {
+          setRestaurant(data);
+        }
+        return true;
+      } catch (err) {
+        return false;
+      }
+    },
+    [userRole, userRestaurantId],
+  );
+
+  const refreshRestaurant = React.useCallback(
+    async (restaurantId = null) => {
+      const targetRestaurantId = userRole === 'admin' ? restaurantId : userRestaurantId;
+
+      if (!targetRestaurantId) {
+        return false;
+      }
+
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
           .from('restaurants')
           .select('*')
-          .eq('id', restaurantId)
+          .eq('id', targetRestaurantId)
           .eq('is_active', true)
           .maybeSingle();
 
-        if (restaurantData) {
-          setRestaurant(restaurantData);
-        } else {
-          setError('Restaurant not found or inactive');
+        if (error) {
+          if (error.name === 'AbortError') return false;
+          setError(error.message);
           return false;
         }
-      } else {
-        setRestaurant(targetRestaurant);
+
+        if (userRole !== 'admin' || targetRestaurantId === userRestaurantId) {
+          setRestaurant(data);
+        }
+        setError(null);
+        return true;
+      } catch (err) {
+        if (err.name === 'AbortError') return false;
+        setError('Failed to refresh restaurant data');
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [userRole, userRestaurantId],
+  );
+
+  // Function to set restaurant for owner users
+  const setOwnerRestaurant = React.useCallback(
+    async (restaurantId) => {
+      if (userRole !== 'owner') {
+        return false;
       }
 
-      setUserRestaurantId(restaurantId);
-      localStorageStore.set('admin_selected_restaurant', restaurantId);
+      try {
+        setLoading(true);
 
-      // Update URL without page reload
-      const url = new URL(window.location);
-      url.searchParams.set('restaurant', restaurantId);
-      window.history.replaceState({}, '', url);
+        // Verify ownership locally first for speed
+        const targetRestaurant = ownedRestaurants.find((r) => r.id === restaurantId);
 
-      setError(null);
-      return true;
+        if (!targetRestaurant) {
+          // Double check with DB to be safe
+          const { data: staffData, error: staffError } = await supabase
+            .from('restaurant_staff')
+            .select('restaurant_id')
+            .eq('user_id', user.id)
+            .eq('restaurant_id', restaurantId)
+            .eq('connected', true)
+            .maybeSingle();
 
-    } catch (err) {
-      if (err.name === 'AbortError') return false;
-      setError('Failed to set restaurant');
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  }, [userRole, ownedRestaurants, user?.id]);
+          if (staffError || !staffData) {
+            setError('You do not have access to this restaurant');
+            return false;
+          }
+
+          const { data: restaurantData, error: restaurantError } = await supabase
+            .from('restaurants')
+            .select('*')
+            .eq('id', restaurantId)
+            .eq('is_active', true)
+            .maybeSingle();
+
+          if (restaurantData) {
+            setRestaurant(restaurantData);
+          } else {
+            setError('Restaurant not found or inactive');
+            return false;
+          }
+        } else {
+          setRestaurant(targetRestaurant);
+        }
+
+        setUserRestaurantId(restaurantId);
+        localStorageStore.set('admin_selected_restaurant', restaurantId);
+
+        // Update URL without page reload
+        const url = new URL(window.location);
+        url.searchParams.set('restaurant', restaurantId);
+        window.history.replaceState({}, '', url);
+
+        setError(null);
+        return true;
+      } catch (err) {
+        if (err.name === 'AbortError') return false;
+        setError('Failed to set restaurant');
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [userRole, ownedRestaurants, user?.id],
+  );
 
   const canEdit = React.useCallback(() => {
     return ['admin', 'manager', 'owner'].includes(userRole);
@@ -435,13 +457,11 @@ export const AdminRestaurantProvider = ({ children }) => {
     canEdit,
     canView,
     isAdmin,
-    isOwner
+    isOwner,
   };
 
   return (
-    <AdminRestaurantContext.Provider value={value}>
-      {children}
-    </AdminRestaurantContext.Provider>
+    <AdminRestaurantContext.Provider value={value}>{children}</AdminRestaurantContext.Provider>
   );
 };
 

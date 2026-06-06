@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { Plus, LayoutGrid, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, LayoutGrid, ChevronLeft } from 'lucide-react';
 import { categories } from '../../../../customer/api/foodData';
 import FoodItemList from './FoodItemList';
 import FoodItemForm from './FoodItemForm';
@@ -7,7 +7,14 @@ import CategoryFilter from './CategoryFilter';
 
 const GRID_OPTIONS = [2, 3, 4];
 
-const MenuManagement = ({ foodItems, fetchFoodItems, setLoading, setErrorMsg, setSuccessMsg, searchTerm }) => {
+const MenuManagement = ({
+  foodItems,
+  fetchFoodItems,
+  setLoading,
+  setErrorMsg,
+  setSuccessMsg,
+  searchTerm,
+}) => {
   const [gridColumns, setGridColumns] = useState(3);
   const [formData, setFormData] = useState({
     name: '',
@@ -18,7 +25,7 @@ const MenuManagement = ({ foodItems, fetchFoodItems, setLoading, setErrorMsg, se
     discountvalue: '',
     tags: '',
     image: '',
-    imageFile: null
+    imageFile: null,
   });
   const [editItem, setEditItem] = useState(null);
   const [filterCategory, setFilterCategory] = useState('All');
@@ -32,7 +39,7 @@ const MenuManagement = ({ foodItems, fetchFoodItems, setLoading, setErrorMsg, se
       price: item.price.toString(),
       discountvalue: item.discountvalue ? item.discountvalue.toString() : '',
       tags: item.tags?.join(', ') || '',
-      imageFile: null
+      imageFile: null,
     });
     setShowForm(true);
     setLeftPanelCollapsed(false); // Expand left panel so form is visible when editing
@@ -52,24 +59,27 @@ const MenuManagement = ({ foodItems, fetchFoodItems, setLoading, setErrorMsg, se
       discountvalue: '',
       tags: '',
       image: '',
-      imageFile: null
+      imageFile: null,
     });
     setEditItem(null);
   }, []);
 
   // Filter food items based on search and category
   const filteredFoodItems = useMemo(() => {
-    return foodItems.filter(item => {
-      const matchesSearch = searchTerm ?
-        (item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    return foodItems.filter((item) => {
+      const matchesSearch = searchTerm
+        ? item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (item.tags && item.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))) : true;
+          (item.tags &&
+            item.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase())))
+        : true;
 
       let matchesCategory = true;
       if (filterCategory === 'All') {
         matchesCategory = true;
       } else if (filterCategory === 'Recommended' || filterCategory === 'Bestseller') {
-        matchesCategory = item.tags && item.tags.some(tag => tag.toLowerCase() === filterCategory.toLowerCase());
+        matchesCategory =
+          item.tags && item.tags.some((tag) => tag.toLowerCase() === filterCategory.toLowerCase());
       } else {
         matchesCategory = item.category === filterCategory;
       }
@@ -83,8 +93,11 @@ const MenuManagement = ({ foodItems, fetchFoodItems, setLoading, setErrorMsg, se
       <div className="flex flex-col md:flex-row gap-4 h-full">
         {/* Left panel: Add Food Item form – collapsible on desktop */}
         <div
-          className={`flex flex-shrink-0 transition-all duration-300 ease-in-out overflow-hidden md:relative bg-white md:bg-transparent ${showForm ? 'w-full block border-b border-gray-200 md:border-none mb-4 md:mb-0' : 'hidden md:block'
-            } ${leftPanelCollapsed ? 'md:w-0 md:border-none' : 'md:w-1/3'}`}
+          className={`flex flex-shrink-0 transition-all duration-300 ease-in-out overflow-hidden md:relative bg-white md:bg-transparent ${
+            showForm
+              ? 'w-full block border-b border-gray-200 md:border-none mb-4 md:mb-0'
+              : 'hidden md:block'
+          } ${leftPanelCollapsed ? 'md:w-0 md:border-none' : 'md:w-1/3'}`}
         >
           <div className="flex w-full h-auto md:h-[calc(100vh-200px)]">
             {/* Form content */}
@@ -106,8 +119,9 @@ const MenuManagement = ({ foodItems, fetchFoodItems, setLoading, setErrorMsg, se
             <button
               type="button"
               onClick={() => setLeftPanelCollapsed((c) => !c)}
-              className={`flex-shrink-0 items-center justify-center w-12 h-14 bg-white hover:bg-orange-50 border border-gray-200 hover:border-orange-200 shadow-sm transition-colors ${leftPanelCollapsed ? 'hidden' : 'border-l-0 rounded-r-xl hidden md:flex'
-                }`}
+              className={`flex-shrink-0 items-center justify-center w-12 h-14 bg-white hover:bg-orange-50 border border-gray-200 hover:border-orange-200 shadow-sm transition-colors ${
+                leftPanelCollapsed ? 'hidden' : 'border-l-0 rounded-r-xl hidden md:flex'
+              }`}
               title="Collapse Add Food Item"
               aria-label="Collapse form"
             >
@@ -128,17 +142,22 @@ const MenuManagement = ({ foodItems, fetchFoodItems, setLoading, setErrorMsg, se
                     categories={categories}
                   />
                 </div>
-                <div className="flex-shrink-0 flex items-center gap-1 bg-gray-100 rounded-lg p-1" role="group" aria-label="Items per row">
+                <div
+                  className="flex-shrink-0 flex items-center gap-1 bg-gray-100 rounded-lg p-1"
+                  role="group"
+                  aria-label="Items per row"
+                >
                   <LayoutGrid className="w-4 h-4 text-gray-500 hidden sm:block mr-1" aria-hidden />
                   {GRID_OPTIONS.map((cols) => (
                     <button
                       key={cols}
                       type="button"
                       onClick={() => setGridColumns(cols)}
-                      className={`px-2 py-1.5 rounded-md text-xs font-medium transition-colors ${gridColumns === cols
-                        ? 'bg-orange-500 text-white shadow-sm'
-                        : 'text-gray-600 hover:bg-gray-200'
-                        }`}
+                      className={`px-2 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                        gridColumns === cols
+                          ? 'bg-orange-500 text-white shadow-sm'
+                          : 'text-gray-600 hover:bg-gray-200'
+                      }`}
                       title={`${cols} items per row`}
                       aria-pressed={gridColumns === cols}
                     >

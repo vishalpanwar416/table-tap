@@ -23,8 +23,6 @@ import {
   initializeRazorpayPayment,
   verifyRazorpaySignature,
   createOrder,
-  validatePaymentData,
-  processOrderWithPayment,
   checkPendingFailedOrders,
 } from '../api/paymentService';
 import LoadingScreen from '../../shared/components/LoadingScreen';

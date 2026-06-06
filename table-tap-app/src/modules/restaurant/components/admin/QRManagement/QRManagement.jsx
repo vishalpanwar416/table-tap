@@ -23,8 +23,7 @@ import {
   CheckCircle,
   Check,
   Users,
-  AlertCircle,
-  Grid
+  Grid,
 } from 'lucide-react';
 
 const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) => {
@@ -45,7 +44,7 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
     tableNumber: '',
     location: '',
     capacity: 2,
-    restaurantId: restaurant?.id || ''
+    restaurantId: restaurant?.id || '',
   });
   const [platformBranding, setPlatformBranding] = useState(null);
   const [isPreparingPrint, setIsPreparingPrint] = useState(false);
@@ -79,64 +78,62 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
     startNumber: 1,
     count: 5,
     capacity: 4,
-    location: 'Main Hall'
+    location: 'Main Hall',
   });
 
   // Automatically update suggested start number
   useEffect(() => {
     if (tables.length > 0) {
       // Try to find the highest numeric table number
-      const numbers = tables
-        .map(t => parseInt(t.tableNumber))
-        .filter(n => !isNaN(n));
+      const numbers = tables.map((t) => parseInt(t.tableNumber)).filter((n) => !isNaN(n));
       const max = numbers.length > 0 ? Math.max(...numbers) : tables.length;
-      setBulkConfig(prev => ({ ...prev, startNumber: max + 1 }));
+      setBulkConfig((prev) => ({ ...prev, startNumber: max + 1 }));
     } else {
-      setBulkConfig(prev => ({ ...prev, startNumber: 1 }));
+      setBulkConfig((prev) => ({ ...prev, startNumber: 1 }));
     }
   }, [tables.length]);
 
   // Status metadata for order status colors
   const STATUS_META = {
     pending: {
-      label: "Pending",
-      color: "yellow",
+      label: 'Pending',
+      color: 'yellow',
       icon: <Clock className="h-4 w-4 text-yellow-600" />,
-      badge: "bg-yellow-100 text-yellow-800 border border-yellow-200",
-      bgColor: "bg-yellow-50",
-      borderColor: "border-yellow-200"
+      badge: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
+      bgColor: 'bg-yellow-50',
+      borderColor: 'border-yellow-200',
     },
     preparing: {
-      label: "Preparing",
-      color: "orange",
+      label: 'Preparing',
+      color: 'orange',
       icon: <Truck className="h-4 w-4 text-orange-600" />,
-      badge: "bg-orange-100 text-orange-800 border border-orange-200",
-      bgColor: "bg-orange-50",
-      borderColor: "border-orange-200"
+      badge: 'bg-orange-100 text-orange-800 border border-orange-200',
+      bgColor: 'bg-orange-50',
+      borderColor: 'border-orange-200',
     },
     ready: {
-      label: "Ready",
-      color: "green",
+      label: 'Ready',
+      color: 'green',
       icon: <CheckCircle className="h-4 w-4 text-green-600" />,
-      badge: "bg-green-100 text-green-800 border border-green-200",
-      bgColor: "bg-green-50",
-      borderColor: "border-green-200"
+      badge: 'bg-green-100 text-green-800 border border-green-200',
+      bgColor: 'bg-green-50',
+      borderColor: 'border-green-200',
     },
     completed: {
-      label: "Completed",
-      color: "teal",
+      label: 'Completed',
+      color: 'teal',
       icon: <Check className="h-4 w-4 text-teal-600" />,
-      badge: "bg-teal-100 text-teal-800 border border-teal-200",
-      bgColor: "bg-teal-50",
-      borderColor: "border-teal-200"
+      badge: 'bg-teal-100 text-teal-800 border border-teal-200',
+      bgColor: 'bg-teal-50',
+      borderColor: 'border-teal-200',
     },
     rejected: {
-      label: "Rejected",
-      color: "red",
+      label: 'Rejected',
+      color: 'red',
       icon: <X className="h-4 w-4 text-red-600" />,
-      badge: "bg-red-100 text-red-800 border border-red-200",
-      bgColor: "bg-red-50",
-      borderColor: "border-red-200"
+      badge: 'bg-red-100 text-red-800 border border-red-200',
+      bgColor: 'bg-red-50',
+      borderColor: 'border-red-200',
     },
   };
 
@@ -145,7 +142,7 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
     if (!Array.isArray(rawTables)) return [];
     return rawTables.map((t) => ({
       ...t,
-      restaurantId: t.restaurantId || t.restaurant_id || restaurantId
+      restaurantId: t.restaurantId || t.restaurant_id || restaurantId,
     }));
   };
 
@@ -188,7 +185,9 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
     };
 
     loadTables();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [restaurant?.id]);
 
   // Fetch orders for all tables
@@ -201,7 +200,7 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
   // Function to fetch orders for all tables
   const fetchTableOrders = async () => {
     try {
-      const tableNumbers = tables.map(table => table.tableNumber);
+      const tableNumbers = tables.map((table) => table.tableNumber);
 
       const { data: orders, error } = await supabase
         .from('orders')
@@ -217,7 +216,7 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
 
       // Group orders by table number
       const ordersByTable = {};
-      orders.forEach(order => {
+      orders.forEach((order) => {
         const tableNum = order.table_number || order.tableNumber;
         if (tableNum) {
           if (!ordersByTable[tableNum]) {
@@ -228,8 +227,7 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
       });
 
       setTableOrders(ordersByTable);
-    } catch (error) {
-    }
+    } catch (error) {}
   };
 
   // Get table status based on active orders
@@ -242,10 +240,10 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
         label: 'Empty',
         color: 'gray',
         icon: <Table className="h-4 w-4 text-gray-600" />,
-        badge: "bg-gray-100 text-gray-800 border border-gray-200",
-        bgColor: "bg-gray-50",
-        borderColor: "border-gray-200",
-        orderCount: 0
+        badge: 'bg-gray-100 text-gray-800 border border-gray-200',
+        bgColor: 'bg-gray-50',
+        borderColor: 'border-gray-200',
+        orderCount: 0,
       };
     }
 
@@ -256,7 +254,7 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
     return {
       ...statusMeta,
       orderCount: tableOrdersList.length,
-      latestOrder
+      latestOrder,
     };
   };
 
@@ -277,7 +275,7 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
       tableNumber: '',
       location: '',
       capacity: 2,
-      restaurantId: restaurant?.id || ''
+      restaurantId: restaurant?.id || '',
     });
   };
 
@@ -289,7 +287,7 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
   const handleInputChange = (e) => {
     setNewTable({
       ...newTable,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
@@ -308,7 +306,7 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
         .from('restaurants')
         .update({
           tables: JSON.stringify(updatedTables),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq('id', restaurant.id)
         .select()
@@ -322,7 +320,6 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
       // Refresh the restaurant context to get updated data
       await refreshRestaurant();
       return true;
-
     } catch (err) {
       setErrorMsg('Failed to save tables data');
       return false;
@@ -351,7 +348,7 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
         capacity: parseInt(capacity) || 4,
         restaurantId: restaurant.id,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
     });
 
@@ -371,7 +368,7 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
     }
 
     // Check if table number already exists
-    const existingTable = tables.find(t => t.tableNumber === newTable.tableNumber.trim());
+    const existingTable = tables.find((t) => t.tableNumber === newTable.tableNumber.trim());
     if (existingTable && !editingTable) {
       setErrorMsg('Table number already exists');
       return;
@@ -384,15 +381,13 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
       capacity: parseInt(newTable.capacity) || 2,
       restaurantId: restaurant?.id || newTable.restaurantId,
       createdAt: editingTable ? editingTable.createdAt : new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
 
     let updatedTables;
     if (editingTable) {
       // Update existing table
-      updatedTables = tables.map(table =>
-        table.id === editingTable.id ? tableData : table
-      );
+      updatedTables = tables.map((table) => (table.id === editingTable.id ? tableData : table));
     } else {
       // Add new table
       updatedTables = [...tables, tableData];
@@ -415,7 +410,7 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
       tableNumber: table.tableNumber,
       location: table.location,
       capacity: table.capacity,
-      restaurantId: table.restaurantId
+      restaurantId: table.restaurantId,
     });
     setShowAddForm(true);
   };
@@ -425,7 +420,7 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
       return;
     }
 
-    const updatedTables = tables.filter(table => table.id !== tableId);
+    const updatedTables = tables.filter((table) => table.id !== tableId);
 
     // Save to database
     const success = await saveTablesData(updatedTables);
@@ -439,11 +434,14 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
   };
 
   const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text).then(() => {
-      setSuccessMsg('QR URL copied to clipboard!');
-    }).catch(() => {
-      setErrorMsg('Failed to copy URL');
-    });
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        setSuccessMsg('QR URL copied to clipboard!');
+      })
+      .catch(() => {
+        setErrorMsg('Failed to copy URL');
+      });
   };
 
   const handleDownloadCard = async () => {
@@ -458,13 +456,13 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
       }
 
       // Wait a moment for fonts/images
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       const canvas = await html2canvas(cardElement, {
         scale: 2, // High resolution
         backgroundColor: null,
         logging: false,
-        useCORS: true
+        useCORS: true,
       });
 
       const link = document.createElement('a');
@@ -480,7 +478,6 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
     }
   };
 
-
   const handleBulkPrint = () => {
     setIsPreparingPrint(true);
     // Timeout handled by BulkQRLayout logic or manual timeout here
@@ -490,9 +487,10 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
     }, 2000); // Wait 2s for canvases to render
   };
 
-  const filteredTables = tables.filter(table =>
-    table.tableNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (table.location && table.location.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredTables = tables.filter(
+    (table) =>
+      table.tableNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (table.location && table.location.toLowerCase().includes(searchTerm.toLowerCase())),
   );
 
   // Show loading state if restaurant data is not loaded
@@ -537,7 +535,11 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
               disabled={saving}
               className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-blue-600 text-white font-bold px-2.5 py-2 sm:px-4 sm:py-2 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 disabled:opacity-50 text-xs sm:text-sm"
             >
-              {saving ? <Loader size={16} className="animate-spin" /> : <Plus size={16} className="sm:w-[20px] sm:h-[20px]" />}
+              {saving ? (
+                <Loader size={16} className="animate-spin" />
+              ) : (
+                <Plus size={16} className="sm:w-[20px] sm:h-[20px]" />
+              )}
               <span className="whitespace-nowrap">Add Table</span>
             </button>
           </div>
@@ -554,8 +556,9 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
           return (
             <div
               key={table.id}
-              className={`bg-white rounded-2xl shadow-sm border border-slate-200 transition-all duration-300 hover:shadow-xl hover:shadow-slate-200/50 group relative overflow-hidden ${selectedTable?.id === table.id ? 'ring-2 ring-blue-500 shadow-lg' : ''
-                } ${bgColor} ${borderColor}`}
+              className={`bg-white rounded-2xl shadow-sm border border-slate-200 transition-all duration-300 hover:shadow-xl hover:shadow-slate-200/50 group relative overflow-hidden ${
+                selectedTable?.id === table.id ? 'ring-2 ring-blue-500 shadow-lg' : ''
+              } ${bgColor} ${borderColor}`}
             >
               <div className="p-4">
                 {/* Table Header & QR Preview */}
@@ -567,14 +570,17 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
                     {/* Status Badge */}
                     <div className="flex items-center gap-2 mt-1">
                       {tableStatus.icon}
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${tableStatus.badge}`}>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${tableStatus.badge}`}
+                      >
                         {tableStatus.label}
                       </span>
                     </div>
                     {tableStatus.orderCount > 0 && (
                       <div className="flex items-center gap-1.5 mt-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                         <Users size={12} className="text-blue-500" />
-                        {tableStatus.orderCount} active session{tableStatus.orderCount > 1 ? 's' : ''}
+                        {tableStatus.orderCount} active session
+                        {tableStatus.orderCount > 1 ? 's' : ''}
                       </div>
                     )}
                   </div>
@@ -592,7 +598,10 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
                   {canEdit() && (
                     <>
                       <button
-                        onClick={(e) => { e.stopPropagation(); handleEditTable(table); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditTable(table);
+                        }}
                         disabled={saving}
                         className="p-1.5 bg-white/90 backdrop-blur-sm text-slate-600 hover:text-blue-600 rounded-lg shadow-sm border border-slate-100 transition-all"
                         title="Edit table"
@@ -600,7 +609,10 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
                         <Edit3 size={14} />
                       </button>
                       <button
-                        onClick={(e) => { e.stopPropagation(); handleDeleteTable(table.id); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteTable(table.id);
+                        }}
                         disabled={saving}
                         className="p-1.5 bg-white/90 backdrop-blur-sm text-slate-600 hover:text-red-600 rounded-lg shadow-sm border border-slate-100 transition-all"
                         title="Delete table"
@@ -680,8 +692,7 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
           <p className="text-slate-500 max-w-sm mx-auto mb-8 text-sm font-medium">
             {searchTerm
               ? 'Try adjusting your search terms'
-              : 'Add your tables to generate unique QR codes for contactless ordering.'
-            }
+              : 'Add your tables to generate unique QR codes for contactless ordering.'}
           </p>
           {!searchTerm && canEdit() && (
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -803,7 +814,9 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
           <div className="bg-white rounded-3xl sm:rounded-[48px] shadow-2xl w-full max-w-sm overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-300 flex flex-col max-h-[96vh] sm:max-h-[92vh]">
             {/* Modal Header */}
             <div className="px-5 py-3 sm:px-6 sm:py-4 flex justify-between items-center border-b border-slate-50 bg-white z-10 sticky top-0">
-              <h3 className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-widest">Premium Card Preview</h3>
+              <h3 className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-widest">
+                Premium Card Preview
+              </h3>
               <button
                 onClick={() => setSelectedTable(null)}
                 className="p-1.5 sm:p-2 hover:bg-slate-100 rounded-full transition-colors"
@@ -839,7 +852,11 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
                 disabled={isDownloading}
                 className="flex items-center justify-center gap-2 bg-[#0f172a] text-white font-black py-3.5 sm:py-4 rounded-xl sm:rounded-2xl hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/10 text-xs uppercase tracking-widest disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                {isDownloading ? <Loader size={18} className="animate-spin" /> : <Download size={18} />}
+                {isDownloading ? (
+                  <Loader size={18} className="animate-spin" />
+                ) : (
+                  <Download size={18} />
+                )}
                 {isDownloading ? 'Saving...' : 'Download Card'}
               </button>
             </div>
@@ -869,7 +886,9 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
               <div className="flex justify-between items-center mb-6">
                 <div>
                   <h3 className="text-xl font-black text-slate-900">Bulk Generation</h3>
-                  <p className="text-sm text-slate-500 font-medium">Create multiple tables at once</p>
+                  <p className="text-sm text-slate-500 font-medium">
+                    Create multiple tables at once
+                  </p>
                 </div>
                 <button
                   onClick={() => setShowBulkModal(false)}
@@ -888,7 +907,9 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
                     <input
                       type="number"
                       value={bulkConfig.startNumber}
-                      onChange={(e) => setBulkConfig(prev => ({ ...prev, startNumber: e.target.value }))}
+                      onChange={(e) =>
+                        setBulkConfig((prev) => ({ ...prev, startNumber: e.target.value }))
+                      }
                       className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all font-bold text-slate-900"
                     />
                   </div>
@@ -899,7 +920,9 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
                     <input
                       type="number"
                       value={bulkConfig.count}
-                      onChange={(e) => setBulkConfig(prev => ({ ...prev, count: parseInt(e.target.value) || 0 }))}
+                      onChange={(e) =>
+                        setBulkConfig((prev) => ({ ...prev, count: parseInt(e.target.value) || 0 }))
+                      }
                       className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all font-bold text-slate-900"
                     />
                   </div>
@@ -910,14 +933,15 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
                     Default Capacity
                   </label>
                   <div className="flex items-center gap-3">
-                    {[2, 4, 6, 8].map(cap => (
+                    {[2, 4, 6, 8].map((cap) => (
                       <button
                         key={cap}
-                        onClick={() => setBulkConfig(prev => ({ ...prev, capacity: cap }))}
-                        className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all ${bulkConfig.capacity === cap
-                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-100'
-                          : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-100'
-                          }`}
+                        onClick={() => setBulkConfig((prev) => ({ ...prev, capacity: cap }))}
+                        className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all ${
+                          bulkConfig.capacity === cap
+                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-100'
+                            : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-100'
+                        }`}
                       >
                         {cap}
                       </button>
@@ -933,7 +957,9 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
                     type="text"
                     placeholder="e.g., Main Hall, Terrace"
                     value={bulkConfig.location}
-                    onChange={(e) => setBulkConfig(prev => ({ ...prev, location: e.target.value }))}
+                    onChange={(e) =>
+                      setBulkConfig((prev) => ({ ...prev, location: e.target.value }))
+                    }
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all font-bold text-slate-900"
                   />
                 </div>
@@ -949,7 +975,8 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
                   Generate {bulkConfig.count} Tables
                 </button>
                 <p className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-tight">
-                  Tables {bulkConfig.startNumber} to {parseInt(bulkConfig.startNumber) + (bulkConfig.count - 1)} will be created
+                  Tables {bulkConfig.startNumber} to{' '}
+                  {parseInt(bulkConfig.startNumber) + (bulkConfig.count - 1)} will be created
                 </p>
               </div>
             </div>

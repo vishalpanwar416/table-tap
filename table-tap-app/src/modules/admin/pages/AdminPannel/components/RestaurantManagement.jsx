@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Building2, Plus, List, Grid } from 'lucide-react';
-import RestaurantCard from './RestaurantCard';
 import RestaurantListView from './RestaurantListView';
 import RestaurantGrid from './RestaurantGrid';
 import { supabase } from '../../../../shared/supabase';

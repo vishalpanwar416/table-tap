@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   Users,
   LogOut,
-  Menu,
-  X,
   LayoutDashboard,
   Utensils,
   ShoppingCart,

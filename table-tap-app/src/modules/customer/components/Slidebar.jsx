@@ -4,7 +4,6 @@ import {
   LogOut,
   ShoppingBag,
   User,
-  CreditCard,
   Phone,
   HelpCircle,
   Shield,
@@ -17,7 +16,6 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../shared/supabase';
 import { useAuth } from '../../shared/config/AuthContext';
-import { getSubdomainUrl } from '../../shared/utils/subdomainRouter';
 import ContactPopup from './ContactPopup';
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar, onLogout }) => {

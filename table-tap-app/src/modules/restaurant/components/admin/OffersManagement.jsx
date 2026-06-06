@@ -1,6 +1,26 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Tag, Plus, X, Edit, Trash2, Check, ShoppingBag, Eye, AlertCircle, Package, DollarSign, Percent, IndianRupee } from 'lucide-react';
-import { createOffer, updateOffer, deleteOffer, getAllOffers, setCarouselOffer, getRestaurantOffers, getCarouselOffers, getRestaurantCarouselOffers, getRestaurantOfferStats } from '../../../customer/api/offerService';
+import {
+  Tag,
+  Plus,
+  X,
+  Edit,
+  Trash2,
+  Check,
+  ShoppingBag,
+  Eye,
+  AlertCircle,
+  Package,
+  Percent,
+  IndianRupee,
+} from 'lucide-react';
+import {
+  createOffer,
+  updateOffer,
+  deleteOffer,
+  getAllOffers,
+  setCarouselOffer,
+  getRestaurantOffers,
+} from '../../../customer/api/offerService';
 import { getAllFoodItems, getRestaurantFoodItems } from '../../../customer/api/foodService';
 import { useAdminRestaurant } from '../../../shared/context/AdminRestaurantContext';
 
@@ -24,7 +44,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
     image: '',
     imageFile: null,
     items: [],
-    is_carousel: false
+    is_carousel: false,
   });
 
   const { userRestaurantId } = useAdminRestaurant();
@@ -40,24 +60,21 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
       if (userRestaurantId) {
         [items, offerData] = await Promise.all([
           getRestaurantFoodItems(userRestaurantId),
-          getRestaurantOffers(userRestaurantId)
+          getRestaurantOffers(userRestaurantId),
         ]);
       } else {
-        [items, offerData] = await Promise.all([
-          getAllFoodItems(),
-          getAllOffers()
-        ]);
+        [items, offerData] = await Promise.all([getAllFoodItems(), getAllOffers()]);
       }
 
       // Filter valid items
-      const validItems = items.filter(item => item.id && item.name);
-      const validOffers = offerData.filter(offer => offer.id);
+      const validItems = items.filter((item) => item.id && item.name);
+      const validOffers = offerData.filter((offer) => offer.id);
 
       setFoodItems(validItems);
       setOffers(validOffers);
 
       // Identify carousel offers
-      const carouselItems = validOffers.filter(offer => offer.is_carousel);
+      const carouselItems = validOffers.filter((offer) => offer.is_carousel);
       setCarouselOffers(carouselItems);
     } catch (error) {
       setErrorMsg('Failed to load data: ' + error.message);
@@ -73,9 +90,9 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
@@ -97,10 +114,10 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
       // Create blob URL for preview
       const blobUrl = URL.createObjectURL(file);
 
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         imageFile: file,
-        image: blobUrl
+        image: blobUrl,
       }));
     }
   };
@@ -134,26 +151,26 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
         return sum + price;
       }, 0);
 
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         price: totalPrice,
-        discounted_price: prev.discounted_price || (totalPrice * 0.9) // Keep existing discount or default 10%
+        discounted_price: prev.discounted_price || totalPrice * 0.9, // Keep existing discount or default 10%
       }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         price: 0,
-        discounted_price: 0
+        discounted_price: 0,
       }));
     }
   }, [selectedItems]);
 
   const handleAddItem = (item) => {
-    setSelectedItems(prev => [...prev, item]);
+    setSelectedItems((prev) => [...prev, item]);
   };
 
   const removeSelectedItem = (index) => {
-    setSelectedItems(prev => prev.filter((_, i) => i !== index));
+    setSelectedItems((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
@@ -196,10 +213,10 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
         description: formData.description.trim(),
         price: parseFloat(formData.price),
         discounted_price: parseFloat(formData.discounted_price),
-        items: selectedItems.map(item => item.id),
+        items: selectedItems.map((item) => item.id),
         image: formData.image || null,
         is_carousel: formData.is_carousel,
-        restaurant_id: userRestaurantId // Add restaurant_id
+        restaurant_id: userRestaurantId, // Add restaurant_id
       };
 
       if (editingOffer) {
@@ -232,7 +249,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
       image: '',
       imageFile: null,
       items: [],
-      is_carousel: false
+      is_carousel: false,
     });
     setSelectedItems([]);
     setEditingOffer(null);
@@ -243,7 +260,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
     try {
       // Find the selected food items safely
       const offerItems = (offer.items || [])
-        .map(itemId => foodItems.find(food => food.id === itemId))
+        .map((itemId) => foodItems.find((food) => food.id === itemId))
         .filter(Boolean);
 
       setEditingOffer(offer);
@@ -255,7 +272,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
         discounted_price: parseFloat(offer.discounted_price) || 0,
         image: offer.image || '',
         imageFile: null,
-        is_carousel: Boolean(offer.is_carousel)
+        is_carousel: Boolean(offer.is_carousel),
       });
       setShowForm(true);
       setViewingOffer(null);
@@ -265,7 +282,9 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
   };
 
   const handleDeleteOffer = async (offerId) => {
-    if (window.confirm('Are you sure you want to delete this offer? This action cannot be undone.')) {
+    if (
+      window.confirm('Are you sure you want to delete this offer? This action cannot be undone.')
+    ) {
       try {
         setLoading(true);
         await deleteOffer(offerId);
@@ -292,7 +311,9 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
       await setCarouselOffer(offer.id, !offer.is_carousel);
       await loadData();
 
-      setSuccessMsg(`Offer ${!offer.is_carousel ? 'added to' : 'removed from'} carousel successfully!`);
+      setSuccessMsg(
+        `Offer ${!offer.is_carousel ? 'added to' : 'removed from'} carousel successfully!`,
+      );
     } catch (error) {
       setErrorMsg(error.message || 'Failed to update carousel status');
     } finally {
@@ -300,7 +321,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
     }
   };
 
-  const filteredFoodItems = foodItems.filter(item => {
+  const filteredFoodItems = foodItems.filter((item) => {
     const searchLower = searchTerm.toLowerCase();
     return (
       item.name?.toLowerCase().includes(searchLower) ||
@@ -312,7 +333,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
   const calculateSavings = (original, discounted) => {
     if (original <= 0) return { amount: 0, percentage: 0 };
     const amount = original - discounted;
-    const percentage = ((amount / original) * 100);
+    const percentage = (amount / original) * 100;
     return { amount, percentage };
   };
 
@@ -343,7 +364,10 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-6">
           <div>
             <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-              Your Offers <span className="bg-orange-100 text-orange-700 text-xs px-2 py-0.5 rounded-full">{offers.length}</span>
+              Your Offers{' '}
+              <span className="bg-orange-100 text-orange-700 text-xs px-2 py-0.5 rounded-full">
+                {offers.length}
+              </span>
             </h2>
             <p className="text-sm text-gray-500 mt-1 hidden md:block">
               Manage special offers and promotional deals for your customers
@@ -365,8 +389,12 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
           <div className="min-w-[85px] flex-1 bg-blue-50 p-2 md:p-4 rounded-xl border border-blue-100 snap-start">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-1">
               <div>
-                <p className="text-[10px] md:text-sm text-blue-600 font-medium uppercase tracking-wide">Total Offers</p>
-                <p className="text-lg md:text-2xl font-bold text-blue-800 leading-tight">{offers.length}</p>
+                <p className="text-[10px] md:text-sm text-blue-600 font-medium uppercase tracking-wide">
+                  Total Offers
+                </p>
+                <p className="text-lg md:text-2xl font-bold text-blue-800 leading-tight">
+                  {offers.length}
+                </p>
               </div>
               <Package className="text-blue-500 w-4 h-4 md:w-6 md:h-6" />
             </div>
@@ -375,8 +403,13 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
           <div className="min-w-[85px] flex-1 bg-green-50 p-2 md:p-4 rounded-xl border border-green-100 snap-start">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-1">
               <div>
-                <p className="text-[10px] md:text-sm text-green-600 font-medium uppercase tracking-wide">Active Ads</p>
-                <p className="text-lg md:text-2xl font-bold text-green-800 leading-tight">{carouselOffers.length}<span className="text-xs text-green-600 font-normal">/3</span></p>
+                <p className="text-[10px] md:text-sm text-green-600 font-medium uppercase tracking-wide">
+                  Active Ads
+                </p>
+                <p className="text-lg md:text-2xl font-bold text-green-800 leading-tight">
+                  {carouselOffers.length}
+                  <span className="text-xs text-green-600 font-normal">/3</span>
+                </p>
               </div>
               <ShoppingBag className="text-green-500 w-4 h-4 md:w-6 md:h-6" />
             </div>
@@ -385,14 +418,19 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
           <div className="min-w-[85px] flex-1 bg-orange-50 p-2 md:p-4 rounded-xl border border-orange-100 snap-start">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-1">
               <div>
-                <p className="text-[10px] md:text-sm text-orange-600 font-medium uppercase tracking-wide">Avg. Disc</p>
+                <p className="text-[10px] md:text-sm text-orange-600 font-medium uppercase tracking-wide">
+                  Avg. Disc
+                </p>
                 <p className="text-lg md:text-2xl font-bold text-orange-800 leading-tight">
                   {offers.length > 0
-                    ? Math.round(offers.reduce((sum, offer) => {
-                      const savings = calculateSavings(offer.price, offer.discounted_price);
-                      return sum + savings.percentage;
-                    }, 0) / offers.length)
-                    : 0}%
+                    ? Math.round(
+                        offers.reduce((sum, offer) => {
+                          const savings = calculateSavings(offer.price, offer.discounted_price);
+                          return sum + savings.percentage;
+                        }, 0) / offers.length,
+                      )
+                    : 0}
+                  %
                 </p>
               </div>
               <Percent className="text-orange-500 w-4 h-4 md:w-6 md:h-6" />
@@ -402,12 +440,17 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
           <div className="min-w-[85px] flex-1 bg-purple-50 p-2 md:p-4 rounded-xl border border-purple-100 snap-start">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-1">
               <div>
-                <p className="text-[10px] md:text-sm text-purple-600 font-medium uppercase tracking-wide">Savings</p>
+                <p className="text-[10px] md:text-sm text-purple-600 font-medium uppercase tracking-wide">
+                  Savings
+                </p>
                 <p className="text-lg md:text-2xl font-bold text-purple-800 leading-tight">
-                  ₹{offers.reduce((sum, offer) => {
-                    const savings = calculateSavings(offer.price, offer.discounted_price);
-                    return sum + savings.amount;
-                  }, 0).toFixed(0)}
+                  ₹
+                  {offers
+                    .reduce((sum, offer) => {
+                      const savings = calculateSavings(offer.price, offer.discounted_price);
+                      return sum + savings.amount;
+                    }, 0)
+                    .toFixed(0)}
                 </p>
               </div>
               <IndianRupee className="text-purple-500 w-4 h-4 md:w-6 md:h-6" />
@@ -484,7 +527,9 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                       min="0"
                       step="0.01"
                     />
-                    <span className="absolute right-3 top-3 text-xs text-gray-400 font-medium">Value</span>
+                    <span className="absolute right-3 top-3 text-xs text-gray-400 font-medium">
+                      Value
+                    </span>
                   </div>
                 </div>
 
@@ -516,7 +561,11 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                           ₹{(formData.price - formData.discounted_price).toFixed(2)}
                         </div>
                         <div className="text-xs font-medium bg-green-200 text-green-800 px-2 py-0.5 rounded-full">
-                          {(((formData.price - formData.discounted_price) / formData.price) * 100).toFixed(0)}% OFF
+                          {(
+                            ((formData.price - formData.discounted_price) / formData.price) *
+                            100
+                          ).toFixed(0)}
+                          % OFF
                         </div>
                       </>
                     ) : (
@@ -536,7 +585,12 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
                       <Plus className="w-6 h-6 text-gray-400" />
                     </div>
-                    <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                    />
                   </label>
 
                   {formData.image && (
@@ -548,7 +602,9 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                       />
                       <button
                         type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, image: '', imageFile: null }))}
+                        onClick={() =>
+                          setFormData((prev) => ({ ...prev, image: '', imageFile: null }))
+                        }
                         className="absolute -top-2 -right-2 bg-white text-red-500 rounded-full p-1 shadow-md border border-gray-100 hover:bg-red-50"
                       >
                         <X size={14} />
@@ -556,9 +612,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                     </div>
                   )}
                   <div className="flex-1">
-                    <p className="text-xs text-gray-500">
-                      Tap the box to upload. Max 5MB.
-                    </p>
+                    <p className="text-xs text-gray-500">Tap the box to upload. Max 5MB.</p>
                   </div>
                 </div>
               </div>
@@ -586,16 +640,25 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                 ) : (
                   <div className="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
                     {selectedItems.map((item, index) => (
-                      <div key={index} className="flex items-center gap-3 p-2 bg-white border border-gray-100 rounded-lg shadow-sm">
+                      <div
+                        key={index}
+                        className="flex items-center gap-3 p-2 bg-white border border-gray-100 rounded-lg shadow-sm"
+                      >
                         {item.image ? (
-                          <img src={item.image} alt={item.name} className="w-10 h-10 object-cover rounded-md bg-gray-100" />
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-10 h-10 object-cover rounded-md bg-gray-100"
+                          />
                         ) : (
                           <div className="w-10 h-10 bg-gray-100 rounded-md flex items-center justify-center text-gray-400">
                             <Package size={16} />
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium text-gray-800 text-sm truncate">{item.name}</div>
+                          <div className="font-medium text-gray-800 text-sm truncate">
+                            {item.name}
+                          </div>
                           <div className="text-xs text-gray-500 truncate">
                             {item.category} • ₹{parseFloat(item.price).toFixed(2)}
                           </div>
@@ -634,19 +697,24 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 gap-2">
-                        {filteredFoodItems.map(item => {
-                          const count = selectedItems.filter(selected => selected.id === item.id).length;
+                        {filteredFoodItems.map((item) => {
+                          const count = selectedItems.filter(
+                            (selected) => selected.id === item.id,
+                          ).length;
                           const isSelected = count > 0;
                           return (
                             <div
                               key={item.id}
                               onClick={() => handleAddItem(item)}
-                              className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all hover:bg-orange-50 border ${isSelected
-                                ? 'border-orange-200 bg-orange-50/50'
-                                : 'border-transparent'
-                                }`}
+                              className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all hover:bg-orange-50 border ${
+                                isSelected
+                                  ? 'border-orange-200 bg-orange-50/50'
+                                  : 'border-transparent'
+                              }`}
                             >
-                              <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'bg-orange-500 border-orange-500' : 'border-gray-300'}`}>
+                              <div
+                                className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'bg-orange-500 border-orange-500' : 'border-gray-300'}`}
+                              >
                                 {count > 0 ? (
                                   <span className="text-[9px] text-white font-bold">{count}</span>
                                 ) : (
@@ -654,8 +722,14 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                                 )}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <div className={`text-sm font-medium truncate ${isSelected ? 'text-orange-900' : 'text-gray-700'}`}>{item.name}</div>
-                                <div className="text-xs text-gray-500">₹{parseFloat(item.price).toFixed(2)}</div>
+                                <div
+                                  className={`text-sm font-medium truncate ${isSelected ? 'text-orange-900' : 'text-gray-700'}`}
+                                >
+                                  {item.name}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  ₹{parseFloat(item.price).toFixed(2)}
+                                </div>
                               </div>
                             </div>
                           );
@@ -679,7 +753,10 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   />
                 </div>
                 <div className="flex-1 text-sm">
-                  <label htmlFor="is_carousel" className="font-bold text-gray-800 cursor-pointer block">
+                  <label
+                    htmlFor="is_carousel"
+                    className="font-bold text-gray-800 cursor-pointer block"
+                  >
                     Feature in Carousel
                   </label>
                   <p className="text-xs text-gray-600 mt-0.5">
@@ -710,7 +787,7 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   disabled={isUpdating}
                   className="px-5 py-2.5 text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 rounded-lg transition-colors disabled:opacity-50 shadow-sm shadow-orange-200"
                 >
-                  {isUpdating ? 'Saving...' : (editingOffer ? 'Save Changes' : 'Create Offer')}
+                  {isUpdating ? 'Saving...' : editingOffer ? 'Save Changes' : 'Create Offer'}
                 </button>
               </div>
             </form>
@@ -749,10 +826,13 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
             </div>
           ) : (
             <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 -mx-4 px-4 md:grid md:grid-cols-3 md:gap-5 md:pb-0 md:mx-0 md:px-0 no-scrollbar">
-              {carouselOffers.map(offer => {
+              {carouselOffers.map((offer) => {
                 const savings = calculateSavings(offer.price, offer.discounted_price);
                 return (
-                  <div key={offer.id} className="min-w-[85vw] md:min-w-0 snap-center bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all relative group">
+                  <div
+                    key={offer.id}
+                    className="min-w-[85vw] md:min-w-0 snap-center bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all relative group"
+                  >
                     <div className="relative aspect-[2/1] bg-gray-100">
                       {offer.image ? (
                         <img
@@ -762,8 +842,13 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                         />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-orange-500 to-amber-500 flex flex-col justify-center items-center p-6 text-white text-center">
-                          <h3 className="font-bold text-lg leading-tight mb-1 opacity-90">{offer.name}</h3>
-                          <div className="text-4xl font-extrabold tracking-tight drop-shadow-sm">{savings.percentage.toFixed(0)}% <span className="text-lg align-top font-medium opacity-80">OFF</span></div>
+                          <h3 className="font-bold text-lg leading-tight mb-1 opacity-90">
+                            {offer.name}
+                          </h3>
+                          <div className="text-4xl font-extrabold tracking-tight drop-shadow-sm">
+                            {savings.percentage.toFixed(0)}%{' '}
+                            <span className="text-lg align-top font-medium opacity-80">OFF</span>
+                          </div>
                         </div>
                       )}
 
@@ -793,11 +878,17 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                       <div className="flex justify-between items-start mb-1">
                         <h4 className="font-bold text-gray-900 line-clamp-1">{offer.name}</h4>
                         <div className="text-right shrink-0 ml-2">
-                          <span className="block text-lg font-bold text-orange-600 leading-none">₹{parseFloat(offer.discounted_price).toFixed(0)}</span>
-                          <span className="text-xs text-gray-400 line-through decoration-gray-300">₹{parseFloat(offer.price).toFixed(0)}</span>
+                          <span className="block text-lg font-bold text-orange-600 leading-none">
+                            ₹{parseFloat(offer.discounted_price).toFixed(0)}
+                          </span>
+                          <span className="text-xs text-gray-400 line-through decoration-gray-300">
+                            ₹{parseFloat(offer.price).toFixed(0)}
+                          </span>
                         </div>
                       </div>
-                      <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">{offer.description}</p>
+                      <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
+                        {offer.description}
+                      </p>
                     </div>
                   </div>
                 );
@@ -815,10 +906,13 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {offers.map(offer => {
+              {offers.map((offer) => {
                 const savings = calculateSavings(offer.price, offer.discounted_price);
                 return (
-                  <div key={offer.id} className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                  <div
+                    key={offer.id}
+                    className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+                  >
                     <div className="flex">
                       <div className="w-24 h-24 bg-gray-100 flex items-center justify-center">
                         {offer.image ? (
@@ -845,7 +939,9 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                             </span>
                           </div>
                         </div>
-                        <p className="text-sm text-gray-600 line-clamp-1 mt-1">{offer.description}</p>
+                        <p className="text-sm text-gray-600 line-clamp-1 mt-1">
+                          {offer.description}
+                        </p>
                         <div className="flex justify-between items-center mt-2">
                           <div className="flex items-center text-xs">
                             <Tag size={12} className="mr-1 text-green-600" />
@@ -920,12 +1016,18 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
               ) : (
                 <div className="w-24 h-24 md:w-32 md:h-32 flex items-center justify-center bg-gradient-to-br from-orange-400 to-orange-600 text-white rounded-2xl shadow-md mb-4 ring-4 ring-orange-100">
                   <span className="text-3xl font-bold">
-                    {calculateSavings(viewingOffer.price, viewingOffer.discounted_price).percentage.toFixed(0)}%
+                    {calculateSavings(
+                      viewingOffer.price,
+                      viewingOffer.discounted_price,
+                    ).percentage.toFixed(0)}
+                    %
                   </span>
                 </div>
               )}
 
-              <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">{viewingOffer.name}</h2>
+              <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">
+                {viewingOffer.name}
+              </h2>
               <p className="text-sm text-gray-500 mb-4 px-2">{viewingOffer.description}</p>
 
               <div className="flex items-center justify-center gap-3 mb-6 bg-gray-50 px-4 py-2 rounded-xl border border-gray-100 w-full">
@@ -952,13 +1054,19 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
                   <Package size={14} className="text-gray-400" /> Included Items
                 </h4>
                 <div className="space-y-2 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
-                  {(viewingOffer.items || []).map(itemId => {
-                    const item = foodItems.find(f => f.id === itemId);
+                  {(viewingOffer.items || []).map((itemId) => {
+                    const item = foodItems.find((f) => f.id === itemId);
                     return item ? (
-                      <div key={item.id} className="flex items-center gap-2 text-sm bg-white p-2 rounded-lg border border-gray-100 shadow-sm">
-                        {item.image &&
-                          <img src={item.image} className="w-8 h-8 rounded-md object-cover bg-gray-100" />
-                        }
+                      <div
+                        key={item.id}
+                        className="flex items-center gap-2 text-sm bg-white p-2 rounded-lg border border-gray-100 shadow-sm"
+                      >
+                        {item.image && (
+                          <img
+                            src={item.image}
+                            className="w-8 h-8 rounded-md object-cover bg-gray-100"
+                          />
+                        )}
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-gray-700 truncate">{item.name}</div>
                           <div className="text-xs text-gray-400">{item.category}</div>

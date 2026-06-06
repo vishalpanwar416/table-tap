@@ -1,13 +1,22 @@
-import React, { useMemo, useCallback, useEffect, useState, lazy, Suspense, memo, useRef } from "react";
-import { ShoppingBag, Heart, Filter, Star, Clock, ChevronLeft } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, {
+  useMemo,
+  useCallback,
+  useEffect,
+  useState,
+  lazy,
+  Suspense,
+  memo,
+  useRef,
+} from 'react';
+import { ShoppingBag, Heart, Filter, Star, Clock, ChevronLeft } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../../shared/config/CartContent';
 import { useLikes } from '../../shared/config/LikesContent';
 import { useRestaurant } from '../../restaurant/pages/RestaurantSelection/RestaurantContext';
 import { fetchBestSellerItems } from '../api/foodData';
 import { useNavigate } from 'react-router-dom';
 import FoodImageWithFallback from '../components/FoodImageWithFallback';
-import { useScrollLock, useMultiScrollLock } from '../../shared/hooks/useScrollLock';
+import { useMultiScrollLock } from '../../shared/hooks/useScrollLock';
 import LoadingScreen from '../../shared/components/LoadingScreen';
 
 // Lazy load components for better performance
@@ -48,7 +57,14 @@ const ItemSkeleton = memo(() => (
 ));
 
 // Progressive Image Component (same as MenuDropdown)
-const ProgressiveImage = ({ src, alt, className, placeholderColor = '#f3f4f6', delay = 0, priority = false }) => {
+const ProgressiveImage = ({
+  src,
+  alt,
+  className,
+  placeholderColor = '#f3f4f6',
+  delay = 0,
+  priority = false,
+}) => {
   const [imageState, setImageState] = useState('waiting');
   const [imageSrc, setImageSrc] = useState('');
   const [retryCount, setRetryCount] = useState(0);
@@ -57,32 +73,35 @@ const ProgressiveImage = ({ src, alt, className, placeholderColor = '#f3f4f6', d
   const timeoutRef = useRef();
   const isUnmountedRef = useRef(false);
 
-  const loadImage = useCallback((src, retry = false) => {
-    if (retry) setRetryCount(prev => prev + 1);
+  const loadImage = useCallback(
+    (src, retry = false) => {
+      if (retry) setRetryCount((prev) => prev + 1);
 
-    const img = new Image();
-    img.onload = () => {
-      if (!isUnmountedRef.current) {
-        requestAnimationFrame(() => {
+      const img = new Image();
+      img.onload = () => {
+        if (!isUnmountedRef.current) {
           requestAnimationFrame(() => {
-            setImageSrc(src);
-            setImageState('loaded');
+            requestAnimationFrame(() => {
+              setImageSrc(src);
+              setImageState('loaded');
+            });
           });
-        });
-      }
-    };
+        }
+      };
 
-    img.onerror = () => {
-      if (!isUnmountedRef.current && retryCount < 2) {
-        setTimeout(() => loadImage(src, true), 1000 * (retryCount + 1));
-      } else if (!isUnmountedRef.current) {
-        setImageState('error');
-      }
-    };
+      img.onerror = () => {
+        if (!isUnmountedRef.current && retryCount < 2) {
+          setTimeout(() => loadImage(src, true), 1000 * (retryCount + 1));
+        } else if (!isUnmountedRef.current) {
+          setImageState('error');
+        }
+      };
 
-    img.loading = priority ? 'eager' : 'lazy';
-    img.src = src;
-  }, [retryCount]);
+      img.loading = priority ? 'eager' : 'lazy';
+      img.src = src;
+    },
+    [retryCount],
+  );
 
   useEffect(() => {
     isUnmountedRef.current = false;
@@ -106,8 +125,8 @@ const ProgressiveImage = ({ src, alt, className, placeholderColor = '#f3f4f6', d
         },
         {
           threshold: 0.1,
-          rootMargin: '50px'
-        }
+          rootMargin: '50px',
+        },
       );
 
       if (imgRef.current) {
@@ -144,7 +163,7 @@ const ProgressiveImage = ({ src, alt, className, placeholderColor = '#f3f4f6', d
           style={{
             opacity: 1,
             transform: 'translateZ(0)',
-            backfaceVisibility: 'hidden'
+            backfaceVisibility: 'hidden',
           }}
         />
       )}
@@ -157,7 +176,7 @@ const PriceDisplay = ({ item }) => {
   const discountedPrice = useMemo(() => {
     if (!item.discounttype || !item.discountvalue) return item.price;
     return item.discounttype === 'Percentage'
-      ? (item.price - (item.price * (item.discountvalue / 100)))
+      ? item.price - item.price * (item.discountvalue / 100)
       : Math.max(0, item.price - item.discountvalue);
   }, [item.price, item.discounttype, item.discountvalue]);
 
@@ -187,9 +206,12 @@ const BestSellerItem = memo(({ item, onItemClick, index = 0 }) => {
   const { cartItems, addToCart, updateQuantity, removeItem } = useCart();
   const [isLikedAnimating, setIsLikedAnimating] = useState(false);
 
-  const cartItem = useMemo(() => cartItems.find(i => i.id === item.id), [cartItems, item.id]);
+  const cartItem = useMemo(() => cartItems.find((i) => i.id === item.id), [cartItems, item.id]);
   const quantity = cartItem?.quantity || 0;
-  const isLiked = useMemo(() => likedItems.some(likedItem => likedItem.id === item.id), [likedItems, item.id]);
+  const isLiked = useMemo(
+    () => likedItems.some((likedItem) => likedItem.id === item.id),
+    [likedItems, item.id],
+  );
 
   const handleAddClick = useCallback(() => addToCart(item), [addToCart, item]);
   const handleIncrement = useCallback(() => addToCart(item), [addToCart, item]);
@@ -201,13 +223,16 @@ const BestSellerItem = memo(({ item, onItemClick, index = 0 }) => {
     }
   }, [quantity, removeItem, updateQuantity, item.id, item.category]);
 
-  const handleLikeClick = useCallback((e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    setIsLikedAnimating(true);
-    requestAnimationFrame(() => toggleLike(item));
-    setTimeout(() => setIsLikedAnimating(false), 600);
-  }, [toggleLike, item]);
+  const handleLikeClick = useCallback(
+    (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      setIsLikedAnimating(true);
+      requestAnimationFrame(() => toggleLike(item));
+      setTimeout(() => setIsLikedAnimating(false), 600);
+    },
+    [toggleLike, item],
+  );
 
   // Discount tag component
   const DiscountTag = () => {
@@ -229,8 +254,8 @@ const BestSellerItem = memo(({ item, onItemClick, index = 0 }) => {
         "
         initial={{ scale: 0.7, opacity: 0, y: -10 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 300, damping: 20, duration: 0.5, delay: 0.2 }}
-        whileHover={{ scale: 1.08, filter: "brightness(1.1)" }}
+        transition={{ type: 'spring', stiffness: 300, damping: 20, duration: 0.5, delay: 0.2 }}
+        whileHover={{ scale: 1.08, filter: 'brightness(1.1)' }}
       >
         {item.discounttype === 'Percentage'
           ? `${item.discountvalue}% OFF`
@@ -240,9 +265,7 @@ const BestSellerItem = memo(({ item, onItemClick, index = 0 }) => {
   };
 
   return (
-    <div
-      className="group bg-white rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1.5 hover:scale-[1.02] transition-all duration-300 overflow-hidden border border-gray-100 relative"
-    >
+    <div className="group bg-white rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1.5 hover:scale-[1.02] transition-all duration-300 overflow-hidden border border-gray-100 relative">
       <div className="relative h-48 overflow-hidden bg-gray-100">
         {/* Discount Tag moved to top-right */}
         <div className="absolute top-3 right-3 z-30">
@@ -250,10 +273,7 @@ const BestSellerItem = memo(({ item, onItemClick, index = 0 }) => {
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent z-10 pointer-events-none"></div>
 
-        <motion.div
-          whileHover={{ scale: 1.1 }}
-          transition={{ duration: 0.3 }}
-        >
+        <motion.div whileHover={{ scale: 1.1 }} transition={{ duration: 0.3 }}>
           <FoodImageWithFallback
             src={item.image}
             alt={item.name}
@@ -271,20 +291,23 @@ const BestSellerItem = memo(({ item, onItemClick, index = 0 }) => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={handleLikeClick}
-          aria-label={isLiked ? "Remove from favorites" : "Add to favorites"}
+          aria-label={isLiked ? 'Remove from favorites' : 'Add to favorites'}
         >
           <motion.div
-            animate={isLikedAnimating ? {
-              scale: [1, 1.3, 1],
-              rotate: [0, 10, -10, 0]
-            } : {}}
+            animate={
+              isLikedAnimating
+                ? {
+                    scale: [1, 1.3, 1],
+                    rotate: [0, 10, -10, 0],
+                  }
+                : {}
+            }
             transition={{ duration: 0.6 }}
           >
             <Heart
-              className={`h-5 w-5 transition-colors duration-200 ${isLiked
-                ? "text-red-500 fill-red-500"
-                : "text-gray-600 hover:text-red-400"
-                }`}
+              className={`h-5 w-5 transition-colors duration-200 ${
+                isLiked ? 'text-red-500 fill-red-500' : 'text-gray-600 hover:text-red-400'
+              }`}
             />
           </motion.div>
         </motion.button>
@@ -328,10 +351,10 @@ const BestSellerItem = memo(({ item, onItemClick, index = 0 }) => {
                   ₹{Number(item.price).toFixed(0)}
                 </span>
                 <span className="text-xl md:text-2xl font-extrabold text-orange-600 leading-none font-spartan">
-                  ₹{(
-                    item.discounttype === "Percentage"
-                      ? item.price - (item.price * (item.discountvalue / 100))
-                      : Math.max(0, item.price - item.discountvalue)
+                  ₹
+                  {(item.discounttype === 'Percentage'
+                    ? item.price - item.price * (item.discountvalue / 100)
+                    : Math.max(0, item.price - item.discountvalue)
                   ).toFixed(0)}
                 </span>
               </>
@@ -387,7 +410,7 @@ const BestSellerItem = memo(({ item, onItemClick, index = 0 }) => {
                   className="bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white rounded-full px-4 py-1.5 shadow flex items-center gap-1 text-base font-semibold font-spartan"
                   whileHover={{
                     scale: 1.08,
-                    boxShadow: "0 6px 16px rgba(0,0,0,0.15)"
+                    boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
                   }}
                   whileTap={{ scale: 0.96 }}
                   initial={{ scale: 0.8, opacity: 0 }}
@@ -432,45 +455,50 @@ BestSellerItem.displayName = 'BestSellerItem';
 const pageVariants = {
   initial: {
     opacity: 0,
-    y: 20
+    y: 20,
   },
   animate: {
     opacity: 1,
     y: 0,
     transition: {
       duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0.1 : 0.3,
-      ease: "easeOut"
-    }
+      ease: 'easeOut',
+    },
   },
   exit: {
     opacity: 0,
     y: -20,
     transition: {
       duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0.05 : 0.2,
-      ease: "easeIn"
-    }
-  }
+      ease: 'easeIn',
+    },
+  },
 };
 
 const staggerContainer = {
   animate: {
     transition: {
-      staggerChildren: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 0.05
-    }
-  }
+      staggerChildren: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 0.05,
+    },
+  },
 };
 
 // Debounce utility
 function useDebouncedCallback(callback, delay) {
   const timeoutRef = useRef();
   const callbackRef = useRef(callback);
-  useEffect(() => { callbackRef.current = callback; }, [callback]);
-  return useCallback((...args) => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => {
-      callbackRef.current(...args);
-    }, delay);
-  }, [delay]);
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
+  return useCallback(
+    (...args) => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
+        callbackRef.current(...args);
+      }, delay);
+    },
+    [delay],
+  );
 }
 
 // Enhanced BestSeller Page
@@ -500,9 +528,12 @@ const BestSellerPage = memo(() => {
   }, 250);
 
   // Real-time search handler (debounced)
-  const handleSearch = useCallback((query) => {
-    debouncedSetSearchTerm(query);
-  }, [debouncedSetSearchTerm]);
+  const handleSearch = useCallback(
+    (query) => {
+      debouncedSetSearchTerm(query);
+    },
+    [debouncedSetSearchTerm],
+  );
 
   // Clear search when search is closed
   const handleSearchClose = useCallback(() => {
@@ -528,7 +559,8 @@ const BestSellerPage = memo(() => {
 
         if (cached) {
           const { data, timestamp } = JSON.parse(cached);
-          if (Date.now() - timestamp < 5 * 60 * 1000) { // 5 min cache
+          if (Date.now() - timestamp < 5 * 60 * 1000) {
+            // 5 min cache
             setBestSellerItems(data);
             setLoading(false);
             return;
@@ -539,10 +571,13 @@ const BestSellerPage = memo(() => {
         setBestSellerItems(data);
 
         // Cache the data
-        sessionStorage.setItem(cacheKey, JSON.stringify({
-          data,
-          timestamp: Date.now()
-        }));
+        sessionStorage.setItem(
+          cacheKey,
+          JSON.stringify({
+            data,
+            timestamp: Date.now(),
+          }),
+        );
       } catch (error) {
         setError('Failed to load best sellers. Please try again.');
         setBestSellerItems([]);
@@ -555,12 +590,15 @@ const BestSellerPage = memo(() => {
   }, [restaurantId]);
 
   // Optimized event handlers
-  const toggles = useMemo(() => ({
-    sidebar: () => setIsSidebarOpen(prev => !prev),
-    cart: () => setIsCartOpen(prev => !prev),
-    search: () => setIsSearchActive(prev => !prev),
-    notification: () => setIsNotificationOpen(prev => !prev),
-  }), []);
+  const toggles = useMemo(
+    () => ({
+      sidebar: () => setIsSidebarOpen((prev) => !prev),
+      cart: () => setIsCartOpen((prev) => !prev),
+      search: () => setIsSearchActive((prev) => !prev),
+      notification: () => setIsNotificationOpen((prev) => !prev),
+    }),
+    [],
+  );
 
   const handleOpenItemCard = useCallback((item) => {
     setSelectedItem(item);
@@ -584,10 +622,11 @@ const BestSellerPage = memo(() => {
 
     // Apply real-time search filter
     if (searchTerm.trim()) {
-      items = items.filter(item =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.category?.toLowerCase().includes(searchTerm.toLowerCase())
+      items = items.filter(
+        (item) =>
+          item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.category?.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
@@ -610,7 +649,7 @@ const BestSellerPage = memo(() => {
   useMultiScrollLock({
     cart: isCartOpen,
     sidebar: isSidebarOpen,
-    notifications: isNotificationOpen
+    notifications: isNotificationOpen,
   });
 
   // Loading state with enhanced UX
@@ -706,11 +745,7 @@ const BestSellerPage = memo(() => {
         <AnimatePresence mode="wait">
           {isCartOpen && (
             <Suspense fallback={<div className="fixed inset-0 z-50 bg-black/50" />}>
-              <CartSidebar
-                isOpen={isCartOpen}
-                onClose={toggles.cart}
-                cartItems={cartItems}
-              />
+              <CartSidebar isOpen={isCartOpen} onClose={toggles.cart} cartItems={cartItems} />
             </Suspense>
           )}
         </AnimatePresence>
@@ -718,10 +753,7 @@ const BestSellerPage = memo(() => {
         <AnimatePresence mode="wait">
           {isNotificationOpen && (
             <Suspense fallback={<div className="fixed inset-0 z-50 bg-black/50" />}>
-              <NotificationSidebar
-                isOpen={isNotificationOpen}
-                onClose={toggles.notification}
-              />
+              <NotificationSidebar isOpen={isNotificationOpen} onClose={toggles.notification} />
             </Suspense>
           )}
         </AnimatePresence>
@@ -747,7 +779,7 @@ const BestSellerPage = memo(() => {
           className="bg-white rounded-3xl p-4 md:p-6 flex-1 flex flex-col min-h-[calc(100vh-200px)] overflow-y-auto shadow-xl pb-28"
           initial={{ opacity: 0, y: 20, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ delay: 0.2, duration: 0.5, ease: "easeOut" }}
+          transition={{ delay: 0.2, duration: 0.5, ease: 'easeOut' }}
         >
           {/* Sort Options */}
           <motion.div
@@ -783,11 +815,13 @@ const BestSellerPage = memo(() => {
             <p className="text-gray-600 text-sm">
               {searchTerm ? (
                 <>
-                  {filteredAndSortedItems.length} result{filteredAndSortedItems.length !== 1 ? 's' : ''} for "{searchTerm}"
+                  {filteredAndSortedItems.length} result
+                  {filteredAndSortedItems.length !== 1 ? 's' : ''} for "{searchTerm}"
                 </>
               ) : (
                 <>
-                  {filteredAndSortedItems.length} item{filteredAndSortedItems.length !== 1 ? 's' : ''} found
+                  {filteredAndSortedItems.length} item
+                  {filteredAndSortedItems.length !== 1 ? 's' : ''} found
                 </>
               )}
             </p>
@@ -806,15 +840,11 @@ const BestSellerPage = memo(() => {
                   key={item.id}
                   variants={{
                     hidden: { opacity: 0, y: 20 },
-                    visible: { opacity: 1, y: 0 }
+                    visible: { opacity: 1, y: 0 },
                   }}
-                  transition={{ duration: 0.3, ease: "easeOut", delay: index * 0.05 }}
+                  transition={{ duration: 0.3, ease: 'easeOut', delay: index * 0.05 }}
                 >
-                  <BestSellerItem
-                    item={item}
-                    index={index}
-                    onItemClick={handleOpenItemCard}
-                  />
+                  <BestSellerItem item={item} index={index} onItemClick={handleOpenItemCard} />
                 </motion.div>
               ))}
             </motion.div>
@@ -849,11 +879,7 @@ const BestSellerPage = memo(() => {
 
       {/* Order Card */}
       <Suspense fallback={null}>
-        <OrderCard
-          isOpen={isOrderCardOpen}
-          onClose={handleCloseItemCard}
-          item={selectedItem}
-        />
+        <OrderCard isOpen={isOrderCardOpen} onClose={handleCloseItemCard} item={selectedItem} />
       </Suspense>
     </motion.div>
   );

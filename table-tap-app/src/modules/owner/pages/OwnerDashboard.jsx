@@ -1,21 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAdminRestaurant } from '../../shared/context/AdminRestaurantContext';
 import { supabase } from '../../shared/supabase';
-import {
-  LayoutDashboard,
-  Building2,
-  CreditCard,
-  Settings,
-  LogOut,
-  Bell,
-  Search,
-  ChevronDown,
-  Plus,
-  User,
-  Store,
-  ArrowLeft,
-} from 'lucide-react';
+import { Settings, Bell } from 'lucide-react';
 
 // Components
 import Sidebar from '../../restaurant/components/admin/Sidebar';

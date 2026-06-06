@@ -1,8 +1,6 @@
-import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import { Users, Loader2, ChevronUp, Edit, Trash2 } from 'lucide-react';
-import { FixedSizeList as List } from 'react-window';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { Users, Loader2, Edit, Trash2 } from 'lucide-react';
 import RestaurantStaffHeader from './RestaurantStaffHeader';
-import StaffTableRow from './StaffTableRow';
 import EmptyStaffState from './EmptyStaffState';
 
 const RestaurantStaffSection = ({

@@ -16,16 +16,9 @@ import {
   CreditCard,
   FileText,
   X,
-  Printer,
-  Download,
 } from 'lucide-react';
 import { supabase } from '../../../../shared/supabase';
-import {
-  getSystemSettings,
-  updateSystemSetting,
-  getAllRestaurants,
-  getEmailTemplate,
-} from '../admin_service.js';
+import { getAllRestaurants } from '../admin_service.js';
 import { applyTemplate } from '../../../../shared/api/emailService';
 import { generateProfessionalInvoiceHTML } from '../../../../shared/utils/invoiceGenerator';
 

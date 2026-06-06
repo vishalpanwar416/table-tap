@@ -2,26 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import {
-  ChevronLeft,
-  MapPin,
-  Phone,
-  Clock,
-  RefreshCw,
-  Store,
-  ArrowRight,
-  Navigation,
-  Crosshair,
-  ChevronDown,
-  Edit3,
-  Search,
-  X,
-} from 'lucide-react';
+import { ChevronLeft, MapPin, Store, ArrowRight, Search, X } from 'lucide-react';
 import {
   getActiveRestaurants,
   getClosestRestaurants,
   getAllRestaurants,
-  searchRestaurants,
 } from './restaurantSelectionService';
 import { useRestaurant } from './RestaurantContext';
 import { useAuth } from '../../../shared/config/AuthContext';

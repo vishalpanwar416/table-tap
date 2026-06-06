@@ -1,6 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense, useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Loader, X, Bell } from 'lucide-react';
 import AdminSidebar from './components/AdminSidebar.jsx';
 import AdminHeader from './components/AdminHeader.jsx';
 import MobileAdminHeader from './components/MobileAdminHeader.jsx';

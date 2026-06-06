@@ -1,10 +1,9 @@
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useMemo, useCallback } from 'react';
 import { Heart, ShoppingBag, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../components/Header';
 import Sidebar from '../components/Slidebar';
 import CartSidebar from '../components/CartSidebar';
-import { profileImg } from '../../../assets/images/Food';
 import { useCart } from '../../shared/config/CartContent';
 import { useNavigate } from 'react-router-dom';
 import { useLikes } from '../../shared/config/LikesContent';
@@ -19,7 +18,7 @@ const pageVariants = {
   initial: {
     opacity: 0,
     x: 20,
-    scale: 0.98
+    scale: 0.98,
   },
   animate: {
     opacity: 1,
@@ -27,8 +26,8 @@ const pageVariants = {
     scale: 1,
     transition: {
       duration: 0.3,
-      ease: "easeOut"
-    }
+      ease: 'easeOut',
+    },
   },
   exit: {
     opacity: 0,
@@ -36,25 +35,25 @@ const pageVariants = {
     scale: 0.98,
     transition: {
       duration: 0.2,
-      ease: "easeIn"
-    }
-  }
+      ease: 'easeIn',
+    },
+  },
 };
 
 // Stagger animation for grid items
 const staggerContainer = {
   animate: {
     transition: {
-      staggerChildren: 0.1
-    }
-  }
+      staggerChildren: 0.1,
+    },
+  },
 };
 
 const itemVariants = {
   initial: {
     opacity: 0,
     y: 20,
-    scale: 0.9
+    scale: 0.9,
   },
   animate: {
     opacity: 1,
@@ -62,9 +61,9 @@ const itemVariants = {
     scale: 1,
     transition: {
       duration: 0.4,
-      ease: "easeOut"
-    }
-  }
+      ease: 'easeOut',
+    },
+  },
 };
 
 const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
@@ -72,9 +71,12 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
   const { toggleLike, likedItems } = useLikes();
   const [isLikedAnimating, setIsLikedAnimating] = useState(false);
 
-  const cartItem = useMemo(() => cartItems.find(i => i.id === item.id), [cartItems, item.id]);
+  const cartItem = useMemo(() => cartItems.find((i) => i.id === item.id), [cartItems, item.id]);
   const quantity = cartItem?.quantity || 0;
-  const isLiked = useMemo(() => likedItems.some(likedItem => likedItem.id === item.id), [likedItems, item.id]);
+  const isLiked = useMemo(
+    () => likedItems.some((likedItem) => likedItem.id === item.id),
+    [likedItems, item.id],
+  );
 
   const handleAddClick = useCallback(() => addToCart(item), [addToCart, item]);
   const handleIncrement = useCallback(() => addToCart(item), [addToCart, item]);
@@ -86,13 +88,16 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
     }
   }, [quantity, removeItem, updateQuantity, item.id, item.category]);
 
-  const handleLikeClick = useCallback((e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    setIsLikedAnimating(true);
-    requestAnimationFrame(() => toggleLike(item));
-    setTimeout(() => setIsLikedAnimating(false), 600);
-  }, [toggleLike, item]);
+  const handleLikeClick = useCallback(
+    (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      setIsLikedAnimating(true);
+      requestAnimationFrame(() => toggleLike(item));
+      setTimeout(() => setIsLikedAnimating(false), 600);
+    },
+    [toggleLike, item],
+  );
 
   // Discount tag component
   const DiscountTag = () =>
@@ -105,9 +110,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
     ) : null;
 
   return (
-    <div
-      className="group bg-white rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1.5 hover:scale-[1.02] transition-all duration-300 overflow-hidden border border-gray-100 relative"
-    >
+    <div className="group bg-white rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1.5 hover:scale-[1.02] transition-all duration-300 overflow-hidden border border-gray-100 relative">
       <div className="relative h-48 overflow-hidden bg-gray-100">
         {/* Discount Tag moved to top-right */}
         <div className="absolute top-3 right-3 z-30">
@@ -115,10 +118,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent z-10 pointer-events-none"></div>
 
-        <motion.div
-          whileHover={{ scale: 1.1 }}
-          transition={{ duration: 0.3 }}
-        >
+        <motion.div whileHover={{ scale: 1.1 }} transition={{ duration: 0.3 }}>
           <FoodImageWithFallback
             src={item.image}
             alt={item.name}
@@ -136,20 +136,23 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={handleLikeClick}
-          aria-label={isLiked ? "Remove from favorites" : "Add to favorites"}
+          aria-label={isLiked ? 'Remove from favorites' : 'Add to favorites'}
         >
           <motion.div
-            animate={isLikedAnimating ? {
-              scale: [1, 1.3, 1],
-              rotate: [0, 10, -10, 0]
-            } : {}}
+            animate={
+              isLikedAnimating
+                ? {
+                    scale: [1, 1.3, 1],
+                    rotate: [0, 10, -10, 0],
+                  }
+                : {}
+            }
             transition={{ duration: 0.6 }}
           >
             <Heart
-              className={`h-5 w-5 transition-colors duration-200 ${isLiked
-                ? "text-red-500 fill-red-500"
-                : "text-gray-600 hover:text-red-400"
-                }`}
+              className={`h-5 w-5 transition-colors duration-200 ${
+                isLiked ? 'text-red-500 fill-red-500' : 'text-gray-600 hover:text-red-400'
+              }`}
             />
           </motion.div>
         </motion.button>
@@ -169,10 +172,10 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
                   ₹{Number(item.price).toFixed(0)}
                 </span>
                 <span className="text-xl md:text-2xl font-extrabold text-orange-600 leading-none font-spartan">
-                  ₹{(
-                    item.discounttype === "Percentage"
-                      ? item.price - (item.price * (item.discountvalue / 100))
-                      : Math.max(0, item.price - item.discountvalue)
+                  ₹
+                  {(item.discounttype === 'Percentage'
+                    ? item.price - item.price * (item.discountvalue / 100)
+                    : Math.max(0, item.price - item.discountvalue)
                   ).toFixed(0)}
                 </span>
               </>
@@ -228,7 +231,7 @@ const LikedItemCard = ({ item, onItemClick, index = 0 }) => {
                   className="bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white rounded-full px-4 py-1.5 shadow flex items-center gap-1 text-base font-semibold font-spartan"
                   whileHover={{
                     scale: 1.08,
-                    boxShadow: "0 6px 16px rgba(0,0,0,0.15)"
+                    boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
                   }}
                   whileTap={{ scale: 0.96 }}
                   initial={{ scale: 0.8, opacity: 0 }}
@@ -284,7 +287,7 @@ const LikedItemsPage = () => {
   useMultiScrollLock({
     cart: isCartOpen,
     sidebar: isSidebarOpen,
-    notifications: isNotificationOpen
+    notifications: isNotificationOpen,
   });
 
   // Real-time search handler
@@ -304,10 +307,11 @@ const LikedItemsPage = () => {
       return likedItems;
     }
 
-    return likedItems.filter(item =>
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.category?.toLowerCase().includes(searchTerm.toLowerCase())
+    return likedItems.filter(
+      (item) =>
+        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.category?.toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [likedItems, searchTerm]);
 
@@ -370,23 +374,13 @@ const LikedItemsPage = () => {
           />
         </div>
 
-        <Sidebar
-          isSidebarOpen={isSidebarOpen}
-          toggleSidebar={toggle.sidebar}
-        />
+        <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggle.sidebar} />
 
         {isNotificationOpen && (
-          <NotificationSidebar
-            isOpen={isNotificationOpen}
-            onClose={toggle.notification}
-          />
+          <NotificationSidebar isOpen={isNotificationOpen} onClose={toggle.notification} />
         )}
 
-        <CartSidebar
-          isOpen={isCartOpen}
-          onClose={toggle.cart}
-          cartItems={cartItems}
-        />
+        <CartSidebar isOpen={isCartOpen} onClose={toggle.cart} cartItems={cartItems} />
 
         <motion.div
           className="pt-4 md:pt-6 pb-6 relative"
@@ -404,7 +398,7 @@ const LikedItemsPage = () => {
           className="bg-white rounded-3xl p-4 md:p-6 flex-1 flex flex-col min-h-[calc(100vh-200px)] overflow-y-auto shadow-xl"
           initial={{ opacity: 0, y: 20, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ delay: 0.2, duration: 0.5, ease: "easeOut" }}
+          transition={{ delay: 0.2, duration: 0.5, ease: 'easeOut' }}
         >
           <motion.p
             className="justify-center text-center text-black font-medium text-lg md:text-xl mb-4 md:mb-6 font-spartan-medium"
@@ -424,16 +418,15 @@ const LikedItemsPage = () => {
               transition={{ delay: 0.4, duration: 0.3 }}
             >
               <p className="text-gray-600 text-sm">
-                {filteredLikedItems.length} result{filteredLikedItems.length !== 1 ? 's' : ''} for "{searchTerm}"
+                {filteredLikedItems.length} result{filteredLikedItems.length !== 1 ? 's' : ''} for "
+                {searchTerm}"
               </p>
             </motion.div>
           )}
 
           {/* Items Grid */}
           {filteredLikedItems.length > 0 ? (
-            <div
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"
-            >
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {filteredLikedItems.map((item, idx) => (
                 <div key={item.id}>
                   <LikedItemCard item={item} onItemClick={handleImageClick} index={idx} />

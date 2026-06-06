@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { supabase } from '../../shared/supabase';
 import { useAuth } from './AuthContext';
 import { useRestaurant } from '../../restaurant/pages/RestaurantSelection/RestaurantContext';
-import { secureStorage, sanitizeInput } from '../../shared/utils/security';
+import { secureStorage } from '../../shared/utils/security';
 
 const CartContext = createContext();
 
