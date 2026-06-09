@@ -25,7 +25,9 @@ export default function AdminOnlyWrapper({ children }) {
 
   useEffect(() => {
     mountedRef.current = true;
-    return () => { mountedRef.current = false; };
+    return () => {
+      mountedRef.current = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -48,10 +50,12 @@ export default function AdminOnlyWrapper({ children }) {
         return;
       }
 
-      const metadataRole = user.user_metadata?.profile_role ||
-        user.app_metadata?.profile_role ||
-        user.app_metadata?.role ||
-        user.user_metadata?.role;
+      // Only trust app_metadata for a fast-path: it is server-controlled and
+      // cannot be set by the client. user_metadata is client-writable
+      // (supabase.auth.updateUser({ data })), so it must NOT grant access —
+      // doing so allowed privilege escalation. The profiles table below is the
+      // authoritative source of truth.
+      const metadataRole = user.app_metadata?.profile_role || user.app_metadata?.role;
 
       if (metadataRole && metadataRole.toLowerCase() === 'admin') {
         finishChecking(true, false);
@@ -94,7 +98,7 @@ export default function AdminOnlyWrapper({ children }) {
       } finally {
         if (mounted) clearTimeout(timeoutId);
         // We don't reset checkInProgressRef here because we want to block until unmount/remount
-        // actually we should reset it if we want to allow re-checks? 
+        // actually we should reset it if we want to allow re-checks?
         // But the robust fix is in cleanup.
       }
     };
@@ -112,7 +116,7 @@ export default function AdminOnlyWrapper({ children }) {
     if (!checkingRole && !authLoading && shouldRedirect && !isAdmin && mountedRef.current) {
       navigate('/login', {
         replace: true,
-        state: { from: location.pathname }
+        state: { from: location.pathname },
       });
     }
   }, [checkingRole, authLoading, shouldRedirect, isAdmin, navigate, location.pathname]);
@@ -149,4 +153,3 @@ export default function AdminOnlyWrapper({ children }) {
 
   return <AuthWrapper>{children}</AuthWrapper>;
 }
-
