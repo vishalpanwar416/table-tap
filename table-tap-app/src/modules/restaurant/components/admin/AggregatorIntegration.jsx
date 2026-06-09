@@ -707,7 +707,7 @@ const AggregatorIntegration = ({ restaurantId, restaurant }) => {
                               : 'bg-rose-600 shadow-rose-100'
                           }`}
                         >
-                          {order.platform[0]}
+                          {order.platform?.[0]}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">

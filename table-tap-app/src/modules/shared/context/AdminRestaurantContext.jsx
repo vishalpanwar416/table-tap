@@ -31,6 +31,13 @@ const localStorageStore = {
   },
 };
 
+// Namespace the selected-restaurant key per user so one user's selection never
+// bleeds into another user's session on a shared device. Falls back to the
+// legacy shared key only when there is no user id (e.g. logged out).
+const SELECTION_KEY_BASE = 'admin_selected_restaurant';
+const getSelectionKey = (userId) =>
+  userId ? `${SELECTION_KEY_BASE}_${userId}` : SELECTION_KEY_BASE;
+
 export const AdminRestaurantProvider = ({ children }) => {
   const { user } = useAuth();
   const [restaurant, setRestaurant] = useState(null);
@@ -56,7 +63,7 @@ export const AdminRestaurantProvider = ({ children }) => {
       }
 
       // Avoid redundant loading if possible
-      const currentStoredId = urlRestaurantId || localStorageStore.get('admin_selected_restaurant');
+      const currentStoredId = urlRestaurantId || localStorageStore.get(getSelectionKey(user?.id));
       if (
         userRole &&
         userRestaurantId === currentStoredId &&
@@ -158,7 +165,7 @@ export const AdminRestaurantProvider = ({ children }) => {
 
         // 3. Selection Logic
         let targetId = null;
-        const storedId = localStorageStore.get('admin_selected_restaurant');
+        const storedId = localStorageStore.get(getSelectionKey(user?.id));
         const filteredIds = filteredRestaurants.map((r) => r.id);
 
         if (urlRestaurantId && filteredIds.includes(urlRestaurantId)) {
@@ -180,7 +187,7 @@ export const AdminRestaurantProvider = ({ children }) => {
           if (selected) {
             setRestaurant(selected);
             if (['admin', 'owner'].includes(role)) {
-              localStorageStore.set('admin_selected_restaurant', targetId);
+              localStorageStore.set(getSelectionKey(user?.id), targetId);
             }
           }
         }
@@ -231,7 +238,7 @@ export const AdminRestaurantProvider = ({ children }) => {
 
         setRestaurant(restaurantData);
         setUserRestaurantId(restaurantId);
-        localStorageStore.set('admin_selected_restaurant', restaurantId);
+        localStorageStore.set(getSelectionKey(user?.id), restaurantId);
 
         // Update URL without page reload
         const url = new URL(window.location);
@@ -259,7 +266,7 @@ export const AdminRestaurantProvider = ({ children }) => {
 
     setRestaurant(null);
     setUserRestaurantId(null);
-    localStorageStore.remove('admin_selected_restaurant');
+    localStorageStore.remove(getSelectionKey(user?.id));
 
     // Remove restaurant parameter from URL
     const url = new URL(window.location);
@@ -406,7 +413,7 @@ export const AdminRestaurantProvider = ({ children }) => {
         }
 
         setUserRestaurantId(restaurantId);
-        localStorageStore.set('admin_selected_restaurant', restaurantId);
+        localStorageStore.set(getSelectionKey(user?.id), restaurantId);
 
         // Update URL without page reload
         const url = new URL(window.location);

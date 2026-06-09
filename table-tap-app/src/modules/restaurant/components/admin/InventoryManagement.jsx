@@ -193,12 +193,15 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
         let aValue = a[sortBy];
         let bValue = b[sortBy];
         if (sortBy === 'expiry_date') {
-          aValue = new Date(aValue).getTime();
-          bValue = new Date(bValue).getTime();
+          // Missing dates -> 0 (instead of NaN, which makes the order unstable).
+          aValue = aValue ? new Date(aValue).getTime() : 0;
+          bValue = bValue ? new Date(bValue).getTime() : 0;
         }
-        if (typeof aValue === 'string') {
-          aValue = aValue.toLowerCase();
-          bValue = bValue.toLowerCase();
+        if (typeof aValue === 'string' || typeof bValue === 'string') {
+          // Normalize both sides to strings so a null optional field on either
+          // row doesn't throw on .toLowerCase().
+          aValue = String(aValue ?? '').toLowerCase();
+          bValue = String(bValue ?? '').toLowerCase();
         }
         return sortOrder === 'asc' ? (aValue > bValue ? 1 : -1) : aValue < bValue ? 1 : -1;
       });
@@ -909,11 +912,13 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                           </div>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
-                          ₹{item.cost_per_unit.toFixed(2)}
+                          ₹{(Number(item.cost_per_unit) || 0).toFixed(2)}
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900">
-                            {new Date(item.expiry_date).toLocaleDateString()}
+                            {item.expiry_date
+                              ? new Date(item.expiry_date).toLocaleDateString()
+                              : '—'}
                           </div>
                           {isExpiringSoon && (
                             <div className="text-xs text-orange-600 flex items-center gap-1">
@@ -1039,14 +1044,14 @@ const InventoryManagement = ({ setLoading, setErrorMsg, setSuccessMsg, searchTer
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-gray-500">Cost</span>
                         <span className="text-xs font-medium text-gray-900">
-                          ₹{item.cost_per_unit.toFixed(2)}
+                          ₹{(Number(item.cost_per_unit) || 0).toFixed(2)}
                         </span>
                       </div>
 
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-gray-500">Expiry</span>
                         <span className="text-xs font-medium text-gray-900">
-                          {new Date(item.expiry_date).toLocaleDateString()}
+                          {item.expiry_date ? new Date(item.expiry_date).toLocaleDateString() : '—'}
                         </span>
                       </div>
                     </div>

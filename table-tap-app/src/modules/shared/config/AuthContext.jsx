@@ -1,5 +1,5 @@
 // src/contexts/AuthContext.jsx
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '../../shared/supabase';
 import SessionExpiryModal from '../components/SessionExpiryModal';
 
@@ -9,7 +9,16 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showSessionModal, setShowSessionModal] = useState(false);
-  const [wasAuthenticated, setWasAuthenticated] = useState(false);
+  // The auth effect below runs once ([] deps), so its onAuthStateChange/getSession
+  // closures capture the first-render value of any state (always its initial
+  // value). A ref always reflects the latest value, so the session-expiry modal
+  // guards read it instead. (Was previously a useState whose stale closure value
+  // kept the expiry modal from ever showing.) Nothing renders from this, so a
+  // ref — not state — is the right tool.
+  const wasAuthenticatedRef = useRef(false);
+  const updateWasAuthenticated = (value) => {
+    wasAuthenticatedRef.current = value;
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -32,7 +41,7 @@ export const AuthProvider = ({ children }) => {
         if (mounted) {
           const hasUser = !!session?.user;
           setUser(session?.user ?? null);
-          setWasAuthenticated(hasUser);
+          updateWasAuthenticated(hasUser);
           setLoading(false);
         }
       } catch (error) {
@@ -94,7 +103,7 @@ export const AuthProvider = ({ children }) => {
           } catch {
             // ignore
           }
-          if (mounted && wasAuthenticated) setShowSessionModal(true);
+          if (mounted && wasAuthenticatedRef.current) setShowSessionModal(true);
         }
         if (mounted) {
           setUser(null);
@@ -122,11 +131,11 @@ export const AuthProvider = ({ children }) => {
         } catch {
           // ignore
         }
-        if (mounted && wasAuthenticated) setShowSessionModal(true);
+        if (mounted && wasAuthenticatedRef.current) setShowSessionModal(true);
       }
 
       if (event === 'SIGNED_IN') {
-        setWasAuthenticated(true);
+        updateWasAuthenticated(true);
         // Attempt to sync guest orders — silently skip if RPC doesn't exist
         try {
           const { data: syncResult } = await supabase.rpc('sync_guest_orders').throwOnError();
@@ -142,10 +151,10 @@ export const AuthProvider = ({ children }) => {
         const isAuthPage = ['/login', '/signup', '/forgot-password'].some((path) =>
           window.location.pathname.includes(path),
         );
-        if (mounted && wasAuthenticated && !isAuthPage) {
+        if (mounted && wasAuthenticatedRef.current && !isAuthPage) {
           setShowSessionModal(true);
         }
-        setWasAuthenticated(false);
+        updateWasAuthenticated(false);
       }
     });
 

@@ -489,7 +489,9 @@ const QRManagement = ({ searchTerm, setLoading, setErrorMsg, setSuccessMsg }) =>
 
   const filteredTables = tables.filter(
     (table) =>
-      table.tableNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(table.tableNumber ?? '')
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
       (table.location && table.location.toLowerCase().includes(searchTerm.toLowerCase())),
   );
 

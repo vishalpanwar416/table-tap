@@ -618,7 +618,9 @@ const BestSellerPage = memo(() => {
 
   // Updated filteredAndSortedItems with real-time search
   const filteredAndSortedItems = useMemo(() => {
-    let items = bestSellerItems;
+    // Copy so the in-place .sort() below never mutates the bestSellerItems
+    // state array (which also backs the sessionStorage cache).
+    let items = [...bestSellerItems];
 
     // Apply real-time search filter
     if (searchTerm.trim()) {

@@ -268,11 +268,15 @@ export function CartProvider({ children }) {
         if (error.name === 'QuotaExceededError') {
           // Try to clear old carts and retry
           try {
+            // secureStorage namespaces its keys, so the stored key contains
+            // (but doesn't equal) getCartKey(). Match on substring and remove
+            // the full stored key directly.
             const keys = Object.keys(localStorage);
+            const currentCartKey = getCartKey();
             const oldCartKeys = keys.filter(
-              (key) => key.startsWith('cart_') && key !== getCartKey(),
+              (key) => key.includes('cart_') && !key.includes(currentCartKey),
             );
-            oldCartKeys.forEach((key) => secureStorage.removeItem(key));
+            oldCartKeys.forEach((key) => localStorage.removeItem(key));
             secureStorage.setItem(getCartKey(), cartData);
             setError(null);
           } catch (retryError) {}

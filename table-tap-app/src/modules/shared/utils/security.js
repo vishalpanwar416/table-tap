@@ -12,19 +12,14 @@ const SECURITY_CONFIG = {
   LOCKOUT_DURATION: 15 * 60 * 1000, // 15 minutes
   // NOTE: This key is used for client-side obfuscation (e.g. local storage) and is NOT a security primitive.
   // It is visible in the browser bundle. Do not use for sensitive data.
-  ENCRYPTION_KEY: process.env.REACT_APP_ENCRYPTION_KEY || 'default-obfuscation-key'
+  ENCRYPTION_KEY: process.env.REACT_APP_ENCRYPTION_KEY || 'default-obfuscation-key',
 };
 
 // Input sanitization
 export const sanitizeInput = (input, options = {}) => {
   if (typeof input !== 'string') return input;
 
-  const {
-    allowHtml = false,
-    maxLength = 1000,
-    allowedTags = [],
-    allowedAttributes = {}
-  } = options;
+  const { allowHtml = false, maxLength = 1000, allowedTags = [], allowedAttributes = {} } = options;
 
   // Remove null bytes and control characters
   let sanitized = input.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
@@ -55,14 +50,17 @@ export const sanitizeInput = (input, options = {}) => {
 export const validateEmail = (email) => {
   if (!email || typeof email !== 'string') return false;
 
-  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+  const emailRegex =
+    /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 
-  return emailRegex.test(email) &&
+  return (
+    emailRegex.test(email) &&
     email.length <= 254 &&
     email.length >= 5 &&
     !email.includes('..') &&
     !email.startsWith('.') &&
-    !email.endsWith('.');
+    !email.endsWith('.')
+  );
 };
 
 // Strong password validation
@@ -100,7 +98,7 @@ export const validatePassword = (password) => {
   return {
     isValid: errors.length === 0,
     errors,
-    strength: calculatePasswordStrength(password)
+    strength: calculatePasswordStrength(password),
   };
 };
 
@@ -148,6 +146,13 @@ export const validatePhoneNumber = (phone) => {
   return true;
 };
 
+// secureStorage namespaces every key it writes under SECURE_PREFIX so clear()
+// can target only its own entries. (clear() previously called
+// localStorage.clear(), which also wiped Supabase auth tokens and unrelated
+// app state.)
+const SECURE_PREFIX = 'tt_secure:';
+const prefixKey = (key) => (key.startsWith(SECURE_PREFIX) ? key : `${SECURE_PREFIX}${key}`);
+
 // Secure storage utilities
 export const secureStorage = {
   // Encrypt data before storing
@@ -179,7 +184,7 @@ export const secureStorage = {
     try {
       const encrypted = secureStorage.encrypt(value);
       if (encrypted) {
-        localStorage.setItem(key, encrypted);
+        localStorage.setItem(prefixKey(key), encrypted);
         return true;
       }
       return false;
@@ -192,7 +197,17 @@ export const secureStorage = {
   // Secure get item
   getItem: (key) => {
     try {
-      const encrypted = localStorage.getItem(key);
+      let encrypted = localStorage.getItem(prefixKey(key));
+      if (!encrypted) {
+        // Legacy fallback: migrate values written before keys were namespaced
+        // so existing guest carts/likes aren't lost on upgrade.
+        const legacy = localStorage.getItem(key);
+        if (legacy) {
+          localStorage.setItem(prefixKey(key), legacy);
+          localStorage.removeItem(key);
+          encrypted = legacy;
+        }
+      }
       if (!encrypted) return null;
 
       const decrypted = secureStorage.decrypt(encrypted);
@@ -206,7 +221,8 @@ export const secureStorage = {
   // Secure remove item
   removeItem: (key) => {
     try {
-      localStorage.removeItem(key);
+      localStorage.removeItem(prefixKey(key));
+      localStorage.removeItem(key); // also drop any legacy unprefixed entry
       return true;
     } catch (error) {
       console.error('Secure storage remove failed:', error);
@@ -214,16 +230,19 @@ export const secureStorage = {
     }
   },
 
-  // Clear all secure storage
+  // Clear only the keys secureStorage owns (NOT all of localStorage, which
+  // would also remove Supabase auth tokens and unrelated app state).
   clear: () => {
     try {
-      localStorage.clear();
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith(SECURE_PREFIX))
+        .forEach((k) => localStorage.removeItem(k));
       return true;
     } catch (error) {
       console.error('Secure storage clear failed:', error);
       return false;
     }
-  }
+  },
 };
 
 // Rate limiting utilities
@@ -231,12 +250,16 @@ export const rateLimiter = {
   attempts: new Map(),
 
   // Check if action is allowed
-  isAllowed: (key, maxAttempts = SECURITY_CONFIG.MAX_LOGIN_ATTEMPTS, windowMs = SECURITY_CONFIG.LOCKOUT_DURATION) => {
+  isAllowed: (
+    key,
+    maxAttempts = SECURITY_CONFIG.MAX_LOGIN_ATTEMPTS,
+    windowMs = SECURITY_CONFIG.LOCKOUT_DURATION,
+  ) => {
     const now = Date.now();
     const attempts = rateLimiter.attempts.get(key) || [];
 
     // Remove expired attempts
-    const validAttempts = attempts.filter(timestamp => now - timestamp < windowMs);
+    const validAttempts = attempts.filter((timestamp) => now - timestamp < windowMs);
 
     if (validAttempts.length >= maxAttempts) {
       return false;
@@ -254,17 +277,21 @@ export const rateLimiter = {
   },
 
   // Get remaining attempts
-  getRemainingAttempts: (key, maxAttempts = SECURITY_CONFIG.MAX_LOGIN_ATTEMPTS, windowMs = SECURITY_CONFIG.LOCKOUT_DURATION) => {
+  getRemainingAttempts: (
+    key,
+    maxAttempts = SECURITY_CONFIG.MAX_LOGIN_ATTEMPTS,
+    windowMs = SECURITY_CONFIG.LOCKOUT_DURATION,
+  ) => {
     const now = Date.now();
     const attempts = rateLimiter.attempts.get(key) || [];
-    const validAttempts = attempts.filter(timestamp => now - timestamp < windowMs);
+    const validAttempts = attempts.filter((timestamp) => now - timestamp < windowMs);
     return Math.max(0, maxAttempts - validAttempts.length);
   },
 
   // Clear attempts for a key
   clearAttempts: (key) => {
     rateLimiter.attempts.delete(key);
-  }
+  },
 };
 
 // Session management
@@ -275,7 +302,7 @@ export const sessionManager = {
     if (!lastActivity) return false;
 
     const now = Date.now();
-    return (now - lastActivity) < SECURITY_CONFIG.SESSION_TIMEOUT;
+    return now - lastActivity < SECURITY_CONFIG.SESSION_TIMEOUT;
   },
 
   // Update session activity
@@ -292,7 +319,7 @@ export const sessionManager = {
   // Get session timeout
   getSessionTimeout: () => {
     return SECURITY_CONFIG.SESSION_TIMEOUT;
-  }
+  },
 };
 
 // File upload validation
@@ -300,7 +327,7 @@ export const validateFileUpload = (file, options = {}) => {
   const {
     maxSize = 5 * 1024 * 1024, // 5MB default
     allowedTypes = ['image/jpeg', 'image/png', 'image/webp'],
-    allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp']
+    allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'],
   } = options;
 
   const errors = [];
@@ -329,7 +356,7 @@ export const validateFileUpload = (file, options = {}) => {
 
   return {
     isValid: errors.length === 0,
-    errors
+    errors,
   };
 };
 
@@ -352,8 +379,8 @@ export const csrfProtection = {
 
   refreshToken: () => {
     return csrfProtection.generateToken();
-  }
+  },
 };
 
 // Export security configuration
-export { SECURITY_CONFIG }; 
+export { SECURITY_CONFIG };
