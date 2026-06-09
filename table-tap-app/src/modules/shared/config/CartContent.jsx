@@ -442,9 +442,11 @@ export function CartProvider({ children }) {
     setLastSyncTime(null);
     setError(null);
 
-    // Clear from localStorage
+    // Clear from localStorage. Must go through secureStorage.removeItem so the
+    // namespaced ('tt_secure:') key is removed — a raw localStorage.removeItem
+    // would miss it and the cart would reappear on the next load.
     try {
-      localStorage.removeItem(getCartKey());
+      secureStorage.removeItem(getCartKey());
     } catch (error) {}
 
     // Clear from server

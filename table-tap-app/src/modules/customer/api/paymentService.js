@@ -220,7 +220,7 @@ export const createOrder = async (orderData) => {
       customer_email:
         orderData.customerEmail && orderData.customerEmail.trim() !== ''
           ? orderData.customerEmail.trim()
-          : `guest_${(orderData.customerPhone || '').replace(/[^0-9]/g, '') || Date.now()}@tabletap.com`,
+          : `guest_${(orderData.customerPhone || '').replace(/[^0-9]/g, '') || `${Date.now()}${Math.floor(Math.random() * 1e6)}`}@tabletap.com`,
       customer_phone: (orderData.customerPhone || '').trim(),
       table_number: orderData.tableNumber || 'Not Specified',
       items: orderData.items.map((item) => ({

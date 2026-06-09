@@ -200,7 +200,15 @@ const SubscriptionManagementV2 = () => {
     }
   };
 
-  const fetchData = () => fetchTabData(activeTab, page, false);
+  const fetchData = async () => {
+    await fetchTabData(activeTab, page, false);
+    // Always refresh the active-subscription id set after a (re)fetch so the
+    // always-visible Assign modal's availability stays correct even when the
+    // mutation was triggered from a tab whose fetchTabData branch doesn't
+    // reload it (overview/expiring/plans).
+    const activeIdsRes = await getActiveSubscriptionRestaurantIds();
+    setActiveSubRestaurantIds(activeIdsRes.data || []);
+  };
 
   const handleLoadMore = () => {
     if (!loadingMore && hasMore) {
