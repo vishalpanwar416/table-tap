@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { ChevronLeft, MapPin, Store, ArrowRight, Search, X } from 'lucide-react';
+import { ChevronLeft, MapPin, Store, ArrowRight, Search, X, QrCode } from 'lucide-react';
 import {
   getActiveRestaurants,
   getClosestRestaurants,
@@ -15,6 +15,8 @@ import {
   getStoredRestaurantSelection,
   storeRestaurantSelection,
 } from '../../../shared/utils/restaurantCheck';
+import { parseTableTapQrPayload } from '../../../shared/utils/parseTableTapQr';
+import QRScanModal from './QRScanModal';
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -120,6 +122,7 @@ const RestaurantSelectionPage = () => {
   const [cachedNearby, setCachedNearby] = useState(null);
   const [cachedAll, setCachedAll] = useState(null);
   const [showSearch, setShowSearch] = useState(false);
+  const [showQrScanner, setShowQrScanner] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Owner specific states
@@ -178,6 +181,24 @@ const RestaurantSelectionPage = () => {
     setSearchError(null);
   };
 
+  const applyTableTapSelection = (restaurantId, tableNumber) => {
+    storeRestaurantSelection(restaurantId, tableNumber);
+    setRestaurantAndTable(restaurantId, tableNumber);
+    navigate('/home');
+  };
+
+  const handleQrScanSuccess = (decodedText) => {
+    const parsed = parseTableTapQrPayload(decodedText);
+    if (!parsed) {
+      toast.error('Invalid Table-Tap QR. Scan the code on your table.');
+      return false;
+    }
+    setShowQrScanner(false);
+    toast.success(`Table ${parsed.tableNumber} — opening menu`);
+    applyTableTapSelection(parsed.restaurantId, parsed.tableNumber);
+    return true;
+  };
+
   const scrollRef = useRef(null);
   const scrollYRef = useRef(0); // Add this near your other refs
   const scrollTimeoutRef = useRef(null);
@@ -198,14 +219,7 @@ const RestaurantSelectionPage = () => {
       const urlTableNumber = urlParams.get('table');
 
       if (urlRestaurantId && urlTableNumber) {
-        // Store the restaurant and table from URL
-        storeRestaurantSelection(urlRestaurantId, urlTableNumber);
-
-        // Set in context
-        setRestaurantAndTable(urlRestaurantId, urlTableNumber);
-
-        // Auto-redirect to home page
-        navigate('/home');
+        applyTableTapSelection(urlRestaurantId, urlTableNumber);
         return;
       }
     };
@@ -970,6 +984,14 @@ const RestaurantSelectionPage = () => {
                       </button>
                     ) : null}
                     <button
+                      type="button"
+                      onClick={() => setShowQrScanner(true)}
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-orange-50 text-orange-600 hover:bg-orange-100 flex-shrink-0 transition-all"
+                      aria-label="Scan table QR code"
+                    >
+                      <QrCode size={15} />
+                    </button>
+                    <button
                       onClick={handleSearchToggle}
                       className="text-xs font-medium text-orange-500 flex-shrink-0 ml-1"
                     >
@@ -1046,6 +1068,16 @@ const RestaurantSelectionPage = () => {
                         All
                       </button>
                     </div>
+
+                    {/* QR scan */}
+                    <button
+                      type="button"
+                      onClick={() => setShowQrScanner(true)}
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-orange-50 text-orange-600 hover:bg-orange-100 flex-shrink-0 transition-all"
+                      aria-label="Scan table QR code"
+                    >
+                      <QrCode size={15} />
+                    </button>
 
                     {/* Search icon */}
                     <button
@@ -1151,14 +1183,25 @@ const RestaurantSelectionPage = () => {
                       <div className="text-gray-400 text-6xl mb-4">🔍</div>
                       <h3 className="text-gray-700 text-xl font-semibold mb-2">No Results Found</h3>
                       <p className="text-gray-500 text-sm mb-4">
-                        No restaurants found matching "{searchQuery}". Try a different search term.
+                        No restaurants found matching "{searchQuery}". Try a different search, or
+                        scan the QR code on your table.
                       </p>
-                      <button
-                        onClick={handleClearSearch}
-                        className="w-full bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
-                      >
-                        Clear Search
-                      </button>
+                      <div className="flex flex-col gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowQrScanner(true)}
+                          className="w-full bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
+                        >
+                          <QrCode size={18} />
+                          Scan Table QR
+                        </button>
+                        <button
+                          onClick={handleClearSearch}
+                          className="w-full bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"
+                        >
+                          Clear Search
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ) : !loading &&
@@ -1166,32 +1209,44 @@ const RestaurantSelectionPage = () => {
                   !(showSearch && searchResults !== null) ? (
                   <div className="flex flex-col items-center justify-center h-full p-6">
                     <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 max-w-md shadow-lg text-center">
-                      <div className="text-gray-400 text-6xl mb-4">🍽️</div>
+                      <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-orange-100 flex items-center justify-center">
+                        <QrCode size={28} className="text-orange-500" />
+                      </div>
                       <h3 className="text-gray-700 text-xl font-semibold mb-2">
-                        No Restaurants Available
+                        {showMyRestaurants ? 'No restaurants assigned' : 'No restaurants found'}
                       </h3>
                       <p className="text-gray-500 text-sm mb-4">
                         {showMyRestaurants
                           ? "You don't have any restaurants assigned to your account."
                           : showAllRestaurants
-                            ? 'There are no restaurants available at the moment. This may be because no restaurants have active subscriptions.'
+                            ? 'No restaurants are listed right now. Scan the QR code on your table to open the menu directly.'
                             : userLocation
-                              ? 'No restaurants found nearby. Try enabling location or viewing all restaurants.'
-                              : 'No restaurants found. Try enabling location to see nearby restaurants or view all restaurants.'}
+                              ? 'No restaurants found nearby. Scan your table QR or view all restaurants.'
+                              : 'No restaurants found nearby. Scan your table QR, enable location, or view all restaurants.'}
                       </p>
                       <div className="flex flex-col gap-2">
-                        {!showAllRestaurants && (
+                        {!showMyRestaurants && (
+                          <button
+                            type="button"
+                            onClick={() => setShowQrScanner(true)}
+                            className="w-full bg-orange-500 text-white px-4 py-2.5 rounded-lg hover:bg-orange-600 transition-colors flex items-center justify-center gap-2 font-medium"
+                          >
+                            <QrCode size={18} />
+                            Scan Table QR
+                          </button>
+                        )}
+                        {!showAllRestaurants && !showMyRestaurants && (
                           <button
                             onClick={() => {
                               setShowAllRestaurants(true);
                               setShowMyRestaurants(false);
                             }}
-                            className="w-full bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
+                            className="w-full bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-900 transition-colors"
                           >
                             View All Restaurants
                           </button>
                         )}
-                        {!userLocation && (
+                        {!userLocation && !showMyRestaurants && (
                           <button
                             onClick={getUserLocation}
                             className="w-full bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
@@ -1722,6 +1777,12 @@ const RestaurantSelectionPage = () => {
             </motion.div>
           </motion.div>
         )}
+
+        <QRScanModal
+          open={showQrScanner}
+          onClose={() => setShowQrScanner(false)}
+          onScan={handleQrScanSuccess}
+        />
       </div>
     </div>
   );
