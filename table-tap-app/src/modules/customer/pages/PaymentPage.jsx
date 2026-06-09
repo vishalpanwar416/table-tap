@@ -42,6 +42,21 @@ const PaymentPage = () => {
   const [paymentMethod, setPaymentMethod] = useState('razorpay');
   const [animateItems, setAnimateItems] = useState(false);
   const lastPaymentIdRef = useRef(null);
+  // Synchronous re-entry guard: isProcessing is React state, so it updates on
+  // the next render — too late to block a fast double-tap. A ref flips
+  // immediately and stops a second handler from starting the flow twice.
+  const isSubmittingRef = useRef(false);
+  // Stable idempotency key for offline (direct/UPI) payments. Previously these
+  // used `Date.now()` regenerated on every click, so the duplicate guard never
+  // matched across clicks. Generated once per order attempt and only reset
+  // after a successful order so retries of a failed order reuse the same key.
+  const idempotencyKeyRef = useRef(null);
+  const getIdempotencyKey = (prefix) => {
+    if (!idempotencyKeyRef.current) {
+      idempotencyKeyRef.current = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    }
+    return `${prefix}-${idempotencyKeyRef.current}`;
+  };
   const { restaurant } = useRestaurant();
   const { user, loading: authLoading } = useAuth();
 
@@ -176,15 +191,21 @@ const PaymentPage = () => {
   };
 
   const handlePayment = async () => {
+    if (isSubmittingRef.current) return; // prevent double-submit on fast taps
+    isSubmittingRef.current = true;
     setIsProcessing(true);
 
     try {
       if (paymentMethod === 'direct') {
         await processOrder({
-          razorpay_payment_id: 'DIRECT-' + Date.now(),
-          razorpay_order_id: 'DIRECT-ORDER-' + Date.now(),
+          razorpay_payment_id: getIdempotencyKey('DIRECT'),
+          razorpay_order_id: getIdempotencyKey('DIRECT-ORDER'),
           razorpay_signature: 'NA',
         });
+        // processOrder navigates away on success; reset here for the failure
+        // path so the user can retry.
+        isSubmittingRef.current = false;
+        setIsProcessing(false);
         return;
       }
 
@@ -204,28 +225,41 @@ const PaymentPage = () => {
           themeColor: '#F37254',
           onSuccess: async (response) => {
             setIsProcessing(true);
-            await processOrder({
-              ...response,
-              payment_method: 'razorpay',
-            });
+            try {
+              await processOrder({
+                ...response,
+                payment_method: 'razorpay',
+              });
+            } finally {
+              isSubmittingRef.current = false;
+              setIsProcessing(false);
+            }
           },
           onDismiss: () => {
+            isSubmittingRef.current = false;
             setIsProcessing(false);
           },
           onFailure: (error) => {
             setScriptError(error || 'Payment failed');
+            isSubmittingRef.current = false;
             setIsProcessing(false);
           },
         });
 
+        // Keep the button disabled while the Razorpay modal is open; the flow
+        // resolves in onSuccess/onDismiss/onFailure above. (Previously a
+        // `finally` reset isProcessing right after open(), re-enabling the
+        // button mid-payment and allowing duplicate orders.)
         rzp.open();
         return;
       }
 
       // ...rest of your payment logic for other methods if any...
+      isSubmittingRef.current = false;
+      setIsProcessing(false);
     } catch (error) {
       setScriptError(error.message || 'Payment failed');
-    } finally {
+      isSubmittingRef.current = false;
       setIsProcessing(false);
     }
   };
@@ -357,6 +391,10 @@ const PaymentPage = () => {
 
       // Order created successfully - clear backup payment data
       sessionStorage.removeItem(`payment_${paymentResponse.razorpay_payment_id}`);
+
+      // Order placed: invalidate the idempotency key so a genuinely new order
+      // gets a fresh key instead of reusing this one.
+      idempotencyKeyRef.current = null;
 
       clearCart();
       navigate('/order-confirmation-page', {
@@ -759,10 +797,12 @@ const PaymentPage = () => {
   };
 
   const handleUPIPayment = async () => {
+    if (isSubmittingRef.current) return; // prevent double-submit on fast taps
     if (!restaurant.upi_id) {
       setScriptError('UPI payment is not configured for this restaurant.');
       return;
     }
+    isSubmittingRef.current = true;
 
     try {
       const upiUrl = createUPIPaymentUrl(restaurant.upi_id, finalTotal, restaurant.name);
@@ -784,8 +824,8 @@ const PaymentPage = () => {
       if (confirmed) {
         setIsProcessing(true);
         const result = await processOrder({
-          razorpay_payment_id: 'UPI-' + Date.now(),
-          razorpay_order_id: 'UPI-ORDER-' + Date.now(),
+          razorpay_payment_id: getIdempotencyKey('UPI'),
+          razorpay_order_id: getIdempotencyKey('UPI-ORDER'),
           razorpay_signature: 'NA',
           upi_id: restaurant.upi_id,
           payment_method: 'upi',
@@ -798,6 +838,10 @@ const PaymentPage = () => {
     } catch (error) {
       setScriptError(`Failed to open UPI payment: ${error.message}`);
       setIsProcessing(false);
+    } finally {
+      // Reset the re-entry guard. On success processOrder navigates away and
+      // this is moot; on cancel/failure it re-enables the button for a retry.
+      isSubmittingRef.current = false;
     }
   };
 

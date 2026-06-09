@@ -15,6 +15,9 @@ const OrderConfirmationPage = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    let cleanupChannel = null;
+    let redirectTimer = null;
+
     const initializeOrder = async () => {
       try {
         const orderId = location.state?.orderId;
@@ -36,10 +39,10 @@ const OrderConfirmationPage = () => {
         const order = await getOrderDetails(orderId);
 
         setOrderDetails(order);
-        startStatusUpdates(orderId);
+        cleanupChannel = startStatusUpdates(orderId);
 
         // Auto-redirect to tracking page after 8 seconds
-        setTimeout(() => {
+        redirectTimer = setTimeout(() => {
           navigate('/order-tracking', {
             state: { orderId: orderId },
           });
@@ -53,6 +56,11 @@ const OrderConfirmationPage = () => {
     };
 
     initializeOrder();
+
+    return () => {
+      if (cleanupChannel) cleanupChannel();
+      if (redirectTimer) clearTimeout(redirectTimer);
+    };
   }, [location.state?.orderId, navigate, getOrderDetails]);
 
   const startStatusUpdates = (orderId) => {

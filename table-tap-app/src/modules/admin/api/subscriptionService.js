@@ -156,6 +156,27 @@ export const getPaginatedSubscriptions = async (page = 1, pageSize = 20, status 
 };
 
 /**
+ * Get the restaurant IDs that currently hold an active or grace-period
+ * subscription. Used to compute which restaurants are still assignable.
+ * Returns a full (non-paginated) list of ids only, so availability is correct
+ * even when there are more subscriptions than fit on one paginated page.
+ */
+export const getActiveSubscriptionRestaurantIds = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .select('restaurant_id')
+      .in('status', ['active', 'grace_period']);
+
+    if (error) throw error;
+    return { data: (data || []).map((s) => s.restaurant_id), error: null };
+  } catch (error) {
+    console.error('Error fetching active subscription restaurant ids:', error);
+    return { data: [], error: error.message };
+  }
+};
+
+/**
  * Get all restaurant subscriptions from the subscriptions table.
  * @deprecated Use getPaginatedSubscriptions instead.
  */

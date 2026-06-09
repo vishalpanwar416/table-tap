@@ -220,7 +220,7 @@ export const createOrder = async (orderData) => {
       customer_email:
         orderData.customerEmail && orderData.customerEmail.trim() !== ''
           ? orderData.customerEmail.trim()
-          : `guest_${orderData.customerPhone.replace(/[^0-9]/g, '')}@tabletap.com`,
+          : `guest_${(orderData.customerPhone || '').replace(/[^0-9]/g, '') || Date.now()}@tabletap.com`,
       customer_phone: (orderData.customerPhone || '').trim(),
       table_number: orderData.tableNumber || 'Not Specified',
       items: orderData.items.map((item) => ({
@@ -821,7 +821,7 @@ export const processOrderWithPayment = async ({
       customerEmail:
         finalCustomerEmail && finalCustomerEmail.trim() !== ''
           ? finalCustomerEmail.trim()
-          : `guest_${finalCustomerPhone.replace(/[^0-9]/g, '')}@tabletap.com`,
+          : `guest_${(finalCustomerPhone || '').replace(/[^0-9]/g, '') || paymentResponse.razorpay_payment_id}@tabletap.com`,
       customerPhone: (finalCustomerPhone || '').trim(),
       tableNumber,
       items: cartItems.map((item) => ({

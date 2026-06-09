@@ -693,56 +693,12 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
     }
   };
 
-  const orderSupabaseRef = useRef(null);
-  const orderRealtimeChannelRef = useRef(null);
+  // Initial load only. The realtime subscription lives in the single
+  // "Enhanced real-time subscription" effect below — a second channel here
+  // duplicated every INSERT/UPDATE/DELETE (and its INSERT handler had no
+  // dedupe, producing duplicate rows and duplicate React keys).
   useEffect(() => {
     fetchOrders();
-
-    if (!restaurantId) return;
-
-    let cancelled = false;
-    (async () => {
-      const { supabase } = await import('../../../shared/supabase');
-      if (cancelled || !supabase) return;
-      orderSupabaseRef.current = supabase;
-
-      const channel = supabase
-        .channel(`ordermgmt-realtime-${restaurantId}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'orders',
-            filter: `restaurant_id=eq.${restaurantId}`,
-          },
-          (payload) => {
-            const { eventType, new: newOrder, old: oldOrder } = payload;
-
-            if (eventType === 'INSERT' && newOrder) {
-              setOrders((prev) => [newOrder, ...prev]);
-            } else if (eventType === 'UPDATE' && newOrder) {
-              setOrders((prev) =>
-                prev.map((o) => (o.id === newOrder.id ? { ...o, ...newOrder } : o)),
-              );
-            } else if (eventType === 'DELETE' && oldOrder) {
-              setOrders((prev) => prev.filter((o) => o.id !== oldOrder.id));
-            }
-          },
-        )
-        .subscribe();
-
-      if (!cancelled) orderRealtimeChannelRef.current = channel;
-    })();
-
-    return () => {
-      cancelled = true;
-      const client = orderSupabaseRef.current;
-      if (client && orderRealtimeChannelRef.current) {
-        client.removeChannel(orderRealtimeChannelRef.current);
-      }
-      orderRealtimeChannelRef.current = null;
-    };
   }, [restaurantId]);
 
   // Deep-link: Auto-expand and scroll to order if orderId is in URL

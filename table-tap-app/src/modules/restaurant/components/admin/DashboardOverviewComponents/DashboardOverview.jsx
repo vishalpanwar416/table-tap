@@ -151,12 +151,14 @@ const DashboardOverview = ({
 
   useEffect(() => {
     const now = new Date();
+    const pending = orders.filter((o) => o.status === 'pending').length;
     const ready = orders.filter((o) => o.status === 'ready').length;
     const completed = orders.filter((o) => o.status === 'completed').length;
     const preparing = orders.filter((o) => o.status === 'preparing').length;
 
     setOrderStats({
-      total: ready + completed,
+      total: pending + preparing + ready + completed,
+      pending,
       preparing,
       ready,
       completed,
@@ -241,11 +243,13 @@ const DashboardOverview = ({
       await updateOrderStatus(orderId, status);
     } catch (e) {
       const client = supabaseRef.current;
-      if (client) {
+      if (client && restaurant?.id) {
         const { data } = await client
           .from('orders')
           .select('*')
-          .order('created_at', { ascending: false });
+          .eq('restaurant_id', restaurant.id)
+          .order('created_at', { ascending: false })
+          .limit(200);
         setOrders(data || []);
       }
     }

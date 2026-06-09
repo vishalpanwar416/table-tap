@@ -47,6 +47,7 @@ import {
   processExpiredSubscriptions,
   getSubscriptionHistory,
   getPaginatedSubscriptions,
+  getActiveSubscriptionRestaurantIds,
 } from '../../../../admin/api/subscriptionService';
 import { supabase } from '../../../../shared/supabase';
 import { getAllRestaurants, getEmailTemplate } from '../admin_service.js';
@@ -56,6 +57,10 @@ const SubscriptionManagementV2 = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [plans, setPlans] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
+  // Full list of restaurant ids with an active/grace subscription. `subscriptions`
+  // above is only the current paginated page, so availability must be computed
+  // from this complete list instead.
+  const [activeSubRestaurantIds, setActiveSubRestaurantIds] = useState([]);
   const [restaurants, setRestaurants] = useState([]);
   const [stats, setStats] = useState(null);
   const [upcomingRenewals, setUpcomingRenewals] = useState([]);
@@ -136,14 +141,16 @@ const SubscriptionManagementV2 = () => {
     try {
       // Restaurants are needed by the always-visible "Assign Subscription" modal,
       // so load them on mount rather than only on the subscriptions/billing tabs.
-      const [plansRes, cyclesRes, restRes] = await Promise.all([
+      const [plansRes, cyclesRes, restRes, activeIdsRes] = await Promise.all([
         getSubscriptionPlans(),
         getBillingCycles(),
         getAllRestaurants(),
+        getActiveSubscriptionRestaurantIds(),
       ]);
       setPlans(plansRes.data || []);
       setBillingCycles(cyclesRes.data || []);
       setRestaurants(restRes.data || []);
+      setActiveSubRestaurantIds(activeIdsRes.data || []);
     } catch (e) {
       console.error('Master data fail:', e);
     }
@@ -175,6 +182,10 @@ const SubscriptionManagementV2 = () => {
             // Also fetch restaurants for the lookup if needed for assignment modal
             const restRes = await getAllRestaurants();
             setRestaurants(restRes.data || []);
+            // Refresh the full active-subscription id set so availability stays
+            // accurate after assignments/cancellations.
+            const activeIdsRes = await getActiveSubscriptionRestaurantIds();
+            setActiveSubRestaurantIds(activeIdsRes.data || []);
           }
 
           setHasMore(pageNum * pageSize < subsRes.totalCount);
@@ -550,13 +561,11 @@ const SubscriptionManagementV2 = () => {
     }
   };
 
-  // Get restaurants without active subscription
-  const availableRestaurants = restaurants.filter(
-    (r) =>
-      !subscriptions.some(
-        (s) => s.restaurant_id === r.id && ['active', 'grace_period'].includes(s.status),
-      ),
-  );
+  // Get restaurants without an active subscription. Uses the full
+  // activeSubRestaurantIds set (not the paginated `subscriptions` page) so a
+  // restaurant whose subscription is beyond page 1 isn't wrongly shown as
+  // assignable.
+  const availableRestaurants = restaurants.filter((r) => !activeSubRestaurantIds.includes(r.id));
 
   const getStatusColor = (status) => {
     switch (status) {

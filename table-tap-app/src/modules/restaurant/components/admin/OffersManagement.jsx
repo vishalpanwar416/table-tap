@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Tag,
   Plus,
@@ -32,6 +32,11 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
   const [selectedItems, setSelectedItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingOffer, setEditingOffer] = useState(null);
+  // When loading an existing offer for editing we set selectedItems, which
+  // would otherwise trigger the price-recompute effect and clobber the offer's
+  // saved price/discount. This skips that one recompute; genuine item
+  // add/remove afterwards still recomputes normally.
+  const skipPriceRecalcRef = useRef(false);
   const [carouselOffers, setCarouselOffers] = useState([]);
   const [viewingOffer, setViewingOffer] = useState(null);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -145,6 +150,12 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
 
   // Calculate price based on selected items
   useEffect(() => {
+    // Skip the recompute triggered by loading an existing offer for editing,
+    // so its saved price/discount are preserved.
+    if (skipPriceRecalcRef.current) {
+      skipPriceRecalcRef.current = false;
+      return;
+    }
     if (selectedItems.length > 0) {
       const totalPrice = selectedItems.reduce((sum, item) => {
         const price = parseFloat(item.price) || 0;
@@ -264,6 +275,9 @@ const OffersManagement = ({ setLoading, setErrorMsg, setSuccessMsg }) => {
         .filter(Boolean);
 
       setEditingOffer(offer);
+      // Preserve the offer's saved price/discount: skip the next price-recompute
+      // that setSelectedItems would otherwise trigger.
+      skipPriceRecalcRef.current = true;
       setSelectedItems(offerItems);
       setFormData({
         name: offer.name || '',
