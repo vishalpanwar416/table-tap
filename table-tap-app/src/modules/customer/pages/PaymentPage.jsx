@@ -726,13 +726,26 @@ const PaymentPage = () => {
     if (dialog) dialog.remove();
   };
 
-  // Add this to your component's useEffect to check for pending failed orders on load
+  // Check for pending failed orders on load (payment succeeded but order
+  // creation failed). The service signature is
+  // checkPendingFailedOrders(userId, showPaymentRecoveryOptions): the first arg
+  // must be the user id so the DB lookup is scoped correctly, and the second is
+  // the callback invoked with the failed payment id. Depends on user?.id so it
+  // re-runs once auth resolves (user is null on the first render).
   useEffect(() => {
-    checkPendingFailedOrders((paymentId) => {
-      // You can call showPaymentRecoveryOptions here if you want,
-      // or just rely on the service to handle it.
+    checkPendingFailedOrders(user?.id ?? null, (paymentId) => {
+      showPaymentRecoveryOptions(
+        paymentId,
+        'Your previous payment was successful, but the order was not created.',
+        {
+          retryOrderCreation: () => retryOrderCreation(paymentId),
+          contactSupport: () => contactSupport(paymentId),
+          closeRecoveryDialog,
+        },
+      );
     });
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   // Function to create general UPI payment URL
   const createUPIPaymentUrl = (upiId, amount, merchantName) => {
