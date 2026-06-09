@@ -1,5 +1,21 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { ChevronLeft, Trash2, Minus, Plus, ChevronDown, CheckCircle, Clock, MapPin, User, Mail, Phone, AlertCircle, Info, LogIn, Smartphone } from 'lucide-react';
+import {
+  ChevronLeft,
+  Trash2,
+  Minus,
+  Plus,
+  ChevronDown,
+  CheckCircle,
+  Clock,
+  MapPin,
+  User,
+  Mail,
+  Phone,
+  AlertCircle,
+  Info,
+  LogIn,
+  Smartphone,
+} from 'lucide-react';
 import { useCart } from '../../shared/config/CartContent';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../shared/supabase';
@@ -29,14 +45,14 @@ const EmailExistsPopup = ({ show, onClose, onAccept, onReject, email }) => {
       y: 0,
       opacity: 1,
       scale: 1,
-      transition: { type: 'spring', stiffness: 300, damping: 30 }
+      transition: { type: 'spring', stiffness: 300, damping: 30 },
     },
-    exit: { y: 100, opacity: 0, scale: 0.98, transition: { duration: 0.25 } }
+    exit: { y: 100, opacity: 0, scale: 0.98, transition: { duration: 0.25 } },
   };
   const overlayVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1 },
-    exit: { opacity: 0 }
+    exit: { opacity: 0 },
   };
   return (
     <AnimatePresence>
@@ -55,7 +71,13 @@ const EmailExistsPopup = ({ show, onClose, onAccept, onReject, email }) => {
           <motion.div
             key="popup-content"
             className="fixed bottom-3 left-0 right-0 z-50 mx-auto p-6 shadow-2xl border border-orange-100"
-            style={{ maxWidth: '390px', background: 'linear-gradient(135deg, rgba(255,255,255,0.85) 60%, rgba(255,240,220,0.85) 100%)', backdropFilter: 'blur(12px)', borderRadius: '3rem' }}
+            style={{
+              maxWidth: '390px',
+              background:
+                'linear-gradient(135deg, rgba(255,255,255,0.85) 60%, rgba(255,240,220,0.85) 100%)',
+              backdropFilter: 'blur(12px)',
+              borderRadius: '3rem',
+            }}
             variants={popupVariants}
             initial="hidden"
             animate="visible"
@@ -67,15 +89,40 @@ const EmailExistsPopup = ({ show, onClose, onAccept, onReject, email }) => {
               <motion.div
                 className="w-14 h-14 rounded-full bg-orange-100 flex items-center justify-center mb-2 shadow-lg"
                 initial={{ boxShadow: '0 0 0 0 rgba(255,140,0,0.3)' }}
-                animate={{ boxShadow: ['0 0 0 0 rgba(255,140,0,0.3)', '0 0 0 8px rgba(255,140,0,0.08)', '0 0 0 0 rgba(255,140,0,0.3)'] }}
+                animate={{
+                  boxShadow: [
+                    '0 0 0 0 rgba(255,140,0,0.3)',
+                    '0 0 0 8px rgba(255,140,0,0.08)',
+                    '0 0 0 0 rgba(255,140,0,0.3)',
+                  ],
+                }}
                 transition={{ repeat: Infinity, duration: 2 }}
               >
-                <svg className="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z" /></svg>
+                <svg
+                  className="w-8 h-8 text-orange-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z"
+                  />
+                </svg>
               </motion.div>
-              <h2 className="text-2xl font-extrabold text-gray-900 mb-1 tracking-tight">Account Found</h2>
-              <p className="text-base text-gray-700 font-medium">The email <span className="font-semibold text-orange-600">{email}</span> is already registered.</p>
+              <h2 className="text-2xl font-extrabold text-gray-900 mb-1 tracking-tight">
+                Account Found
+              </h2>
+              <p className="text-base text-gray-700 font-medium">
+                The email <span className="font-semibold text-orange-600">{email}</span> is already
+                registered.
+              </p>
             </div>
-            <p className="text-gray-500 text-xs text-center mb-6">Would you like to login to your existing account?</p>
+            <p className="text-gray-500 text-xs text-center mb-6">
+              Would you like to login to your existing account?
+            </p>
             <div className="flex gap-4 justify-center px-2 mb-2">
               <button
                 onClick={onReject}
@@ -125,7 +172,7 @@ const TableSelector = ({
   setShowTableDropdown,
   dropdownRef,
   isLoadingTables,
-  selectedTableDetails
+  selectedTableDetails,
 }) => (
   <div className="mb-8">
     {selectedTableDetails && (
@@ -194,8 +241,9 @@ const TableSelector = ({
                   setTableNumber(table.tableNumber);
                   setShowTableDropdown(false);
                 }}
-                className={`w-full px-4 py-4 text-left hover:bg-orange-50 border-b border-gray-100 last:border-b-0 transition-colors duration-200 ${table.tableNumber === tableNumber ? 'bg-orange-50 border-orange-200' : ''
-                  }`}
+                className={`w-full px-4 py-4 text-left hover:bg-orange-50 border-b border-gray-100 last:border-b-0 transition-colors duration-200 ${
+                  table.tableNumber === tableNumber ? 'bg-orange-50 border-orange-200' : ''
+                }`}
               >
                 <div className="flex justify-between items-center">
                   <div>
@@ -241,7 +289,7 @@ const GuestForm = ({
   isCheckingEmail,
   emailExists,
   handleEmailChange,
-  guestEmailInputRef
+  guestEmailInputRef,
 }) => (
   <div className="mb-8 p-6 border-2 border-gray-200 rounded-3xl bg-gradient-to-br from-orange-50 to-white animate-in slide-in-from-bottom-2 duration-500 shadow-sm">
     <h3 className="font-bold text-xl mb-6 flex items-center gap-2 text-gray-800">
@@ -251,12 +299,17 @@ const GuestForm = ({
     <div className="space-y-6">
       {/* Phone Number - Now Primary and Mandatory */}
       <div>
-        <label className="text-sm font-bold text-gray-700 flex items-center gap-2 mb-1" htmlFor="guestPhone">
+        <label
+          className="text-sm font-bold text-gray-700 flex items-center gap-2 mb-1"
+          htmlFor="guestPhone"
+        >
           <Phone size={16} className="text-orange-500" />
           Phone Number *
         </label>
         <div className="relative">
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">+91</div>
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">
+            +91
+          </div>
           <input
             id="guestPhone"
             type="tel"
@@ -271,13 +324,20 @@ const GuestForm = ({
       </div>
 
       <div className="relative py-2">
-        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-100"></div></div>
-        <div className="relative flex justify-center text-xs uppercase text-gray-400 font-black tracking-widest bg-white px-2 w-fit mx-auto">Optional Details</div>
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-100"></div>
+        </div>
+        <div className="relative flex justify-center text-xs uppercase text-gray-400 font-black tracking-widest bg-white px-2 w-fit mx-auto">
+          Optional Details
+        </div>
       </div>
 
       {/* Name - Now Optional */}
       <div>
-        <label className="text-xs font-bold text-gray-500 flex items-center gap-2 mb-1" htmlFor="guestName">
+        <label
+          className="text-xs font-bold text-gray-500 flex items-center gap-2 mb-1"
+          htmlFor="guestName"
+        >
           <User size={14} />
           Full Name (Optional)
         </label>
@@ -293,7 +353,10 @@ const GuestForm = ({
 
       {/* Email - Now Optional */}
       <div>
-        <label className="text-xs font-bold text-gray-500 flex items-center gap-2 mb-1" htmlFor="guestEmail">
+        <label
+          className="text-xs font-bold text-gray-500 flex items-center gap-2 mb-1"
+          htmlFor="guestEmail"
+        >
           <Mail size={14} />
           Email for Invoice (Optional)
           {isCheckingEmail && (
@@ -306,8 +369,9 @@ const GuestForm = ({
           value={guestEmail}
           onChange={handleEmailChange}
           placeholder="For digital bill"
-          className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:border-orange-500 transition-all duration-200 ${emailExists ? 'border-orange-300 bg-orange-50' : 'border-gray-100'
-            }`}
+          className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:border-orange-500 transition-all duration-200 ${
+            emailExists ? 'border-orange-300 bg-orange-50' : 'border-gray-100'
+          }`}
           autoComplete="email"
           ref={guestEmailInputRef}
         />
@@ -391,7 +455,9 @@ const OrderConfirmation = () => {
       }
     };
     fetchUser();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Parse tables from restaurant data with better error handling
@@ -399,9 +465,8 @@ const OrderConfirmation = () => {
     setIsLoadingTables(true);
     if (restaurant?.tables) {
       try {
-        const parsedTables = typeof restaurant.tables === 'string'
-          ? JSON.parse(restaurant.tables)
-          : restaurant.tables;
+        const parsedTables =
+          typeof restaurant.tables === 'string' ? JSON.parse(restaurant.tables) : restaurant.tables;
         setAvailableTables(Array.isArray(parsedTables) ? parsedTables : []);
       } catch (error) {
         setAvailableTables([]);
@@ -417,8 +482,8 @@ const OrderConfirmation = () => {
     try {
       const storedSelection = getStoredRestaurantSelection();
       if (storedSelection?.tableNumber && availableTables.length > 0) {
-        const matchingTable = availableTables.find(table =>
-          table.tableNumber === storedSelection.tableNumber
+        const matchingTable = availableTables.find(
+          (table) => table.tableNumber === storedSelection.tableNumber,
         );
         if (matchingTable) {
           setTableNumber(storedSelection.tableNumber);
@@ -514,7 +579,7 @@ const OrderConfirmation = () => {
 
   // Get selected table details with null check
   const getSelectedTableDetails = () => {
-    return availableTables.find(table => table.tableNumber === tableNumber) || null;
+    return availableTables.find((table) => table.tableNumber === tableNumber) || null;
   };
 
   // Moved to useCallback to prevent stale calculations
@@ -522,18 +587,17 @@ const OrderConfirmation = () => {
     let originalTotal = 0;
     let discountAmount = 0;
     let taxableAmount = 0;
-    cartItems.forEach(item => {
+    cartItems.forEach((item) => {
       const originalItemTotal = item.price * item.quantity;
       originalTotal += originalItemTotal;
-      const effectivePrice = item.effectivePrice !== undefined ?
-        item.effectivePrice :
-        calculateEffectivePrice(item);
+      const effectivePrice =
+        item.effectivePrice !== undefined ? item.effectivePrice : calculateEffectivePrice(item);
       const itemDiscount = (item.price - effectivePrice) * item.quantity;
       discountAmount += itemDiscount;
       const itemSubtotal = effectivePrice * item.quantity;
-      const isWater = item.name &&
-        (item.name.toLowerCase().includes('water') ||
-          item.category?.toLowerCase() === 'water');
+      const isWater =
+        item.name &&
+        (item.name.toLowerCase().includes('water') || item.category?.toLowerCase() === 'water');
       if (!isWater) {
         taxableAmount += itemSubtotal;
       }
@@ -548,26 +612,37 @@ const OrderConfirmation = () => {
       subtotalAfterDiscount,
       cgst,
       sgst,
-      finalTotal
+      finalTotal,
     };
   }, [cartItems, calculateEffectivePrice]);
 
-  const {
-    originalTotal,
-    discountAmount,
-    subtotalAfterDiscount,
-    cgst,
-    sgst,
-    finalTotal
-  } = calculatePriceDetails();
+  const { originalTotal, discountAmount, subtotalAfterDiscount, cgst, sgst, finalTotal } =
+    calculatePriceDetails();
 
   const formatDate = (timestamp) => {
     const date = new Date(timestamp);
-    return `${date.getDate()} ${getMonthName(date.getMonth())}, ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')} ${date.getHours() >= 12 ? 'pm' : 'am'}`;
+    const hours24 = date.getHours();
+    const hours12 = hours24 % 12 || 12; // 0 and 12 both display as 12
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const suffix = hours24 >= 12 ? 'pm' : 'am';
+    return `${date.getDate()} ${getMonthName(date.getMonth())}, ${hours12}:${minutes} ${suffix}`;
   };
 
   const getMonthName = (monthIndex) => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     return months[monthIndex];
   };
 
@@ -624,12 +699,14 @@ const OrderConfirmation = () => {
         state: {
           tableNumber,
           specialInstructions,
-          guestDetails: !user ? {
-            name: guestName,
-            email: guestEmail,
-            phone: guestPhone,
-          } : null
-        }
+          guestDetails: !user
+            ? {
+                name: guestName,
+                email: guestEmail,
+                phone: guestPhone,
+              }
+            : null,
+        },
       });
     } finally {
       setIsPlacingOrder(false);
@@ -648,7 +725,12 @@ const OrderConfirmation = () => {
         <div className="text-center text-white">
           <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </div>
           <h2 className="text-xl font-semibold mb-2">Restaurant Not Found</h2>
@@ -683,7 +765,9 @@ const OrderConfirmation = () => {
 
         {/* Enhanced Main Content */}
         <div className="bg-gradient-to-br from-gray-50 to-white w-full flex-1 rounded-t-3xl px-4 pt-10 pb-6 flex flex-col font-spartan overflow-y-auto shadow-2xl">
-          <div className={`transition-all duration-700 ${animateItems ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+          <div
+            className={`transition-all duration-700 ${animateItems ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+          >
             {/* Enhanced Header with Progress Indicator */}
             <div className="mb-8">
               <div className="flex items-center justify-center gap-2 mb-4">
@@ -704,7 +788,9 @@ const OrderConfirmation = () => {
               <h2 className="justify-center text-center text-gray-800 text-3xl font-bold mb-2">
                 Order Summary
               </h2>
-              <p className="text-center text-gray-600 text-sm">Review your order before proceeding to payment</p>
+              <p className="text-center text-gray-600 text-sm">
+                Review your order before proceeding to payment
+              </p>
             </div>
 
             {/* Table Selector */}
@@ -737,7 +823,10 @@ const OrderConfirmation = () => {
 
             {/* Enhanced Special Instructions */}
             <div className="mb-8">
-              <label className="block text-gray-800 mb-3 text-lg font-semibold" htmlFor="specialInstructions">
+              <label
+                className="block text-gray-800 mb-3 text-lg font-semibold"
+                htmlFor="specialInstructions"
+              >
                 Special Instructions (optional)
               </label>
               <textarea
@@ -758,12 +847,24 @@ const OrderConfirmation = () => {
               <div className="my-4 p-6 bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-2xl animate-in slide-in-from-bottom-2 duration-300">
                 <div className="text-center">
                   <div className="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    <svg
+                      className="w-8 h-8 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                      />
                     </svg>
                   </div>
                   <p className="font-semibold text-yellow-800 mb-1">Your cart is empty</p>
-                  <p className="text-sm text-yellow-700">Please add items to your cart before proceeding.</p>
+                  <p className="text-sm text-yellow-700">
+                    Please add items to your cart before proceeding.
+                  </p>
                 </div>
               </div>
             )}
@@ -771,14 +872,17 @@ const OrderConfirmation = () => {
             {/* Enhanced Cart Items */}
             <div className="border-t-2 border-gray-200 pt-6">
               {cartItems.map((item, index) => {
-                const isWater = item.name &&
+                const isWater =
+                  item.name &&
                   (item.name.toLowerCase().includes('water') ||
                     item.category?.toLowerCase() === 'water');
-                const effectivePrice = item.effectivePrice !== undefined
-                  ? Number(item.effectivePrice)
-                  : Number(calculateEffectivePrice(item));
+                const effectivePrice =
+                  item.effectivePrice !== undefined
+                    ? Number(item.effectivePrice)
+                    : Number(calculateEffectivePrice(item));
                 const originalPriceNum = Number(item.price);
-                const hasDeal = effectivePrice > 0 && originalPriceNum > 0 && effectivePrice < originalPriceNum;
+                const hasDeal =
+                  effectivePrice > 0 && originalPriceNum > 0 && effectivePrice < originalPriceNum;
                 const originalTotal = (originalPriceNum * item.quantity).toFixed(2);
                 const discountedTotal = (effectivePrice * item.quantity).toFixed(2);
                 return (
@@ -806,10 +910,11 @@ const OrderConfirmation = () => {
                           <Clock size={14} />
                           {item.addedAt ? formatDate(item.addedAt) : 'Now'}
                         </p>
-                        {(item.discounttype && item.discountvalue) && (
+                        {item.discounttype && item.discountvalue && (
                           <div className="text-green-600 text-sm font-medium bg-green-100 px-2 py-1 rounded-full inline-block mb-2">
                             {item.discounttype === 'Percentage' && `${item.discountvalue}% off`}
-                            {item.discounttype === 'Fixed' && `₹${item.discountvalue * item.quantity} off`}
+                            {item.discounttype === 'Fixed' &&
+                              `₹${Math.min(item.discountvalue, item.price) * item.quantity} off`}
                           </div>
                         )}
                         {isWater && (
@@ -825,23 +930,35 @@ const OrderConfirmation = () => {
                                   updateQuantity(item.id, item.category, item.quantity - 1);
                                 }
                               }}
-                              className={`w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center transition-all duration-200 hover:bg-gray-50 active:scale-95 ${item.quantity <= 1 ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'
-                                }`}
+                              className={`w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center transition-all duration-200 hover:bg-gray-50 active:scale-95 ${
+                                item.quantity <= 1
+                                  ? 'opacity-50 cursor-not-allowed'
+                                  : 'hover:shadow-md'
+                              }`}
                               disabled={item.quantity <= 1}
                               aria-label="Decrease quantity"
                             >
-                              <Minus size={16} className={`transition-colors duration-200 ${item.quantity <= 1 ? 'text-gray-400' : 'text-gray-600'
-                                }`} />
+                              <Minus
+                                size={16}
+                                className={`transition-colors duration-200 ${
+                                  item.quantity <= 1 ? 'text-gray-400' : 'text-gray-600'
+                                }`}
+                              />
                             </button>
                             <span className="mx-4 font-semibold text-gray-800 transition-all duration-200 transform scale-100 hover:scale-110">
                               {item.quantity}
                             </span>
                             <button
-                              onClick={() => updateQuantity(item.id, item.category, item.quantity + 1)}
+                              onClick={() =>
+                                updateQuantity(item.id, item.category, item.quantity + 1)
+                              }
                               className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center transition-all duration-200 hover:bg-gray-50 hover:shadow-md active:scale-95"
                               aria-label="Increase quantity"
                             >
-                              <Plus size={16} className="text-gray-600 transition-colors duration-200" />
+                              <Plus
+                                size={16}
+                                className="text-gray-600 transition-colors duration-200"
+                              />
                             </button>
                           </div>
                         </div>
@@ -850,10 +967,14 @@ const OrderConfirmation = () => {
                         {hasDeal ? (
                           <>
                             <p className="text-gray-400 text-sm line-through">₹{originalTotal}</p>
-                            <p className="font-bold text-xl text-green-700 transition-all duration-200 transform scale-100 hover:scale-105">₹{discountedTotal}</p>
+                            <p className="font-bold text-xl text-green-700 transition-all duration-200 transform scale-100 hover:scale-105">
+                              ₹{discountedTotal}
+                            </p>
                           </>
                         ) : (
-                          <p className="font-bold text-xl text-gray-800 transition-all duration-200 transform scale-100 hover:scale-105">₹{originalTotal}</p>
+                          <p className="font-bold text-xl text-gray-800 transition-all duration-200 transform scale-100 hover:scale-105">
+                            ₹{originalTotal}
+                          </p>
                         )}
                         <button
                           onClick={() => removeItem(item.id, item.category)}
@@ -878,12 +999,16 @@ const OrderConfirmation = () => {
               {discountAmount > 0 && (
                 <div className="flex justify-between items-center">
                   <span className="text-green-600 font-medium">Discount</span>
-                  <span className="text-green-600 font-semibold">- ₹{discountAmount.toFixed(2)}</span>
+                  <span className="text-green-600 font-semibold">
+                    - ₹{discountAmount.toFixed(2)}
+                  </span>
                 </div>
               )}
               <div className="flex justify-between items-center">
                 <span className="text-gray-600 font-medium">Subtotal</span>
-                <span className="font-semibold text-gray-800">₹{subtotalAfterDiscount.toFixed(2)}</span>
+                <span className="font-semibold text-gray-800">
+                  ₹{subtotalAfterDiscount.toFixed(2)}
+                </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-600 font-medium">CGST (2.5%)</span>
@@ -914,37 +1039,61 @@ const OrderConfirmation = () => {
                 (!user && emailExists) ||
                 isPlacingOrder ||
                 !tableNumber ||
-                (!user && (
-                  !/^[6-9]\d{9}$/.test(guestPhone) ||
-                  (guestEmail.trim() !== '' && !/^([^\s@]+)@([^\s@]+)\.[^\s@]+$/.test(guestEmail))
-                ))
+                (!user &&
+                  (!/^[6-9]\d{9}$/.test(guestPhone) ||
+                    (guestEmail.trim() !== '' &&
+                      !/^([^\s@]+)@([^\s@]+)\.[^\s@]+$/.test(guestEmail))))
               }
-              className={`w-full py-4 rounded-full font-bold text-lg transition-all duration-300 transform hover:scale-105 ${cartItems.length === 0 ||
-                  isCheckingEmail ||
-                  (!user && emailExists) ||
-                  isPlacingOrder ||
-                  !tableNumber ||
-                  (!user && (
-                    !/^[6-9]\d{9}$/.test(guestPhone) ||
-                    (guestEmail.trim() !== '' && !/^([^\s@]+)@([^\s@]+)\.[^\s@]+$/.test(guestEmail))
-                  ))
+              className={`w-full py-4 rounded-full font-bold text-lg transition-all duration-300 transform hover:scale-105 ${
+                cartItems.length === 0 ||
+                isCheckingEmail ||
+                (!user && emailExists) ||
+                isPlacingOrder ||
+                !tableNumber ||
+                (!user &&
+                  (!/^[6-9]\d{9}$/.test(guestPhone) ||
+                    (guestEmail.trim() !== '' &&
+                      !/^([^\s@]+)@([^\s@]+)\.[^\s@]+$/.test(guestEmail))))
                   ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   : 'bg-gray-600 text-white hover:bg-gray-700 shadow-lg hover:shadow-xl'
-                }`}
+              }`}
               aria-busy={isPlacingOrder}
             >
               {isPlacingOrder ? (
                 <span className="flex items-center justify-center gap-2">
-                  <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 2v4m0 12v4m8-8h-4M4 12H2" className="opacity-75" />
+                  <svg
+                    className="w-5 h-5 animate-spin"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      className="opacity-25"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 2v4m0 12v4m8-8h-4M4 12H2"
+                      className="opacity-75"
+                    />
                   </svg>
                   Processing...
                 </span>
               ) : cartItems.length === 0 ? (
                 <span className="flex items-center justify-center gap-2">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                    />
                   </svg>
                   Cart is Empty
                 </span>
@@ -968,8 +1117,8 @@ const OrderConfirmation = () => {
             navigate(ROUTES.LOGIN, {
               state: {
                 email: guestEmail,
-                returnTo: ROUTES.ORDER_CONFIRMATION
-              }
+                returnTo: ROUTES.ORDER_CONFIRMATION,
+              },
             });
           }}
           onReject={() => {

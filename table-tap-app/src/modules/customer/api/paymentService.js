@@ -636,7 +636,10 @@ const createOrderWithRetry = async (orderData, maxRetries = 3) => {
 };
 
 // Helper: Notify backend and customer about payment-order mismatch (Client-side logging fallback)
-const notifyPaymentOrderMismatch = async (failedOrderData, restaurantName) => {
+// Exported so the PaymentPage recovery flow uses this working implementation
+// (which invokes the payment-alert edge function) instead of POSTing to dead
+// /api/... routes. Best-effort: never throws.
+export const notifyPaymentOrderMismatch = async (failedOrderData, restaurantName) => {
   // Log locally for now to prevent UI errors if backend function is missing
   console.warn('PAYMENT MISMATCH ALERT:', {
     message: 'Payment succeeded but order creation failed',

@@ -24,6 +24,7 @@ import {
   verifyRazorpaySignature,
   createOrder,
   checkPendingFailedOrders,
+  notifyPaymentOrderMismatch,
 } from '../api/paymentService';
 import LoadingScreen from '../../shared/components/LoadingScreen';
 
@@ -436,7 +437,8 @@ const PaymentPage = () => {
     try {
       setScriptError(
         `IMPORTANT: Your payment was successful but there was an issue creating your order. ` +
-          `Please don't worry - your money is safe. Our team has been notified and will contact you shortly. ` +
+          `Please don't worry - your money is safe. Use the options below to retry, or contact ` +
+          `support with this Payment ID if you need help. ` +
           `Payment ID: ${paymentResponse.razorpay_payment_id}`,
       );
       // 1. Store the failed order attempt for manual processing
@@ -462,19 +464,10 @@ const PaymentPage = () => {
         `failed_order_${paymentResponse.razorpay_payment_id}`,
         JSON.stringify(failedOrderData),
       );
-      // 2. Try to notify the backend about the failure
-      try {
-        await notifyPaymentOrderMismatch(failedOrderData);
-      } catch (notifyError) {
-        console.error('Failed to notify backend about payment-order mismatch:', notifyError);
-      }
-      // 3. Send email notification to customer
-      try {
-        await sendOrderFailureNotification(failedOrderData, restaurant);
-      } catch (emailError) {
-        console.error('Failed to send email notification:', emailError);
-      }
-      // 4. Show recovery options to user
+      // 2. Best-effort alert to the team + customer via the payment-alert edge
+      // function (also handles the customer email). Never throws.
+      await notifyPaymentOrderMismatch(failedOrderData, restaurant?.name);
+      // 3. Show recovery options to user
       showPaymentRecoveryOptions(paymentResponse.razorpay_payment_id, originalError.message, {
         retryOrderCreation: async () => {
           try {
@@ -580,36 +573,6 @@ const PaymentPage = () => {
   };
 
   // Function to notify backend about payment-order mismatch
-  const notifyPaymentOrderMismatch = async (failedOrderData) => {
-    const response = await fetch('/api/payment-order-mismatch', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'payment_success_order_failed',
-        data: failedOrderData,
-        urgency: 'high',
-      }),
-    });
-    if (!response.ok) throw new Error('Failed to notify backend');
-  };
-
-  // Function to send order failure notification to customer
-  const sendOrderFailureNotification = async (failedOrderData) => {
-    const response = await fetch('/api/send-order-failure-notification', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        customerEmail: failedOrderData.customerEmail,
-        customerName: failedOrderData.customerName,
-        paymentId: failedOrderData.paymentId,
-        amount: failedOrderData.amount,
-        restaurantName: restaurant.name,
-        tableNumber: failedOrderData.tableNumber,
-      }),
-    });
-    if (!response.ok) throw new Error('Failed to send notification email');
-  };
-
   // Function to show recovery options to user — built with DOM APIs (no innerHTML) to prevent XSS
   const showPaymentRecoveryOptions = (
     paymentId,
@@ -1156,7 +1119,7 @@ const PaymentPage = () => {
                           <div className="text-green-600 text-sm font-medium bg-green-100 px-2 py-1 rounded-full inline-block mt-1">
                             {item.discounttype === 'Percentage' && `${item.discountvalue}% off`}
                             {item.discounttype === 'Fixed' &&
-                              `₹${item.discountvalue * item.quantity} off`}
+                              `₹${Math.min(item.discountvalue, item.price) * item.quantity} off`}
                           </div>
                         )}
                         {isWater && (
