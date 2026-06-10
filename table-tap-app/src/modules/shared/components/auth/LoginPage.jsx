@@ -13,6 +13,7 @@ import {
   rateLimiter,
   sessionManager,
 } from '../../../shared/utils/security';
+import { isAdminHost, isRestaurantPortalHost } from '../../../shared/utils/subdomainRouter';
 
 const RESTAURANT_ROLES = ['owner', 'manager', 'captain', 'chef', 'staff', 'waiter', 'cashier'];
 
@@ -72,6 +73,10 @@ export default function LoginPage() {
   }, []);
 
   const handleContinue = () => {
+    if (isAdminHost() || isRestaurantPortalHost()) {
+      navigate('/', { replace: true });
+      return;
+    }
     if (hasValidRestaurantSelection()) {
       navigate('/home');
     } else {
@@ -142,11 +147,10 @@ export default function LoginPage() {
       // ---------------------------------------------------------
       // STRICT PORTAL ACCESS CONTROL & REDIRECTION
       // ---------------------------------------------------------
-      const h = (window.location.hostname || '').toLowerCase();
       const role = profile?.profile_role || profile?.role || 'customer';
 
-      // 1. Admin Portal
-      if (h.startsWith('admin.')) {
+      // 1. Admin Portal (admin.table-tap.in or staging.admin.table-tap.in)
+      if (isAdminHost()) {
         if (role !== 'admin') {
           await authService.signOut();
           throw new Error('Access Denied: Only administrators can log in here.');
@@ -156,7 +160,7 @@ export default function LoginPage() {
       }
 
       // 2. Restaurant/Partner Portal
-      if (h.startsWith('restaurant.') || h.startsWith('manager.') || h.startsWith('owner.')) {
+      if (isRestaurantPortalHost()) {
         if (!RESTAURANT_ROLES.includes(role)) {
           await authService.signOut();
           throw new Error('Access Denied: Restricted to restaurant staff.');

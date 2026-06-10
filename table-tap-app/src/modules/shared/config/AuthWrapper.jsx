@@ -5,26 +5,10 @@ import { supabase } from '../../shared/supabase';
 import { useAuth } from './AuthContext';
 import { hasValidRestaurantSelection } from '../../shared/utils/restaurantCheck';
 import { authService } from '../../shared/api/authService';
+import { isPortalHost } from '../../shared/utils/subdomainRouter';
 
 const AUTH_CHECK_TIMEOUT_MS = 10000;
 const PORTAL_ROLES = ['admin', 'owner', 'manager', 'captain', 'chef', 'staff', 'waiter', 'cashier'];
-
-/**
- * True when on admin or restaurant subdomain — handles both production and staging.
- * e.g. admin.table-tap.in, staging.admin.table-tap.in, restaurant.table-tap.in
- */
-function isAdminOrRestaurantOrigin() {
-  if (typeof window === 'undefined') return false;
-  const h = (window.location.hostname || '').toLowerCase();
-  // Strip optional staging/preview prefix before checking app type
-  const withoutPrefix = h.replace(/^(staging|preview)\./i, '');
-  return (
-    withoutPrefix.startsWith('admin.') ||
-    withoutPrefix.startsWith('restaurant.') ||
-    withoutPrefix.startsWith('manager.') ||
-    withoutPrefix.startsWith('owner.')
-  );
-}
 
 export default function AuthWrapper({ children, publicOnly = false }) {
   const navigate = useNavigate();
@@ -60,7 +44,7 @@ export default function AuthWrapper({ children, publicOnly = false }) {
     const checkAuthAndProfile = async () => {
       if (authLoading) return;
 
-      const onAdminOrRestaurant = isAdminOrRestaurantOrigin();
+      const onAdminOrRestaurant = isPortalHost();
       const pathIsAdminOrRestaurant =
         location.pathname.startsWith('/admin') ||
         location.pathname.startsWith('/restaurant') ||

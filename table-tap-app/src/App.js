@@ -163,8 +163,11 @@ const App = () => {
       );
     }
 
-    // Explicitly handle restaurant-selection via CustomerApp BEFORE checking /restaurant prefix
-    if (pathname.startsWith('/restaurant-selection')) {
+    // Customer-only route — portal subdomains (admin/restaurant) use their own apps
+    if (
+      pathname.startsWith('/restaurant-selection') &&
+      (subdomain === 'app' || subdomain === 'landing')
+    ) {
       return <CustomerApp />;
     }
 

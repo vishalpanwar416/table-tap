@@ -11,6 +11,39 @@
 const APP_KEYWORDS = ['admin', 'owner', 'restaurant', 'manager', 'app'];
 
 /**
+ * Strip deployment prefixes (staging, preview) so portal checks work on
+ * staging.admin.table-tap.in the same as admin.table-tap.in.
+ */
+export const stripDeploymentPrefix = (hostname) => {
+  return (hostname || '').toLowerCase().replace(/^(staging|preview)\./i, '');
+};
+
+export const isAdminHost = (
+  hostname = typeof window !== 'undefined' ? window.location.hostname : '',
+) => {
+  return stripDeploymentPrefix(hostname).startsWith('admin.');
+};
+
+export const isRestaurantPortalHost = (
+  hostname = typeof window !== 'undefined' ? window.location.hostname : '',
+) => {
+  const h = stripDeploymentPrefix(hostname);
+  return h.startsWith('restaurant.') || h.startsWith('manager.') || h.startsWith('owner.');
+};
+
+/** True on admin.* or restaurant/manager/owner.* hosts (prod or staging). */
+export const isPortalHost = (hostname) => {
+  return isAdminHost(hostname) || isRestaurantPortalHost(hostname);
+};
+
+/** Customer app origin — not a staff/admin portal subdomain. */
+export const isCustomerAppOrigin = (
+  hostname = typeof window !== 'undefined' ? window.location.hostname : '',
+) => {
+  return !isPortalHost(hostname);
+};
+
+/**
  * Extracts the logical app type from a hostname regardless of staging prefix.
  * e.g. "staging.app.table-tap.in" → "app"
  *      "restaurant.table-tap.in"  → "restaurant"
@@ -66,10 +99,14 @@ export const getBasePath = () => {
 
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
     switch (subdomain) {
-      case 'app': return '/app';
-      case 'restaurant': return '/restaurant';
-      case 'admin': return '/admin';
-      default: return '';
+      case 'app':
+        return '/app';
+      case 'restaurant':
+        return '/restaurant';
+      case 'admin':
+        return '/admin';
+      default:
+        return '';
     }
   }
 
@@ -112,10 +149,14 @@ export const getSubdomainUrl = (targetSubdomain, path = '/') => {
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
     const port = window.location.port ? `:${window.location.port}` : '';
     switch (targetSubdomain) {
-      case 'app': return `${protocol}//${hostname}${port}/app${path}`;
-      case 'restaurant': return `${protocol}//${hostname}${port}/restaurant${path}`;
-      case 'admin': return `${protocol}//${hostname}${port}/admin${path}`;
-      default: return `${protocol}//${hostname}${port}${path}`;
+      case 'app':
+        return `${protocol}//${hostname}${port}/app${path}`;
+      case 'restaurant':
+        return `${protocol}//${hostname}${port}/restaurant${path}`;
+      case 'admin':
+        return `${protocol}//${hostname}${port}/admin${path}`;
+      default:
+        return `${protocol}//${hostname}${port}${path}`;
     }
   }
 
@@ -125,7 +166,15 @@ export const getSubdomainUrl = (targetSubdomain, path = '/') => {
   // Find root domain: last two parts that contain the actual domain name
   // e.g. ['staging','app','table-tap','in'] → rootDomain = 'table-tap.in'
   // e.g. ['app','table-tap','in']           → rootDomain = 'table-tap.in'
-  const knownAppParts = new Set(['staging', 'preview', 'app', 'restaurant', 'admin', 'owner', 'manager']);
+  const knownAppParts = new Set([
+    'staging',
+    'preview',
+    'app',
+    'restaurant',
+    'admin',
+    'owner',
+    'manager',
+  ]);
   const rootParts = [];
   let passedAppPart = false;
   for (let i = parts.length - 1; i >= 0; i--) {
@@ -157,4 +206,9 @@ export default {
   isDevelopment,
   isStaging,
   getSubdomainUrl,
+  stripDeploymentPrefix,
+  isAdminHost,
+  isRestaurantPortalHost,
+  isPortalHost,
+  isCustomerAppOrigin,
 };

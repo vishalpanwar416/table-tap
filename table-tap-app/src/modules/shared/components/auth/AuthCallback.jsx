@@ -4,27 +4,22 @@ import { useAuth } from '../../../shared/config/AuthContext';
 import { hasValidRestaurantSelection } from '../../../shared/utils/restaurantCheck';
 import { authService, syncProfile } from '../../api/authService';
 import LoadingScreen from '../LoadingScreen';
+import {
+  isAdminHost,
+  isCustomerAppOrigin,
+  isRestaurantPortalHost,
+} from '../../utils/subdomainRouter';
 
 const RESTAURANT_ROLES = ['owner', 'manager', 'captain', 'chef', 'staff', 'waiter', 'cashier'];
 
 function getDefaultRedirectPath() {
   if (typeof window === 'undefined') return '/home';
-  const h = (window.location.hostname || '').toLowerCase();
   const p = window.location.pathname || '';
-  if (h.startsWith('admin.') || p.startsWith('/admin')) {
-    return h.startsWith('admin.') ? '/' : '/admin';
+  if (isAdminHost() || p.startsWith('/admin')) {
+    return isAdminHost() ? '/' : '/admin';
   }
-  if (
-    h.startsWith('restaurant.') ||
-    h.startsWith('manager.') ||
-    p.startsWith('/restaurant') ||
-    p.startsWith('/owner')
-  ) {
-    return h.startsWith('restaurant.') || h.startsWith('owner.') || h.startsWith('manager.')
-      ? '/'
-      : p.startsWith('/owner')
-        ? '/owner'
-        : '/restaurant';
+  if (isRestaurantPortalHost() || p.startsWith('/restaurant') || p.startsWith('/owner')) {
+    return isRestaurantPortalHost() ? '/' : p.startsWith('/owner') ? '/owner' : '/restaurant';
   }
   return '/home';
 }
@@ -67,14 +62,8 @@ const AuthCallback = () => {
         clearTimeout(fallbackTimer);
 
         const role = profile?.profile_role || profile?.role || 'customer';
-        const h = (window.location.hostname || '').toLowerCase();
-        const isCustomerOrigin =
-          !h.startsWith('admin.') &&
-          !h.startsWith('restaurant.') &&
-          !h.startsWith('manager.') &&
-          !h.startsWith('owner.');
 
-        if (isCustomerOrigin) {
+        if (isCustomerAppOrigin()) {
           setStatus('Finding your table...');
           const isComplete = Boolean(profile?.mobile_number && profile?.date_of_birth);
           navigate(
@@ -85,7 +74,7 @@ const AuthCallback = () => {
               : '/complete-profile',
             { replace: true },
           );
-        } else if (h.startsWith('admin.')) {
+        } else if (isAdminHost()) {
           if (role === 'admin') navigate('/', { replace: true });
           else throw new Error('Admin-only portal');
         } else {

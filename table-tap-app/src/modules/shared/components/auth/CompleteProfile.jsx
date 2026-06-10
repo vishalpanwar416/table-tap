@@ -7,22 +7,22 @@ import { toast, ToastContainer, Slide } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { optimizeProfileImage } from '../../../shared/utils/imageOptimization';
+import { isAdminHost, isRestaurantPortalHost } from '../../utils/subdomainRouter';
 
 const PORTAL_ROLES = ['admin', 'owner', 'manager', 'captain', 'chef', 'staff', 'waiter', 'cashier'];
 
 function getRoleRedirect(role, hostname, pathname) {
-  const isAdminContext = hostname.startsWith('admin.') || pathname.startsWith('/admin');
+  const isAdminContext = isAdminHost(hostname) || pathname.startsWith('/admin');
   const isRestaurantContext =
-    hostname.startsWith('restaurant.') ||
-    hostname.startsWith('manager.') ||
+    isRestaurantPortalHost(hostname) ||
     pathname.startsWith('/restaurant') ||
     pathname.startsWith('/owner');
 
   if (role === 'admin' && isAdminContext) {
-    return hostname.startsWith('admin.') ? '/' : '/admin';
+    return isAdminHost(hostname) ? '/' : '/admin';
   }
   if (PORTAL_ROLES.includes(role) && isRestaurantContext) {
-    if (hostname.startsWith('restaurant.') || hostname.startsWith('manager.')) return '/';
+    if (isRestaurantPortalHost(hostname)) return '/';
     return pathname.startsWith('/owner') ? '/owner' : '/restaurant';
   }
   return null;

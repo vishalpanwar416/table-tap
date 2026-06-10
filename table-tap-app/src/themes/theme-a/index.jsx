@@ -10,6 +10,7 @@ import { hasValidRestaurantSelection } from '../../modules/shared/utils/restaura
 import Opening from '../../modules/shared/pages/opening';
 import { authService } from '../../modules/shared/api/authService';
 import LoadingScreen from '../../modules/shared/components/LoadingScreen';
+import { isCustomerAppOrigin } from '../../modules/shared/utils/subdomainRouter';
 
 /** On "/": show Opening (splash) only when not logged in; if logged in, redirect to /home or /restaurant-selection. */
 function OpeningOrRedirect() {
@@ -22,8 +23,7 @@ function OpeningOrRedirect() {
   // Only run redirect on customer app root (not admin/restaurant subdomain)
   const isCustomerOrigin = () => {
     if (typeof window === 'undefined') return true;
-    const h = (window.location.hostname || '').toLowerCase();
-    return !h.startsWith('admin.') && !h.startsWith('restaurant.') && !h.startsWith('manager.');
+    return isCustomerAppOrigin();
   };
 
   React.useEffect(() => {
