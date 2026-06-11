@@ -7,6 +7,7 @@ import {
   Brain,
   ShoppingBag,
   FileText,
+  CreditCard,
   Loader2,
   ChevronUp,
 } from 'lucide-react';
@@ -19,6 +20,7 @@ const RestaurantListView = ({
   onToggleAI,
   onToggleAggregators,
   onToggleOnlineBill,
+  onToggleSubscriptionAutopay,
   onEdit,
   onDelete,
   onClick,
@@ -148,6 +150,11 @@ const RestaurantListView = ({
     onToggleOnlineBill(restaurant.id);
   };
 
+  const handleToggleSubscriptionAutopay = (e, restaurant) => {
+    e.stopPropagation();
+    onToggleSubscriptionAutopay(restaurant.id);
+  };
+
   const handleEdit = (e, restaurant) => {
     e.stopPropagation();
     onEdit(restaurant);
@@ -219,10 +226,10 @@ const RestaurantListView = ({
               </div>
             </div>
           </div>
-          <div className="col-span-2 text-sm text-gray-600 font-spartan truncate">
+          <div className="col-span-1 text-sm text-gray-600 font-spartan truncate">
             {restaurant.address}
           </div>
-          <div className="col-span-2 text-sm text-gray-600 font-spartan truncate">
+          <div className="col-span-1 text-sm text-gray-600 font-spartan truncate">
             {restaurant.contact_phone}
           </div>
           <div className="col-span-1 text-center text-sm">{restaurant.staff_count || 0}</div>
@@ -257,7 +264,15 @@ const RestaurantListView = ({
               onClick={(e) => handleToggleOnlineBill(e, restaurant)}
             />
           </div>
-          <div className="col-span-1 flex justify-center space-x-2">
+          <div className="col-span-1 flex justify-center">
+            <FeatureIconToggle
+              active={restaurant.enable_subscription_autopay !== false}
+              icon={CreditCard}
+              color="orange"
+              onClick={(e) => handleToggleSubscriptionAutopay(e, restaurant)}
+            />
+          </div>
+          <div className="col-span-2 flex justify-center space-x-2">
             <ActionButtons restaurant={restaurant} onEdit={handleEdit} onDelete={handleDelete} />
           </div>
         </div>
@@ -348,6 +363,13 @@ const RestaurantListView = ({
                     color="blue"
                     onClick={(e) => handleToggleOnlineBill(e, restaurant)}
                     label="Bill"
+                  />
+                  <FeatureIconToggle
+                    active={restaurant.enable_subscription_autopay !== false}
+                    icon={CreditCard}
+                    color="orange"
+                    onClick={(e) => handleToggleSubscriptionAutopay(e, restaurant)}
+                    label="Pay"
                   />
                 </div>
               </div>
@@ -454,14 +476,15 @@ const RestaurantListView = ({
         {/* Table Header - Desktop Only */}
         <div className="hidden md:grid bg-gray-50 px-6 py-4 border-b border-gray-200 grid-cols-12 gap-4 text-sm font-medium text-gray-700 font-spartan">
           <div className="col-span-2">Restaurant</div>
-          <div className="col-span-2">Location</div>
-          <div className="col-span-2">Contact</div>
+          <div className="col-span-1">Location</div>
+          <div className="col-span-1">Contact</div>
           <div className="col-span-1 text-center">Staff</div>
           <div className="col-span-1 text-center">Status</div>
           <div className="col-span-1 text-center">AI</div>
           <div className="col-span-1 text-center">Agg</div>
           <div className="col-span-1 text-center">Bill</div>
-          <div className="col-span-1 text-center">Actions</div>
+          <div className="col-span-1 text-center">Autopay</div>
+          <div className="col-span-2 text-center">Actions</div>
         </div>
 
         {/* List */}

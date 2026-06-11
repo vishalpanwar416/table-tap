@@ -45,6 +45,7 @@ import { useAuth } from '../../../shared/config/AuthContext';
 import ReactDOMServer from 'react-dom/server';
 import PrintBill from './PrintBill';
 import PrintKOT from './PrintKOT';
+import LiveOrderManageModal from './LiveOrderManageModal';
 import { sendBillEmail } from '../../../shared/api/emailService';
 import { sendWhatsAppBill, openWhatsAppBill } from '../../../shared/api/whatsappService';
 import toast from 'react-hot-toast';
@@ -462,6 +463,7 @@ const ActionButtons = ({
   onlineBillModalRef,
   restaurant,
   handleQuickAction,
+  onManageLiveOrder,
 }) => {
   const [loadingAction, setLoadingAction] = useState(null);
 
@@ -474,9 +476,25 @@ const ActionButtons = ({
     }
   };
 
+  const liveTabButton =
+    order.order_kind === 'live_order' && onManageLiveOrder ? (
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onManageLiveOrder(order);
+        }}
+        className="min-h-[44px] sm:min-h-0 px-3 py-2.5 sm:px-4 sm:py-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-600 hover:text-white flex items-center gap-2 transition-colors touch-manipulation flex-shrink-0 border border-transparent font-semibold text-xs sm:text-sm"
+        title="Manage live order"
+      >
+        Live tab
+      </button>
+    ) : null;
+
   if (order.status === 'pending') {
     return (
       <>
+        {liveTabButton}
         <button
           disabled={!!loadingAction}
           onClick={(e) => {
@@ -509,6 +527,7 @@ const ActionButtons = ({
   if (order.status === 'preparing') {
     return (
       <>
+        {liveTabButton}
         <button
           disabled={!!loadingAction}
           onClick={(e) => {
@@ -541,22 +560,25 @@ const ActionButtons = ({
   }
   if (order.status === 'ready') {
     return (
-      <button
-        disabled={!!loadingAction}
-        onClick={(e) => {
-          e.stopPropagation();
-          wrapQuickAction('complete');
-        }}
-        className="min-h-[44px] sm:min-h-0 px-3 py-2.5 sm:px-4 sm:py-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center gap-2 transition-colors touch-manipulation flex-shrink-0 border border-transparent disabled:opacity-50"
-        title="Complete"
-      >
-        {loadingAction === 'complete' ? (
-          <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-        ) : (
-          <Check size={18} />
-        )}
-        <span className="hidden sm:inline">Complete</span>
-      </button>
+      <>
+        {liveTabButton}
+        <button
+          disabled={!!loadingAction}
+          onClick={(e) => {
+            e.stopPropagation();
+            wrapQuickAction('complete');
+          }}
+          className="min-h-[44px] sm:min-h-0 px-3 py-2.5 sm:px-4 sm:py-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center gap-2 transition-colors touch-manipulation flex-shrink-0 border border-transparent disabled:opacity-50"
+          title="Complete"
+        >
+          {loadingAction === 'complete' ? (
+            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <Check size={18} />
+          )}
+          <span className="hidden sm:inline">Complete</span>
+        </button>
+      </>
     );
   }
   if (order.status === 'completed') {
@@ -633,6 +655,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
   const [subscriptionStatus, setSubscriptionStatus] = useState('disconnected');
   const [overviewOpen, setOverviewOpen] = useState(true);
   const [showCreateOrderModal, setShowCreateOrderModal] = useState(false);
+  const [liveOrderTarget, setLiveOrderTarget] = useState(null);
   const [itemProcessing, setItemProcessing] = useState(null); // Track fast actions (orderId)
   const [menuItems, setMenuItems] = useState([]);
   const [menuLoading, setMenuLoading] = useState(false);
@@ -1206,13 +1229,16 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
     };
   }, [dropdownOpenOrderId]);
 
-  const handlePrintKOT = (order) => {
+  const handlePrintKOT = (order, kot = null) => {
     const printWindow = window.open('', '', 'width=600,height=600');
-    const html = ReactDOMServer.renderToString(<PrintKOT order={order} />);
+    const html = ReactDOMServer.renderToString(<PrintKOT order={order} kot={kot} />);
+    const title = kot
+      ? `KOT #${kot.kot_number} - ${order.order_number || order.id.slice(0, 8)}`
+      : `KOT - Order ${order.order_number || order.id.slice(0, 8)}`;
     printWindow.document.write(`
       <html>
         <head>
-          <title>KOT - Order ${order.order_number || order.id.slice(0, 8)}</title>
+          <title>${title}</title>
         </head>
         <body>${html}</body>
       </html>
@@ -1599,6 +1625,11 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                         <span className="font-bold text-gray-900 text-sm">
                           #{order.order_number || order.id.slice(0, 8)}
                         </span>
+                        {order.order_kind === 'live_order' && (
+                          <span className="text-[10px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded">
+                            LIVE
+                          </span>
+                        )}
                         {getStatusBadge(order.status)}
                       </div>
                       <div className="flex items-center gap-2 text-xs text-gray-500 mb-1.5">
@@ -1696,6 +1727,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                           onlineBillModalRef={onlineBillModalRef}
                           restaurant={restaurant}
                           handleQuickAction={handleQuickAction}
+                          onManageLiveOrder={setLiveOrderTarget}
                         />
                       </div>
                     </div>
@@ -1754,6 +1786,11 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                           <span className="truncate">
                             #{order.order_number || order.id.slice(0, 8)}
                           </span>
+                          {order.order_kind === 'live_order' && (
+                            <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full shrink-0">
+                              LIVE
+                            </span>
+                          )}
                           <span className="text-xs font-semibold text-gray-400 shrink-0">
                             {formatDate(order.created_at)}
                           </span>
@@ -1887,6 +1924,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                         onlineBillModalRef={onlineBillModalRef}
                         restaurant={restaurant}
                         handleQuickAction={handleQuickAction}
+                        onManageLiveOrder={setLiveOrderTarget}
                       />
                     </div>
                   </div>
@@ -2062,6 +2100,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                                     onlineBillModalRef={onlineBillModalRef}
                                     restaurant={restaurant}
                                     handleQuickAction={handleQuickAction}
+                                    onManageLiveOrder={setLiveOrderTarget}
                                   />
                                 </div>
                               </div>
@@ -2143,6 +2182,7 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
                               onlineBillModalRef={onlineBillModalRef}
                               restaurant={restaurant}
                               handleQuickAction={handleQuickAction}
+                              onManageLiveOrder={setLiveOrderTarget}
                             />
                           </div>
                         </td>
@@ -2756,6 +2796,18 @@ const OrderManagement = ({ restaurantId, updateOrderStatus, searchTerm: propSear
         onSuccess={applyOptimisticStatus}
       />
       <OnlineBillModal ref={onlineBillModalRef} restaurant={restaurant} triggeredBy={triggeredBy} />
+      {liveOrderTarget && (
+        <LiveOrderManageModal
+          order={liveOrderTarget}
+          restaurant={restaurant}
+          onClose={() => setLiveOrderTarget(null)}
+          onOrderUpdated={(updated) => {
+            setOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
+            setLiveOrderTarget(updated);
+          }}
+          onPrintKot={handlePrintKOT}
+        />
+      )}
     </div>
   );
 };

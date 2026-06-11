@@ -16,6 +16,7 @@ export const createNotification = async (notification) => {
       'order_preparing',
       'order_ready',
       'order_rejected',
+      'kot_added',
       'payment_success',
       'payment_failed',
       'subscription_expired',

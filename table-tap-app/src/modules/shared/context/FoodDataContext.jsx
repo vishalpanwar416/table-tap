@@ -10,6 +10,9 @@ import { useRestaurant } from '../../restaurant/pages/RestaurantSelection/Restau
 const FoodDataContext = createContext();
 
 // Cache configuration
+const CACHE_VERSION = 'v3'; // bump when menu schema/categories change
+const getMemoryCacheKey = (restId) => `${CACHE_VERSION}_${restId}`;
+const getStorageCacheKey = (restId) => `fooddata_${CACHE_VERSION}_${restId}`;
 const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
 const STALE_DURATION = 2 * 60 * 1000; // 2 minutes - show stale data while refreshing
 const MAX_RETRIES = 3;
@@ -36,14 +39,13 @@ export const FoodDataProvider = ({ children }) => {
   const { restaurantId } = useRestaurant();
 
   // Get cache key for a restaurant
-  const getCacheKey = (restId) => `fooddata_v2_${restId}`;
-
   // Load data from localStorage (persistent) + memory cache (fast)
   const loadFromCache = useCallback((restaurantId) => {
     try {
       // Check memory cache first (fastest)
-      if (memoryCache.current.has(restaurantId)) {
-        const cached = memoryCache.current.get(restaurantId);
+      const memoryKey = getMemoryCacheKey(restaurantId);
+      if (memoryCache.current.has(memoryKey)) {
+        const cached = memoryCache.current.get(memoryKey);
         const age = Date.now() - cached.timestamp;
 
         if (age < CACHE_DURATION) {
@@ -52,7 +54,7 @@ export const FoodDataProvider = ({ children }) => {
       }
 
       // Fallback to localStorage (persistent across sessions)
-      const cacheKey = getCacheKey(restaurantId);
+      const cacheKey = getStorageCacheKey(restaurantId);
       const cached = localStorage.getItem(cacheKey);
 
       if (cached) {
@@ -61,7 +63,7 @@ export const FoodDataProvider = ({ children }) => {
 
         if (age < CACHE_DURATION) {
           // Also store in memory cache for faster access
-          memoryCache.current.set(restaurantId, { data, timestamp });
+          memoryCache.current.set(memoryKey, { data, timestamp });
           return { data, isStale: age > STALE_DURATION };
         } else {
           // Cache expired, remove it
@@ -80,10 +82,10 @@ export const FoodDataProvider = ({ children }) => {
       const cacheData = { data, timestamp: Date.now() };
 
       // Save to memory cache
-      memoryCache.current.set(restaurantId, cacheData);
+      memoryCache.current.set(getMemoryCacheKey(restaurantId), cacheData);
 
       // Save to localStorage
-      const cacheKey = getCacheKey(restaurantId);
+      const cacheKey = getStorageCacheKey(restaurantId);
       localStorage.setItem(cacheKey, JSON.stringify(cacheData));
     } catch (error) {
       console.warn('Cache write error:', error);
@@ -246,8 +248,8 @@ export const FoodDataProvider = ({ children }) => {
   // Clear cache for a specific restaurant
   const clearCache = useCallback((restaurantId) => {
     try {
-      memoryCache.current.delete(restaurantId);
-      localStorage.removeItem(getCacheKey(restaurantId));
+      memoryCache.current.delete(getMemoryCacheKey(restaurantId));
+      localStorage.removeItem(getStorageCacheKey(restaurantId));
     } catch (error) {
       console.warn('Cache clear error:', error);
     }

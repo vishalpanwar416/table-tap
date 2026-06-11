@@ -29,7 +29,7 @@ export const optimizeImageForUpload = async (file, options = {}) => {
     maxHeight = 600,
     quality = 0.8,
     format = 'webp',
-    maxFileSize = 500 * 1024 // 500KB
+    maxFileSize = 500 * 1024, // 500KB
   } = options;
 
   return new Promise((resolve, reject) => {
@@ -78,13 +78,13 @@ export const optimizeImageForUpload = async (file, options = {}) => {
             // Create new file with optimized data
             const optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.webp'), {
               type: 'image/webp',
-              lastModified: Date.now()
+              lastModified: Date.now(),
             });
 
             resolve(optimizedFile);
           },
           'image/webp',
-          quality
+          quality,
         );
       } catch (error) {
         reject(error);
@@ -112,7 +112,7 @@ export const createImageVariants = async (file) => {
   const sizes = [
     { width: 300, height: 200, suffix: 'thumb' },
     { width: 600, height: 400, suffix: 'medium' },
-    { width: 800, height: 600, suffix: 'large' }
+    { width: 800, height: 600, suffix: 'large' },
   ];
 
   const variants = {};
@@ -122,12 +122,11 @@ export const createImageVariants = async (file) => {
       const optimized = await optimizeImageForUpload(file, {
         maxWidth: size.width,
         maxHeight: size.height,
-        quality: 0.8
+        quality: 0.8,
       });
 
       variants[size.suffix] = optimized;
-    } catch (error) {
-    }
+    } catch (error) {}
   }
 
   return variants;
@@ -173,12 +172,30 @@ export const validateImageFile = (file) => {
 export const getFallbackImage = (category, itemName = '') => {
   // Simple colored rectangles as fallback images (base64 encoded)
   const fallbackImages = {
-    'Snacks': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRkY2QjM1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5TbmFja3M8L3RleHQ+PC9zdmc+',
-    'Main Course': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRkY2QjM1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5NYWluIENvdXJzZTwvdGV4dD48L3N2Zz4=',
-    'Beverages': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRkY2QjM1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5CZXZlcmFnZXM8L3RleHQ+PC9zdmc+',
-    'Dessert': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRkY2QjM1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5EZXNzZXJ0PC90ZXh0Pjwvc3ZnPg==',
-    'Offers': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRkY2QjM1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5PZmZlcnM8L3RleHQ+PC9zdmc+',
-    'default': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRkY2QjM1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5Gb29kIEl0ZW08L3RleHQ+PC9zdmc+'
+    Snacks:
+      'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRkY2QjM1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5TbmFja3M8L3RleHQ+PC9zdmc+',
+    'Main Course':
+      'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRkY2QjM1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5NYWluIENvdXJzZTwvdGV4dD48L3N2Zz4=',
+    Tacos:
+      'https://images.pexels.com/photos/2092500/pexels-photo-2092500.jpeg?auto=compress&cs=tinysrgb&w=400',
+    Burritos:
+      'https://images.pexels.com/photos/1438672/pexels-photo-1438672.jpeg?auto=compress&cs=tinysrgb&w=400',
+    Entradas:
+      'https://images.pexels.com/photos/1279330/pexels-photo-1279330.jpeg?auto=compress&cs=tinysrgb&w=400',
+    'Platos Fuertes':
+      'https://images.pexels.com/photos/1556688/pexels-photo-1556688.jpeg?auto=compress&cs=tinysrgb&w=400',
+    Bebidas:
+      'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400',
+    Postres:
+      'https://images.pexels.com/photos/958545/pexels-photo-958545.jpeg?auto=compress&cs=tinysrgb&w=400',
+    Beverages:
+      'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRkY2QjM1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5CZXZlcmFnZXM8L3RleHQ+PC9zdmc+',
+    Dessert:
+      'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRkY2QjM1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5EZXNzZXJ0PC90ZXh0Pjwvc3ZnPg==',
+    Offers:
+      'https://images.pexels.com/photos/2087740/pexels-photo-2087740.jpeg?auto=compress&cs=tinysrgb&w=400',
+    default:
+      'https://images.pexels.com/photos/2087740/pexels-photo-2087740.jpeg?auto=compress&cs=tinysrgb&w=400',
   };
 
   return fallbackImages[category] || fallbackImages.default;
@@ -262,12 +279,9 @@ export const LazyImage = ({
     if (imageRef && imageSrc === (placeholder || getFallbackImage(category)) && src) {
       if (IntersectionObserver) {
         observer = new IntersectionObserver(
-          entries => {
-            entries.forEach(entry => {
-              if (
-                !didCancel &&
-                (entry.intersectionRatio > 0 || entry.isIntersecting)
-              ) {
+          (entries) => {
+            entries.forEach((entry) => {
+              if (!didCancel && (entry.intersectionRatio > 0 || entry.isIntersecting)) {
                 setImageSrc(src);
                 observer.unobserve(imageRef);
               }
@@ -276,7 +290,7 @@ export const LazyImage = ({
           {
             threshold: 0.01,
             rootMargin: '75%',
-          }
+          },
         );
         observer.observe(imageRef);
       } else {
@@ -307,19 +321,20 @@ export const LazyImage = ({
 
 // Process food items to ensure they have valid images
 export const processFoodItems = (items) => {
-  return items.map(item => {
-    const isInvalid = !item.image || (typeof item.image === 'string' && item.image.startsWith('blob:'));
+  return items.map((item) => {
+    const isInvalid =
+      !item.image || (typeof item.image === 'string' && item.image.startsWith('blob:'));
     return {
       ...item,
       image: isInvalid ? getFallbackImage(item.category, item.name) : item.image,
-      hasValidImage: !isInvalid
+      hasValidImage: !isInvalid,
     };
   });
 };
 
 // Preload critical images
 export const preloadImages = (imageUrls) => {
-  imageUrls.forEach(url => {
+  imageUrls.forEach((url) => {
     const img = new Image();
     img.src = url;
   });
@@ -383,7 +398,7 @@ export const ProgressiveImage = ({
         style={{
           opacity: isLoading ? 0 : 1,
           transform: 'translateZ(0)',
-          backfaceVisibility: 'hidden'
+          backfaceVisibility: 'hidden',
         }}
         loading="lazy"
         {...props}
@@ -430,7 +445,7 @@ export const useImageUpload = () => {
   return {
     processAndUpload,
     isProcessing,
-    progress
+    progress,
   };
 };
 
@@ -491,4 +506,4 @@ function hasAlpha(img) {
     if (data[i] < 255) return true;
   }
   return false;
-} 
+}

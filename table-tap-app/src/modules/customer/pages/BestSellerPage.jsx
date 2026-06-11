@@ -663,7 +663,7 @@ const BestSellerPage = memo(() => {
   if (error) {
     return (
       <motion.div
-        className="flex justify-center items-center min-h-screen bg-black p-4"
+        className="flex justify-center items-center min-h-screen bg-black md:p-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
@@ -687,13 +687,13 @@ const BestSellerPage = memo(() => {
 
   return (
     <motion.div
-      className="flex justify-center items-start min-h-screen bg-black p-4"
+      className="flex justify-center items-start min-h-screen bg-black md:p-4"
       variants={pageVariants}
       initial="initial"
       animate="animate"
       exit="exit"
     >
-      <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col relative">
+      <div className="w-full max-w-mobile-shell md:max-w-4xl lg:max-w-6xl h-screen flex flex-col relative">
         {/* Modals and Sidebars */}
         <Suspense fallback={null}>
           <LogoutPopup

@@ -50,6 +50,7 @@ export { LikesProvider, useLikes } from '../modules/shared/config/LikesContent';
 
 // --- Orders --------------------------------------------------------------------
 export { OrderProvider, useOrders } from '../modules/shared/context/OrderContext';
+export { LiveOrderProvider, useLiveOrder } from '../modules/shared/context/LiveOrderContext';
 
 // --- Payments (Razorpay) -------------------------------------------------------
 export {

@@ -173,19 +173,29 @@ export const fetchMaincaroselData = async (restaurantId = null) => {
   }
 };
 
-// Helper function to format message display
+const CAROUSEL_MESSAGE_MAX = 52;
+
+const truncateCarouselText = (text, max = CAROUSEL_MESSAGE_MAX) => {
+  if (!text) return '';
+  const trimmed = text.trim();
+  if (trimmed.length <= max) return trimmed;
+  const cut = trimmed.slice(0, max).trimEnd();
+  const lastSpace = cut.lastIndexOf(' ');
+  const safe = lastSpace > 24 ? cut.slice(0, lastSpace).trimEnd() : cut;
+  return `${safe}…`;
+};
+
+// Helper function to format carousel headline text (kept short for the slider)
 const formatMessage = (item) => {
-  // Use description if available, otherwise use name
   if (item.description && item.description.trim().length > 0) {
-    return item.description;
+    return truncateCarouselText(item.description);
   }
 
-  // If no description, create an enticing message based on the item
   if (item.category) {
-    return `Delicious ${item.category} Special!`;
+    return truncateCarouselText(`Delicious ${item.category} Special!`);
   }
 
-  return item.name || 'Special Offer!';
+  return truncateCarouselText(item.name || 'Special Offer!');
 };
 
 // Helper function to format discount display

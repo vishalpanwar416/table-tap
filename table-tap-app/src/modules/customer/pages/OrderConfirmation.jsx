@@ -72,7 +72,7 @@ const EmailExistsPopup = ({ show, onClose, onAccept, onReject, email }) => {
             key="popup-content"
             className="fixed bottom-3 left-0 right-0 z-50 mx-auto p-6 shadow-2xl border border-orange-100"
             style={{
-              maxWidth: '390px',
+              maxWidth: 'min(100%, 430px)',
               background:
                 'linear-gradient(135deg, rgba(255,255,255,0.85) 60%, rgba(255,240,220,0.85) 100%)',
               backdropFilter: 'blur(12px)',
@@ -316,7 +316,7 @@ const GuestForm = ({
             value={guestPhone}
             onChange={(e) => setGuestPhone(e.target.value.replace(/\D/g, ''))}
             maxLength={10}
-            placeholder="nEnter mobile number"
+            placeholder="Enter mobile number"
             className="w-full pl-14 pr-4 py-4 border-2 border-orange-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all duration-200 text-lg font-bold tracking-wider"
             required
           />
@@ -744,7 +744,7 @@ const OrderConfirmation = () => {
 
   return (
     <div className="flex justify-center items-start min-h-screen bg-black">
-      <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
+      <div className="w-full max-w-mobile-shell md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
         {/* Enhanced Header */}
         <div className="w-full px-4 py-8 relative flex justify-center">
           <button
@@ -1030,7 +1030,7 @@ const OrderConfirmation = () => {
 
         {/* Floating Payment Button */}
         <div className="fixed bottom-0 left-0 right-0 px-4 py-4 z-50">
-          <div className="max-w-[390px] md:max-w-4xl lg:max-w-6xl mx-auto">
+          <div className="max-w-mobile-shell md:max-w-4xl lg:max-w-6xl mx-auto">
             <button
               onClick={handlePlaceOrder}
               disabled={

@@ -321,6 +321,30 @@ const AdminPanel = () => {
     }
   };
 
+  const handleToggleSubscriptionAutopay = async (id) => {
+    try {
+      const restaurant = restaurants.find((r) => r.id === id);
+      const newStatus = restaurant.enable_subscription_autopay === false;
+
+      const { error } = await supabase
+        .from('restaurants')
+        .update({ enable_subscription_autopay: newStatus })
+        .eq('id', id);
+
+      if (error) {
+        handleError('Failed to update subscription autopay: ' + error.message);
+        return;
+      }
+
+      setRestaurants((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, enable_subscription_autopay: newStatus } : r)),
+      );
+      handleSuccess(`Subscription autopay ${newStatus ? 'enabled' : 'disabled'} for restaurant`);
+    } catch (err) {
+      handleError('Failed to toggle subscription autopay: ' + err.message);
+    }
+  };
+
   const handleToggleOnlineBill = async (id) => {
     try {
       const restaurant = restaurants.find((r) => r.id === id);
@@ -631,6 +655,7 @@ const AdminPanel = () => {
             onToggleAI={handleToggleRestaurantAI}
             onToggleAggregators={handleToggleRestaurantAggregators}
             onToggleOnlineBill={handleToggleOnlineBill}
+            onToggleSubscriptionAutopay={handleToggleSubscriptionAutopay}
             onEdit={handleEditRestaurant}
             onDelete={handleDeleteRestaurant}
             onClick={handleRestaurantClick}

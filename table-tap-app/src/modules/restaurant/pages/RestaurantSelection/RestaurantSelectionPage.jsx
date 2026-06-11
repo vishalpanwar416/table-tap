@@ -310,27 +310,29 @@ const RestaurantSelectionPage = () => {
     fetchRestaurants(false);
   }, [userLocation, showAllRestaurants, showMyRestaurants, isOwner, authLoading]);
 
-  // Throttled scroll handler with ref and stable effect
+  // Collapse bottom selection bar while scrolling the restaurant list
   useEffect(() => {
-    let ticking = false;
+    const el = scrollRef.current;
+    if (!el) return undefined;
+
+    let scrollEndTimer;
     const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const currentScrollY = window.scrollY;
-          if (Math.abs(currentScrollY - scrollYRef.current) > 10) {
-            setIsScrolling(true);
-            setTimeout(() => setIsScrolling(false), 150);
-          }
-          scrollYRef.current = currentScrollY;
-          setScrollY(currentScrollY);
-          ticking = false;
-        });
-        ticking = true;
+      const currentScrollY = el.scrollTop;
+      if (Math.abs(currentScrollY - scrollYRef.current) > 4) {
+        setIsScrolling(true);
+        clearTimeout(scrollEndTimer);
+        scrollEndTimer = setTimeout(() => setIsScrolling(false), 220);
       }
+      scrollYRef.current = currentScrollY;
+      setScrollY(currentScrollY);
     };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []); // <-- Empty dependency array
+
+    el.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      el.removeEventListener('scroll', handleScroll);
+      clearTimeout(scrollEndTimer);
+    };
+  }, [restaurants.length, selectedRestaurant?.id]);
 
   // After fetching restaurants with location:
   useEffect(() => {
@@ -514,29 +516,6 @@ const RestaurantSelectionPage = () => {
     const distance = R * c; // Distance in kilometers
     return distance;
   };
-
-  // Handle scroll detection for hiding table selection and zoom effect
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-
-      // Only trigger scroll state if there's significant movement
-      if (Math.abs(currentScrollY - scrollY) > 10) {
-        // Increased threshold from 5 to 10
-        setIsScrolling(true);
-
-        // Clear scroll state after a delay
-        setTimeout(() => {
-          setIsScrolling(false);
-        }, 150); // Reduced delay from 200 to 150ms
-      }
-
-      setScrollY(currentScrollY);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [scrollY]);
 
   const getRestaurantScale = (restaurantId, index) => {
     // Base scale logic
@@ -1134,7 +1113,7 @@ const RestaurantSelectionPage = () => {
                 ref={scrollRef}
                 className="h-full overflow-y-auto overscroll-contain p-2 md:p-4"
                 style={{
-                  paddingBottom: selectedRestaurant ? '140px' : '16px',
+                  paddingBottom: selectedRestaurant ? (isScrolling ? '96px' : '140px') : '16px',
                   WebkitOverflowScrolling: 'touch',
                   touchAction: 'pan-y',
                 }}
@@ -1387,9 +1366,13 @@ const RestaurantSelectionPage = () => {
                   className="fixed left-0 right-0 bottom-0 z-50 flex justify-center"
                 >
                   <div
-                    className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl px-3 pt-2 pb-3 bg-white rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.12)] border-t-4 border-orange-500 overflow-hidden touch-manipulation"
+                    className={`w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl px-3 bg-white rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.12)] border-t-4 border-orange-500 overflow-hidden touch-manipulation transition-all duration-200 ease-out ${
+                      isScrolling ? 'pt-1 pb-2' : 'pt-2 pb-3'
+                    }`}
                     style={{
-                      paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))',
+                      paddingBottom: isScrolling
+                        ? 'max(0.5rem, env(safe-area-inset-bottom))'
+                        : 'max(0.75rem, env(safe-area-inset-bottom))',
                     }}
                     onTouchStart={(e) => {
                       floatingCardTouchStartY.current = e.touches[0].clientY;
@@ -1413,7 +1396,7 @@ const RestaurantSelectionPage = () => {
                     aria-label="Swipe down to cancel selection"
                   >
                     <motion.div
-                      className="p-2.5"
+                      className={`transition-all duration-200 ease-out ${isScrolling ? 'p-1.5' : 'p-2.5'}`}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{
@@ -1423,8 +1406,14 @@ const RestaurantSelectionPage = () => {
                       }}
                       transition={{ duration: 0.3, delay: 0.1 }}
                     >
-                      {/* Row 1: Restaurant name (always visible) */}
-                      <div className="flex items-center min-w-0 mb-2">
+                      {/* Row 1: Restaurant name — collapses while scrolling */}
+                      <div
+                        className={`flex items-center min-w-0 overflow-hidden transition-all duration-200 ease-out ${
+                          isScrolling
+                            ? 'max-h-0 opacity-0 mb-0 pointer-events-none'
+                            : 'max-h-8 opacity-100 mb-2'
+                        }`}
+                      >
                         <Store size={16} className="text-orange-500 mr-1.5 flex-shrink-0" />
                         <span className="text-sm font-bold text-orange-600 truncate min-w-0 block">
                           {selectedRestaurant.name}
@@ -1436,7 +1425,11 @@ const RestaurantSelectionPage = () => {
                           <select
                             value={tableNumber}
                             onChange={(e) => setTableNumber(e.target.value)}
-                            className={`flex-shrink-0 text-[11px] font-medium rounded-md border py-1 pl-2 pr-6 appearance-none bg-no-repeat focus:outline-none focus:ring-2 focus:ring-orange-400 cursor-pointer min-w-0 max-w-[7rem] ${
+                            className={`flex-shrink-0 font-medium rounded-md border appearance-none bg-no-repeat focus:outline-none focus:ring-2 focus:ring-orange-400 cursor-pointer min-w-0 max-w-[7rem] transition-all duration-200 ${
+                              isScrolling
+                                ? 'text-[10px] py-0.5 pl-1.5 pr-5'
+                                : 'text-[11px] py-1 pl-2 pr-6'
+                            } ${
                               isTableAutoSelected()
                                 ? 'bg-green-100 text-green-800 border-green-300'
                                 : 'bg-gray-50 text-gray-800 border-gray-200 hover:border-orange-300'
@@ -1469,8 +1462,10 @@ const RestaurantSelectionPage = () => {
                           disabled={
                             isSelecting || (availableTables.length > 0 && !tableNumber.trim())
                           }
-                          className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-2 px-3 rounded-lg transition-colors shadow-sm touch-manipulation text-sm flex-shrink-0 flex items-center gap-1.5"
-                          style={{ minHeight: '36px' }}
+                          className={`bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-all duration-200 shadow-sm touch-manipulation flex-shrink-0 flex items-center gap-1.5 ${
+                            isScrolling ? 'py-1.5 px-2.5 text-xs' : 'py-2 px-3 text-sm'
+                          }`}
+                          style={{ minHeight: isScrolling ? '32px' : '36px' }}
                         >
                           {isSelecting ? (
                             <>

@@ -401,6 +401,7 @@ export const createRestaurant = async (restaurantData) => {
         online_bill_enabled: restaurantData.online_bill_enabled !== false,
         billing_features_enabled: restaurantData.billing_features_enabled !== false,
         auto_email_billing_enabled: restaurantData.auto_email_billing_enabled === true,
+        enable_subscription_autopay: restaurantData.enable_subscription_autopay !== false,
         is_active: true,
       })
       .select()
@@ -580,6 +581,7 @@ export const updateRestaurant = async (restaurantId, updateData) => {
         online_bill_enabled: updateData.online_bill_enabled !== false,
         billing_features_enabled: updateData.billing_features_enabled !== false,
         auto_email_billing_enabled: updateData.auto_email_billing_enabled === true,
+        enable_subscription_autopay: updateData.enable_subscription_autopay !== false,
         updated_at: new Date().toISOString(),
       })
       .eq('id', restaurantId)

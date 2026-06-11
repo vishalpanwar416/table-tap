@@ -1,13 +1,8 @@
 import { ChevronDown, Sandwich, UtensilsCrossed, CupSoda, IceCream, Tag } from 'lucide-react';
 
-const CategoryButtons = ({  
-  activeCategory, 
-  handleCategoryClick, 
-  categoryButtonsRef,
-  menuOpen 
-}) => {
+const CategoryButtons = ({ activeCategory, handleCategoryClick, categoryButtonsRef, menuOpen }) => {
   const getCategoryIcon = (name) => {
-    switch(name) {
+    switch (name) {
       case 'Snacks':
         return <Sandwich className="w-6 h-6" color="gray" />;
       case 'Main Course':
@@ -26,22 +21,29 @@ const CategoryButtons = ({
   const categories = ['Snacks', 'Main Course', 'Beverages', 'Dessert', 'Offers'];
 
   return (
-    <div className="flex justify-center items-center gap-1 md:gap-[10%] mb-4" ref={categoryButtonsRef}>
+    <div
+      className="grid grid-cols-5 gap-x-1.5 sm:gap-x-3 w-full px-2 sm:px-5 md:flex md:justify-center md:items-center md:gap-[10%] md:px-0 mb-4"
+      ref={categoryButtonsRef}
+    >
       {categories.map((categoryName, index) => (
         <button
           type="button"
           key={index}
-          className="flex flex-col items-center relative focus:outline-none justify-center"
+          className="flex flex-col items-center relative focus:outline-none justify-center min-w-0 md:flex-none"
           onClick={(e) => handleCategoryClick(categoryName, e)}
         >
-          <div className={`${
-            activeCategory === categoryName 
-              ? 'bg-orange-200 text-orange-700' 
-              : 'bg-orange-100 text-orange-600'
-          } rounded-3xl px-4 py-3 shadow-md hover:bg-orange-200 transition-all flex items-center justify-center w-16 h-16`}>
+          <div
+            className={`${
+              activeCategory === categoryName
+                ? 'bg-orange-200 text-orange-700'
+                : 'bg-orange-100 text-orange-600'
+            } rounded-3xl shadow-md hover:bg-orange-200 transition-all flex items-center justify-center w-[3.25rem] h-[3.25rem] sm:w-16 sm:h-16`}
+          >
             {getCategoryIcon(categoryName)}
           </div>
-          <span className="text-black text-xs mt-2">{categoryName}</span>
+          <span className="text-black text-[10px] sm:text-xs mt-1.5 text-center leading-tight w-full px-0.5">
+            {categoryName}
+          </span>
           {categoryName === activeCategory && menuOpen && (
             <ChevronDown className="h-3 w-3 text-black absolute -bottom-3" />
           )}

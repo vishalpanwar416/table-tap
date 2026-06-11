@@ -285,7 +285,7 @@ const ContactUsPage = () => {
   ];
 
   return (
-    <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl flex flex-col mx-auto">
+    <div className="w-full max-w-mobile-shell md:max-w-4xl lg:max-w-6xl flex flex-col mx-auto">
       {/* Header */}
       <div className="w-full px-6 py-6 sm:py-8 relative flex items-center justify-center">
         <button
@@ -309,7 +309,7 @@ const ContactUsPage = () => {
           initial={{ opacity: 0, y: 30, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
-          className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl mx-auto"
+          className="w-full max-w-mobile-shell md:max-w-4xl lg:max-w-6xl mx-auto"
         >
           {/* Main Card */}
           <div className="bg-white rounded-t-3xl md:rounded-t-[30px] shadow-xl overflow-hidden w-full">

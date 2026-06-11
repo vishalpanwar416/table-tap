@@ -21,6 +21,7 @@ import { useAuth } from '../../shared/config/AuthContext';
 import {
   loadRazorpayScript,
   initializeRazorpayPayment,
+  getRestaurantPaymentImage,
   verifyRazorpaySignature,
   createOrder,
   checkPendingFailedOrders,
@@ -216,7 +217,7 @@ const PaymentPage = () => {
           razorpayKeyId: restaurant.razorpay_key_id,
           amount: amountInPaise,
           restaurantName: restaurant.name,
-          restaurantLogo: restaurant.logo_url,
+          restaurantLogo: getRestaurantPaymentImage(restaurant),
           restaurantId: restaurant.id,
           customerName: finalCustomerName,
           customerEmail: finalCustomerEmail,
@@ -822,7 +823,7 @@ const PaymentPage = () => {
 
   return (
     <div className="flex justify-center items-start min-h-screen bg-black">
-      <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
+      <div className="w-full max-w-mobile-shell md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
         {/* Enhanced Header */}
         <div className="w-full px-6 py-8 relative flex items-center justify-center">
           <button
@@ -1217,7 +1218,7 @@ const PaymentPage = () => {
 
         {/* Floating Payment Button */}
         <div className="fixed bottom-0 left-0 right-0 px-6 py-4 z-50">
-          <div className="max-w-[390px] md:max-w-4xl lg:max-w-6xl mx-auto">
+          <div className="max-w-mobile-shell md:max-w-4xl lg:max-w-6xl mx-auto">
             <button
               onClick={paymentMethod === 'upi' ? handleUPIPayment : handlePayment}
               disabled={isProcessing || cartItems.length === 0}

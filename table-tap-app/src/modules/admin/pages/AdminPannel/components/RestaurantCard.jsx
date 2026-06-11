@@ -24,6 +24,7 @@ const RestaurantCard = ({
   onToggleAI,
   onToggleAggregators,
   onToggleOnlineBill,
+  onToggleSubscriptionAutopay,
   onEdit,
   onDelete,
   onClick,
@@ -324,6 +325,15 @@ const RestaurantCard = ({
             colorClass="blue"
             activeBg="bg-gray-50"
             activeText="text-gray-700"
+          />
+          <FeatureToggle
+            icon={CreditCard}
+            label="Autopay"
+            active={restaurant.enable_subscription_autopay !== false}
+            onClick={onToggleSubscriptionAutopay}
+            colorClass="orange"
+            activeBg="bg-orange-50"
+            activeText="text-orange-700"
           />
         </div>
       </div>

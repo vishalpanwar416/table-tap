@@ -4,6 +4,7 @@ import React, { Suspense } from 'react';
 import {
   RestaurantProvider,
   OrderProvider,
+  LiveOrderProvider,
   CartProvider,
   LikesProvider,
   FoodDataProvider,
@@ -48,11 +49,13 @@ const CustomerApp = () => {
     <RestaurantProvider>
       <OrderProvider>
         <CartProvider>
-          <LikesProvider>
-            <FoodDataProvider>
-              <ThemeOutlet />
-            </FoodDataProvider>
-          </LikesProvider>
+          <LiveOrderProvider>
+            <LikesProvider>
+              <FoodDataProvider>
+                <ThemeOutlet />
+              </FoodDataProvider>
+            </LikesProvider>
+          </LiveOrderProvider>
         </CartProvider>
       </OrderProvider>
     </RestaurantProvider>

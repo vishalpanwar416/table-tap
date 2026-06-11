@@ -15,12 +15,13 @@ import {
   Facebook,
   Building,
   FileText,
-  Award,
+  CheckCircle,
   Zap,
   Power,
   Image as ImageIcon,
   Receipt,
   ShoppingBag,
+  ShoppingCart,
   Eye,
   EyeOff,
   Send,
@@ -46,11 +47,13 @@ const RestaurantInformation = () => {
   // Local state for optimistic toggles in View Mode
   const [localOnlineBill, setLocalOnlineBill] = useState(true);
   const [localAutoEmail, setLocalAutoEmail] = useState(false);
+  const [localLiveOrders, setLocalLiveOrders] = useState(true);
 
   useEffect(() => {
     if (restaurant) {
       setLocalOnlineBill(restaurant.online_bill_enabled !== false);
       setLocalAutoEmail(restaurant.auto_email_billing_enabled === true);
+      setLocalLiveOrders(restaurant.enable_live_orders !== false);
     }
   }, [restaurant]);
 
@@ -161,8 +164,8 @@ const RestaurantInformation = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50/30 to-amber-50/50 p-3 md:p-6">
-      <div className="max-w-6xl mx-auto space-y-3 md:space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50/30 to-amber-50/50 px-2 py-3 md:px-4 md:py-6">
+      <div className="max-w-7xl mx-auto space-y-3 md:space-y-8">
         {/* Removed redundant header */}
 
         {/* Removed redundant header */}
@@ -172,7 +175,7 @@ const RestaurantInformation = () => {
           <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-2xl p-4 shadow-sm">
             <div className="flex items-center">
               <div className="w-9 h-9 bg-orange-100 rounded-xl flex items-center justify-center mr-4">
-                <Award className="w-5 h-5 text-orange-600" />
+                <CheckCircle className="w-5 h-5 text-orange-600" />
               </div>
               <p className="text-orange-800 font-semibold">
                 Restaurant information updated successfully!
@@ -200,10 +203,8 @@ const RestaurantInformation = () => {
               <div className="space-y-6 md:space-y-10">
                 {/* Basic Information */}
                 <div>
-                  <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-6 flex items-center">
-                    <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-lg md:rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                      <Building className="w-4 h-4 md:w-5 md:h-5 text-white" />
-                    </div>
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-6 flex items-center border-b border-gray-100 pb-2">
+                    <Building className="w-4 h-4 md:w-5 md:h-5 mr-2 text-gray-400" />
                     Basic Information
                   </h3>
                   <div className="grid grid-cols-2 gap-3 md:gap-6">
@@ -237,10 +238,8 @@ const RestaurantInformation = () => {
 
                 {/* Restaurant Assets */}
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                      <ImageIcon className="w-5 h-5 text-white" />
-                    </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center border-b border-gray-100 pb-2">
+                    <ImageIcon className="w-5 h-5 mr-2 text-gray-400" />
                     Restaurant Assets
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -308,10 +307,8 @@ const RestaurantInformation = () => {
 
                 {/* Contact Information */}
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-amber-500 rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                      <Phone className="w-5 h-5 text-white" />
-                    </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center border-b border-gray-100 pb-2">
+                    <Phone className="w-5 h-5 mr-2 text-gray-400" />
                     Contact Information
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
@@ -344,10 +341,8 @@ const RestaurantInformation = () => {
 
                 {/* Business Details */}
                 <div>
-                  <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-4 md:mb-6 flex items-center">
-                    <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg md:rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                      <Clock className="w-4 h-4 md:w-5 md:h-5 text-white" />
-                    </div>
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-4 md:mb-6 flex items-center border-b border-gray-100 pb-2">
+                    <Clock className="w-4 h-4 md:w-5 md:h-5 mr-2 text-gray-400" />
                     Business Details
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -382,10 +377,8 @@ const RestaurantInformation = () => {
 
                 {/* Features & Settings */}
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                      <Zap className="w-5 h-5 text-white" />
-                    </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center border-b border-gray-100 pb-2">
+                    <Zap className="w-5 h-5 mr-2 text-gray-400" />
                     Features & Settings
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
@@ -428,15 +421,32 @@ const RestaurantInformation = () => {
                         <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-slate-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
                       </label>
                     </div>
+
+                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 p-4 md:p-5 rounded-xl flex items-center justify-between md:col-span-2">
+                      <div>
+                        <span className="block text-sm font-bold text-gray-800">Live Orders</span>
+                        <span className="text-[10px] md:text-xs text-gray-500">
+                          Let guests run an open tab per table (add items over time, pay at end)
+                        </span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                        <input
+                          type="checkbox"
+                          name="enable_live_orders"
+                          checked={formData.enable_live_orders !== false}
+                          onChange={handleChange}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                      </label>
+                    </div>
                   </div>
                 </div>
 
                 {/* Appearance / Customer Theme */}
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-fuchsia-500 to-purple-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                      <Palette className="w-5 h-5 text-white" />
-                    </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center border-b border-gray-100 pb-2">
+                    <Palette className="w-5 h-5 mr-2 text-gray-400" />
                     Customer App Theme
                   </h3>
                   <p className="text-sm text-gray-500 mb-4">
@@ -452,10 +462,8 @@ const RestaurantInformation = () => {
                 {/* Online Bill Toggle */}
                 {restaurant?.billing_features_enabled !== false && (
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                      <div className="w-10 h-10 bg-gradient-to-br from-orange-600 to-amber-700 rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                        <Receipt className="w-5 h-5 text-white" />
-                      </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center border-b border-gray-100 pb-2">
+                      <Receipt className="w-5 h-5 mr-2 text-gray-400" />
                       Online Bill Delivery
                     </h3>
                     <p className="text-sm text-gray-500 mb-4">
@@ -528,10 +536,8 @@ const RestaurantInformation = () => {
 
                 {/* Location & Online Presence */}
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-rose-500 to-pink-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                      <MapPin className="w-5 h-5 text-white" />
-                    </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center border-b border-gray-100 pb-2">
+                    <MapPin className="w-5 h-5 mr-2 text-gray-400" />
                     Location & Online Presence
                   </h3>
                   <div className="space-y-6">
@@ -621,8 +627,8 @@ const RestaurantInformation = () => {
 
                 {/* Legal & Payment */}
                 <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-                    <Shield className="w-5 h-5 mr-2 text-blue-600" /> Legal & Payment Information
+                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center border-b border-gray-100 pb-2">
+                    <Shield className="w-5 h-5 mr-2 text-gray-400" /> Legal & Payment Information
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-2">
@@ -670,10 +676,8 @@ const RestaurantInformation = () => {
                 {/* Aggregator Integration - Visible to Admin */}
                 {canSeeApiKeys() && (
                   <div className="bg-gradient-to-br from-slate-50 to-gray-50/50 rounded-2xl p-4 md:p-8 border border-slate-200/60 shadow-inner">
-                    <h3 className="text-base md:text-xl font-black text-gray-900 mb-4 md:mb-8 flex items-center group">
-                      <div className="w-9 h-9 md:w-12 md:h-12 bg-white rounded-xl flex items-center justify-center mr-3 shadow-md group-hover:scale-110 transition-transform">
-                        <ShoppingBag className="w-5 h-5 text-orange-600" />
-                      </div>
+                    <h3 className="text-base md:text-xl font-bold text-gray-900 mb-4 md:mb-8 flex items-center border-b border-gray-100 pb-2">
+                      <ShoppingBag className="w-5 h-5 mr-2 text-gray-400" />
                       Aggregator Integration
                     </h3>
 
@@ -681,13 +685,12 @@ const RestaurantInformation = () => {
                       {/* Swiggy API Key */}
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                          <label className="text-[11px] md:text-sm font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                            <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
-                            Swiggy API Portal
+                          <label className="text-xs md:text-sm font-semibold text-gray-700">
+                            Swiggy API Key
                           </label>
                           {formData.swiggy_api_key && (
-                            <span className="text-[9px] font-black text-green-600 bg-green-50 px-2 py-0.5 rounded-md border border-green-100 uppercase tracking-tighter">
-                              SECURED
+                            <span className="text-[10px] font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-md border border-green-100">
+                              Saved
                             </span>
                           )}
                         </div>
@@ -722,13 +725,12 @@ const RestaurantInformation = () => {
                       {/* Zomato API Key */}
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                          <label className="text-[11px] md:text-sm font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                            <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                            Zomato API Portal
+                          <label className="text-xs md:text-sm font-semibold text-gray-700">
+                            Zomato API Key
                           </label>
                           {formData.zomato_api_key && (
-                            <span className="text-[9px] font-black text-green-600 bg-green-50 px-2 py-0.5 rounded-md border border-green-100 uppercase tracking-tighter">
-                              SECURED
+                            <span className="text-[10px] font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-md border border-green-100">
+                              Saved
                             </span>
                           )}
                         </div>
@@ -760,19 +762,17 @@ const RestaurantInformation = () => {
                         </div>
                       </div>
                     </div>
-                    <p className="mt-4 md:mt-6 text-[10px] md:text-xs text-slate-400 font-bold flex items-center gap-2 uppercase tracking-wide">
-                      <Shield className="w-3 h-3 text-green-500" />
-                      Encrypted End-to-End Security Protocol
+                    <p className="mt-4 md:mt-6 text-[10px] md:text-xs text-slate-400 flex items-center gap-2">
+                      <Shield className="w-3 h-3 text-slate-400" />
+                      API keys are stored securely.
                     </p>
                   </div>
                 )}
 
                 {/* Description */}
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-blue-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                      <FileText className="w-5 h-5 text-white" />
-                    </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center border-b border-gray-100 pb-2">
+                    <FileText className="w-5 h-5 mr-2 text-gray-400" />
                     Description
                   </h3>
                   <textarea
@@ -810,10 +810,8 @@ const RestaurantInformation = () => {
               <div className="space-y-6 md:space-y-10">
                 {/* Basic Information */}
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-4 md:mb-6 flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                      <Building className="w-5 h-5 text-white" />
-                    </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-4 md:mb-6 flex items-center border-b border-gray-100 pb-2">
+                    <Building className="w-5 h-5 mr-2 text-gray-400" />
                     Basic Information
                   </h3>
                   <div className="grid grid-cols-2 gap-3 md:gap-6">
@@ -838,10 +836,8 @@ const RestaurantInformation = () => {
 
                 {/* Restaurant Assets Display */}
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                      <ImageIcon className="w-5 h-5 text-white" />
-                    </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center border-b border-gray-100 pb-2">
+                    <ImageIcon className="w-5 h-5 mr-2 text-gray-400" />
                     Restaurant Assets
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
@@ -885,10 +881,8 @@ const RestaurantInformation = () => {
 
                 {/* Description */}
                 <div>
-                  <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-6 flex items-center">
-                    <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-amber-500 to-blue-600 rounded-lg md:rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                      <FileText className="w-4 h-4 md:w-5 md:h-5 text-white" />
-                    </div>
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-6 flex items-center border-b border-gray-100 pb-2">
+                    <FileText className="w-4 h-4 md:w-5 md:h-5 mr-2 text-gray-400" />
                     Description
                   </h3>
                   <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl md:rounded-2xl p-4 md:p-6 border border-amber-100">
@@ -899,10 +893,8 @@ const RestaurantInformation = () => {
                 </div>
 
                 <div>
-                  <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-6 flex items-center">
-                    <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-lg md:rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                      <Globe className="w-4 h-4 md:w-5 md:h-5 text-white" />
-                    </div>
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-6 flex items-center border-b border-gray-100 pb-2">
+                    <Globe className="w-4 h-4 md:w-5 md:h-5 mr-2 text-gray-400" />
                     Contact & Social Media
                   </h3>
                   <div className="grid grid-cols-2 gap-3 md:gap-6">
@@ -964,10 +956,8 @@ const RestaurantInformation = () => {
 
               {/* Features Status Display */}
               <div className="mt-5 md:mt-8">
-                <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-6 flex items-center">
-                  <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-lg md:rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                    <Zap className="w-4 h-4 md:w-5 md:h-5 text-white" />
-                  </div>
+                <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-6 flex items-center border-b border-gray-100 pb-2">
+                  <Zap className="w-4 h-4 md:w-5 md:h-5 mr-2 text-gray-400" />
                   Features & Status
                 </h3>
                 <div className="grid grid-cols-2 gap-3 md:gap-6">
@@ -1010,15 +1000,55 @@ const RestaurantInformation = () => {
                       />
                     </div>
                   </div>
+
+                  <div className="col-span-2 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl md:rounded-2xl p-2.5 md:p-6 border border-green-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-9 h-9 md:w-12 md:h-12 rounded-xl flex items-center justify-center shrink-0 ${localLiveOrders ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-400'}`}
+                      >
+                        <ShoppingCart className="w-4 h-4 md:w-6 md:h-6" />
+                      </div>
+                      <div>
+                        <h4 className="text-[10px] md:text-sm font-semibold text-green-700 mb-0.5">
+                          Live Orders
+                        </h4>
+                        <p className="text-[10px] md:text-xs text-gray-500 max-w-md">
+                          Open tab per table — guests add KOTs over time and pay once at the end
+                        </p>
+                      </div>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer shrink-0 self-end sm:self-center">
+                      <input
+                        type="checkbox"
+                        checked={localLiveOrders}
+                        onChange={async (e) => {
+                          const val = e.target.checked;
+                          setLocalLiveOrders(val);
+                          const success = await updateRestaurant({ enable_live_orders: val });
+                          if (success) {
+                            setSaveSuccess(true);
+                            setTimeout(() => setSaveSuccess(false), 2000);
+                          } else {
+                            setLocalLiveOrders(!val);
+                            setSaveError('Failed to update live orders setting');
+                            setTimeout(() => setSaveError(null), 3000);
+                          }
+                        }}
+                        className="sr-only peer"
+                        disabled={!canEdit()}
+                      />
+                      <div
+                        className={`w-10 h-5 md:w-14 md:h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 md:after:h-6 after:w-4 md:after:w-6 after:transition-all peer-checked:bg-green-600 ${!canEdit() ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      ></div>
+                    </label>
+                  </div>
                 </div>
               </div>
 
               {/* Customer App Theme Display */}
               <div className="mt-5 md:mt-8">
-                <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-6 flex items-center">
-                  <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-fuchsia-500 to-purple-600 rounded-lg md:rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                    <Palette className="w-4 h-4 md:w-5 md:h-5 text-white" />
-                  </div>
+                <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-6 flex items-center border-b border-gray-100 pb-2">
+                  <Palette className="w-4 h-4 md:w-5 md:h-5 mr-2 text-gray-400" />
                   Customer App Theme
                 </h3>
                 <div className="bg-gradient-to-br from-fuchsia-50 to-purple-50 rounded-xl md:rounded-2xl p-3 md:p-6 border border-fuchsia-100 flex items-center justify-between">
@@ -1041,10 +1071,8 @@ const RestaurantInformation = () => {
 
               {/* Online Bill Delivery Status Display with Toggles */}
               <div className="mt-5 md:mt-8">
-                <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-6 flex items-center">
-                  <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-orange-600 to-amber-700 rounded-lg md:rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                    <Receipt className="w-4 h-4 md:w-5 md:h-5 text-white" />
-                  </div>
+                <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-6 flex items-center border-b border-gray-100 pb-2">
+                  <Receipt className="w-4 h-4 md:w-5 md:h-5 mr-2 text-gray-400" />
                   Online Bill Delivery
                 </h3>
 
@@ -1144,77 +1172,75 @@ const RestaurantInformation = () => {
 
               {canSeeAggregatorStatus() && (
                 <div className="mt-5 md:mt-8">
-                  <h3 className="text-lg md:text-xl font-black text-gray-900 mb-4 md:mb-6 flex items-center">
-                    <div className="w-9 h-9 md:w-11 md:h-11 bg-white rounded-xl flex items-center justify-center mr-3 shadow-md border border-slate-50">
-                      <ShoppingBag className="w-5 h-5 text-orange-600" />
-                    </div>
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-4 md:mb-6 flex items-center border-b border-gray-100 pb-2">
+                    <ShoppingBag className="w-5 h-5 mr-2 text-gray-400" />
                     Marketplace Integration
                   </h3>
                   <div className="grid grid-cols-2 gap-3 md:gap-6">
                     {/* Swiggy Card */}
                     <div
-                      className={`relative group overflow-hidden rounded-2xl md:rounded-3xl p-3 md:p-6 border transition-all duration-500 ${restaurant?.swiggy_api_key ? 'bg-gradient-to-br from-orange-500/5 to-amber-500/5 border-orange-100 shadow-sm' : 'bg-slate-50 border-slate-100'}`}
+                      className={`rounded-2xl p-3 md:p-6 border ${restaurant?.swiggy_api_key ? 'bg-white border-orange-100' : 'bg-slate-50 border-slate-100'}`}
                     >
-                      <div className="flex flex-col items-center text-center relative z-10">
+                      <div className="flex flex-col items-center text-center">
                         <div
-                          className={`w-12 h-12 md:w-16 md:h-16 rounded-2xl mb-3 flex items-center justify-center transition-transform group-hover:scale-110 duration-300 ${restaurant?.swiggy_api_key ? 'bg-orange-100 text-orange-600 shadow-lg shadow-orange-100' : 'bg-white text-slate-300 shadow-sm'}`}
+                          className={`w-12 h-12 md:w-16 md:h-16 rounded-2xl mb-3 flex items-center justify-center ${restaurant?.swiggy_api_key ? 'bg-orange-100 text-orange-600' : 'bg-white text-slate-300'}`}
                         >
                           <ShoppingBag className="w-6 h-6 md:w-8 md:h-8" />
                         </div>
-                        <h4 className="text-[10px] md:text-sm font-black text-gray-900 uppercase tracking-widest mb-1">
+                        <h4 className="text-sm md:text-base font-bold text-gray-900 mb-1">
                           Swiggy
                         </h4>
                         <div className="flex items-center gap-1.5">
                           <div
-                            className={`w-1.5 h-1.5 rounded-full ${restaurant?.swiggy_api_key ? 'bg-green-500 animate-pulse' : 'bg-slate-300'}`}
+                            className={`w-1.5 h-1.5 rounded-full ${restaurant?.swiggy_api_key ? 'bg-green-500' : 'bg-slate-300'}`}
                           ></div>
                           <p
-                            className={`text-[11px] md:text-sm font-bold ${restaurant?.swiggy_api_key ? 'text-green-600' : 'text-slate-400'}`}
+                            className={`text-[11px] md:text-sm font-medium ${restaurant?.swiggy_api_key ? 'text-green-600' : 'text-slate-400'}`}
                           >
-                            {restaurant?.swiggy_api_key ? 'ONLINE' : 'OFFLINE'}
+                            {restaurant?.swiggy_api_key ? 'Connected' : 'Not connected'}
                           </p>
                         </div>
                       </div>
                       {canSeeApiKeys() && (
                         <button
                           onClick={() => setIsEditing(true)}
-                          className="mt-4 w-full py-2 bg-white/80 backdrop-blur-md rounded-xl text-[10px] md:text-xs font-black text-orange-600 border border-orange-100 hover:bg-orange-600 hover:text-white transition-all shadow-sm"
+                          className="mt-4 w-full py-2 bg-white rounded-xl text-xs md:text-sm font-semibold text-orange-600 border border-orange-100 hover:bg-orange-50 transition-all"
                         >
-                          {restaurant?.swiggy_api_key ? 'CONFIGURE' : 'CONNECT'}
+                          {restaurant?.swiggy_api_key ? 'Configure' : 'Connect'}
                         </button>
                       )}
                     </div>
 
                     {/* Zomato Card */}
                     <div
-                      className={`relative group overflow-hidden rounded-2xl md:rounded-3xl p-3 md:p-6 border transition-all duration-500 ${restaurant?.zomato_api_key ? 'bg-gradient-to-br from-red-500/5 to-rose-500/5 border-red-100 shadow-sm' : 'bg-slate-50 border-slate-100'}`}
+                      className={`rounded-2xl p-3 md:p-6 border ${restaurant?.zomato_api_key ? 'bg-white border-red-100' : 'bg-slate-50 border-slate-100'}`}
                     >
-                      <div className="flex flex-col items-center text-center relative z-10">
+                      <div className="flex flex-col items-center text-center">
                         <div
-                          className={`w-12 h-12 md:w-16 md:h-16 rounded-2xl mb-3 flex items-center justify-center transition-transform group-hover:scale-110 duration-300 ${restaurant?.zomato_api_key ? 'bg-red-100 text-red-600 shadow-lg shadow-red-100' : 'bg-white text-slate-300 shadow-sm'}`}
+                          className={`w-12 h-12 md:w-16 md:h-16 rounded-2xl mb-3 flex items-center justify-center ${restaurant?.zomato_api_key ? 'bg-red-100 text-red-600' : 'bg-white text-slate-300'}`}
                         >
                           <ShoppingBag className="w-6 h-6 md:w-8 md:h-8" />
                         </div>
-                        <h4 className="text-[10px] md:text-sm font-black text-gray-900 uppercase tracking-widest mb-1">
+                        <h4 className="text-sm md:text-base font-bold text-gray-900 mb-1">
                           Zomato
                         </h4>
                         <div className="flex items-center gap-1.5">
                           <div
-                            className={`w-1.5 h-1.5 rounded-full ${restaurant?.zomato_api_key ? 'bg-green-500 animate-pulse' : 'bg-slate-300'}`}
+                            className={`w-1.5 h-1.5 rounded-full ${restaurant?.zomato_api_key ? 'bg-green-500' : 'bg-slate-300'}`}
                           ></div>
                           <p
-                            className={`text-[11px] md:text-sm font-bold ${restaurant?.zomato_api_key ? 'text-green-600' : 'text-slate-400'}`}
+                            className={`text-[11px] md:text-sm font-medium ${restaurant?.zomato_api_key ? 'text-green-600' : 'text-slate-400'}`}
                           >
-                            {restaurant?.zomato_api_key ? 'ONLINE' : 'OFFLINE'}
+                            {restaurant?.zomato_api_key ? 'Connected' : 'Not connected'}
                           </p>
                         </div>
                       </div>
                       {canSeeApiKeys() && (
                         <button
                           onClick={() => setIsEditing(true)}
-                          className="mt-4 w-full py-2 bg-white/80 backdrop-blur-md rounded-xl text-[10px] md:text-xs font-black text-red-600 border border-red-100 hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                          className="mt-4 w-full py-2 bg-white rounded-xl text-xs md:text-sm font-semibold text-red-600 border border-red-100 hover:bg-red-50 transition-all"
                         >
-                          {restaurant?.zomato_api_key ? 'CONFIGURE' : 'CONNECT'}
+                          {restaurant?.zomato_api_key ? 'Configure' : 'Connect'}
                         </button>
                       )}
                     </div>

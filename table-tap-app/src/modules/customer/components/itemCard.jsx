@@ -4,6 +4,7 @@ import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-mo
 import { useCart } from '../../shared/config/CartContent';
 import { useLikes } from '../../shared/config/LikesContent';
 import PriceDisplay from './PriceDisplay';
+import FoodImageWithFallback from './FoodImageWithFallback';
 
 const OrderCard = ({ isOpen, onClose, item }) => {
   const { cartItems, addToCart, updateQuantity, removeItem } = useCart();
@@ -116,15 +117,21 @@ const OrderCard = ({ isOpen, onClose, item }) => {
                 />
               )}
 
-              <motion.img
-                src={item.image}
-                alt={item.name}
-                className="w-full h-full object-cover"
+              <motion.div
+                className="w-full h-full"
                 initial={{ scale: 1.1 }}
                 animate={{ scale: imageLoaded ? 1 : 1.1 }}
                 transition={{ duration: 0.6, ease: 'easeOut' }}
-                onLoad={() => setImageLoaded(true)}
-              />
+              >
+                <FoodImageWithFallback
+                  src={item.image}
+                  alt={item.name}
+                  category={item.category}
+                  itemName={item.name}
+                  className="w-full h-full object-cover"
+                  onLoad={() => setImageLoaded(true)}
+                />
+              </motion.div>
 
               {/* Gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />

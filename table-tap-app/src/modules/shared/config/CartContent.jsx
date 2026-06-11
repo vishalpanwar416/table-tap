@@ -436,6 +436,62 @@ export function CartProvider({ children }) {
     [saveCartToServer],
   );
 
+  const syncCartFromOrderItems = useCallback(
+    async (orderItems) => {
+      if (!orderItems?.length) {
+        setCartItems([]);
+        setLastSyncTime(Date.now());
+        return;
+      }
+
+      const minimalItems = orderItems.map((item) => ({
+        food_item_id: item.food_item_id || item.id,
+        restaurant_id: restaurantId,
+        quantity: item.quantity,
+        addedAt: Date.now(),
+      }));
+
+      const enrichedItems = await enrichCartItemsWithFoodData(minimalItems);
+      setCartItems(enrichedItems);
+      setLastSyncTime(Date.now());
+      setError(null);
+    },
+    [restaurantId, enrichCartItemsWithFoodData],
+  );
+
+  const addDeltaToCart = useCallback(
+    (deltaItems) => {
+      if (!deltaItems?.length) return;
+
+      const key = (item) => `${item.food_item_id || item.id}-${item.category || ''}`;
+
+      setCartItems((prev) => {
+        const map = new Map(prev.map((item) => [key(item), { ...item }]));
+
+        deltaItems.forEach((item) => {
+          const itemKey = key(item);
+          const existing = map.get(itemKey);
+          if (existing) {
+            map.set(itemKey, {
+              ...existing,
+              quantity: existing.quantity + item.quantity,
+            });
+          } else {
+            map.set(itemKey, {
+              ...item,
+              id: item.id || item.food_item_id,
+              effectivePrice: calculateEffectivePrice(item),
+            });
+          }
+        });
+
+        return Array.from(map.values());
+      });
+      setError(null);
+    },
+    [calculateEffectivePrice],
+  );
+
   // Clear entire cart - DEFINE THIS BEFORE THE useEffect THAT USES IT
   const clearCart = useCallback(() => {
     setCartItems([]);
@@ -667,6 +723,8 @@ export function CartProvider({ children }) {
         removeItem,
         updateQuantity,
         clearCart,
+        syncCartFromOrderItems,
+        addDeltaToCart,
         calculateEffectivePrice,
         syncWithServer,
         mergeCarts,

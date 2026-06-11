@@ -449,12 +449,9 @@ export const MenuDropdown = ({
         exit="exit"
         className="w-full bg-gray-50 rounded-t-3xl shadow-2xl border-t border-gray-200 mt-6"
       >
-        <main className="p-0  max-h-[70vh] overflow-y-auto">
-          <header className="sticky top-0 z-30 p-4">
-            {/* Blur with white to transparent gradient */}
-            <div className="absolute inset-0 bg-gradient-to-b from-white/95 to-transparent backdrop-blur-xl"></div>
-
-            <div className="flex justify-center items-center max-w-7xl mx-auto relative z-10">
+        <main className="p-0">
+          <header className="sticky top-0 z-30 p-4 bg-gray-50 border-b border-gray-100">
+            <div className="flex justify-center items-center max-w-7xl mx-auto">
               <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
                 <Flame className="w-6 h-6 text-orange-500" />
                 {activeCategory} Menu
@@ -476,7 +473,7 @@ export const MenuDropdown = ({
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 px-4 pb-8">
                 {visibleItems.map((item, index) => (
                   <MenuItem
                     key={`${activeCategory}-${item.id}`}

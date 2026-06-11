@@ -1,4 +1,13 @@
-import React, { useState, useRef, useEffect, useMemo, useCallback, memo, Suspense, lazy } from 'react';
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+  useCallback,
+  memo,
+  Suspense,
+  lazy,
+} from 'react';
 import LoadingScreen from '../../../shared/components/LoadingScreen';
 import { MenuDropdown, Divider } from '../../components/MenuDropdown';
 import CategoryButtons from '../../components/CategoryButtons';
@@ -23,16 +32,16 @@ import { authService } from '../../../shared/api/authService';
 import Maincarosel from '../../components/Maincarosel';
 import Sidebar from '../../components/Slidebar';
 const NotificationSidebar = lazy(() => import('../../components/NotificationSlidebar'), {
-  suspense: true
+  suspense: true,
 });
 const CartSidebar = lazy(() => import('../../components/CartSidebar'), {
-  suspense: true
+  suspense: true,
 });
 const OrderCard = lazy(() => import('../../components/OrderCard'), {
-  suspense: true
+  suspense: true,
 });
 const RecommendationItems = lazy(() => import('../../components/RecommendationItems'), {
-  suspense: true
+  suspense: true,
 });
 
 // Enhanced loading skeleton components with better UX
@@ -58,22 +67,23 @@ const SidebarSkeleton = memo(() => (
 ));
 
 // Optimized animation variants with reduced motion support
-const prefersReducedMotion = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const pageVariants = {
   initial: { opacity: 0 },
   animate: {
     opacity: 1,
     transition: {
-      duration: prefersReducedMotion() ? 0.1 : 0.3
-    }
+      duration: prefersReducedMotion() ? 0.1 : 0.3,
+    },
   },
   exit: {
     opacity: 0,
     transition: {
-      duration: prefersReducedMotion() ? 0.05 : 0.2
-    }
-  }
+      duration: prefersReducedMotion() ? 0.05 : 0.2,
+    },
+  },
 };
 
 const slideUp = {
@@ -83,45 +93,48 @@ const slideUp = {
     opacity: 1,
     transition: {
       duration: prefersReducedMotion() ? 0.1 : 0.4,
-      ease: "easeOut"
-    }
-  }
+      ease: 'easeOut',
+    },
+  },
 };
 
 const staggerItems = {
   animate: {
     transition: {
-      staggerChildren: prefersReducedMotion() ? 0 : 0.1
-    }
-  }
+      staggerChildren: prefersReducedMotion() ? 0 : 0.1,
+    },
+  },
 };
 
 // Enhanced scroll management with intersection observer
 const useScrollToCategory = (categoryButtonsRef) => {
-  return useCallback((delay = 300) => {
-    if (!categoryButtonsRef.current) return;
+  return useCallback(
+    (delay = 300) => {
+      if (!categoryButtonsRef.current) return;
 
-    const element = categoryButtonsRef.current;
-    const rect = element.getBoundingClientRect();
-    const headerHeight = 80;
-    const viewportHeight = window.innerHeight;
+      const element = categoryButtonsRef.current;
+      const rect = element.getBoundingClientRect();
+      const headerHeight = 80;
+      const viewportHeight = window.innerHeight;
 
-    // Only scroll if element is not visible
-    if (rect.top < headerHeight || rect.bottom > viewportHeight) {
-      const scrollTop = window.pageYOffset + rect.top - headerHeight - 10;
+      // Only scroll if element is not visible
+      if (rect.top < headerHeight || rect.bottom > viewportHeight) {
+        const scrollTop = window.pageYOffset + rect.top - headerHeight - 10;
 
-      // Use smooth scroll with fallback
-      if ('scrollBehavior' in document.documentElement.style) {
-        window.scrollTo({
-          top: scrollTop,
-          behavior: 'smooth'
-        });
-      } else {
-        // Fallback for older browsers
-        window.scrollTo(0, scrollTop);
+        // Use smooth scroll with fallback
+        if ('scrollBehavior' in document.documentElement.style) {
+          window.scrollTo({
+            top: scrollTop,
+            behavior: 'smooth',
+          });
+        } else {
+          // Fallback for older browsers
+          window.scrollTo(0, scrollTop);
+        }
       }
-    }
-  }, [categoryButtonsRef]);
+    },
+    [categoryButtonsRef],
+  );
 };
 
 // Memoized main component
@@ -138,7 +151,7 @@ const HomePage = memo(() => {
     loading,
     error,
     loadFoodData,
-    currentRestaurantId
+    currentRestaurantId,
   } = useFoodData();
 
   // Redirect to restaurant selection if no restaurant is selected
@@ -183,11 +196,12 @@ const HomePage = memo(() => {
   const searchedItems = useMemo(() => {
     if (!searchTerm.trim()) return [];
     const q = searchTerm.toLowerCase();
-    return allFoodItems.filter(item =>
-      (item.name && item.name.toLowerCase().includes(q)) ||
-      (item.description && item.description.toLowerCase().includes(q)) ||
-      (item.category && item.category.toLowerCase().includes(q)) ||
-      (Array.isArray(item.tags) && item.tags.some(tag => tag.toLowerCase().includes(q)))
+    return allFoodItems.filter(
+      (item) =>
+        (item.name && item.name.toLowerCase().includes(q)) ||
+        (item.description && item.description.toLowerCase().includes(q)) ||
+        (item.category && item.category.toLowerCase().includes(q)) ||
+        (Array.isArray(item.tags) && item.tags.some((tag) => tag.toLowerCase().includes(q))),
     );
   }, [allFoodItems, searchTerm]);
 
@@ -199,10 +213,10 @@ const HomePage = memo(() => {
 
   const scrollToCategory = useScrollToCategory(categoryButtonsRef);
 
-  // Initialize data when restaurantId changes
+  // Refresh menu when restaurant changes (force to avoid stale category cache)
   useEffect(() => {
     if (restaurantId && restaurantId !== currentRestaurantId) {
-      loadFoodData(restaurantId);
+      loadFoodData(restaurantId, true);
     }
   }, [restaurantId, currentRestaurantId, loadFoodData]);
 
@@ -212,33 +226,46 @@ const HomePage = memo(() => {
   // Memoized filtered menu items with debouncing
   const filteredMenuItems = useMemo(() => {
     if (!activeCategory || !allFoodItems.length) return [];
-    return allFoodItems.filter(item => item.category === activeCategory);
+    return allFoodItems.filter((item) => item.category === activeCategory);
   }, [allFoodItems, activeCategory]);
 
   // Optimized event handlers
-  const toggles = useMemo(() => ({
-    search: () => setIsSearchActive(prev => !prev),
-    sidebar: () => setIsSidebarOpen(prev => !prev),
-    cart: () => setIsCartOpen(prev => !prev),
-    notifications: () => setIsNotificationOpen(prev => !prev)
-  }), []);
+  const toggles = useMemo(
+    () => ({
+      search: () => setIsSearchActive((prev) => !prev),
+      sidebar: () => setIsSidebarOpen((prev) => !prev),
+      cart: () => setIsCartOpen((prev) => !prev),
+      notifications: () => setIsNotificationOpen((prev) => !prev),
+    }),
+    [],
+  );
 
-  const handleCategoryClick = useCallback((category, event) => {
-    if (activeCategory === category && menuOpen) {
-      setMenuOpen(false);
-      setActiveCategory('');
-    } else {
-      setActiveCategory(category);
-      setMenuOpen(true);
-      scrollToCategory();
-    }
-  }, [activeCategory, menuOpen, scrollToCategory]);
+  const handleCategoryClick = useCallback(
+    (category) => {
+      if (activeCategory === category && menuOpen) {
+        setMenuOpen(false);
+        setActiveCategory('');
+      } else {
+        setActiveCategory(category);
+        setMenuOpen(true);
+        scrollToCategory();
+        const hasCategoryItems = allFoodItems.some((item) => item.category === category);
+        if (!hasCategoryItems && restaurantId) {
+          loadFoodData(restaurantId, true);
+        }
+      }
+    },
+    [activeCategory, menuOpen, scrollToCategory, allFoodItems, restaurantId, loadFoodData],
+  );
 
-  const handleItemClick = useCallback((item) => {
-    setPendingOrderItem(item);
-    setIsSearchActive(false);
-    if (menuOpen) setMenuOpen(false);
-  }, [menuOpen]);
+  const handleItemClick = useCallback(
+    (item) => {
+      setPendingOrderItem(item);
+      setIsSearchActive(false);
+      if (menuOpen) setMenuOpen(false);
+    },
+    [menuOpen],
+  );
 
   const handleOverlayExit = useCallback(() => {
     if (pendingOrderItem) {
@@ -253,7 +280,7 @@ const HomePage = memo(() => {
       const container = scrollRef.current;
       container.scrollTo({
         left: container.scrollLeft + scrollOffset,
-        behavior: 'smooth'
+        behavior: 'smooth',
       });
     }
   }, []);
@@ -302,19 +329,22 @@ const HomePage = memo(() => {
   }, [menuOpen]);
 
   // Custom backdrop click handler
-  const handleBackdropClick = useCallback((e) => {
-    if (e.target.closest('[data-searchbar-area]')) {
-      // Clicked inside searchbar, do nothing
-      return;
-    }
-    handleSearchClose();
-  }, [handleSearchClose]);
+  const handleBackdropClick = useCallback(
+    (e) => {
+      if (e.target.closest('[data-searchbar-area]')) {
+        // Clicked inside searchbar, do nothing
+        return;
+      }
+      handleSearchClose();
+    },
+    [handleSearchClose],
+  );
 
   // Lock scroll when any sidebar is open
   useMultiScrollLock({
     cart: isCartOpen,
     sidebar: isSidebarOpen,
-    notifications: isNotificationOpen
+    notifications: isNotificationOpen,
   });
 
   // Show loading while checking restaurant or redirecting
@@ -325,7 +355,7 @@ const HomePage = memo(() => {
   // Error boundary with retry mechanism
   if (error) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-black p-4">
+      <div className="flex justify-center items-center min-h-screen bg-black md:p-4">
         <div className="text-center text-white">
           <h2 className="text-xl font-bold mb-2">Something went wrong</h2>
           <p className="text-gray-400 mb-4">Unable to load menu data</p>
@@ -353,7 +383,7 @@ const HomePage = memo(() => {
 
   return (
     <div className="flex justify-center items-start min-h-screen bg-black">
-      <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl min-h-screen flex flex-col">
+      <div className="w-full max-w-mobile-shell md:max-w-4xl lg:max-w-6xl min-h-screen flex flex-col">
         {/* Backdrop for searchbar close - only for homepage search */}
         {isSearchActive && (
           <div
@@ -367,7 +397,7 @@ const HomePage = memo(() => {
           animate="animate"
           exit="exit"
           variants={pageVariants}
-          className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl mx-auto relative overflow-visible flex-col"
+          className="w-full max-w-mobile-shell md:max-w-4xl lg:max-w-6xl mx-auto relative overflow-visible flex-col"
         >
           {/* Modals and Sidebars with enhanced loading */}
           <LogoutPopup
@@ -391,10 +421,7 @@ const HomePage = memo(() => {
           <AnimatePresence mode="wait">
             {isNotificationOpen && (
               <Suspense fallback={<div className="fixed inset-0 z-50 bg-black/50" />}>
-                <NotificationSidebar
-                  isOpen={isNotificationOpen}
-                  onClose={toggles.notifications}
-                />
+                <NotificationSidebar isOpen={isNotificationOpen} onClose={toggles.notifications} />
               </Suspense>
             )}
           </AnimatePresence>
@@ -468,13 +495,16 @@ const HomePage = memo(() => {
 
             {/* Carousel with enhanced loading */}
             <motion.div {...slideUp}>
-              <div className="relative py-2">
+              <div className="relative py-1.5">
                 <Maincarosel />
               </div>
             </motion.div>
 
             {/* Main Content Area with conditional rendering */}
-            <motion.div {...slideUp} className="bg-white rounded-t-[30px] rounded-b-none py-4 flex-1 min-h-0">
+            <motion.div
+              {...slideUp}
+              className="bg-white rounded-t-[30px] rounded-b-none py-4 pb-8 flex-1 min-h-0"
+            >
               <CategoryButtons
                 activeCategory={activeCategory}
                 handleCategoryClick={handleCategoryClick}
@@ -497,7 +527,7 @@ const HomePage = memo(() => {
                 )}
               </AnimatePresence>
 
-              <Divider />
+              {!menuOpen && <Divider />}
 
               {/* Content Sections - Only show when menu is closed with progressive loading */}
               {!menuOpen && (
@@ -512,12 +542,11 @@ const HomePage = memo(() => {
 
                   <Divider />
 
-                  <LikedItems
-                    foodItems={allFoodItems}
-                    onItemClick={handleItemClick}
-                  />
+                  <LikedItems foodItems={allFoodItems} onItemClick={handleItemClick} />
 
-                  <Suspense fallback={<div className="h-32 bg-gray-100 rounded-lg animate-pulse mx-4" />}>
+                  <Suspense
+                    fallback={<div className="h-32 bg-gray-100 rounded-lg animate-pulse mx-4" />}
+                  >
                     <motion.div>
                       <RecommendationItems
                         allFoodItems={recommendedItems}
@@ -531,10 +560,7 @@ const HomePage = memo(() => {
                   {allFoodItems.length > 0 && (
                     <motion.div variants={staggerItems}>
                       <Divider />
-                      <Tags
-                        foodItems={allFoodItems}
-                        onItemClick={handleItemClick}
-                      />
+                      <Tags foodItems={allFoodItems} onItemClick={handleItemClick} />
                     </motion.div>
                   )}
                 </>

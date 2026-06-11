@@ -377,7 +377,7 @@ export default function MyOrders() {
 
   return (
     <div className="flex justify-center items-start min-h-screen bg-black">
-      <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
+      <div className="w-full max-w-mobile-shell md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
         {/* Header */}
         <div className="w-full px-6 py-8 relative flex items-center justify-between">
           <button

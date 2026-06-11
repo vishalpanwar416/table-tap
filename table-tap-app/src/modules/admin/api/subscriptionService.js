@@ -521,6 +521,8 @@ export const cancelRestaurantSubscription = async (subscriptionId, reason = '') 
         cancelled_at: new Date().toISOString(),
         cancellation_reason: reason,
         auto_renew: false,
+        autopay_status: 'cancelled',
+        razorpay_token_id: null,
         updated_at: new Date().toISOString(),
       })
       .eq('id', subscriptionId)

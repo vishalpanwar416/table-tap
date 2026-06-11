@@ -9,81 +9,74 @@ import LoadingScreen from '../../shared/components/LoadingScreen';
 const OrderConfirmationPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { getOrderDetails } = useOrders();
+  const { getOrderDetails, subscribeToOrderStatus, currentOrder } = useOrders();
   const [orderDetails, setOrderDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    let cleanupChannel = null;
+    const orderId = location.state?.orderId;
+
+    if (!orderId) {
+      setError('No order ID provided');
+      setLoading(false);
+      return undefined;
+    }
+
+    let cancelled = false;
+    let channel = null;
     let redirectTimer = null;
 
     const initializeOrder = async () => {
       try {
-        const orderId = location.state?.orderId;
-
-        if (!orderId) {
-          setError('No order ID provided');
-          setLoading(false);
-          return;
-        }
-
         // Save order ID for guest tracking (Array + Most Recent)
         const currentGuestOrders = JSON.parse(localStorage.getItem('guestOrderIds') || '[]');
         if (!currentGuestOrders.includes(orderId)) {
-          const newGuestOrders = [orderId, ...currentGuestOrders].slice(0, 5); // Keep last 5
+          const newGuestOrders = [orderId, ...currentGuestOrders].slice(0, 5);
           localStorage.setItem('guestOrderIds', JSON.stringify(newGuestOrders));
         }
         localStorage.setItem('lastGuestOrderId', orderId);
 
         const order = await getOrderDetails(orderId);
+        if (cancelled) return;
 
         setOrderDetails(order);
-        cleanupChannel = startStatusUpdates(orderId);
+        channel = subscribeToOrderStatus(orderId);
 
-        // Auto-redirect to tracking page after 8 seconds
         redirectTimer = setTimeout(() => {
-          navigate('/order-tracking', {
-            state: { orderId: orderId },
-          });
+          navigate('/order-tracking', { state: { orderId } });
         }, 8000);
       } catch (err) {
-        console.error('OrderConfirmationPage: Error:', err);
-        setError(err.message || 'Failed to load order details');
+        if (!cancelled) {
+          console.error('OrderConfirmationPage: Error:', err);
+          setError(err.message || 'Failed to load order details');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     initializeOrder();
 
     return () => {
-      if (cleanupChannel) cleanupChannel();
-      if (redirectTimer) clearTimeout(redirectTimer);
+      cancelled = true;
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+      if (redirectTimer) {
+        clearTimeout(redirectTimer);
+      }
     };
-  }, [location.state?.orderId, navigate, getOrderDetails]);
+  }, [location.state?.orderId, navigate, getOrderDetails, subscribeToOrderStatus]);
 
-  const startStatusUpdates = (orderId) => {
-    const channel = supabase
-      .channel(`order-${orderId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'orders',
-          filter: `id=eq.${orderId}`,
-        },
-        (payload) => {
-          setOrderDetails(payload.new);
-        },
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  };
+  useEffect(() => {
+    const orderId = location.state?.orderId;
+    if (currentOrder?.id === orderId) {
+      setOrderDetails((prev) => (prev ? { ...prev, ...currentOrder } : currentOrder));
+    }
+  }, [currentOrder, location.state?.orderId]);
 
   const handleTrackOrder = () => {
     if (orderDetails && orderDetails.id) {

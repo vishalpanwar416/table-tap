@@ -43,6 +43,20 @@ export const loadRazorpayScript = () => {
   });
 };
 
+/** Same image priority as restaurant selection: photo first, then logo. */
+export const getRestaurantPaymentImage = (restaurant) => {
+  if (!restaurant) return null;
+
+  const candidates = [restaurant.restaurant_photo_url, restaurant.logo_url];
+  for (const url of candidates) {
+    const trimmed = url?.trim();
+    if (trimmed && /^https?:\/\//i.test(trimmed)) {
+      return trimmed;
+    }
+  }
+  return null;
+};
+
 /**
  * Initialize Razorpay payment
  */
@@ -63,13 +77,18 @@ export const initializeRazorpayPayment = ({
   onFailure,
 }) => {
   try {
+    const paymentImage =
+      restaurantLogo?.trim() && /^https?:\/\//i.test(restaurantLogo.trim())
+        ? restaurantLogo.trim()
+        : null;
+
     const rzp = new window.Razorpay({
       key: razorpayKeyId,
       amount: amount,
       currency: 'INR',
       name: restaurantName || 'Restaurant Order',
       description: `Order at ${restaurantName || 'Restaurant'}`,
-      image: restaurantLogo || '/logo.png',
+      ...(paymentImage ? { image: paymentImage } : {}),
       handler: onSuccess,
       prefill: {
         name: customerName || 'Valued Customer',
@@ -224,7 +243,7 @@ export const createOrder = async (orderData) => {
       customer_phone: (orderData.customerPhone || '').trim(),
       table_number: orderData.tableNumber || 'Not Specified',
       items: orderData.items.map((item) => ({
-        food_item_id: item.id,
+        food_item_id: item.food_item_id || item.id,
         quantity: item.quantity,
         price: item.price,
         name: item.name,
@@ -232,6 +251,8 @@ export const createOrder = async (orderData) => {
         image: item.image,
         note: item.note || null,
       })),
+      order_kind: orderData.orderKind || 'order',
+      kot_count: orderData.kotCount ?? 0,
       subtotal: totals.subtotalAfterDiscount,
       gst: totals.cgst + totals.sgst,
       discount: totals.discountAmount,
@@ -268,8 +289,10 @@ export const createOrder = async (orderData) => {
       throw error;
     }
 
-    // Create notification for new order
-    await createManagerOrderNotification(data);
+    // Live orders send their own KOT notifications
+    if (data.order_kind !== 'live_order') {
+      await createManagerOrderNotification(data);
+    }
 
     return data;
   } catch (error) {

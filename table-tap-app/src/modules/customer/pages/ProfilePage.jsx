@@ -1,26 +1,49 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ChevronLeft, Camera, LogOut, Trash2, User, Mail, Phone, Calendar, Edit3, Save, X, AlertCircle, Shield } from 'lucide-react';
+import {
+  ChevronLeft,
+  Camera,
+  LogOut,
+  Trash2,
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  Edit3,
+  Save,
+  X,
+  AlertCircle,
+  Shield,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import DeleteProfilePopup from '../../shared/components/auth/auth/DeleteProfilePopup';
-import { optimizeProfileImage, validateImageFile, ProgressiveImage } from '../../shared/utils/imageOptimization';
+import {
+  optimizeProfileImage,
+  validateImageFile,
+  ProgressiveImage,
+} from '../../shared/utils/imageOptimization';
 import authService from '../../shared/api/authService';
 import { supabase } from '../../shared/supabase';
 import LoadingScreen from '../../shared/components/LoadingScreen';
 
 // DefaultAvatar component - moved outside the main component
-const DefaultAvatar = ({ className = 'w-full h-full', iconClassName = 'w-12 h-12 text-gray-400' }) => (
-  <div className={`bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center ${className}`}>
+const DefaultAvatar = ({
+  className = 'w-full h-full',
+  iconClassName = 'w-12 h-12 text-gray-400',
+}) => (
+  <div
+    className={`bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center ${className}`}
+  >
     <User className={iconClassName} />
   </div>
 );
 
 const ProfilePage = () => {
   const [profileData, setProfileData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    dob: "",
-    profileImg: ""
+    name: '',
+    email: '',
+    phone: '',
+    dob: '',
+    profileImg: '',
   });
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({ ...profileData });
@@ -65,7 +88,7 @@ const ProfilePage = () => {
             email: profile.email || user.email,
             phone: profile.mobile_number || '',
             dob: dobString,
-            profileImg: profile.avatar_url || ''
+            profileImg: profile.avatar_url || '',
           };
 
           setProfileData(newProfileData);
@@ -118,7 +141,9 @@ const ProfilePage = () => {
           throw new Error('Failed to fetch optimized image');
         }
         const blob = await res.blob();
-        optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), { type: 'image/jpeg' });
+        optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), {
+          type: 'image/jpeg',
+        });
       } catch (blobError) {
         console.error('Blob conversion failed:', blobError);
         // Fallback: use the original file
@@ -133,22 +158,21 @@ const ProfilePage = () => {
         .from('avatars')
         .upload(filePath, optimizedFile, {
           cacheControl: '3600',
-          upsert: true
+          upsert: true,
         });
       if (error) throw error;
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from('avatars').getPublicUrl(filePath);
       await authService.updateProfile({ avatar_url: publicUrl });
 
-      setProfileData(prev => ({ ...prev, profileImg: publicUrl }));
-      setFormData(prev => ({ ...prev, profileImg: publicUrl }));
+      setProfileData((prev) => ({ ...prev, profileImg: publicUrl }));
+      setFormData((prev) => ({ ...prev, profileImg: publicUrl }));
 
       // Clean up the object URL if we created one
       if (optimizedDataUrl.startsWith('blob:')) {
         URL.revokeObjectURL(optimizedDataUrl);
       }
-
     } catch (error) {
       console.error('Upload error:', error);
       alert('Error uploading image: ' + error.message);
@@ -170,147 +194,178 @@ const ProfilePage = () => {
     }
   }, []);
 
-  const handleChange = useCallback((e) => {
-    const { name, value } = e.target;
+  const handleChange = useCallback(
+    (e) => {
+      const { name, value } = e.target;
 
-    if (name === 'dob') {
-      const formattedValue = formatDateInput(value);
-      setFormData(prev => ({
-        ...prev,
-        [name]: formattedValue
-      }));
-    } else {
-      // Basic sanitization: remove potential script tags
-      const sanitizedValue = value.replace(/[<>]/g, '');
-      setFormData(prev => ({
-        ...prev,
-        [name]: sanitizedValue
-      }));
-    }
-  }, [formatDateInput]);
+      if (name === 'dob') {
+        const formattedValue = formatDateInput(value);
+        setFormData((prev) => ({
+          ...prev,
+          [name]: formattedValue,
+        }));
+      } else {
+        // Basic sanitization: remove potential script tags
+        const sanitizedValue = value.replace(/[<>]/g, '');
+        setFormData((prev) => ({
+          ...prev,
+          [name]: sanitizedValue,
+        }));
+      }
+    },
+    [formatDateInput],
+  );
 
   const validateEmail = useCallback((email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email) &&
+    return (
+      emailRegex.test(email) &&
       email.length <= 254 &&
       email.length >= 5 &&
       !email.includes('..') &&
       !email.startsWith('.') &&
-      !email.endsWith('.');
+      !email.endsWith('.')
+    );
   }, []);
 
-  const handleSubmit = useCallback(async (e) => {
-    e.preventDefault();
+  const handleSubmit = useCallback(
+    async (e) => {
+      e.preventDefault();
 
-    if (!user) return;
+      if (!user) return;
 
-    setIsSubmitting(true);
+      setIsSubmitting(true);
 
-    try {
-      const cleanPhone = formData.phone.replace(/\D/g, '');
-      if (cleanPhone.length < 10) {
-        alert('Phone number must be at least 10 digits');
-        return;
-      }
-
-      if (!/^\d{2}-\d{2}-\d{4}$/.test(formData.dob)) {
-        alert('Please use DD-MM-YYYY format for date of birth (e.g., 25-12-1990)');
-        return;
-      }
-
-      if (!validateEmail(formData.email)) {
-        alert('Please enter a valid email address');
-        return;
-      }
-
-      const [day, month, year] = formData.dob.split('-');
-      const dobDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-
-      if (isNaN(dobDate.getTime())) {
-        alert('Please enter a valid date of birth');
-        return;
-      }
-
-      const today = new Date();
-      if (dobDate > today) {
-        alert('Date of birth cannot be in the future');
-        return;
-      }
-
-      const emailChanged = formData.email !== user.email;
-
-      await authService.updateProfile({
-        full_name: formData.name,
-        mobile_number: cleanPhone,
-        date_of_birth: dobDate.toISOString()
-      });
-
-      setProfileData(prev => ({
-        ...prev,
-        name: formData.name,
-        phone: cleanPhone,
-        dob: formData.dob
-      }));
-
-      if (emailChanged) {
-        if (!validateEmail(formData.email)) {
-          alert('Please enter a valid email address in the format: example@domain.com');
+      try {
+        const cleanPhone = formData.phone.replace(/\D/g, '');
+        if (cleanPhone.length < 10) {
+          alert('Phone number must be at least 10 digits');
           return;
         }
 
-        const cleanEmail = formData.email.trim().toLowerCase();
+        if (!/^\d{2}-\d{2}-\d{4}$/.test(formData.dob)) {
+          alert('Please use DD-MM-YYYY format for date of birth (e.g., 25-12-1990)');
+          return;
+        }
 
-        try {
-          const { data: { user: updatedUser }, error: authError } = await supabase.auth.updateUser({
-            email: cleanEmail
-          });
+        if (!validateEmail(formData.email)) {
+          alert('Please enter a valid email address');
+          return;
+        }
 
-          if (authError) {
+        const [day, month, year] = formData.dob.split('-');
+        const dobDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
 
-            if (authError.message.includes('User already registered') ||
-              authError.message.includes('already exists') ||
-              authError.code === 'email_address_invalid') {
-              alert('This email address is already registered or invalid. Please use a different email.');
-            } else if (authError.message.includes('rate') || authError.message.includes('limit')) {
-              alert('Too many email change attempts. Please wait a few minutes before trying again.');
-            } else if (authError.message.includes('invalid') || authError.message.includes('Invalid')) {
-              alert(`Email validation failed: ${authError.message}\n\nPlease try:\n- A different email provider\n- Removing special characters\n- Using a standard format like: name@example.com`);
-            } else {
-              alert(`Error updating email: ${authError.message}\n\nIf this persists, please contact support.`);
-            }
+        if (isNaN(dobDate.getTime())) {
+          alert('Please enter a valid date of birth');
+          return;
+        }
+
+        const today = new Date();
+        if (dobDate > today) {
+          alert('Date of birth cannot be in the future');
+          return;
+        }
+
+        const emailChanged = formData.email !== user.email;
+
+        await authService.updateProfile({
+          full_name: formData.name,
+          mobile_number: cleanPhone,
+          date_of_birth: dobDate.toISOString(),
+        });
+
+        setProfileData((prev) => ({
+          ...prev,
+          name: formData.name,
+          phone: cleanPhone,
+          dob: formData.dob,
+        }));
+
+        if (emailChanged) {
+          if (!validateEmail(formData.email)) {
+            alert('Please enter a valid email address in the format: example@domain.com');
             return;
           }
 
-          if (updatedUser) {
-            setProfileData(prev => ({
-              ...prev,
-              email: cleanEmail
-            }));
+          const cleanEmail = formData.email.trim().toLowerCase();
 
-            // Set pending email if not yet confirmed
-            if (!updatedUser.email_confirmed_at || updatedUser.new_email) {
-              setPendingEmail(cleanEmail);
-              alert('A confirmation email has been sent to ' + cleanEmail + '. Please check your inbox and click the verification link to complete the email change.');
-            } else {
-              setPendingEmail(null);
-              alert('Profile and email updated successfully!');
+          try {
+            const {
+              data: { user: updatedUser },
+              error: authError,
+            } = await supabase.auth.updateUser({
+              email: cleanEmail,
+            });
+
+            if (authError) {
+              if (
+                authError.message.includes('User already registered') ||
+                authError.message.includes('already exists') ||
+                authError.code === 'email_address_invalid'
+              ) {
+                alert(
+                  'This email address is already registered or invalid. Please use a different email.',
+                );
+              } else if (
+                authError.message.includes('rate') ||
+                authError.message.includes('limit')
+              ) {
+                alert(
+                  'Too many email change attempts. Please wait a few minutes before trying again.',
+                );
+              } else if (
+                authError.message.includes('invalid') ||
+                authError.message.includes('Invalid')
+              ) {
+                alert(
+                  `Email validation failed: ${authError.message}\n\nPlease try:\n- A different email provider\n- Removing special characters\n- Using a standard format like: name@example.com`,
+                );
+              } else {
+                alert(
+                  `Error updating email: ${authError.message}\n\nIf this persists, please contact support.`,
+                );
+              }
+              return;
             }
+
+            if (updatedUser) {
+              setProfileData((prev) => ({
+                ...prev,
+                email: cleanEmail,
+              }));
+
+              // Set pending email if not yet confirmed
+              if (!updatedUser.email_confirmed_at || updatedUser.new_email) {
+                setPendingEmail(cleanEmail);
+                alert(
+                  'A confirmation email has been sent to ' +
+                    cleanEmail +
+                    '. Please check your inbox and click the verification link to complete the email change.',
+                );
+              } else {
+                setPendingEmail(null);
+                alert('Profile and email updated successfully!');
+              }
+            }
+          } catch (emailError) {
+            alert(
+              `Profile information updated, but email update failed: ${emailError.message}\n\nPlease try updating your email again later.`,
+            );
           }
-        } catch (emailError) {
-          alert(`Profile information updated, but email update failed: ${emailError.message}\n\nPlease try updating your email again later.`);
+        } else {
+          alert('Profile updated successfully!');
         }
-      } else {
-        alert('Profile updated successfully!');
+
+        setIsEditing(false);
+      } catch (error) {
+        alert('Failed to update profile: ' + error.message);
+      } finally {
+        setIsSubmitting(false);
       }
-
-      setIsEditing(false);
-
-    } catch (error) {
-      alert('Failed to update profile: ' + error.message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [user, formData, validateEmail]);
+    },
+    [user, formData, validateEmail],
+  );
 
   const handleLogout = useCallback(async () => {
     try {
@@ -327,7 +382,7 @@ const ProfilePage = () => {
 
   if (error) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-black p-4">
+      <div className="flex justify-center items-center min-h-screen bg-black md:p-4">
         <div className="text-center text-white">
           <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <AlertCircle className="w-8 h-8 text-white" />
@@ -346,9 +401,8 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="flex justify-center items-start min-h-screen bg-black p-4">
-      <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
-
+    <div className="flex justify-center items-start min-h-screen bg-black md:p-4">
+      <div className="w-full max-w-mobile-shell md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
         {/* Header with Back Button and Title */}
         <div className="relative flex items-center justify-center py-6 md:py-8">
           <button
@@ -360,9 +414,7 @@ const ProfilePage = () => {
           </button>
 
           <div className="text-center">
-            <h1 className="text-2xl md:text-4xl text-white font-spartan-medium">
-              My Profile
-            </h1>
+            <h1 className="text-2xl md:text-4xl text-white font-spartan-medium">My Profile</h1>
             <p className="text-orange-100/60 mt-2 text-sm md:text-base text-center">
               Manage your account information
             </p>
@@ -379,13 +431,17 @@ const ProfilePage = () => {
                   <div className="flex items-start gap-3">
                     <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
-                      <h3 className="text-sm font-semibold text-orange-900">Email Verification Pending</h3>
+                      <h3 className="text-sm font-semibold text-orange-900">
+                        Email Verification Pending
+                      </h3>
                       <p className="text-sm text-orange-800 mt-1">
                         A confirmation email has been sent to <strong>{pendingEmail}</strong>.
-                        Please check your inbox and click the verification link to complete the email change.
+                        Please check your inbox and click the verification link to complete the
+                        email change.
                       </p>
                       <p className="text-xs text-orange-700 mt-2">
-                        Your email will remain <strong>{user?.email}</strong> until you verify the new address.
+                        Your email will remain <strong>{user?.email}</strong> until you verify the
+                        new address.
                       </p>
                     </div>
                   </div>
@@ -482,7 +538,9 @@ const ProfilePage = () => {
                   {formData.email !== user?.email && (
                     <div className="flex items-center gap-2 text-xs text-gray-600 mt-2 p-3 bg-yellow-50 rounded-xl border border-yellow-200">
                       <AlertCircle className="w-3 h-3 text-yellow-600" />
-                      <span className="font-medium">Changing your email will require verification</span>
+                      <span className="font-medium">
+                        Changing your email will require verification
+                      </span>
                     </div>
                   )}
                 </div>
@@ -560,7 +618,9 @@ const ProfilePage = () => {
                     <div className="w-2 h-2 bg-white rounded-full"></div>
                   </div>
                 </div>
-                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{profileData.name || 'User'}</h2>
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+                  {profileData.name || 'User'}
+                </h2>
                 <p className="text-gray-500 text-sm font-medium">{profileData.email}</p>
                 <div className="flex items-center gap-2 mt-2 text-xs text-gray-400">
                   <Shield className="w-3 h-3" />
@@ -577,7 +637,9 @@ const ProfilePage = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-sm text-gray-500 mb-1 font-medium">Full Name</h3>
-                      <p className="text-gray-900 font-semibold text-base md:text-lg truncate">{profileData.name || 'Not provided'}</p>
+                      <p className="text-gray-900 font-semibold text-base md:text-lg truncate">
+                        {profileData.name || 'Not provided'}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -589,7 +651,9 @@ const ProfilePage = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-sm text-gray-500 mb-1 font-medium">Date of Birth</h3>
-                      <p className="text-gray-900 font-semibold text-base md:text-lg truncate">{profileData.dob || 'Not provided'}</p>
+                      <p className="text-gray-900 font-semibold text-base md:text-lg truncate">
+                        {profileData.dob || 'Not provided'}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -601,7 +665,9 @@ const ProfilePage = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-sm text-gray-500 mb-1 font-medium">Email</h3>
-                      <p className="text-gray-900 font-semibold text-base md:text-lg break-all">{profileData.email}</p>
+                      <p className="text-gray-900 font-semibold text-base md:text-lg break-all">
+                        {profileData.email}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -613,7 +679,9 @@ const ProfilePage = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-sm text-gray-500 mb-1 font-medium">Phone Number</h3>
-                      <p className="text-gray-900 font-semibold text-base md:text-lg truncate">{profileData.phone || 'Not provided'}</p>
+                      <p className="text-gray-900 font-semibold text-base md:text-lg truncate">
+                        {profileData.phone || 'Not provided'}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -650,10 +718,7 @@ const ProfilePage = () => {
       </div>
 
       {/* Delete Profile Popup */}
-      <DeleteProfilePopup
-        isOpen={showDeletePopup}
-        onClose={() => setShowDeletePopup(false)}
-      />
+      <DeleteProfilePopup isOpen={showDeletePopup} onClose={() => setShowDeletePopup(false)} />
     </div>
   );
 };

@@ -200,23 +200,37 @@ export const getOrderById = async (orderId) => {
   }
 };
 
-// Listen for order status changes
+// Listen for order status changes (customer tracking + single-order views)
 export const subscribeToOrderUpdates = (orderId, callback) => {
-  return supabase
-    .channel(`order-${orderId}`)
-    .on(
-      'postgres_changes',
-      {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'orders',
-        filter: `id=eq.${orderId}`,
-      },
-      (payload) => {
+  const channelName = `order-${orderId}`;
+  const existing = supabase.getChannels().find((ch) => ch.topic === `realtime:${channelName}`);
+  if (existing) {
+    supabase.removeChannel(existing);
+  }
+
+  const channel = supabase.channel(channelName);
+  channel.on(
+    'postgres_changes',
+    {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'orders',
+      filter: `id=eq.${orderId}`,
+    },
+    (payload) => {
+      if (payload.new) {
         callback(payload.new);
-      },
-    )
-    .subscribe();
+      }
+    },
+  );
+
+  channel.subscribe((status, err) => {
+    if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+      console.error(`Order realtime subscription failed (${channelName}):`, status, err);
+    }
+  });
+
+  return channel;
 };
 
 // Listen for new orders (admin side)
@@ -480,7 +494,33 @@ export const updateOrderStatus = async (
 ) => {
   const status = newStatus; // Alias for clarity
   try {
-    const updates = { status };
+    const { data: existingOrder } = await supabase
+      .from('orders')
+      .select('tracking')
+      .eq('id', orderId)
+      .maybeSingle();
+
+    const now = new Date().toISOString();
+    const tracking = { ...(existingOrder?.tracking || {}) };
+
+    if (['confirmed', 'accepted', 'preparing'].includes(status)) {
+      tracking.confirmed = { status: true, timestamp: tracking.confirmed?.timestamp || now };
+    }
+    if (status === 'preparing') {
+      tracking.preparing = { status: true, timestamp: now };
+    }
+    if (status === 'ready') {
+      tracking.ready = { status: true, timestamp: now };
+    }
+    if (status === 'completed') {
+      tracking.completed = { status: true, timestamp: now };
+    }
+
+    const updates = {
+      status,
+      tracking,
+      updated_at: now,
+    };
     if (cancelReason) {
       updates.cancel_reason = cancelReason;
     }

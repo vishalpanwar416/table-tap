@@ -342,13 +342,13 @@ const LikedItemsPage = () => {
 
   return (
     <motion.div
-      className="flex justify-center items-start min-h-screen bg-black p-4"
+      className="flex justify-center items-start min-h-screen bg-black md:p-4"
       variants={pageVariants}
       initial="initial"
       animate="animate"
       exit="exit"
     >
-      <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col relative">
+      <div className="w-full max-w-mobile-shell md:max-w-4xl lg:max-w-6xl h-screen flex flex-col relative">
         <div className="relative flex items-center mb-2 md:mb-3">
           <motion.button
             className="absolute left-2 text-orange-500 hover:text-orange-600 transition-all duration-300 p-2 rounded-full hover:bg-orange-500/10 active:bg-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-500/30 z-20"

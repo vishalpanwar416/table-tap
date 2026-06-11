@@ -13,6 +13,7 @@ const RestaurantManagement = ({
   onToggleAI,
   onToggleAggregators,
   onToggleOnlineBill,
+  onToggleSubscriptionAutopay,
   onEdit,
   onDelete,
   onClick,
@@ -258,6 +259,7 @@ const RestaurantManagement = ({
                 onToggleAI={onToggleAI}
                 onToggleAggregators={onToggleAggregators}
                 onToggleOnlineBill={onToggleOnlineBill}
+                onToggleSubscriptionAutopay={onToggleSubscriptionAutopay}
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onClick={onClick}
@@ -270,6 +272,7 @@ const RestaurantManagement = ({
                 onToggleAI={onToggleAI}
                 onToggleAggregators={onToggleAggregators}
                 onToggleOnlineBill={onToggleOnlineBill}
+                onToggleSubscriptionAutopay={onToggleSubscriptionAutopay}
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onClick={onClick}

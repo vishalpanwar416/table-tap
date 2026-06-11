@@ -1,6 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ChevronLeft, CheckCircle, Clock, XCircle, Truck, MapPin, CreditCard, ShoppingBag, User, X, LogIn, Archive, MessageCircle } from 'lucide-react';
+import {
+  ChevronLeft,
+  CheckCircle,
+  Clock,
+  XCircle,
+  Truck,
+  MapPin,
+  CreditCard,
+  ShoppingBag,
+  User,
+  X,
+  LogIn,
+  Archive,
+  MessageCircle,
+} from 'lucide-react';
 import { useOrders } from '../../shared/context/OrderContext';
 import { useAuth } from '../../shared/config/AuthContext';
 import { supabase } from '../../shared/supabase';
@@ -11,7 +25,14 @@ const OrderTracking = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { getOrderDetails, subscribeToOrderStatus, currentOrder, loading, error } = useOrders();
+  const {
+    getOrderDetails,
+    subscribeToOrderStatus,
+    refreshOrderSilently,
+    currentOrder,
+    loading,
+    error,
+  } = useOrders();
   const { user } = useAuth();
   const [statusPercentage, setStatusPercentage] = useState(0);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -30,20 +51,22 @@ const OrderTracking = () => {
     }
   }, [orderId, getOrderDetails]);
 
-  // Subscribe to real-time updates
+  // Realtime subscription + silent polling fallback for mobile browsers
   useEffect(() => {
-    if (!orderId) return;
+    if (!orderId) return undefined;
 
-    // Create subscription
-    const subscription = subscribeToOrderStatus(orderId);
+    const channel = subscribeToOrderStatus(orderId);
+    const pollInterval = setInterval(() => {
+      refreshOrderSilently(orderId);
+    }, 10000);
 
-    // Cleanup subscription on unmount or ID change
     return () => {
-      if (subscription) {
-        supabase.removeChannel(subscription);
+      if (channel) {
+        supabase.removeChannel(channel);
       }
+      clearInterval(pollInterval);
     };
-  }, [orderId, subscribeToOrderStatus]);
+  }, [orderId, subscribeToOrderStatus, refreshOrderSilently]);
 
   useEffect(() => {
     if (currentOrder) {
@@ -83,7 +106,7 @@ const OrderTracking = () => {
       day: 'numeric',
       hour: 'numeric',
       minute: 'numeric',
-      hour12: true
+      hour12: true,
     }).format(date);
   };
 
@@ -109,14 +132,14 @@ const OrderTracking = () => {
   };
 
   const statusMessages = {
-    pending: "Your order is being reviewed by the restaurant.",
-    confirmed: "Order accepted! Kitchen will start shortly.",
-    accepted: "Order accepted! Kitchen will start shortly.",
-    preparing: "Your food is being prepared right now.",
-    ready: "Your order is ready! It will be served shortly.",
-    completed: "Order completed. Enjoy your meal!",
-    rejected: "Sorry, your order was rejected. Please contact staff.",
-    cancelled: "This order has been cancelled."
+    pending: 'Your order is being reviewed by the restaurant.',
+    confirmed: 'Order accepted! Kitchen will start shortly.',
+    accepted: 'Order accepted! Kitchen will start shortly.',
+    preparing: 'Your food is being prepared right now.',
+    ready: 'Your order is ready! It will be served shortly.',
+    completed: 'Order completed. Enjoy your meal!',
+    rejected: 'Sorry, your order was rejected. Please contact staff.',
+    cancelled: 'This order has been cancelled.',
   };
 
   const handleWhatsAppShare = () => {
@@ -141,8 +164,8 @@ View Details: ${trackingUrl}`;
     navigate('/login', {
       state: {
         returnUrl: `/order-tracking`,
-        orderId: currentOrder?.id
-      }
+        orderId: currentOrder?.id,
+      },
     });
   };
 
@@ -186,7 +209,7 @@ View Details: ${trackingUrl}`;
 
   return (
     <div className="flex justify-center items-start min-h-screen bg-black">
-      <div className="w-full max-w-[390px] md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
+      <div className="w-full max-w-mobile-shell md:max-w-4xl lg:max-w-6xl h-screen flex flex-col">
         {/* Header */}
         <div className="w-full px-6 py-8 relative flex items-center justify-between">
           <button
@@ -198,10 +221,10 @@ View Details: ${trackingUrl}`;
           </button>
 
           <div className="flex flex-col items-center absolute left-1/2 transform -translate-x-1/2">
-            <h1 className="text-gray-100 text-2xl font-medium">
-              Order Tracking
-            </h1>
-            <p className="text-orange-100/60 text-xs mt-1 text-center">#{currentOrder.id.slice(0, 8).toUpperCase()}</p>
+            <h1 className="text-gray-100 text-2xl font-medium">Order Tracking</h1>
+            <p className="text-orange-100/60 text-xs mt-1 text-center">
+              #{currentOrder.id.slice(0, 8).toUpperCase()}
+            </p>
           </div>
 
           {/* Guest History & Login Buttons */}
@@ -231,9 +254,8 @@ View Details: ${trackingUrl}`;
         </div>
 
         {/* Main Content - White block with rounded top corners */}
-        <div className="flex-1 flex flex-col bg-gray-100 rounded-t-3xl overflow-hidden shadow-2xl">
-          <div className="flex-1 overflow-y-auto pb-24">
-
+        <div className="flex-1 flex flex-col bg-gray-100 rounded-t-3xl overflow-hidden shadow-2xl min-h-0">
+          <div className="flex-1 overflow-y-auto pb-[max(1.5rem,env(safe-area-inset-bottom))]">
             {/* Status Card */}
             <div className="bg-white p-6 pb-8 rounded-b-3xl shadow-sm mb-4">
               <div className="flex flex-col items-center mb-6">
@@ -244,7 +266,9 @@ View Details: ${trackingUrl}`;
                 >
                   {getStatusIcon(currentOrder.status)}
                 </motion.div>
-                <h2 className={`text-xl font-bold capitalize mb-1 ${['preparing', 'ready'].includes(currentOrder.status) ? 'text-orange-600 animate-pulse' : 'text-gray-800'}`}>
+                <h2
+                  className={`text-xl font-bold capitalize mb-1 ${['preparing', 'ready'].includes(currentOrder.status) ? 'text-orange-600 animate-pulse' : 'text-gray-800'}`}
+                >
                   {currentOrder.status}
                 </h2>
                 <p className="text-sm text-gray-500">{formatDate(currentOrder.created_at)}</p>
@@ -268,12 +292,12 @@ View Details: ${trackingUrl}`;
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${statusPercentage}%` }}
-                    transition={{ duration: 0.8, ease: "easeInOut" }}
+                    transition={{ duration: 0.8, ease: 'easeInOut' }}
                     className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-orange-500"
                   ></motion.div>
                 </div>
                 <p className="text-center text-sm text-gray-600 font-medium px-4">
-                  {statusMessages[currentOrder.status] || "Tracking your order..."}
+                  {statusMessages[currentOrder.status] || 'Tracking your order...'}
                 </p>
               </div>
             </div>
@@ -294,14 +318,16 @@ View Details: ${trackingUrl}`;
                       <p className="text-orange-100 text-xs">Login to keep tracking history</p>
                     </div>
                   </div>
-                  <ChevronLeft size={16} className="text-white/70 rotate-180 group-hover:text-white transition-colors" />
+                  <ChevronLeft
+                    size={16}
+                    className="text-white/70 rotate-180 group-hover:text-white transition-colors"
+                  />
                 </button>
               </div>
             )}
 
             {/* Order Details */}
-            <div className="px-4 space-y-4">
-
+            <div className="px-4 space-y-4 pb-2">
               {/* Order Items */}
               <div className="bg-white rounded-2xl p-4 shadow-sm">
                 <h3 className="text-gray-800 font-bold mb-3 flex items-center gap-2">
@@ -309,15 +335,18 @@ View Details: ${trackingUrl}`;
                   Order Items
                 </h3>
                 <div className="divide-y divide-gray-100">
-                  {currentOrder.items && currentOrder.items.map((item, index) => (
-                    <div key={index} className="py-3 flex justify-between items-start">
-                      <div>
-                        <p className="font-semibold text-gray-800 text-sm">{item.name}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">Qty: {item.quantity}</p>
+                  {currentOrder.items &&
+                    currentOrder.items.map((item, index) => (
+                      <div key={index} className="py-3 flex justify-between items-start">
+                        <div>
+                          <p className="font-semibold text-gray-800 text-sm">{item.name}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">Qty: {item.quantity}</p>
+                        </div>
+                        <p className="font-medium text-gray-800 text-sm">
+                          ₹{(item.price * item.quantity).toFixed(2)}
+                        </p>
                       </div>
-                      <p className="font-medium text-gray-800 text-sm">₹{(item.price * item.quantity).toFixed(2)}</p>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
 
@@ -357,29 +386,23 @@ View Details: ${trackingUrl}`;
               </div>
 
               {/* Share via WhatsApp Button (especially for guests) */}
-              <div className="mt-4">
-                <button
-                  onClick={handleWhatsAppShare}
-                  className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white font-bold py-3.5 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 transform active:scale-[0.98]"
-                >
-                  <MessageCircle size={22} fill="white" className="text-[#25D366]" />
-                  Share Bill via WhatsApp
-                </button>
-              </div>
+              <button
+                onClick={handleWhatsAppShare}
+                className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white font-bold py-3.5 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 transform active:scale-[0.98]"
+              >
+                <MessageCircle size={22} fill="white" className="text-[#25D366]" />
+                Share Bill via WhatsApp
+              </button>
 
+              <button
+                onClick={() => navigate('/home')}
+                className="w-full bg-gray-900 text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-black transition-transform transform active:scale-95 flex items-center justify-center gap-2"
+              >
+                <ChevronLeft size={20} />
+                Back to Home
+              </button>
             </div>
           </div>
-        </div>
-
-        {/* Bottom Action Button */}
-        <div className="absolute bottom-6 left-0 right-0 px-6 max-w-[390px] md:max-w-4xl lg:max-w-6xl mx-auto">
-          <button
-            onClick={() => navigate('/home')}
-            className="w-full bg-gray-900 text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-black transition-transform transform active:scale-95 flex items-center justify-center gap-2"
-          >
-            <ChevronLeft size={20} />
-            Back to Home
-          </button>
         </div>
       </div>
 
@@ -418,12 +441,11 @@ View Details: ${trackingUrl}`;
                     <LogIn size={28} />
                   </div>
 
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
-                    Save Your Order
-                  </h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Save Your Order</h3>
 
                   <p className="text-gray-600 mb-6 text-sm leading-relaxed">
-                    Login to add this order to your history and track it anytime. Don't lose track of your delicious food!
+                    Login to add this order to your history and track it anytime. Don't lose track
+                    of your delicious food!
                   </p>
 
                   <div className="space-y-3">
@@ -486,20 +508,26 @@ View Details: ${trackingUrl}`;
                         navigate(`/order-tracking/${guestId}`);
                         setShowHistoryModal(false);
                       }}
-                      className={`w-full p-3 rounded-xl flex items-center justify-between transition-colors ${guestId === currentOrder?.id
-                        ? 'bg-orange-50 border border-orange-200'
-                        : 'bg-gray-50 hover:bg-gray-100'
-                        }`}
+                      className={`w-full p-3 rounded-xl flex items-center justify-between transition-colors ${
+                        guestId === currentOrder?.id
+                          ? 'bg-orange-50 border border-orange-200'
+                          : 'bg-gray-50 hover:bg-gray-100'
+                      }`}
                     >
                       <div className="text-left">
-                        <p className={`font-medium text-sm ${guestId === currentOrder?.id ? 'text-orange-700' : 'text-gray-800'}`}>
+                        <p
+                          className={`font-medium text-sm ${guestId === currentOrder?.id ? 'text-orange-700' : 'text-gray-800'}`}
+                        >
                           Order #{guestId.slice(0, 8).toUpperCase()}
                         </p>
                         <p className="text-xs text-gray-500">
                           {index === 0 ? 'Latest' : 'Previous'}
                         </p>
                       </div>
-                      <ChevronLeft size={16} className={`rotate-180 ${guestId === currentOrder?.id ? 'text-orange-500' : 'text-gray-400'}`} />
+                      <ChevronLeft
+                        size={16}
+                        className={`rotate-180 ${guestId === currentOrder?.id ? 'text-orange-500' : 'text-gray-400'}`}
+                      />
                     </button>
                   ))}
                 </div>
@@ -508,7 +536,7 @@ View Details: ${trackingUrl}`;
           </>
         )}
       </AnimatePresence>
-    </div >
+    </div>
   );
 };
 

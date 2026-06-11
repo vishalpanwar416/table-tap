@@ -142,57 +142,73 @@ export const OrderProvider = ({ children }) => {
     }
   };
 
-  // Subscribe to order status updates
-  const subscribeToOrderStatus = useCallback((orderId) => {
-    if (!orderId) {
-      return null;
-    }
+  const applyOrderUpdate = useCallback((orderId, updatedOrder) => {
+    setUserOrders((prev) =>
+      prev.map((order) => (order.id === orderId ? { ...order, ...updatedOrder } : order)),
+    );
 
-    const subscription = subscribeToOrderUpdates(orderId, (updatedOrder) => {
-      // Update order in local state
-      setUserOrders((prev) =>
-        prev.map((order) => (order.id === updatedOrder.id ? updatedOrder : order)),
-      );
-
-      // Update current order if it's the one being viewed
-      setCurrentOrder((prevCurrent) =>
-        prevCurrent && prevCurrent.id === updatedOrder.id ? updatedOrder : prevCurrent,
-      );
-    });
-
-    return subscription;
+    setCurrentOrder((prev) => (prev?.id === orderId ? { ...prev, ...updatedOrder } : prev));
   }, []);
 
-  // Get a specific order by ID
-  const getOrderDetails = useCallback(
+  // Subscribe to order status updates
+  const subscribeToOrderStatus = useCallback(
+    (orderId) => {
+      if (!orderId) {
+        return null;
+      }
+
+      return subscribeToOrderUpdates(orderId, (updatedOrder) => {
+        applyOrderUpdate(orderId, updatedOrder);
+      });
+    },
+    [applyOrderUpdate],
+  );
+
+  const refreshOrderSilently = useCallback(
     async (orderId) => {
+      if (!orderId) return null;
+
       try {
-        if (!orderId) {
-          throw new Error('Order ID is required');
-        }
-
-        setLoading(true);
         const order = await getOrderById(orderId);
-
-        if (!order) {
-          throw new Error('Order not found');
+        if (order) {
+          applyOrderUpdate(orderId, order);
         }
-
-        setCurrentOrder(order);
-
-        // Removed automatic subscription to prevent leaks.
-        // Components must subscribe explicitly using subscribeToOrderStatus.
-
         return order;
       } catch (err) {
-        setError('Failed to load order details');
-        throw err;
-      } finally {
-        setLoading(false);
+        console.warn('Silent order refresh failed:', err);
+        return null;
       }
     },
-    [subscribeToOrderStatus],
+    [applyOrderUpdate],
   );
+
+  // Get a specific order by ID
+  const getOrderDetails = useCallback(async (orderId) => {
+    try {
+      if (!orderId) {
+        throw new Error('Order ID is required');
+      }
+
+      setLoading(true);
+      const order = await getOrderById(orderId);
+
+      if (!order) {
+        throw new Error('Order not found');
+      }
+
+      setCurrentOrder(order);
+
+      // Removed automatic subscription to prevent leaks.
+      // Components must subscribe explicitly using subscribeToOrderStatus.
+
+      return order;
+    } catch (err) {
+      setError('Failed to load order details');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const value = {
     userOrders,
@@ -205,6 +221,7 @@ export const OrderProvider = ({ children }) => {
     fetchUserOrders,
     getOrderDetails,
     subscribeToOrderStatus,
+    refreshOrderSilently,
     restaurant, // Expose restaurant data for components that need it
   };
 
